@@ -1,0 +1,47 @@
+
+# sst
+.sst
+node_modules
+
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.swp
+
+# React
+/node_modules
+/build
+/.env
+.DS_Store
+
+# Editor
+/.vscode
+/.idea
+
+# Testing
+/coverage
+
+# Dependency directories
+/.pnp
+.pnp.js
+
+# Build artifacts
+/dist
+
+# Logs
+/log
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Cache and compiled files
+/.eslintcache
+/.next
+/out
+/.cache
+/.yarn
+/yarn-error.log
