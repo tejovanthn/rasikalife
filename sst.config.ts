@@ -17,9 +17,9 @@ export default $config({
       link: [bucket],
       path: "packages/web/",
       domain: {
-        name: $app.stage === "prod" ? "rasika.life" : `${$app.stage}.rasika.life`,
-        redirects: $app.stage === "prod" ? ["www.rasika.life"] : undefined,
-        hostedZone: "Z0190677U1NK4BAEXE0M",
+        domainName: $app.stage === "prod" ? "rasika.life" : `${$app.stage}.rasika.life`,
+        redirects: $app.stage === "prod" ? ["www.rasika.life"] : [`www.${$app.stage}.rasika.life`],
+        hostedZone: "rasika.life",
       }
     });
   },
