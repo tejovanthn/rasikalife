@@ -15,7 +15,12 @@ export default $config({
 
     new sst.aws.Remix("RasikaWeb", {
       link: [bucket],
-      path: "packages/web/"
+      path: "packages/web/",
+      domain: {
+        name: $app.stage === "prod" ? "rasika.life" : `${$app.stage}.rasika.life`,
+        redirects: $app.stage === "prod" ? ["www.rasika.life"] : undefined,
+        hostedZone: "Z0190677U1NK4BAEXE0M",
+      }
     });
   },
 });
