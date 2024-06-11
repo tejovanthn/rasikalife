@@ -4,7 +4,7 @@ export default $config({
   app(input) {
     return {
       name: "rasika",
-      removal: input?.stage === "production" ? "retain" : "remove",
+      removal: input?.stage === "prod" ? "retain" : "remove",
       home: "aws",
     };
   },
@@ -17,9 +17,11 @@ export default $config({
       link: [bucket],
       path: "packages/web/",
       domain: {
-        domainName: $app.stage === "prod" ? "rasika.life" : `${$app.stage}.rasika.life`,
+        name: $app.stage === "prod" ? "rasika.life" : `${$app.stage}.rasika.life`,
         redirects: $app.stage === "prod" ? ["www.rasika.life"] : [`www.${$app.stage}.rasika.life`],
-        hostedZone: "rasika.life",
+        dns: sst.aws.dns({
+          zone: "Z0190677U1NK4BAEXE0M"
+        })
       }
     });
   },
