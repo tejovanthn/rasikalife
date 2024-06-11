@@ -1,19 +1,19 @@
-export interface Song   {
+export interface Song {
   id: string;
-  tala?:string;
-  composer?:string;
-  language?:string;
-  updated?:string;
-  title:string;
-  raga:Array<string>;
-  lyrics:string;
-  meaning?:string;
-  notation?:string;
-  otherInfo?:string;
+  tala?: string;
+  composer?: string;
+  language?: string;
+  updated?: string;
+  title: string;
+  raga: Array<string>;
+  lyrics: string;
+  meaning?: string;
+  notation?: string;
+  otherInfo?: string;
   source?: string;
 }
 
-export default [
+export const allData = [
   {
     "id": "c0000.shtml",
     "tala": "aadi",
@@ -1580,3 +1580,20 @@ export default [
     "otherInfo": "Lyrics and Tamil notation contributed by Lakshman Ragde."
   }
 ] as Song[]
+
+export interface Tala { 
+  tala: string;
+  songs: Song[]
+}
+export const allTalas = allData.reduce((acc, data) => {
+  const index = acc.findIndex(a => a.tala === data.tala)
+  if(index === -1) {
+    acc.push({tala: data.tala || "", songs: [data]})
+  } else {
+    acc[index].songs.push(data)
+  }
+  return acc
+}, [] as Tala[])
+.sort((a, b) => (a.tala > b.tala) ? 1 : -1)
+
+export default allData;

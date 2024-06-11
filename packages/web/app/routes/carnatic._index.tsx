@@ -32,9 +32,9 @@ export default function Index() {
         <h2 className="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0">Most Popular Songs</h2>
         <ul>
           {popularSongs.map((song) => (
-            <li key={song.id}>{song.title}</li>
+            <li key={song.id}><Link to={`/carnatic/songs/${song.id}`}>{song.title}</Link></li>
           ))}
-          <li><Link to={"/songs"}>View all Songs</Link></li>
+          <li><Link to={"/carnatic/songs"}>View all Songs</Link></li>
         </ul>
       </section>
 
