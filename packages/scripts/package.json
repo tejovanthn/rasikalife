@@ -1,0 +1,19 @@
+{
+  "name": "@rasika/scripts",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "shell": "sst shell tsx",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@rasika/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

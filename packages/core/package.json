@@ -1,0 +1,16 @@
+{
+  "name": "@rasika/core",
+  "version": "0.0.0",
+  "description": "",
+  "exports": {
+    "./*": [
+      "./src/*/index.ts",
+      "./src/*.ts"
+    ]
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1659.0",
+    "electrodb": "^2.14.2",
+    "ksuid": "^3.0.0"
+  }
+}

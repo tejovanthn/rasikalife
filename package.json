@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" \u0026\u0026 exit 1"
+    "dev": "sst dev",
+    "format": "./node_modules/.bin/prettier --write '**/*.{js,jsx,ts,tsx,json}'",
+    "lint": "./node_modules/.bin/eslint . --report-unused-disable-directives --max-warnings 0 --fix"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -13,6 +19,16 @@
     "sst": "ion"
   },
   "devDependencies": {
-    "@types/aws-lambda": "8.10.138"
+    "@eslint/js": "^9.6.0",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@tsconfig/node20": "^20.1.4",
+    "@types/aws-lambda": "8.10.138",
+    "@types/eslint__js": "^8.42.3",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.8.0",
+    "prettier": "^3.3.2",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^7.15.0"
   }
 }
