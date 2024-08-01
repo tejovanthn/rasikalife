@@ -287,11 +287,13 @@ export const updateSong = async (id: string, song: UpdateSong) => {
 // }
 
 export const getTop10Songs = async () => {
-  return await Song.query.byViews({}).go({ limit: 10, order: 'desc' });
+  return await Song.query
+    .byViews({})
+    .go({ limit: 10, order: 'desc', attributes: ['id', 'name'] });
 };
 
 export const getTop10Ragas = async () => {
   return await Item.query
     .byViews({ type: 'raga' })
-    .go({ limit: 10, order: 'desc' });
+    .go({ limit: 10, order: 'desc', attributes: ['id', 'name'] });
 };

@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.0.2",
+    "@rasika/functions": "workspace:*",
     "@remix-run/node": "^2.9.2",
     "@remix-run/react": "^2.9.2",
     "@remix-run/serve": "^2.9.2",
+    "@trpc/client": "11.0.0-rc.467",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "isbot": "^4.1.0",

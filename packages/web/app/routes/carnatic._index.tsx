@@ -1,6 +1,6 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import DATA from '~/data';
+import { client } from '~/api.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -10,19 +10,15 @@ export const meta: MetaFunction = () => {
 };
 
 export type LoaderData = {
-  popularSongs: { id: string; title: string }[];
-  popularRagas: { id: string; raga: string }[];
+  popularSongs: { id: string; name: string }[];
+  popularRagas: { id: string; name: string }[];
 };
 
-export const loader: LoaderFunction = () => {
-  const popularSongs = DATA.slice(0, 10).map((song) => ({
-    id: song.id,
-    title: song.title,
-  }));
-  const popularRagas = DATA.slice(0, 10).map((song) => ({
-    id: song.id,
-    raga: song.raga,
-  }));
+export const loader: LoaderFunction = async () => {
+  const popularSongs = (await client.songs.popular.query()).data;
+  const popularRagas = (await client.ragas.popular.query()).data;
+
+  console.log({ popularSongs, popularRagas });
 
   return { popularSongs, popularRagas };
 };
@@ -43,7 +39,7 @@ export default function Index() {
         <ul>
           {popularSongs.map((song) => (
             <li key={song.id}>
-              <Link to={`/carnatic/songs/${song.id}`}>{song.title}</Link>
+              <Link to={`/carnatic/songs/${song.id}`}>{song.name}</Link>
             </li>
           ))}
           <li>
@@ -58,7 +54,7 @@ export default function Index() {
         </h2>
         <ul>
           {popularRagas.map((song) => (
-            <li key={song.id}>{song.raga}</li>
+            <li key={song.id}>{song.name}</li>
           ))}
           <li>View all Ragas</li>
         </ul>

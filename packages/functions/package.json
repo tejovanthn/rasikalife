@@ -1,6 +1,12 @@
 {
   "name": "@rasika/functions",
   "version": "0.0.0",
+  "exports": {
+    "./*": [
+      "./src/*/index.ts",
+      "./src/*.ts"
+    ]
+  },
   "dependencies": {
     "@rasika/core": "workspace:*",
     "@trpc/client": "11.0.0-rc.467",

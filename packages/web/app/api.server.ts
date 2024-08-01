@@ -1,0 +1,11 @@
+import type { Router } from '@rasika/functions';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import { Resource } from 'sst';
+
+export const client = createTRPCClient<Router>({
+  links: [
+    httpBatchLink({
+      url: Resource.RasikaTRPC.url,
+    }),
+  ],
+});
