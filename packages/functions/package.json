@@ -1,0 +1,15 @@
+{
+  "name": "@rasika/functions",
+  "version": "0.0.0",
+  "dependencies": {
+    "@rasika/core": "workspace:*",
+    "@trpc/client": "11.0.0-rc.467",
+    "@trpc/server": "11.0.0-rc.467",
+    "sst": "ion",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.137",
+    "sst": "ion"
+  }
+}

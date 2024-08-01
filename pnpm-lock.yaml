@@ -58,6 +58,28 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
 
+  packages/functions:
+    dependencies:
+      '@rasika/core':
+        specifier: workspace:*
+        version: link:../core
+      '@trpc/client':
+        specifier: 11.0.0-rc.467
+        version: 11.0.0-rc.467(@trpc/server@11.0.0-rc.467)
+      '@trpc/server':
+        specifier: 11.0.0-rc.467
+        version: 11.0.0-rc.467
+      sst:
+        specifier: ion
+        version: 0.1.73
+      zod:
+        specifier: ^3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@types/aws-lambda':
+        specifier: ^8.10.137
+        version: 8.10.138
+
   packages/scripts:
     dependencies:
       '@rasika/core':
@@ -1609,6 +1631,14 @@ packages:
     peerDependenciesMeta:
       '@vue/compiler-sfc':
         optional: true
+
+  '@trpc/client@11.0.0-rc.467':
+    resolution: {integrity: sha512-ovZaGdAUl+EEmtJJc5uuo95B0gw8+q3jwNjUQQmmSMU5Isq4sYdjIWNkhbrFtR8CovllFyrRrjAgCWdaOTEY4g==}
+    peerDependencies:
+      '@trpc/server': 11.0.0-rc.467+8f72171d6
+
+  '@trpc/server@11.0.0-rc.467':
+    resolution: {integrity: sha512-94Gv26ALuBfxgFlSGV3x2uF2ixUEViuK0m3IPKOvCTMreisZkBqyTa3NkBcuPZW/AMUieM5P4Q2NrbHTIA0fKQ==}
 
   '@tsconfig/node20@20.1.4':
     resolution: {integrity: sha512-sqgsT69YFeLWf5NtJ4Xq/xAF8p4ZQHlmGW74Nu2tD4+g5fAsposc4ZfaaPixVu4y01BEiDCWLRDCvDM5JOsRxg==}
@@ -4024,8 +4054,18 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
+  sst-darwin-arm64@0.1.73:
+    resolution: {integrity: sha512-KMULR9F1Nk9lrMqqmXVazS1RpRO4r9di9h8pjdiM/Bl02h48A3LdKYK5rvfu5IA0rLuDqicFI2sKZAT4IsxPSg==}
+    cpu: [arm64]
+    os: [darwin]
+
   sst-darwin-x64@0.0.535:
     resolution: {integrity: sha512-U8qGe+8GdoryYgnftKYV9m9sFGWCY+VIsE31Y29wzdTJc2lcjDSd/JOS2vMGCJyfed/R2PZsVBcyMpf+vTZr+w==}
+    cpu: [x64]
+    os: [darwin]
+
+  sst-darwin-x64@0.1.73:
+    resolution: {integrity: sha512-wiFGueCRGTzZJfPuSH4pOTopdu2PmC9Cw+kNR0+tm2/igX1Oh3zoreEymEofW///swOkalXOxpYDfRJA0btd6w==}
     cpu: [x64]
     os: [darwin]
 
@@ -4034,8 +4074,18 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  sst-linux-arm64@0.1.73:
+    resolution: {integrity: sha512-JytUtbTRbUxEXwauUsjGtk2o8eu/2jM+e/jaNO7X8KL2Zt3PiEb1miRvRSL+WaoWLrPmRz9bIvzMd6qjDMLM9g==}
+    cpu: [arm64]
+    os: [linux]
+
   sst-linux-x64@0.0.535:
     resolution: {integrity: sha512-JA6uXQpMcMkO2WranHjZH9G1mSKT5HBU+Na3sdLKoKBNgj6wvMzt/ccCWNGtCRK8jOrIqF9NI0OBc3fG6eUBHQ==}
+    cpu: [x64]
+    os: [linux]
+
+  sst-linux-x64@0.1.73:
+    resolution: {integrity: sha512-rncZBVLERfm72GmcqACOUmu6o4IqRQEWqexb0TZEtz4fhaJSxf+CPQbD5qAuhQ2S5uUcjwY6/lakpCAKrH2fBg==}
     cpu: [x64]
     os: [linux]
 
@@ -4044,8 +4094,25 @@ packages:
     cpu: [x86]
     os: [linux]
 
+  sst-linux-x86@0.1.73:
+    resolution: {integrity: sha512-Y+1INVMvyFAxhsCnLED2q/f7QOlstp6dZwSz1nFgTxJbFALmyJxuSSztAj1OiRiH/DNe4mRm0Zm61JNnGRhlcg==}
+    cpu: [x86]
+    os: [linux]
+
   sst@0.0.535:
     resolution: {integrity: sha512-niIUNfsCyeJmDcRH0u7tC2f6sFv95os2NcVbvjcdJpoRbGPe8NhB5tboZ7VfIxJOmg5wBd9AGbGwpj5cjkYMNw==}
+    hasBin: true
+    peerDependencies:
+      hono: 4.x
+      valibot: 0.30.x
+    peerDependenciesMeta:
+      hono:
+        optional: true
+      valibot:
+        optional: true
+
+  sst@0.1.73:
+    resolution: {integrity: sha512-kCc0dkGNxemz8xi4ob611s/9fXQZ1AKPAMv73D/eeqfacJK50LIQ+wALXF3CTfD34cn0kmqQ1v5hLGzdX7Vldw==}
     hasBin: true
     peerDependencies:
       hono: 4.x
@@ -4532,6 +4599,9 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
+  zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -4547,7 +4617,7 @@ snapshots:
   '@aws-crypto/crc32@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.468.0
+      '@aws-sdk/types': 3.609.0
       tslib: 1.14.1
 
   '@aws-crypto/ie11-detection@3.0.0':
@@ -4560,7 +4630,7 @@ snapshots:
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-crypto/supports-web-crypto': 3.0.0
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.468.0
+      '@aws-sdk/types': 3.609.0
       '@aws-sdk/util-locate-window': 3.568.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
@@ -4578,7 +4648,7 @@ snapshots:
   '@aws-crypto/sha256-js@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.468.0
+      '@aws-sdk/types': 3.609.0
       tslib: 1.14.1
 
   '@aws-crypto/sha256-js@5.2.0':
@@ -4597,7 +4667,7 @@ snapshots:
 
   '@aws-crypto/util@3.0.0':
     dependencies:
-      '@aws-sdk/types': 3.468.0
+      '@aws-sdk/types': 3.609.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
 
@@ -6661,6 +6731,12 @@ snapshots:
       prettier: 3.3.3
     transitivePeerDependencies:
       - supports-color
+
+  '@trpc/client@11.0.0-rc.467(@trpc/server@11.0.0-rc.467)':
+    dependencies:
+      '@trpc/server': 11.0.0-rc.467
+
+  '@trpc/server@11.0.0-rc.467': {}
 
   '@tsconfig/node20@20.1.4': {}
 
@@ -9621,16 +9697,31 @@ snapshots:
   sst-darwin-arm64@0.0.535:
     optional: true
 
+  sst-darwin-arm64@0.1.73:
+    optional: true
+
   sst-darwin-x64@0.0.535:
+    optional: true
+
+  sst-darwin-x64@0.1.73:
     optional: true
 
   sst-linux-arm64@0.0.535:
     optional: true
 
+  sst-linux-arm64@0.1.73:
+    optional: true
+
   sst-linux-x64@0.0.535:
     optional: true
 
+  sst-linux-x64@0.1.73:
+    optional: true
+
   sst-linux-x86@0.0.535:
+    optional: true
+
+  sst-linux-x86@0.1.73:
     optional: true
 
   sst@0.0.535:
@@ -9645,6 +9736,21 @@ snapshots:
       sst-linux-arm64: 0.0.535
       sst-linux-x64: 0.0.535
       sst-linux-x86: 0.0.535
+    transitivePeerDependencies:
+      - aws-crt
+
+  sst@0.1.73:
+    dependencies:
+      '@aws-sdk/client-lambda': 3.478.0
+      aws4fetch: 1.0.18
+      jose: 5.2.3
+      openid-client: 5.6.4
+    optionalDependencies:
+      sst-darwin-arm64: 0.1.73
+      sst-darwin-x64: 0.1.73
+      sst-linux-arm64: 0.1.73
+      sst-linux-x64: 0.1.73
+      sst-linux-x86: 0.1.73
     transitivePeerDependencies:
       - aws-crt
 
@@ -10200,5 +10306,7 @@ snapshots:
   yaml@2.4.2: {}
 
   yocto-queue@0.1.0: {}
+
+  zod@3.23.8: {}
 
   zwitch@2.0.4: {}
