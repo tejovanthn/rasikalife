@@ -1,7 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { client } from '~/api.server';
-import { getSongSlug } from '~/lib/carnaticUtils.server';
+import { getSongSlug } from '~/lib/carnaticUtils';
 
 export const meta: MetaFunction = () => {
   return [

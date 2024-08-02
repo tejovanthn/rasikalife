@@ -1,10 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import {
-  clientMap,
-  getSongSlug,
-  handleItemTypes,
-} from '~/lib/carnaticUtils.server';
+import { getSongSlug } from '~/lib/carnaticUtils';
+import { clientMap } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -19,7 +16,16 @@ export type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
-  handleItemTypes({ params });
+  if (
+    !params.item ||
+    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
+  ) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
+
   if (!params.itemid) {
     throw new Response(null, {
       status: 404,

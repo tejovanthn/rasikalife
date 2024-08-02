@@ -1,9 +1,18 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { clientMap, handleItemTypes } from '~/lib/carnaticUtils.server';
+import { clientMap } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = ({ params }) => {
-  handleItemTypes({ params });
+  if (
+    !params.item ||
+    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
+  ) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
+
   return [
     { title: `All ${params.item}s` },
     { name: 'description', content: `All ${params.item}s at Rasika.life` },
@@ -19,7 +28,15 @@ export type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
-  handleItemTypes({ params });
+  if (
+    !params.item ||
+    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
+  ) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
 
   const data = await Promise.all(
     'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
