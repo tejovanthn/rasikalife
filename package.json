@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "sst dev",
-    "format": "./node_modules/.bin/prettier --write '**/*.{js,jsx,ts,tsx,json}'",
+    "format": "./node_modules/.bin/prettier --write '**/*.{js,jsx,ts,tsx,json,css}'",
     "lint": "./node_modules/.bin/eslint . --report-unused-disable-directives --max-warnings 0 --fix"
   },
   "workspaces": [

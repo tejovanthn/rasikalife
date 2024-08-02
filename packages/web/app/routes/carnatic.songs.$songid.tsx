@@ -57,30 +57,34 @@ export default function Index() {
       <section className="mt-5">
         <ul>
           <li>
-            Raga: <Link to={`/carnatic/ragas/${data.raga}`}>{data.raga}</Link>
+            <span className="font-bold">Raga:</span>{' '}
+            <Link to={`/carnatic/ragas/${data.raga}`}>{data.raga}</Link>
           </li>
           <li>
-            Tala: <Link to={`/carnatic/talas/${data.tala}`}>{data.tala}</Link>
+            <span className="font-bold">Tala:</span>{' '}
+            <Link to={`/carnatic/talas/${data.tala}`}>{data.tala}</Link>
           </li>
           <li>
-            Composer:{' '}
+            <span className="font-bold">Composer:</span>{' '}
             <Link to={`/carnatic/composers/${data.composer}`}>
               {data.composer}
             </Link>
           </li>
           <li>
-            Language:{' '}
+            <span className="font-bold">Language:</span>{' '}
             <Link to={`/carnatic/languages/${data.language}`}>
               {data.language}
             </Link>
           </li>
           <li>
-            Source:{' '}
+            <span className="font-bold">Source:</span>{' '}
             <a href={data.source} target="_blank">
               {data.source}
             </a>
           </li>
-          <li>Last Updated: {new Date(data.updatedAt).toDateString()}</li>
+          <li className="text-xs">
+            Last Updated: {new Date(data.updatedAt).toDateString()}
+          </li>
         </ul>
       </section>
       <Section heading="Lyrics" detail={data.lyrics} />

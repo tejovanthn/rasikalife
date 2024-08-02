@@ -7,7 +7,9 @@ export default function Index() {
       <nav>
         <Header />
       </nav>
-      <Outlet />
+      <div className="mb-20">
+        <Outlet />
+      </div>
     </>
   );
 }
