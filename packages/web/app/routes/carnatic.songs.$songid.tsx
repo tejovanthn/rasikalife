@@ -14,7 +14,14 @@ export type LoaderData = {
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
-  const song = await client.songs.byId.query({ id: params.songid || '' });
+  if (!params.songid) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
+  const songId = (params.songid || '').split('-').pop();
+  const song = await client.songs.byId.query({ id: songId || '' });
   if (song.data.length === 0) {
     throw new Response(null, {
       status: 404,

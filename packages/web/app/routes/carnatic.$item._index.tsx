@@ -1,7 +1,6 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-
-import { clientMap, handleItemTypes } from './carnatic._index';
+import { clientMap, handleItemTypes } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = ({ params }) => {
   handleItemTypes({ params });
@@ -34,8 +33,6 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 export default function Index() {
   const { data, params } = useLoaderData<LoaderData>();
-
-  console.log(data);
 
   return (
     <main className="container">

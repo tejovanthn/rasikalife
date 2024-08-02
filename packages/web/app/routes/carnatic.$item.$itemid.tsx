@@ -1,7 +1,10 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-
-import { clientMap, handleItemTypes } from './carnatic._index';
+import {
+  clientMap,
+  getSongSlug,
+  handleItemTypes,
+} from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -17,6 +20,12 @@ export type LoaderData = {
 
 export const loader: LoaderFunction = async ({ params }) => {
   handleItemTypes({ params });
+  if (!params.itemid) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
 
   const item = await clientMap[params.item].byName.query({
     name: params.itemid || '',
@@ -31,8 +40,6 @@ export const loader: LoaderFunction = async ({ params }) => {
 export default function Index() {
   const { data } = useLoaderData<LoaderData>();
 
-  console.log(data);
-
   return (
     <main className="container">
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -45,7 +52,11 @@ export default function Index() {
         <ul>
           {data.songs.map((song) => (
             <li key={song.id}>
-              <Link to={`/carnatic/songs/${song.id}`}>{song.name}</Link>
+              <Link
+                to={`/carnatic/songs/${getSongSlug({ id: song.id, name: song.name })}`}
+              >
+                {song.name}
+              </Link>
             </li>
           ))}
         </ul>

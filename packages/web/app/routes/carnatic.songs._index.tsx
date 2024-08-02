@@ -1,6 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { client } from '~/api.server';
+import { getSongSlug } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -42,7 +43,11 @@ export default function Index() {
             <ul className="">
               {songs.map((song) => (
                 <li key={song.id}>
-                  <Link to={`/carnatic/songs/${song.id}`}>{song.name}</Link>
+                  <Link
+                    to={`/carnatic/songs/${getSongSlug({ id: song.id, name: song.name })}`}
+                  >
+                    {song.name}
+                  </Link>
                 </li>
               ))}
             </ul>

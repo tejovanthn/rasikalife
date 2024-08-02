@@ -1,6 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
-import { Link, Params, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { client } from '~/api.server';
+import { getSongSlug } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -14,36 +15,9 @@ export type LoaderData = {
   popularRagas: { id: string; name: string }[];
 };
 
-export const handleItemTypes = ({ params }: { params: Params }) => {
-  if (
-    !params.item ||
-    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
-  ) {
-    throw new Response(null, {
-      status: 404,
-      statusText: 'Not Found',
-    });
-  }
-};
-
-export const clientMap = {
-  ragas: client.ragas,
-  talas: client.talas,
-  languages: client.languages,
-  composers: client.composers,
-  songs: {
-    ragas: client.songs.byRaga,
-    talas: client.songs.byTala,
-    languages: client.songs.byLanguage,
-    composers: client.songs.byComposer,
-  },
-};
-
 export const loader: LoaderFunction = async () => {
   const popularSongs = (await client.songs.popular.query()).data;
   const popularRagas = (await client.ragas.popular.query()).data;
-
-  console.log({ popularSongs, popularRagas });
 
   return { popularSongs, popularRagas };
 };
@@ -64,7 +38,11 @@ export default function Index() {
         <ul>
           {popularSongs.map((song) => (
             <li key={song.id}>
-              <Link to={`/carnatic/songs/${song.id}`}>{song.name}</Link>
+              <Link
+                to={`/carnatic/songs/${getSongSlug({ id: song.id, name: song.name })}`}
+              >
+                {song.name}
+              </Link>
             </li>
           ))}
           <li>
@@ -78,10 +56,14 @@ export default function Index() {
           Most Popular Ragas
         </h2>
         <ul>
-          {popularRagas.map((song) => (
-            <li key={song.id}>{song.name}</li>
+          {popularRagas.map((raga) => (
+            <li key={raga.id}>
+              <Link to={`/carnatic/ragas/${raga.name}`}>{raga.name}</Link>
+            </li>
           ))}
-          <li>View all Ragas</li>
+          <li>
+            <Link to={'/carnatic/ragas'}>View all Ragas</Link>
+          </li>
         </ul>
       </section>
     </main>
