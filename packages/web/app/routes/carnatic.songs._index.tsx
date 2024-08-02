@@ -38,7 +38,7 @@ export default function Index() {
       </h1>
       {data.map(({ letter, songs }) =>
         songs.length > 0 ? (
-          <section className="flex flex-row mt-5">
+          <section className="flex flex-row mt-5" key={letter}>
             <p className="mr-4">{letter}</p>
             <ul className="">
               {songs.map((song) => (
