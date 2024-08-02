@@ -1,5 +1,5 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { Link, Params, useLoaderData } from '@remix-run/react';
 import { client } from '~/api.server';
 
 export const meta: MetaFunction = () => {
@@ -12,6 +12,31 @@ export const meta: MetaFunction = () => {
 export type LoaderData = {
   popularSongs: { id: string; name: string }[];
   popularRagas: { id: string; name: string }[];
+};
+
+export const handleItemTypes = ({ params }: { params: Params }) => {
+  if (
+    !params.item ||
+    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
+  ) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
+};
+
+export const clientMap = {
+  ragas: client.ragas,
+  talas: client.talas,
+  languages: client.languages,
+  composers: client.composers,
+  songs: {
+    ragas: client.songs.byRaga,
+    talas: client.songs.byTala,
+    languages: client.songs.byLanguage,
+    composers: client.songs.byComposer,
+  },
 };
 
 export const loader: LoaderFunction = async () => {

@@ -1,6 +1,6 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import DATA from '~/data';
+import { client } from '~/api.server';
 
 export const meta: MetaFunction = () => {
   return [
@@ -12,28 +12,17 @@ export const meta: MetaFunction = () => {
 export type LoaderData = {
   data: Array<{
     letter: string;
-    songs: { id: string; title: string }[];
+    songs: { id: string; name: string }[];
   }>;
 };
 
-export const loader: LoaderFunction = () => {
-  const allSongs = DATA.map((song) => ({ id: song.id, title: song.title }));
-
-  const data = allSongs
-    .reduce(
-      (acc, song) => {
-        const letter = (song.title ? song.title[0] : '=').toUpperCase();
-        const index = acc.findIndex((item) => item.letter === letter);
-        if (index === -1) {
-          acc.push({ letter, songs: [song] });
-        } else {
-          acc[index].songs.push(song);
-        }
-        return acc;
-      },
-      [] as LoaderData['data'],
-    )
-    .sort((a, b) => (a.letter > b.letter ? 1 : -1));
+export const loader: LoaderFunction = async () => {
+  const data = await Promise.all(
+    'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
+      letter,
+      songs: (await client.songs.byName.query({ name: letter })).data,
+    })),
+  );
 
   return { data };
 };
@@ -46,18 +35,20 @@ export default function Index() {
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
         All Songs
       </h1>
-      {data.map(({ letter, songs }) => (
-        <section className="flex flex-row mt-5">
-          <p className="mr-4">{letter}</p>
-          <ul className="">
-            {songs.map((song) => (
-              <li key={song.id}>
-                <Link to={`/songs/${song.id}`}>{song.title}</Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+      {data.map(({ letter, songs }) =>
+        songs.length > 0 ? (
+          <section className="flex flex-row mt-5">
+            <p className="mr-4">{letter}</p>
+            <ul className="">
+              {songs.map((song) => (
+                <li key={song.id}>
+                  <Link to={`/carnatic/songs/${song.id}`}>{song.name}</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null,
+      )}
     </main>
   );
 }

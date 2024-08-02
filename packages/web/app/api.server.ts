@@ -1,5 +1,9 @@
 import type { Router } from '@rasika/functions';
-import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import {
+  createTRPCClient,
+  httpBatchLink,
+  inferRouterClient,
+} from '@trpc/client';
 import { Resource } from 'sst';
 
 export const client = createTRPCClient<Router>({
@@ -9,3 +13,5 @@ export const client = createTRPCClient<Router>({
     }),
   ],
 });
+
+export type RouterOutput = inferRouterClient<Router>;

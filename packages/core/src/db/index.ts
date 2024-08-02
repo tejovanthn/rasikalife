@@ -161,8 +161,8 @@ const Item = new Entity({
     },
   },
 });
-// type CreateItem = CreateEntityItem<typeof Item>
-// type UpdateItem = UpdateEntityItem<typeof Item>
+type CreateItem = Omit<CreateEntityItem<typeof Item>, 'type'>;
+type UpdateItem = Omit<UpdateEntityItem<typeof Item>, 'type'>;
 
 export const service = new Service(
   { Song, Item },
@@ -246,45 +246,51 @@ export const updateSong = async (id: string, song: UpdateSong) => {
   return await Song.update({ id }).set(song).go();
 };
 
-// export const addRaga = async (item: CreateItem) => {
-//   return await Item.put({ ...item, type: "raga" }).go()
-// }
+export const addRaga = async (item: CreateItem) => {
+  return await Item.put({ ...item, type: 'raga' }).go();
+};
 
-// export const updateRaga = async (id: string, item: UpdateItem) => {
-//   return await Item.update({ `` id }).set(item).go()
-// }
+export const updateRaga = async (name: string, item: UpdateItem) => {
+  return await Item.update({ name, type: 'raga' }).set(item).go();
+};
 
-// export const addTala = async (item: CreateItem) => {
-//   return await Item.put({ ...item, type: "tala" }).go()
-// }
+export const addTala = async (item: CreateItem) => {
+  return await Item.put({ ...item, type: 'tala' }).go();
+};
 
-// export const updateTala = async (id: string, item: UpdateItem) => {
-//   return await Item.update({  id }).set(item).go()
-// }
+export const updateTala = async (name: string, item: UpdateItem) => {
+  return await Item.update({ name, type: 'tala' }).set(item).go();
+};
 
-// export const addComposer = async (item: CreateItem) => {
-//   return await Item.put({ ...item, type: "composer" }).go()
-// }
+export const addComposer = async (item: CreateItem) => {
+  return await Item.put({ ...item, type: 'composer' }).go();
+};
 
-// export const updateComposer = async (id: string, composer: UpdateItem) => {
-//   return await Item.update({ id }).set(composer).go()
-// }
+export const updateComposer = async (name: string, composer: UpdateItem) => {
+  return await Item.update({ name, type: 'composer' }).set(composer).go();
+};
 
-// export const addLanguage = async (item: CreateItem) => {
-//   return await Item.put({ ...item, type: "language" }).go()
-// }
+export const addLanguage = async (item: CreateItem) => {
+  return await Item.put({ ...item, type: 'language' }).go();
+};
 
-// export const updateLanguage = async (id: string, language: UpdateItem) => {
-//   return await Item.update({  id }).set(language).go()
-// }
+export const updateLanguage = async (name: string, language: UpdateItem) => {
+  return await Item.update({ name, type: 'language' }).set(language).go();
+};
 
-// export const updateSongView = async (id: string) => {
-//   return await Song.update({ id }).add({ views: 1 }).go()
-// }
+export const updateSongView = async (id: string) => {
+  return await Song.update({ id }).add({ views: 1 }).go();
+};
 
-// export const updateItemView = async (type: "raga" | "tala" | "composer" | "language", id: string) => {
-//   return await Item.update({  id }).add({ views: 1 }).go()
-// }
+export const updateItemView = async ({
+  type,
+  name,
+}: {
+  type: 'raga' | 'tala' | 'composer' | 'language';
+  name: string;
+}) => {
+  return await Item.update({ name, type }).add({ views: 1 }).go();
+};
 
 export const getTop10Songs = async () => {
   return await Song.query
