@@ -19,10 +19,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   const popularSongs = (await client.songs.popular.query()).data;
   const popularRagas = (await client.ragas.popular.query()).data;
 
-  console.log(request.headers.get('User-Agent'));
-  const ip = request.headers.get('x-forwarded-for') || 'unknown';
-  console.log(ip);
-
   return { popularSongs, popularRagas };
 };
 

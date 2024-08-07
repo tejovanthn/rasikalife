@@ -16,7 +16,7 @@ export async function handler() {
     statusCode: 200,
     body: {
       timestamp: new Date().getTime(),
-      ...(await client.songsByRaga.query({ raga: 'aa' })),
+      ...(await client.songs.popular.query()),
     },
   };
 }
