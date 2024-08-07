@@ -26,7 +26,8 @@
     --radius: 0.5rem;
   }
 
-  .dark {
+  .dark,
+  :root[class~='dark'] {
     --background: 17 50% 5%;
     --foreground: 17 5% 90%;
     --card: 17 50% 0%;

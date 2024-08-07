@@ -7,6 +7,8 @@ import {
   navigationMenuTriggerStyle,
 } from '~/components/ui/navigation-menu';
 
+import { ModeToggle } from './mode-toggle';
+
 export function Header() {
   return (
     <NavigationMenu>
@@ -17,6 +19,7 @@ export function Header() {
               Rasika.life
             </NavigationMenuLink>
           </Link>
+          <ModeToggle />
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
