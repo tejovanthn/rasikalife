@@ -16,7 +16,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.137",
+    "@types/aws-lambda": "^8.10.143",
     "sst": "ion"
   }
 }

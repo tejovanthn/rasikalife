@@ -9,8 +9,8 @@
     ]
   },
   "dependencies": {
-    "aws-sdk": "^2.1659.0",
-    "electrodb": "^2.14.2",
+    "aws-sdk": "^2.1669.0",
+    "electrodb": "^2.14.3",
     "ksuid": "^3.0.0"
   }
 }
