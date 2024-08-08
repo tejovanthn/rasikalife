@@ -1,7 +1,8 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
+import type { SitemapFunction } from 'remix-sitemap';
 import { client } from '~/api.server';
-import { getSongSlug } from '~/lib/carnaticUtils';
+import { slugify } from '~/lib/carnaticUtils';
 
 export const meta: MetaFunction = () => {
   return [
@@ -28,7 +29,29 @@ export const loader: LoaderFunction = async () => {
   return { data };
 };
 
-export default function Index() {
+export const sitemap: SitemapFunction = async () => {
+  const data = await Promise.all(
+    'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
+      letter,
+      songs: (await client.songs.byName.query({ name: letter })).data,
+    })),
+  );
+
+  const list: { loc: string; lastmod: string }[] = [];
+
+  data.forEach(({ songs }) => {
+    songs.forEach((song) => {
+      list.push({
+        loc: slugify({ id: song.id, name: song.name }),
+        lastmod: new Date(song.updatedAt).toISOString(),
+      });
+    });
+  });
+
+  return list;
+};
+
+export default function SongList() {
   const { data } = useLoaderData<LoaderData>();
 
   return (
@@ -43,9 +66,7 @@ export default function Index() {
             <ul className="">
               {songs.map((song) => (
                 <li key={song.id}>
-                  <Link
-                    to={`/carnatic/songs/${getSongSlug({ id: song.id, name: song.name })}`}
-                  >
+                  <Link to={slugify({ id: song.id, name: song.name })}>
                     {song.name}
                   </Link>
                 </li>

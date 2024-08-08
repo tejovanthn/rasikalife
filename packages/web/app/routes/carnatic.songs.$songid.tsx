@@ -46,7 +46,7 @@ const Section = ({ heading, detail }: { heading: string; detail?: string }) => {
   );
 };
 
-export default function Index() {
+export default function SongDetails() {
   const { data } = useLoaderData<LoaderData>();
 
   return (

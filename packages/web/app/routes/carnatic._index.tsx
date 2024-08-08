@@ -1,7 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { client } from '~/api.server';
-import { getSongSlug } from '~/lib/carnaticUtils';
+import { slugify } from '~/lib/carnaticUtils';
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,14 +15,14 @@ export type LoaderData = {
   popularRagas: { id: string; name: string }[];
 };
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader: LoaderFunction = async () => {
   const popularSongs = (await client.songs.popular.query()).data;
   const popularRagas = (await client.ragas.popular.query()).data;
 
   return { popularSongs, popularRagas };
 };
 
-export default function Index() {
+export default function CarnaticIndex() {
   const { popularSongs, popularRagas } = useLoaderData<LoaderData>();
 
   return (
@@ -38,9 +38,7 @@ export default function Index() {
         <ul>
           {popularSongs.map((song) => (
             <li key={song.id}>
-              <Link
-                to={`/carnatic/songs/${getSongSlug({ id: song.id, name: song.name })}`}
-              >
+              <Link to={slugify({ id: song.id, name: song.name })}>
                 {song.name}
               </Link>
             </li>
@@ -58,7 +56,9 @@ export default function Index() {
         <ul>
           {popularRagas.map((raga) => (
             <li key={raga.id}>
-              <Link to={`/carnatic/ragas/${raga.name}`}>{raga.name}</Link>
+              <Link to={slugify({ name: raga.name, type: 'ragas' })}>
+                {raga.name}
+              </Link>
             </li>
           ))}
           <li>

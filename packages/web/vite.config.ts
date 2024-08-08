@@ -10,6 +10,16 @@ export default defineConfig({
         v3_relativeSplatPath: true,
         v3_throwAbortReason: true,
       },
+      routes(defineRoutes) {
+        return defineRoutes((route) => {
+          route('/sitemap.xml', 'routes/_null.tsx', {
+            id: 'routes/sitemap.xml',
+          }),
+            route('/robots.txt', 'routes/_null.tsx', {
+              id: 'routes/robots.txt',
+            });
+        });
+      },
     }),
     tsconfigPaths(),
   ],

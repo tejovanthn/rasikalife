@@ -1,5 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
+import type { SitemapFunction } from 'remix-sitemap';
+import { slugify } from '~/lib/carnaticUtils';
 import { clientMap } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = ({ params }) => {
@@ -48,7 +50,33 @@ export const loader: LoaderFunction = async ({ params }) => {
   return { data, params };
 };
 
-export default function Index() {
+export const sitemap: SitemapFunction = async () => {
+  const list: { loc: string; lastmod: string }[] = [];
+
+  await Promise.all(
+    ['ragas', 'talas', 'languages', 'composers'].map(async (type) => {
+      const data = await Promise.all(
+        'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
+          letter,
+          items: (await clientMap[type].byName.query({ name: letter })).data,
+        })),
+      );
+
+      data.forEach(({ items }) => {
+        items.forEach((item) => {
+          list.push({
+            loc: slugify({ type, name: item.name }),
+            lastmod: new Date(item.updatedAt).toISOString(),
+          });
+        });
+      });
+    }),
+  );
+
+  return list;
+};
+
+export default function ItemList() {
   const { data, params } = useLoaderData<LoaderData>();
 
   return (
@@ -63,7 +91,7 @@ export default function Index() {
             <ul className="">
               {items.map((item) => (
                 <li key={item.id}>
-                  <Link to={`/carnatic/${params.item}/${item.name}`}>
+                  <Link to={slugify({ type: params.item, name: item.name })}>
                     {item.name}
                   </Link>
                 </li>
