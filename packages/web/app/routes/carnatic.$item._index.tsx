@@ -1,6 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import type { SitemapFunction } from 'remix-sitemap';
+import { serverOnly$ } from 'vite-env-only/macros';
 import { slugify } from '~/lib/carnaticUtils';
 import { clientMap } from '~/lib/carnaticUtils.server';
 
@@ -50,7 +51,7 @@ export const loader: LoaderFunction = async ({ params }) => {
   return { data, params };
 };
 
-export const sitemap: SitemapFunction = async () => {
+export const sitemap: SitemapFunction = serverOnly$(async () => {
   const list: { loc: string; lastmod: string }[] = [];
 
   await Promise.all(
@@ -74,7 +75,7 @@ export const sitemap: SitemapFunction = async () => {
   );
 
   return list;
-};
+});
 
 export default function ItemList() {
   const { data, params } = useLoaderData<LoaderData>();

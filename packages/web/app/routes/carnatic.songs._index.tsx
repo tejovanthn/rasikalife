@@ -1,6 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import type { SitemapFunction } from 'remix-sitemap';
+import { serverOnly$ } from 'vite-env-only/macros';
 import { client } from '~/api.server';
 import { slugify } from '~/lib/carnaticUtils';
 
@@ -29,7 +30,7 @@ export const loader: LoaderFunction = async () => {
   return { data };
 };
 
-export const sitemap: SitemapFunction = async () => {
+export const sitemap: SitemapFunction = serverOnly$(async () => {
   const data = await Promise.all(
     'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
       letter,
@@ -49,7 +50,7 @@ export const sitemap: SitemapFunction = async () => {
   });
 
   return list;
-};
+});
 
 export default function SongList() {
   const { data } = useLoaderData<LoaderData>();

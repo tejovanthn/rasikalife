@@ -16,6 +16,9 @@ const ABORT_DELAY = 5_000;
 const { isSitemapUrl, sitemap } = createSitemapGenerator({
   siteUrl: 'https://rasika.life',
   generateRobotsTxt: true,
+  headers: {
+    'Cache-Control': 'public, max-age 86400, stale-while-revalidate 86400',
+  },
   // configure other things here
 });
 

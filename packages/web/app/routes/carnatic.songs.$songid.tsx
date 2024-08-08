@@ -1,6 +1,7 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { RouterOutput, client } from '~/api.server';
+import { slugify } from '~/lib/carnaticUtils';
 
 export const meta: MetaFunction = () => {
   return [
@@ -58,21 +59,25 @@ export default function SongDetails() {
         <ul>
           <li>
             <span className="font-bold">Raga:</span>{' '}
-            <Link to={`/carnatic/ragas/${data.raga}`}>{data.raga}</Link>
+            <Link to={slugify({ type: 'ragas', name: data.raga })}>
+              {data.raga}
+            </Link>
           </li>
           <li>
             <span className="font-bold">Tala:</span>{' '}
-            <Link to={`/carnatic/talas/${data.tala}`}>{data.tala}</Link>
+            <Link to={slugify({ type: 'talas', name: data.tala })}>
+              {data.tala}
+            </Link>
           </li>
           <li>
             <span className="font-bold">Composer:</span>{' '}
-            <Link to={`/carnatic/composers/${data.composer}`}>
+            <Link to={slugify({ type: 'composers', name: data.composer })}>
               {data.composer}
             </Link>
           </li>
           <li>
             <span className="font-bold">Language:</span>{' '}
-            <Link to={`/carnatic/languages/${data.language}`}>
+            <Link to={slugify({ type: 'languages', name: data.language })}>
               {data.language}
             </Link>
           </li>

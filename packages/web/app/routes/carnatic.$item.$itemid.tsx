@@ -34,10 +34,10 @@ export const loader: LoaderFunction = async ({ params }) => {
   }
 
   const item = await clientMap[params.item].byName.query({
-    name: params.itemid || '',
+    name: params.itemid.replace('-', ' ') || '',
   });
   const songs = await clientMap.songs[params.item].query({
-    raga: params.itemid || '',
+    raga: params.itemid.replace('-', ' ') || '',
   });
 
   return { data: { item: item.data[0], songs: songs.data } };
