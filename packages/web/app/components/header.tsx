@@ -35,7 +35,7 @@ export const Header = () => {
             <div className="flex-shrink-0">
               <img
                 className="h-8 w-8"
-                src="/public/android-chrome-192x192.png"
+                src="/android-chrome-192x192.png"
                 alt="Logo"
               />
             </div>
