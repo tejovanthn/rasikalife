@@ -80,7 +80,10 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function AppWithProviders() {
   const data = useLoaderData<typeof loader>();
   return (
-    <ThemeProvider specifiedTheme={data.theme} themeAction="/action/set-theme">
+    <ThemeProvider
+      specifiedTheme={data?.theme || null}
+      themeAction="/action/set-theme"
+    >
       <Layout>
         <Outlet />
       </Layout>
@@ -93,7 +96,10 @@ export function ErrorBoundary() {
   const data = useRouteLoaderData<typeof loader>('root');
 
   return (
-    <ThemeProvider specifiedTheme={data!.theme} themeAction="/action/set-theme">
+    <ThemeProvider
+      specifiedTheme={data?.theme || null}
+      themeAction="/action/set-theme"
+    >
       <Layout>
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold">
