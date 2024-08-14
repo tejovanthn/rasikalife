@@ -18,15 +18,9 @@ export type LoaderData = {
 export const loader: LoaderFunction = async ({ params }) => {
   if (
     !params.item ||
-    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
+    !['ragas', 'talas', 'languages', 'composers'].includes(params.item) ||
+    !params.itemid
   ) {
-    throw new Response(null, {
-      status: 404,
-      statusText: 'Not Found',
-    });
-  }
-
-  if (!params.itemid) {
     throw new Response(null, {
       status: 404,
       statusText: 'Not Found',
@@ -39,6 +33,13 @@ export const loader: LoaderFunction = async ({ params }) => {
   const songs = await clientMap.songs[params.item].query({
     raga: params.itemid.replace('-', ' ') || '',
   });
+
+  if (!item.data[0] || !songs.data) {
+    throw new Response(null, {
+      status: 404,
+      statusText: 'Not Found',
+    });
+  }
 
   return { data: { item: item.data[0], songs: songs.data } };
 };
