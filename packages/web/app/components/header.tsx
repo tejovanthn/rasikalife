@@ -1,3 +1,4 @@
+import { Link } from '@remix-run/react';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '~/components/ui/button';
@@ -24,6 +25,9 @@ export const Header = () => {
     { href: '/', label: 'Home' },
     { href: '/carnatic/songs', label: 'All Songs' },
     { href: '/carnatic/ragas', label: 'All Ragas' },
+    { href: '/about', label: 'About' },
+    { href: '/faq', label: 'FAQ' },
+    { href: '/support', label: 'Support' },
     { label: 'mode-toggle', component: <ModeToggle /> },
   ];
 
@@ -33,11 +37,13 @@ export const Header = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <img
-                className="h-8 w-8"
-                src="/android-chrome-192x192.png"
-                alt="Logo"
-              />
+              <Link to="/">
+                <img
+                  className="h-8 w-8"
+                  src="/android-chrome-192x192.png"
+                  alt="Logo"
+                />
+              </Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">

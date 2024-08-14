@@ -19,6 +19,7 @@ import {
   useTheme,
 } from 'remix-themes';
 
+import { Footer } from './components/footer';
 import { Header } from './components/header';
 import { logAnalyticsEvent } from './firebase';
 import styles from './globals.css?url';
@@ -80,6 +81,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <Header />
         <div className="mb-20 mt-10">{children}</div>
+        <Footer />
         <ScrollRestoration />
         <Scripts />
       </body>

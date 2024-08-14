@@ -77,6 +77,16 @@ const router = t.router({
         return db.getComposerByStartingLetter(input.name);
       }),
   }),
+  content: t.router({
+    byPath: t.procedure
+      .input(z.object({ path: z.string().min(2).startsWith('/') }))
+      .query(({ input }) => {
+        return db.getContent(input.path);
+      }),
+    allPaths: t.procedure.query(() => {
+      return db.getAllContentPaths();
+    }),
+  }),
 });
 
 export type Router = typeof router;

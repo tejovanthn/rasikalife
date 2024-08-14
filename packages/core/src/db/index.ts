@@ -1,7 +1,10 @@
 import { DocumentClient } from 'aws-sdk/clients/dynamodb';
-import { CreateEntityItem, Entity, Service, UpdateEntityItem } from 'electrodb';
-import KSUID from 'ksuid';
+import { Service } from 'electrodb';
 import { Resource } from 'sst';
+
+import { Content, CreateContent, UpdateContent } from './content';
+import { CreateItem, Item, UpdateItem } from './item';
+import { CreateSong, Song, UpdateSong } from './song';
 
 /** Access pattern:
 * [ ] Given song name, show song and details
@@ -21,153 +24,10 @@ const client = new DocumentClient({
   region: 'us-east-1',
 });
 
-const Song = new Entity({
-  model: {
-    entity: 'Song',
-    service: 'Rasika',
-    version: '1',
-  },
-  attributes: {
-    id: {
-      type: 'string',
-      required: true,
-      default: () => KSUID.randomSync().string,
-    },
-    name: { type: 'string', required: true },
-    slug: {
-      type: 'string',
-      watch: ['name'],
-      set: (_, { name }) => {
-        return name.toLowerCase().replace(/ /g, '-');
-      },
-    },
-    lyrics: { type: 'string', required: true },
-    notation: { type: 'string', required: false },
-    otherInfo: { type: 'string', required: false },
-    source: { type: 'string', required: true },
-
-    raga: { type: 'string', required: false },
-    tala: { type: 'string', required: false },
-    composer: { type: 'string', required: false },
-    language: { type: 'string', required: false },
-
-    views: { type: 'number', required: true, default: 0 },
-
-    createdAt: {
-      type: 'number',
-      readOnly: true,
-      required: true,
-      default: () => Date.now(),
-      set: () => Date.now(),
-    },
-    updatedAt: {
-      type: 'number',
-      watch: '*',
-      required: true,
-      default: () => Date.now(),
-      set: () => Date.now(),
-    },
-  },
-  indexes: {
-    byId: {
-      pk: { field: 'pk', composite: ['id'] },
-      sk: { field: 'sk', composite: [] },
-    },
-    byName: {
-      index: 'GSI1',
-      pk: { field: 'gsi1pk', composite: [] },
-      sk: { field: 'gsi1sk', composite: ['name'] },
-    },
-    byRaga: {
-      index: 'GSI2',
-      pk: { field: 'gsi2pk', composite: ['raga'] },
-      sk: { field: 'gsi2sk', composite: [] },
-    },
-    byTala: {
-      index: 'GSI3',
-      pk: { field: 'gsi3pk', composite: ['tala'] },
-      sk: { field: 'gsi3sk', composite: [] },
-    },
-    byComposer: {
-      index: 'GSI4',
-      pk: { field: 'gsi4pk', composite: ['composer'] },
-      sk: { field: 'gsi4sk', composite: [] },
-    },
-    byLanguage: {
-      index: 'GSI5',
-      pk: { field: 'gsi5pk', composite: ['language'] },
-      sk: { field: 'gsi5sk', composite: [] },
-    },
-    byViews: {
-      index: 'GSI6',
-      pk: { field: 'gsi6pk', composite: [] },
-      sk: { field: 'gsi6sk', composite: ['views', 'id'] },
-    },
-  },
-});
-type CreateSong = CreateEntityItem<typeof Song>;
-type UpdateSong = UpdateEntityItem<typeof Song>;
-
-const Item = new Entity({
-  model: {
-    entity: 'Item',
-    service: 'Rasika',
-    version: '1',
-  },
-  attributes: {
-    id: {
-      type: 'string',
-      required: true,
-      default: () => KSUID.randomSync().string,
-    },
-    type: {
-      type: ['raga', 'tala', 'composer', 'language'] as const,
-      required: true,
-    },
-    name: { type: 'string', required: true },
-    description: { type: 'string', required: false },
-
-    views: { type: 'number', required: true, default: 0 },
-
-    createdAt: {
-      type: 'number',
-      readOnly: true,
-      required: true,
-      default: () => Date.now(),
-      set: () => Date.now(),
-    },
-    updatedAt: {
-      type: 'number',
-      watch: '*',
-      required: true,
-      default: () => Date.now(),
-      set: () => Date.now(),
-    },
-  },
-  indexes: {
-    // byId: {
-    //   pk: { field: "pk", composite: ["id"] },
-    //   sk: { field: "sk", composite: [] },
-    // },
-    byTypeAndName: {
-      // index: "GSI1",
-      pk: { field: 'pk', composite: ['type'] },
-      sk: { field: 'sk', composite: ['name'] },
-    },
-    byViews: {
-      index: 'GSI6',
-      pk: { field: 'gsi6pk', composite: ['type'] },
-      sk: { field: 'gsi6sk', composite: ['views', 'id'] },
-    },
-  },
-});
-type CreateItem = Omit<CreateEntityItem<typeof Item>, 'type'>;
-type UpdateItem = Omit<UpdateEntityItem<typeof Item>, 'type'>;
-
 export const service = new Service(
-  { Song, Item },
+  { Song, Item, Content },
   {
-    client, // <----- client
+    client,
     table,
   },
 );
@@ -302,4 +162,22 @@ export const getTop10Ragas = async () => {
   return await Item.query
     .byViews({ type: 'raga' })
     .go({ limit: 10, order: 'desc', attributes: ['id', 'name'] });
+};
+
+export const getAllContentPaths = async () => {
+  return await Content.query
+    .byPath({ path: '/' })
+    .go({ attributes: ['path', 'updatedAt'] });
+};
+
+export const getContent = async (path: string) => {
+  return await Content.get({ path }).go();
+};
+
+export const addContent = async (content: CreateContent) => {
+  return await Content.put(content).go();
+};
+
+export const updateContent = async (path: string, content: UpdateContent) => {
+  return await Content.update({ path }).set(content).go();
 };

@@ -27,6 +27,7 @@
     "lucide-react": "^0.379.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
     "remix-sitemap": "^3.2.0",
     "remix-themes": "^1.5.0",
     "tailwind-merge": "^2.4.0",
