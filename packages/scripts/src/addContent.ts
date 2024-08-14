@@ -125,7 +125,7 @@ This Privacy Policy is governed by the laws of India. However, we also comply wi
 
 If you have any questions about this privacy policy or our privacy practices, please contact us at:
 
-Email: [bltmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Privacy%20Rasika.life)
+Email: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Privacy%20Rasika.life)
 
 Rasika.life, Bangalore, India
     `,
@@ -223,7 +223,7 @@ We reserve the right, at our sole discretion, to modify or replace these Terms a
 
 ## 12. Contact Us
 
-If you have any questions about these Terms, please contact us at [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Terms%20Rasika.life).
+If you have any questions about these Terms, please contact us at [email here](mailto:blrmys.c+rasika@gmail.com?subject=Terms%20Rasika.life).
 
 Rasika.life, Bangalore, India`,
   },
@@ -235,7 +235,7 @@ We're always excited to hear from fellow Carnatic music enthusiasts! Whether you
 
 ## General Inquiries
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=General%20Inquiry%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=General%20Inquiry%20Rasika.life)
 - **Phone**: +91 990 272 5714
 - **Hours**: Monday to Friday, 9 AM to 5 PM (IST)
 
@@ -243,31 +243,31 @@ We're always excited to hear from fellow Carnatic music enthusiasts! Whether you
 
 For questions about contributing to our database:
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Contribution%20Support%20-%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Contribution%20Support%20-%20Rasika.life)
 
 ## Technical Support
 
 Having issues with the website? Our tech team is here to help:
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Technical%20Support%20-%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Technical%20Support%20-%20Rasika.life)
 
 ## Event Listings
 
 To submit an event for our calendar:
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Event%20Listing%20-%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Event%20Listing%20-%20Rasika.life)
 
 ## Partnerships and Collaborations
 
 Interested in partnering with Rasika.life?
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Partner%20with%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Partner%20with%20Rasika.life)
 
 ## Feedback
 
 We value your thoughts on how we can improve Rasika.life:
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Feedback%20for%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Feedback%20for%20Rasika.life)
 
 
 We aim to respond to all inquiries within 2 business days. Thank you for your interest in Rasika.life!`,
@@ -377,7 +377,7 @@ We value every contribution. Active contributors may be recognized on our [Hall 
 
 ## Need Help?
 
-If you have any questions about contributing, don't hesitate to reach out to our support team at [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=General%20Inquiry%20Rasika.life).
+If you have any questions about contributing, don't hesitate to reach out to our support team at [email here](mailto:blrmys.c+rasika@gmail.com?subject=General%20Inquiry%20Rasika.life).
 
 Thank you for helping make Rasika.life the ultimate resource for Carnatic music enthusiasts worldwide!`,
   },
@@ -423,7 +423,7 @@ Thank you for helping make Rasika.life the ultimate resource for Carnatic music 
 10. **Q: How can I report incorrect information?**
     A: Use the 'Report an Error' button available on each content page, or contact us directly.
 
-For any questions not answered here, please visit our Contact page or email us at [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=General%20Inquiry%20Rasika.life).`,
+For any questions not answered here, please visit our Contact page or email us at [email here](mailto:blrmys.c+rasika@gmail.com?subject=General%20Inquiry%20Rasika.life).`,
   },
   {
     path: '/carnatic/resources/glossary',
@@ -556,7 +556,7 @@ The Web Content Accessibility Guidelines (WCAG) defines requirements for designe
 
 We welcome your feedback on the accessibility of Rasika.life. Please let us know if you encounter accessibility barriers on Rasika.life:
 
-- E-mail: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Accessibility%20Feedback%20Rasika.life)
+- E-mail: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Accessibility%20Feedback%20Rasika.life)
 
 We try to respond to feedback within 3 business days.
 
@@ -601,7 +601,7 @@ Before contacting us, please check our [FAQ page](/faq) to see if your question 
 
 If you couldn't find the answer you're looking for in our FAQ, please feel free to reach out to us:
 
-- **Email**: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=General%20Inquiry%20Rasika.life)
+- **Email**: [email here](mailto:blrmys.c+rasika@gmail.com?subject=General%20Inquiry%20Rasika.life)
 - **Phone**: +91 990 272 5714
 - **Hours**: Monday to Friday, 9 AM to 5 PM (IST)
 
@@ -614,15 +614,15 @@ If you've encountered a technical issue or a bug on our website, please report i
 3. Mention the device and browser you're using
 4. If possible, include screenshots
 
-Send this information to: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Bug%20Report%20Rasika.life)
+Send this information to: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Bug%20Report%20Rasika.life)
 
 ## Feature Requests
 
-We're always looking to improve Rasika.life. If you have ideas for new features or improvements, we'd love to hear them! Please send your suggestions to: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Feature%20Request%20Rasika.life)
+We're always looking to improve Rasika.life. If you have ideas for new features or improvements, we'd love to hear them! Please send your suggestions to: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Feature%20Request%20Rasika.life)
 
 ## Content Corrections
 
-If you've found an error in our content (e.g., incorrect lyrics, raga classification, etc.), please use the 'Report an Error' button on the relevant page or email us at: [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Content%20Correction%20Rasika.life)
+If you've found an error in our content (e.g., incorrect lyrics, raga classification, etc.), please use the 'Report an Error' button on the relevant page or email us at: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Content%20Correction%20Rasika.life)
 
 ## Volunteer
 
@@ -661,7 +661,7 @@ Your donation helps us:
 We offer several convenient ways to contribute:
 
 1. **Buy-me-a-coffee**: 
-   - [Click here](buymeacoffee.com/tejovanthn) to make a one-time donation through our secure payment gateway.
+   - [Click here](https://buymeacoffee.com/tejovanthn) to make a one-time donation through our secure payment gateway.
    - Choose any amount you're comfortable with - every contribution helps!
 
 2. **Monthly Subscription**:
@@ -677,7 +677,7 @@ If you're unable to make a financial contribution, there are many other ways to 
 
 ## Contact Us
 
-If you have any questions about donating or need assistance, please don't hesitate to reach out to us at [blrmys.c@gmail.com](mailto:blrmys.c@gmail.com?subject=Donation%20Inquiry%20Rasika.life).
+If you have any questions about donating or need assistance, please don't hesitate to reach out to us at [email here](mailto:blrmys.c+rasika@gmail.com?subject=Donation%20Inquiry%20Rasika.life).
 
 Thank you for your support. Your generosity helps keep the tradition of Carnatic music alive and thriving in the digital age!`,
   },
