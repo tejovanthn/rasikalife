@@ -12,6 +12,7 @@ import {
   useRouteLoaderData,
 } from '@remix-run/react';
 import clsx from 'clsx';
+import { useEffect } from 'react';
 import {
   PreventFlashOnWrongTheme,
   ThemeProvider,
@@ -19,6 +20,7 @@ import {
 } from 'remix-themes';
 
 import { Header } from './components/header';
+import { logAnalyticsEvent } from './firebase';
 import styles from './globals.css?url';
 import { themeSessionResolver } from './sessions.server';
 
@@ -57,6 +59,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 function Layout({ children }: { children: React.ReactNode }) {
   const data = useLoaderData<typeof loader>();
   const [theme] = useTheme();
+
+  useEffect(() => {
+    logAnalyticsEvent('page_view', {
+      page_title: window.document.title,
+      page_location: window.location.href,
+      page_path: window.location.pathname,
+    });
+  }, []);
 
   return (
     <html lang="en" className={clsx(theme)}>
