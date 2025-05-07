@@ -2,9 +2,9 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { Service } from 'electrodb';
 import { Resource } from 'sst';
 
-import { Content, CreateContent, UpdateContent } from './content';
-import { CreateItem, Item, UpdateItem } from './item';
-import { CreateSong, Song, UpdateSong } from './song';
+import { Content, type CreateContent, type UpdateContent } from './content';
+import { type CreateItem, Item, type UpdateItem } from './item';
+import { type CreateSong, Song, type UpdateSong } from './song';
 
 /** Access pattern:
 * [ ] Given song name, show song and details
@@ -29,7 +29,7 @@ export const service = new Service(
   {
     client,
     table,
-  },
+  }
 );
 
 export const getSongById = async (id: string) => {
@@ -81,10 +81,7 @@ export const getComposerByName = async (name: string) => {
 };
 
 export const getComposerByStartingLetter = async (name: string) => {
-  return await Item.query
-    .byTypeAndName({ type: 'composer' })
-    .begins({ name })
-    .go();
+  return await Item.query.byTypeAndName({ type: 'composer' }).begins({ name }).go();
 };
 
 export const getLanguageByName = async (name: string) => {
@@ -92,10 +89,7 @@ export const getLanguageByName = async (name: string) => {
 };
 
 export const getLanguageByStartingLetter = async (name: string) => {
-  return await Item.query
-    .byTypeAndName({ type: 'language' })
-    .begins({ name })
-    .go();
+  return await Item.query.byTypeAndName({ type: 'language' }).begins({ name }).go();
 };
 
 export const addSong = async (song: CreateSong) => {
@@ -153,9 +147,7 @@ export const updateItemView = async ({
 };
 
 export const getTop10Songs = async () => {
-  return await Song.query
-    .byViews({})
-    .go({ limit: 10, order: 'desc', attributes: ['id', 'name'] });
+  return await Song.query.byViews({}).go({ limit: 10, order: 'desc', attributes: ['id', 'name'] });
 };
 
 export const getTop10Ragas = async () => {
@@ -165,9 +157,7 @@ export const getTop10Ragas = async () => {
 };
 
 export const getAllContentPaths = async () => {
-  return await Content.query
-    .byPath({ path: '/' })
-    .go({ attributes: ['path', 'updatedAt'] });
+  return await Content.query.byPath({ path: '/' }).go({ attributes: ['path', 'updatedAt'] });
 };
 
 export const getContent = async (path: string) => {

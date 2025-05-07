@@ -685,12 +685,12 @@ Thank you for your support. Your generosity helps keep the tradition of Carnatic
 
 const main = async () =>
   await Promise.all(
-    data.map(async (item) => {
+    data.map(async item => {
       await addContent({
         path: item.path,
         content: item.content,
       });
-    }),
+    })
   );
 
 main().then(() => {

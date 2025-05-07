@@ -1,11 +1,8 @@
-import { Params } from '@remix-run/react';
+import type { Params } from '@remix-run/react';
 import { client } from '~/api.server';
 
 export const handleItemTypes = ({ params }: { params: Params }) => {
-  if (
-    !params.item ||
-    !['ragas', 'talas', 'languages', 'composers'].includes(params.item)
-  ) {
+  if (!params.item || !['ragas', 'talas', 'languages', 'composers'].includes(params.item)) {
     throw new Response(null, {
       status: 404,
       statusText: 'Not Found',

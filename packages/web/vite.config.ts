@@ -13,7 +13,7 @@ export default defineConfig({
         v3_throwAbortReason: true,
       },
       routes(defineRoutes) {
-        return defineRoutes((route) => {
+        return defineRoutes(route => {
           route('/sitemap.xml', 'routes/_null.tsx', {
             id: 'routes/sitemap.xml',
           }),

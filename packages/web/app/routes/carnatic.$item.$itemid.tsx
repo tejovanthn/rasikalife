@@ -4,10 +4,7 @@ import { slugify } from '~/lib/carnaticUtils';
 import { clientMap } from '~/lib/carnaticUtils.server';
 
 export const meta: MetaFunction = () => {
-  return [
-    { title: 'All Songs' },
-    { name: 'description', content: 'All songs at Rasika.art' },
-  ];
+  return [{ title: 'All Songs' }, { name: 'description', content: 'All songs at Rasika.art' }];
 };
 
 export type LoaderData = {
@@ -57,11 +54,9 @@ export default function ItemDetails() {
           Songs
         </h2>
         <ul>
-          {data.songs.map((song) => (
+          {data.songs.map(song => (
             <li key={song.id}>
-              <Link to={slugify({ id: song.id, name: song.name })}>
-                {song.name}
-              </Link>
+              <Link to={slugify({ id: song.id, name: song.name })}>{song.name}</Link>
             </li>
           ))}
         </ul>

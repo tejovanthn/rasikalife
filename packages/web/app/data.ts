@@ -547,8 +547,7 @@ export const allData = [
     meaning:
       "Addresing the mind personified as a young maiden, the poet says: O blessed mind, \nlisten! You latch on to one thing, and sway in its grip; anticipating the next thing, you move\nfrom one to the next and again, the next thing; when asked to focus on the good, you manage to \ngive one the slip; when told to 'leave it alone!', you hang on to it with firmer grip; you keep\nreverting to the same old thoughts; Let us lose ourselves in the new; you want the new, but are\nat the same time, are fearful of it!\n\n\n\n\n\n\n\n\n\nOther information:\n\nLyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.\n\n\n\n\n\n\n\nfirst | \n\n\nprevious | \n\nnext\n\n\n\nContact us\n\n\nupdated on 07/19/2007",
     notation: '',
-    otherInfo:
-      'Lyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.',
+    otherInfo: 'Lyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.',
   },
   {
     id: 'c0038.shtml',
@@ -563,8 +562,7 @@ export const allData = [
     meaning:
       "The great Himalayan peak is ours; is there another equal to it?\nThe waters of the Ganges are like none other;what can compare with these?\n\nThe ancient Upanishads are our texts; where in the world can you see their equal?\nThe golden bright Bharat is our land; let us celebrate it, this unique land of ours.\n\nThis country that's seen great warriors and sages,\nHome of wonderful music and all that is beautiful,\n\nThe land of the birth of ancient wisdom and the grace of Lord Buddha,\nThis Bharat of antiquity has no equal; let's sing its praises.\n\nWe won't fear tribulation; we will not give up and live in poverty\nWe will honor any work that advances our lot, we won't go a-begging, in this land of ours.\n\nThis is a land of milk and honey, where there's always plenty\nLet us remember and repeat this, of this great land of ours.\n\n\n\n\n\n\n\nOther information:\n\nLyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.\n\n\n\n\n\n\n\nfirst | \n\n\nprevious | \n\nnext\n\n\n\nContact us\n\n\nupdated on 07/19/2007",
     notation: '',
-    otherInfo:
-      'Lyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.',
+    otherInfo: 'Lyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.',
   },
   {
     id: 'c0039.shtml',
@@ -594,8 +592,7 @@ export const allData = [
     meaning:
       'O lord Muruga, let me see you seated on your peacock, with your spear,\nplease grant us all glory, peace and prosperity \n\nMany a devotee of yours is here, please liberate us\nYou, an end to the endless, as to the demons \n\nYou, the basis of thought, the fire and courage, please show yourself to me\nYou who destroys the basis of all worry, let me see you, O Lord! \n\nGrant me the life immortal, I bow to you\nYou shatter all our  troubles, I surrender to you, our Light\n\nIn the temple of wisdom, on the lap of mother Grace,\nMay you appear with your spear, to give new life to your devotees, on earth\n\nO teacher! the son of Lord Siva,the flame in the cave\nGrant us toil and its fruits, O immortal Lord, I surrender to you\n\n\n\n\n\n\nOther information:\n\nLyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.\n\n\n\n\n\n\n\nfirst | \n\n\nprevious | \n\nnext\n\n\n\nContact us\n\n\nupdated on 10/11/2007',
     notation: '',
-    otherInfo:
-      'Lyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.',
+    otherInfo: 'Lyrics contributed by Lakshman Ragde. Meaning contributed by Suhasini Jayakumar.',
   },
   {
     id: 'c0041.shtml',
@@ -610,8 +607,7 @@ export const allData = [
     meaning:
       "What shall we do now, O friend, when we see things never seen before, on earth? \n\nThere is chaos in the land; there is no recognition of good nor evil; there are gangs of thugs\nin all directions, and these lads have no fear in their hearts. \n\nCountless people listened, in this land; they quit their many modes of work and livelihood;\n\n\nThere is no regard for those with titles; nor are people charmed by the foreign speech;\nthose with no regard for laws are engaged in worship! To the government we complain, only in vain. \n\nForeign cloth makes their blood boil; if it's below par, they treat it with contempt;\noverwhelmed with emotion, they chant 'vandE', and use inappropriate words, in their fury! \n\n\n\n\n\n\n\nOther information:\n\nLyrics contributed by Lakshman Ragde. Meaning by Suhasini Jayakumar.\n\n\n\n\n\n\n\nfirst | \n\n\nprevious | \n\nnext\n\n\n\nContact us\n\n\nupdated on 07/26/2007",
     notation: '',
-    otherInfo:
-      'Lyrics contributed by Lakshman Ragde. Meaning by Suhasini Jayakumar.',
+    otherInfo: 'Lyrics contributed by Lakshman Ragde. Meaning by Suhasini Jayakumar.',
   },
   {
     id: 'c0042.shtml',
@@ -641,8 +637,7 @@ export const allData = [
     meaning:
       'The heart cannot bear this, my heart cannot \n\nWhen I think of these unsettled masses,  my heart....\n\nThey have not even porridge to drink, yet they know not the reasons\n\n\n\n\n\n\n\nOther information:\n\nLyrics contributed by Lakshman Ragde. Partial meaning by Suhasini Jayakumar.\n\n\n\n\n\n\n\nfirst | \n\n\nprevious | \n\nnext\n\n\n\nContact us\n\n\nupdated on 09/23/2007',
     notation: '',
-    otherInfo:
-      'Lyrics contributed by Lakshman Ragde. Partial meaning by Suhasini Jayakumar.',
+    otherInfo: 'Lyrics contributed by Lakshman Ragde. Partial meaning by Suhasini Jayakumar.',
   },
   {
     id: 'c0044.shtml',
@@ -1466,8 +1461,7 @@ export const allData = [
       'Oh Karunaakaraa (a name for Vishnu), is it a heavy burden for you to protect a single soul like me? You are the whole universe itself and as Krishna showed it all to be in your stomach. Have you not lovingly borne for the sake of the Devas the whole  weight of Mount Mandara when the ocean was churned, and have you not lifted Mount Govardhan for the sake of Gopis?',
     notation:
       "Notation available here at Shivkumar Kalyanaraman's Krithi Archive. Also, listen to the music class here.",
-    otherInfo:
-      'Lyrics contributed by Lakshman Ragde. Swaras contributed by TV Gopalakrishnan.',
+    otherInfo: 'Lyrics contributed by Lakshman Ragde. Swaras contributed by TV Gopalakrishnan.',
   },
   {
     id: 'c1003.shtml',
@@ -1517,8 +1511,7 @@ export const allData = [
     meaning:
       'contributed by Suhasini Jayakumar\npallavi: oh mind, bow at the feet of these ladies (Goddesses Durga, Lakshmi, Saraswati, especially Durga, for whom NavarAtri is celebrated)\nanupallavi:  she gives those joys that are all inclusive, during the navarathri, famed for good music, with heart filled with love\ncaraNam:  the deeds of previous births will be cancelled, the 6 sins including\nMoham (illusion) will be destroyed\n ???????  auspicious lamps will be lit, and happiness will prevail, \nalong with fame, in life.',
     notation: '',
-    otherInfo:
-      'Also sung in suddha dhanyaasi\nLyrics contributed by Lakshman Ragde.',
+    otherInfo: 'Also sung in suddha dhanyaasi\nLyrics contributed by Lakshman Ragde.',
   },
   {
     id: 'c1006.shtml',
@@ -1548,8 +1541,7 @@ export const allData = [
       'pallavi \n\n\n\n   \n\n\n\nenna tavam sheidanai yasOdA engum nirai parabhrammam ammAvenr-azhaikka\n\n\n\n(enna tavam) \n\n\nanupallavi\n\n\n\n\n\n\nIrEzu bhuvanangaL paDaittavanaik-kaiyil Endi shIrATTi pAlUTi tAlATTa nI \n\n\n\n(enna tavam)\n\n\n\n    \n\n\n\ncaraNam 1\n\n\n\n    \n\n\nbhramanum indranum manadil porAmai koLLa\n\nuralil kaTTi vAi pottik-kenjavaittAi tAyE\n\n\n\n(enna tavam)\n\n\n\n\n\ncaraNam 2 \n\n\n\n    \n\n\nsanakAdiyar tava yOgam sheidu varundi\n\nsAdhittadai punita mAdE eLidil pera \n\n\n\n(enna tavam)',
     meaning:
       'pallavi: Yashoda, what tapas (prayer, sacrifice) did you make, that the Almighty himself calls you dearly, "Mother" ?\n\nanupallavi: To take Krishna, the One who created the 14 worlds, to lift him into your arms, to rock him to sleep, to feed him milk, what great tapas did you do, Yashoda?\n\ncaraNam 1: O mother what tapas did you do, that to the great envy of Brahma and Indra, you could tie Krishna himself to the grinding stone and bound his mouth and make him beg you for mercy!\n\ncaraNam 2: What great sages like Sanakaa achieved through great tapas and yoga, what they reached by prodigious effort, you achieved so easily - what tapas did YOU do to have this great fortune?\nFull meaning and explanation by MG Vasudevan is here.',
-    notation:
-      'Click here for the full notation (from Gayaka). Tamil notation available here.',
+    notation: 'Click here for the full notation (from Gayaka). Tamil notation available here.',
     otherInfo: 'Lyrics and Tamil notation contributed by Lakshman Ragde.',
   },
 ] as Song[];
@@ -1560,7 +1552,7 @@ export interface Tala {
 }
 export const allTalas = allData
   .reduce((acc, data) => {
-    const index = acc.findIndex((a) => a.tala === data.tala);
+    const index = acc.findIndex(a => a.tala === data.tala);
     if (index === -1) {
       acc.push({ tala: data.tala || '', songs: [data] });
     } else {

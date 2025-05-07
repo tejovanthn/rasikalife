@@ -3,10 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "exports": {
-    "./*": [
-      "./src/*/index.ts",
-      "./src/*.ts"
-    ]
+    "./*": ["./src/*/index.ts", "./src/*.ts"]
   },
   "dependencies": {
     "aws-sdk": "^2.1692.0",

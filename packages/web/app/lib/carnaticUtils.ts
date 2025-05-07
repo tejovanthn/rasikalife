@@ -15,11 +15,10 @@ export const slugify = ({
       camelCase: false,
     });
     return `/carnatic/songs/${slug}`;
-  } else {
+  }
     slug = convert(name, {
       camelCase: false,
     });
     return `/carnatic/${type}/${slug}`;
-  }
-  return ``;
+  return '';
 };

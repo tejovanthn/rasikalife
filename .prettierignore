@@ -1,6 +1,0 @@
-node_modules
-.sst
-dist
-pnpm-lock.yaml
-sst-env.d.ts
-build

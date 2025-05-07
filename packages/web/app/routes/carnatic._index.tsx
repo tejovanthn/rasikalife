@@ -1,8 +1,4 @@
-import type {
-  LoaderFunction,
-  LoaderFunctionArgs,
-  MetaFunction,
-} from '@remix-run/node';
+import type { LoaderFunction, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import Markdown from 'react-markdown';
 import { client } from '~/api.server';
@@ -21,16 +17,12 @@ export type LoaderData = {
   homepageContent: string;
 };
 
-export const loader: LoaderFunction = async ({
-  request,
-}: LoaderFunctionArgs) => {
+export const loader: LoaderFunction = async ({ request }: LoaderFunctionArgs) => {
   const popularSongs = (await client.songs.popular.query()).data;
   const popularRagas = (await client.ragas.popular.query()).data;
 
   const url = new URL(request.url);
-  const homepageContent = (
-    await client.content.byPath.query({ path: url.pathname })
-  ).data;
+  const homepageContent = (await client.content.byPath.query({ path: url.pathname })).data;
 
   return {
     popularSongs,
@@ -40,8 +32,7 @@ export const loader: LoaderFunction = async ({
 };
 
 export default function CarnaticIndex() {
-  const { popularSongs, popularRagas, homepageContent } =
-    useLoaderData<LoaderData>();
+  const { popularSongs, popularRagas, homepageContent } = useLoaderData<LoaderData>();
 
   return (
     <main className="container flex flex-col lg:grid lg:grid-cols-2 lg:gap-8">
@@ -54,11 +45,9 @@ export default function CarnaticIndex() {
             Most Popular Songs
           </h2>
           <ul>
-            {popularSongs.map((song) => (
+            {popularSongs.map(song => (
               <li key={song.id}>
-                <Link to={slugify({ id: song.id, name: song.name })}>
-                  {song.name}
-                </Link>
+                <Link to={slugify({ id: song.id, name: song.name })}>{song.name}</Link>
               </li>
             ))}
             <li>
@@ -72,11 +61,9 @@ export default function CarnaticIndex() {
             Most Popular Ragas
           </h2>
           <ul>
-            {popularRagas.map((raga) => (
+            {popularRagas.map(raga => (
               <li key={raga.id}>
-                <Link to={slugify({ name: raga.name, type: 'ragas' })}>
-                  {raga.name}
-                </Link>
+                <Link to={slugify({ name: raga.name, type: 'ragas' })}>{raga.name}</Link>
               </li>
             ))}
             <li>

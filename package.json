@@ -6,12 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "sst dev",
-    "format": "./node_modules/.bin/prettier --write '**/*.{js,jsx,ts,tsx,json,css}'",
-    "lint": "./node_modules/.bin/eslint . --report-unused-disable-directives --max-warnings 0 --fix"
+    "format": "biome format --write .",
+    "lint": "biome lint --write .",
+    "check": "biome check ."
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,16 +18,10 @@
     "sst": "^0.1.111"
   },
   "devDependencies": {
-    "@eslint/js": "^9.26.0",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@biomejs/biome": "^1.9.4",
     "@tsconfig/node20": "^20.1.5",
     "@types/aws-lambda": "8.10.138",
-    "@types/eslint__js": "^8.42.3",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.1.0",
     "globals": "^15.15.0",
-    "prettier": "^3.5.3",
-    "typescript": "^5.8.3",
-    "typescript-eslint": "^7.18.0"
+    "typescript": "^5.8.3"
   }
 }

@@ -6,10 +6,7 @@ import { client } from '~/api.server';
 import { slugify } from '~/lib/carnaticUtils';
 
 export const meta: MetaFunction = () => {
-  return [
-    { title: 'All Songs' },
-    { name: 'description', content: 'All songs at Rasika.art' },
-  ];
+  return [{ title: 'All Songs' }, { name: 'description', content: 'All songs at Rasika.art' }];
 };
 
 export type LoaderData = {
@@ -21,10 +18,10 @@ export type LoaderData = {
 
 export const loader: LoaderFunction = async () => {
   const data = await Promise.all(
-    'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
+    'abcdefghijklmnopqrstuvwxyz'.split('').map(async letter => ({
       letter,
       songs: (await client.songs.byName.query({ name: letter })).data,
-    })),
+    }))
   );
 
   return { data };
@@ -32,16 +29,16 @@ export const loader: LoaderFunction = async () => {
 
 export const sitemap: SitemapFunction = serverOnly$(async () => {
   const data = await Promise.all(
-    'abcdefghijklmnopqrstuvwxyz'.split('').map(async (letter) => ({
+    'abcdefghijklmnopqrstuvwxyz'.split('').map(async letter => ({
       letter,
       songs: (await client.songs.byName.query({ name: letter })).data,
-    })),
+    }))
   );
 
   const list: { loc: string; lastmod: string }[] = [];
 
   data.forEach(({ songs }) => {
-    songs.forEach((song) => {
+    songs.forEach(song => {
       list.push({
         loc: slugify({ id: song.id, name: song.name }),
         lastmod: new Date(song.updatedAt).toISOString(),
@@ -57,24 +54,20 @@ export default function SongList() {
 
   return (
     <main className="container">
-      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
-        All Songs
-      </h1>
+      <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">All Songs</h1>
       {data.map(({ letter, songs }) =>
         songs.length > 0 ? (
           <section className="flex flex-row mt-5" key={letter}>
             <p className="mr-4">{letter}</p>
             <ul className="">
-              {songs.map((song) => (
+              {songs.map(song => (
                 <li key={song.id}>
-                  <Link to={slugify({ id: song.id, name: song.name })}>
-                    {song.name}
-                  </Link>
+                  <Link to={slugify({ id: song.id, name: song.name })}>{song.name}</Link>
                 </li>
               ))}
             </ul>
           </section>
-        ) : null,
+        ) : null
       )}
     </main>
   );

@@ -27,7 +27,7 @@
   }
 
   .dark,
-  :root[class~='dark'] {
+  :root[class~="dark"] {
     --background: 17 50% 5%;
     --foreground: 17 5% 90%;
     --card: 17 50% 0%;
@@ -62,8 +62,8 @@
   a {
     @apply text-primary;
   }
-  a[href^='http']::after {
-    content: ' ↗';
+  a[href^="http"]::after {
+    content: " ↗";
   }
   h1 {
     @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mt-6;

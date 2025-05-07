@@ -38,23 +38,19 @@ export const Header = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/">
-                <img
-                  className="h-8 w-8"
-                  src="/android-chrome-192x192.png"
-                  alt="Logo"
-                />
+                <img className="h-8 w-8" src="/android-chrome-192x192.png" alt="Logo" />
               </Link>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                {navLinks.map((link) =>
+                {navLinks.map(link =>
                   link.component ? (
                     <div key={link.label}>{link.component}</div>
                   ) : (
                     <NavLink key={link.label} href={link.href}>
                       {link.label}
                     </NavLink>
-                  ),
+                  )
                 )}
               </div>
             </div>
@@ -76,14 +72,14 @@ export const Header = () => {
               </SheetTrigger>
               <SheetContent side="left" className="w-[240px] sm:w-[300px]">
                 <nav className="flex flex-col space-y-4 mt-4">
-                  {navLinks.map((link) =>
+                  {navLinks.map(link =>
                     link.component ? (
                       <div key={link.label}>{link.component}</div>
                     ) : (
                       <NavLink key={link.label} href={link.href}>
                         {link.label}
                       </NavLink>
-                    ),
+                    )
                   )}
                 </nav>
               </SheetContent>

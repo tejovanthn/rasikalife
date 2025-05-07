@@ -1,4 +1,4 @@
-import { CreateEntityItem, Entity, UpdateEntityItem } from 'electrodb';
+import { type CreateEntityItem, Entity, type UpdateEntityItem } from 'electrodb';
 import KSUID from 'ksuid';
 
 export const Item = new Entity({

@@ -1,13 +1,10 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { RouterOutput, client } from '~/api.server';
+import { type RouterOutput, client } from '~/api.server';
 import { slugify } from '~/lib/carnaticUtils';
 
 export const meta: MetaFunction = () => {
-  return [
-    { title: 'All Songs' },
-    { name: 'description', content: 'All songs at Rasika.art' },
-  ];
+  return [{ title: 'All Songs' }, { name: 'description', content: 'All songs at Rasika.art' }];
 };
 
 export type LoaderData = {
@@ -59,37 +56,27 @@ export default function SongDetails() {
         <ul>
           <li>
             <span className="font-bold">Raga:</span>{' '}
-            <Link to={slugify({ type: 'ragas', name: data.raga })}>
-              {data.raga}
-            </Link>
+            <Link to={slugify({ type: 'ragas', name: data.raga })}>{data.raga}</Link>
           </li>
           <li>
             <span className="font-bold">Tala:</span>{' '}
-            <Link to={slugify({ type: 'talas', name: data.tala })}>
-              {data.tala}
-            </Link>
+            <Link to={slugify({ type: 'talas', name: data.tala })}>{data.tala}</Link>
           </li>
           <li>
             <span className="font-bold">Composer:</span>{' '}
-            <Link to={slugify({ type: 'composers', name: data.composer })}>
-              {data.composer}
-            </Link>
+            <Link to={slugify({ type: 'composers', name: data.composer })}>{data.composer}</Link>
           </li>
           <li>
             <span className="font-bold">Language:</span>{' '}
-            <Link to={slugify({ type: 'languages', name: data.language })}>
-              {data.language}
-            </Link>
+            <Link to={slugify({ type: 'languages', name: data.language })}>{data.language}</Link>
           </li>
           <li>
             <span className="font-bold">Source:</span>{' '}
-            <a href={data.source} target="_blank">
+            <a href={data.source} target="_blank" rel="noreferrer">
               {data.source}
             </a>
           </li>
-          <li className="text-xs">
-            Last Updated: {new Date(data.updatedAt).toDateString()}
-          </li>
+          <li className="text-xs">Last Updated: {new Date(data.updatedAt).toDateString()}</li>
         </ul>
       </section>
       <Section heading="Lyrics" detail={data.lyrics} />

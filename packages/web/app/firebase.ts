@@ -16,16 +16,14 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 
 // Initialize Analytics conditionally
-export const analytics = isSupported().then((yes) =>
-  yes ? getAnalytics(app) : null,
-);
+export const analytics = isSupported().then(yes => (yes ? getAnalytics(app) : null));
 
 export const logAnalyticsEvent = (
   event: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params: Record<string, any>,
+  params: Record<string, any>
 ) => {
-  analytics.then((analyticsInstance) => {
+  analytics.then(analyticsInstance => {
     if (analyticsInstance) {
       logEvent(analyticsInstance, event, params);
     }
