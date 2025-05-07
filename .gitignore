@@ -45,3 +45,5 @@ node_modules
 /.cache
 /.yarn
 /yarn-error.log
+
+file struct
