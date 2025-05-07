@@ -1,7 +1,7 @@
 /**
  * DynamoDB query builder utilities
  */
-import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
+import type { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 import { query } from './operations';
 
 // DynamoDB key structure
@@ -65,7 +65,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Add a partition key condition
-   * 
+   *
    * @param key - Name of the key (PK, GSI1PK, etc.)
    * @param value - Value to compare against
    * @returns The query builder instance for chaining
@@ -78,7 +78,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Add a sort key equality condition
-   * 
+   *
    * @param key - Name of the key (SK, GSI1SK, etc.)
    * @param value - Value to compare against
    * @returns The query builder instance for chaining
@@ -91,7 +91,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Add a begins_with condition for a sort key
-   * 
+   *
    * @param key - Name of the key (SK, GSI1SK, etc.)
    * @param prefix - Prefix to match
    * @returns The query builder instance for chaining
@@ -104,7 +104,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Add a between condition for a sort key
-   * 
+   *
    * @param key - Name of the key (SK, GSI1SK, etc.)
    * @param start - Start value (inclusive)
    * @param end - End value (inclusive)
@@ -119,7 +119,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Add a filter expression
-   * 
+   *
    * @param attribute - Attribute name
    * @param operator - Comparison operator
    * @param value - Value to compare against
@@ -134,7 +134,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Set the index to query
-   * 
+   *
    * @param indexName - Name of the index (GSI1, GSI2, etc.)
    * @returns The query builder instance for chaining
    */
@@ -145,7 +145,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Set the maximum number of items to return
-   * 
+   *
    * @param limit - Maximum number of items
    * @returns The query builder instance for chaining
    */
@@ -156,7 +156,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Set the sort order (ascending or descending)
-   * 
+   *
    * @param ascending - True for ascending, false for descending
    * @returns The query builder instance for chaining
    */
@@ -167,7 +167,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Set the starting point for pagination
-   * 
+   *
    * @param exclusiveStartKey - Last evaluated key from previous query
    * @returns The query builder instance for chaining
    */
@@ -178,36 +178,36 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Set projection expression to limit attributes returned
-   * 
+   *
    * @param attributes - Array of attribute paths to include
    * @returns The query builder instance for chaining
    */
   withProjection(attributes: string[]): QueryBuilder<T> {
     const expressionAttributeNames: Record<string, string> = {};
-    
+
     const projectionItems = attributes.map((attr, index) => {
       const parts = attr.split('.');
       const path = parts.map((part, i) => `#${index}_${i}`).join('.');
-      
+
       parts.forEach((part, i) => {
         expressionAttributeNames[`#${index}_${i}`] = part;
       });
-      
+
       return path;
     });
-    
+
     this.options.projectionExpression = projectionItems.join(', ');
     this.options.expressionAttributeNames = {
       ...this.options.expressionAttributeNames,
       ...expressionAttributeNames,
     };
-    
+
     return this;
   }
 
   /**
    * Execute the query and return the results
-   * 
+   *
    * @returns Promise with the query results
    */
   async execute(): Promise<PaginationResult<T>> {
@@ -237,7 +237,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
   /**
    * Execute a paginated query
-   * 
+   *
    * @param params - Pagination parameters
    * @returns Promise with the query results
    */
@@ -245,16 +245,16 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
     if (params.limit) {
       this.withLimit(params.limit);
     }
-    
+
     if (params.nextToken) {
       this.withStartKey(JSON.parse(Buffer.from(params.nextToken, 'base64').toString()));
     }
-    
+
     const result = await this.execute();
-    
+
     return {
       ...result,
-      lastEvaluatedKey: result.lastEvaluatedKey 
+      lastEvaluatedKey: result.lastEvaluatedKey
         ? Buffer.from(JSON.stringify(result.lastEvaluatedKey)).toString('base64')
         : undefined,
     };
@@ -263,7 +263,7 @@ export class QueryBuilder<T extends DynamoItem = DynamoItem> {
 
 /**
  * Create a new query builder
- * 
+ *
  * @param options - Query builder options
  * @returns A new query builder instance
  */

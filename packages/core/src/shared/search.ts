@@ -1,9 +1,9 @@
 /**
  * Search utilities for the application
  */
-import { ScanCommandInput } from '@aws-sdk/lib-dynamodb';
+import type { ScanCommandInput } from '@aws-sdk/lib-dynamodb';
 import { scan } from '../db/operations';
-import { DynamoItem } from '../db/queryBuilder';
+import type { DynamoItem } from '../db/queryBuilder';
 import { createPaginatedResponse, normalizePaginationParams } from './pagination';
 
 /**
@@ -14,12 +14,12 @@ export interface SearchOptions {
    * Fields to search in
    */
   fields: string[];
-  
+
   /**
    * Filter conditions (AND)
    */
   filters?: Record<string, any>;
-  
+
   /**
    * Pagination parameters
    */
@@ -27,12 +27,12 @@ export interface SearchOptions {
     limit?: number;
     nextToken?: string;
   };
-  
+
   /**
    * Case-sensitive search
    */
   caseSensitive?: boolean;
-  
+
   /**
    * Table name suffix
    */
@@ -41,10 +41,10 @@ export interface SearchOptions {
 
 /**
  * Simple search implementation using DynamoDB Scan
- * 
- * Note: For production use with large datasets, consider using 
+ *
+ * Note: For production use with large datasets, consider using
  * Elasticsearch or other dedicated search solutions
- * 
+ *
  * @param searchTerm - Search term to find
  * @param options - Search options
  * @returns Paginated search results
@@ -60,22 +60,22 @@ export const basicSearch = async <T extends DynamoItem>(
   if (!searchTerm || !options.fields || options.fields.length === 0) {
     return { items: [], hasMore: false };
   }
-  
+
   const pagination = normalizePaginationParams(options.pagination);
-  
+
   // Build filter expressions for each field
   const fieldExpressions: string[] = options.fields.map((field, index) => {
     return options.caseSensitive
       ? `contains(${field}, :searchTerm)`
       : `contains(lower(${field}), :searchTerm)`;
   });
-  
+
   // Add any additional filters
   const filterConditions: string[] = [];
   const expressionAttributeValues: Record<string, any> = {
     ':searchTerm': options.caseSensitive ? searchTerm : searchTerm.toLowerCase(),
   };
-  
+
   if (options.filters) {
     Object.entries(options.filters).forEach(([key, value], index) => {
       const attrName = `:filter${index}`;
@@ -83,34 +83,31 @@ export const basicSearch = async <T extends DynamoItem>(
       expressionAttributeValues[attrName] = value;
     });
   }
-  
+
   // Combine field expressions with OR, and additional filters with AND
   let filterExpression = `(${fieldExpressions.join(' OR ')})`;
   if (filterConditions.length > 0) {
     filterExpression += ` AND ${filterConditions.join(' AND ')}`;
   }
-  
+
   const params: ScanCommandInput = {
     TableName: options.tableName,
     FilterExpression: filterExpression,
     ExpressionAttributeValues: expressionAttributeValues,
     Limit: pagination.limit,
-    ExclusiveStartKey: pagination.nextToken 
+    ExclusiveStartKey: pagination.nextToken
       ? JSON.parse(Buffer.from(pagination.nextToken, 'base64').toString())
       : undefined,
   };
-  
+
   const result = await scan<T>(params);
-  
-  return createPaginatedResponse(
-    result.items,
-    result.lastEvaluatedKey
-  );
+
+  return createPaginatedResponse(result.items, result.lastEvaluatedKey);
 };
 
 /**
  * Create a prefixed search term for partial matching at the beginning of words
- * 
+ *
  * @param term - Original search term
  * @returns Processed search term
  */
@@ -120,7 +117,7 @@ export const createPrefixSearchTerm = (term: string): string => {
 
 /**
  * Score search results based on relevance
- * 
+ *
  * @param items - Items to score
  * @param searchTerm - Search term
  * @param fields - Fields to consider for scoring with weights
@@ -132,16 +129,16 @@ export const scoreSearchResults = <T>(
   fields: Array<{ name: string; weight: number }>
 ): T[] => {
   const lowerSearchTerm = searchTerm.toLowerCase();
-  
+
   const scoredItems = items.map(item => {
     let score = 0;
-    
+
     for (const field of fields) {
       const value = getNestedProperty(item, field.name);
-      
+
       if (typeof value === 'string') {
         const lowerValue = value.toLowerCase();
-        
+
         // Exact match gets the highest score
         if (lowerValue === lowerSearchTerm) {
           score += field.weight * 10;
@@ -160,19 +157,19 @@ export const scoreSearchResults = <T>(
         }
       }
     }
-    
+
     return { item, score };
   });
-  
+
   // Sort by score descending
   scoredItems.sort((a, b) => b.score - a.score);
-  
+
   return scoredItems.map(({ item }) => item);
 };
 
 /**
  * Get a nested property from an object using dot notation
- * 
+ *
  * @param obj - Object to get property from
  * @param path - Property path (e.g., "address.city")
  * @returns Property value or undefined

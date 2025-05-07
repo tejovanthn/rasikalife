@@ -1,7 +1,7 @@
 /**
  * Utilities for working with the single-table design pattern
  */
-import { DynamoItem } from '../db/queryBuilder';
+import type { DynamoItem } from '../db/queryBuilder';
 import { getCurrentISOString } from '../utils/dateTime';
 import { generateId } from '../utils/id';
 
@@ -64,7 +64,7 @@ export enum SecondaryPrefix {
 
 /**
  * Format a key with entity prefix and ID
- * 
+ *
  * @param prefix - Entity type prefix
  * @param id - Entity ID
  * @returns Formatted key (e.g., "USER#123")
@@ -75,7 +75,7 @@ export const formatKey = (prefix: EntityPrefix | string, id: string): string => 
 
 /**
  * Format a date-based sort key
- * 
+ *
  * @param prefix - Sort key prefix
  * @param date - Date string in YYYY-MM-DD format
  * @param id - Optional ID to append
@@ -86,22 +86,17 @@ export const formatDateSortKey = (
   date: string,
   id?: string
 ): string => {
-  return id 
-    ? `${prefix}#${date}#${id}`
-    : `${prefix}#${date}`;
+  return id ? `${prefix}#${date}#${id}` : `${prefix}#${date}`;
 };
 
 /**
  * Create a version sort key
- * 
+ *
  * @param version - Version string
  * @param timestamp - Optional timestamp
  * @returns Formatted version key (e.g., "VERSION#v1#2023-01-01T00:00:00.000Z")
  */
-export const formatVersionKey = (
-  version: string,
-  timestamp?: string
-): string => {
+export const formatVersionKey = (version: string, timestamp?: string): string => {
   return timestamp
     ? `${SecondaryPrefix.VERSION}#${version}#${timestamp}`
     : `${SecondaryPrefix.VERSION}#${version}`;
@@ -109,7 +104,7 @@ export const formatVersionKey = (
 
 /**
  * Create a base DynamoDB item for a new entity
- * 
+ *
  * @param entityType - Type of entity (USER, ARTIST, etc.)
  * @param id - Optional ID (will be generated if not provided)
  * @param sortKey - Optional sort key (defaults to #METADATA)
@@ -120,9 +115,9 @@ export const createBaseItem = async (
   id?: string,
   sortKey: string = SecondaryPrefix.METADATA
 ): Promise<DynamoItem> => {
-  const entityId = id || await generateId();
+  const entityId = id || (await generateId());
   const now = getCurrentISOString();
-  
+
   return {
     PK: formatKey(entityType, entityId),
     SK: sortKey,
@@ -134,7 +129,7 @@ export const createBaseItem = async (
 
 /**
  * Create a composite ID for entities that need a compound key
- * 
+ *
  * @param parts - Array of ID parts to join
  * @returns Composite ID string
  */
@@ -144,7 +139,7 @@ export const createCompositeId = (parts: string[]): string => {
 
 /**
  * Format a secondary index key
- * 
+ *
  * @param prefix - Index key prefix
  * @param value - Value to include in the key
  * @returns Formatted GSI key (e.g., "EMAIL#test@example.com")
@@ -155,7 +150,7 @@ export const formatIndexKey = (prefix: string, value: string): string => {
 
 /**
  * Extract ID from a formatted key
- * 
+ *
  * @param key - Formatted key (e.g., "USER#123")
  * @returns The extracted ID
  */
@@ -165,7 +160,7 @@ export const extractIdFromKey = (key: string): string => {
 
 /**
  * Add timestamps to an item for updates
- * 
+ *
  * @param item - The item to update
  * @returns The item with updated timestamp
  */

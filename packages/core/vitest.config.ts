@@ -1,5 +1,5 @@
 import { defineConfig } from 'vitest/config';
-import { resolve } from 'path';
+import { resolve } from 'node:path';
 
 export default defineConfig({
   test: {
@@ -9,13 +9,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
-      exclude: ['**/node_modules/**', '**/test/**', '**/*.test.ts', '**/types/**', 'src/index.ts']
+      exclude: ['**/node_modules/**', '**/test/**', '**/*.test.ts', '**/types/**', 'src/index.ts'],
     },
-    setupFiles: ['test/setup.ts']
+    setupFiles: ['test/setup.ts'],
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
-    }
-  }
+      '@': resolve(__dirname, './src'),
+    },
+  },
 });

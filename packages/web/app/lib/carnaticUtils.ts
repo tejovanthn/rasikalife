@@ -16,9 +16,9 @@ export const slugify = ({
     });
     return `/carnatic/songs/${slug}`;
   }
-    slug = convert(name, {
-      camelCase: false,
-    });
-    return `/carnatic/${type}/${slug}`;
+  slug = convert(name, {
+    camelCase: false,
+  });
+  return `/carnatic/${type}/${slug}`;
   return '';
 };

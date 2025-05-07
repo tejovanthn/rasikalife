@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist",
-    "test": "vitest run", 
+    "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"

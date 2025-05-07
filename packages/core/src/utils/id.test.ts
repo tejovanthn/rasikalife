@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { 
-  generateId, 
-  generatePrefixedId, 
-  generateIdSync, 
-  generateRandomString, 
-  getTimestampFromId 
+import {
+  generateId,
+  generatePrefixedId,
+  generateIdSync,
+  generateRandomString,
+  getTimestampFromId,
 } from './id';
 
 describe('ID utilities', () => {
   beforeEach(() => {
-    vi.unmock("./id")
-  })
+    vi.unmock('./id');
+  });
 
   it('generates a valid KSUID', async () => {
     const id = await generateId();
@@ -36,7 +36,7 @@ describe('ID utilities', () => {
   it('extracts timestamp from KSUID', async () => {
     const id = await generateId();
     const timestamp = getTimestampFromId(id);
-    
+
     // The timestamp should be recent (within the last minute)
     const now = new Date();
     const diff = now.getTime() - timestamp.getTime();
@@ -46,7 +46,7 @@ describe('ID utilities', () => {
   it('extracts timestamp from prefixed KSUID', async () => {
     const id = await generatePrefixedId('user');
     const timestamp = getTimestampFromId(id);
-    
+
     // The timestamp should be recent (within the last minute)
     const now = new Date();
     const diff = now.getTime() - timestamp.getTime();

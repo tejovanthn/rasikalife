@@ -1,16 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mockDb } from '../../test/mocks/dynamodb';
 import { putItem } from '../db/operations';
-import {
-  basicSearch,
-  createPrefixSearchTerm,
-  scoreSearchResults
-} from './search';
+import { basicSearch, createPrefixSearchTerm, scoreSearchResults } from './search';
 
 describe('Search Utilities', () => {
   beforeEach(async () => {
     mockDb.reset();
-    
+
     // Set up test data
     await Promise.all([
       putItem({
@@ -21,9 +17,9 @@ describe('Search Utilities', () => {
         email: 'john@example.com',
         bio: 'Software developer with experience in AWS',
         createdAt: '2023-01-01T00:00:00.000Z',
-        updatedAt: '2023-01-01T00:00:00.000Z'
+        updatedAt: '2023-01-01T00:00:00.000Z',
       }),
-      
+
       putItem({
         PK: 'USER#2',
         SK: '#METADATA',
@@ -32,9 +28,9 @@ describe('Search Utilities', () => {
         email: 'jane@example.com',
         bio: 'Product manager with AWS certification',
         createdAt: '2023-01-02T00:00:00.000Z',
-        updatedAt: '2023-01-02T00:00:00.000Z'
+        updatedAt: '2023-01-02T00:00:00.000Z',
       }),
-      
+
       putItem({
         PK: 'ARTIST#1',
         SK: '#METADATA',
@@ -42,8 +38,8 @@ describe('Search Utilities', () => {
         name: 'John Legend',
         bio: 'Famous musician and singer',
         createdAt: '2023-01-03T00:00:00.000Z',
-        updatedAt: '2023-01-03T00:00:00.000Z'
-      })
+        updatedAt: '2023-01-03T00:00:00.000Z',
+      }),
     ]);
   });
 
@@ -54,9 +50,9 @@ describe('Search Utilities', () => {
   describe('basicSearch', () => {
     it.todo('should find items matching the search term', async () => {
       const result = await basicSearch('John', {
-        fields: ['name', 'bio']
+        fields: ['name', 'bio'],
       });
-      
+
       expect(result.items).toHaveLength(2);
       expect(result.items[0].name).toBe('John Smith');
       expect(result.items[1].name).toBe('John Legend');
@@ -64,18 +60,18 @@ describe('Search Utilities', () => {
 
     it.todo('should find items case-insensitively', async () => {
       const result = await basicSearch('john', {
-        fields: ['name']
+        fields: ['name'],
       });
-      
+
       expect(result.items).toHaveLength(2);
     });
 
     it('should apply additional filters', async () => {
       const result = await basicSearch('John', {
         fields: ['name', 'bio'],
-        filters: { PK: 'USER#1' }
+        filters: { PK: 'USER#1' },
       });
-      
+
       expect(result.items).toHaveLength(1);
       expect(result.items[0].PK).toBe('USER#1');
     });
@@ -83,9 +79,9 @@ describe('Search Utilities', () => {
     it('should respect pagination parameters', async () => {
       const result = await basicSearch('John', {
         fields: ['name', 'bio'],
-        pagination: { limit: 1 }
+        pagination: { limit: 1 },
       });
-      
+
       expect(result.items).toHaveLength(1);
       expect(result.hasMore).toBe(true);
       expect(result.nextToken).toBeDefined();
@@ -93,18 +89,18 @@ describe('Search Utilities', () => {
 
     it('should return empty results for empty search term', async () => {
       const result = await basicSearch('', {
-        fields: ['name', 'bio']
+        fields: ['name', 'bio'],
       });
-      
+
       expect(result.items).toHaveLength(0);
       expect(result.hasMore).toBe(false);
     });
 
     it('should return empty results when fields array is empty', async () => {
       const result = await basicSearch('John', {
-        fields: []
+        fields: [],
       });
-      
+
       expect(result.items).toHaveLength(0);
     });
   });
@@ -121,25 +117,25 @@ describe('Search Utilities', () => {
         { id: '1', name: 'John Doe', title: 'Senior Developer' },
         { id: '2', name: 'Johnny Smith', title: 'Developer' },
         { id: '3', name: 'Jane Smith', title: 'John is the manager' },
-        { id: '4', name: 'Bob Johnson', title: 'Works with John' }
+        { id: '4', name: 'Bob Johnson', title: 'Works with John' },
       ];
-      
+
       const fields = [
         { name: 'name', weight: 2 },
-        { name: 'title', weight: 1 }
+        { name: 'title', weight: 1 },
       ];
-      
+
       const scored = scoreSearchResults(items, 'john', fields);
-      
+
       // First result should be exact match "John Doe"
       expect(scored[0].id).toBe('1');
-      
+
       // Second should be name starting with "John"
       expect(scored[1].id).toBe('2');
-      
+
       // Third should be title containing "John"
       expect(scored[2].id).toBe('4');
-      
+
       // Fourth should be title containing "John" but not at word boundary
       expect(scored[3].id).toBe('3');
     });
@@ -147,15 +143,13 @@ describe('Search Utilities', () => {
     it('should handle nested properties using dot notation', () => {
       const items = [
         { id: '1', profile: { name: 'John Doe' } },
-        { id: '2', profile: { name: 'Jane Smith' } }
+        { id: '2', profile: { name: 'Jane Smith' } },
       ];
-      
-      const fields = [
-        { name: 'profile.name', weight: 1 }
-      ];
-      
+
+      const fields = [{ name: 'profile.name', weight: 1 }];
+
       const scored = scoreSearchResults(items, 'john', fields);
-      
+
       expect(scored[0].id).toBe('1');
       expect(scored[1].id).toBe('2');
     });

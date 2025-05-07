@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { 
-  getCurrentISOString, 
-  formatDateYYYYMMDD, 
-  toISOString, 
-  addDays, 
-  isPast, 
-  isFuture, 
-  daysBetween, 
-  getTimeBasedShard 
+import {
+  getCurrentISOString,
+  formatDateYYYYMMDD,
+  toISOString,
+  addDays,
+  isPast,
+  isFuture,
+  daysBetween,
+  getTimeBasedShard,
 } from './dateTime';
 
 describe('DateTime utilities', () => {
@@ -33,7 +33,7 @@ describe('DateTime utilities', () => {
     const dateObj = new Date('2025-01-15T12:00:00.000Z');
     const dateStr = '2025-01-15T12:00:00.000Z';
     const dateNum = dateObj.getTime();
-    
+
     expect(toISOString(dateObj)).toBe('2025-01-15T12:00:00.000Z');
     expect(toISOString(dateStr)).toBe('2025-01-15T12:00:00.000Z');
     expect(toISOString(dateNum)).toBe('2025-01-15T12:00:00.000Z');
@@ -48,7 +48,7 @@ describe('DateTime utilities', () => {
   it('checks if a date is in the past', () => {
     const past = new Date('2025-01-10T12:00:00.000Z');
     const future = new Date('2025-01-20T12:00:00.000Z');
-    
+
     expect(isPast(past)).toBe(true);
     expect(isPast(future)).toBe(false);
     expect(isPast('2025-01-10T12:00:00.000Z')).toBe(true);
@@ -57,7 +57,7 @@ describe('DateTime utilities', () => {
   it('checks if a date is in the future', () => {
     const past = new Date('2025-01-10T12:00:00.000Z');
     const future = new Date('2025-01-20T12:00:00.000Z');
-    
+
     expect(isFuture(past)).toBe(false);
     expect(isFuture(future)).toBe(true);
     expect(isFuture('2025-01-20T12:00:00.000Z')).toBe(true);
@@ -75,21 +75,21 @@ describe('DateTime utilities', () => {
   it('generates a time-based shard key', () => {
     const id1 = 'test1';
     const id2 = 'test2';
-    
+
     // Same ID should get same shard in same minute
     const shard1a = getTimeBasedShard(id1);
     const shard1b = getTimeBasedShard(id1);
     expect(shard1a).toBe(shard1b);
-    
+
     // Different IDs should likely get different shards
     const shard2 = getTimeBasedShard(id2);
     // This could theoretically fail if they hash to same value, but unlikely
     expect(shard1a).not.toBe(shard2);
-    
+
     // Shard should be within range
     expect(shard1a).toBeGreaterThanOrEqual(0);
     expect(shard1a).toBeLessThan(10);
-    
+
     // Custom shard count
     const customShard = getTimeBasedShard(id1, 20);
     expect(customShard).toBeGreaterThanOrEqual(0);

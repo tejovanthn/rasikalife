@@ -39,7 +39,7 @@ export const docClient = DynamoDBDocumentClient.from(ddbClient, {
 
 /**
  * Get the table name to use for the current environment
- * 
+ *
  * @param tableSuffix - Optional suffix to append to the table name
  * @returns The full table name
  */

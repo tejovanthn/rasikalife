@@ -26,7 +26,7 @@ export const toISOString = (date: Date | string | number): string => {
   if (date instanceof Date) {
     return date.toISOString();
   }
-  
+
   if (typeof date === 'string') {
     // If it's already ISO format, return as is
     if (date.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/)) {
@@ -34,7 +34,7 @@ export const toISOString = (date: Date | string | number): string => {
     }
     return new Date(date).toISOString();
   }
-  
+
   return new Date(date).toISOString();
 };
 
@@ -75,11 +75,11 @@ export const isFuture = (date: Date | string): boolean => {
 export const daysBetween = (dateA: Date | string, dateB: Date | string): number => {
   const a = typeof dateA === 'string' ? new Date(dateA) : dateA;
   const b = typeof dateB === 'string' ? new Date(dateB) : dateB;
-  
+
   // Convert to UTC to avoid time zone issues
   const utcA = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
   const utcB = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
-  
+
   const millisPerDay = 1000 * 60 * 60 * 24;
   return Math.floor((utcB - utcA) / millisPerDay);
 };
@@ -90,10 +90,10 @@ export const daysBetween = (dateA: Date | string, dateB: Date | string): number 
  * @param id - The base ID
  * @param shardCount - Number of shards to distribute across
  */
-export const getTimeBasedShard = (id: string, shardCount: number = 10): number => {
+export const getTimeBasedShard = (id: string, shardCount = 10): number => {
   const now = new Date();
   const minute = now.getMinutes();
   const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  
+
   return (hash + minute) % shardCount;
 };

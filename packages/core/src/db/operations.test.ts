@@ -6,7 +6,7 @@ import { ApplicationError } from '../types';
 
 describe('DynamoDB operations', () => {
   beforeEach(() => {
-    mockDb.reset()
+    mockDb.reset();
   });
 
   afterEach(() => {
@@ -19,11 +19,11 @@ describe('DynamoDB operations', () => {
         PK: 'USER#123',
         SK: '#METADATA',
         name: 'Test User',
-        email: 'test@example.com'
+        email: 'test@example.com',
       };
 
       await putItem(item);
-      
+
       const table = mockDb.getTable(undefined);
 
       expect(table).toHaveLength(1);
@@ -35,18 +35,18 @@ describe('DynamoDB operations', () => {
         PK: 'USER#123',
         SK: '#METADATA',
         name: 'Test User',
-        email: 'test@example.com'
+        email: 'test@example.com',
       };
 
       await putItem(item);
-      
+
       const updatedItem = {
         ...item,
-        name: 'Updated Name'
+        name: 'Updated Name',
       };
-      
+
       await putItem(updatedItem);
-      
+
       const table = mockDb.getTable(undefined);
       expect(table).toHaveLength(1);
       expect(table[0]).toEqual(updatedItem);
@@ -59,13 +59,13 @@ describe('DynamoDB operations', () => {
         PK: 'USER#123',
         SK: '#METADATA',
         name: 'Test User',
-        email: 'test@example.com'
+        email: 'test@example.com',
       };
 
       await putItem(item);
-      
+
       const result = await getItem({ PK: 'USER#123', SK: '#METADATA' });
-      
+
       expect(result).toEqual(item);
     });
 
@@ -84,19 +84,19 @@ describe('DynamoDB operations', () => {
         email: 'test@example.com',
         address: {
           city: 'Test City',
-          country: 'Test Country'
-        }
+          country: 'Test Country',
+        },
       };
 
       await putItem(item);
-      
+
       const updates = {
         name: 'Updated Name',
-        'address.city': 'New City'
+        'address.city': 'New City',
       };
-      
+
       const result = await updateItem({ PK: 'USER#123', SK: '#METADATA' }, updates);
-      
+
       expect(result.name).toBe('Updated Name');
       expect(result.address.city).toBe('New City');
       expect(result.address.country).toBe('Test Country');
@@ -104,12 +104,9 @@ describe('DynamoDB operations', () => {
     });
 
     it('should throw an error for empty updates', async () => {
-      await expect(updateItem({ PK: 'USER#123', SK: '#METADATA' }, {}))
-        .rejects
-        .toThrow(new ApplicationError(
-          ErrorCode.DB_WRITE_ERROR,
-          'No update expressions provided'
-        ));
+      await expect(updateItem({ PK: 'USER#123', SK: '#METADATA' }, {})).rejects.toThrow(
+        new ApplicationError(ErrorCode.DB_WRITE_ERROR, 'No update expressions provided')
+      );
     });
   });
 
@@ -118,15 +115,15 @@ describe('DynamoDB operations', () => {
       const item = {
         PK: 'USER#123',
         SK: '#METADATA',
-        name: 'Test User'
+        name: 'Test User',
       };
 
       await putItem(item);
-      
+
       const result = await deleteItem({ PK: 'USER#123', SK: '#METADATA' });
-      
+
       expect(result).toBe(true);
-      
+
       const table = mockDb.getTable('RasikaTable');
       expect(table).toHaveLength(0);
     });
@@ -146,22 +143,22 @@ describe('DynamoDB operations', () => {
         name: 'User 1',
         email: 'user1@example.com',
         GSI1PK: 'EMAIL#user1@example.com',
-        GSI1SK: 'USER#1'
+        GSI1SK: 'USER#1',
       });
-      
+
       await putItem({
         PK: 'USER#1',
         SK: 'KARMA#2023-01-01',
-        value: 10
+        value: 10,
       });
-      
+
       await putItem({
         PK: 'USER#2',
         SK: '#METADATA',
         name: 'User 2',
         email: 'user2@example.com',
         GSI1PK: 'EMAIL#user2@example.com',
-        GSI1SK: 'USER#2'
+        GSI1SK: 'USER#2',
       });
     });
 
@@ -169,10 +166,10 @@ describe('DynamoDB operations', () => {
       const result = await query({
         KeyConditionExpression: 'PK = :PK',
         ExpressionAttributeValues: {
-          ':PK': 'USER#1'
-        }
+          ':PK': 'USER#1',
+        },
       });
-      
+
       expect(result.items).toHaveLength(2);
       expect(result.items[0].PK).toBe('USER#1');
       expect(result.items[1].PK).toBe('USER#1');
@@ -183,10 +180,10 @@ describe('DynamoDB operations', () => {
         KeyConditionExpression: 'PK = :pk AND begins_with(SK, :prefix)',
         ExpressionAttributeValues: {
           ':pk': 'USER#1',
-          ':prefix': 'KARMA#'
-        }
+          ':prefix': 'KARMA#',
+        },
       });
-      
+
       expect(result.items).toHaveLength(1);
       expect(result.items[0].SK).toBe('KARMA#2023-01-01');
     });
@@ -196,10 +193,10 @@ describe('DynamoDB operations', () => {
         IndexName: 'GSI1',
         KeyConditionExpression: 'GSI1PK = :pk',
         ExpressionAttributeValues: {
-          ':pk': 'EMAIL#user1@example.com'
-        }
+          ':pk': 'EMAIL#user1@example.com',
+        },
       });
-      
+
       expect(result.items).toHaveLength(1);
       expect(result.items[0].email).toBe('user1@example.com');
     });

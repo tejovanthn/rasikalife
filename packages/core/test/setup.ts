@@ -20,22 +20,22 @@ vi.mock('../src/utils/dateTime', async () => {
   return {
     ...actual,
     getCurrentISOString: () => '2025-01-15T12:00:00.000Z',
-    formatDateYYYYMMDD: () => '2025-01-15'
+    formatDateYYYYMMDD: () => '2025-01-15',
   };
 });
 
 // Mock ID generation for deterministic testing
 vi.mock('../src/utils/id', async () => {
   const actual = await vi.importActual('../src/utils/id');
-  
+
   let idCounter = 1;
-  
+
   return {
     ...actual,
     generateId: async () => `test_id_${idCounter++}`,
     generatePrefixedId: async (prefix: string) => `${prefix}_test_id_${idCounter++}`,
     generateIdSync: () => `test_id_${idCounter++}`,
-    generateRandomString: (length: number = 6) => 'abcdef'.substring(0, length)
+    generateRandomString: (length = 6) => 'abcdef'.substring(0, length),
   };
 });
 

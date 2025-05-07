@@ -2,12 +2,12 @@
  * Common type definitions used across the Rasika.life application
  */
 
-import { ErrorCodeType } from '../constants/errorCodes';
+import type { ErrorCodeType } from '../constants/errorCodes';
 
 // Base application error
 export class ApplicationError extends Error {
   code: ErrorCodeType;
-  
+
   constructor(code: ErrorCodeType, message: string) {
     super(message);
     this.code = code;
@@ -16,16 +16,16 @@ export class ApplicationError extends Error {
 }
 
 // Common entity types
-export type EntityType = 
-  | 'user' 
-  | 'artist' 
-  | 'composition' 
-  | 'raga' 
-  | 'tala' 
-  | 'event' 
-  | 'venue' 
-  | 'thread' 
-  | 'reply' 
+export type EntityType =
+  | 'user'
+  | 'artist'
+  | 'composition'
+  | 'raga'
+  | 'tala'
+  | 'event'
+  | 'venue'
+  | 'thread'
+  | 'reply'
   | 'update'
   | 'collection';
 
@@ -104,5 +104,5 @@ export interface Location {
   coordinates?: {
     latitude: number;
     longitude: number;
-  }
+  };
 }

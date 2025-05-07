@@ -1,7 +1,7 @@
 /**
  * ID generation utilities using KSUID
  */
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'node:crypto';
 import ksuid from 'ksuid';
 
 /**
@@ -32,7 +32,7 @@ export const generateIdSync = (): string => {
  * Generate a new random string (for verification codes, etc.)
  * @param length - Length of the random string
  */
-export const generateRandomString = (length: number = 6): string => {
+export const generateRandomString = (length = 6): string => {
   return randomBytes(Math.ceil(length / 2))
     .toString('hex')
     .slice(0, length);
@@ -46,7 +46,7 @@ export const generateRandomString = (length: number = 6): string => {
 export const getTimestampFromId = (id: string): Date => {
   // For prefixed IDs, extract just the KSUID portion
   const ksuidPart = id.includes('_') ? id.split('_')[1] : id;
-  
+
   try {
     const parsed = ksuid.parse(ksuidPart);
     return new Date(parsed.date);

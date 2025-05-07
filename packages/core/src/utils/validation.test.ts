@@ -9,7 +9,7 @@ import {
   isoDateStringSchema,
   createArraySchema,
   socialLinksSchema,
-  locationSchema
+  locationSchema,
 } from './validation';
 
 describe('Validation utilities', () => {
@@ -92,13 +92,15 @@ describe('Validation utilities', () => {
     it('validates ISO date format strictly', () => {
       expect(() => isoDateStringSchema.parse('2025-01-15')).toThrow(); // Not ISO format
       expect(() => isoDateStringSchema.parse('2025-01-15T12:00:00')).toThrow(); // Missing milliseconds and Z
-      expect(isoDateStringSchema.parse('2025-01-15T12:00:00.000Z')).toBe('2025-01-15T12:00:00.000Z');
+      expect(isoDateStringSchema.parse('2025-01-15T12:00:00.000Z')).toBe(
+        '2025-01-15T12:00:00.000Z'
+      );
     });
   });
 
   describe('createArraySchema', () => {
     const stringSchema = z.string();
-    
+
     it('creates a required array schema by default', () => {
       const schema = createArraySchema(stringSchema);
       expect(() => schema.parse(undefined)).toThrow();
@@ -138,16 +140,20 @@ describe('Validation utilities', () => {
 
   describe('socialLinksSchema', () => {
     it('validates social links', () => {
-      expect(() => socialLinksSchema.parse({
-        website: 'not-a-url'
-      })).toThrow();
-      
-      expect(socialLinksSchema.parse({
+      expect(() =>
+        socialLinksSchema.parse({
+          website: 'not-a-url',
+        })
+      ).toThrow();
+
+      expect(
+        socialLinksSchema.parse({
+          website: 'https://example.com',
+          youtube: 'https://youtube.com/channel/123',
+        })
+      ).toEqual({
         website: 'https://example.com',
-        youtube: 'https://youtube.com/channel/123'
-      })).toEqual({
-        website: 'https://example.com',
-        youtube: 'https://youtube.com/channel/123'
+        youtube: 'https://youtube.com/channel/123',
       });
 
       // Optional
@@ -157,41 +163,49 @@ describe('Validation utilities', () => {
 
   describe('locationSchema', () => {
     it('validates location data', () => {
-      expect(() => locationSchema.parse({
-        // Missing required country
-        city: 'Mumbai'
-      })).toThrow();
-      
-      expect(locationSchema.parse({
+      expect(() =>
+        locationSchema.parse({
+          // Missing required country
+          city: 'Mumbai',
+        })
+      ).toThrow();
+
+      expect(
+        locationSchema.parse({
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          country: 'India',
+        })
+      ).toEqual({
         city: 'Mumbai',
         state: 'Maharashtra',
-        country: 'India'
-      })).toEqual({
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        country: 'India'
+        country: 'India',
       });
-      
-      expect(() => locationSchema.parse({
-        country: 'India',
-        coordinates: {
-          latitude: 100, // Invalid latitude (>90)
-          longitude: 75
-        }
-      })).toThrow();
-      
-      expect(locationSchema.parse({
+
+      expect(() =>
+        locationSchema.parse({
+          country: 'India',
+          coordinates: {
+            latitude: 100, // Invalid latitude (>90)
+            longitude: 75,
+          },
+        })
+      ).toThrow();
+
+      expect(
+        locationSchema.parse({
+          country: 'India',
+          coordinates: {
+            latitude: 19.076,
+            longitude: 72.877,
+          },
+        })
+      ).toEqual({
         country: 'India',
         coordinates: {
           latitude: 19.076,
-          longitude: 72.877
-        }
-      })).toEqual({
-        country: 'India',
-        coordinates: {
-          latitude: 19.076,
-          longitude: 72.877
-        }
+          longitude: 72.877,
+        },
       });
     });
   });

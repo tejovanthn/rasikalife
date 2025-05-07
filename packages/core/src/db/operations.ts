@@ -3,40 +3,37 @@
  */
 import {
   PutCommand,
-  PutCommandInput,
-  GetCommandInput,
+  type PutCommandInput,
+  type GetCommandInput,
   GetCommand,
-  QueryCommandInput,
+  type QueryCommandInput,
   QueryCommand,
   UpdateCommand,
-  UpdateCommandInput,
-  DeleteCommandInput,
+  type UpdateCommandInput,
+  type DeleteCommandInput,
   DeleteCommand,
-  TransactWriteCommandInput,
+  type TransactWriteCommandInput,
   TransactWriteCommand,
-  BatchGetCommandInput,
+  type BatchGetCommandInput,
   BatchGetCommand,
-  BatchWriteCommandInput,
+  type BatchWriteCommandInput,
   BatchWriteCommand,
-  ScanCommandInput,
+  type ScanCommandInput,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { docClient, getTableName } from './client';
-import { DynamoKey, DynamoItem, PaginationResult } from './queryBuilder';
+import type { DynamoKey, DynamoItem, PaginationResult } from './queryBuilder';
 import { ApplicationError } from '../types';
 import { ErrorCode } from '../constants';
 
 /**
  * Put an item in DynamoDB
- * 
+ *
  * @param item - The item to put
  * @param tableName - Optional table name suffix
  * @returns The result of the operation
  */
-export const putItem = async (
-  item: DynamoItem,
-  tableName?: string
-): Promise<DynamoItem> => {
+export const putItem = async (item: DynamoItem, tableName?: string): Promise<DynamoItem> => {
   const params: PutCommandInput = {
     TableName: getTableName(tableName),
     Item: item,
@@ -56,23 +53,20 @@ export const putItem = async (
 
 /**
  * Put multiple items in DynamoDB in a single transaction
- * 
+ *
  * @param items - Array of items to put
  * @param tableName - Optional table name suffix
  * @returns Result of the operation
  */
-export const batchPutItems = async (
-  items: DynamoItem[],
-  tableName?: string
-): Promise<void> => {
+export const batchPutItems = async (items: DynamoItem[], tableName?: string): Promise<void> => {
   if (items.length === 0) return;
 
   const tableFinalName = getTableName(tableName);
-  
+
   // DynamoDB batch writes are limited to 25 items
   const chunkSize = 25;
   const chunks = [];
-  
+
   for (let i = 0; i < items.length; i += chunkSize) {
     chunks.push(items.slice(i, i + chunkSize));
   }
@@ -102,7 +96,7 @@ export const batchPutItems = async (
 
 /**
  * Transaction to write multiple items atomically
- * 
+ *
  * @param items - Array of items to write
  * @param tableName - Optional table name suffix
  * @returns Result of the operation
@@ -143,7 +137,7 @@ export const transactWriteItems = async (
 
 /**
  * Get a single item by key
- * 
+ *
  * @param key - The key of the item to get
  * @param tableName - Optional table name suffix
  * @returns The item or null if not found
@@ -171,7 +165,7 @@ export const getItem = async <T extends DynamoItem>(
 
 /**
  * Get multiple items by keys
- * 
+ *
  * @param keys - Array of keys to get
  * @param tableName - Optional table name suffix
  * @returns Array of items found
@@ -185,14 +179,14 @@ export const batchGetItems = async <T extends DynamoItem>(
   const tableFinalName = getTableName(tableName);
   const chunkSize = 100; // DynamoDB batch get limit
   const chunks = [];
-  
+
   for (let i = 0; i < keys.length; i += chunkSize) {
     chunks.push(keys.slice(i, i + chunkSize));
   }
 
   try {
     const results: T[] = [];
-    
+
     for (const chunk of chunks) {
       const params: BatchGetCommandInput = {
         RequestItems: {
@@ -203,12 +197,12 @@ export const batchGetItems = async <T extends DynamoItem>(
       };
 
       const response = await docClient.send(new BatchGetCommand(params));
-      
-      if (response.Responses && response.Responses[tableFinalName]) {
+
+      if (response.Responses?.[tableFinalName]) {
         results.push(...(response.Responses[tableFinalName] as T[]));
       }
     }
-    
+
     return results;
   } catch (error) {
     console.error('Error batch getting items:', error);
@@ -221,7 +215,7 @@ export const batchGetItems = async <T extends DynamoItem>(
 
 /**
  * Update an item in DynamoDB
- * 
+ *
  * @param key - The key of the item to update
  * @param updates - Map of attribute paths to values
  * @param tableName - Optional table name suffix
@@ -233,17 +227,14 @@ export const updateItem = async <T extends DynamoItem>(
   tableName?: string
 ): Promise<T> => {
   if (Object.keys(updates).length === 0) {
-    throw new ApplicationError(
-      ErrorCode.DB_WRITE_ERROR,
-      'No update expressions provided'
-    );
+    throw new ApplicationError(ErrorCode.DB_WRITE_ERROR, 'No update expressions provided');
   }
 
   // Build the update expression
   const updateExpressions: string[] = [];
   const expressionAttributeNames: Record<string, string> = {};
   const expressionAttributeValues: Record<string, any> = {};
-  let count = 0
+  let count = 0;
 
   Object.entries(updates).forEach(([path, value]) => {
     // Skip undefined values
@@ -251,16 +242,16 @@ export const updateItem = async <T extends DynamoItem>(
 
     // Handle nested paths (e.g., "address.city")
     const parts = path.split('.');
-    const attributePath = parts.map((part, i) => `#key${count+i}`).join('.');
-    
+    const attributePath = parts.map((part, i) => `#key${count + i}`).join('.');
+
     parts.forEach((part, i) => {
-      expressionAttributeNames[`#key${count+i}`] = part;
+      expressionAttributeNames[`#key${count + i}`] = part;
     });
 
     const valuePlaceholder = `:${path.replace(/\./g, '_')}`;
     updateExpressions.push(`${attributePath} = ${valuePlaceholder}`);
     expressionAttributeValues[valuePlaceholder] = value;
-    count = count + path.split('.').length
+    count = count + path.split('.').length;
   });
 
   if (updateExpressions.length === 0) {
@@ -293,15 +284,12 @@ export const updateItem = async <T extends DynamoItem>(
 
 /**
  * Delete an item from DynamoDB
- * 
+ *
  * @param key - The key of the item to delete
  * @param tableName - Optional table name suffix
  * @returns True if the item was deleted, false if it didn't exist
  */
-export const deleteItem = async (
-  key: DynamoKey,
-  tableName?: string
-): Promise<boolean> => {
+export const deleteItem = async (key: DynamoKey, tableName?: string): Promise<boolean> => {
   const params: DeleteCommandInput = {
     TableName: getTableName(tableName),
     Key: key,
@@ -322,7 +310,7 @@ export const deleteItem = async (
 
 /**
  * Execute a query against DynamoDB
- * 
+ *
  * @param params - Query parameters
  * @returns The query results with pagination token
  */
@@ -336,7 +324,7 @@ export const query = async <T extends DynamoItem>(
 
   try {
     const result = await docClient.send(new QueryCommand(queryParams));
-    
+
     return {
       items: (result.Items || []) as T[],
       lastEvaluatedKey: result.LastEvaluatedKey,
@@ -354,7 +342,7 @@ export const query = async <T extends DynamoItem>(
 
 /**
  * Execute a scan against DynamoDB
- * 
+ *
  * @param params - Scan parameters
  * @returns The scan results with pagination token
  */
@@ -368,7 +356,7 @@ export const scan = async <T extends DynamoItem>(
 
   try {
     const result = await docClient.send(new ScanCommand(scanParams));
-    
+
     return {
       items: (result.Items || []) as T[],
       lastEvaluatedKey: result.LastEvaluatedKey,

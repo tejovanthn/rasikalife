@@ -1,16 +1,16 @@
 /**
  * Mock entities for testing
  */
-import { 
-  User, 
-  Artist, 
-  Composition, 
-  Raga, 
-  Tala, 
-  Event, 
+import type {
+  User,
+  Artist,
+  Composition,
+  Raga,
+  Tala,
+  Event,
   Venue,
   Thread,
-  Reply
+  Reply,
 } from '../../src/types';
 
 export const mockUsers: User[] = [
@@ -29,30 +29,30 @@ export const mockUsers: User[] = [
       preferredTraditions: ['carnatic'],
       favoriteInstruments: ['violin', 'mridangam'],
       favoriteRagas: ['todi', 'kalyani'],
-      themeName: 'light'
+      themeName: 'light',
     },
     notificationSettings: {
       email: {
         newFollower: true,
         upcomingEvents: true,
         artistUpdates: true,
-        threadReplies: true
+        threadReplies: true,
       },
       push: {
         newFollower: true,
         upcomingEvents: true,
         artistUpdates: false,
-        threadReplies: true
-      }
+        threadReplies: true,
+      },
     },
     privacySettings: {
       showEmail: false,
       showActivity: true,
       showFollowing: true,
-      allowMessages: true
+      allowMessages: true,
     },
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'user_2',
@@ -69,31 +69,31 @@ export const mockUsers: User[] = [
       preferredTraditions: ['carnatic'],
       favoriteInstruments: ['vocal'],
       favoriteRagas: ['bhairavi', 'kalyani'],
-      themeName: 'dark'
+      themeName: 'dark',
     },
     notificationSettings: {
       email: {
         newFollower: true,
         upcomingEvents: true,
         artistUpdates: true,
-        threadReplies: true
+        threadReplies: true,
       },
       push: {
         newFollower: true,
         upcomingEvents: true,
         artistUpdates: true,
-        threadReplies: true
-      }
+        threadReplies: true,
+      },
     },
     privacySettings: {
       showEmail: false,
       showActivity: true,
       showFollowing: true,
-      allowMessages: true
+      allowMessages: true,
     },
     createdAt: '2024-01-02T00:00:00.000Z',
-    updatedAt: '2024-01-02T00:00:00.000Z'
-  }
+    updatedAt: '2024-01-02T00:00:00.000Z',
+  },
 ];
 
 export const mockArtists: Artist[] = [
@@ -113,17 +113,17 @@ export const mockArtists: Artist[] = [
     location: {
       city: 'Chennai',
       state: 'Tamil Nadu',
-      country: 'India'
+      country: 'India',
     },
     profileImage: 'https://example.com/artist1.jpg',
     socialLinks: {
       website: 'https://vidyasubramanian.com',
       youtube: 'https://youtube.com/vidyasubramanian',
-      instagram: 'https://instagram.com/vidyasubramanian'
+      instagram: 'https://instagram.com/vidyasubramanian',
     },
     traditions: ['carnatic'],
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'artist_2',
@@ -140,17 +140,17 @@ export const mockArtists: Artist[] = [
     location: {
       city: 'Chennai',
       state: 'Tamil Nadu',
-      country: 'India'
+      country: 'India',
     },
     profileImage: 'https://example.com/artist2.jpg',
     socialLinks: {
       youtube: 'https://youtube.com/ramakrishnanmurthy',
-      instagram: 'https://instagram.com/ramakrishnanmurthy'
+      instagram: 'https://instagram.com/ramakrishnanmurthy',
     },
     traditions: ['carnatic'],
     createdAt: '2024-01-02T00:00:00.000Z',
-    updatedAt: '2024-01-02T00:00:00.000Z'
-  }
+    updatedAt: '2024-01-02T00:00:00.000Z',
+  },
 ];
 
 export const mockCompositions: Composition[] = [
@@ -177,7 +177,7 @@ export const mockCompositions: Composition[] = [
     sourceAttribution: 'Traditional notation from Dikshitar sampradaya',
     tradition: 'carnatic',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'composition_2',
@@ -201,8 +201,8 @@ export const mockCompositions: Composition[] = [
     sourceAttribution: 'Traditional notation from Tyagaraja sampradaya',
     tradition: 'carnatic',
     createdAt: '2024-01-02T00:00:00.000Z',
-    updatedAt: '2024-01-15T00:00:00.000Z'
-  }
+    updatedAt: '2024-01-15T00:00:00.000Z',
+  },
 ];
 
 export const mockRagas: Raga[] = [
@@ -224,7 +224,7 @@ export const mockRagas: Raga[] = [
     editedBy: ['user_1'],
     tradition: 'carnatic',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'raga_2',
@@ -243,8 +243,8 @@ export const mockRagas: Raga[] = [
     editedBy: ['user_1', 'user_2'],
     tradition: 'carnatic',
     createdAt: '2024-01-02T00:00:00.000Z',
-    updatedAt: '2024-01-15T00:00:00.000Z'
-  }
+    updatedAt: '2024-01-15T00:00:00.000Z',
+  },
 ];
 
 export const mockTalas: Tala[] = [
@@ -262,7 +262,7 @@ export const mockTalas: Tala[] = [
     editedBy: ['user_1'],
     tradition: 'carnatic',
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'tala_2',
@@ -277,21 +277,22 @@ export const mockTalas: Tala[] = [
     editedBy: ['user_1'],
     tradition: 'carnatic',
     createdAt: '2024-01-02T00:00:00.000Z',
-    updatedAt: '2024-01-02T00:00:00.000Z'
-  }
+    updatedAt: '2024-01-02T00:00:00.000Z',
+  },
 ];
 
 export const mockEvents: Event[] = [
   {
     id: 'event_1',
     title: 'Annual Thyagaraja Aradhana',
-    description: 'Annual celebration of Saint Thyagaraja with performances of the Pancharatna Kritis',
+    description:
+      'Annual celebration of Saint Thyagaraja with performances of the Pancharatna Kritis',
     startDate: '2025-02-01T10:00:00.000Z',
     endDate: '2025-02-01T18:00:00.000Z',
     location: {
       city: 'Chennai',
       state: 'Tamil Nadu',
-      country: 'India'
+      country: 'India',
     },
     venue: 'Music Academy',
     venueId: 'venue_1',
@@ -300,7 +301,7 @@ export const mockEvents: Event[] = [
       isPaid: true,
       price: 500,
       currency: 'INR',
-      ticketUrl: 'https://example.com/tickets/event1'
+      ticketUrl: 'https://example.com/tickets/event1',
     },
     artists: ['artist_1', 'artist_2'],
     ragas: ['todi', 'kalyani', 'bhairavi'],
@@ -313,7 +314,7 @@ export const mockEvents: Event[] = [
     status: 'scheduled',
     isVirtual: false,
     createdAt: '2024-12-15T00:00:00.000Z',
-    updatedAt: '2024-12-15T00:00:00.000Z'
+    updatedAt: '2024-12-15T00:00:00.000Z',
   },
   {
     id: 'event_2',
@@ -324,7 +325,7 @@ export const mockEvents: Event[] = [
     location: {
       city: 'Bangalore',
       state: 'Karnataka',
-      country: 'India'
+      country: 'India',
     },
     venue: 'Chowdiah Memorial Hall',
     venueId: 'venue_2',
@@ -333,7 +334,7 @@ export const mockEvents: Event[] = [
       isPaid: true,
       price: 300,
       currency: 'INR',
-      ticketUrl: 'https://example.com/tickets/event2'
+      ticketUrl: 'https://example.com/tickets/event2',
     },
     artists: ['artist_2'],
     organizer: 'Carnatic Youth Association',
@@ -344,8 +345,8 @@ export const mockEvents: Event[] = [
     isVirtual: false,
     seriesId: 'series_1',
     createdAt: '2024-12-20T00:00:00.000Z',
-    updatedAt: '2024-12-20T00:00:00.000Z'
-  }
+    updatedAt: '2024-12-20T00:00:00.000Z',
+  },
 ];
 
 export const mockVenues: Venue[] = [
@@ -361,7 +362,7 @@ export const mockVenues: Venue[] = [
     contact: {
       email: 'info@musicacademy.org',
       phone: '+91-44-28112231',
-      person: 'Secretary'
+      person: 'Secretary',
     },
     website: 'https://musicacademy.org',
     images: ['https://example.com/venue1.jpg'],
@@ -369,7 +370,7 @@ export const mockVenues: Venue[] = [
     partnershipStatus: 'premium',
     virtualCapabilities: true,
     createdAt: '2024-01-01T00:00:00.000Z',
-    updatedAt: '2024-01-01T00:00:00.000Z'
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: 'venue_2',
@@ -382,7 +383,7 @@ export const mockVenues: Venue[] = [
     facilities: ['parking', 'air_conditioning'],
     contact: {
       email: 'info@chowdiahhall.org',
-      phone: '+91-80-23445810'
+      phone: '+91-80-23445810',
     },
     website: 'https://chowdiahhall.org',
     images: ['https://example.com/venue2.jpg'],
@@ -390,15 +391,16 @@ export const mockVenues: Venue[] = [
     partnershipStatus: 'basic',
     virtualCapabilities: false,
     createdAt: '2024-01-02T00:00:00.000Z',
-    updatedAt: '2024-01-02T00:00:00.000Z'
-  }
+    updatedAt: '2024-01-02T00:00:00.000Z',
+  },
 ];
 
 export const mockThreads: Thread[] = [
   {
     id: 'thread_1',
     title: 'Identifying a Dikshitar kriti I heard yesterday',
-    content: 'I heard this beautiful composition in Kalyani raga yesterday but couldn\'t catch the name. It started with "Hiranmayeem" if I recall correctly. Can anyone identify it?',
+    content:
+      'I heard this beautiful composition in Kalyani raga yesterday but couldn\'t catch the name. It started with "Hiranmayeem" if I recall correctly. Can anyone identify it?',
     authorId: 'user_1',
     category: 'identification',
     tags: ['dikshitar', 'kalyani', 'composition-id'],
@@ -410,12 +412,13 @@ export const mockThreads: Thread[] = [
     isSticky: false,
     isPinned: false,
     createdAt: '2024-01-01T10:00:00.000Z',
-    updatedAt: '2024-01-02T12:30:00.000Z'
+    updatedAt: '2024-01-02T12:30:00.000Z',
   },
   {
     id: 'thread_2',
     title: 'Best recordings of Pancharatna Kritis?',
-    content: 'I\'m looking for recommendations for the best recordings of the Thyagaraja Pancharatna Kritis. Which artists would you recommend for a beginner?',
+    content:
+      "I'm looking for recommendations for the best recordings of the Thyagaraja Pancharatna Kritis. Which artists would you recommend for a beginner?",
     authorId: 'user_2',
     category: 'recommendation',
     tags: ['thyagaraja', 'pancharatna', 'recordings'],
@@ -427,42 +430,45 @@ export const mockThreads: Thread[] = [
     isSticky: false,
     isPinned: false,
     createdAt: '2024-01-03T09:00:00.000Z',
-    updatedAt: '2024-01-03T14:15:00.000Z'
-  }
+    updatedAt: '2024-01-03T14:15:00.000Z',
+  },
 ];
 
 export const mockReplies: Reply[] = [
   {
     id: 'reply_1',
     threadId: 'thread_1',
-    content: 'That sounds like "Hiranmayeem Lakshmim" in Lalitha raga, not Kalyani. It\'s one of Dikshitar\'s compositions on Goddess Lakshmi.',
+    content:
+      'That sounds like "Hiranmayeem Lakshmim" in Lalitha raga, not Kalyani. It\'s one of Dikshitar\'s compositions on Goddess Lakshmi.',
     authorId: 'user_2',
     isAccepted: false,
     voteCount: 5,
     createdAt: '2024-01-01T11:30:00.000Z',
-    updatedAt: '2024-01-01T11:30:00.000Z'
+    updatedAt: '2024-01-01T11:30:00.000Z',
   },
   {
     id: 'reply_2',
     threadId: 'thread_1',
-    content: 'Actually, you might be thinking of "Hiranmayim" which is indeed in Lalitha raga as the previous reply mentioned. Here\'s a recording link that might help: [example link]',
+    content:
+      'Actually, you might be thinking of "Hiranmayim" which is indeed in Lalitha raga as the previous reply mentioned. Here\'s a recording link that might help: [example link]',
     authorId: 'user_1',
     parentReplyId: 'reply_1',
     isAccepted: true,
     voteCount: 8,
     createdAt: '2024-01-02T12:30:00.000Z',
-    updatedAt: '2024-01-02T12:30:00.000Z'
+    updatedAt: '2024-01-02T12:30:00.000Z',
   },
   {
     id: 'reply_3',
     threadId: 'thread_2',
-    content: 'For Pancharatna Kritis, I would highly recommend the recordings by Maharajapuram Santhanam or M.S. Subbulakshmi. Both offer excellent renditions that are accessible to beginners.',
+    content:
+      'For Pancharatna Kritis, I would highly recommend the recordings by Maharajapuram Santhanam or M.S. Subbulakshmi. Both offer excellent renditions that are accessible to beginners.',
     authorId: 'user_1',
     isAccepted: false,
     voteCount: 3,
     createdAt: '2024-01-03T14:15:00.000Z',
-    updatedAt: '2024-01-03T14:15:00.000Z'
-  }
+    updatedAt: '2024-01-03T14:15:00.000Z',
+  },
 ];
 
 /**
@@ -489,7 +495,7 @@ export const convertUserToDynamoItem = (user: User) => ({
   notificationSettings: user.notificationSettings,
   privacySettings: user.privacySettings,
   createdAt: user.createdAt,
-  updatedAt: user.updatedAt
+  updatedAt: user.updatedAt,
 });
 
 export const convertArtistToDynamoItem = (artist: Artist) => ({
@@ -514,7 +520,7 @@ export const convertArtistToDynamoItem = (artist: Artist) => ({
   socialLinks: artist.socialLinks,
   traditions: artist.traditions,
   createdAt: artist.createdAt,
-  updatedAt: artist.updatedAt
+  updatedAt: artist.updatedAt,
 });
 
 export const convertCompositionToDynamoItem = (composition: Composition) => ({
@@ -546,32 +552,32 @@ export const convertCompositionToDynamoItem = (composition: Composition) => ({
   sourceAttribution: composition.sourceAttribution,
   tradition: composition.tradition,
   createdAt: composition.createdAt,
-  updatedAt: composition.updatedAt
+  updatedAt: composition.updatedAt,
 });
 
 export const initializeMockDb = () => {
   const { mockDb } = require('./dynamodb');
-  
+
   // Reset the mock database
   mockDb.reset();
-  
+
   // Initialize with mock data
   const coreTbl = mockDb.getTable('RasikaTable');
-  
+
   // Add users
   mockUsers.forEach(user => {
     coreTbl.push(convertUserToDynamoItem(user));
   });
-  
+
   // Add artists
   mockArtists.forEach(artist => {
     coreTbl.push(convertArtistToDynamoItem(artist));
   });
-  
+
   // Add compositions
   mockCompositions.forEach(composition => {
     coreTbl.push(convertCompositionToDynamoItem(composition));
-    
+
     // Add latest version pointer
     coreTbl.push({
       PK: `COMPOSITION#${composition.id}`,
@@ -579,12 +585,12 @@ export const initializeMockDb = () => {
       GSI1PK: `RAGA#${composition.ragas[0]}`,
       GSI1SK: `COMPOSITION#${composition.id}`,
       id: composition.id,
-      version: composition.version
+      version: composition.version,
     });
   });
-  
+
   // Add other entities...
   // Similar patterns for ragas, talas, events, etc.
-  
+
   return coreTbl;
 };
