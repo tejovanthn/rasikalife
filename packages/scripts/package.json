@@ -11,7 +11,7 @@
     "@rasika/core": "workspace:*"
   },
   "devDependencies": {
-    "tsx": "^4.16.5"
+    "tsx": "^4.19.4"
   },
   "keywords": [],
   "author": "",
