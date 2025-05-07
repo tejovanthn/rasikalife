@@ -471,7 +471,7 @@ function mockImplementScanCommand(command: any) {
       }
     });
   }
-  
+
   // Implement pagination
   let startIndex = 0;
   if (ExclusiveStartKey) {
