@@ -15,14 +15,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.804.0",
-    "@aws-sdk/lib-dynamodb": "^3.804.0",
-    "@aws-sdk/util-dynamodb": "^3.804.0",
+    "@aws-sdk/client-dynamodb": "^3.806.0",
+    "@aws-sdk/lib-dynamodb": "^3.806.0",
+    "@aws-sdk/util-dynamodb": "^3.806.0",
     "ksuid": "^3.0.0",
     "zod": "^3.24.4"
   },
   "devDependencies": {
-    "@types/node": "^20.17.43",
+    "@types/node": "^20.17.46",
     "@vitest/coverage-v8": "^1.6.1",
     "rimraf": "^5.0.10",
     "typescript": "^5.8.3",
