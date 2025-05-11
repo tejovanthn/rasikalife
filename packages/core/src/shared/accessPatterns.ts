@@ -1,8 +1,7 @@
 /**
  * Common access patterns implementation for the single-table design
  */
-import type { DynamoItem } from '../db/queryBuilder';
-import { createQuery } from '../db/queryBuilder';
+import { createQuery, type DynamoItem } from '../db/queryBuilder';
 import { putItem, getItem, updateItem, deleteItem, transactWriteItems } from '../db/operations';
 import {
   type EntityPrefix,

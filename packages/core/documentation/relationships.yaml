@@ -1,0 +1,106 @@
+erDiagram
+    %% Core Identity Entities
+    User ||--o{ ArtistManagement : manages
+    User ||--o{ Favorite : favorites
+    User ||--o{ Vote : votes
+    User ||--o{ ThreadSubscription : subscribes
+    User ||--o{ Collection : creates
+    User ||--o{ Transaction : makes
+    User ||--o{ Ticket : purchases
+    User ||--o{ Patronage : supports
+    User ||--o{ UserBadge : earns
+    User ||--o{ KarmaHistory : accumulates
+    User ||--o{ SearchHistory : searches
+    User ||--o{ UserHistory : browses
+    User ||--o{ UserSegment : belongs_to
+    User ||--o{ Thread : creates
+    User ||--o{ Reply : posts
+    User ||--o{ ApprovalRequest : requests
+    User ||--o{ FlaggedContent : flags
+    User ||--o{ ModerationAction : performs
+    User ||--o{ Notification : receives
+    User }|--|| WhatsAppUser : has_whatsapp
+
+    %% Artist and Management
+    Artist ||--o{ ArtistManagement : managed_by
+    Artist ||--o{ CompositionAttribution : composes
+    Artist ||--o{ Performance : performs
+    Artist ||--o{ EventParticipant : participates_in
+    Artist ||--o{ PatronTier : offers
+    Artist ||--o{ Patronage : receives_support
+    Artist ||--o{ Update : posts
+    Artist ||--o{ Thread : discussed_in
+    Artist ||--o{ NameVariant : has_variants
+    Artist }o--o{ Artist : group_member_of
+
+    %% Composition and Attribution
+    Composition ||--o{ CompositionAttribution : attributed_to
+    Composition }o--o{ Performance : performed_in
+    Composition ||--o{ NameVariant : has_variants
+    Composition }o--o{ Raga : uses_raga
+    Composition }o--o{ Tala : uses_tala
+    
+    %% Performance and Recording
+    Performance }o--|| Event : performed_at
+    Performance }o--o{ Composition : performs
+    Performance ||--o{ Artist : performed_by
+    Performance ||--o{ Recording : recorded_as
+    
+    %% Events and Venues
+    Event }o--|| Venue : held_at
+    Event ||--o{ EventParticipant : has_participants
+    Event ||--o{ Ticket : has_tickets
+    Event }o--|| EventSeries : part_of
+    
+    %% Forum and Community
+    Thread ||--o{ Reply : has_replies
+    Thread ||--o{ ThreadSubscription : subscribed_by
+    Thread }o--|| User : created_by
+    Reply }o--|| User : posted_by
+    Reply }o--|| Reply : replies_to
+    
+    %% Collections
+    Collection ||--o{ CollectionItem : contains
+    CollectionItem }o--|| User : added_by
+    
+    %% Karma and Badges
+    Badge ||--o{ UserBadge : awarded_to
+    KarmaHistory }o--|| User : belongs_to
+    
+    %% Patronage and Transactions
+    PatronTier }o--|| Artist : offered_by
+    Patronage }o--|| User : patron
+    Patronage }o--|| Artist : supports
+    Patronage }o--|| PatronTier : subscribes_to
+    Transaction }o--|| User : made_by
+    
+    %% Notifications
+    Notification }o--|| User : sent_to
+    
+    %% Moderation
+    ApprovalRequest }o--|| User : requested_by
+    ApprovalRequest }o--|| User : reviewed_by
+    FlaggedContent }o--|| User : flagged_by
+    ModerationAction }o--|| User : performed_by
+    
+    %% Analytics and Metrics
+    SearchHistory }o--|| User : searched_by
+    UserHistory }o--|| User : belongs_to
+    UserSegment }o--|| User : contains
+    EntityMetric ||--o{ Artist : measures
+    EntityMetric ||--o{ Composition : measures
+    EntityMetric ||--o{ Event : measures
+    
+    %% Language and Music Theory
+    Raga ||--o{ Composition : used_in
+    Raga ||--o{ Performance : performed_in
+    Raga ||--o{ NameVariant : has_variants
+    Tala ||--o{ Composition : used_in
+    Tala ||--o{ Performance : performed_in
+    Tala ||--o{ NameVariant : has_variants
+    
+    %% Name Variants
+    NameVariant ||--o{ Artist : refers_to
+    NameVariant ||--o{ Composition : refers_to
+    NameVariant ||--o{ Raga : refers_to
+    NameVariant ||--o{ Tala : refers_to

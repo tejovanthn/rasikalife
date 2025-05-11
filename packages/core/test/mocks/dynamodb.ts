@@ -31,21 +31,29 @@ export const mockDynamoDBDocumentClient = {
       send: vi.fn().mockImplementation(command => {
         if (command.constructor.name === 'PutCommand') {
           return mockImplementPutCommand(command);
-        }if (command.constructor.name === 'GetCommand') {
+        }
+        if (command.constructor.name === 'GetCommand') {
           return mockImplementGetCommand(command);
-        }if (command.constructor.name === 'UpdateCommand') {
+        }
+        if (command.constructor.name === 'UpdateCommand') {
           return mockImplementUpdateCommand(command);
-        }if (command.constructor.name === 'DeleteCommand') {
+        }
+        if (command.constructor.name === 'DeleteCommand') {
           return mockImplementDeleteCommand(command);
-        }if (command.constructor.name === 'QueryCommand') {
+        }
+        if (command.constructor.name === 'QueryCommand') {
           return mockImplementQueryCommand(command);
-        }if (command.constructor.name === 'ScanCommand') {
+        }
+        if (command.constructor.name === 'ScanCommand') {
           return mockImplementScanCommand(command);
-        }if (command.constructor.name === 'BatchWriteCommand') {
+        }
+        if (command.constructor.name === 'BatchWriteCommand') {
           return mockImplementBatchWriteCommand(command);
-        }if (command.constructor.name === 'BatchGetCommand') {
+        }
+        if (command.constructor.name === 'BatchGetCommand') {
           return mockImplementBatchGetCommand(command);
-        }if (command.constructor.name === 'TransactWriteCommand') {
+        }
+        if (command.constructor.name === 'TransactWriteCommand') {
           return mockImplementTransactWriteCommand(command);
         }
 

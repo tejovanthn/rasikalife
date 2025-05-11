@@ -2,7 +2,8 @@
  * Common type definitions used across the Rasika.life application
  */
 
-import type { ErrorCodeType } from '../constants/errorCodes';
+import type { ErrorCodeType } from '@/constants/errorCodes';
+import type { PaginationParams, PaginationResult } from '@/db/queryBuilder';
 
 // Base application error
 export class ApplicationError extends Error {
@@ -29,45 +30,11 @@ export type EntityType =
   | 'update'
   | 'collection';
 
-export type Tradition = 'carnatic' | 'hindustani';
-
 // Base entity interface with common properties
 export interface BaseEntity {
   id: string;
   createdAt: string;
   updatedAt: string;
-}
-
-// Pagination input parameters
-export interface PaginationParams {
-  limit?: number;
-  nextToken?: string;
-}
-
-// Pagination response
-export interface PaginatedResult<T> {
-  items: T[];
-  nextToken?: string;
-}
-
-// DynamoDB key structure
-export interface DynamoKey {
-  PK: string;
-  SK: string;
-}
-
-// Common structure for single-table design items
-export interface DynamoItem extends DynamoKey {
-  [key: string]: any;
-  GSI1PK?: string;
-  GSI1SK?: string;
-  GSI2PK?: string;
-  GSI2SK?: string;
-  GSI3PK?: string;
-  GSI3SK?: string;
-  GSI4PK?: string;
-  GSI4SK?: string;
-  LSI1SK?: string;
 }
 
 // Generic type for repository operations
@@ -76,7 +43,7 @@ export interface Repository<T extends BaseEntity, K = string> {
   getById(id: K): Promise<T | null>;
   update(id: K, item: Partial<T>): Promise<T>;
   delete(id: K): Promise<void>;
-  list(params?: PaginationParams): Promise<PaginatedResult<T>>;
+  list(params?: PaginationParams): Promise<PaginationResult<T>>;
 }
 
 // Version control interface for wiki-style entities

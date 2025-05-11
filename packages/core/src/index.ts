@@ -19,16 +19,16 @@ export * from './shared/pagination';
 export * from './shared/search';
 
 // Export domains
-export * from './domain/user';
+// export * from './domain/user';
 export * from './domain/artist';
-export * from './domain/composition';
-export * from './domain/raga';
-export * from './domain/tala';
-export * from './domain/event';
-export * from './domain/venue';
-export * from './domain/forum';
-export * from './domain/whatsapp';
-export * from './domain/collection';
-export * from './domain/karma';
-export * from './domain/notification';
-export * from './domain/payment';
+// export * from './domain/composition';
+// export * from './domain/raga';
+// export * from './domain/tala';
+// export * from './domain/event';
+// export * from './domain/venue';
+// export * from './domain/forum';
+// export * from './domain/whatsapp';
+// export * from './domain/collection';
+// export * from './domain/karma';
+// export * from './domain/notification';
+// export * from './domain/payment';
