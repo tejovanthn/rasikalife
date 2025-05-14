@@ -1,0 +1,25 @@
+{
+  "name": "@rasika/trpc",
+  "version": "0.0.0",
+  "private": true,
+  "description": "tRPC server for Rasika.life Indian classical arts community platform",
+  "main": "src/index.js",
+  "type": "module",
+  "types": "src/index.ts",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@rasika/core": "workspace:*",
+    "@trpc/server": "^10.45.2",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.1",
+    "typescript": "^5.8.3",
+    "vitest": "^1.6.1"
+  }
+}

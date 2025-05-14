@@ -21,9 +21,9 @@ export * from './shared/search';
 // Export domains
 // export * from './domain/user';
 export * from './domain/artist';
-// export * from './domain/composition';
-// export * from './domain/raga';
-// export * from './domain/tala';
+export * from './domain/composition';
+export * from './domain/raga';
+export * from './domain/tala';
 // export * from './domain/event';
 // export * from './domain/venue';
 // export * from './domain/forum';
