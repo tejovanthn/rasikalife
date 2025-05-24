@@ -1,5 +1,14 @@
 import { z } from 'zod';
-import { createArtist, createArtistSchema, getArtist, getPopularArtists, incrementViewCount, searchArtists, updateArtist, updateArtistSchema } from '@rasika/core';
+import {
+  createArtist,
+  createArtistSchema,
+  getArtist,
+  getPopularArtists,
+  incrementViewCount,
+  searchArtists,
+  updateArtist,
+  updateArtistSchema,
+} from '@rasika/core';
 import { createRouter, publicProcedure, protectedProcedure } from '../server';
 import { idWithViewTrackingSchema } from '../schemas';
 import { artistSearchParamsSchema } from '../schemas/artist';

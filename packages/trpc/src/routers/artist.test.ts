@@ -84,7 +84,7 @@ describe('Artist Router Integration Tests', () => {
         },
       ];
 
-      await Promise.all(artists.map(artist => testRouter.artist.create(artist)));      
+      await Promise.all(artists.map(artist => testRouter.artist.create(artist)));
 
       // Search for "Doe"
       const searchParams: ArtistSearchParams = {
@@ -134,4 +134,4 @@ describe('Artist Router Integration Tests', () => {
       expect(result.profileImage).toBe(artistData.profileImage); // Should remain unchanged
     });
   });
-}); 
+});

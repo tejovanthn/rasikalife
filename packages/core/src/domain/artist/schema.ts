@@ -1,4 +1,9 @@
-import { createStringSchema, createArraySchema, locationSchema, socialLinksSchema } from '../../utils';
+import {
+  createStringSchema,
+  createArraySchema,
+  locationSchema,
+  socialLinksSchema,
+} from '../../utils';
 import { z } from 'zod';
 import { ArtistType, Tradition, VerificationStatus } from './types';
 
@@ -32,7 +37,7 @@ export const createArtistSchema = z.object({
 
 // Update schema - partial version for updates
 export const updateArtistSchema = createArtistSchema.partial().extend({
-  id: z.string()
+  id: z.string(),
 });
 
 // Full artist schema including system fields
@@ -55,5 +60,5 @@ export const artistSchema = createArtistSchema.extend({
 
 // Export inferred types
 export type CreateArtistInput = z.infer<typeof createArtistSchema>;
-export type UpdateArtistInput = Omit<z.infer<typeof updateArtistSchema>, "id">;
+export type UpdateArtistInput = Omit<z.infer<typeof updateArtistSchema>, 'id'>;
 export type Artist = z.infer<typeof artistSchema>;

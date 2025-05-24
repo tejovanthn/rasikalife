@@ -1,10 +1,23 @@
-import { putItem, updateItem, query } from "../../db";
-import { getByPrimaryKey, getByGlobalIndex } from "../../shared/accessPatterns";
-import { createPaginatedResponse } from "../../shared/pagination";
-import { scoreSearchResults } from "../../shared/search";
-import { createBaseItem, EntityPrefix, formatIndexKey, formatKey, SecondaryPrefix } from "../../shared/singleTable";
-import { createArtistSchema, Artist, updateArtistSchema } from "./schema";
-import { ArtistDynamoItem, VerificationStatus, UpdateArtistDynamoItem, ArtistSearchResult, Tradition, ArtistSearchParams } from "./types";
+import { putItem, updateItem, query } from '../../db';
+import { getByPrimaryKey, getByGlobalIndex } from '../../shared/accessPatterns';
+import { createPaginatedResponse } from '../../shared/pagination';
+import { scoreSearchResults } from '../../shared/search';
+import {
+  createBaseItem,
+  EntityPrefix,
+  formatIndexKey,
+  formatKey,
+  SecondaryPrefix,
+} from '../../shared/singleTable';
+import { createArtistSchema, Artist, updateArtistSchema } from './schema';
+import {
+  ArtistDynamoItem,
+  VerificationStatus,
+  UpdateArtistDynamoItem,
+  ArtistSearchResult,
+  Tradition,
+  ArtistSearchParams,
+} from './types';
 
 export class ArtistRepository {
   static async create(input: unknown): Promise<ArtistDynamoItem> {
@@ -59,7 +72,10 @@ export class ArtistRepository {
   }
 
   static async update(id: string, input: unknown): Promise<Artist> {
-    const validatedInput: UpdateArtistDynamoItem = updateArtistSchema.parse({id, ...input});
+    const validatedInput: UpdateArtistDynamoItem = updateArtistSchema.parse({
+      id,
+      ...(input || {}),
+    });
 
     // Update GSI fields if name is changing
     if (validatedInput.name) {

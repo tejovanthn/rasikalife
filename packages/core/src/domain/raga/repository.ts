@@ -1,5 +1,9 @@
 import { type DynamoItem, batchPutItems, query, updateItem } from '../../db';
-import { getByPrimaryKey, getAllByPartitionKey, getByGlobalIndex } from '../../shared/accessPatterns';
+import {
+  getByPrimaryKey,
+  getAllByPartitionKey,
+  getByGlobalIndex,
+} from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {

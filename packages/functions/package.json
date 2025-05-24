@@ -2,10 +2,7 @@
   "name": "@rasika/functions",
   "version": "0.0.0",
   "exports": {
-    "./*": [
-      "./src/*/index.ts",
-      "./src/*.ts"
-    ]
+    "./*": ["./src/*/index.ts", "./src/*.ts"]
   },
   "types": "./src/index.ts",
   "dependencies": {

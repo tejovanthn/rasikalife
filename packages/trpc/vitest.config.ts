@@ -14,4 +14,4 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     testTimeout: 10000, // Increased timeout for integration tests
   },
-}); 
+});

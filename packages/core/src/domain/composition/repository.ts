@@ -19,10 +19,20 @@ import {
   type AttributionSearchResult,
   AttributionType,
 } from './types';
-import { getByPrimaryKey, getAllByPartitionKey, getByGlobalIndex } from '../../shared/accessPatterns';
+import {
+  getByPrimaryKey,
+  getAllByPartitionKey,
+  getByGlobalIndex,
+} from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
-import { createBaseItem, EntityPrefix, formatVersionKey, formatIndexKey, formatKey } from '../../shared/singleTable';
+import {
+  createBaseItem,
+  EntityPrefix,
+  formatVersionKey,
+  formatIndexKey,
+  formatKey,
+} from '../../shared/singleTable';
 import { getCurrentISOString } from '../../utils';
 
 export class CompositionRepository {

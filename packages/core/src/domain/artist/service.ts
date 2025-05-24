@@ -1,9 +1,8 @@
-import { formatKey, EntityPrefix, SecondaryPrefix } from "../../shared/singleTable";
-import { createQuery, updateItem } from "../../db";
-import { ArtistRepository } from "./repository";
-import { CreateArtistInput, Artist, UpdateArtistInput } from "./schema";
-import { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from "./types";
-
+import { formatKey, EntityPrefix, SecondaryPrefix } from '../../shared/singleTable';
+import { createQuery, updateItem } from '../../db';
+import { ArtistRepository } from './repository';
+import { CreateArtistInput, Artist, UpdateArtistInput } from './schema';
+import { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from './types';
 
 export const createArtist = async (input: CreateArtistInput): Promise<Artist> => {
   // Add any business logic here (e.g., validation, enrichment)
@@ -46,7 +45,6 @@ export const incrementViewCount = async (id: string): Promise<void> => {
       PK: formatKey(EntityPrefix.ARTIST, id),
       SK: SecondaryPrefix.METADATA,
     },
-    {viewCount: { $increment: 1 },}
-
+    { viewCount: { $increment: 1 } }
   );
 };
