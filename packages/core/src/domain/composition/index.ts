@@ -1,4 +1,4 @@
-// src/domain/composition/index.ts
+// ../../domain/composition/index.ts
 export * from './schema';
 export * from './types';
 export * from './repository';

@@ -1,4 +1,4 @@
-import { createStringSchema, createArraySchema } from '@/utils';
+import { createStringSchema, createArraySchema } from '../../utils';
 import { z } from 'zod';
 import { Tradition } from '../artist';
 import { AttributionConfidence, AttributionType } from './types';
@@ -39,7 +39,6 @@ export const compositionSchema = z.object({
   version: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  addedBy: z.string(),
   editedBy: z.array(z.string()),
   viewCount: z.number().int().default(0),
   favoriteCount: z.number().int().default(0),

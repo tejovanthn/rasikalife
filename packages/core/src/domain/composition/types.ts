@@ -1,4 +1,4 @@
-import type { DynamoItem } from '@/db';
+import type { DynamoItem } from '../../db';
 import type { Tradition } from '../artist';
 import type { Composition, CompositionAttribution } from './schema';
 

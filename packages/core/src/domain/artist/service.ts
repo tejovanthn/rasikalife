@@ -1,7 +1,9 @@
-import { createQuery } from '@/db';
-import { ArtistRepository } from './repository';
-import type { CreateArtistInput, Artist, UpdateArtistInput } from './schema';
-import type { ArtistDynamoItem, ArtistSearchParams, ArtistSearchResult } from './types';
+import { formatKey, EntityPrefix, SecondaryPrefix } from "../../shared/singleTable";
+import { createQuery, updateItem } from "../../db";
+import { ArtistRepository } from "./repository";
+import { CreateArtistInput, Artist, UpdateArtistInput } from "./schema";
+import { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from "./types";
+
 
 export const createArtist = async (input: CreateArtistInput): Promise<Artist> => {
   // Add any business logic here (e.g., validation, enrichment)
@@ -39,8 +41,12 @@ export const getPopularArtists = async (limit = 10): Promise<Artist[]> => {
 };
 
 export const incrementViewCount = async (id: string): Promise<void> => {
-  await ArtistRepository.update(id, {
-    viewCount: { $increment: 1 },
-    // We'd also update popularity score here based on your algorithm
-  });
+  updateItem<ArtistDynamoItem>(
+    {
+      PK: formatKey(EntityPrefix.ARTIST, id),
+      SK: SecondaryPrefix.METADATA,
+    },
+    {viewCount: { $increment: 1 },}
+
+  );
 };

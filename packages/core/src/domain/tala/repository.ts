@@ -1,15 +1,15 @@
-import { type DynamoItem, batchPutItems, query, updateItem } from '@/db';
-import { getByPrimaryKey, getAllByPartitionKey, getByGlobalIndex } from '@/shared/accessPatterns';
-import { createPaginatedResponse } from '@/shared/pagination';
-import { scoreSearchResults } from '@/shared/search';
+import { type DynamoItem, batchPutItems, query, updateItem } from '../../db';
+import { getByPrimaryKey, getAllByPartitionKey, getByGlobalIndex } from '../../shared/accessPatterns';
+import { createPaginatedResponse } from '../../shared/pagination';
+import { scoreSearchResults } from '../../shared/search';
 import {
   createBaseItem,
   EntityPrefix,
   formatVersionKey,
   formatIndexKey,
   formatKey,
-} from '@/shared/singleTable';
-import { getCurrentISOString } from '@/utils';
+} from '../../shared/singleTable';
+import { getCurrentISOString } from '../../utils';
 import type { Tradition } from '../artist';
 import { type CreateTalaInput, type Tala, talaSchema, type UpdateTalaInput } from './schema';
 import type { TalaDynamoItem, TalaVersion, TalaSearchResult } from './types';

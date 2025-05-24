@@ -1,4 +1,4 @@
-// src/domain/raga/service.test.ts
+// ../../domain/raga/service.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RagaService } from './service';
 import { RagaRepository } from './repository';

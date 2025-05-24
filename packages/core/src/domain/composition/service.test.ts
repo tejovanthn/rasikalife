@@ -1,4 +1,4 @@
-// src/domain/composition/service.test.ts
+// ../../domain/composition/service.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CompositionService } from './service';
 import { CompositionRepository } from './repository';

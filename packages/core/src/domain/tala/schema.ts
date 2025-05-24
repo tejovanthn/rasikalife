@@ -1,4 +1,4 @@
-import { createStringSchema, createArraySchema } from '@/utils';
+import { createStringSchema, createArraySchema } from '../../utils';
 import { z } from 'zod';
 import { Tradition } from '../artist';
 

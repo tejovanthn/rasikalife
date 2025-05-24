@@ -31,7 +31,7 @@ export const artistRouter = createRouter({
   create: protectedProcedure.input(createArtistSchema).mutation(async ({ input, ctx }) => {
     return createArtist({
       ...input,
-      addedBy: ctx.user.id,
+      editedBy: [ctx.user.id],
     });
   }),
 

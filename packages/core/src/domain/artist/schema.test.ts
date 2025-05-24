@@ -1,4 +1,4 @@
-// src/domain/artist/schema.test.ts
+// ../../domain/artist/schema.test.ts
 import { describe, it, expect } from 'vitest';
 import { createArtistSchema, updateArtistSchema } from './schema';
 import { ArtistType, Tradition } from './types';

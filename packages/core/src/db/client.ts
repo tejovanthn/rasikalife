@@ -3,22 +3,16 @@
  */
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { Resource } from 'sst';
 
 // Default region from environment or fallback
-const REGION = process.env.AWS_REGION || 'ap-south-1';
+const REGION = process.env.AWS_REGION || 'us-east-1';
 // Default table name from environment or fallback
-export const TABLE_NAME = process.env.TABLE_NAME || 'RasikaTable';
+export const TABLE_NAME = Resource.RasikaTable.name;
 
 // Create the base DynamoDB client
 const ddbClient = new DynamoDBClient({
   region: REGION,
-  ...(process.env.IS_LOCAL === 'true' && {
-    endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
-    credentials: {
-      accessKeyId: 'LOCAL',
-      secretAccessKey: 'LOCAL',
-    },
-  }),
 });
 
 // Create the DynamoDB document client
@@ -44,5 +38,5 @@ export const docClient = DynamoDBDocumentClient.from(ddbClient, {
  * @returns The full table name
  */
 export const getTableName = (tableSuffix?: string): string => {
-  const tablename = tableSuffix ? `${TABLE_NAME}-${tableSuffix}` : TABLE_NAME;
+  return tableSuffix ? `${TABLE_NAME}-${tableSuffix}` : TABLE_NAME;
 };

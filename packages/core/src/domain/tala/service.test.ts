@@ -1,4 +1,4 @@
-// src/domain/tala/service.test.ts
+// ../../domain/tala/service.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TalaService } from './service';
 import { TalaRepository } from './repository';

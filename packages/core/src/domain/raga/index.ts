@@ -1,4 +1,4 @@
-// src/domain/raga/index.ts
+// ../../domain/raga/index.ts
 export * from './schema';
 export * from './types';
 export * from './repository';

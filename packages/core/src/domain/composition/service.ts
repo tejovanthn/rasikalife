@@ -1,4 +1,4 @@
-// src/domain/composition/service.ts
+// ../../domain/composition/service.ts
 import { CompositionRepository } from './repository';
 import type {
   CreateCompositionInput,

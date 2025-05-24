@@ -1,5 +1,5 @@
-// src/domain/artist/types.ts
-import type { DynamoItem } from '@/db';
+// ../../domain/artist/types.ts
+import type { DynamoItem } from '../../db';
 import type { Artist } from './schema';
 
 // Minimal types that can't be inferred from schemas

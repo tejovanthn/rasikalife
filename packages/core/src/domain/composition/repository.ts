@@ -1,15 +1,5 @@
-import { type DynamoItem, batchPutItems, query, updateItem, putItem } from '@/db';
-import { getByPrimaryKey, getAllByPartitionKey, getByGlobalIndex } from '@/shared/accessPatterns';
-import { createPaginatedResponse } from '@/shared/pagination';
-import { scoreSearchResults } from '@/shared/search';
-import {
-  createBaseItem,
-  EntityPrefix,
-  formatVersionKey,
-  formatIndexKey,
-  formatKey,
-} from '@/shared/singleTable';
-import { getCurrentISOString } from '@/utils';
+import { type DynamoItem, batchPutItems, query, updateItem, putItem } from '../../db';
+
 import {
   type CreateCompositionInput,
   type Composition,
@@ -29,6 +19,11 @@ import {
   type AttributionSearchResult,
   AttributionType,
 } from './types';
+import { getByPrimaryKey, getAllByPartitionKey, getByGlobalIndex } from '../../shared/accessPatterns';
+import { createPaginatedResponse } from '../../shared/pagination';
+import { scoreSearchResults } from '../../shared/search';
+import { createBaseItem, EntityPrefix, formatVersionKey, formatIndexKey, formatKey } from '../../shared/singleTable';
+import { getCurrentISOString } from '../../utils';
 
 export class CompositionRepository {
   static async create(input: CreateCompositionInput): Promise<Composition> {

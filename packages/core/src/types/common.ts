@@ -2,8 +2,8 @@
  * Common type definitions used across the Rasika.life application
  */
 
-import type { ErrorCodeType } from '@/constants/errorCodes';
-import type { PaginationParams, PaginationResult } from '@/db/queryBuilder';
+import { ErrorCodeType } from '../../constants';
+import type { PaginationParams, PaginationResult } from '../../db/queryBuilder';
 
 // Base application error
 export class ApplicationError extends Error {

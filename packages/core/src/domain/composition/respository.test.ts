@@ -495,7 +495,7 @@ describe('CompositionRepository', () => {
     });
   });
 
-  // src/domain/composition/repository.test.ts
+  // ../../domain/composition/repository.test.ts
   // Update the describe('verifyAttribution') section
 
   describe('verifyAttribution', () => {

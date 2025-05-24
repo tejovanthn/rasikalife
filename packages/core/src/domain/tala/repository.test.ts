@@ -1,4 +1,4 @@
-// src/domain/tala/repository.test.ts
+// ../../domain/tala/repository.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TalaRepository } from './repository';
 import { type CreateTalaInput, Tala } from './schema';

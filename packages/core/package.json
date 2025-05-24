@@ -2,9 +2,46 @@
   "name": "@rasika/core",
   "version": "0.0.0",
   "description": "Core domain logic for Rasika.life Indian classical arts community platform",
-  "main": "src/index.js",
+  "main": "./src/index.js",
   "type": "module",
-  "types": "src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.js",
+      "require": "./src/index.js"
+    },
+    "./utils": {
+      "types": "./src/utils/index.ts",
+      "import": "./src/utils/index.js",
+      "require": "./src/utils/index.js"
+    },
+    "./domain/*": {
+      "types": "./src/domain/*.ts",
+      "import": "./src/domain/*.js",
+      "require": "./src/domain/*.js"
+    },
+    "./shared/*": {
+      "types": "./src/shared/*.ts",
+      "import": "./src/shared/*.js",
+      "require": "./src/shared/*.js"
+    },
+    "./db": {
+      "types": "./src/db/index.ts",
+      "import": "./src/db/index.js",
+      "require": "./src/db/index.js"
+    },
+    "./constants": {
+      "types": "./src/constants/index.ts",
+      "import": "./src/constants/index.js",
+      "require": "./src/constants/index.js"
+    },
+    "./types": {
+      "types": "./src/types/index.ts",
+      "import": "./src/types/index.js",
+      "require": "./src/types/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rimraf dist",
@@ -15,14 +52,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.808.0",
-    "@aws-sdk/lib-dynamodb": "^3.808.0",
-    "@aws-sdk/util-dynamodb": "^3.808.0",
+    "@aws-sdk/client-dynamodb": "^3.817.0",
+    "@aws-sdk/lib-dynamodb": "^3.817.0",
+    "@aws-sdk/util-dynamodb": "^3.817.0",
     "ksuid": "^3.0.0",
-    "zod": "^3.24.4"
+    "zod": "^3.25.28"
   },
   "devDependencies": {
-    "@types/node": "^20.17.46",
+    "@types/node": "^20.17.50",
     "@vitest/coverage-v8": "^1.6.1",
     "rimraf": "^5.0.10",
     "typescript": "^5.8.3",

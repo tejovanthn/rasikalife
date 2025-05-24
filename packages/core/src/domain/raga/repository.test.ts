@@ -1,4 +1,4 @@
-// src/domain/raga/repository.test.ts
+// ../../domain/raga/repository.test.ts
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RagaRepository } from './repository';
 import { type CreateRagaInput, Raga } from './schema';
