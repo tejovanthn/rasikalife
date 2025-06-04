@@ -103,6 +103,73 @@ describe('Artist Router Integration Tests', () => {
       expect(result.items[0].name).toContain('Doe');
       expect(result.hasMore).toBeDefined();
     });
+
+    it('should handle pagination correctly', async () => {
+      // Create multiple test artists
+      const artists = Array.from({ length: 15 }, (_, i) => ({
+        name: `Artist ${i + 1}`,
+        bio: `Bio ${i + 1}`,
+        profileImage: `https://example.com/${i + 1}.jpg`,
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      }));
+
+      await Promise.all(artists.map(artist => testRouter.artist.create(artist)));
+
+      // First page
+      const firstPage = await testRouter.artist.search({
+        query: 'Artist',
+        limit: 5,
+        nextToken: undefined,
+      });
+
+      expect(firstPage.items).toHaveLength(5);
+      expect(firstPage.hasMore).toBe(true);
+      expect(firstPage.nextToken).toBeDefined();
+
+      // Second page
+      const secondPage = await testRouter.artist.search({
+        query: 'Artist',
+        limit: 5,
+        nextToken: firstPage.nextToken,
+      });
+
+      expect(secondPage.items).toHaveLength(5);
+      expect(secondPage.items[0].name).not.toBe(firstPage.items[0].name);
+    });
+
+    it('should filter by tradition correctly', async () => {
+      const artists = [
+        {
+          name: 'Carnatic Artist',
+          bio: 'Carnatic Bio',
+          profileImage: 'https://example.com/carnatic.jpg',
+          artistType: ArtistType.VOCALIST,
+          instruments: ['Voice'],
+          traditions: [Tradition.CARNATIC],
+        },
+        {
+          name: 'Hindustani Artist',
+          bio: 'Hindustani Bio',
+          profileImage: 'https://example.com/hindustani.jpg',
+          artistType: ArtistType.VOCALIST,
+          instruments: ['Voice'],
+          traditions: [Tradition.HINDUSTANI],
+        },
+      ];
+
+      await Promise.all(artists.map(artist => testRouter.artist.create(artist)));
+
+      const result = await testRouter.artist.search({
+        query: 'Artist',
+        limit: 10,
+        tradition: Tradition.CARNATIC,
+      });
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].name).toBe('Carnatic Artist');
+    });
   });
 
   describe('update', () => {
@@ -132,6 +199,122 @@ describe('Artist Router Integration Tests', () => {
       expect(result.name).toBe(updateData.name);
       expect(result.bio).toBe(updateData.bio);
       expect(result.profileImage).toBe(artistData.profileImage); // Should remain unchanged
+    });
+  });
+
+  describe('getPopular', () => {
+    it('should return popular artists within limit', async () => {
+      // Create multiple artists
+      const artists = Array.from({ length: 15 }, (_, i) => ({
+        name: `Popular Artist ${i + 1}`,
+        bio: `Bio ${i + 1}`,
+        profileImage: `https://example.com/${i + 1}.jpg`,
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      }));
+
+      await Promise.all(artists.map(artist => testRouter.artist.create(artist)));
+
+      const result = await testRouter.artist.getPopular({ limit: 5 });
+
+      expect(result).toHaveLength(5);
+      expect(result[0]).toHaveProperty('name');
+      expect(result[0]).toHaveProperty('viewCount');
+    });
+
+    it('should respect maximum limit of 50', async () => {
+      const result = await testRouter.artist.getPopular({ limit: 100 });
+      expect(result.length).toBeLessThanOrEqual(50);
+    });
+  });
+
+  describe('view tracking', () => {
+    it('should track views for non-bot requests', async () => {
+      const artistData = {
+        name: 'View Tracked Artist',
+        bio: 'Test Bio',
+        profileImage: 'https://example.com/image.jpg',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      };
+
+      const createdArtist = await testRouter.artist.create(artistData);
+
+      // First get should increment view count
+      await testRouter.artist.getById({
+        id: createdArtist.id,
+        trackView: true,
+      });
+
+      // Get again to verify view count
+      const result = await testRouter.artist.getById({
+        id: createdArtist.id,
+        trackView: false,
+      });
+
+      expect(result?.viewCount).toBeGreaterThan(0);
+    });
+
+    it('should not track views for bot requests', async () => {
+      const artistData = {
+        name: 'Bot View Artist',
+        bio: 'Test Bio',
+        profileImage: 'https://example.com/image.jpg',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      };
+
+      const createdArtist = await testRouter.artist.create(artistData);
+
+      // Simulate bot request (assuming ctx.isBot is set in test setup)
+      await testRouter.artist.getById({
+        id: createdArtist.id,
+        trackView: true,
+      });
+
+      const result = await testRouter.artist.getById({
+        id: createdArtist.id,
+        trackView: false,
+      });
+
+      expect(result?.viewCount).toBe(0);
+    });
+  });
+
+  describe('error cases', () => {
+    it('should handle invalid artist type in create', async () => {
+      const invalidArtistData = {
+        name: 'Invalid Artist',
+        bio: 'Test Bio',
+        profileImage: 'https://example.com/image.jpg',
+        artistType: 'INVALID_TYPE' as ArtistType,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      };
+
+      await expect(testRouter.artist.create(invalidArtistData)).rejects.toThrow();
+    });
+
+    it('should handle update of non-existent artist', async () => {
+      const updateData = {
+        id: 'non-existent-id',
+        name: 'Updated Name',
+      };
+
+      await expect(testRouter.artist.update(updateData)).rejects.toThrow();
+    });
+
+    it('should handle invalid tradition in search', async () => {
+      const searchParams = {
+        query: 'Test',
+        limit: 10,
+        tradition: 'INVALID_TRADITION' as Tradition,
+      };
+
+      await expect(testRouter.artist.search(searchParams)).rejects.toThrow();
     });
   });
 });
