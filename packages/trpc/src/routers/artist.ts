@@ -9,13 +9,13 @@ import {
   updateArtist,
   updateArtistSchema,
 } from '@rasika/core';
-import { createRouter, publicProcedure, protectedProcedure } from '../server';
+import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 import { idWithViewTrackingSchema } from '../schemas';
 import { artistSearchParamsSchema } from '../schemas/artist';
 
 export const artistRouter = createRouter({
   // Queries
-  getById: publicProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
+  getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
     const artist = await getArtist(input.id);
 
     // Track view if enabled and not a bot
@@ -26,25 +26,25 @@ export const artistRouter = createRouter({
     return artist;
   }),
 
-  search: publicProcedure.input(artistSearchParamsSchema).query(async ({ input }) => {
+  search: searchProcedure.input(artistSearchParamsSchema).query(async ({ input }) => {
     return searchArtists(input);
   }),
 
-  getPopular: publicProcedure
+  getPopular: rateLimitedProcedure
     .input(z.object({ limit: z.number().min(1).max(50).default(10) }))
     .query(async ({ input }) => {
       return getPopularArtists(input.limit);
     }),
 
   // Mutations
-  create: protectedProcedure.input(createArtistSchema).mutation(async ({ input, ctx }) => {
+  create: writeProcedure.input(createArtistSchema).mutation(async ({ input, ctx }) => {
     return createArtist({
       ...input,
       editedBy: [ctx.user.id],
     });
   }),
 
-  update: protectedProcedure.input(updateArtistSchema).mutation(async ({ input, ctx }) => {
+  update: writeProcedure.input(updateArtistSchema).mutation(async ({ input }) => {
     const { id, ...updateData } = input;
     return updateArtist(id, updateData);
   }),

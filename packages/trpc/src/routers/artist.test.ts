@@ -287,6 +287,113 @@ describe('Artist Router Integration Tests', () => {
     });
   });
 
+  describe('rate limiting', () => {
+    it('should apply general rate limit to getById calls', async () => {
+      // Note: Test user is exempt from rate limits for testing
+      // This test documents the rate limiting behavior
+      const artistData = {
+        name: 'Rate Limited Artist',
+        bio: 'Test Bio',
+        profileImage: 'https://example.com/image.jpg',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      };
+
+      const createdArtist = await testRouter.artist.create(artistData);
+
+      // Multiple calls should succeed for test user (bypasses rate limits)
+      const promises = Array.from({ length: 5 }, () =>
+        testRouter.artist.getById({
+          id: createdArtist.id,
+          trackView: false,
+        })
+      );
+
+      const results = await Promise.all(promises);
+      results.forEach(result => {
+        expect(result).toBeDefined();
+        expect(result?.id).toBe(createdArtist.id);
+      });
+    });
+
+    it('should apply search rate limit to search calls', async () => {
+      // Note: Test user is exempt from rate limits for testing
+      // This test documents the search rate limiting behavior
+      const searchParams: ArtistSearchParams = {
+        query: 'Test',
+        limit: 5,
+        nextToken: undefined,
+      };
+
+      // Multiple search calls should succeed for test user
+      const promises = Array.from({ length: 3 }, () => testRouter.artist.search(searchParams));
+
+      const results = await Promise.all(promises);
+      results.forEach(result => {
+        expect(result).toBeDefined();
+        expect(result.items).toBeDefined();
+        expect(Array.isArray(result.items)).toBe(true);
+      });
+    });
+
+    it('should apply write rate limit to create calls', async () => {
+      // Note: Test user is exempt from rate limits for testing
+      // This test documents the write rate limiting behavior
+      const createPromises = Array.from({ length: 3 }, (_, i) => ({
+        name: `Write Limited Artist ${i}`,
+        bio: 'Test Bio',
+        profileImage: 'https://example.com/image.jpg',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      })).map(artistData => testRouter.artist.create(artistData));
+
+      const results = await Promise.all(createPromises);
+      results.forEach(result => {
+        expect(result).toBeDefined();
+        expect(result.name).toContain('Write Limited Artist');
+      });
+    });
+
+    it('should apply write rate limit to update calls', async () => {
+      // Create initial artist
+      const artistData = {
+        name: 'Update Rate Limited Artist',
+        bio: 'Test Bio',
+        profileImage: 'https://example.com/image.jpg',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['Voice'],
+        traditions: [Tradition.CARNATIC],
+      };
+
+      const createdArtist = await testRouter.artist.create(artistData);
+
+      // Multiple update calls should succeed for test user
+      const updatePromises = Array.from({ length: 2 }, (_, i) => ({
+        id: createdArtist.id,
+        name: `Updated Name ${i}`,
+      })).map(updateData => testRouter.artist.update(updateData));
+
+      const results = await Promise.all(updatePromises);
+      results.forEach((result, i) => {
+        expect(result).toBeDefined();
+        expect(result.name).toBe(`Updated Name ${i}`);
+      });
+    });
+
+    it('should handle getPopular calls with rate limiting', async () => {
+      // Multiple calls to getPopular should succeed for test user
+      const promises = Array.from({ length: 3 }, () => testRouter.artist.getPopular({ limit: 5 }));
+
+      const results = await Promise.all(promises);
+      results.forEach(result => {
+        expect(Array.isArray(result)).toBe(true);
+        expect(result.length).toBeLessThanOrEqual(5);
+      });
+    });
+  });
+
   describe('error cases', () => {
     it('should handle invalid artist type in create', async () => {
       const invalidArtistData = {

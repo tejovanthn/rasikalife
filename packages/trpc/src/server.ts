@@ -70,8 +70,114 @@ export const publicProcedure = t.procedure.use(errorHandler);
 // Protected procedures - requires authentication
 export const protectedProcedure = publicProcedure.use(isAuthed);
 
+// Rate limited procedures
+import {
+  rateLimiter,
+  RateLimitConfigs,
+  getRateLimitIdentifier,
+  isTrustedSource,
+} from '@rasika/core';
+
+// General rate limiting middleware
+const generalRateLimit = t.middleware(async ({ ctx, next }) => {
+  const identifier = getRateLimitIdentifier(
+    ctx.session?.user?.id,
+    ctx.req?.headers['x-forwarded-for'] || ctx.req?.headers['x-real-ip'] || 'unknown'
+  );
+
+  if (!isTrustedSource(identifier)) {
+    const result = rateLimiter.checkLimit(identifier, RateLimitConfigs.GENERAL);
+
+    if (ctx.res) {
+      ctx.res.setHeader('X-RateLimit-Limit', result.limit.toString());
+      ctx.res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      ctx.res.setHeader(
+        'X-RateLimit-Reset',
+        Math.ceil((Date.now() + result.resetTime) / 1000).toString()
+      );
+    }
+
+    if (!result.allowed) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: `Rate limit exceeded. Try again in ${Math.ceil(result.resetTime / 1000)} seconds.`,
+      });
+    }
+  }
+
+  return next();
+});
+
+// Search rate limiting middleware
+const searchRateLimit = t.middleware(async ({ ctx, next }) => {
+  const identifier = getRateLimitIdentifier(
+    ctx.session?.user?.id,
+    ctx.req?.headers['x-forwarded-for'] || ctx.req?.headers['x-real-ip'] || 'unknown'
+  );
+
+  if (!isTrustedSource(identifier)) {
+    const result = rateLimiter.checkLimit(identifier, RateLimitConfigs.SEARCH);
+
+    if (ctx.res) {
+      ctx.res.setHeader('X-RateLimit-Limit', result.limit.toString());
+      ctx.res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      ctx.res.setHeader(
+        'X-RateLimit-Reset',
+        Math.ceil((Date.now() + result.resetTime) / 1000).toString()
+      );
+    }
+
+    if (!result.allowed) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: `Search rate limit exceeded. Try again in ${Math.ceil(result.resetTime / 1000)} seconds.`,
+      });
+    }
+  }
+
+  return next();
+});
+
+// Write rate limiting middleware
+const writeRateLimit = t.middleware(async ({ ctx, next }) => {
+  const identifier = getRateLimitIdentifier(
+    ctx.session?.user?.id,
+    ctx.req?.headers['x-forwarded-for'] || ctx.req?.headers['x-real-ip'] || 'unknown'
+  );
+
+  if (!isTrustedSource(identifier)) {
+    const result = rateLimiter.checkLimit(identifier, RateLimitConfigs.WRITE);
+
+    if (ctx.res) {
+      ctx.res.setHeader('X-RateLimit-Limit', result.limit.toString());
+      ctx.res.setHeader('X-RateLimit-Remaining', result.remaining.toString());
+      ctx.res.setHeader(
+        'X-RateLimit-Reset',
+        Math.ceil((Date.now() + result.resetTime) / 1000).toString()
+      );
+    }
+
+    if (!result.allowed) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: `Write rate limit exceeded. Try again in ${Math.ceil(result.resetTime / 1000)} seconds.`,
+      });
+    }
+  }
+
+  return next();
+});
+
+// Rate limited procedure variants
+export const rateLimitedProcedure = publicProcedure.use(generalRateLimit);
+export const searchProcedure = publicProcedure.use(searchRateLimit);
+export const writeProcedure = protectedProcedure.use(writeRateLimit);
+
 // Create router
 export const createRouter = t.router;
 
 // Export router types for convenience
 export type Router = ReturnType<typeof createRouter>;
+
+// Export middleware creator for custom middleware
+export const middleware = t.middleware;

@@ -6,10 +6,10 @@
  * integration tests run against actual AWS infrastructure in the dev environment.
  */
 
-import { appRouter } from '../src/routers';
+import { deleteItem, rateLimiter, scan } from '@rasika/core';
+import { afterEach, beforeEach } from 'vitest';
 import type { Context } from '../src/context';
-import { scan, deleteItem } from '@rasika/core';
-import { afterEach } from 'vitest';
+import { appRouter } from '../src/routers';
 
 /**
  * Creates a standardized test context for tRPC router calls
@@ -53,6 +53,13 @@ export const testRouter = appRouter.createCaller(createTestContext());
 export const botTestRouter = appRouter.createCaller({
   ...createTestContext(),
   isBot: true, // Bot context for testing bot-specific behavior
+});
+
+/**
+ * Clear rate limiter before each test
+ */
+beforeEach(() => {
+  rateLimiter.clear();
 });
 
 /**

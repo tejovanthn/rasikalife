@@ -15,7 +15,9 @@ export * from './db';
 // Export shared functionality
 export * from './shared/singleTable';
 export * from './shared/accessPatterns';
+export * from './shared/cache';
 export * from './shared/pagination';
+export * from './shared/rateLimiter';
 export * from './shared/search';
 
 // Export domains

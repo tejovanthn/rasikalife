@@ -51,9 +51,9 @@ export class ArtistRepository {
     artistItem.GSI3SK = formatKey(EntityPrefix.ARTIST, baseItem.id);
 
     // Add popularity index (GSI5 for popularity)
-    // Uses padded score in sort key to enable proper numeric sorting in DynamoDB
+    // Uses view count as popularity proxy with padded values for proper numeric sorting
     artistItem.GSI5PK = 'POPULARITY';
-    artistItem.GSI5SK = `SCORE#${String(artistItem.popularityScore).padStart(10, '0')}#${baseItem.id}`;
+    artistItem.GSI5SK = `VIEWS#${String(artistItem.viewCount).padStart(10, '0')}#${baseItem.id}`;
 
     // Add location index if provided
     if (validatedInput.location) {

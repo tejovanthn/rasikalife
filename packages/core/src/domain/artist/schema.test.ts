@@ -143,14 +143,14 @@ describe('Artist Schema', () => {
 
   describe('updateArtistSchema', () => {
     it('should allow partial updates', () => {
-      const input = { name: 'Updated Name' };
+      const input = { id: 'test-id', name: 'Updated Name' };
       const result = updateArtistSchema.parse(input);
       expect(result).toEqual(input);
     });
 
     it('should validate updated fields', () => {
-      expect(() => updateArtistSchema.parse({ name: '' })).toThrow();
-      expect(() => updateArtistSchema.parse({ artistType: 'invalid' })).toThrow();
+      expect(() => updateArtistSchema.parse({ id: 'test-id', name: '' })).toThrow();
+      expect(() => updateArtistSchema.parse({ id: 'test-id', artistType: 'invalid' })).toThrow();
     });
   });
 });
