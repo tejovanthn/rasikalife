@@ -161,22 +161,28 @@ function mockImplementUpdateCommand(command: any) {
       if (valueRef.startsWith(':') && ExpressionAttributeValues[valueRef]) {
         const value = ExpressionAttributeValues[valueRef];
 
-        // Handle nested attributes with dot notation (very simplified)
-        if (resolvedPath.includes('.')) {
-          const parts = resolvedPath.split('.');
-          let current = table[existingIndex];
-
-          for (let i = 0; i < parts.length - 1; i++) {
-            if (!current[parts[i]]) {
-              current[parts[i]] = {};
-            }
-            current = current[parts[i]];
-          }
-
-          const lastPart = parts[parts.length - 1];
-          current[lastPart] = value;
+        // Handle $increment operation
+        if (typeof value === 'object' && value.$increment) {
+          const currentValue = table[existingIndex][resolvedPath] || 0;
+          table[existingIndex][resolvedPath] = currentValue + value.$increment;
         } else {
-          table[existingIndex][resolvedPath] = value;
+          // Handle nested attributes with dot notation (very simplified)
+          if (resolvedPath.includes('.')) {
+            const parts = resolvedPath.split('.');
+            let current = table[existingIndex];
+
+            for (let i = 0; i < parts.length - 1; i++) {
+              if (!current[parts[i]]) {
+                current[parts[i]] = {};
+              }
+              current = current[parts[i]];
+            }
+
+            const lastPart = parts[parts.length - 1];
+            current[lastPart] = value;
+          } else {
+            table[existingIndex][resolvedPath] = value;
+          }
         }
       }
     }

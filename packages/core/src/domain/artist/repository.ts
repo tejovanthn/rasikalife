@@ -1,4 +1,4 @@
-import { putItem, updateItem, query } from '../../db';
+import { putItem, updateItem, query, scan } from '../../db';
 import { getByPrimaryKey, getByGlobalIndex } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
@@ -33,6 +33,7 @@ export class ArtistRepository {
       viewCount: 0,
       favoriteCount: 0,
       popularityScore: 0,
+      searchName: validatedInput.name.toLowerCase(), // For case-insensitive search
 
       // GSI fields for search
       GSI1PK: formatIndexKey('ARTIST_NAME', validatedInput.name.toLowerCase()),
@@ -48,6 +49,11 @@ export class ArtistRepository {
     // Add tradition index
     artistItem.GSI3PK = formatIndexKey('TRADITION', validatedInput.traditions[0]);
     artistItem.GSI3SK = formatKey(EntityPrefix.ARTIST, baseItem.id);
+
+    // Add popularity index (GSI5 for popularity)
+    // Uses padded score in sort key to enable proper numeric sorting in DynamoDB
+    artistItem.GSI5PK = 'POPULARITY';
+    artistItem.GSI5SK = `SCORE#${String(artistItem.popularityScore).padStart(10, '0')}#${baseItem.id}`;
 
     // Add location index if provided
     if (validatedInput.location) {
@@ -112,19 +118,51 @@ export class ArtistRepository {
     );
   }
 
-  static async searchByName(name: string, limit = 20): Promise<ArtistSearchResult> {
-    const result = await query<ArtistDynamoItem>({
-      IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK = :pk',
-      ExpressionAttributeValues: {
-        ':pk': formatIndexKey('ARTIST_NAME', name.toLowerCase()),
+  /**
+   * Search artists by name using DynamoDB scan with filters
+   *
+   * Since DynamoDB doesn't excel at full-text search, this implementation
+   * uses a scan operation with filters to find artists whose names contain
+   * the search term. While not as efficient as a dedicated search engine,
+   * this provides acceptable performance for moderate datasets.
+   *
+   * Optimization notes:
+   * - Scans more items than requested (limit * 3) to improve hit rate
+   * - Uses exact case matching for reliability
+   * - Supports pagination via nextToken
+   * - Applies search scoring to rank results by relevance
+   *
+   * @param name Search term to match against artist names
+   * @param limit Maximum number of results to return
+   * @param nextToken Pagination token for continued search
+   * @returns Promise resolving to paginated search results
+   */
+  static async searchByName(
+    name: string,
+    limit = 20,
+    nextToken?: string
+  ): Promise<ArtistSearchResult> {
+    const result = await scan<ArtistDynamoItem>({
+      FilterExpression:
+        'begins_with(PK, :pkPrefix) AND SK = :skValue AND contains(#name, :searchTerm)',
+      ExpressionAttributeNames: {
+        '#name': 'name',
       },
-      Limit: limit,
+      ExpressionAttributeValues: {
+        ':pkPrefix': EntityPrefix.ARTIST + '#',
+        ':skValue': SecondaryPrefix.METADATA,
+        ':searchTerm': name, // Case-sensitive matching
+      },
+      Limit: limit * 3, // Scan more items to improve hit rate
+      ExclusiveStartKey: nextToken
+        ? JSON.parse(Buffer.from(nextToken, 'base64').toString())
+        : undefined,
     });
 
     const scoredItems = scoreSearchResults(result.items, name, [{ name: 'name', weight: 1 }]);
-
-    return createPaginatedResponse(scoredItems, result.lastEvaluatedKey);
+    // Limit results to requested amount since we scanned more
+    const limitedItems = scoredItems.slice(0, limit);
+    return createPaginatedResponse(limitedItems, result.lastEvaluatedKey);
   }
 
   static async getByTradition(
@@ -168,17 +206,37 @@ export class ArtistRepository {
   }
 
   static async search(params: ArtistSearchParams): Promise<ArtistSearchResult> {
-    // This is a simplified search - can be expanded based on needs
-    if (params.query) {
-      return ArtistRepository.searchByName(params.query, params.limit);
+    // If tradition filter is specified, search within that tradition
+    if (params.tradition) {
+      if (params.query) {
+        // For tradition + query, use searchByName and then filter by tradition
+        // This is simpler than trying to do complex tradition filtering with pagination
+        const searchResults = await ArtistRepository.searchByName(
+          params.query,
+          params.limit,
+          params.nextToken
+        );
+        const filteredItems = searchResults.items.filter(artist =>
+          artist.traditions.includes(params.tradition!)
+        );
+        return {
+          items: filteredItems,
+          hasMore: searchResults.hasMore,
+          nextToken: searchResults.nextToken,
+        };
+      } else {
+        return ArtistRepository.getByTradition(params.tradition, params.limit, params.nextToken);
+      }
     }
 
+    // If instrument filter is specified
     if (params.instrument) {
       return ArtistRepository.getByInstrument(params.instrument, params.limit, params.nextToken);
     }
 
-    if (params.tradition) {
-      return ArtistRepository.getByTradition(params.tradition, params.limit, params.nextToken);
+    // If only query is specified, do a broader search
+    if (params.query) {
+      return ArtistRepository.searchByName(params.query, params.limit, params.nextToken);
     }
 
     // Return empty results if no search criteria

@@ -3,7 +3,9 @@ import type { DynamoItem } from '../../db';
 import type { Artist } from './schema';
 
 // Minimal types that can't be inferred from schemas
-export interface ArtistDynamoItem extends DynamoItem, Artist {}
+export interface ArtistDynamoItem extends DynamoItem, Artist {
+  searchName: string; // Lowercase name for case-insensitive search
+}
 export type UpdateArtistDynamoItem = Partial<ArtistDynamoItem>;
 
 export enum ArtistType {

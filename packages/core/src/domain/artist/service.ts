@@ -1,5 +1,5 @@
 import { formatKey, EntityPrefix, SecondaryPrefix } from '../../shared/singleTable';
-import { createQuery, updateItem } from '../../db';
+import { createQuery, updateItem, scan } from '../../db';
 import { ArtistRepository } from './repository';
 import { CreateArtistInput, Artist, UpdateArtistInput } from './schema';
 import { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from './types';
@@ -27,24 +27,57 @@ export const searchArtists = async (params: ArtistSearchParams): Promise<ArtistS
   return ArtistRepository.search(params);
 };
 
+/**
+ * Retrieves popular artists sorted by popularity score
+ *
+ * Uses GSI5 (popularity index) to efficiently query artists
+ * sorted by their popularity score in descending order.
+ *
+ * GSI Structure:
+ * - GSI5PK: 'POPULARITY' (all artists share this partition)
+ * - GSI5SK: 'SCORE#{paddedScore}#{artistId}' (enables score-based sorting)
+ *
+ * @param limit Maximum number of artists to return (default: 10)
+ * @returns Promise resolving to array of popular artists
+ */
 export const getPopularArtists = async (limit = 10): Promise<Artist[]> => {
-  // Using popularity score GSI
   const result = await createQuery<ArtistDynamoItem>()
-    .withIndex('GSI3')
-    .withPartitionKey('GSI3PK', 'POPULARITY')
-    .withSortOrder(false) // Descending
+    .withIndex('GSI5')
+    .withPartitionKey('GSI5PK', 'POPULARITY')
+    .withSortOrder(false) // Descending order by popularity score
     .withLimit(limit)
     .execute();
 
   return result.items;
 };
 
+/**
+ * Atomically increments the view count for an artist
+ *
+ * Uses DynamoDB's native ADD operation to ensure atomic increments
+ * without race conditions. This is more reliable than read-modify-write
+ * operations, especially under concurrent access.
+ *
+ * Note: Direct DynamoDB operations are used here instead of the generic
+ * updateItem function because the generic function doesn't support ADD operations.
+ *
+ * @param id Artist ID to increment view count for
+ */
 export const incrementViewCount = async (id: string): Promise<void> => {
-  updateItem<ArtistDynamoItem>(
-    {
-      PK: formatKey(EntityPrefix.ARTIST, id),
-      SK: SecondaryPrefix.METADATA,
-    },
-    { viewCount: { $increment: 1 } }
+  const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+  const { docClient, getTableName } = await import('../../db/client');
+
+  await docClient.send(
+    new UpdateCommand({
+      TableName: getTableName(),
+      Key: {
+        PK: formatKey(EntityPrefix.ARTIST, id),
+        SK: SecondaryPrefix.METADATA,
+      },
+      UpdateExpression: 'ADD viewCount :increment',
+      ExpressionAttributeValues: {
+        ':increment': 1,
+      },
+    })
   );
 };

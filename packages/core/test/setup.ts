@@ -2,7 +2,7 @@
  * Global test setup for the core package
  */
 import { vi } from 'vitest';
-import { mockDynamoDBClient, mockDynamoDBDocumentClient } from './mocks/dynamodb';
+import { mockDynamoDBClient, mockDynamoDBDocumentClient, mockDb } from './mocks/dynamodb';
 
 // Set up the mock DynamoDB client
 vi.mock('@aws-sdk/client-dynamodb', () => {
@@ -54,4 +54,5 @@ afterAll(() => {
 // Reset mock counters between tests
 afterEach(() => {
   vi.clearAllMocks();
+  mockDb.reset();
 });
