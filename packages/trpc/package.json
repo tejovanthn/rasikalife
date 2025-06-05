@@ -7,7 +7,6 @@
   "type": "module",
   "types": "./src/index.ts",
   "scripts": {
-    "lint": "eslint .",
     "test": "sst shell vitest run",
     "test:watch": "sst shell vitest",
     "test:coverage": "sst shell vitest run -- --coverage"
