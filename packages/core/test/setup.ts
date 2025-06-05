@@ -32,12 +32,13 @@ vi.mock('../src/utils/id', async () => {
 
   return {
     ...actual,
-    generateId: async () => `test_id_${idCounter++}`,
-    generatePrefixedId: async (prefix: string) => `${prefix}_test_id_${idCounter++}`,
-    generateIdSync: () => `test_id_${idCounter++}`,
+    generateId: async () => `test-id-${idCounter++}`,
+    generatePrefixedId: async (prefix: string) => `${prefix}_test-id-${idCounter++}`,
+    generateIdSync: () => `test-id-${idCounter++}`,
     generateRandomString: (length = 6) => 'abcdef'.substring(0, length),
   };
 });
+
 
 // Global setup
 beforeAll(() => {
@@ -55,4 +56,5 @@ afterAll(() => {
 afterEach(() => {
   vi.clearAllMocks();
   mockDb.reset();
+  // Reset ID counter would go here if we track it
 });

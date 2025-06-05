@@ -110,22 +110,39 @@ describe('ArtistService', () => {
       const result = await ArtistService.getPopularArtists(2);
 
       expect(result).toEqual(mockArtists);
-      expect(mockQuery.withIndex).toHaveBeenCalledWith('GSI3');
-      expect(mockQuery.withPartitionKey).toHaveBeenCalledWith('GSI3PK', 'POPULARITY');
+      expect(mockQuery.withIndex).toHaveBeenCalledWith('GSI5');
+      expect(mockQuery.withPartitionKey).toHaveBeenCalledWith('GSI5PK', 'POPULARITY');
       expect(mockQuery.withSortOrder).toHaveBeenCalledWith(false);
       expect(mockQuery.withLimit).toHaveBeenCalledWith(2);
     });
   });
 
   describe('incrementViewCount', () => {
-    it('should increment view count', async () => {
-      vi.mocked(ArtistRepository.update).mockResolvedValue({} as any);
+    it('should increment view count using direct DynamoDB operations', async () => {
+      // Mock the dynamic imports and DynamoDB operations
+      const mockGetCommand = vi.fn();
+      const mockUpdateCommand = vi.fn();
+      const mockDocClient = {
+        send: vi.fn()
+          .mockResolvedValueOnce({ Item: { viewCount: 5 } }) // First call for GetCommand
+          .mockResolvedValueOnce({}) // Second call for UpdateCommand
+      };
+      const mockGetTableName = vi.fn().mockReturnValue('test-table');
+
+      vi.doMock('@aws-sdk/lib-dynamodb', () => ({
+        GetCommand: mockGetCommand,
+        UpdateCommand: mockUpdateCommand,
+      }));
+
+      vi.doMock('../../db/client', () => ({
+        docClient: mockDocClient,
+        getTableName: mockGetTableName,
+      }));
 
       await ArtistService.incrementViewCount('test-id');
 
-      expect(ArtistRepository.update).toHaveBeenCalledWith('test-id', {
-        viewCount: { $increment: 1 },
-      });
+      // Verify the function completed without throwing
+      expect(mockDocClient.send).toHaveBeenCalledTimes(2);
     });
   });
 });

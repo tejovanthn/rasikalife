@@ -112,8 +112,18 @@ export const basicSearch = async <T extends DynamoItem>(
 
   // Limit results since we scanned more
   const limitedItems = result.items.slice(0, pagination.limit);
+  
+  // Determine if there are more results
+  // If we limited the results and either there were more items returned or there was a lastEvaluatedKey
+  const hasMore = limitedItems.length < result.items.length || !!result.lastEvaluatedKey;
+  
+  // Only pass lastEvaluatedKey if we actually have more results to fetch
+  const lastEvaluatedKey = hasMore ? (result.lastEvaluatedKey || { 
+    PK: limitedItems[limitedItems.length - 1]?.PK,
+    SK: limitedItems[limitedItems.length - 1]?.SK 
+  }) : undefined;
 
-  return createPaginatedResponse(limitedItems, result.lastEvaluatedKey);
+  return createPaginatedResponse(limitedItems, lastEvaluatedKey);
 };
 
 /**

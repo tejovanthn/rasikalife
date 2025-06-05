@@ -139,3 +139,13 @@ export const incrementViewCount = async (id: string): Promise<void> => {
   cache.delete(CacheKeys.artist(id));
   invalidateCachePattern('popular_artists:');
 };
+
+// Service object for easier imports
+export const ArtistService = {
+  createArtist,
+  getArtist,
+  updateArtist,
+  searchArtists,
+  getPopularArtists,
+  incrementViewCount,
+};

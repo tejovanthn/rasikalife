@@ -21,7 +21,7 @@ export interface CacheMetrics {
 export function getCacheMetrics(): CacheMetrics {
   const stats = cache.getStats();
   const keysByType: Record<string, number> = {};
-  let oldestTimestamp = Date.now();
+  let oldestTimestamp = Number.MAX_SAFE_INTEGER;
   let newestTimestamp = 0;
   let oldestKey: string | null = null;
   let newestKey: string | null = null;

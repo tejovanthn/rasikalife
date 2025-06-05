@@ -31,7 +31,9 @@ import {
   EntityPrefix,
   formatIndexKey,
   formatKey,
+  formatVersionKey,
 } from '../../shared/singleTable';
+import { getCurrentISOString } from '../../utils/dateTime';
 
 /**
  * Versioning configuration for compositions

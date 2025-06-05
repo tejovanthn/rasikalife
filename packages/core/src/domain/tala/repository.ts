@@ -11,6 +11,7 @@ import {
   EntityPrefix,
   formatIndexKey,
   formatKey,
+  formatVersionKey,
 } from '../../shared/singleTable';
 import type { Tradition } from '../artist';
 import { type CreateTalaInput, type Tala, talaSchema, type UpdateTalaInput } from './schema';

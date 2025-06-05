@@ -24,7 +24,7 @@ describe('DynamoDB operations', () => {
 
       await putItem(item);
 
-      const table = mockDb.getTable(undefined);
+      const table = mockDb.getTable('mock-rasika-table');
 
       expect(table).toHaveLength(1);
       expect(table[0]).toEqual(item);
@@ -47,7 +47,7 @@ describe('DynamoDB operations', () => {
 
       await putItem(updatedItem);
 
-      const table = mockDb.getTable(undefined);
+      const table = mockDb.getTable('mock-rasika-table');
       expect(table).toHaveLength(1);
       expect(table[0]).toEqual(updatedItem);
     });

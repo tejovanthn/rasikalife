@@ -20,7 +20,7 @@ node_modules
 /.idea
 
 # Testing
-/coverage
+coverage
 
 # Dependency directories
 /.pnp

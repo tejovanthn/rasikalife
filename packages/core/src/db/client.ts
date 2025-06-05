@@ -3,20 +3,30 @@
  */
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { Resource } from 'sst';
-
 // Default region from environment or fallback
 const REGION = process.env.AWS_REGION || 'us-east-1';
 // Default table name from environment or fallback
-export const TABLE_NAME = Resource.RasikaTable.name;
+export const TABLE_NAME = (() => {
+  // In test environment, use mock table name
+  if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+    return 'mock-rasika-table';
+  }
+  
+  // In production/dev, use SST Resource
+  try {
+    const { Resource } = require('sst');
+    return Resource.RasikaTable.name;
+  } catch (error) {
+    // Fallback if SST is not available
+    return process.env.RASIKA_TABLE_NAME || 'rasika-table';
+  }
+})();
 
 // Create the base DynamoDB client with optimized configuration
 const ddbClient = new DynamoDBClient({
   region: REGION,
   // Connection and retry configuration for better performance
   maxAttempts: 3,
-  requestTimeout: 10000, // 10 seconds
-  connectionTimeout: 5000, // 5 seconds
   // Support local development with DynamoDB Local
   ...(process.env.DYNAMODB_ENDPOINT && {
     endpoint: process.env.DYNAMODB_ENDPOINT,

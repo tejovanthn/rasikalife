@@ -165,6 +165,11 @@ function mockImplementUpdateCommand(command: any) {
         if (typeof value === 'object' && value.$increment) {
           const currentValue = table[existingIndex][resolvedPath] || 0;
           table[existingIndex][resolvedPath] = currentValue + value.$increment;
+        }
+        // Handle $add operation
+        else if (typeof value === 'object' && value.$add) {
+          const currentValue = table[existingIndex][resolvedPath] || 0;
+          table[existingIndex][resolvedPath] = currentValue + value.$add;
         } else {
           // Handle nested attributes with dot notation (very simplified)
           if (resolvedPath.includes('.')) {

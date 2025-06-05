@@ -6,8 +6,18 @@ import * as db from '../../db';
 import * as accessPatterns from '../../shared/accessPatterns';
 
 // Mock the database operations
-vi.mock('../../db');
-vi.mock('../../shared/accessPatterns');
+vi.mock('../../db', () => ({
+  putItem: vi.fn().mockResolvedValue(undefined),
+  updateItem: vi.fn().mockResolvedValue(undefined),
+  query: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
+  scan: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
+  getByPrimaryKey: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../../shared/accessPatterns', () => ({
+  getByPrimaryKey: vi.fn().mockResolvedValue(null),
+  getByGlobalIndex: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
+}));
 
 describe('ArtistRepository', () => {
   beforeEach(() => {
@@ -164,25 +174,29 @@ describe('ArtistRepository', () => {
         lastEvaluatedKey: undefined,
       };
 
-      vi.mocked(db.query).mockResolvedValue(mockResults);
+      vi.mocked(db.scan).mockResolvedValue(mockResults);
 
       const result = await ArtistRepository.searchByName('balamurali');
 
       expect(result.items.length).toBe(2);
-      expect(db.query).toHaveBeenCalledWith({
-        IndexName: 'GSI1',
-        KeyConditionExpression: 'GSI1PK = :pk',
-        ExpressionAttributeValues: {
-          ':pk': 'ARTIST_NAME#balamurali',
+      expect(db.scan).toHaveBeenCalledWith({
+        FilterExpression: 'begins_with(PK, :pkPrefix) AND SK = :skValue AND contains(#searchName, :searchTerm)',
+        ExpressionAttributeNames: {
+          '#searchName': 'searchName',
         },
-        Limit: 20,
+        ExpressionAttributeValues: {
+          ':pkPrefix': 'ARTIST#',
+          ':skValue': '#METADATA',
+          ':searchTerm': 'balamurali',
+        },
+        Limit: 60,
       });
     });
 
     it('should handle pagination', async () => {
       const nextToken = Buffer.from(JSON.stringify({ PK: 'test' })).toString('base64');
 
-      vi.mocked(db.query).mockResolvedValue({
+      vi.mocked(db.scan).mockResolvedValue({
         items: [],
         lastEvaluatedKey: { PK: 'test' },
       });
@@ -249,7 +263,7 @@ describe('ArtistRepository', () => {
 
       await ArtistRepository.search({ query: 'test' });
 
-      expect(searchByNameSpy).toHaveBeenCalledWith('test', undefined);
+      expect(searchByNameSpy).toHaveBeenCalledWith('test', undefined, undefined);
     });
 
     it('should delegate to getByInstrument when instrument provided', async () => {
