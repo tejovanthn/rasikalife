@@ -1,4 +1,5 @@
-import { type DynamoItem, batchPutItems, query, updateItem, putItem } from '../../db';
+import { query, updateItem, putItem } from '../../db';
+import { VersioningService, type VersioningConfig } from '../../shared/versioning';
 
 import {
   type CreateCompositionInput,
@@ -27,89 +28,59 @@ import {
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {
-  createBaseItem,
   EntityPrefix,
-  formatVersionKey,
   formatIndexKey,
   formatKey,
 } from '../../shared/singleTable';
-import { getCurrentISOString } from '../../utils';
+
+/**
+ * Versioning configuration for compositions
+ */
+const compositionVersioningConfig: VersioningConfig<
+  Composition,
+  CompositionDynamoItem,
+  CreateCompositionInput,
+  UpdateCompositionInput
+> = {
+  entityPrefix: EntityPrefix.COMPOSITION,
+  schema: compositionSchema,
+  applyDefaults: (input) => ({
+    addedBy: input.editorId,
+    favoriteCount: 0,
+    popularityScore: 0,
+  }),
+  applyGSIMappings: (item, input) => {
+    const mappings: Partial<CompositionDynamoItem> = {};
+
+    // GSI1: Title search (always required for compositions)
+    if ('title' in input && input.title) {
+      mappings.GSI1PK = formatIndexKey('TITLE', input.title.toLowerCase());
+      mappings.GSI1SK = formatKey(EntityPrefix.COMPOSITION, item.id);
+    }
+
+    // GSI2: Tradition search (always required for compositions)
+    if ('tradition' in input && input.tradition) {
+      mappings.GSI2PK = formatIndexKey('TRADITION', input.tradition);
+      mappings.GSI2SK = formatKey(EntityPrefix.COMPOSITION, item.id);
+    }
+
+    // GSI3: Language search
+    if ('language' in input && input.language) {
+      mappings.GSI3PK = formatIndexKey('LANGUAGE', input.language.toLowerCase());
+      mappings.GSI3SK = formatKey(EntityPrefix.COMPOSITION, item.id);
+    }
+
+    return mappings;
+  },
+};
 
 export class CompositionRepository {
   static async create(input: CreateCompositionInput): Promise<Composition> {
-    // Create a new base Composition item
-    const baseItem = await createBaseItem(EntityPrefix.COMPOSITION);
-    const timestamp = getCurrentISOString();
-    const version = 'v1';
-
-    // Create primary version record
-    const compositionItem: CompositionDynamoItem = {
-      ...baseItem,
-      ...input,
-      version,
-      addedBy: input.editorId,
-      editedBy: [input.editorId],
-      viewCount: 0,
-      favoriteCount: 0,
-      popularityScore: 0,
-      isLatest: true,
-
-      // Dynamo specific fields
-      SK: formatVersionKey(version, timestamp),
-      GSI1PK: formatIndexKey('TITLE', input.title.toLowerCase()),
-      GSI1SK: formatKey(EntityPrefix.COMPOSITION, baseItem.id),
-    };
-
-    // Add tradition index
-    compositionItem.GSI2PK = formatIndexKey('TRADITION', input.tradition);
-    compositionItem.GSI2SK = formatKey(EntityPrefix.COMPOSITION, baseItem.id);
-
-    // Add language index if provided
-    if (input.language) {
-      compositionItem.GSI3PK = formatIndexKey('LANGUAGE', input.language.toLowerCase());
-      compositionItem.GSI3SK = formatKey(EntityPrefix.COMPOSITION, baseItem.id);
-    }
-
-    // Create Latest version pointer
-    const latestPointer: DynamoItem = {
-      PK: compositionItem.PK,
-      SK: 'VERSION#LATEST',
-      version,
-      timestamp,
-      isLatest: true,
-    };
-
-    // Create records in a transaction
-    await batchPutItems([compositionItem, latestPointer]);
-
-    return compositionSchema.parse(compositionItem);
+    return VersioningService.create(input, compositionVersioningConfig);
   }
 
   static async getById(id: string, version?: string): Promise<Composition | null> {
-    if (version) {
-      // Get specific version
-      return getByPrimaryKey<CompositionDynamoItem>(
-        EntityPrefix.COMPOSITION,
-        id,
-        formatVersionKey(version)
-      );
-    }
-
-    // Get latest version pointer
-    const latestPointer = await getByPrimaryKey<any>(
-      EntityPrefix.COMPOSITION,
-      id,
-      'VERSION#LATEST'
-    );
-
-    if (!latestPointer) return null;
-
-    // Get the actual latest version
-    return getByPrimaryKey<CompositionDynamoItem>(
-      EntityPrefix.COMPOSITION,
-      id,
-      formatVersionKey(latestPointer.version, latestPointer.timestamp)
-    );
+    return VersioningService.getById(id, compositionVersioningConfig, version);
   }
 
   static async getWithAttributions(id: string): Promise<CompositionWithAttributions | null> {
@@ -128,81 +99,16 @@ export class CompositionRepository {
   }
 
   static async update(id: string, input: UpdateCompositionInput): Promise<Composition> {
-    // Get current latest version
-    const current = await CompositionRepository.getById(id);
-    if (!current) {
-      throw new Error(`Composition ${id} not found`);
-    }
-
-    // Create new version number
-    const currentVersion = current.version;
-    const versionNum = Number.parseInt(currentVersion.replace('v', ''));
-    const newVersion = `v${versionNum + 1}`;
-    const timestamp = getCurrentISOString();
-
-    // Build new version with updates
-    const compositionItem: CompositionDynamoItem = {
-      ...current,
-      ...input,
-      version: newVersion,
-      updatedAt: timestamp,
-      editedBy: [...new Set([...current.editedBy, input.editorId])],
-
-      // Keys - maintain same PK but new version SK
-      PK: formatKey(EntityPrefix.COMPOSITION, id),
-      SK: formatVersionKey(newVersion, timestamp),
-    };
-
-    // Update GSI fields if relevant
-    if (input.title) {
-      compositionItem.GSI1PK = formatIndexKey('TITLE', input.title.toLowerCase());
-      compositionItem.GSI1SK = formatKey(EntityPrefix.COMPOSITION, id);
-    }
-
-    if (input.tradition) {
-      compositionItem.GSI2PK = formatIndexKey('TRADITION', input.tradition);
-      compositionItem.GSI2SK = formatKey(EntityPrefix.COMPOSITION, id);
-    }
-
-    if (input.language) {
-      compositionItem.GSI3PK = formatIndexKey('LANGUAGE', input.language.toLowerCase());
-      compositionItem.GSI3SK = formatKey(EntityPrefix.COMPOSITION, id);
-    }
-
-    // Update latest pointer
-    const latestPointer: DynamoItem = {
-      PK: compositionItem.PK,
-      SK: 'VERSION#LATEST',
-      version: newVersion,
-      timestamp,
-      isLatest: true,
-    };
-
-    // Mark old version as non-latest
-    const oldVersionUpdate = {
-      PK: compositionItem.PK,
-      SK: formatVersionKey(currentVersion, current.updatedAt),
-      isLatest: false,
-    };
-
-    // Create records in a transaction
-    await batchPutItems([compositionItem, latestPointer, oldVersionUpdate]);
-
-    return compositionSchema.parse(compositionItem);
+    return VersioningService.update(
+      id, 
+      input, 
+      compositionVersioningConfig, 
+      CompositionRepository.getById
+    );
   }
 
   static async getVersionHistory(id: string): Promise<CompositionVersion[]> {
-    // Query all versions
-    const result = await getAllByPartitionKey(EntityPrefix.COMPOSITION, id, {
-      sortKeyPrefix: 'VERSION#v',
-    });
-
-    return result.items.map(item => ({
-      id,
-      version: item.version,
-      timestamp: item.updatedAt || item.createdAt,
-      editorId: item.editedBy[item.editedBy.length - 1],
-    }));
+    return VersioningService.getVersionHistory(id, EntityPrefix.COMPOSITION);
   }
 
   static async searchByTitle(title: string, limit = 20): Promise<CompositionSearchResult> {
@@ -246,8 +152,8 @@ export class CompositionRepository {
       }
     );
 
-    // Filter for latest versions only
-    const latestVersions = result.items.filter(item => item.isLatest);
+    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
+    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
 
     return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
   }
@@ -269,34 +175,48 @@ export class CompositionRepository {
       }
     );
 
-    // Filter for latest versions only
-    const latestVersions = result.items.filter(item => item.isLatest);
+    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
+    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
 
     return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
   }
 
   static async incrementViewCount(id: string): Promise<void> {
-    // Get current latest version
+    // Optimized: Update both the specific version and the denormalized latest pointer
+    // This ensures consistent view counts across both records
+    const pk = formatKey(EntityPrefix.COMPOSITION, id);
+    const latestSK = 'VERSION#LATEST';
+    
+    // Get latest pointer to find the version SK
     const latestPointer = await getByPrimaryKey<any>(
       EntityPrefix.COMPOSITION,
       id,
-      'VERSION#LATEST'
+      latestSK
     );
 
     if (!latestPointer) return;
 
-    // Update the view count on the latest version
-    await updateItem(
-      {
-        PK: formatKey(EntityPrefix.COMPOSITION, id),
-        SK: formatVersionKey(latestPointer.version, latestPointer.timestamp),
-      },
-      {
-        viewCount: { $increment: 1 },
-        // We can also update popularity score here using a formula
-        popularityScore: { $add: 0.1 },
-      }
-    );
+    const versionSK = formatVersionKey(latestPointer.version, latestPointer.timestamp);
+    
+    // Update both records atomically using batch operations
+    await Promise.all([
+      // Update the specific version record
+      updateItem(
+        { PK: pk, SK: versionSK },
+        {
+          viewCount: { $increment: 1 },
+          popularityScore: { $add: 0.1 },
+        }
+      ),
+      // Update the denormalized latest pointer for consistency
+      updateItem(
+        { PK: pk, SK: latestSK },
+        {
+          viewCount: { $increment: 1 },
+          popularityScore: { $add: 0.1 },
+        }
+      ),
+    ]);
   }
 
   // Attribution methods

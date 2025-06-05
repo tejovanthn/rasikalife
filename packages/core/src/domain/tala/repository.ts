@@ -1,4 +1,5 @@
-import { type DynamoItem, batchPutItems, query, updateItem } from '../../db';
+import { query, updateItem } from '../../db';
+import { VersioningService, type VersioningConfig } from '../../shared/versioning';
 import {
   getByPrimaryKey,
   getAllByPartitionKey,
@@ -7,168 +8,76 @@ import {
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {
-  createBaseItem,
   EntityPrefix,
-  formatVersionKey,
   formatIndexKey,
   formatKey,
 } from '../../shared/singleTable';
-import { getCurrentISOString } from '../../utils';
 import type { Tradition } from '../artist';
 import { type CreateTalaInput, type Tala, talaSchema, type UpdateTalaInput } from './schema';
 import type { TalaDynamoItem, TalaVersion, TalaSearchResult } from './types';
 
-export class TalaRepository {
-  static async create(input: CreateTalaInput): Promise<Tala> {
-    // Create a new base Tala item
-    const baseItem = await createBaseItem(EntityPrefix.TALA);
-    const timestamp = getCurrentISOString();
-    const version = 'v1';
+/**
+ * Versioning configuration for talas
+ */
+const talaVersioningConfig: VersioningConfig<
+  Tala,
+  TalaDynamoItem,
+  CreateTalaInput,
+  UpdateTalaInput
+> = {
+  entityPrefix: EntityPrefix.TALA,
+  schema: talaSchema,
+  applyGSIMappings: (item, input) => {
+    const mappings: Partial<TalaDynamoItem> = {};
 
-    // Create primary version record
-    const talaItem: TalaDynamoItem = {
-      ...baseItem,
-      ...input,
-      version,
-      viewCount: 0,
-      editedBy: [input.editorId],
-      isLatest: true,
-
-      // Dynamo specific fields
-      SK: formatVersionKey(version, timestamp),
-      GSI1PK: formatIndexKey('TALA_NAME', input.name.toLowerCase()),
-      GSI1SK: formatKey(EntityPrefix.TALA, baseItem.id),
-    };
-
-    // Add beats/aksharas index
-    talaItem.GSI2PK = formatIndexKey('AKSHARAS', input.aksharas.toString());
-    talaItem.GSI2SK = formatKey(EntityPrefix.TALA, baseItem.id);
-
-    // Add type index if provided
-    if (input.type) {
-      talaItem.GSI3PK = formatIndexKey('TALA_TYPE', input.type.toLowerCase());
-      talaItem.GSI3SK = formatKey(EntityPrefix.TALA, baseItem.id);
+    // GSI1: Name search
+    if ('name' in input && input.name) {
+      mappings.GSI1PK = formatIndexKey('TALA_NAME', input.name.toLowerCase());
+      mappings.GSI1SK = formatKey(EntityPrefix.TALA, item.id);
     }
 
-    // Add tradition index
-    talaItem.GSI4PK = formatIndexKey('TRADITION', input.tradition);
-    talaItem.GSI4SK = formatKey(EntityPrefix.TALA, baseItem.id);
+    // GSI2: Aksharas search
+    if ('aksharas' in input && input.aksharas) {
+      mappings.GSI2PK = formatIndexKey('AKSHARAS', input.aksharas.toString());
+      mappings.GSI2SK = formatKey(EntityPrefix.TALA, item.id);
+    }
 
-    // Create Latest version pointer
-    const latestPointer: DynamoItem = {
-      PK: talaItem.PK,
-      SK: 'VERSION#LATEST',
-      version,
-      timestamp,
-      isLatest: true,
-    };
+    // GSI3: Type search
+    if ('type' in input && input.type) {
+      mappings.GSI3PK = formatIndexKey('TALA_TYPE', input.type.toLowerCase());
+      mappings.GSI3SK = formatKey(EntityPrefix.TALA, item.id);
+    }
 
-    // Create records in a transaction
-    await batchPutItems([talaItem, latestPointer]);
+    // GSI4: Tradition search
+    if ('tradition' in input && input.tradition) {
+      mappings.GSI4PK = formatIndexKey('TRADITION', input.tradition);
+      mappings.GSI4SK = formatKey(EntityPrefix.TALA, item.id);
+    }
 
-    return talaSchema.parse(talaItem);
+    return mappings;
+  },
+};
+
+export class TalaRepository {
+  static async create(input: CreateTalaInput): Promise<Tala> {
+    return VersioningService.create(input, talaVersioningConfig);
   }
 
   static async getById(id: string, version?: string): Promise<Tala | null> {
-    if (version) {
-      // Get specific version
-      return getByPrimaryKey<TalaDynamoItem>(EntityPrefix.TALA, id, formatVersionKey(version));
-    }
-
-    // Get latest version pointer
-    const latestPointer = await getByPrimaryKey<any>(EntityPrefix.TALA, id, 'VERSION#LATEST');
-
-    if (!latestPointer) return null;
-
-    // Get the actual latest version
-    return getByPrimaryKey<TalaDynamoItem>(
-      EntityPrefix.TALA,
-      id,
-      formatVersionKey(latestPointer.version, latestPointer.timestamp)
-    );
+    return VersioningService.getById(id, talaVersioningConfig, version);
   }
 
   static async update(id: string, input: UpdateTalaInput): Promise<Tala> {
-    // Get current latest version
-    const current = await TalaRepository.getById(id);
-    if (!current) {
-      throw new Error(`Tala ${id} not found`);
-    }
-
-    // Create new version number
-    const currentVersion = current.version;
-    const versionNum = Number.parseInt(currentVersion.replace('v', ''));
-    const newVersion = `v${versionNum + 1}`;
-    const timestamp = getCurrentISOString();
-
-    // Build new version with updates
-    const talaItem: TalaDynamoItem = {
-      ...current,
-      ...input,
-      version: newVersion,
-      updatedAt: timestamp,
-      editedBy: [...new Set([...current.editedBy, input.editorId])],
-
-      // Keys - maintain same PK but new version SK
-      PK: formatKey(EntityPrefix.TALA, id),
-      SK: formatVersionKey(newVersion, timestamp),
-    };
-
-    // Update GSI fields if relevant
-    if (input.name) {
-      talaItem.GSI1PK = formatIndexKey('TALA_NAME', input.name.toLowerCase());
-      talaItem.GSI1SK = formatKey(EntityPrefix.TALA, id);
-    }
-
-    if (input.aksharas) {
-      talaItem.GSI2PK = formatIndexKey('AKSHARAS', input.aksharas.toString());
-      talaItem.GSI2SK = formatKey(EntityPrefix.TALA, id);
-    }
-
-    if (input.type) {
-      talaItem.GSI3PK = formatIndexKey('TALA_TYPE', input.type.toLowerCase());
-      talaItem.GSI3SK = formatKey(EntityPrefix.TALA, id);
-    }
-
-    if (input.tradition) {
-      talaItem.GSI4PK = formatIndexKey('TRADITION', input.tradition);
-      talaItem.GSI4SK = formatKey(EntityPrefix.TALA, id);
-    }
-
-    // Update latest pointer
-    const latestPointer: DynamoItem = {
-      PK: talaItem.PK,
-      SK: 'VERSION#LATEST',
-      version: newVersion,
-      timestamp,
-      isLatest: true,
-    };
-
-    // Mark old version as non-latest
-    const oldVersionUpdate = {
-      PK: talaItem.PK,
-      SK: formatVersionKey(currentVersion, current.updatedAt),
-      isLatest: false,
-    };
-
-    // Create records in a transaction
-    await batchPutItems([talaItem, latestPointer, oldVersionUpdate]);
-
-    return talaSchema.parse(talaItem);
+    return VersioningService.update(
+      id,
+      input,
+      talaVersioningConfig,
+      TalaRepository.getById
+    );
   }
 
   static async getVersionHistory(id: string): Promise<TalaVersion[]> {
-    // Query all versions
-    const result = await getAllByPartitionKey(EntityPrefix.TALA, id, {
-      sortKeyPrefix: 'VERSION#v',
-    });
-
-    return result.items.map(item => ({
-      id,
-      version: item.version,
-      timestamp: item.updatedAt || item.createdAt,
-      editorId: item.editedBy[item.editedBy.length - 1],
-    }));
+    return VersioningService.getVersionHistory(id, EntityPrefix.TALA);
   }
 
   static async getByName(name: string): Promise<Tala | null> {
@@ -203,8 +112,8 @@ export class TalaRepository {
       }
     );
 
-    // Filter for latest versions only
-    const latestVersions = result.items.filter(item => item.isLatest);
+    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
+    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
 
     return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
   }
@@ -222,8 +131,8 @@ export class TalaRepository {
       }
     );
 
-    // Filter for latest versions only
-    const latestVersions = result.items.filter(item => item.isLatest);
+    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
+    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
 
     return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
   }
@@ -245,8 +154,8 @@ export class TalaRepository {
       }
     );
 
-    // Filter for latest versions only
-    const latestVersions = result.items.filter(item => item.isLatest);
+    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
+    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
 
     return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
   }
