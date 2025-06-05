@@ -52,7 +52,7 @@ export const putItem = async (item: DynamoItem, tableName?: string): Promise<Dyn
 };
 
 /**
- * Put multiple items in DynamoDB in a single transaction
+ * Put multiple items in DynamoDB in batches with retry logic
  *
  * @param items - Array of items to put
  * @param tableName - Optional table name suffix
@@ -73,17 +73,7 @@ export const batchPutItems = async (items: DynamoItem[], tableName?: string): Pr
 
   try {
     for (const chunk of chunks) {
-      const params: BatchWriteCommandInput = {
-        RequestItems: {
-          [tableFinalName]: chunk.map(item => ({
-            PutRequest: {
-              Item: item,
-            },
-          })),
-        },
-      };
-
-      await docClient.send(new BatchWriteCommand(params));
+      await batchWriteWithRetry(tableFinalName, chunk);
     }
   } catch (error) {
     console.error('Error batch writing items:', error);
@@ -93,6 +83,70 @@ export const batchPutItems = async (items: DynamoItem[], tableName?: string): Pr
     );
   }
 };
+
+/**
+ * Helper function to handle batch write with exponential backoff retry
+ * for unprocessed items
+ *
+ * @param tableName - The table name
+ * @param items - Items to write
+ * @param maxRetries - Maximum number of retry attempts
+ */
+async function batchWriteWithRetry(
+  tableName: string,
+  items: DynamoItem[],
+  maxRetries = 3
+): Promise<void> {
+  let unprocessedItems: BatchWriteCommandInput['RequestItems'] = {
+    [tableName]: items.map(item => ({
+      PutRequest: {
+        Item: item,
+      },
+    })),
+  };
+
+  let attempts = 0;
+
+  while (unprocessedItems && Object.keys(unprocessedItems).length > 0 && attempts < maxRetries) {
+    try {
+      const response = await docClient.send(
+        new BatchWriteCommand({ RequestItems: unprocessedItems })
+      );
+
+      unprocessedItems = response.UnprocessedItems;
+
+      // If there are unprocessed items, wait before retrying with exponential backoff
+      if (unprocessedItems && Object.keys(unprocessedItems).length > 0) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempts), 10000); // Max 10 seconds
+        console.warn(
+          `Batch write has ${Object.values(unprocessedItems)[0]?.length || 0} unprocessed items. ` +
+            `Retrying in ${backoffMs}ms (attempt ${attempts + 1}/${maxRetries})`
+        );
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
+    } catch (error) {
+      console.error(`Batch write attempt ${attempts + 1} failed:`, error);
+      if (attempts === maxRetries - 1) {
+        throw error; // Re-throw on final attempt
+      }
+      // Wait before retrying on error
+      const backoffMs = Math.min(1000 * Math.pow(2, attempts), 10000);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+    }
+
+    attempts++;
+  }
+
+  // If we still have unprocessed items after all retries, log warning
+  if (unprocessedItems && Object.keys(unprocessedItems).length > 0) {
+    const remainingCount = Object.values(unprocessedItems)[0]?.length || 0;
+    console.error(`Failed to process ${remainingCount} items after ${maxRetries} retry attempts`);
+    throw new ApplicationError(
+      ErrorCode.DB_WRITE_ERROR,
+      `Failed to process ${remainingCount} items after ${maxRetries} retry attempts`
+    );
+  }
+}
 
 /**
  * Transaction to write multiple items atomically

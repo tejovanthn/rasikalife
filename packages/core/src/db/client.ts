@@ -10,9 +10,17 @@ const REGION = process.env.AWS_REGION || 'us-east-1';
 // Default table name from environment or fallback
 export const TABLE_NAME = Resource.RasikaTable.name;
 
-// Create the base DynamoDB client
+// Create the base DynamoDB client with optimized configuration
 const ddbClient = new DynamoDBClient({
   region: REGION,
+  // Connection and retry configuration for better performance
+  maxAttempts: 3,
+  requestTimeout: 10000, // 10 seconds
+  connectionTimeout: 5000, // 5 seconds
+  // Support local development with DynamoDB Local
+  ...(process.env.DYNAMODB_ENDPOINT && {
+    endpoint: process.env.DYNAMODB_ENDPOINT,
+  }),
 });
 
 // Create the DynamoDB document client
