@@ -24,6 +24,7 @@ export * from './shared/search';
 // export * from './domain/user';
 export * from './domain/artist';
 export * from './domain/composition';
+export * from './domain/content';
 export * from './domain/raga';
 export * from './domain/tala';
 // export * from './domain/event';

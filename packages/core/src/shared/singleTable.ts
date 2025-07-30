@@ -29,6 +29,7 @@ export enum EntityPrefix {
   USER = 'USER',
   ARTIST = 'ARTIST',
   COMPOSITION = 'COMPOSITION',
+  CONTENT = 'CONTENT',
   RAGA = 'RAGA',
   TALA = 'TALA',
   EVENT = 'EVENT',

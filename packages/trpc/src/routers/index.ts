@@ -3,6 +3,7 @@ import { artistRouter } from './artist';
 import { ragaRouter } from './raga';
 import { talaRouter } from './tala';
 import { compositionRouter } from './composition';
+import { contentRouter } from './content';
 import type { inferRouterOutputs } from '@trpc/server';
 
 // Create and export the app router
@@ -11,6 +12,7 @@ export const appRouter = createRouter({
   raga: ragaRouter,
   tala: talaRouter,
   composition: compositionRouter,
+  content: contentRouter,
 });
 
 // Export type for client usage

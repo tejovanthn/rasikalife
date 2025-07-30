@@ -188,11 +188,19 @@ export class VersioningService {
   ): Promise<TEntity | null> {
     if (version) {
       // Get specific version
-      return getItem<TDynamoItem>(config.entityPrefix, id, formatVersionKey(version));
+      const item = await getItem<TDynamoItem>({
+        PK: formatKey(config.entityPrefix, id),
+        SK: formatVersionKey(version)
+      });
+      return item ? config.schema.parse(item) : null;
     }
 
     // Optimized: Get latest version data directly from denormalized pointer (single lookup)
-    return getItem<TDynamoItem>(config.entityPrefix, id, 'VERSION#LATEST');
+    const item = await getItem<TDynamoItem>({
+      PK: formatKey(config.entityPrefix, id),
+      SK: 'VERSION#LATEST'
+    });
+    return item ? config.schema.parse(item) : null;
   }
 
   /**
