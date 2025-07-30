@@ -52,9 +52,9 @@ describe('RagaRepository', () => {
     it('should throw error when raga not found', async () => {
       const input = { notes: 'Updated notes', editorId: 'user-456' };
 
-      await expect(
-        RagaRepository.update('nonexistent', input)
-      ).rejects.toThrow('Entity nonexistent not found');
+      await expect(RagaRepository.update('nonexistent', input)).rejects.toThrow(
+        'Entity nonexistent not found'
+      );
     });
   });
 

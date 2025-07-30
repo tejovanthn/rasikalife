@@ -46,7 +46,7 @@ const compositionVersioningConfig: VersioningConfig<
 > = {
   entityPrefix: EntityPrefix.COMPOSITION,
   schema: compositionSchema,
-  applyDefaults: (input) => ({
+  applyDefaults: input => ({
     addedBy: input.editorId,
     favoriteCount: 0,
     popularityScore: 0,
@@ -102,9 +102,9 @@ export class CompositionRepository {
 
   static async update(id: string, input: UpdateCompositionInput): Promise<Composition> {
     return VersioningService.update(
-      id, 
-      input, 
-      compositionVersioningConfig, 
+      id,
+      input,
+      compositionVersioningConfig,
       CompositionRepository.getById
     );
   }
@@ -188,18 +188,14 @@ export class CompositionRepository {
     // This ensures consistent view counts across both records
     const pk = formatKey(EntityPrefix.COMPOSITION, id);
     const latestSK = 'VERSION#LATEST';
-    
+
     // Get latest pointer to find the version SK
-    const latestPointer = await getByPrimaryKey<any>(
-      EntityPrefix.COMPOSITION,
-      id,
-      latestSK
-    );
+    const latestPointer = await getByPrimaryKey<any>(EntityPrefix.COMPOSITION, id, latestSK);
 
     if (!latestPointer) return;
 
     const versionSK = formatVersionKey(latestPointer.version, latestPointer.timestamp);
-    
+
     // Update both records atomically using batch operations
     await Promise.all([
       // Update the specific version record

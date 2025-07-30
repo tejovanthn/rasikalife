@@ -1,25 +1,30 @@
 /**
  * Shared versioning service for wiki-style entities
- * 
+ *
  * This service provides common versioning operations for entities that support
  * wiki-style editing with version history, latest pointers, and denormalized data.
  */
 import type { ZodSchema } from 'zod';
-import { batchPutItems, getByPrimaryKey } from '../db';
+import { batchPutItems, getItem } from '../db';
 import { getAllByPartitionKey } from './accessPatterns';
-import { 
-  createBaseItem, 
-  EntityPrefix, 
-  formatKey, 
+import {
+  createBaseItem,
+  type EntityPrefix,
+  formatKey,
   formatVersionKey,
-  type DynamoItem 
+  type DynamoItem,
 } from './singleTable';
 import { getCurrentISOString } from '../utils';
 
 /**
  * Configuration for versioning operations
  */
-export interface VersioningConfig<TEntity, TDynamoItem extends DynamoItem, TCreateInput, TUpdateInput> {
+export interface VersioningConfig<
+  TEntity,
+  TDynamoItem extends DynamoItem,
+  TCreateInput,
+  TUpdateInput,
+> {
   entityPrefix: EntityPrefix;
   schema: ZodSchema<TEntity>;
   /**
@@ -61,7 +66,11 @@ export class VersioningService {
   /**
    * Create a new versioned entity
    */
-  static async create<TEntity, TDynamoItem extends DynamoItem, TCreateInput extends VersionedEntityInput>(
+  static async create<
+    TEntity,
+    TDynamoItem extends DynamoItem,
+    TCreateInput extends VersionedEntityInput,
+  >(
     input: TCreateInput,
     config: VersioningConfig<TEntity, TDynamoItem, TCreateInput, any>
   ): Promise<TEntity> {
@@ -114,7 +123,11 @@ export class VersioningService {
   /**
    * Update an existing versioned entity (creates new version)
    */
-  static async update<TEntity, TDynamoItem extends DynamoItem, TUpdateInput extends VersionedEntityInput>(
+  static async update<
+    TEntity,
+    TDynamoItem extends DynamoItem,
+    TUpdateInput extends VersionedEntityInput,
+  >(
     id: string,
     input: TUpdateInput,
     config: VersioningConfig<TEntity, TDynamoItem, any, TUpdateInput>,
@@ -175,28 +188,17 @@ export class VersioningService {
   ): Promise<TEntity | null> {
     if (version) {
       // Get specific version
-      return getByPrimaryKey<TDynamoItem>(
-        config.entityPrefix,
-        id,
-        formatVersionKey(version)
-      );
+      return getItem<TDynamoItem>(config.entityPrefix, id, formatVersionKey(version));
     }
 
     // Optimized: Get latest version data directly from denormalized pointer (single lookup)
-    return getByPrimaryKey<TDynamoItem>(
-      config.entityPrefix,
-      id,
-      'VERSION#LATEST'
-    );
+    return getItem<TDynamoItem>(config.entityPrefix, id, 'VERSION#LATEST');
   }
 
   /**
    * Get version history for an entity
    */
-  static async getVersionHistory(
-    id: string,
-    entityPrefix: EntityPrefix
-  ): Promise<EntityVersion[]> {
+  static async getVersionHistory(id: string, entityPrefix: EntityPrefix): Promise<EntityVersion[]> {
     // Query all versions
     const result = await getAllByPartitionKey(entityPrefix, id, {
       sortKeyPrefix: 'VERSION#v',
@@ -213,10 +215,7 @@ export class VersioningService {
   /**
    * Increment view count for the latest version of an entity
    */
-  static async incrementViewCount(
-    id: string,
-    entityPrefix: EntityPrefix
-  ): Promise<void> {
+  static async incrementViewCount(id: string, entityPrefix: EntityPrefix): Promise<void> {
     // This would require importing updateItem, but keeping it simple for now
     // Each repository can implement this using the shared pattern if needed
     throw new Error('incrementViewCount should be implemented in individual repositories for now');

@@ -39,7 +39,6 @@ vi.mock('../src/utils/id', async () => {
   };
 });
 
-
 // Global setup
 beforeAll(() => {
   // Set a fixed time for all tests

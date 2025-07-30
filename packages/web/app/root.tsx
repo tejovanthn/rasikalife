@@ -49,7 +49,7 @@ export const links: LinksFunction = () => [
 export async function loader({ request }: LoaderFunctionArgs) {
   const { getTheme } = await themeSessionResolver(request);
   return {
-    theme: getTheme(),
+    theme: getTheme() || 'light', // Default to light theme
   };
 }
 
@@ -76,7 +76,7 @@ function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
-        <div className="mb-20 mt-10">{children}</div>
+        <div className="">{children}</div>
         <Footer />
         <ScrollRestoration />
         <Scripts />

@@ -180,7 +180,8 @@ describe('ArtistRepository', () => {
 
       expect(result.items.length).toBe(2);
       expect(db.scan).toHaveBeenCalledWith({
-        FilterExpression: 'begins_with(PK, :pkPrefix) AND SK = :skValue AND contains(#searchName, :searchTerm)',
+        FilterExpression:
+          'begins_with(PK, :pkPrefix) AND SK = :skValue AND contains(#searchName, :searchTerm)',
         ExpressionAttributeNames: {
           '#searchName': 'searchName',
         },

@@ -8,7 +8,7 @@
 import { TRPCError } from '@trpc/server';
 import {
   rateLimiter,
-  RateLimitConfig,
+  type RateLimitConfig,
   RateLimitConfigs,
   getRateLimitIdentifier,
   isTrustedSource,

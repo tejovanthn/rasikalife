@@ -123,9 +123,10 @@ describe('ArtistService', () => {
       const mockGetCommand = vi.fn();
       const mockUpdateCommand = vi.fn();
       const mockDocClient = {
-        send: vi.fn()
+        send: vi
+          .fn()
           .mockResolvedValueOnce({ Item: { viewCount: 5 } }) // First call for GetCommand
-          .mockResolvedValueOnce({}) // Second call for UpdateCommand
+          .mockResolvedValueOnce({}), // Second call for UpdateCommand
       };
       const mockGetTableName = vi.fn().mockReturnValue('test-table');
 

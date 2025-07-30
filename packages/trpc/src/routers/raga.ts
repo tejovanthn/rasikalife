@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { createRagaSchema, RagaService, updateRagaSchema } from '@rasika/core';
-import { createRouter, publicProcedure, protectedProcedure } from '../server';
+import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 import { idWithViewTrackingSchema } from '../schemas';
 import { ragaSearchParamsSchema } from '../schemas/raga';
 
 export const ragaRouter = createRouter({
   // Queries
-  getById: publicProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
+  getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
     const raga = await RagaService.getRaga(input.id, input.version);
 
     // Track view if enabled and not a bot
@@ -17,7 +17,7 @@ export const ragaRouter = createRouter({
     return raga;
   }),
 
-  getByName: publicProcedure
+  getByName: rateLimitedProcedure
     .input(
       z.object({
         name: z.string(),
@@ -35,25 +35,25 @@ export const ragaRouter = createRouter({
       return raga;
     }),
 
-  search: publicProcedure.input(ragaSearchParamsSchema).query(async ({ input }) => {
+  search: searchProcedure.input(ragaSearchParamsSchema).query(async ({ input }) => {
     return RagaService.searchRagas(input);
   }),
 
-  getVersionHistory: publicProcedure
+  getVersionHistory: rateLimitedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       return RagaService.getVersionHistory(input.id);
     }),
 
   // Mutations
-  create: protectedProcedure.input(createRagaSchema).mutation(async ({ input, ctx }) => {
+  create: writeProcedure.input(createRagaSchema).mutation(async ({ input, ctx }) => {
     return RagaService.createRaga({
       ...input,
       addedBy: ctx.user.id,
     });
   }),
 
-  update: protectedProcedure.input(updateRagaSchema).mutation(async ({ input, ctx }) => {
+  update: writeProcedure.input(updateRagaSchema).mutation(async ({ input, ctx }) => {
     const { id, ...updateData } = input;
     return RagaService.updateRaga(id, {
       ...updateData,

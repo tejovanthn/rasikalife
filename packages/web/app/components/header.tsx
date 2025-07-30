@@ -23,11 +23,11 @@ export const Header = () => {
 
   const navLinks = [
     { href: '/', label: 'Home' },
-    { href: '/carnatic/songs', label: 'All Songs' },
-    { href: '/carnatic/ragas', label: 'All Ragas' },
+    { href: '/carnatic/compositions', label: 'Compositions' },
+    { href: '/carnatic/artists', label: 'Artists' },
+    { href: '/carnatic/ragas', label: 'Ragas' },
+    { href: '/carnatic/talas', label: 'Talas' },
     { href: '/about', label: 'About' },
-    { href: '/faq', label: 'FAQ' },
-    { href: '/support', label: 'Support' },
     { label: 'mode-toggle', component: <ModeToggle /> },
   ];
 

@@ -4,7 +4,7 @@ import { createContext } from './context';
 
 // Re-export the router and its type
 export { appRouter } from './routers';
-export type { AppRouter } from './routers';
+export type { AppRouter, RouterOutput } from './routers';
 
 // AWS Lambda handler
 export const handler = awsLambdaRequestHandler({

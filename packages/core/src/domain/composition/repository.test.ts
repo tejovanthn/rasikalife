@@ -55,9 +55,9 @@ describe('CompositionRepository', () => {
     it('should throw error when composition not found', async () => {
       const input = { title: 'Updated Title', editorId: 'user-456' };
 
-      await expect(
-        CompositionRepository.update('nonexistent', input)
-      ).rejects.toThrow('Entity nonexistent not found');
+      await expect(CompositionRepository.update('nonexistent', input)).rejects.toThrow(
+        'Entity nonexistent not found'
+      );
     });
   });
 
@@ -104,7 +104,7 @@ describe('CompositionRepository', () => {
       expect(result.items).toHaveLength(0);
       expect(result.hasMore).toBe(false);
     });
-    
+
     it('should return empty results when getting compositions by artist', async () => {
       const result = await CompositionRepository.getCompositionsByArtistId('nonexistent');
       expect(result.items).toHaveLength(0);

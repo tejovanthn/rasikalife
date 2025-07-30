@@ -18,11 +18,15 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - **Core Package Tests**: `cd packages/core && pnpm test` or `pnpm test:watch` for watch mode
 - **Core Coverage**: `cd packages/core && pnpm test:coverage`
 - **tRPC Tests**: `cd packages/trpc && pnpm test` (requires SST shell: `sst shell vitest run`)
-- **Type Checking**: `cd packages/core && pnpm typecheck`
+- **tRPC Coverage**: `cd packages/trpc && pnpm test:coverage`
+- **Type Checking**: `cd packages/core && pnpm typecheck` or `cd packages/web && pnpm typecheck`
+- **Web Build**: `cd packages/web && pnpm build`
 
 ### Infrastructure
 - Infrastructure is defined in `/infra/` directory using SST v3
 - Database: Single DynamoDB table with 6 GSIs for optimal access patterns
+- **SST Development**: Use `pnpm run dev` to start all services with live reloading
+- **SST Shell**: Use `sst shell` to run commands with proper AWS environment context
 
 ## Architecture
 
@@ -43,6 +47,7 @@ The core package uses a domain-driven design with:
 - **Repository Pattern**: Each domain has repository, service, schema, and types
 - **Access Patterns**: Optimized for DynamoDB with GSI queries
 - **KSUID IDs**: Time-sortable unique identifiers with domain prefixes
+- **Modular Exports**: Package supports selective imports via subpath exports (`@rasika/core/domain/artist`, `@rasika/core/utils`, etc.)
 
 ### Key Technical Patterns
 
@@ -62,9 +67,10 @@ The core package uses a domain-driven design with:
 ### Testing Strategy
 
 - Vitest for all testing with coverage reports
-- Mock DynamoDB implementation for unit tests
+- Mock DynamoDB implementation for unit tests in core package
 - Tests collocated with implementation files (`*.test.ts`)
 - Global test setup with deterministic ID and date generation
+- tRPC tests require SST environment context via `sst shell vitest run`
 
 ## Code Conventions
 
@@ -73,6 +79,8 @@ The core package uses a domain-driven design with:
 - 2-space indentation, single quotes, semicolons required
 - Line width: 100 characters
 - Strict TypeScript rules: no explicit any, import type enforcement
+- Auto-organizes imports and enforces `import type` for type-only imports
+- Specific rules: no forEach loops, no non-null assertions, no useless empty exports
 
 ### File Naming
 - Domain modules: `packages/core/src/domain/[entity]/`

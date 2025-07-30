@@ -6,7 +6,7 @@ import type { AppRouter } from './index';
 const client = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({
-      url: Resource.RasikaTRPC.url,
+      url: Resource.trpc.url,
       // You can pass any HTTP headers you wish here
       // async headers() {
       //   return {

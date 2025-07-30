@@ -1,2 +1,7 @@
 packages:
-  - 'packages/*'
+  - packages/*
+onlyBuiltDependencies:
+  - '@biomejs/biome'
+  - aws-sdk
+  - esbuild
+  - protobufjs

@@ -1,13 +1,13 @@
-import type { Router } from '@rasika/functions';
-import { createTRPCClient, httpBatchLink, type inferRouterClient } from '@trpc/client';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import type { AppRouter } from '@rasika/trpc';
 import { Resource } from 'sst';
 
-export const client = createTRPCClient<Router>({
+export type { RouterOutput } from '@rasika/trpc';
+
+export const client = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: Resource.RasikaTRPC.url,
     }),
   ],
 });
-
-export type RouterOutput = inferRouterClient<Router>;

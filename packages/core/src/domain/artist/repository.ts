@@ -9,14 +9,14 @@ import {
   formatKey,
   SecondaryPrefix,
 } from '../../shared/singleTable';
-import { createArtistSchema, Artist, updateArtistSchema } from './schema';
+import { createArtistSchema, type Artist, updateArtistSchema } from './schema';
 import {
-  ArtistDynamoItem,
+  type ArtistDynamoItem,
   VerificationStatus,
-  UpdateArtistDynamoItem,
-  ArtistSearchResult,
-  Tradition,
-  ArtistSearchParams,
+  type UpdateArtistDynamoItem,
+  type ArtistSearchResult,
+  type Tradition,
+  type ArtistSearchParams,
 } from './types';
 
 export class ArtistRepository {

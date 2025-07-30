@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { createTalaSchema, TalaService, updateTalaSchema } from '@rasika/core';
-import { createRouter, publicProcedure, protectedProcedure } from '../server';
+import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 import { idWithViewTrackingSchema } from '../schemas';
 import { talaSearchParamsSchema } from '../schemas/tala';
 
 export const talaRouter = createRouter({
   // Queries
-  getById: publicProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
+  getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
     const tala = await TalaService.getTala(input.id, input.version);
 
     // Track view if enabled and not a bot
@@ -17,7 +17,7 @@ export const talaRouter = createRouter({
     return tala;
   }),
 
-  getByName: publicProcedure
+  getByName: rateLimitedProcedure
     .input(
       z.object({
         name: z.string(),
@@ -35,25 +35,25 @@ export const talaRouter = createRouter({
       return tala;
     }),
 
-  search: publicProcedure.input(talaSearchParamsSchema).query(async ({ input }) => {
+  search: searchProcedure.input(talaSearchParamsSchema).query(async ({ input }) => {
     return TalaService.searchTalas(input);
   }),
 
-  getVersionHistory: publicProcedure
+  getVersionHistory: rateLimitedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       return TalaService.getVersionHistory(input.id);
     }),
 
   // Mutations
-  create: protectedProcedure.input(createTalaSchema).mutation(async ({ input, ctx }) => {
+  create: writeProcedure.input(createTalaSchema).mutation(async ({ input, ctx }) => {
     return TalaService.createTala({
       ...input,
       addedBy: ctx.user.id,
     });
   }),
 
-  update: protectedProcedure.input(updateTalaSchema).mutation(async ({ input, ctx }) => {
+  update: writeProcedure.input(updateTalaSchema).mutation(async ({ input, ctx }) => {
     const { id, ...updateData } = input;
     return TalaService.updateTala(id, {
       ...updateData,

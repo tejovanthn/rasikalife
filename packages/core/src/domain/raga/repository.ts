@@ -1,9 +1,6 @@
 import { query, updateItem } from '../../db';
 import { VersioningService, type VersioningConfig } from '../../shared/versioning';
-import {
-  getByPrimaryKey,
-  getByGlobalIndex,
-} from '../../shared/accessPatterns';
+import { getByPrimaryKey, getByGlobalIndex } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {
@@ -62,12 +59,7 @@ export class RagaRepository {
   }
 
   static async update(id: string, input: UpdateRagaInput): Promise<Raga> {
-    return VersioningService.update(
-      id,
-      input,
-      ragaVersioningConfig,
-      RagaRepository.getById
-    );
+    return VersioningService.update(id, input, ragaVersioningConfig, RagaRepository.getById);
   }
 
   static async getVersionHistory(id: string): Promise<RagaVersion[]> {

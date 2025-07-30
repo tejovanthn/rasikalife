@@ -2,8 +2,8 @@ import { formatKey, EntityPrefix, SecondaryPrefix } from '../../shared/singleTab
 import { createQuery, updateItem, scan } from '../../db';
 import { cache, CacheKeys, CacheTTL, withCache, invalidateCachePattern } from '../../shared/cache';
 import { ArtistRepository } from './repository';
-import { CreateArtistInput, Artist, UpdateArtistInput } from './schema';
-import { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from './types';
+import type { CreateArtistInput, Artist, UpdateArtistInput } from './schema';
+import type { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from './types';
 
 export const createArtist = async (input: CreateArtistInput): Promise<Artist> => {
   // Add any business logic here (e.g., validation, enrichment)

@@ -1,11 +1,11 @@
 import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { 
-  getCacheMetrics, 
-  cleanupExpiredEntries, 
-  getCacheHitRate, 
+import {
+  getCacheMetrics,
+  cleanupExpiredEntries,
+  getCacheHitRate,
   logCacheMetrics,
   warmCache,
-  getCacheRecommendations 
+  getCacheRecommendations,
 } from './cache-monitor';
 
 // Mock the cache module with factory function
@@ -16,11 +16,11 @@ vi.mock('./cache', () => {
     cleanup: vi.fn(() => {}),
     cache: mockInternalCache,
   };
-  
+
   // Store references on global for test access
   (globalThis as any).__mockCacheService = mockCacheService;
   (globalThis as any).__mockInternalCache = mockInternalCache;
-  
+
   return {
     cache: mockCacheService,
   };
@@ -32,11 +32,11 @@ const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 describe('Cache Monitor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Get mock references from global
     const mockInternalCache = (globalThis as any).__mockInternalCache;
     const mockCacheService = (globalThis as any).__mockCacheService;
-    
+
     mockInternalCache.clear();
     mockCacheService.getStats.mockReturnValue({ size: 0, keys: [] });
   });
@@ -58,7 +58,7 @@ describe('Cache Monitor', () => {
       const now = Date.now();
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       // Set up mock cache with sample data
       mockInternalCache.set('artist:123', {
         data: { name: 'Test Artist' },
@@ -76,9 +76,9 @@ describe('Cache Monitor', () => {
         ttl: 300000,
       });
 
-      mockCacheService.getStats.mockReturnValue({ 
-        size: 3, 
-        keys: ['artist:123', 'composition:456', 'artist:789'] 
+      mockCacheService.getStats.mockReturnValue({
+        size: 3,
+        keys: ['artist:123', 'composition:456', 'artist:789'],
       });
 
       const metrics = getCacheMetrics();
@@ -97,7 +97,7 @@ describe('Cache Monitor', () => {
       const now = Date.now();
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockInternalCache.set('raga:abc', {
         data: { name: 'Test Raga' },
         timestamp: now,
@@ -118,10 +118,10 @@ describe('Cache Monitor', () => {
   describe('cleanupExpiredEntries', () => {
     it('should return count of cleaned entries', () => {
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats
-        .mockReturnValueOnce({ size: 10 })  // before cleanup
-        .mockReturnValueOnce({ size: 7 });  // after cleanup
+        .mockReturnValueOnce({ size: 10 }) // before cleanup
+        .mockReturnValueOnce({ size: 7 }); // after cleanup
 
       const cleanedCount = cleanupExpiredEntries();
 
@@ -131,11 +131,9 @@ describe('Cache Monitor', () => {
 
     it('should return 0 when no entries are cleaned', () => {
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
-      mockCacheService.getStats
-        .mockReturnValueOnce({ size: 5 })
-        .mockReturnValueOnce({ size: 5 });
-      
+
+      mockCacheService.getStats.mockReturnValueOnce({ size: 5 }).mockReturnValueOnce({ size: 5 });
+
       const cleanedCount = cleanupExpiredEntries();
 
       expect(cleanedCount).toBe(0);
@@ -145,9 +143,9 @@ describe('Cache Monitor', () => {
   describe('getCacheHitRate', () => {
     it('should return 0.8 when matching keys exist', () => {
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({
-        keys: ['artist:123', 'artist:456', 'composition:789']
+        keys: ['artist:123', 'artist:456', 'composition:789'],
       });
 
       const hitRate = getCacheHitRate('artist');
@@ -157,9 +155,9 @@ describe('Cache Monitor', () => {
 
     it('should return 0.0 when no matching keys exist', () => {
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({
-        keys: ['composition:123', 'raga:456']
+        keys: ['composition:123', 'raga:456'],
       });
 
       const hitRate = getCacheHitRate('artist');
@@ -169,7 +167,7 @@ describe('Cache Monitor', () => {
 
     it('should handle empty cache', () => {
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({ keys: [] });
 
       const hitRate = getCacheHitRate('artist');
@@ -182,9 +180,9 @@ describe('Cache Monitor', () => {
     it('should log cache metrics to console', () => {
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({ size: 2, keys: [] });
-      
+
       // Add some test data for memory calculation
       mockInternalCache.set('test:1', {
         data: { value: 'test' },
@@ -216,7 +214,7 @@ describe('Cache Monitor', () => {
   describe('getCacheRecommendations', () => {
     it('should recommend cache eviction for large cache', () => {
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({ size: 1500, keys: [] });
 
       const recommendations = getCacheRecommendations();
@@ -229,7 +227,7 @@ describe('Cache Monitor', () => {
     it('should recommend external cache for high memory usage', () => {
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockInternalCache.set('test', {
         data: 'x'.repeat(60 * 1024 * 1024), // 60MB of data
         timestamp: Date.now(),
@@ -239,17 +237,15 @@ describe('Cache Monitor', () => {
 
       const recommendations = getCacheRecommendations();
 
-      expect(recommendations).toContain(
-        'Memory usage is high - consider external cache (Redis)'
-      );
+      expect(recommendations).toContain('Memory usage is high - consider external cache (Redis)');
     });
 
     it('should recommend search result aggregation for many artist searches', () => {
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({ size: 150, keys: [] });
-      
+
       // Mock many artist search entries
       for (let i = 0; i < 150; i++) {
         mockInternalCache.set(`artist_search:${i}`, {
@@ -269,15 +265,13 @@ describe('Cache Monitor', () => {
     it('should warn when cache is empty', () => {
       const recommendations = getCacheRecommendations();
 
-      expect(recommendations).toContain(
-        'Cache is empty - ensure caching is working correctly'
-      );
+      expect(recommendations).toContain('Cache is empty - ensure caching is working correctly');
     });
 
     it('should return empty array for healthy cache', () => {
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({ size: 50, keys: [] });
       mockInternalCache.set('artist:1', {
         data: { name: 'Test' },
@@ -293,16 +287,16 @@ describe('Cache Monitor', () => {
     it('should return multiple recommendations when applicable', () => {
       const mockInternalCache = (globalThis as any).__mockInternalCache;
       const mockCacheService = (globalThis as any).__mockCacheService;
-      
+
       mockCacheService.getStats.mockReturnValue({ size: 1200, keys: [] });
-      
+
       // Add large data to trigger memory warning
       mockInternalCache.set('large', {
         data: 'x'.repeat(60 * 1024 * 1024), // 60MB
         timestamp: Date.now(),
         ttl: 300000,
       });
-      
+
       // Add many artist search entries
       for (let i = 0; i < 150; i++) {
         mockInternalCache.set(`artist_search:${i}`, {
@@ -318,9 +312,7 @@ describe('Cache Monitor', () => {
       expect(recommendations).toContain(
         'Consider implementing cache eviction policies - cache is getting large'
       );
-      expect(recommendations).toContain(
-        'Memory usage is high - consider external cache (Redis)'
-      );
+      expect(recommendations).toContain('Memory usage is high - consider external cache (Redis)');
     });
   });
 });

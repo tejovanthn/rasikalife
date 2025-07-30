@@ -10,10 +10,10 @@
     "@trpc/client": "11.0.0-rc.467",
     "@trpc/server": "11.0.0-rc.467",
     "sst": "ion",
-    "zod": "^3.25.28"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.149",
+    "@types/aws-lambda": "^8.10.152",
     "sst": "ion"
   }
 }

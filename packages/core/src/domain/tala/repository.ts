@@ -69,12 +69,7 @@ export class TalaRepository {
   }
 
   static async update(id: string, input: UpdateTalaInput): Promise<Tala> {
-    return VersioningService.update(
-      id,
-      input,
-      talaVersioningConfig,
-      TalaRepository.getById
-    );
+    return VersioningService.update(id, input, talaVersioningConfig, TalaRepository.getById);
   }
 
   static async getVersionHistory(id: string): Promise<TalaVersion[]> {

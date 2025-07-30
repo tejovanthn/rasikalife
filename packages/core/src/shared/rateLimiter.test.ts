@@ -1,11 +1,11 @@
 import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { 
+import {
   rateLimiter,
   RateLimitConfigs,
   TrustedSources,
   isTrustedSource,
   getRateLimitIdentifier,
-  performRateLimitCleanup 
+  performRateLimitCleanup,
 } from './rateLimiter';
 
 // Mock console.log for cleanup testing
@@ -26,7 +26,7 @@ describe('Rate Limiter', () => {
   describe('Basic Rate Limiting', () => {
     it('should allow requests within limit', () => {
       const config = { max: 5, windowMs: 60000 };
-      
+
       // Make 5 requests - all should be allowed
       for (let i = 0; i < 5; i++) {
         const result = rateLimiter.checkLimit('user1', config);
@@ -39,13 +39,13 @@ describe('Rate Limiter', () => {
 
     it('should block requests that exceed limit', () => {
       const config = { max: 3, windowMs: 60000 };
-      
+
       // Make 3 allowed requests
       for (let i = 0; i < 3; i++) {
         const result = rateLimiter.checkLimit('user1', config);
         expect(result.allowed).toBe(true);
       }
-      
+
       // 4th request should be blocked
       const blockedResult = rateLimiter.checkLimit('user1', config);
       expect(blockedResult.allowed).toBe(false);
@@ -56,16 +56,16 @@ describe('Rate Limiter', () => {
 
     it('should track different identifiers separately', () => {
       const config = { max: 2, windowMs: 60000 };
-      
+
       // User1 makes 2 requests
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user1', config);
-      
+
       // User2 should still be allowed
       const user2Result = rateLimiter.checkLimit('user2', config);
       expect(user2Result.allowed).toBe(true);
       expect(user2Result.count).toBe(1);
-      
+
       // User1 should be blocked
       const user1Result = rateLimiter.checkLimit('user1', config);
       expect(user1Result.allowed).toBe(false);
@@ -75,18 +75,18 @@ describe('Rate Limiter', () => {
   describe('Sliding Window Algorithm', () => {
     it('should reset window when time advances', () => {
       const config = { max: 2, windowMs: 60000 }; // 1 minute window
-      
+
       // Make 2 requests at time 0
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user1', config);
-      
+
       // Next request should be blocked
       let result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(false);
-      
+
       // Advance time by 61 seconds (past the window)
       vi.advanceTimersByTime(61000);
-      
+
       // Should be allowed again
       result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(true);
@@ -95,26 +95,26 @@ describe('Rate Limiter', () => {
 
     it('should handle partial window overlap correctly', () => {
       const config = { max: 3, windowMs: 60000 };
-      
+
       // Make 2 requests at time 0
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user1', config);
-      
+
       // Advance time by 30 seconds
       vi.advanceTimersByTime(30000);
-      
+
       // Make 1 more request (still within window)
       let result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(true);
       expect(result.count).toBe(3);
-      
+
       // Should be at limit
       result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(false);
-      
+
       // Advance another 31 seconds (first 2 requests expire)
       vi.advanceTimersByTime(31000);
-      
+
       // Should have capacity again (only 1 request in current window)
       result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(true);
@@ -127,9 +127,9 @@ describe('Rate Limiter', () => {
       const config = {
         max: 1,
         windowMs: 60000,
-        skip: (identifier: string) => identifier === 'admin'
+        skip: (identifier: string) => identifier === 'admin',
       };
-      
+
       // Admin should always be allowed
       for (let i = 0; i < 5; i++) {
         const result = rateLimiter.checkLimit('admin', config);
@@ -137,7 +137,7 @@ describe('Rate Limiter', () => {
         expect(result.count).toBe(0);
         expect(result.remaining).toBe(1);
       }
-      
+
       // Regular user should be limited
       rateLimiter.checkLimit('user1', config);
       const result = rateLimiter.checkLimit('user1', config);
@@ -148,10 +148,10 @@ describe('Rate Limiter', () => {
   describe('Reset Time Calculation', () => {
     it('should calculate correct reset time', () => {
       const config = { max: 1, windowMs: 60000 };
-      
+
       const startTime = Date.now();
       rateLimiter.checkLimit('user1', config);
-      
+
       // Second request should be blocked with correct reset time
       const result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(false);
@@ -162,36 +162,36 @@ describe('Rate Limiter', () => {
   describe('Cleanup Functionality', () => {
     it('should remove stale entries during cleanup', () => {
       const config = { max: 5, windowMs: 60000 };
-      
+
       // Create entries for multiple users
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user2', config);
       rateLimiter.checkLimit('user3', config);
-      
+
       const initialStats = rateLimiter.getStats();
       expect(initialStats.totalIdentifiers).toBe(3);
-      
+
       // Advance time by 6 minutes (past cleanup threshold)
       vi.advanceTimersByTime(6 * 60 * 1000);
-      
+
       const deletedCount = rateLimiter.cleanup();
       expect(deletedCount).toBe(3);
-      
+
       const finalStats = rateLimiter.getStats();
       expect(finalStats.totalIdentifiers).toBe(0);
     });
 
     it('should not remove recent entries during cleanup', () => {
       const config = { max: 5, windowMs: 60000 };
-      
+
       rateLimiter.checkLimit('user1', config);
-      
+
       // Advance time by only 2 minutes (less than cleanup threshold)
       vi.advanceTimersByTime(2 * 60 * 1000);
-      
+
       const deletedCount = rateLimiter.cleanup();
       expect(deletedCount).toBe(0);
-      
+
       const stats = rateLimiter.getStats();
       expect(stats.totalIdentifiers).toBe(1);
     });
@@ -200,10 +200,10 @@ describe('Rate Limiter', () => {
   describe('Statistics', () => {
     it('should provide accurate statistics', () => {
       const config = { max: 5, windowMs: 60000 };
-      
+
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user2', config);
-      
+
       const stats = rateLimiter.getStats();
       expect(stats.totalIdentifiers).toBe(2);
       expect(stats.lastGlobalCleanup).toBeTypeOf('number');
@@ -213,29 +213,29 @@ describe('Rate Limiter', () => {
   describe('Clear and Reset', () => {
     it('should clear all data', () => {
       const config = { max: 5, windowMs: 60000 };
-      
+
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user2', config);
-      
+
       rateLimiter.clear();
-      
+
       const stats = rateLimiter.getStats();
       expect(stats.totalIdentifiers).toBe(0);
     });
 
     it('should reset specific identifier', () => {
       const config = { max: 1, windowMs: 60000 };
-      
+
       // Block user1
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user1', config);
-      
+
       let result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(false);
-      
+
       // Reset user1
       rateLimiter.reset('user1');
-      
+
       // Should be allowed again
       result = rateLimiter.checkLimit('user1', config);
       expect(result.allowed).toBe(true);
@@ -300,24 +300,22 @@ describe('Rate Limiter', () => {
   describe('Periodic Cleanup', () => {
     it('should log cleanup results when entries are deleted', () => {
       const config = { max: 5, windowMs: 60000 };
-      
+
       // Create some entries
       rateLimiter.checkLimit('user1', config);
       rateLimiter.checkLimit('user2', config);
-      
+
       // Advance time to make entries stale
       vi.advanceTimersByTime(6 * 60 * 1000);
-      
+
       performRateLimitCleanup();
-      
-      expect(consoleSpy).toHaveBeenCalledWith(
-        '🧹 Rate limiter cleanup: removed 2 stale entries'
-      );
+
+      expect(consoleSpy).toHaveBeenCalledWith('🧹 Rate limiter cleanup: removed 2 stale entries');
     });
 
     it('should not log when no entries are deleted', () => {
       performRateLimitCleanup();
-      
+
       expect(consoleSpy).not.toHaveBeenCalled();
     });
   });

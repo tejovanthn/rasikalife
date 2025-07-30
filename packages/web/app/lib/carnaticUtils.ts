@@ -9,16 +9,21 @@ export const slugify = ({
   type?: string;
   id?: string;
 }) => {
-  let slug = '';
-  if (id) {
-    slug = convert(`${name}-${id}`, {
-      camelCase: false,
-    });
-    return `/carnatic/songs/${slug}`;
-  }
-  slug = convert(name, {
+  const slug = convert(`${name}-${id}`, {
     camelCase: false,
   });
-  return `/carnatic/${type}/${slug}`;
-  return '';
+
+  // Return carnatic-nested URL structure
+  if (type === 'compositions' || (!type && id)) {
+    return `/carnatic/compositions/${slug}`;
+  } else if (type === 'artists') {
+    return `/carnatic/artists/${slug}`;
+  } else if (type === 'ragas') {
+    return `/carnatic/ragas/${slug}`;
+  } else if (type === 'talas') {
+    return `/carnatic/talas/${slug}`;
+  }
+
+  // Fallback for other types
+  return `/carnatic/${type}/${convert(name, { camelCase: false })}`;
 };

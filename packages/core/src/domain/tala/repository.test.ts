@@ -56,9 +56,9 @@ describe('TalaRepository', () => {
     it('should throw error when tala not found', async () => {
       const input = { structure: 'Updated structure', editorId: 'user-456' };
 
-      await expect(
-        TalaRepository.update('nonexistent', input)
-      ).rejects.toThrow('Entity nonexistent not found');
+      await expect(TalaRepository.update('nonexistent', input)).rejects.toThrow(
+        'Entity nonexistent not found'
+      );
     });
   });
 
@@ -76,7 +76,7 @@ describe('TalaRepository', () => {
       const result = await TalaRepository.getByName('nonexistent');
       expect(result).toBeNull();
     });
-    
+
     it('should return empty results when searching by aksharas', async () => {
       const result = await TalaRepository.getByAksharas(99);
       expect(result.items).toHaveLength(0);

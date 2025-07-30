@@ -20,7 +20,9 @@ vi.mock('./singleTable', () => ({
     createdAt: '2025-01-15T12:00:00.000Z',
   }),
   formatKey: vi.fn((prefix, id) => `${prefix}#${id}`),
-  formatVersionKey: vi.fn((version, timestamp) => `VERSION#${version}#${timestamp || '2025-01-15T12:00:00.000Z'}`),
+  formatVersionKey: vi.fn(
+    (version, timestamp) => `VERSION#${version}#${timestamp || '2025-01-15T12:00:00.000Z'}`
+  ),
   EntityPrefix: {
     TEST: 'TEST',
     COMPOSITION: 'COMPOSITION',
@@ -383,13 +385,14 @@ describe('VersioningService', () => {
         lastEvaluatedKey: undefined,
       });
 
-      const result = await VersioningService.getVersionHistory('test-id-123', EntityPrefix.TEST as any);
-
-      expect(getAllByPartitionKey).toHaveBeenCalledWith(
-        EntityPrefix.TEST,
+      const result = await VersioningService.getVersionHistory(
         'test-id-123',
-        { sortKeyPrefix: 'VERSION#v' }
+        EntityPrefix.TEST as any
       );
+
+      expect(getAllByPartitionKey).toHaveBeenCalledWith(EntityPrefix.TEST, 'test-id-123', {
+        sortKeyPrefix: 'VERSION#v',
+      });
 
       expect(result).toEqual([
         {
@@ -420,7 +423,10 @@ describe('VersioningService', () => {
         lastEvaluatedKey: undefined,
       });
 
-      const result = await VersioningService.getVersionHistory('test-id-123', EntityPrefix.TEST as any);
+      const result = await VersioningService.getVersionHistory(
+        'test-id-123',
+        EntityPrefix.TEST as any
+      );
 
       expect(result).toEqual([]);
     });
@@ -440,7 +446,10 @@ describe('VersioningService', () => {
         lastEvaluatedKey: undefined,
       });
 
-      const result = await VersioningService.getVersionHistory('test-id-123', EntityPrefix.TEST as any);
+      const result = await VersioningService.getVersionHistory(
+        'test-id-123',
+        EntityPrefix.TEST as any
+      );
 
       expect(result[0].editorId).toBe('user-789'); // Last editor in array
     });
@@ -450,7 +459,9 @@ describe('VersioningService', () => {
     it('should throw not implemented error', async () => {
       await expect(
         VersioningService.incrementViewCount('test-id', EntityPrefix.TEST as any)
-      ).rejects.toThrow('incrementViewCount should be implemented in individual repositories for now');
+      ).rejects.toThrow(
+        'incrementViewCount should be implemented in individual repositories for now'
+      );
     });
   });
 
@@ -487,7 +498,7 @@ describe('VersioningService', () => {
         viewCount: 5,
         isLatest: true,
       };
-      
+
       const highVersionEntity = { ...mockCurrentEntity, version: 'v99' };
       const mockGetCurrentEntity = vi.fn().mockResolvedValue(highVersionEntity);
 

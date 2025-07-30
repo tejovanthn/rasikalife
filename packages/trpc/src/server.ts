@@ -30,7 +30,7 @@ const errorHandler = t.middleware(async ({ next }) => {
 
     // Re-throw other errors as INTERNAL_SERVER_ERROR
     throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
+      code: 'INTERNAL_SERVER_ERROR' as TRPCError['code'],
       message: 'An unexpected error occurred',
       cause: error,
     });
@@ -44,7 +44,7 @@ function mapErrorCodeToTRPCCode(code: string): TRPCError['code'] {
   if (code.includes('FORBIDDEN')) return 'FORBIDDEN';
   if (code.includes('BAD_REQUEST')) return 'BAD_REQUEST';
   if (code.includes('CONFLICT')) return 'CONFLICT';
-  return 'INTERNAL_SERVER_ERROR';
+  return 'INTERNAL_SERVER_ERROR' as TRPCError['code'];
 }
 
 // Middleware that checks if user is authenticated
@@ -99,7 +99,7 @@ const generalRateLimit = t.middleware(async ({ ctx, next }) => {
 
     if (!result.allowed) {
       throw new TRPCError({
-        code: 'TOO_MANY_REQUESTS',
+        code: 'TOO_MANY_REQUESTS' as TRPCError['code'],
         message: `Rate limit exceeded. Try again in ${Math.ceil(result.resetTime / 1000)} seconds.`,
       });
     }

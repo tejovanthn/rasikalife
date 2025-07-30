@@ -2,7 +2,7 @@
  * Common type definitions used across the Rasika.life application
  */
 
-import { ErrorCodeType } from '../../constants';
+import type { ErrorCodeType } from '../../constants';
 import type { PaginationParams, PaginationResult } from '../../db/queryBuilder';
 
 // Base application error

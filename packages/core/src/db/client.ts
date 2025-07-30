@@ -7,15 +7,25 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 const REGION = process.env.AWS_REGION || 'us-east-1';
 // Default table name from environment or fallback
 export const TABLE_NAME = (() => {
-  // In test environment, use mock table name
-  if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+  // Check if running in SST environment (has SST resources available)
+  const inSST = process.env.SST_RESOURCE_RasikaTable || process.env.SST_RESOURCE_App;
+
+  // Only use mock table for core package unit tests when NOT in SST environment
+  if ((process.env.NODE_ENV === 'test' || process.env.VITEST) && !inSST) {
     return 'mock-rasika-table';
   }
-  
-  // In production/dev, use SST Resource
+
+  // In production/dev or SST shell environment, use SST Resource
   try {
-    const { Resource } = require('sst');
-    return Resource.RasikaTable.name;
+    // Use environment variable from SST resource
+    const resourceInfo = process.env.SST_RESOURCE_RasikaTable;
+    if (resourceInfo) {
+      const parsed = JSON.parse(resourceInfo);
+      return parsed.name;
+    }
+
+    // Fallback if SST is not available
+    return process.env.RASIKA_TABLE_NAME || 'rasika-table';
   } catch (error) {
     // Fallback if SST is not available
     return process.env.RASIKA_TABLE_NAME || 'rasika-table';

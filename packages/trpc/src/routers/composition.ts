@@ -6,7 +6,7 @@ import {
   updateAttributionSchema,
   updateCompositionSchema,
 } from '@rasika/core';
-import { createRouter, publicProcedure, protectedProcedure } from '../server';
+import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 import { idWithViewTrackingSchema } from '../schemas';
 import {
   compositionSearchParamsSchema,
@@ -15,7 +15,7 @@ import {
 
 export const compositionRouter = createRouter({
   // Composition Queries
-  getById: publicProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
+  getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
     const composition = await CompositionService.getComposition(input.id, input.version);
 
     // Track view if enabled and not a bot
@@ -26,7 +26,7 @@ export const compositionRouter = createRouter({
     return composition;
   }),
 
-  getWithAttributions: publicProcedure
+  getWithAttributions: rateLimitedProcedure
     .input(
       z.object({
         id: z.string(),
@@ -44,26 +44,25 @@ export const compositionRouter = createRouter({
       return composition;
     }),
 
-  search: publicProcedure.input(compositionSearchParamsSchema).query(async ({ input }) => {
+  search: searchProcedure.input(compositionSearchParamsSchema).query(async ({ input }) => {
     return CompositionService.searchCompositions(input);
   }),
 
-  getVersionHistory: publicProcedure
+  getVersionHistory: rateLimitedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       return CompositionService.getVersionHistory(input.id);
     }),
 
   // Composition Mutations
-  create: protectedProcedure.input(createCompositionSchema).mutation(async ({ input, ctx }) => {
+  create: writeProcedure.input(createCompositionSchema).mutation(async ({ input, ctx }) => {
     return CompositionService.createComposition({
       ...input,
-      addedBy: ctx.user.id,
-      editedBy: [ctx.user.id],
+      editorId: ctx.user.id,
     });
   }),
 
-  update: protectedProcedure.input(updateCompositionSchema).mutation(async ({ input, ctx }) => {
+  update: writeProcedure.input(updateCompositionSchema).mutation(async ({ input, ctx }) => {
     const { id, ...updateData } = input;
     return CompositionService.updateComposition(id, {
       ...updateData,
@@ -72,7 +71,7 @@ export const compositionRouter = createRouter({
   }),
 
   // Attribution Queries
-  getAttribution: publicProcedure
+  getAttribution: rateLimitedProcedure
     .input(
       z.object({
         compositionId: z.string(),
@@ -83,23 +82,21 @@ export const compositionRouter = createRouter({
       return CompositionService.getAttribution(input.compositionId, input.artistId);
     }),
 
-  searchAttributions: publicProcedure
+  searchAttributions: searchProcedure
     .input(attributionSearchParamsSchema)
     .query(async ({ input }) => {
       return CompositionService.searchAttributions(input);
     }),
 
   // Attribution Mutations
-  createAttribution: protectedProcedure
-    .input(attributionSchema)
-    .mutation(async ({ input, ctx }) => {
-      return CompositionService.createAttribution({
-        ...input,
-        addedBy: ctx.user.id,
-      });
-    }),
+  createAttribution: writeProcedure.input(attributionSchema).mutation(async ({ input, ctx }) => {
+    return CompositionService.createAttribution({
+      ...input,
+      addedBy: ctx.user.id,
+    });
+  }),
 
-  updateAttribution: protectedProcedure
+  updateAttribution: writeProcedure
     .input(updateAttributionSchema)
     .mutation(async ({ input, ctx }) => {
       return CompositionService.updateAttribution({
@@ -108,7 +105,7 @@ export const compositionRouter = createRouter({
       });
     }),
 
-  verifyAttribution: protectedProcedure
+  verifyAttribution: writeProcedure
     .input(
       z.object({
         compositionId: z.string(),
