@@ -80,7 +80,7 @@ const fetchPopularArtists = async (limit = 10): Promise<Artist[]> => {
  * @param limit Maximum number of artists to return (default: 10)
  * @returns Promise resolving to array of popular artists
  */
-export const getPopularArtists = withCache(
+export const getPopularArtists = withCache<[limit?: number], Artist[]>(
   (limit = 10) => CacheKeys.popularArtists(limit),
   CacheTTL.POPULAR_ARTISTS
 )(fetchPopularArtists);

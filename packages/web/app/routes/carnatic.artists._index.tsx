@@ -7,7 +7,7 @@ import { slugify } from '~/lib/carnaticUtils';
 
 type LoaderData = {
   artists: RouterOutput['artist']['search'];
-  // popularArtists: RouterOutput['artist']['getPopular'];
+  popularArtists: RouterOutput['artist']['getPopular'];
   searchQuery?: string;
   traditionFilter?: string;
 };
@@ -29,12 +29,12 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     // Get popular artists for homepage
-    // const popularArtists =
-    //   searchQuery || traditionFilter ? [] : await client.artist.getPopular.query({ limit: 12 });
+    const popularArtists =
+      searchQuery || traditionFilter ? [] : await client.artist.getPopular.query({ limit: 12 });
 
     return json<LoaderData>({
       artists,
-      // popularArtists,
+      popularArtists: popularArtists as RouterOutput['artist']['getPopular'],
       searchQuery,
       traditionFilter,
     });
@@ -120,11 +120,11 @@ const ArtistCard = ({ artist }: { artist: LoaderData['artists']['items'][0] }) =
 };
 
 export default function ArtistsIndex() {
-  const { artists, searchQuery, traditionFilter } = useLoaderData<LoaderData>();
+  const { artists, popularArtists, searchQuery, traditionFilter } = useLoaderData<LoaderData>();
   const [searchParams] = useSearchParams();
 
   const hasFilters = searchQuery || traditionFilter;
-  // const showPopular = !hasFilters && popularArtists.length > 0;
+  const showPopular = !hasFilters && popularArtists.length > 0;
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -196,7 +196,7 @@ export default function ArtistsIndex() {
       </div>
 
       {/* Popular Artists */}
-      {/* {showPopular && (
+      {showPopular && (
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-foreground mb-6">Popular Artists</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -205,7 +205,7 @@ export default function ArtistsIndex() {
             ))}
           </div>
         </section>
-      )} */}
+      )}
 
       {/* All Artists */}
       <section>

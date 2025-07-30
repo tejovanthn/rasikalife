@@ -7,7 +7,7 @@ import { slugify } from '~/lib/carnaticUtils';
 type LoaderData = {
   popularCompositions: RouterOutput['composition']['search']['items'];
   recentCompositions: RouterOutput['composition']['search']['items'];
-  // featuredArtists: RouterOutput['artist']['getPopular'];
+  featuredArtists: RouterOutput['artist']['getPopular'];
 };
 
 export const meta: MetaFunction = () => {
@@ -36,16 +36,16 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async () => {
   try {
-    const [popularCompositions, recentCompositions] = await Promise.all([
+    const [popularCompositions, recentCompositions, featuredArtists] = await Promise.all([
       client.composition.search.query({ limit: 6 }),
       client.composition.search.query({ limit: 4 }),
-      // client.artist.getPopular({ limit: 8 }),
+      client.artist.getPopular.query({ limit: 8 }),
     ]);
 
     return json<LoaderData>({
       popularCompositions: popularCompositions.items,
       recentCompositions: recentCompositions.items,
-      // featuredArtists,
+      featuredArtists,
     });
   } catch (error) {
     console.error('Error loading homepage data:', error);
@@ -53,7 +53,7 @@ export const loader: LoaderFunction = async () => {
     return json<LoaderData>({
       popularCompositions: [],
       recentCompositions: [],
-      // featuredArtists: [],
+      featuredArtists: [],
     });
   }
 };
@@ -88,21 +88,21 @@ const CompositionCard = ({
   </Link>
 );
 
-// const ArtistCard = ({ artist }: { artist: LoaderData['featuredArtists'][0] }) => (
-//   <Link
-//     to={slugify({ name: artist.name, id: artist.id, type: 'artists' })}
-//     className="block p-3 border border-border rounded-lg hover:shadow-md transition-shadow bg-card text-center"
-//   >
-//     <h3 className="font-medium text-card-foreground">{artist.name}</h3>
-//     <p className="text-sm text-muted-foreground mt-1">{artist.artistType}</p>
-//     {artist.viewCount && (
-//       <p className="text-xs text-muted-foreground mt-1">{artist.viewCount} views</p>
-//     )}
-//   </Link>
-// );
+const ArtistCard = ({ artist }: { artist: LoaderData['featuredArtists'][0] }) => (
+  <Link
+    to={slugify({ name: artist.name, id: artist.id, type: 'artists' })}
+    className="block p-3 border border-border rounded-lg hover:shadow-md transition-shadow bg-card text-center"
+  >
+    <h3 className="font-medium text-card-foreground">{artist.name}</h3>
+    <p className="text-sm text-muted-foreground mt-1">{artist.artistType}</p>
+    {artist.viewCount && (
+      <p className="text-xs text-muted-foreground mt-1">{artist.viewCount} views</p>
+    )}
+  </Link>
+);
 
 export default function HomePage() {
-  const { popularCompositions, recentCompositions } = useLoaderData<LoaderData>();
+  const { popularCompositions, recentCompositions, featuredArtists } = useLoaderData<LoaderData>();
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -155,7 +155,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Artists */}
-      {/* <section className="mb-12">
+      <section className="mb-12">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-foreground">Featured Artists</h2>
           <Link to="/carnatic/artists" className="text-primary hover:text-primary/80 font-medium">
@@ -174,7 +174,7 @@ export default function HomePage() {
             <p>No artists available at the moment.</p>
           </div>
         )}
-      </section> */}
+      </section>
 
       {/* Recent Additions */}
       <section className="mb-12">
