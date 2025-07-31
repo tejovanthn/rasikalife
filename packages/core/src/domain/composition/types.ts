@@ -58,4 +58,12 @@ export interface AttributionSearchResult {
 
 export interface CompositionWithAttributions extends Composition {
   attributions: CompositionAttribution[];
+  // Denormalized data for UI convenience - primary raga/tala (first in arrays)
+  ragaName?: string;
+  ragaId?: string;
+  talaName?: string;
+  talaId?: string;
+  // Full denormalized data for all ragas/talas
+  ragas?: Array<{ id: string; name: string }>;
+  talas?: Array<{ id: string; name: string }>;
 }

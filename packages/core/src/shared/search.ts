@@ -2,7 +2,7 @@
  * Search utilities for the application
  */
 import type { ScanCommandInput } from '@aws-sdk/lib-dynamodb';
-import { scan, query } from '../db/operations';
+import { query, scan } from '../db/operations';
 import type { DynamoItem } from '../db/queryBuilder';
 import { createPaginatedResponse, normalizePaginationParams } from './pagination';
 import { formatIndexKey } from './singleTable';

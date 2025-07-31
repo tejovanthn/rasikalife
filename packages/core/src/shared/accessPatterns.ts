@@ -1,17 +1,17 @@
+import { ErrorCode } from '../constants';
+import { deleteItem, getItem, putItem, transactWriteItems, updateItem } from '../db/operations';
 /**
  * Common access patterns implementation for the single-table design
  */
-import { createQuery, type DynamoItem } from '../db/queryBuilder';
-import { putItem, getItem, updateItem, deleteItem, transactWriteItems } from '../db/operations';
+import { type DynamoItem, createQuery } from '../db/queryBuilder';
+import { ApplicationError } from '../types';
 import {
   type EntityPrefix,
   SecondaryPrefix,
-  formatKey,
   formatDateSortKey,
   formatIndexKey,
+  formatKey,
 } from './singleTable';
-import { ApplicationError } from '../types';
-import { ErrorCode } from '../constants';
 
 /**
  * Get an item by its primary key

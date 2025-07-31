@@ -1,11 +1,11 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  rateLimiter,
   RateLimitConfigs,
   TrustedSources,
-  isTrustedSource,
   getRateLimitIdentifier,
+  isTrustedSource,
   performRateLimitCleanup,
+  rateLimiter,
 } from './rateLimiter';
 
 // Mock console.log for cleanup testing

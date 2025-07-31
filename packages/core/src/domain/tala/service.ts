@@ -97,7 +97,6 @@ export class TalaService {
     };
 
     const lowerType = type.toLowerCase();
-    console.log(lowerType);
 
     // Return standardized type if known
     for (const [key, value] of Object.entries(typeMap)) {

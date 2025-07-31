@@ -1,6 +1,6 @@
+import { AttributionType } from '@rasika/core';
 import { z } from 'zod';
 import { baseSearchParamsSchema, paginationParamsSchema } from './index';
-import { AttributionType } from '@rasika/core';
 
 // Composition search params
 export const compositionSearchParamsSchema = baseSearchParamsSchema.extend({

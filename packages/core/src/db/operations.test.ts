@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockDb } from '../../test/mocks/dynamodb';
-import { putItem, getItem, updateItem, deleteItem, query } from './operations';
 import { ErrorCode } from '../constants';
 import { ApplicationError } from '../types';
+import { deleteItem, getItem, putItem, query, updateItem } from './operations';
 
 describe('DynamoDB operations', () => {
   beforeEach(() => {

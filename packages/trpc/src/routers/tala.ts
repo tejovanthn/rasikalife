@@ -1,8 +1,8 @@
+import { TalaService, createTalaSchema, updateTalaSchema } from '@rasika/core';
 import { z } from 'zod';
-import { createTalaSchema, TalaService, updateTalaSchema } from '@rasika/core';
-import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 import { idWithViewTrackingSchema } from '../schemas';
 import { talaSearchParamsSchema } from '../schemas/tala';
+import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 
 export const talaRouter = createRouter({
   // Queries

@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockDb } from '../../test/mocks/dynamodb';
-import { createQuery } from './queryBuilder';
 import { putItem } from './operations';
+import { createQuery } from './queryBuilder';
 
 describe('QueryBuilder', () => {
   beforeEach(async () => {

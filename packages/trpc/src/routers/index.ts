@@ -1,10 +1,10 @@
+import type { inferRouterOutputs } from '@trpc/server';
 import { createRouter } from '../server';
 import { artistRouter } from './artist';
-import { ragaRouter } from './raga';
-import { talaRouter } from './tala';
 import { compositionRouter } from './composition';
 import { contentRouter } from './content';
-import type { inferRouterOutputs } from '@trpc/server';
+import { ragaRouter } from './raga';
+import { talaRouter } from './tala';
 
 // Create and export the app router
 export const appRouter = createRouter({

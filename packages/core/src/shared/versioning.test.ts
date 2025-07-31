@@ -1,7 +1,7 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { VersioningService } from './versioning';
-import { EntityPrefix } from './singleTable';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
+import { EntityPrefix } from './singleTable';
+import { VersioningService } from './versioning';
 
 // Mock dependencies
 vi.mock('../db', () => ({

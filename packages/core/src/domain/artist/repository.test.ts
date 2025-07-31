@@ -1,9 +1,9 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as db from '../../db';
+import * as accessPatterns from '../../shared/accessPatterns';
 import { ArtistRepository } from './repository';
 import type { CreateArtistInput } from './schema';
 import { ArtistType, Tradition } from './types';
-import * as db from '../../db';
-import * as accessPatterns from '../../shared/accessPatterns';
 
 // Mock the database operations
 vi.mock('../../db', () => ({

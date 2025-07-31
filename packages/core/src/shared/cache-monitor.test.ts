@@ -1,11 +1,11 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  getCacheMetrics,
   cleanupExpiredEntries,
   getCacheHitRate,
+  getCacheMetrics,
+  getCacheRecommendations,
   logCacheMetrics,
   warmCache,
-  getCacheRecommendations,
 } from './cache-monitor';
 
 // Mock the cache module with factory function

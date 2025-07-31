@@ -9,15 +9,32 @@ export const action: ActionFunction = async ({ request }) => {
 
   try {
     const formData = await request.formData();
-    const compositionId = formData.get('compositionId')?.toString();
+    const entityId = formData.get('entityId')?.toString();
+    const entityType = formData.get('entityType')?.toString();
     const action = formData.get('action')?.toString();
 
-    if (!compositionId || action !== 'trackView') {
+    if (!entityId || !entityType || action !== 'trackView') {
       return json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    // Track the view via tRPC
-    const result = await client.composition.trackView({ id: compositionId });
+    // Track the view via tRPC by calling getById with trackView: true
+    let result;
+    switch (entityType) {
+      case 'composition':
+        result = await client.composition.getById({ id: entityId, trackView: true });
+        break;
+      case 'artist':
+        result = await client.artist.getById({ id: entityId, trackView: true });
+        break;
+      case 'raga':
+        result = await client.raga.getById({ id: entityId, trackView: true });
+        break;
+      case 'tala':
+        result = await client.tala.getById({ id: entityId, trackView: true });
+        break;
+      default:
+        return json({ error: 'Unsupported entity type' }, { status: 400 });
+    }
 
     return json(
       {

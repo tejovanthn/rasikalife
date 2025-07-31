@@ -1,4 +1,4 @@
-import { ContentService, ContentStatus, ContentVisibility, ContentCategory } from '@rasika/core';
+import { ContentCategory, ContentService, ContentStatus, ContentVisibility } from '@rasika/core';
 
 const data = [
   {
@@ -42,25 +42,40 @@ Be a part of our journey in making Carnatic music more accessible and appreciate
     // Auxiliary content for About page
     meta: {
       title: 'About Rasika.life - Your Carnatic Music Community',
-      description: 'Learn about Rasika.life\'s mission to preserve and promote Carnatic music through a comprehensive, community-driven digital platform.',
-      keywords: ['about rasika.life', 'carnatic music community', 'mission', 'vision', 'ethical data collection'],
+      description:
+        "Learn about Rasika.life's mission to preserve and promote Carnatic music through a comprehensive, community-driven digital platform.",
+      keywords: [
+        'about rasika.life',
+        'carnatic music community',
+        'mission',
+        'vision',
+        'ethical data collection',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'About', path: '/about' }
+        { label: 'About', path: '/about' },
       ],
       menuPlacement: { section: 'footer', order: 1 },
       relatedPages: [
-        { title: 'Contact Us', path: '/contact', description: 'Get in touch with the Rasika.life team' },
-        { title: 'How to Contribute', path: '/contribute', description: 'Join our community and help build the database' }
-      ]
+        {
+          title: 'Contact Us',
+          path: '/contact',
+          description: 'Get in touch with the Rasika.life team',
+        },
+        {
+          title: 'How to Contribute',
+          path: '/contribute',
+          description: 'Join our community and help build the database',
+        },
+      ],
     },
     status: ContentStatus.PUBLISHED,
     visibility: ContentVisibility.PUBLIC,
     category: ContentCategory.ABOUT,
-    editorId: 'system'
+    editorId: 'system',
   },
   {
     path: '/privacy',
@@ -157,21 +172,30 @@ Rasika.life, Bangalore, India
     editorId: 'system',
     meta: {
       title: 'Privacy Policy - Rasika.life',
-      description: 'Learn about how Rasika.life protects your privacy and handles your personal data in accordance with global data protection standards.',
+      description:
+        'Learn about how Rasika.life protects your privacy and handles your personal data in accordance with global data protection standards.',
       keywords: ['privacy policy', 'data protection', 'GDPR', 'personal data', 'rasika.life'],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Privacy Policy', path: '/privacy' }
+        { label: 'Privacy Policy', path: '/privacy' },
       ],
       menuPlacement: { section: 'footer', order: 2 },
       relatedPages: [
-        { title: 'Terms of Service', path: '/tos', description: 'Our terms and conditions for using Rasika.life' },
-        { title: 'Contact Us', path: '/contact', description: 'Get in touch about privacy concerns' }
-      ]
-    }
+        {
+          title: 'Terms of Service',
+          path: '/tos',
+          description: 'Our terms and conditions for using Rasika.life',
+        },
+        {
+          title: 'Contact Us',
+          path: '/contact',
+          description: 'Get in touch about privacy concerns',
+        },
+      ],
+    },
   },
   {
     path: '/carnatic',
@@ -216,9 +240,17 @@ Immerse yourself in the world of Carnatic music with Rasika.life - where every n
     editorId: 'system',
     meta: {
       title: 'Welcome to Rasika.life - Your Carnatic Music Companion',
-      description: 'Discover the rich world of Carnatic music with comprehensive lyrics, raga information, tala details, and more.',
-      keywords: ['carnatic music', 'ragas', 'talas', 'lyrics', 'compositions', 'indian classical music'],
-    }
+      description:
+        'Discover the rich world of Carnatic music with comprehensive lyrics, raga information, tala details, and more.',
+      keywords: [
+        'carnatic music',
+        'ragas',
+        'talas',
+        'lyrics',
+        'compositions',
+        'indian classical music',
+      ],
+    },
   },
   {
     path: '/tos',
@@ -284,21 +316,26 @@ Rasika.life, Bangalore, India`,
     editorId: 'system',
     meta: {
       title: 'Terms of Service - Rasika.life',
-      description: 'Read the terms and conditions for using Rasika.life, your comprehensive Carnatic music platform.',
+      description:
+        'Read the terms and conditions for using Rasika.life, your comprehensive Carnatic music platform.',
       keywords: ['terms of service', 'legal', 'user agreement', 'rasika.life', 'conditions'],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Terms of Service', path: '/tos' }
+        { label: 'Terms of Service', path: '/tos' },
       ],
       menuPlacement: { section: 'footer', order: 3 },
       relatedPages: [
-        { title: 'Privacy Policy', path: '/privacy', description: 'Learn how we protect your data' },
-        { title: 'Contact Us', path: '/contact', description: 'Questions about our terms?' }
-      ]
-    }
+        {
+          title: 'Privacy Policy',
+          path: '/privacy',
+          description: 'Learn how we protect your data',
+        },
+        { title: 'Contact Us', path: '/contact', description: 'Questions about our terms?' },
+      ],
+    },
   },
   {
     path: '/contact',
@@ -350,21 +387,26 @@ We aim to respond to all inquiries within 2 business days. Thank you for your in
     editorId: 'system',
     meta: {
       title: 'Contact Rasika.life - Get in Touch',
-      description: 'Connect with the Rasika.life team. Find contact information for support, partnerships, contributions, and general inquiries.',
+      description:
+        'Connect with the Rasika.life team. Find contact information for support, partnerships, contributions, and general inquiries.',
       keywords: ['contact rasika.life', 'customer support', 'partnerships', 'carnatic music help'],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Contact', path: '/contact' }
+        { label: 'Contact', path: '/contact' },
       ],
       menuPlacement: { section: 'footer', order: 4 },
       relatedPages: [
         { title: 'Support', path: '/support', description: 'Visit our support center' },
-        { title: 'How to Contribute', path: '/contribute', description: 'Learn how to contribute to our platform' }
-      ]
-    }
+        {
+          title: 'How to Contribute',
+          path: '/contribute',
+          description: 'Learn how to contribute to our platform',
+        },
+      ],
+    },
   },
   {
     path: '/attribution',
@@ -417,21 +459,26 @@ Thank you for your support in building a comprehensive, ethical, and properly at
     editorId: 'system',
     meta: {
       title: 'Data Sources and Attributions - Rasika.life',
-      description: 'Learn about our data sources, attribution practices, and ethical approach to preserving Carnatic music information.',
+      description:
+        'Learn about our data sources, attribution practices, and ethical approach to preserving Carnatic music information.',
       keywords: ['attribution', 'data sources', 'karnatik.com', 'ethical data', 'copyright'],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Attribution', path: '/attribution' }
+        { label: 'Attribution', path: '/attribution' },
       ],
       menuPlacement: { section: 'footer', order: 5 },
       relatedPages: [
         { title: 'About Us', path: '/about', description: 'Learn about our mission and values' },
-        { title: 'Contact Us', path: '/contact', description: 'Questions about our data practices?' }
-      ]
-    }
+        {
+          title: 'Contact Us',
+          path: '/contact',
+          description: 'Questions about our data practices?',
+        },
+      ],
+    },
   },
   {
     path: '/contribute',
@@ -501,21 +548,26 @@ Thank you for helping make Rasika.life the ultimate resource for Carnatic music 
     editorId: 'system',
     meta: {
       title: 'How to Contribute - Rasika.life',
-      description: 'Join our community! Learn how to contribute content, translations, and expertise to help build the ultimate Carnatic music resource.',
+      description:
+        'Join our community! Learn how to contribute content, translations, and expertise to help build the ultimate Carnatic music resource.',
       keywords: ['contribute', 'volunteer', 'carnatic music community', 'add content', 'help'],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'How to Contribute', path: '/contribute' }
+        { label: 'How to Contribute', path: '/contribute' },
       ],
       menuPlacement: { section: 'main', order: 2 },
       relatedPages: [
-        { title: 'Community Guidelines', path: '/community', description: 'Read our community standards' },
-        { title: 'Contact Us', path: '/contact', description: 'Questions about contributing?' }
-      ]
-    }
+        {
+          title: 'Community Guidelines',
+          path: '/community',
+          description: 'Read our community standards',
+        },
+        { title: 'Contact Us', path: '/contact', description: 'Questions about contributing?' },
+      ],
+    },
   },
   {
     path: '/faq',
@@ -566,21 +618,36 @@ For any questions not answered here, please visit our Contact page or email us a
     editorId: 'system',
     meta: {
       title: 'FAQ - Frequently Asked Questions | Rasika.life',
-      description: 'Find answers to common questions about using Rasika.life, contributing content, and navigating our Carnatic music database.',
-      keywords: ['FAQ', 'frequently asked questions', 'help', 'carnatic music', 'rasika.life support'],
+      description:
+        'Find answers to common questions about using Rasika.life, contributing content, and navigating our Carnatic music database.',
+      keywords: [
+        'FAQ',
+        'frequently asked questions',
+        'help',
+        'carnatic music',
+        'rasika.life support',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'FAQ', path: '/faq' }
+        { label: 'FAQ', path: '/faq' },
       ],
       menuPlacement: { section: 'footer', order: 6 },
       relatedPages: [
-        { title: 'Support', path: '/support', description: 'Need more help? Visit our support center' },
-        { title: 'Contact Us', path: '/contact', description: 'Still have questions? Contact us directly' }
-      ]
-    }
+        {
+          title: 'Support',
+          path: '/support',
+          description: 'Need more help? Visit our support center',
+        },
+        {
+          title: 'Contact Us',
+          path: '/contact',
+          description: 'Still have questions? Contact us directly',
+        },
+      ],
+    },
   },
   {
     path: '/carnatic/resources/glossary',
@@ -637,22 +704,38 @@ This glossary is continually updated. If you have suggestions for additional ter
     editorId: 'system',
     meta: {
       title: 'Carnatic Music Glossary - Essential Terms | Rasika.life',
-      description: 'Comprehensive glossary of Carnatic music terms and concepts. Learn the meanings of raga, tala, kriti, and other essential musical vocabulary.',
-      keywords: ['carnatic music glossary', 'musical terms', 'raga', 'tala', 'kriti', 'indian classical music'],
+      description:
+        'Comprehensive glossary of Carnatic music terms and concepts. Learn the meanings of raga, tala, kriti, and other essential musical vocabulary.',
+      keywords: [
+        'carnatic music glossary',
+        'musical terms',
+        'raga',
+        'tala',
+        'kriti',
+        'indian classical music',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
         { label: 'Carnatic Resources', path: '/carnatic/resources' },
-        { label: 'Glossary', path: '/carnatic/resources/glossary' }
+        { label: 'Glossary', path: '/carnatic/resources/glossary' },
       ],
       menuPlacement: { section: 'main', order: 3 },
       relatedPages: [
-        { title: 'Learning Resources', path: '/carnatic/resources/learning', description: 'Explore learning materials for Carnatic music' },
-        { title: 'About Carnatic Music', path: '/carnatic', description: 'Introduction to Carnatic music tradition' }
-      ]
-    }
+        {
+          title: 'Learning Resources',
+          path: '/carnatic/resources/learning',
+          description: 'Explore learning materials for Carnatic music',
+        },
+        {
+          title: 'About Carnatic Music',
+          path: '/carnatic',
+          description: 'Introduction to Carnatic music tradition',
+        },
+      ],
+    },
   },
   {
     path: '/carnatic/resources/learning',
@@ -672,22 +755,37 @@ Remember, Rasika.life itself is a valuable resource for learning about Carnatic 
     editorId: 'system',
     meta: {
       title: 'Carnatic Music Learning Resources | Rasika.life',
-      description: 'Discover curated learning resources for Carnatic music students and enthusiasts. Find teachers, courses, and materials to advance your musical journey.',
-      keywords: ['carnatic music learning', 'music education', 'carnatic teachers', 'music resources', 'indian classical music'],
+      description:
+        'Discover curated learning resources for Carnatic music students and enthusiasts. Find teachers, courses, and materials to advance your musical journey.',
+      keywords: [
+        'carnatic music learning',
+        'music education',
+        'carnatic teachers',
+        'music resources',
+        'indian classical music',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
         { label: 'Carnatic Resources', path: '/carnatic/resources' },
-        { label: 'Learning Resources', path: '/carnatic/resources/learning' }
+        { label: 'Learning Resources', path: '/carnatic/resources/learning' },
       ],
       menuPlacement: { section: 'main', order: 4 },
       relatedPages: [
-        { title: 'Glossary', path: '/carnatic/resources/glossary', description: 'Learn essential Carnatic music terms' },
-        { title: 'How to Contribute', path: '/contribute', description: 'Share your knowledge with our community' }
-      ]
-    }
+        {
+          title: 'Glossary',
+          path: '/carnatic/resources/glossary',
+          description: 'Learn essential Carnatic music terms',
+        },
+        {
+          title: 'How to Contribute',
+          path: '/contribute',
+          description: 'Share your knowledge with our community',
+        },
+      ],
+    },
   },
   {
     path: '/community',
@@ -739,21 +837,36 @@ Thank you for being part of our community!`,
     editorId: 'system',
     meta: {
       title: 'Community Guidelines - Rasika.life',
-      description: 'Read our community guidelines to learn how to participate respectfully and constructively in the Rasika.life Carnatic music community.',
-      keywords: ['community guidelines', 'rules', 'community standards', 'carnatic music community', 'contribution guidelines'],
+      description:
+        'Read our community guidelines to learn how to participate respectfully and constructively in the Rasika.life Carnatic music community.',
+      keywords: [
+        'community guidelines',
+        'rules',
+        'community standards',
+        'carnatic music community',
+        'contribution guidelines',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Community Guidelines', path: '/community' }
+        { label: 'Community Guidelines', path: '/community' },
       ],
       menuPlacement: { section: 'footer', order: 7 },
       relatedPages: [
-        { title: 'How to Contribute', path: '/contribute', description: 'Learn how to contribute to our platform' },
-        { title: 'Contact Us', path: '/contact', description: 'Report violations or ask questions' }
-      ]
-    }
+        {
+          title: 'How to Contribute',
+          path: '/contribute',
+          description: 'Learn how to contribute to our platform',
+        },
+        {
+          title: 'Contact Us',
+          path: '/contact',
+          description: 'Report violations or ask questions',
+        },
+      ],
+    },
   },
   {
     path: '/accessibility',
@@ -814,21 +927,26 @@ We are committed to continually improving the accessibility of our website. If y
     editorId: 'system',
     meta: {
       title: 'Accessibility Statement - Rasika.life',
-      description: 'Learn about our commitment to digital accessibility and our efforts to ensure Rasika.life is usable by everyone, including people with disabilities.',
+      description:
+        'Learn about our commitment to digital accessibility and our efforts to ensure Rasika.life is usable by everyone, including people with disabilities.',
       keywords: ['accessibility', 'WCAG', 'disabilities', 'inclusive design', 'web accessibility'],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Accessibility', path: '/accessibility' }
+        { label: 'Accessibility', path: '/accessibility' },
       ],
       menuPlacement: { section: 'footer', order: 8 },
       relatedPages: [
-        { title: 'Contact Us', path: '/contact', description: 'Report accessibility issues or provide feedback' },
-        { title: 'Support', path: '/support', description: 'Get help using our platform' }
-      ]
-    }
+        {
+          title: 'Contact Us',
+          path: '/contact',
+          description: 'Report accessibility issues or provide feedback',
+        },
+        { title: 'Support', path: '/support', description: 'Get help using our platform' },
+      ],
+    },
   },
   {
     path: '/support',
@@ -882,21 +1000,28 @@ We aim to respond to all inquiries within 2 business days. Thank you for your pa
     editorId: 'system',
     meta: {
       title: 'Support Center - Rasika.life',
-      description: 'Get help with Rasika.life. Find support for technical issues, content corrections, feature requests, and general inquiries.',
-      keywords: ['support', 'help center', 'technical support', 'customer service', 'rasika.life help'],
+      description:
+        'Get help with Rasika.life. Find support for technical issues, content corrections, feature requests, and general inquiries.',
+      keywords: [
+        'support',
+        'help center',
+        'technical support',
+        'customer service',
+        'rasika.life help',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Support', path: '/support' }
+        { label: 'Support', path: '/support' },
       ],
       menuPlacement: { section: 'footer', order: 9 },
       relatedPages: [
         { title: 'FAQ', path: '/faq', description: 'Check frequently asked questions first' },
-        { title: 'Contact Us', path: '/contact', description: 'Direct contact information' }
-      ]
-    }
+        { title: 'Contact Us', path: '/contact', description: 'Direct contact information' },
+      ],
+    },
   },
   {
     path: '/donate',
@@ -950,21 +1075,32 @@ Thank you for your support. Your generosity helps keep the tradition of Carnatic
     editorId: 'system',
     meta: {
       title: 'Support Rasika.life - Make a Donation',
-      description: 'Help preserve and promote Carnatic music by supporting Rasika.life. Learn about donation options and other ways to contribute to our mission.',
-      keywords: ['donate', 'support rasika.life', 'carnatic music preservation', 'non-profit', 'financial support'],
+      description:
+        'Help preserve and promote Carnatic music by supporting Rasika.life. Learn about donation options and other ways to contribute to our mission.',
+      keywords: [
+        'donate',
+        'support rasika.life',
+        'carnatic music preservation',
+        'non-profit',
+        'financial support',
+      ],
       robots: 'index, follow',
     },
     navigation: {
       breadcrumbs: [
         { label: 'Home', path: '/' },
-        { label: 'Donate', path: '/donate' }
+        { label: 'Donate', path: '/donate' },
       ],
       menuPlacement: { section: 'footer', order: 10 },
       relatedPages: [
-        { title: 'How to Contribute', path: '/contribute', description: 'Other ways to support our mission' },
-        { title: 'About Us', path: '/about', description: 'Learn more about our mission' }
-      ]
-    }
+        {
+          title: 'How to Contribute',
+          path: '/contribute',
+          description: 'Other ways to support our mission',
+        },
+        { title: 'About Us', path: '/about', description: 'Learn more about our mission' },
+      ],
+    },
   },
 ];
 

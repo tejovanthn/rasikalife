@@ -1,3 +1,4 @@
+import { PassThrough } from 'node:stream';
 /**
  * By default, Remix will handle generating the HTTP Response for you.
  * You are free to delete this file if you'd like to, but if you ever want it revealed again, you can run `npx remix reveal` ✨
@@ -7,7 +8,6 @@ import type { AppLoadContext, EntryContext } from '@remix-run/node';
 import { createReadableStreamFromReadable } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
-import { PassThrough } from 'node:stream';
 import { renderToPipeableStream } from 'react-dom/server';
 import { createSitemapGenerator } from 'remix-sitemap';
 

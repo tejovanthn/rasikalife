@@ -67,8 +67,16 @@ const CompositionCard = ({ composition }: { composition: LoaderData['recentCompo
   >
     <h3 className="font-medium text-gray-900 mb-1">{composition.title}</h3>
     <div className="text-xs text-gray-600 space-y-1">
-      {composition.ragaName && <div>Raga: {composition.ragaName}</div>}
-      {composition.talaName && <div>Tala: {composition.talaName}</div>}
+      {composition.ragaIds && composition.ragaIds.length > 0 && (
+        <div>
+          Raga: {composition.ragaIds.length} raga{composition.ragaIds.length > 1 ? 's' : ''}
+        </div>
+      )}
+      {composition.talaIds && composition.talaIds.length > 0 && (
+        <div>
+          Tala: {composition.talaIds.length} tala{composition.talaIds.length > 1 ? 's' : ''}
+        </div>
+      )}
     </div>
   </Link>
 );

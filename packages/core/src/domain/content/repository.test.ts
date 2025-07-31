@@ -1,12 +1,12 @@
 /**
  * Content repository tests
  */
-import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { ContentRepository } from './repository';
-import { ContentStatus, ContentVisibility, ContentCategory } from './schema';
-import type { ContentDynamoItem } from './types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as db from '../../db';
 import * as accessPatterns from '../../shared/accessPatterns';
+import { ContentRepository } from './repository';
+import { ContentCategory, ContentStatus, ContentVisibility } from './schema';
+import type { ContentDynamoItem } from './types';
 
 const { getByPrimaryKey, getByGlobalIndex } = accessPatterns;
 const { putItem, updateItem } = db;
@@ -90,7 +90,7 @@ describe('ContentRepository', () => {
         navigation: {
           breadcrumbs: [
             { label: 'Home', path: '/' },
-            { label: 'Page', path: '/comprehensive-page' }
+            { label: 'Page', path: '/comprehensive-page' },
           ],
           menuPlacement: { section: 'main', order: 1 },
         },
@@ -101,7 +101,7 @@ describe('ContentRepository', () => {
             content: 'Intro content',
             order: 1,
             level: 2,
-          }
+          },
         ],
       };
 
@@ -195,16 +195,11 @@ describe('ContentRepository', () => {
 
       const result = await ContentRepository.getByPath('/about');
 
-      expect(getByGlobalIndex).toHaveBeenCalledWith(
-        'GSI3',
-        'GSI3PK',
-        'CONTENT_PATH',
-        { 
-          sortKeyName: 'GSI3SK',
-          sortKeyValue: '/about',
-          limit: 1 
-        }
-      );
+      expect(getByGlobalIndex).toHaveBeenCalledWith('GSI3', 'GSI3PK', 'CONTENT_PATH', {
+        sortKeyName: 'GSI3SK',
+        sortKeyValue: '/about',
+        limit: 1,
+      });
       expect(result).toEqual(mockContent);
     });
 

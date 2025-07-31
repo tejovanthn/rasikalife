@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import {
   createArtist,
   createArtistSchema,
@@ -9,9 +8,10 @@ import {
   updateArtist,
   updateArtistSchema,
 } from '@rasika/core';
-import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
+import { z } from 'zod';
 import { idWithViewTrackingSchema } from '../schemas';
 import { artistSearchParamsSchema } from '../schemas/artist';
+import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
 
 export const artistRouter = createRouter({
   // Queries

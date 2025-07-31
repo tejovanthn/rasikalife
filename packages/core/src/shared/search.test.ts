@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockDb } from '../../test/mocks/dynamodb';
 import { putItem } from '../db/operations';
 import { basicSearch, createPrefixSearchTerm, scoreSearchResults } from './search';

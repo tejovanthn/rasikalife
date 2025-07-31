@@ -1,8 +1,8 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as db from '../../db';
 import { ArtistRepository } from './repository';
 import { ArtistService } from './service';
 import { ArtistType, Tradition } from './types';
-import * as db from '../../db';
 
 // Mock the repository
 vi.mock('./repository');

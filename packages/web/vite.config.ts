@@ -16,10 +16,10 @@ export default defineConfig({
         return defineRoutes(route => {
           route('/sitemap.xml', 'routes/_null.tsx', {
             id: 'routes/sitemap.xml',
-          }),
-            route('/robots.txt', 'routes/_null.tsx', {
-              id: 'routes/robots.txt',
-            });
+          });
+          route('/robots.txt', 'routes/_null.tsx', {
+            id: 'routes/robots.txt',
+          });
         });
       },
     }),

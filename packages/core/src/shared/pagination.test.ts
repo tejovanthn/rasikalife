@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  normalizePaginationParams,
-  createNextToken,
-  parseNextToken,
-  createPaginatedResponse,
-  MAX_PAGE_SIZE,
   DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  createNextToken,
+  createPaginatedResponse,
+  normalizePaginationParams,
+  parseNextToken,
 } from './pagination';
 
 describe('Pagination Utilities', () => {

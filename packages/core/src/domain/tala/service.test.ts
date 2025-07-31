@@ -1,9 +1,9 @@
 // ../../domain/tala/service.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TalaService } from './service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Tradition } from '../artist';
 import { TalaRepository } from './repository';
 import type { CreateTalaInput, UpdateTalaInput } from './schema';
-import { Tradition } from '../artist';
+import { TalaService } from './service';
 
 // Mock the repository
 vi.mock('./repository');

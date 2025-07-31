@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
 import { Link, useFetcher } from '@remix-run/react';
 import { Search, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useHydrated } from '~/lib/progressive-enhancement';
 
 interface SearchResult {
@@ -166,6 +166,7 @@ export function GlobalSearch() {
       {/* Search trigger button - Progressive Enhancement */}
       {isHydrated ? (
         <button
+          type="button"
           onClick={() => setIsOpen(true)}
           className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors"
         >
@@ -206,9 +207,9 @@ export function GlobalSearch() {
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search compositions, artists, ragas, talas..."
                   className="flex-1 px-4 py-4 text-lg placeholder:text-muted-foreground outline-none bg-transparent"
-                  autoFocus
                 />
                 <button
+                  type="button"
                   onClick={() => setIsOpen(false)}
                   className="p-2 text-muted-foreground hover:text-foreground"
                 >

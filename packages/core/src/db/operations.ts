@@ -2,29 +2,29 @@
  * Common DynamoDB operations
  */
 import {
+  BatchGetCommand,
+  type BatchGetCommandInput,
+  BatchWriteCommand,
+  type BatchWriteCommandInput,
+  DeleteCommand,
+  type DeleteCommandInput,
+  GetCommand,
+  type GetCommandInput,
   PutCommand,
   type PutCommandInput,
-  type GetCommandInput,
-  GetCommand,
-  type QueryCommandInput,
   QueryCommand,
+  type QueryCommandInput,
+  ScanCommand,
+  type ScanCommandInput,
+  TransactWriteCommand,
+  type TransactWriteCommandInput,
   UpdateCommand,
   type UpdateCommandInput,
-  type DeleteCommandInput,
-  DeleteCommand,
-  type TransactWriteCommandInput,
-  TransactWriteCommand,
-  type BatchGetCommandInput,
-  BatchGetCommand,
-  type BatchWriteCommandInput,
-  BatchWriteCommand,
-  type ScanCommandInput,
-  ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { docClient, getTableName } from './client';
-import type { DynamoKey, DynamoItem, PaginationResult } from './queryBuilder';
-import { ApplicationError } from '../types';
 import { ErrorCode } from '../constants';
+import { ApplicationError } from '../types';
+import { docClient, getTableName } from './client';
+import type { DynamoItem, DynamoKey, PaginationResult } from './queryBuilder';
 
 /**
  * Put an item in DynamoDB
@@ -117,7 +117,7 @@ async function batchWriteWithRetry(
 
       // If there are unprocessed items, wait before retrying with exponential backoff
       if (unprocessedItems && Object.keys(unprocessedItems).length > 0) {
-        const backoffMs = Math.min(1000 * Math.pow(2, attempts), 10000); // Max 10 seconds
+        const backoffMs = Math.min(1000 * 2 ** attempts, 10000); // Max 10 seconds
         console.warn(
           `Batch write has ${Object.values(unprocessedItems)[0]?.length || 0} unprocessed items. ` +
             `Retrying in ${backoffMs}ms (attempt ${attempts + 1}/${maxRetries})`
@@ -130,7 +130,7 @@ async function batchWriteWithRetry(
         throw error; // Re-throw on final attempt
       }
       // Wait before retrying on error
-      const backoffMs = Math.min(1000 * Math.pow(2, attempts), 10000);
+      const backoffMs = Math.min(1000 * 2 ** attempts, 10000);
       await new Promise(resolve => setTimeout(resolve, backoffMs));
     }
 
@@ -290,23 +290,23 @@ export const updateItem = async <T extends DynamoItem>(
   const expressionAttributeValues: Record<string, any> = {};
   let count = 0;
 
-  Object.entries(updates).forEach(([path, value]) => {
+  for (const [path, value] of Object.entries(updates)) {
     // Skip undefined values
-    if (value === undefined) return;
+    if (value === undefined) continue;
 
     // Handle nested paths (e.g., "address.city")
     const parts = path.split('.');
     const attributePath = parts.map((part, i) => `#key${count + i}`).join('.');
 
-    parts.forEach((part, i) => {
-      expressionAttributeNames[`#key${count + i}`] = part;
-    });
+    for (let i = 0; i < parts.length; i++) {
+      expressionAttributeNames[`#key${count + i}`] = parts[i];
+    }
 
     const valuePlaceholder = `:${path.replace(/\./g, '_')}`;
     updateExpressions.push(`${attributePath} = ${valuePlaceholder}`);
     expressionAttributeValues[valuePlaceholder] = value;
     count = count + path.split('.').length;
-  });
+  }
 
   if (updateExpressions.length === 0) {
     throw new ApplicationError(

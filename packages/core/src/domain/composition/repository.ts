@@ -1,29 +1,10 @@
-import { query, updateItem, putItem } from '../../db';
-import { VersioningService, type VersioningConfig } from '../../shared/versioning';
+import { putItem, query, updateItem } from '../../db';
+import { type VersioningConfig, VersioningService } from '../../shared/versioning';
 
 import {
-  type CreateCompositionInput,
-  type Composition,
-  compositionSchema,
-  type UpdateCompositionInput,
-  type CreateAttributionInput,
-  type CompositionAttribution,
-  attributionSchema,
-  type UpdateAttributionInput,
-} from './schema';
-import {
-  type CompositionDynamoItem,
-  type CompositionWithAttributions,
-  type CompositionVersion,
-  type CompositionSearchResult,
-  type AttributionDynamoItem,
-  type AttributionSearchResult,
-  AttributionType,
-} from './types';
-import {
-  getByPrimaryKey,
   getAllByPartitionKey,
   getByGlobalIndex,
+  getByPrimaryKey,
 } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
@@ -34,6 +15,25 @@ import {
   formatVersionKey,
 } from '../../shared/singleTable';
 import { getCurrentISOString } from '../../utils/dateTime';
+import {
+  type Composition,
+  type CompositionAttribution,
+  type CreateAttributionInput,
+  type CreateCompositionInput,
+  type UpdateAttributionInput,
+  type UpdateCompositionInput,
+  attributionSchema,
+  compositionSchema,
+} from './schema';
+import {
+  type AttributionDynamoItem,
+  type AttributionSearchResult,
+  AttributionType,
+  type CompositionDynamoItem,
+  type CompositionSearchResult,
+  type CompositionVersion,
+  type CompositionWithAttributions,
+} from './types';
 
 /**
  * Versioning configuration for compositions
@@ -90,7 +90,7 @@ export class CompositionRepository {
     const composition = await CompositionRepository.getById(id);
     if (!composition) return null;
 
-    // Get attributions
+    // Get attributions (should already have denormalized artist names from write-time denormalization)
     const attributions = await CompositionRepository.getAttributionsByCompositionId(id);
 
     // Return combined result

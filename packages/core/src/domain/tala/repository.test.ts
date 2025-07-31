@@ -1,7 +1,7 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Tradition } from '../artist';
 import { TalaRepository } from './repository';
 import type { CreateTalaInput } from './schema';
-import { Tradition } from '../artist';
 
 // Simple, direct mocking
 vi.mock('../../db', () => ({

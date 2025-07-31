@@ -1,8 +1,8 @@
-import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { CompositionRepository } from './repository';
-import type { CreateCompositionInput, CreateAttributionInput } from './schema';
-import { AttributionType, AttributionConfidence } from './types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Tradition } from '../artist';
+import { CompositionRepository } from './repository';
+import type { CreateAttributionInput, CreateCompositionInput } from './schema';
+import { AttributionConfidence, AttributionType } from './types';
 
 // Simple, direct mocking
 vi.mock('../../db', () => ({

@@ -1,17 +1,17 @@
 /**
  * Content schema tests
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  createContentSchema,
-  updateContentSchema,
-  contentSchema,
+  ContentCategory,
   ContentStatus,
   ContentVisibility,
-  ContentCategory,
   contentMetaSchema,
   contentNavigationSchema,
+  contentSchema,
   contentSectionSchema,
+  createContentSchema,
+  updateContentSchema,
 } from './schema';
 
 describe('Content Schema', () => {
@@ -49,7 +49,7 @@ describe('Content Schema', () => {
         navigation: {
           breadcrumbs: [
             { label: 'Home', path: '/' },
-            { label: 'About', path: '/about' }
+            { label: 'About', path: '/about' },
           ],
         },
         sections: [
@@ -59,7 +59,7 @@ describe('Content Schema', () => {
             content: 'Welcome to our site',
             order: 1,
             level: 2,
-          }
+          },
         ],
         status: ContentStatus.DRAFT,
         category: ContentCategory.ABOUT,
@@ -177,7 +177,7 @@ describe('Content Schema', () => {
       const validNav = {
         breadcrumbs: [
           { label: 'Home', path: '/' },
-          { label: 'About', path: '/about' }
+          { label: 'About', path: '/about' },
         ],
         menuPlacement: {
           section: 'main',

@@ -2,7 +2,7 @@
  * Content service with business logic - following artist domain pattern
  */
 import { ContentRepository } from './repository';
-import { contentSchema, type Content } from './schema';
+import { type Content, contentSchema } from './schema';
 
 /**
  * Content service
@@ -14,7 +14,7 @@ export class ContentService {
   static async create(input: unknown): Promise<Content> {
     // Parse input to validate path format
     const parsed = contentSchema.pick({ path: true }).parse(input);
-    
+
     // Check if path already exists
     const existing = await ContentRepository.getByPath(parsed.path);
     if (existing) {

@@ -1,5 +1,5 @@
-import { createStringSchema, createArraySchema } from '../../utils';
 import { z } from 'zod';
+import { createArraySchema, createStringSchema } from '../../utils';
 import { Tradition } from '../artist';
 
 // Base schema for common tala fields

@@ -1,5 +1,5 @@
-import { type LoaderFunctionArgs, json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { type LoaderFunctionArgs, type MetaFunction, json } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
 import Markdown from 'react-markdown';
 import type { SitemapFunction } from 'remix-sitemap';
 import { serverOnly$ } from 'vite-env-only/macros';
@@ -42,7 +42,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   }
 
   const { meta: contentMeta, path } = data.contentData;
-  
+
   const metaTags = [
     { title: contentMeta?.title || 'Rasika.life' },
     { name: 'description', content: contentMeta?.description || 'Carnatic music resource' },
@@ -95,13 +95,10 @@ export default function CatchAll() {
             {contentData.navigation.breadcrumbs.map((crumb, index) => (
               <li key={crumb.path} className="flex items-center">
                 {index > 0 && <span className="mx-2">/</span>}
-                {index === contentData.navigation.breadcrumbs!.length - 1 ? (
+                {index === contentData.navigation.breadcrumbs?.length - 1 ? (
                   <span className="font-medium text-foreground">{crumb.label}</span>
                 ) : (
-                  <Link
-                    to={crumb.path}
-                    className="hover:text-foreground transition-colors"
-                  >
+                  <Link to={crumb.path} className="hover:text-foreground transition-colors">
                     {crumb.label}
                   </Link>
                 )}
@@ -121,7 +118,7 @@ export default function CatchAll() {
         <div className="mt-12 border-t pt-8">
           <h2 className="text-lg font-semibold mb-4">Related Pages</h2>
           <div className="grid gap-4 md:grid-cols-2">
-            {contentData.navigation.relatedPages.map((page) => (
+            {contentData.navigation.relatedPages.map(page => (
               <Link
                 key={page.path}
                 to={page.path}

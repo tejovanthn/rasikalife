@@ -1,9 +1,9 @@
 // ../../domain/raga/service.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RagaService } from './service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Tradition } from '../artist';
 import { RagaRepository } from './repository';
 import { type CreateRagaInput, UpdateRagaInput } from './schema';
-import { Tradition } from '../artist';
+import { RagaService } from './service';
 
 // Mock the repository
 vi.mock('./repository');

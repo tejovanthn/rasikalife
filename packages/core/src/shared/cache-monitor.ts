@@ -124,7 +124,7 @@ export function getCacheRecommendations(): string[] {
     recommendations.push('Memory usage is high - consider external cache (Redis)');
   }
 
-  if (metrics.keysByType['artist_search'] > 100) {
+  if (metrics.keysByType.artist_search > 100) {
     recommendations.push('Many search queries cached - consider search result aggregation');
   }
 

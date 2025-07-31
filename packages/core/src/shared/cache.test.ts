@@ -5,8 +5,8 @@
  * invalidation patterns, and the withCache higher-order function.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { cache, CacheKeys, CacheTTL, withCache, invalidateCachePattern } from './cache';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CacheKeys, CacheTTL, cache, invalidateCachePattern, withCache } from './cache';
 
 describe('Cache Service', () => {
   beforeEach(() => {

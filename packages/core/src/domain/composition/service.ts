@@ -1,19 +1,19 @@
 // ../../domain/composition/service.ts
 import { CompositionRepository } from './repository';
 import type {
-  CreateCompositionInput,
-  UpdateCompositionInput,
   Composition,
-  CreateAttributionInput,
-  UpdateAttributionInput,
   CompositionAttribution,
+  CreateAttributionInput,
+  CreateCompositionInput,
+  UpdateAttributionInput,
+  UpdateCompositionInput,
 } from './schema';
 import type {
+  AttributionSearchParams,
+  AttributionSearchResult,
   CompositionSearchParams,
   CompositionSearchResult,
   CompositionVersion,
-  AttributionSearchParams,
-  AttributionSearchResult,
   CompositionWithAttributions,
 } from './types';
 
@@ -82,7 +82,7 @@ export class CompositionService {
         params.nextToken
       );
 
-      // Get compositions for each attribution
+      // Get compositions for each attribution (now returns denormalized data)
       const compositions = await Promise.all(
         attributions.items.map(attr => CompositionService.getComposition(attr.compositionId))
       );

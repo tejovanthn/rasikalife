@@ -1,6 +1,6 @@
 import { awsLambdaRequestHandler } from '@trpc/server/adapters/aws-lambda';
-import { appRouter } from './routers';
 import { createContext } from './context';
+import { appRouter } from './routers';
 
 // Re-export the router and its type
 export { appRouter } from './routers';

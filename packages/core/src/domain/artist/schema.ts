@@ -1,10 +1,10 @@
+import { z } from 'zod';
 import {
-  createStringSchema,
   createArraySchema,
+  createStringSchema,
   locationSchema,
   socialLinksSchema,
 } from '../../utils';
-import { z } from 'zod';
 import { ArtistType, Tradition, VerificationStatus } from './types';
 
 // Artist creation schema - what's required when creating a new artist

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useFetcher } from '@remix-run/react';
+import { useFetcher, useNavigation } from '@remix-run/react';
 import { Eye } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useHydrated } from '~/lib/progressive-enhancement';
 
 interface OptimisticViewCounterProps {
@@ -8,6 +8,11 @@ interface OptimisticViewCounterProps {
   initialViewCount: number;
   showLabel?: boolean;
   entityType?: 'composition' | 'artist' | 'raga' | 'tala';
+  /**
+   * Whether this view was already tracked server-side (e.g., on initial page load)
+   * When true, prevents double counting by skipping client-side tracking
+   */
+  wasServerTracked?: boolean;
 }
 
 export function OptimisticViewCounter({
@@ -15,15 +20,21 @@ export function OptimisticViewCounter({
   initialViewCount,
   showLabel = true,
   entityType = 'composition',
+  wasServerTracked = false,
 }: OptimisticViewCounterProps) {
   const [optimisticCount, setOptimisticCount] = useState(initialViewCount);
-  const [hasTracked, setHasTracked] = useState(false);
+  const [hasTracked, setHasTracked] = useState(wasServerTracked);
   const isHydrated = useHydrated();
   const fetcher = useFetcher();
+  const navigation = useNavigation();
 
   // Track view on mount (with optimistic update)
   useEffect(() => {
-    if (isHydrated && !hasTracked) {
+    // Only track if:
+    // 1. Page is hydrated (client-side)
+    // 2. Haven't tracked this entity yet
+    // 3. This wasn't already tracked server-side (prevents double counting)
+    if (isHydrated && !hasTracked && !wasServerTracked) {
       // Optimistically increment the count
       setOptimisticCount(prev => prev + 1);
       setHasTracked(true);
@@ -34,7 +45,12 @@ export function OptimisticViewCounter({
         { method: 'POST', action: '/api/track-view' }
       );
     }
-  }, [isHydrated, hasTracked, entityId, entityType, fetcher]);
+  }, [isHydrated, hasTracked, wasServerTracked, entityId, entityType, fetcher]);
+
+  // Reset tracking state when navigating to a new entity
+  useEffect(() => {
+    setHasTracked(wasServerTracked);
+  }, [entityId, wasServerTracked]);
 
   // Handle fetcher response
   useEffect(() => {

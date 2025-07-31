@@ -1,10 +1,10 @@
 /**
  * Content service tests
  */
-import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { ContentService } from './service';
-import { ContentStatus, ContentVisibility, ContentCategory } from './schema';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContentRepository } from './repository';
+import { ContentCategory, ContentStatus, ContentVisibility } from './schema';
+import { ContentService } from './service';
 
 // Mock the repository
 vi.mock('./repository', () => ({
@@ -96,7 +96,7 @@ describe('ContentService', () => {
         navigation: {
           breadcrumbs: [
             { label: 'Home', path: '/' },
-            { label: 'Rich', path: '/rich-content' }
+            { label: 'Rich', path: '/rich-content' },
           ],
         },
         status: ContentStatus.DRAFT,
@@ -273,7 +273,7 @@ describe('ContentService', () => {
         navigation: {
           breadcrumbs: [
             { label: 'Home', path: '/' },
-            { label: 'Updated', path: '/updated' }
+            { label: 'Updated', path: '/updated' },
           ],
         },
       };
@@ -289,7 +289,7 @@ describe('ContentService', () => {
         navigation: {
           breadcrumbs: [
             { label: 'Home', path: '/' },
-            { label: 'Updated', path: '/updated' }
+            { label: 'Updated', path: '/updated' },
           ],
         },
         status: ContentStatus.PUBLISHED,

@@ -1,9 +1,8 @@
 import { query, updateItem } from '../../db';
-import { VersioningService, type VersioningConfig } from '../../shared/versioning';
 import {
-  getByPrimaryKey,
   getAllByPartitionKey,
   getByGlobalIndex,
+  getByPrimaryKey,
 } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
@@ -13,9 +12,10 @@ import {
   formatKey,
   formatVersionKey,
 } from '../../shared/singleTable';
+import { type VersioningConfig, VersioningService } from '../../shared/versioning';
 import type { Tradition } from '../artist';
-import { type CreateTalaInput, type Tala, talaSchema, type UpdateTalaInput } from './schema';
-import type { TalaDynamoItem, TalaVersion, TalaSearchResult } from './types';
+import { type CreateTalaInput, type Tala, type UpdateTalaInput, talaSchema } from './schema';
+import type { TalaDynamoItem, TalaSearchResult, TalaVersion } from './types';
 
 /**
  * Versioning configuration for talas

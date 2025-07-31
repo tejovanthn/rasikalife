@@ -1,15 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
-  createStringSchema,
-  emailSchema,
-  usernameSchema,
-  passwordSchema,
-  dateStringSchema,
-  isoDateStringSchema,
   createArraySchema,
-  socialLinksSchema,
+  createStringSchema,
+  dateStringSchema,
+  emailSchema,
+  isoDateStringSchema,
   locationSchema,
+  passwordSchema,
+  socialLinksSchema,
+  usernameSchema,
 } from './validation';
 
 describe('Validation utilities', () => {

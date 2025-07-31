@@ -1,9 +1,9 @@
-import { formatKey, EntityPrefix, SecondaryPrefix } from '../../shared/singleTable';
-import { createQuery, updateItem, scan } from '../../db';
-import { cache, CacheKeys, CacheTTL, withCache, invalidateCachePattern } from '../../shared/cache';
+import { createQuery, scan, updateItem } from '../../db';
+import { CacheKeys, CacheTTL, cache, invalidateCachePattern, withCache } from '../../shared/cache';
+import { EntityPrefix, SecondaryPrefix, formatKey } from '../../shared/singleTable';
 import { ArtistRepository } from './repository';
-import type { CreateArtistInput, Artist, UpdateArtistInput } from './schema';
-import type { ArtistSearchParams, ArtistSearchResult, ArtistDynamoItem } from './types';
+import type { Artist, CreateArtistInput, UpdateArtistInput } from './schema';
+import type { ArtistDynamoItem, ArtistSearchParams, ArtistSearchResult } from './types';
 
 export const createArtist = async (input: CreateArtistInput): Promise<Artist> => {
   // Add any business logic here (e.g., validation, enrichment)
@@ -37,7 +37,7 @@ export const updateArtist = async (id: string, input: UpdateArtistInput): Promis
 // Cached search for simple name queries only
 const cachedSimpleSearch = withCache(
   (params: ArtistSearchParams) =>
-    CacheKeys.artistSearch(params.query!, params.limit || 20, params.nextToken),
+    CacheKeys.artistSearch(params.query || '', params.limit || 20, params.nextToken),
   CacheTTL.SEARCH_RESULTS
 )(ArtistRepository.search);
 

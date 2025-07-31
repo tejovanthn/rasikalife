@@ -1,9 +1,11 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { client } from '~/api.server';
-import { slugify } from '~/lib/carnaticUtils';
-import { AdvancedSearch } from '~/components/AdvancedSearch';
+import { UnifiedSearch } from '~/components/shared/UnifiedSearch';
+import { type EntityType, entityFormatters, entityUrls } from '~/lib/entityUtils';
+import { globalSuite } from '~/lib/genericFactories';
+import { searchConfigs } from '~/lib/searchConfig';
 
 interface SearchResult {
   id: string;
@@ -30,182 +32,15 @@ interface LoaderData {
   appliedFilters: Record<string, string>;
 }
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const url = new URL(request.url);
-  const query = url.searchParams.get('q') || '';
-  const type = url.searchParams.get('type') || 'all';
-  const tradition = url.searchParams.get('tradition') || '';
-  const language = url.searchParams.get('language') || '';
-  const melakarta = url.searchParams.get('melakarta') || '';
-  const aksharas = url.searchParams.get('aksharas') || '';
-  const artistType = url.searchParams.get('artistType') || '';
+export const loader = globalSuite.loaders.search;
 
-  const appliedFilters = {
-    tradition,
-    language,
-    melakarta,
-    aksharas,
-    artistType,
-  };
-
-  // Remove empty filters
-  Object.keys(appliedFilters).forEach(key => {
-    if (!appliedFilters[key]) {
-      delete appliedFilters[key];
-    }
-  });
-
-  try {
-    const results: SearchResult[] = [];
-    let totalResults = 0;
-
-    if (query.length >= 2 || Object.keys(appliedFilters).length > 0) {
-      // Search based on type with filters
-      if (type === 'all' || type === 'compositions') {
-        const compositions = await client.composition.search.query({
-          query: query || undefined,
-          language: language || undefined,
-          limit: type === 'compositions' ? 50 : 15,
-        });
-
-        results.push(
-          ...compositions.items.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            type: 'composition' as const,
-            ragaName: item.ragaName,
-            talaName: item.talaName,
-            language: item.language,
-            tradition: item.tradition,
-            viewCount: item.viewCount,
-            updatedAt: item.updatedAt,
-          }))
-        );
-      }
-
-      if (type === 'all' || type === 'artists') {
-        const artists = await client.artist.search.query({
-          query: query || undefined,
-          artistType: artistType || undefined,
-          tradition: tradition || undefined,
-          limit: type === 'artists' ? 50 : 15,
-        });
-
-        results.push(
-          ...artists.items.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            type: 'artist' as const,
-            artistType: item.artistType,
-            tradition: item.tradition,
-            viewCount: item.viewCount,
-            updatedAt: item.updatedAt,
-          }))
-        );
-      }
-
-      if (type === 'all' || type === 'ragas') {
-        const searchParams: any = {
-          query: query || undefined,
-          limit: type === 'ragas' ? 50 : 15,
-        };
-
-        if (melakarta) {
-          searchParams.melakarta = Number.parseInt(melakarta);
-        }
-        if (tradition) {
-          searchParams.tradition = tradition;
-        }
-
-        const ragas = await client.raga.search.query(searchParams);
-
-        results.push(
-          ...ragas.items.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            type: 'raga' as const,
-            melakarta: item.melakarta,
-            tradition: item.tradition,
-            viewCount: item.viewCount,
-            updatedAt: item.updatedAt,
-          }))
-        );
-      }
-
-      if (type === 'all' || type === 'talas') {
-        const searchParams: any = {
-          query: query || undefined,
-          limit: type === 'talas' ? 50 : 15,
-        };
-
-        if (aksharas) {
-          searchParams.aksharas = Number.parseInt(aksharas);
-        }
-        if (tradition) {
-          searchParams.tradition = tradition;
-        }
-
-        const talas = await client.tala.search.query(searchParams);
-
-        results.push(
-          ...talas.items.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            type: 'tala' as const,
-            aksharas: item.aksharas,
-            tradition: item.tradition,
-            viewCount: item.viewCount,
-            updatedAt: item.updatedAt,
-          }))
-        );
-      }
-
-      totalResults = results.length;
-    }
-
-    return json<LoaderData>({
-      results,
-      query,
-      type,
-      totalResults,
-      appliedFilters,
-    });
-  } catch (error) {
-    console.error('Search error:', error);
-    return json<LoaderData>({
-      results: [],
-      query,
-      type,
-      totalResults: 0,
-      appliedFilters,
-    });
-  }
-};
-
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const title = data?.query
-    ? `Search: "${data.query}" - Rasika.life`
-    : 'Advanced Search - Rasika.life';
-
-  const description = data?.query
-    ? `Search results for "${data.query}" - ${data.totalResults} results found`
-    : 'Search Indian classical music compositions, artists, ragas, and talas';
-
-  return [
-    { title },
-    { name: 'description', content: description },
-    {
-      name: 'keywords',
-      content:
-        'search, Indian classical music, Carnatic music, compositions, artists, ragas, talas',
-    },
-  ];
-};
+export const meta = globalSuite.meta.search;
 
 const ResultCard = ({ result }: { result: SearchResult }) => {
   const getUrl = () => {
     const name = result.title || result.name || '';
-    return slugify({ name, id: result.id, type: `${result.type}s` });
+    const entityType = `${result.type}s` as EntityType;
+    return entityUrls.detail(entityType, name, result.id);
   };
 
   const getTypeColor = () => {
@@ -276,9 +111,9 @@ const ResultCard = ({ result }: { result: SearchResult }) => {
       </div>
 
       <div className="flex justify-between items-center mt-4 text-xs text-muted-foreground">
-        <span>Updated {new Date(result.updatedAt).toLocaleDateString()}</span>
+        <span>Updated {entityFormatters.formatDate(result.updatedAt)}</span>
         {result.viewCount && result.viewCount > 0 && (
-          <span>{result.viewCount.toLocaleString()} views</span>
+          <span>{entityFormatters.formatViewCount(result.viewCount)}</span>
         )}
       </div>
     </Link>
@@ -308,7 +143,7 @@ export default function SearchResults() {
       </header>
 
       {/* Search Interface */}
-      <AdvancedSearch />
+      <UnifiedSearch config={searchConfigs.globalAdvanced()} />
 
       {/* Active Filters */}
       {hasFilters && (

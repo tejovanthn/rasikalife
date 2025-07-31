@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { Form, useSearchParams, useSubmit } from '@remix-run/react';
-import { Search, Filter, X } from 'lucide-react';
+import { Filter, Search, X } from 'lucide-react';
+import { useState } from 'react';
 import { useHydrated } from '~/lib/progressive-enhancement';
 
 interface SearchFilters {

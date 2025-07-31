@@ -16,11 +16,14 @@ export const slugify = ({
   // Return carnatic-nested URL structure
   if (type === 'compositions' || (!type && id)) {
     return `/carnatic/compositions/${slug}`;
-  } else if (type === 'artists') {
+  }
+  if (type === 'artists') {
     return `/carnatic/artists/${slug}`;
-  } else if (type === 'ragas') {
+  }
+  if (type === 'ragas') {
     return `/carnatic/ragas/${slug}`;
-  } else if (type === 'talas') {
+  }
+  if (type === 'talas') {
     return `/carnatic/talas/${slug}`;
   }
 

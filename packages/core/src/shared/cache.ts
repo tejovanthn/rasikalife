@@ -134,7 +134,8 @@ export function withCache<TArgs extends readonly unknown[], TResult>(
 ) {
   return <TFunc extends (...args: TArgs) => Promise<TResult>>(
     fn: TFunc
-  ): (...args: TArgs) => Promise<TResult> => async (...args: TArgs): Promise<TResult> => {
+  ): ((...args: TArgs) => Promise<TResult>) =>
+    async (...args: TArgs): Promise<TResult> => {
       const cacheKey = keyGenerator(...args);
 
       // Check cache first

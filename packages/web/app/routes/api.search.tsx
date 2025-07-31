@@ -1,6 +1,6 @@
 import type { LoaderFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { client, type RouterOutput } from '~/api.server';
+import { type RouterOutput, client } from '~/api.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -64,8 +64,14 @@ export const loader: LoaderFunction = async ({ request }) => {
         title: item.title,
         type: 'composition' as const,
         url: `/carnatic/compositions/${item.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${item.id}`,
-        raga: item.ragaName,
-        tala: item.talaName,
+        raga:
+          item.ragaIds && item.ragaIds.length > 0
+            ? `${item.ragaIds.length} raga${item.ragaIds.length > 1 ? 's' : ''}`
+            : undefined,
+        tala:
+          item.talaIds && item.talaIds.length > 0
+            ? `${item.talaIds.length} tala${item.talaIds.length > 1 ? 's' : ''}`
+            : undefined,
       }));
     }
 

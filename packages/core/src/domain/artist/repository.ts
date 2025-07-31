@@ -1,22 +1,22 @@
-import { putItem, updateItem, query, scan } from '../../db';
-import { getByPrimaryKey, getByGlobalIndex } from '../../shared/accessPatterns';
+import { putItem, query, scan, updateItem } from '../../db';
+import { getByGlobalIndex, getByPrimaryKey } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {
-  createBaseItem,
   EntityPrefix,
+  SecondaryPrefix,
+  createBaseItem,
   formatIndexKey,
   formatKey,
-  SecondaryPrefix,
 } from '../../shared/singleTable';
-import { createArtistSchema, type Artist, updateArtistSchema } from './schema';
+import { type Artist, createArtistSchema, updateArtistSchema } from './schema';
 import {
   type ArtistDynamoItem,
-  VerificationStatus,
-  type UpdateArtistDynamoItem,
+  type ArtistSearchParams,
   type ArtistSearchResult,
   type Tradition,
-  type ArtistSearchParams,
+  type UpdateArtistDynamoItem,
+  VerificationStatus,
 } from './types';
 
 export class ArtistRepository {

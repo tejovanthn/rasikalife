@@ -1,15 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-  formatKey,
-  formatDateSortKey,
-  formatVersionKey,
-  createBaseItem,
-  createCompositeId,
-  formatIndexKey,
-  extractIdFromKey,
-  addUpdateTimestamp,
   EntityPrefix,
   SecondaryPrefix,
+  addUpdateTimestamp,
+  createBaseItem,
+  createCompositeId,
+  extractIdFromKey,
+  formatDateSortKey,
+  formatIndexKey,
+  formatKey,
+  formatVersionKey,
 } from './singleTable';
 
 describe('Single Table Utilities', () => {

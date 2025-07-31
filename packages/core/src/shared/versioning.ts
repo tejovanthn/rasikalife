@@ -6,15 +6,15 @@
  */
 import type { ZodSchema } from 'zod';
 import { batchPutItems, getItem } from '../db';
+import { getCurrentISOString } from '../utils';
 import { getAllByPartitionKey } from './accessPatterns';
 import {
-  createBaseItem,
+  type DynamoItem,
   type EntityPrefix,
+  createBaseItem,
   formatKey,
   formatVersionKey,
-  type DynamoItem,
 } from './singleTable';
-import { getCurrentISOString } from '../utils';
 
 /**
  * Configuration for versioning operations
@@ -190,7 +190,7 @@ export class VersioningService {
       // Get specific version
       const item = await getItem<TDynamoItem>({
         PK: formatKey(config.entityPrefix, id),
-        SK: formatVersionKey(version)
+        SK: formatVersionKey(version),
       });
       return item ? config.schema.parse(item) : null;
     }
@@ -198,7 +198,7 @@ export class VersioningService {
     // Optimized: Get latest version data directly from denormalized pointer (single lookup)
     const item = await getItem<TDynamoItem>({
       PK: formatKey(config.entityPrefix, id),
-      SK: 'VERSION#LATEST'
+      SK: 'VERSION#LATEST',
     });
     return item ? config.schema.parse(item) : null;
   }

@@ -1,10 +1,10 @@
 // ../../domain/composition/service.test.ts
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { CompositionService } from './service';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Tradition } from '../artist';
 import { CompositionRepository } from './repository';
 import type { CreateCompositionInput, UpdateCompositionInput } from './schema';
-import { Tradition } from '../artist';
-import { AttributionType, AttributionConfidence } from './types';
+import { CompositionService } from './service';
+import { AttributionConfidence, AttributionType } from './types';
 
 // Mock the repository
 vi.mock('./repository');

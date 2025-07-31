@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { testRouter, botTestRouter } from '../../test/setup';
-import { Tradition, ArtistType } from '@rasika/core';
+import { ArtistType, Tradition } from '@rasika/core';
 import type { ArtistSearchParams } from '@rasika/core';
+import { describe, expect, it } from 'vitest';
+import { botTestRouter, testRouter } from '../../test/setup';
 
 describe('Artist Router Integration Tests', () => {
   describe('create', () => {

@@ -2,15 +2,15 @@
  * Mock entities for testing
  */
 import type {
-  User,
   Artist,
   Composition,
-  Raga,
-  Tala,
   Event,
-  Venue,
-  Thread,
+  Raga,
   Reply,
+  Tala,
+  Thread,
+  User,
+  Venue,
 } from '../../src/types';
 
 export const mockUsers: User[] = [

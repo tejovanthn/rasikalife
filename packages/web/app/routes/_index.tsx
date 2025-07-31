@@ -2,7 +2,8 @@ import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { type RouterOutput, client } from '~/api.server';
-import { slugify } from '~/lib/carnaticUtils';
+import { EntityCard, SectionHeader } from '~/components/shared';
+import type { EntityCardField } from '~/components/shared';
 
 type LoaderData = {
   popularCompositions: RouterOutput['composition']['search']['items'];
@@ -60,46 +61,48 @@ export const loader: LoaderFunction = async () => {
 
 const CompositionCard = ({
   composition,
-}: { composition: LoaderData['popularCompositions'][0] }) => (
-  <Link
-    to={slugify({ name: composition.title, id: composition.id, type: 'compositions' })}
-    className="block p-4 border border-border rounded-lg hover:shadow-md transition-shadow bg-card"
-  >
-    <h3 className="font-semibold text-lg text-card-foreground mb-2">{composition.title}</h3>
-    <div className="text-sm text-muted-foreground space-y-1">
-      {composition.ragaIds && (
-        <div>
-          <span className="font-medium">Raga:</span> {composition.ragaIds}
-        </div>
-      )}
-      {composition.talaIds && (
-        <div>
-          <span className="font-medium">Tala:</span> {composition.talaIds}
-        </div>
-      )}
-    </div>
-    {composition.meaning && (
-      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-        {composition.meaning.length > 100
-          ? composition.meaning.substring(0, 100) + '...'
-          : composition.meaning}
-      </p>
-    )}
-  </Link>
-);
+}: { composition: LoaderData['popularCompositions'][0] }) => {
+  const fields: EntityCardField[] = [
+    {
+      label: 'Raga',
+      value:
+        composition.ragaIds && composition.ragaIds.length > 0
+          ? `${composition.ragaIds.length} raga${composition.ragaIds.length > 1 ? 's' : ''}`
+          : 'Unknown',
+    },
+    {
+      label: 'Tala',
+      value:
+        composition.talaIds && composition.talaIds.length > 0
+          ? `${composition.talaIds.length} tala${composition.talaIds.length > 1 ? 's' : ''}`
+          : 'Unknown',
+    },
+  ];
 
-const ArtistCard = ({ artist }: { artist: LoaderData['featuredArtists'][0] }) => (
-  <Link
-    to={slugify({ name: artist.name, id: artist.id, type: 'artists' })}
-    className="block p-3 border border-border rounded-lg hover:shadow-md transition-shadow bg-card text-center"
-  >
-    <h3 className="font-medium text-card-foreground">{artist.name}</h3>
-    <p className="text-sm text-muted-foreground mt-1">{artist.artistType}</p>
-    {artist.viewCount && (
-      <p className="text-xs text-muted-foreground mt-1">{artist.viewCount} views</p>
-    )}
-  </Link>
-);
+  return (
+    <EntityCard
+      id={composition.id}
+      title={composition.title}
+      type="compositions"
+      fields={fields}
+      description={composition.meaning}
+    />
+  );
+};
+
+const ArtistCard = ({ artist }: { artist: LoaderData['featuredArtists'][0] }) => {
+  return (
+    <EntityCard
+      id={artist.id}
+      title={artist.name}
+      type="artists"
+      subtitle={artist.artistType}
+      metadata={{ viewCount: artist.viewCount }}
+      compact
+      className="text-center"
+    />
+  );
+};
 
 export default function HomePage() {
   const { popularCompositions, recentCompositions, featuredArtists } = useLoaderData<LoaderData>();
@@ -131,15 +134,7 @@ export default function HomePage() {
 
       {/* Popular Compositions */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-foreground">Popular Compositions</h2>
-          <Link
-            to="/carnatic/compositions"
-            className="text-primary hover:text-primary/80 font-medium"
-          >
-            View All →
-          </Link>
-        </div>
+        <SectionHeader title="Popular Compositions" viewAllPath="/carnatic/compositions" />
 
         {popularCompositions.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -156,12 +151,7 @@ export default function HomePage() {
 
       {/* Featured Artists */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-foreground">Featured Artists</h2>
-          <Link to="/carnatic/artists" className="text-primary hover:text-primary/80 font-medium">
-            View All →
-          </Link>
-        </div>
+        <SectionHeader title="Featured Artists" viewAllPath="/carnatic/artists" />
 
         {featuredArtists.length > 0 ? (
           <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
@@ -178,9 +168,7 @@ export default function HomePage() {
 
       {/* Recent Additions */}
       <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-3xl font-bold text-foreground">Recent Additions</h2>
-        </div>
+        <SectionHeader title="Recent Additions" />
 
         {recentCompositions.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
