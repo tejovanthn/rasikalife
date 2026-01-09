@@ -87,20 +87,7 @@ export const entityConfigs: Record<string, EntityConfig> = {
 
     searchPlaceholder: 'Search by title, lyrics, or composer...',
     searchLabel: 'Search Compositions',
-    filters: [
-      {
-        name: 'raga',
-        label: 'Filter by Raga',
-        type: 'text',
-        placeholder: 'e.g., Shankarabharanam',
-      },
-      {
-        name: 'tala',
-        label: 'Filter by Tala',
-        type: 'text',
-        placeholder: 'e.g., Adi Tala',
-      },
-    ],
+    filters: [],
 
     title: 'Indian Classical Music Compositions - Rasika.life',
     description:
@@ -136,18 +123,9 @@ export const entityConfigs: Record<string, EntityConfig> = {
     apiEndpoint: 'raga',
     basePath: '/carnatic/ragas',
 
-    searchPlaceholder: 'Search by name or characteristics...',
+    searchPlaceholder: 'Search by name...',
     searchLabel: 'Search Ragas',
-    filters: [
-      {
-        name: 'melakarta',
-        label: 'Filter by Melakarta',
-        type: 'number',
-        min: 1,
-        max: 72,
-        placeholder: '1-72',
-      },
-    ],
+    filters: [],
 
     title: 'Carnatic Ragas - Rasika.life',
     description:
@@ -158,12 +136,7 @@ export const entityConfigs: Record<string, EntityConfig> = {
     defaultLimit: 24,
     gridCols: 'md:grid-cols-2 lg:grid-cols-3',
 
-    getCardFields: raga => [
-      { label: 'Melakarta', value: raga.melakarta },
-      { label: 'Arohanam', value: raga.arohana },
-      { label: 'Avarohanam', value: raga.avarohana },
-      { label: 'Mood', value: raga.mood },
-    ],
+    getCardFields: raga => [],
   },
 
   talas: {
@@ -173,17 +146,9 @@ export const entityConfigs: Record<string, EntityConfig> = {
     apiEndpoint: 'tala',
     basePath: '/carnatic/talas',
 
-    searchPlaceholder: 'Search by name or pattern...',
+    searchPlaceholder: 'Search by name...',
     searchLabel: 'Search Talas',
-    filters: [
-      {
-        name: 'aksharas',
-        label: 'Filter by Aksharas (Beat Count)',
-        type: 'number',
-        min: 1,
-        placeholder: 'e.g., 8, 7, 16',
-      },
-    ],
+    filters: [],
 
     title: 'Carnatic Talas - Rasika.life',
     description:
@@ -194,11 +159,7 @@ export const entityConfigs: Record<string, EntityConfig> = {
     defaultLimit: 24,
     gridCols: 'md:grid-cols-2 lg:grid-cols-3',
 
-    getCardFields: tala => [
-      { label: 'Aksharas', value: tala.aksharas },
-      { label: 'Pattern', value: tala.pattern },
-      { label: 'Type', value: tala.type },
-    ],
-    getCardDescription: tala => tala.description,
+    getCardFields: tala => [],
+    getCardDescription: undefined,
   },
 };

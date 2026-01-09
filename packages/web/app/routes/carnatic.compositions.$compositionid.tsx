@@ -19,7 +19,7 @@ export const meta = compositionSuite.meta.detail;
 
 export default function CompositionDetails() {
   return (
-    <GenericDetailRoute<Composition, Composition>
+    <GenericDetailRoute
       config={config}
       customSections={<CompositionCustomSections />}
       relatedItemsComponent={<RelatedCompositions />}
@@ -29,8 +29,8 @@ export default function CompositionDetails() {
 
 function CompositionCustomSections() {
   const { entity: composition, relatedItems: relatedCompositions } = useLoaderData<{
-    entity: Composition;
-    relatedItems: Composition[];
+    entity: any;
+    relatedItems: any[];
   }>();
 
   return (
@@ -79,50 +79,14 @@ function CompositionCustomSections() {
           </div>
         </section>
       )}
-
-      {/* Related Links */}
-      <section className="mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
-          <div>
-            <span className="font-semibold">Raga:</span>{' '}
-            {composition.ragaIds && composition.ragaIds.length > 0 ? (
-              <span>
-                {composition.ragaIds.length} raga{composition.ragaIds.length > 1 ? 's' : ''}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Unknown</span>
-            )}
-          </div>
-          <div>
-            <span className="font-semibold">Tala:</span>{' '}
-            {composition.talaIds && composition.talaIds.length > 0 ? (
-              <span>
-                {composition.talaIds.length} tala{composition.talaIds.length > 1 ? 's' : ''}
-              </span>
-            ) : (
-              <span className="text-muted-foreground">Unknown</span>
-            )}
-          </div>
-          {composition.language && (
-            <div>
-              <span className="font-semibold">Language:</span> {composition.language}
-            </div>
-          )}
-          {composition.tradition && (
-            <div>
-              <span className="font-semibold">Tradition:</span> {composition.tradition}
-            </div>
-          )}
-        </div>
-      </section>
     </>
   );
 }
 
 function RelatedCompositions() {
   const { entity: composition, relatedItems } = useLoaderData<{
-    entity: Composition;
-    relatedItems: Composition[];
+    entity: any;
+    relatedItems: any[];
   }>();
 
   return <RelatedCompositionsComponent compositions={relatedItems} />;

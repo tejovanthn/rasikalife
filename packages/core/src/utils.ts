@@ -4,11 +4,7 @@ export const generateId = (): string => {
   return KSUID.randomSync().string;
 };
 
-export const generateIdSync = (): string => {
-  return KSUID.randomSync().string;
-};
-
-export const generateRandomString = (length: number = 6): string => {
+export const generateRandomString = (length = 6): string => {
   const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
   let result = '';
   for (let i = 0; i < length; i++) {
@@ -53,13 +49,12 @@ export const daysBetween = (dateA: Date | string, dateB: Date | string): number 
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export const getTimeBasedShard = (id: string, shardCount: number = 10): number => {
-  // Extract timestamp from KSUID (first 4 characters)
-  const timestamp = parseInt(id.substring(0, 4), 36);
+export const getTimeBasedShard = (id: string, shardCount = 10): number => {
+  const timestamp = Number.parseInt(id.substring(0, 4), 36);
   return timestamp % shardCount;
 };
 
 export const getTimestampFromId = (id: string): Date => {
-  const timestamp = parseInt(id.substring(0, 4), 36);
+  const timestamp = Number.parseInt(id.substring(0, 4), 36);
   return new Date(timestamp * 1000);
 };

@@ -1,15 +1,62 @@
-// Repository
-export { ArtistRepository } from './repository';
+import { generateId } from '../../utils';
+import { ArtistEntity } from './entity';
+import type { Artist } from './entity';
+import type { z } from 'zod';
+import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
 
-// Types
-export type {
-  Artist,
-  CreateArtistInput,
-  UpdateArtistInput,
-} from './types';
+export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;
+export type UpdateArtistInput = z.infer<typeof UpdateArtistSchema>;
 
-// Schemas
-export {
-  CreateArtistSchema,
-  UpdateArtistSchema,
-} from './schema';
+export async function createArtist(input: CreateArtistInput): Promise<Artist> {
+  const id = generateId();
+  const result = await ArtistEntity.create({
+    id,
+    ...input,
+  }).go();
+
+  if (!result.data) {
+    throw new Error(`Failed to create artist: ${JSON.stringify(input)}`);
+  }
+
+  return result.data as Artist;
+}
+
+export async function getArtist(id: string): Promise<Artist | null> {
+  const result = await ArtistEntity.get({ id }).go();
+  return result.data || null;
+}
+
+export async function updateArtist(id: string, input: UpdateArtistInput): Promise<Artist> {
+  const result = await ArtistEntity.update({ id }).set(input).go();
+
+  if (!result.data) {
+    throw new Error(`Artist ${id} not found or update failed`);
+  }
+
+  return result.data as Artist;
+}
+
+export async function deleteArtist(id: string): Promise<void> {
+  await ArtistEntity.delete({ id }).go();
+}
+
+export async function listArtists(params?: { limit?: number; nextToken?: string }): Promise<{
+  items: Artist[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 20;
+  const result = await ArtistEntity.scan.go({
+    limit,
+    cursor: params?.nextToken,
+  });
+
+  return {
+    items: result.data || [],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
+export type { Artist } from './entity';
+export { CreateArtistSchema, UpdateArtistSchema } from './schema';

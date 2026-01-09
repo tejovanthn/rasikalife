@@ -1,102 +1,124 @@
-import type { Artist } from '@rasika/core';
-import { Link, useLoaderData } from '@remix-run/react';
-import { GenericDetailRoute, GenericErrorBoundary } from '~/components/shared';
-import { detailConfigs } from '~/lib/detailRouteConfig';
-import { entityUrls } from '~/lib/entityUtils';
-import { artistSuite } from '~/lib/genericFactories';
+import type { Artist } from '@rasika/core/domain/artist/entity';
+import { json } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { client } from '~/api.server';
 
-const config = detailConfigs.artists;
+export async function loader({ params }: { params: { artistid?: string } }) {
+  const { artistid } = params;
 
-export const loader = artistSuite.loaders.detail;
-export const meta = artistSuite.meta.detail;
+  if (!artistid) {
+    throw new Response('Artist ID is required', { status: 400 });
+  }
+
+  const slugId = artistid.split('-').pop();
+
+  if (!slugId) {
+    throw new Response('Invalid URL format', { status: 400 });
+  }
+
+  const artist = await client.artist.get.query({ id: slugId });
+
+  if (!artist) {
+    throw new Response('Artist not found', { status: 404 });
+  }
+
+  return json({
+    entity: artist,
+    breadcrumbs: [
+      { name: 'Home', href: '/' },
+      { name: 'Carnatic', href: '/carnatic' },
+      { name: 'Artists', href: '/carnatic/artists' },
+      { name: artist.name, href: `/carnatic/artists/${artistid}` },
+    ],
+  });
+}
 
 export default function ArtistDetails() {
+  const { entity: artist } = useLoaderData<{
+    entity: Artist;
+    breadcrumbs: Array<{ name: string; href: string }>;
+  }>();
+
   return (
-    <GenericDetailRoute<Artist, Artist>
-      config={config}
-      customSections={<ArtistCustomSections />}
-      relatedItemsComponent={<RelatedArtists />}
-    />
+    <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <ArtistHeader artist={artist} />
+      <ArtistProfile artist={artist} />
+      {artist.bio && <ArtistBiography artist={artist} />}
+      {artist.instruments && artist.instruments.length > 0 && (
+        <ArtistInstruments instruments={artist.instruments} />
+      )}
+      {artist.traditions && artist.traditions.length > 0 && (
+        <ArtistTraditions traditions={artist.traditions} />
+      )}
+    </main>
   );
 }
 
-function ArtistCustomSections() {
-  const { entity: artist } = useLoaderData<{ entity: Artist }>();
-
+function ArtistHeader({ artist }: { artist: Artist }) {
   return (
-    <section className="mb-12">
-      <h2 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight mb-4">
-        Musical Profile
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {artist.instruments && artist.instruments.length > 0 && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Instruments</h3>
-            <ul className="space-y-1">
-              {artist.instruments.map((instrument: string) => (
-                <li key={instrument} className="text-gray-700">
-                  • {instrument}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+    <header className="mb-8">
+      <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
+      <p className="text-xl text-blue-600">{artist.artistType}</p>
+      {artist.isVerified && (
+        <span className="inline-block bg-green-100 text-green-800 text-sm px-2 py-1 rounded">
+          Verified Artist
+        </span>
+      )}
+    </header>
+  );
+}
 
-        {artist.traditions && artist.traditions.length > 0 && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Traditions</h3>
-            <ul className="space-y-1">
-              {artist.traditions.map((tradition: string) => (
-                <li key={tradition} className="text-gray-700">
-                  • {tradition}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+function ArtistProfile({ artist }: { artist: Artist }) {
+  return (
+    <section className="mb-8 p-4 bg-gray-50 rounded-lg">
+      <h2 className="text-lg font-semibold mb-2">Quick Info</h2>
+      <p>Profile Views: {artist.viewCount?.toLocaleString()}</p>
+      {artist.profileImage && (
+        <img
+          src={artist.profileImage}
+          alt={artist.name}
+          className="mt-4 w-32 h-32 rounded-full object-cover"
+        />
+      )}
     </section>
   );
 }
 
-function RelatedArtists() {
-  const { relatedItems: relatedArtists } = useLoaderData<{ relatedItems: Artist[] }>();
-
-  if (relatedArtists.length === 0) return null;
-
+function ArtistBiography({ artist }: { artist: Artist }) {
   return (
-    <section className="mb-12">
-      <h2 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight mb-6">
-        Related Artists
-      </h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {relatedArtists.map(relatedArtist => (
-          <Link
-            key={relatedArtist.id}
-            to={entityUrls.detail('artists', relatedArtist.name, relatedArtist.id)}
-            className="block p-4 border rounded-lg hover:shadow-md transition-shadow bg-white"
-          >
-            <div className="flex items-center space-x-3">
-              {relatedArtist.profileImage && (
-                <img
-                  src={relatedArtist.profileImage}
-                  alt={relatedArtist.name}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-              )}
-              <div>
-                <div className="font-medium">{relatedArtist.name}</div>
-                <div className="text-sm text-gray-600">{relatedArtist.artistType}</div>
-              </div>
-            </div>
-          </Link>
+    <section className="mb-8">
+      <h2 className="text-2xl font-semibold mb-4">Biography</h2>
+      <p className="whitespace-pre-line">{artist.bio}</p>
+    </section>
+  );
+}
+
+function ArtistInstruments({ instruments }: { instruments: string[] }) {
+  return (
+    <section className="mb-8 p-4 bg-gray-50 rounded-lg">
+      <h2 className="text-lg font-semibold mb-2">Instruments</h2>
+      <ul className="space-y-1">
+        {instruments.map(instrument => (
+          <li key={instrument} className="text-gray-700">
+            • {instrument}
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }
 
-export function ErrorBoundary() {
-  const props = artistSuite.components.errorBoundaryProps;
-  return <GenericErrorBoundary {...props} />;
+function ArtistTraditions({ traditions }: { traditions: string[] }) {
+  return (
+    <section className="mb-8 p-4 bg-gray-50 rounded-lg">
+      <h2 className="text-lg font-semibold mb-2">Traditions</h2>
+      <ul className="space-y-1">
+        {traditions.map(tradition => (
+          <li key={tradition} className="text-gray-700">
+            • {tradition}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }

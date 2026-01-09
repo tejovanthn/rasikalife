@@ -196,49 +196,16 @@ export const detailConfigs: Record<string, DetailConfig> = {
     basePath: '/carnatic/ragas',
     paramName: 'ragaid',
 
-    titleTemplate: raga =>
-      `${raga.name} - ${raga.melakarta ? `Melakarta ${raga.melakarta}` : 'Janya Raga'} - Indian Classical Music`,
-    descriptionTemplate: raga =>
-      `Learn about ${raga.name}, a ${raga.melakarta ? `melakarta raga (${raga.melakarta})` : 'janya raga'} in Carnatic music. ${raga.description || 'Explore the melodic characteristics and compositions in this raga.'}`,
-    keywordsTemplate: raga =>
-      `${raga.name}, raga, Carnatic music, Indian classical music, melakarta, janya, ${raga.melakarta || ''}`,
+    titleTemplate: raga => `${raga.name} - Raga - Indian Classical Music`,
+    descriptionTemplate: raga => `Learn about ${raga.name}, a raga in Indian classical music.`,
+    keywordsTemplate: raga => `${raga.name}, raga, Indian classical music`,
     schemaType: 'Article',
 
     hasImage: false,
     nameField: 'name',
 
-    getHeaderSections: raga => [
-      {
-        title: 'Raga Details',
-        items: [
-          { label: 'Melakarta', value: raga.melakarta?.toString() },
-          { label: 'Arohanam', value: raga.arohana },
-          { label: 'Avarohanam', value: raga.avarohana },
-          { label: 'Mood', value: raga.mood },
-        ],
-      },
-    ],
-
-    getContentSections: raga => [
-      ...(raga.description
-        ? [
-            {
-              title: 'Description',
-              content: raga.description,
-              format: 'pre-line' as const,
-            },
-          ]
-        : []),
-      ...(raga.musicalPhrases
-        ? [
-            {
-              title: 'Musical Phrases',
-              content: raga.musicalPhrases.join('\n'),
-              format: 'pre-line' as const,
-            },
-          ]
-        : []),
-    ],
+    getHeaderSections: () => [],
+    getContentSections: () => [],
 
     getBreadcrumbs: (raga, paramValue) => [
       { name: 'Home', href: '/' },
@@ -256,48 +223,16 @@ export const detailConfigs: Record<string, DetailConfig> = {
     basePath: '/carnatic/talas',
     paramName: 'talaid',
 
-    titleTemplate: tala => `${tala.name} - Carnatic Tala - Indian Classical Music`,
-    descriptionTemplate: tala =>
-      `Learn about ${tala.name}, a ${tala.aksharas ? `${tala.aksharas}-beat` : ''} tala in Carnatic music. ${tala.description || 'Explore the rhythmic patterns and structure of this tala.'}`,
-    keywordsTemplate: tala =>
-      `${tala.name}, tala, Carnatic music, Indian classical music, rhythm, ${tala.aksharas ? `${tala.aksharas} beats` : ''}, ${tala.type || ''}`,
+    titleTemplate: tala => `${tala.name} - Tala - Indian Classical Music`,
+    descriptionTemplate: tala => `Learn about ${tala.name}, a tala in Indian classical music.`,
+    keywordsTemplate: tala => `${tala.name}, tala, Indian classical music`,
     schemaType: 'Article',
 
     hasImage: false,
     nameField: 'name',
 
-    getHeaderSections: tala => [
-      {
-        title: 'Tala Details',
-        items: [
-          { label: 'Aksharas (Beats)', value: tala.aksharas?.toString() },
-          { label: 'Pattern', value: tala.pattern },
-          { label: 'Type', value: tala.type },
-          { label: 'Structure', value: tala.structure },
-        ],
-      },
-    ],
-
-    getContentSections: tala => [
-      ...(tala.description
-        ? [
-            {
-              title: 'Description',
-              content: tala.description,
-              format: 'pre-line' as const,
-            },
-          ]
-        : []),
-      ...(tala.notation
-        ? [
-            {
-              title: 'Notation',
-              content: tala.notation,
-              format: 'pre-line' as const,
-            },
-          ]
-        : []),
-    ],
+    getHeaderSections: () => [],
+    getContentSections: () => [],
 
     getBreadcrumbs: (tala, paramValue) => [
       { name: 'Home', href: '/' },
