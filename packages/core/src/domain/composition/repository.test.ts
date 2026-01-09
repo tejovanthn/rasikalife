@@ -7,6 +7,7 @@ import { AttributionConfidence, AttributionType } from './types';
 // Simple, direct mocking
 vi.mock('../../db', () => ({
   batchPutItems: vi.fn().mockResolvedValue(undefined),
+  getItem: vi.fn().mockResolvedValue(null),
   getByPrimaryKey: vi.fn().mockResolvedValue(null),
   putItem: vi.fn().mockResolvedValue(undefined),
   updateItem: vi.fn().mockResolvedValue(undefined),
@@ -39,8 +40,10 @@ describe('CompositionRepository', () => {
         title: 'Vathapi Ganapathim',
         language: 'Sanskrit',
         tradition: Tradition.CARNATIC,
-        version: 'v1',
       });
+      expect(result.id).toBeDefined();
+      expect(result.createdAt).toBeDefined();
+      expect(result.editedBy).toEqual(['user-123']);
     });
   });
 
@@ -56,7 +59,7 @@ describe('CompositionRepository', () => {
       const input = { title: 'Updated Title', editorId: 'user-456' };
 
       await expect(CompositionRepository.update('nonexistent', input)).rejects.toThrow(
-        'Entity nonexistent not found'
+        'Composition nonexistent not found'
       );
     });
   });

@@ -19,5 +19,4 @@ export const baseSearchParamsSchema = z
 export const idWithViewTrackingSchema = z.object({
   id: z.string(),
   trackView: z.boolean().default(true),
-  version: z.string().optional(),
 });

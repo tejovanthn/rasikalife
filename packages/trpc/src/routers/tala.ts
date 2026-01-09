@@ -1,4 +1,4 @@
-import { TalaService, createTalaSchema, updateTalaSchema } from '@rasika/core';
+import { TalaRepository, createTalaSchema, updateTalaSchema } from '@rasika/core';
 import { z } from 'zod';
 import { idWithViewTrackingSchema } from '../schemas';
 import { talaSearchParamsSchema } from '../schemas/tala';
@@ -7,11 +7,11 @@ import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } f
 export const talaRouter = createRouter({
   // Queries
   getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
-    const tala = await TalaService.getTala(input.id, input.version);
+    const tala = await TalaRepository.getById(input.id);
 
     // Track view if enabled and not a bot
     if (tala && input.trackView && !ctx.isBot) {
-      await TalaService.incrementViewCount(input.id);
+      await TalaRepository.incrementViewCount(input.id);
     }
 
     return tala;
@@ -25,39 +25,33 @@ export const talaRouter = createRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const tala = await TalaService.getTalaByName(input.name);
+      const tala = await TalaRepository.getByName(input.name);
 
       // Track view if enabled and not a bot
       if (tala && input.trackView && !ctx.isBot) {
-        await TalaService.incrementViewCount(tala.id);
+        await TalaRepository.incrementViewCount(tala.id);
       }
 
       return tala;
     }),
 
   search: searchProcedure.input(talaSearchParamsSchema).query(async ({ input }) => {
-    return TalaService.searchTalas(input);
+    return TalaRepository.searchTalas(input);
   }),
-
-  getVersionHistory: rateLimitedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      return TalaService.getVersionHistory(input.id);
-    }),
 
   // Mutations
   create: writeProcedure.input(createTalaSchema).mutation(async ({ input, ctx }) => {
-    return TalaService.createTala({
+    return TalaRepository.create({
       ...input,
-      addedBy: ctx.user.id,
+      editorId: ctx.user.id,
     });
   }),
 
   update: writeProcedure.input(updateTalaSchema).mutation(async ({ input, ctx }) => {
     const { id, ...updateData } = input;
-    return TalaService.updateTala(id, {
+    return TalaRepository.update(id, {
       ...updateData,
-      editedBy: ctx.user.id,
+      editorId: ctx.user.id,
     });
   }),
 });

@@ -1,4 +1,4 @@
-import { RagaService, createRagaSchema, updateRagaSchema } from '@rasika/core';
+import { RagaRepository, createRagaSchema, updateRagaSchema } from '@rasika/core';
 import { z } from 'zod';
 import { idWithViewTrackingSchema } from '../schemas';
 import { ragaSearchParamsSchema } from '../schemas/raga';
@@ -7,11 +7,11 @@ import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } f
 export const ragaRouter = createRouter({
   // Queries
   getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
-    const raga = await RagaService.getRaga(input.id, input.version);
+    const raga = await RagaRepository.getById(input.id);
 
     // Track view if enabled and not a bot
     if (raga && input.trackView && !ctx.isBot) {
-      await RagaService.incrementViewCount(input.id);
+      await RagaRepository.incrementViewCount(input.id);
     }
 
     return raga;
@@ -25,39 +25,33 @@ export const ragaRouter = createRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const raga = await RagaService.getRagaByName(input.name);
+      const raga = await RagaRepository.getByName(input.name);
 
       // Track view if enabled and not a bot
       if (raga && input.trackView && !ctx.isBot) {
-        await RagaService.incrementViewCount(raga.id);
+        await RagaRepository.incrementViewCount(raga.id);
       }
 
       return raga;
     }),
 
   search: searchProcedure.input(ragaSearchParamsSchema).query(async ({ input }) => {
-    return RagaService.searchRagas(input);
+    return RagaRepository.searchRagas(input);
   }),
-
-  getVersionHistory: rateLimitedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      return RagaService.getVersionHistory(input.id);
-    }),
 
   // Mutations
   create: writeProcedure.input(createRagaSchema).mutation(async ({ input, ctx }) => {
-    return RagaService.createRaga({
+    return RagaRepository.create({
       ...input,
-      addedBy: ctx.user.id,
+      editorId: ctx.user.id,
     });
   }),
 
   update: writeProcedure.input(updateRagaSchema).mutation(async ({ input, ctx }) => {
     const { id, ...updateData } = input;
-    return RagaService.updateRaga(id, {
+    return RagaRepository.update(id, {
       ...updateData,
-      editedBy: ctx.user.id,
+      editorId: ctx.user.id,
     });
   }),
 });

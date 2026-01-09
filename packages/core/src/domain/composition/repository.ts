@@ -1,6 +1,7 @@
 import { putItem, query, updateItem } from '../../db';
-import { type VersioningConfig, VersioningService } from '../../shared/versioning';
-
+import { createQuery } from '../../db';
+import { ErrorCode } from '../../constants';
+import { ApplicationError } from '../../types/common';
 import {
   getAllByPartitionKey,
   getByGlobalIndex,
@@ -10,9 +11,10 @@ import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {
   EntityPrefix,
+  SecondaryPrefix,
+  createBaseItem,
   formatIndexKey,
   formatKey,
-  formatVersionKey,
 } from '../../shared/singleTable';
 import { getCurrentISOString } from '../../utils/dateTime';
 import {
@@ -27,73 +29,98 @@ import {
 } from './schema';
 import {
   type AttributionDynamoItem,
+  type AttributionSearchParams,
   type AttributionSearchResult,
   AttributionType,
   type CompositionDynamoItem,
+  type CompositionSearchParams,
   type CompositionSearchResult,
-  type CompositionVersion,
   type CompositionWithAttributions,
 } from './types';
 
-/**
- * Versioning configuration for compositions
- */
-const compositionVersioningConfig: VersioningConfig<
-  Composition,
-  CompositionDynamoItem,
-  CreateCompositionInput,
-  UpdateCompositionInput
-> = {
-  entityPrefix: EntityPrefix.COMPOSITION,
-  schema: compositionSchema,
-  applyDefaults: input => ({
-    addedBy: input.editorId,
-    favoriteCount: 0,
-    popularityScore: 0,
-  }),
-  applyGSIMappings: (item, input) => {
-    const mappings: Partial<CompositionDynamoItem> = {};
+const normalizeLanguage = (language: string): string => {
+  const languageMap: Record<string, string> = {
+    sanskrit: 'Sanskrit',
+    tamil: 'Tamil',
+    telugu: 'Telugu',
+    kannada: 'Kannada',
+    hindi: 'Hindi',
+    urdu: 'Urdu',
+    marathi: 'Marathi',
+    gujarati: 'Gujarati',
+    bengali: 'Bengali',
+    punjabi: 'Punjabi',
+    malayalam: 'Malayalam',
+  };
 
-    // GSI1: Title search (always required for compositions)
-    if ('title' in input && input.title) {
-      mappings.GSI1PK = formatIndexKey('TITLE', input.title.toLowerCase());
-      mappings.GSI1SK = formatKey(EntityPrefix.COMPOSITION, item.id);
-    }
-
-    // GSI2: Tradition search (always required for compositions)
-    if ('tradition' in input && input.tradition) {
-      mappings.GSI2PK = formatIndexKey('TRADITION', input.tradition);
-      mappings.GSI2SK = formatKey(EntityPrefix.COMPOSITION, item.id);
-    }
-
-    // GSI3: Language search
-    if ('language' in input && input.language) {
-      mappings.GSI3PK = formatIndexKey('LANGUAGE', input.language.toLowerCase());
-      mappings.GSI3SK = formatKey(EntityPrefix.COMPOSITION, item.id);
-    }
-
-    return mappings;
-  },
+  const lowerLanguage = language.toLowerCase();
+  return (
+    languageMap[lowerLanguage] || language.charAt(0).toUpperCase() + language.slice(1).toLowerCase()
+  );
 };
+
+// Centralized GSI management
+const populateIndexes = (
+  composition: { title?: string; tradition?: string; language?: string },
+  id: string
+) => ({
+  ...(composition.title && {
+    GSI1PK: formatIndexKey('TITLE', composition.title.toLowerCase()),
+    GSI1SK: formatKey(EntityPrefix.COMPOSITION, id),
+  }),
+  ...(composition.tradition && {
+    GSI2PK: formatIndexKey('TRADITION', composition.tradition),
+    GSI2SK: formatKey(EntityPrefix.COMPOSITION, id),
+  }),
+  ...(composition.language && {
+    GSI3PK: formatIndexKey('LANGUAGE', composition.language.toLowerCase()),
+    GSI3SK: formatKey(EntityPrefix.COMPOSITION, id),
+  }),
+});
 
 export class CompositionRepository {
   static async create(input: CreateCompositionInput): Promise<Composition> {
-    return VersioningService.create(input, compositionVersioningConfig);
+    const baseItem = await createBaseItem(EntityPrefix.COMPOSITION);
+    const timestamp = getCurrentISOString();
+
+    const normalizedInput = {
+      ...input,
+      title: input.title.trim(),
+      language: normalizeLanguage(input.language),
+    };
+
+    const compositionItem: CompositionDynamoItem = {
+      PK: baseItem.PK,
+      SK: SecondaryPrefix.METADATA,
+      id: baseItem.id,
+      createdAt: baseItem.createdAt,
+      updatedAt: timestamp,
+      ...normalizedInput,
+      editedBy: [input.editorId],
+      viewCount: 0,
+      favoriteCount: 0,
+      popularityScore: 0,
+      ...populateIndexes({ ...normalizedInput }, baseItem.id),
+    };
+
+    await putItem(compositionItem);
+    return compositionSchema.parse(compositionItem);
   }
 
-  static async getById(id: string, version?: string): Promise<Composition | null> {
-    return VersioningService.getById(id, compositionVersioningConfig, version);
+  static async getById(id: string): Promise<Composition | null> {
+    return getByPrimaryKey<CompositionDynamoItem>(
+      EntityPrefix.COMPOSITION,
+      id,
+      SecondaryPrefix.METADATA
+    );
   }
 
   static async getWithAttributions(id: string): Promise<CompositionWithAttributions | null> {
-    // Get the composition
     const composition = await CompositionRepository.getById(id);
     if (!composition) return null;
 
-    // Get attributions (should already have denormalized artist names from write-time denormalization)
     const attributions = await CompositionRepository.getAttributionsByCompositionId(id);
 
-    // Return combined result
     return {
       ...composition,
       attributions: attributions.items,
@@ -101,35 +128,50 @@ export class CompositionRepository {
   }
 
   static async update(id: string, input: UpdateCompositionInput): Promise<Composition> {
-    return VersioningService.update(
-      id,
-      input,
-      compositionVersioningConfig,
-      CompositionRepository.getById
-    );
-  }
+    const current = await CompositionRepository.getById(id);
+    if (!current) {
+      throw new ApplicationError(ErrorCode.COMPOSITION_NOT_FOUND, `Composition ${id} not found`);
+    }
 
-  static async getVersionHistory(id: string): Promise<CompositionVersion[]> {
-    return VersioningService.getVersionHistory(id, EntityPrefix.COMPOSITION);
+    const normalizedInput = {
+      ...input,
+      ...(input.title ? { title: input.title.trim() } : {}),
+      ...(input.language ? { language: normalizeLanguage(input.language) } : {}),
+    };
+
+    const timestamp = getCurrentISOString();
+    const merged = { ...current, ...normalizedInput };
+    const updates = {
+      ...normalizedInput,
+      updatedAt: timestamp,
+      editedBy: [...new Set([...current.editedBy, input.editorId])],
+      ...populateIndexes(merged, id),
+    };
+
+    await updateItem(
+      {
+        PK: formatKey(EntityPrefix.COMPOSITION, id),
+        SK: SecondaryPrefix.METADATA,
+      },
+      updates
+    );
+
+    return CompositionRepository.getById(id) as Promise<Composition>;
   }
 
   static async searchByTitle(title: string, limit = 20): Promise<CompositionSearchResult> {
-    // Basic search by title
     const result = await query<CompositionDynamoItem>({
       IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK BETWEEN :start AND :end',
+      KeyConditionExpression: 'GSI1PK = :pk',
+      FilterExpression: 'SK = :sk',
       ExpressionAttributeValues: {
-        ':start': formatIndexKey('TITLE', title.toLowerCase()),
-        ':end': formatIndexKey('TITLE', `${title.toLowerCase()}\uffff`),
+        ':pk': formatIndexKey('TITLE', title.toLowerCase()),
+        ':sk': SecondaryPrefix.METADATA,
       },
       Limit: limit,
     });
 
-    // Filter for latest versions
-    const latestVersions = result.items.filter(item => item.isLatest);
-
-    // Score by relevance
-    const scoredItems = scoreSearchResults(latestVersions, title, [
+    const scoredItems = scoreSearchResults(result.items, title, [
       { name: 'title', weight: 1 },
       { name: 'alternativeTitles', weight: 0.5 },
     ]);
@@ -154,10 +196,7 @@ export class CompositionRepository {
       }
     );
 
-    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
-    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
-
-    return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
+    return createPaginatedResponse(result.items, result.lastEvaluatedKey);
   }
 
   static async getByLanguage(
@@ -165,10 +204,11 @@ export class CompositionRepository {
     limit = 20,
     nextToken?: string
   ): Promise<CompositionSearchResult> {
+    const normalizedLanguage = normalizeLanguage(language);
     const result = await getByGlobalIndex<CompositionDynamoItem>(
       'GSI3',
       'GSI3PK',
-      formatIndexKey('LANGUAGE', language.toLowerCase()),
+      formatIndexKey('LANGUAGE', normalizedLanguage.toLowerCase()),
       {
         limit,
         exclusiveStartKey: nextToken
@@ -177,44 +217,63 @@ export class CompositionRepository {
       }
     );
 
-    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
-    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
+    return createPaginatedResponse(result.items, result.lastEvaluatedKey);
+  }
 
-    return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
+  static async search(params: CompositionSearchParams): Promise<CompositionSearchResult> {
+    if (params.query) {
+      return CompositionRepository.searchByTitle(params.query, params.limit);
+    }
+
+    if (params.tradition) {
+      return CompositionRepository.getByTradition(params.tradition, params.limit, params.nextToken);
+    }
+
+    if (params.language) {
+      return CompositionRepository.getByLanguage(params.language, params.limit, params.nextToken);
+    }
+
+    if (params.artistId) {
+      const attributions = await CompositionRepository.getCompositionsByArtistId(
+        params.artistId,
+        params.limit,
+        params.nextToken
+      );
+
+      const compositions = await Promise.all(
+        attributions.items.map(attr => CompositionRepository.getById(attr.compositionId))
+      );
+
+      const validCompositions = compositions.filter((comp): comp is Composition => comp !== null);
+
+      return {
+        items: validCompositions,
+        nextToken: attributions.nextToken,
+        hasMore: attributions.hasMore,
+      };
+    }
+
+    return { items: [], hasMore: false };
   }
 
   static async incrementViewCount(id: string): Promise<void> {
-    // Optimized: Update both the specific version and the denormalized latest pointer
-    // This ensures consistent view counts across both records
-    const pk = formatKey(EntityPrefix.COMPOSITION, id);
-    const latestSK = 'VERSION#LATEST';
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+    const { docClient, getTableName } = await import('../../db/client');
 
-    // Get latest pointer to find the version SK
-    const latestPointer = await getByPrimaryKey<any>(EntityPrefix.COMPOSITION, id, latestSK);
-
-    if (!latestPointer) return;
-
-    const versionSK = formatVersionKey(latestPointer.version, latestPointer.timestamp);
-
-    // Update both records atomically using batch operations
-    await Promise.all([
-      // Update the specific version record
-      updateItem(
-        { PK: pk, SK: versionSK },
-        {
-          viewCount: { $increment: 1 },
-          popularityScore: { $add: 0.1 },
-        }
-      ),
-      // Update the denormalized latest pointer for consistency
-      updateItem(
-        { PK: pk, SK: latestSK },
-        {
-          viewCount: { $increment: 1 },
-          popularityScore: { $add: 0.1 },
-        }
-      ),
-    ]);
+    await docClient.send(
+      new UpdateCommand({
+        TableName: getTableName(),
+        Key: {
+          PK: formatKey(EntityPrefix.COMPOSITION, id),
+          SK: SecondaryPrefix.METADATA,
+        },
+        UpdateExpression: 'ADD viewCount :increment, popularityScore :scoreIncrement',
+        ExpressionAttributeValues: {
+          ':increment': 1,
+          ':scoreIncrement': 0.1,
+        },
+      })
+    );
   }
 
   // Attribution methods
@@ -234,7 +293,6 @@ export class CompositionRepository {
     };
 
     await putItem(item);
-
     return attributionSchema.parse(item);
   }
 
@@ -244,7 +302,6 @@ export class CompositionRepository {
       SK: formatKey('ATTRIBUTION', input.artistId),
     };
 
-    // Check if attribution exists
     const existing = await getByPrimaryKey<AttributionDynamoItem>(
       EntityPrefix.COMPOSITION,
       input.compositionId,
@@ -252,21 +309,19 @@ export class CompositionRepository {
     );
 
     if (!existing) {
-      throw new Error(
+      throw new ApplicationError(
+        ErrorCode.COMPOSITION_NOT_FOUND,
         `Attribution for composition ${input.compositionId} and artist ${input.artistId} not found`
       );
     }
 
-    // Update attribution
-    const updates = { ...input };
+    const updates: Partial<AttributionDynamoItem> = { ...input };
 
-    // Update GSI2PK if attributionType changes
     if (input.attributionType) {
       updates.GSI2PK = formatKey('ATTRIBUTION_TYPE', input.attributionType);
     }
 
     const updated = await updateItem<AttributionDynamoItem>(key, updates);
-
     return attributionSchema.parse(updated);
   }
 
@@ -342,26 +397,69 @@ export class CompositionRepository {
       SK: formatKey('ATTRIBUTION', artistId),
     };
 
-    const attribution = await getByPrimaryKey<AttributionDynamoItem>(
+    const existing = await getByPrimaryKey<AttributionDynamoItem>(
       EntityPrefix.COMPOSITION,
       compositionId,
       formatKey('ATTRIBUTION', artistId)
     );
 
-    if (!attribution) {
-      throw new Error(
+    if (!existing) {
+      throw new ApplicationError(
+        ErrorCode.COMPOSITION_NOT_FOUND,
         `Attribution for composition ${compositionId} and artist ${artistId} not found`
       );
     }
 
-    // Add user to verifiedBy list if not already there
-    const verifiedBy = attribution.verifiedBy || [];
+    const verifiedBy = existing.verifiedBy || [];
     if (!verifiedBy.includes(userId)) {
       verifiedBy.push(userId);
     }
 
     const updated = await updateItem<AttributionDynamoItem>(key, { verifiedBy });
-
     return attributionSchema.parse(updated);
+  }
+
+  static async searchAttributions(
+    params: AttributionSearchParams
+  ): Promise<AttributionSearchResult> {
+    if (params.compositionId) {
+      return CompositionRepository.getAttributionsByCompositionId(params.compositionId);
+    }
+
+    if (params.artistId) {
+      return CompositionRepository.getCompositionsByArtistId(
+        params.artistId,
+        params.limit,
+        params.nextToken
+      );
+    }
+
+    if (params.attributionType === AttributionType.DISPUTED) {
+      return CompositionRepository.getDisputedAttributions(params.limit, params.nextToken);
+    }
+
+    return { items: [], hasMore: false };
+  }
+
+  static async getPopular(limit = 10): Promise<Composition[]> {
+    const result = await createQuery<CompositionDynamoItem>()
+      .withIndex('GSI5')
+      .withPartitionKey('GSI5PK', 'POPULARITY')
+      .withSortOrder(false) // Descending order by view count
+      .withLimit(limit)
+      .execute();
+
+    return result.items;
+  }
+
+  static async getBySourceUrl(sourceUrl: string): Promise<Composition | null> {
+    const result = await getByGlobalIndex<CompositionDynamoItem>(
+      'GSI1',
+      'GSI1PK',
+      formatIndexKey('SOURCE_URL', sourceUrl),
+      { limit: 1 }
+    );
+
+    return result.items[0] || null;
   }
 }

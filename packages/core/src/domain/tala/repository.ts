@@ -1,94 +1,154 @@
-import { query, updateItem } from '../../db';
-import {
-  getAllByPartitionKey,
-  getByGlobalIndex,
-  getByPrimaryKey,
-} from '../../shared/accessPatterns';
+import { putItem, query, updateItem } from '../../db';
+import { ErrorCode } from '../../constants';
+import { ApplicationError } from '../../types/common';
+import { getByGlobalIndex, getByPrimaryKey } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
 import {
   EntityPrefix,
+  SecondaryPrefix,
+  createBaseItem,
   formatIndexKey,
   formatKey,
-  formatVersionKey,
 } from '../../shared/singleTable';
-import { type VersioningConfig, VersioningService } from '../../shared/versioning';
+import { getCurrentISOString } from '../../utils/dateTime';
 import type { Tradition } from '../artist';
 import { type CreateTalaInput, type Tala, type UpdateTalaInput, talaSchema } from './schema';
-import type { TalaDynamoItem, TalaSearchResult, TalaVersion } from './types';
+import type { TalaDynamoItem, TalaSearchParams, TalaSearchResult } from './types';
 
-/**
- * Versioning configuration for talas
- */
-const talaVersioningConfig: VersioningConfig<
-  Tala,
-  TalaDynamoItem,
-  CreateTalaInput,
-  UpdateTalaInput
-> = {
-  entityPrefix: EntityPrefix.TALA,
-  schema: talaSchema,
-  applyGSIMappings: (item, input) => {
-    const mappings: Partial<TalaDynamoItem> = {};
-
-    // GSI1: Name search
-    if ('name' in input && input.name) {
-      mappings.GSI1PK = formatIndexKey('TALA_NAME', input.name.toLowerCase());
-      mappings.GSI1SK = formatKey(EntityPrefix.TALA, item.id);
-    }
-
-    // GSI2: Aksharas search
-    if ('aksharas' in input && input.aksharas) {
-      mappings.GSI2PK = formatIndexKey('AKSHARAS', input.aksharas.toString());
-      mappings.GSI2SK = formatKey(EntityPrefix.TALA, item.id);
-    }
-
-    // GSI3: Type search
-    if ('type' in input && input.type) {
-      mappings.GSI3PK = formatIndexKey('TALA_TYPE', input.type.toLowerCase());
-      mappings.GSI3SK = formatKey(EntityPrefix.TALA, item.id);
-    }
-
-    // GSI4: Tradition search
-    if ('tradition' in input && input.tradition) {
-      mappings.GSI4PK = formatIndexKey('TRADITION', input.tradition);
-      mappings.GSI4SK = formatKey(EntityPrefix.TALA, item.id);
-    }
-
-    return mappings;
-  },
+const normalizeTalaName = (name: string): string => {
+  const words = name.split(' ');
+  return words.map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
+
+const normalizeType = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    suladi: 'Suladi',
+    sapta: 'Sapta',
+    chapu: 'Chapu',
+    jati: 'Jati',
+    misra: 'Misra',
+    khanda: 'Khanda',
+    tisra: 'Tisra',
+    chatusra: 'Chatusra',
+    sankeerna: 'Sankeerna',
+  };
+
+  const lowerType = type.toLowerCase();
+  for (const [key, value] of Object.entries(typeMap)) {
+    if (lowerType.includes(key)) {
+      return value;
+    }
+  }
+  return type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+};
+
+const populateIndexes = (
+  tala: { name?: string; aksharas?: number; type?: string; tradition?: string },
+  id: string
+) => ({
+  ...(tala.name && {
+    GSI1PK: formatIndexKey('TALA_NAME', tala.name.toLowerCase()),
+    GSI1SK: formatKey(EntityPrefix.TALA, id),
+  }),
+  ...(tala.aksharas && {
+    GSI2PK: formatIndexKey('AKSHARAS', tala.aksharas.toString()),
+    GSI2SK: formatKey(EntityPrefix.TALA, id),
+  }),
+  ...(tala.type && {
+    GSI3PK: formatIndexKey('TALA_TYPE', tala.type.toLowerCase()),
+    GSI3SK: formatKey(EntityPrefix.TALA, id),
+  }),
+  ...(tala.tradition && {
+    GSI4PK: formatIndexKey('TRADITION', tala.tradition),
+    GSI4SK: formatKey(EntityPrefix.TALA, id),
+  }),
+});
 
 export class TalaRepository {
   static async create(input: CreateTalaInput): Promise<Tala> {
-    return VersioningService.create(input, talaVersioningConfig);
+    const baseItem = await createBaseItem(EntityPrefix.TALA);
+    const timestamp = getCurrentISOString();
+
+    const normalizedInput = {
+      ...input,
+      name: normalizeTalaName(input.name),
+      ...(input.type ? { type: normalizeType(input.type) } : {}),
+    };
+
+    const talaItem: TalaDynamoItem = {
+      PK: baseItem.PK,
+      SK: SecondaryPrefix.METADATA,
+      id: baseItem.id,
+      createdAt: baseItem.createdAt,
+      updatedAt: timestamp,
+      ...normalizedInput,
+      editedBy: [input.editorId],
+      viewCount: 0,
+      ...populateIndexes({ ...normalizedInput }, baseItem.id),
+    };
+
+    await putItem(talaItem);
+    return talaSchema.parse(talaItem);
   }
 
-  static async getById(id: string, version?: string): Promise<Tala | null> {
-    return VersioningService.getById(id, talaVersioningConfig, version);
+  static async getById(id: string): Promise<Tala | null> {
+    return getByPrimaryKey<TalaDynamoItem>(EntityPrefix.TALA, id, SecondaryPrefix.METADATA);
   }
 
   static async update(id: string, input: UpdateTalaInput): Promise<Tala> {
-    return VersioningService.update(id, input, talaVersioningConfig, TalaRepository.getById);
-  }
+    const current = await TalaRepository.getById(id);
+    if (!current) {
+      throw new ApplicationError(ErrorCode.TALA_NOT_FOUND, `Tala ${id} not found`);
+    }
 
-  static async getVersionHistory(id: string): Promise<TalaVersion[]> {
-    return VersioningService.getVersionHistory(id, EntityPrefix.TALA);
+    const normalizedInput = {
+      ...input,
+      ...(input.name ? { name: normalizeTalaName(input.name) } : {}),
+      ...(input.type ? { type: normalizeType(input.type) } : {}),
+    };
+
+    const timestamp = getCurrentISOString();
+    const merged = { ...current, ...normalizedInput };
+    const updates = {
+      ...normalizedInput,
+      updatedAt: timestamp,
+      editedBy: [...new Set([...current.editedBy, input.editorId])],
+      ...populateIndexes(merged, id),
+    };
+
+    await updateItem(
+      {
+        PK: formatKey(EntityPrefix.TALA, id),
+        SK: SecondaryPrefix.METADATA,
+      },
+      updates
+    );
+
+    return TalaRepository.getById(id) as Promise<Tala>;
   }
 
   static async getByName(name: string): Promise<Tala | null> {
-    // Use GSI1 to lookup by name
-    const results = await getByGlobalIndex<TalaDynamoItem>(
+    const result = await getByGlobalIndex<TalaDynamoItem>(
       'GSI1',
       'GSI1PK',
       formatIndexKey('TALA_NAME', name.toLowerCase()),
       { limit: 1 }
     );
 
-    if (results.items.length === 0) return null;
+    if (result.items.length === 0) {
+      // Try with normalized name
+      const normalizedResults = await getByGlobalIndex<TalaDynamoItem>(
+        'GSI1',
+        'GSI1PK',
+        formatIndexKey('TALA_NAME', normalizeTalaName(name).toLowerCase()),
+        { limit: 1 }
+      );
+      if (normalizedResults.items.length === 0) return null;
+      return talaSchema.parse(normalizedResults.items[0]);
+    }
 
-    // Get the latest version
-    return TalaRepository.getById(results.items[0].id);
+    return talaSchema.parse(result.items[0]);
   }
 
   static async getByAksharas(
@@ -108,17 +168,15 @@ export class TalaRepository {
       }
     );
 
-    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
-    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
-
-    return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
+    return createPaginatedResponse(result.items, result.lastEvaluatedKey);
   }
 
   static async getByType(type: string, limit = 20, nextToken?: string): Promise<TalaSearchResult> {
+    const normalizedType = normalizeType(type);
     const result = await getByGlobalIndex<TalaDynamoItem>(
       'GSI3',
       'GSI3PK',
-      formatIndexKey('TALA_TYPE', type.toLowerCase()),
+      formatIndexKey('TALA_TYPE', normalizedType.toLowerCase()),
       {
         limit,
         exclusiveStartKey: nextToken
@@ -127,10 +185,7 @@ export class TalaRepository {
       }
     );
 
-    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
-    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
-
-    return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
+    return createPaginatedResponse(result.items, result.lastEvaluatedKey);
   }
 
   static async getByTradition(
@@ -150,29 +205,22 @@ export class TalaRepository {
       }
     );
 
-    // Optimized: Filter for latest versions using SK pattern instead of isLatest flag
-    const latestVersions = result.items.filter(item => item.SK === 'VERSION#LATEST');
-
-    return createPaginatedResponse(latestVersions, result.lastEvaluatedKey);
+    return createPaginatedResponse(result.items, result.lastEvaluatedKey);
   }
 
   static async search(name: string, limit = 20): Promise<TalaSearchResult> {
-    // Basic search by name
     const result = await query<TalaDynamoItem>({
       IndexName: 'GSI1',
-      KeyConditionExpression: 'GSI1PK BETWEEN :start AND :end',
+      KeyConditionExpression: 'GSI1PK = :pk',
+      FilterExpression: 'SK = :sk',
       ExpressionAttributeValues: {
-        ':start': formatIndexKey('TALA_NAME', name.toLowerCase()),
-        ':end': formatIndexKey('TALA_NAME', `${name.toLowerCase()}\uffff`),
+        ':pk': formatIndexKey('TALA_NAME', name.toLowerCase()),
+        ':sk': SecondaryPrefix.METADATA,
       },
       Limit: limit,
     });
 
-    // Filter for latest versions
-    const latestVersions = result.items.filter(item => item.isLatest);
-
-    // Score by relevance
-    const scoredItems = scoreSearchResults(latestVersions, name, [
+    const scoredItems = scoreSearchResults(result.items, name, [
       { name: 'name', weight: 1 },
       { name: 'alternativeNames', weight: 0.5 },
     ]);
@@ -181,18 +229,41 @@ export class TalaRepository {
   }
 
   static async incrementViewCount(id: string): Promise<void> {
-    // Get current latest version
-    const latestPointer = await getByPrimaryKey<any>(EntityPrefix.TALA, id, 'VERSION#LATEST');
+    const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
+    const { docClient, getTableName } = await import('../../db/client');
 
-    if (!latestPointer) return;
-
-    // Update the view count on the latest version
-    await updateItem(
-      {
-        PK: formatKey(EntityPrefix.TALA, id),
-        SK: formatVersionKey(latestPointer.version, latestPointer.timestamp),
-      },
-      { viewCount: { $increment: 1 } }
+    await docClient.send(
+      new UpdateCommand({
+        TableName: getTableName(),
+        Key: {
+          PK: formatKey(EntityPrefix.TALA, id),
+          SK: SecondaryPrefix.METADATA,
+        },
+        UpdateExpression: 'ADD viewCount :increment',
+        ExpressionAttributeValues: {
+          ':increment': 1,
+        },
+      })
     );
+  }
+
+  static async searchTalas(params: TalaSearchParams): Promise<TalaSearchResult> {
+    if (params.query) {
+      return TalaRepository.search(params.query, params.limit);
+    }
+
+    if (params.aksharas) {
+      return TalaRepository.getByAksharas(params.aksharas, params.limit, params.nextToken);
+    }
+
+    if (params.type) {
+      return TalaRepository.getByType(params.type, params.limit, params.nextToken);
+    }
+
+    if (params.tradition) {
+      return TalaRepository.getByTradition(params.tradition, params.limit, params.nextToken);
+    }
+
+    return { items: [], hasMore: false };
   }
 }

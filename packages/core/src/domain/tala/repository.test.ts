@@ -6,6 +6,7 @@ import type { CreateTalaInput } from './schema';
 // Simple, direct mocking
 vi.mock('../../db', () => ({
   batchPutItems: vi.fn().mockResolvedValue(undefined),
+  getItem: vi.fn().mockResolvedValue(null),
   getByPrimaryKey: vi.fn().mockResolvedValue(null),
   putItem: vi.fn().mockResolvedValue(undefined),
   updateItem: vi.fn().mockResolvedValue(undefined),
@@ -40,8 +41,10 @@ describe('TalaRepository', () => {
         type: 'Suladi',
         aksharas: 8,
         tradition: Tradition.CARNATIC,
-        version: 'v1',
       });
+      expect(result.id).toBeDefined();
+      expect(result.createdAt).toBeDefined();
+      expect(result.editedBy).toEqual(['user-123']);
     });
   });
 
@@ -57,7 +60,7 @@ describe('TalaRepository', () => {
       const input = { structure: 'Updated structure', editorId: 'user-456' };
 
       await expect(TalaRepository.update('nonexistent', input)).rejects.toThrow(
-        'Entity nonexistent not found'
+        'Tala nonexistent not found'
       );
     });
   });

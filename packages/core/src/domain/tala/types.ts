@@ -5,13 +5,6 @@ import type { Tala } from './schema';
 export interface TalaDynamoItem extends DynamoItem, Tala {}
 export type UpdateTalaDynamoItem = Partial<TalaDynamoItem>;
 
-export interface TalaVersion {
-  id: string;
-  version: string;
-  timestamp: string;
-  editorId: string;
-}
-
 export interface TalaSearchParams {
   query?: string;
   aksharas?: number;

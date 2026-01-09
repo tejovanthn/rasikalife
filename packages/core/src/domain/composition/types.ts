@@ -5,11 +5,19 @@ import type { Composition, CompositionAttribution } from './schema';
 export interface CompositionDynamoItem extends DynamoItem, Composition {}
 export interface AttributionDynamoItem extends DynamoItem, CompositionAttribution {}
 
-export interface CompositionVersion {
-  id: string;
-  version: string;
-  timestamp: string;
-  editorId: string;
+// Structured verse interface
+export interface Verse {
+  type: 'pallavi' | 'anupallavi' | 'caraNam' | 'lyrics';
+  order: number;
+  text: string;
+}
+
+// Composition metadata interface
+export interface CompositionMetadata {
+  hasRagaDetails?: boolean;
+  hasTalaDetails?: boolean;
+  lyricSections?: number;
+  sectionTypes?: string[];
 }
 
 export interface CompositionSearchParams {
@@ -66,4 +74,6 @@ export interface CompositionWithAttributions extends Composition {
   // Full denormalized data for all ragas/talas
   ragas?: Array<{ id: string; name: string }>;
   talas?: Array<{ id: string; name: string }>;
+  // Artist attributions for convenience
+  composers?: Array<{ id: string; name: string; attributionType: AttributionType }>;
 }

@@ -6,6 +6,7 @@ import type { CreateRagaInput } from './schema';
 // Simple, direct mocking
 vi.mock('../../db', () => ({
   batchPutItems: vi.fn().mockResolvedValue(undefined),
+  getItem: vi.fn().mockResolvedValue(null),
   getByPrimaryKey: vi.fn().mockResolvedValue(null),
   putItem: vi.fn().mockResolvedValue(undefined),
   updateItem: vi.fn().mockResolvedValue(undefined),
@@ -36,8 +37,10 @@ describe('RagaRepository', () => {
       expect(result).toMatchObject({
         name: 'Bhairavi',
         tradition: Tradition.CARNATIC,
-        version: 'v1',
       });
+      expect(result.id).toBeDefined();
+      expect(result.createdAt).toBeDefined();
+      expect(result.editedBy).toEqual(['user-123']);
     });
   });
 
@@ -53,7 +56,7 @@ describe('RagaRepository', () => {
       const input = { notes: 'Updated notes', editorId: 'user-456' };
 
       await expect(RagaRepository.update('nonexistent', input)).rejects.toThrow(
-        'Entity nonexistent not found'
+        'Raga nonexistent not found'
       );
     });
   });

@@ -35,12 +35,10 @@ export const updateRagaSchema = z.object({
 export const ragaSchema = z.object({
   ...ragaBaseFields,
   id: z.string(),
-  version: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
   viewCount: z.number().int().default(0),
   editedBy: z.array(z.string()),
-  isLatest: z.boolean().default(true),
 });
 
 // Export inferred types

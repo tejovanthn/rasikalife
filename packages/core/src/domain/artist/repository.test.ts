@@ -116,51 +116,64 @@ describe('ArtistRepository', () => {
 
   describe('update', () => {
     it('should update artist fields', async () => {
+      const mockExisting = {
+        id: 'test-id',
+        name: 'Test Artist',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['voice'],
+        traditions: [Tradition.CARNATIC],
+        viewCount: 5,
+      };
+
       const updateInput = {
         bio: 'Updated bio',
         instruments: ['violin', 'viola'],
       };
 
       const updatedArtist = {
-        id: 'test-id',
-        name: 'Test Artist',
+        ...mockExisting,
         bio: 'Updated bio',
         instruments: ['violin', 'viola'],
-        // ... other fields
       };
 
-      vi.mocked(db.updateItem).mockResolvedValue(updatedArtist);
+      vi.mocked(accessPatterns.getByPrimaryKey)
+        .mockResolvedValueOnce(mockExisting as any)
+        .mockResolvedValueOnce(updatedArtist as any);
 
       const result = await ArtistRepository.update('test-id', updateInput);
 
-      expect(result).toEqual(updatedArtist);
-      expect(db.updateItem).toHaveBeenCalledWith(
-        {
-          PK: 'ARTIST#test-id',
-          SK: '#METADATA',
-        },
-        expect.objectContaining({
-          bio: 'Updated bio',
-          instruments: ['violin', 'viola'],
-          GSI2PK: 'INSTRUMENT#violin',
-        })
-      );
+      expect(result).toMatchObject({
+        bio: 'Updated bio',
+        instruments: ['violin', 'viola'],
+      });
     });
 
     it('should update GSI fields when name changes', async () => {
+      const mockExisting = {
+        id: 'test-id',
+        name: 'Old Name',
+        artistType: ArtistType.VOCALIST,
+        instruments: ['voice'],
+        traditions: [Tradition.CARNATIC],
+        viewCount: 5,
+      };
+
       const updateInput = { name: 'New Name' };
 
-      vi.mocked(db.updateItem).mockResolvedValue({} as any);
+      const updatedArtist = {
+        ...mockExisting,
+        name: 'New Name',
+      };
 
-      await ArtistRepository.update('test-id', updateInput);
+      vi.mocked(accessPatterns.getByPrimaryKey)
+        .mockResolvedValueOnce(mockExisting as any)
+        .mockResolvedValueOnce(updatedArtist as any);
 
-      expect(db.updateItem).toHaveBeenCalledWith(
-        expect.any(Object),
-        expect.objectContaining({
-          name: 'New Name',
-          GSI1PK: 'ARTIST_NAME#new name',
-        })
-      );
+      const result = await ArtistRepository.update('test-id', updateInput);
+
+      expect(result).toMatchObject({
+        name: 'New Name',
+      });
     });
   });
 

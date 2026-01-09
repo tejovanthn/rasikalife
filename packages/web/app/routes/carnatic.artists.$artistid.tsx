@@ -1,5 +1,5 @@
-import { Link, useLoaderData } from '@remix-run/react';
 import type { Artist } from '@rasika/core';
+import { Link, useLoaderData } from '@remix-run/react';
 import { GenericDetailRoute, GenericErrorBoundary } from '~/components/shared';
 import { detailConfigs } from '~/lib/detailRouteConfig';
 import { entityUrls } from '~/lib/entityUtils';

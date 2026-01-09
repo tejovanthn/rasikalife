@@ -1,186 +1,101 @@
-// ../../domain/composition/service.ts
+import { ApplicationError } from '../../types/common';
+import { ErrorCode } from '../../constants';
 import { CompositionRepository } from './repository';
-import type {
-  Composition,
-  CompositionAttribution,
-  CreateAttributionInput,
-  CreateCompositionInput,
-  UpdateAttributionInput,
-  UpdateCompositionInput,
-} from './schema';
-import type {
-  AttributionSearchParams,
-  AttributionSearchResult,
-  CompositionSearchParams,
-  CompositionSearchResult,
-  CompositionVersion,
-  CompositionWithAttributions,
-} from './types';
+import type { CreateCompositionInput, UpdateCompositionInput, Composition } from './schema';
+import type { CompositionSearchParams, CompositionSearchResult } from './types';
 
+/**
+ * Service layer for composition business logic
+ * Handles validation, business rules, and data enrichment
+ */
+/* eslint-disable @typescript-eslint/no-extraneous-class */
 export class CompositionService {
-  // Composition Methods
-  static async createComposition(input: CreateCompositionInput): Promise<Composition> {
-    // Normalize the composition title
-    const normalizedInput = {
-      ...input,
-      title: CompositionService.normalizeTitle(input.title),
-      language: CompositionService.normalizeLanguage(input.language),
-    };
-
-    return CompositionRepository.create(normalizedInput);
-  }
-
-  static async getComposition(id: string, version?: string): Promise<Composition | null> {
-    return CompositionRepository.getById(id, version);
-  }
-
-  static async getCompositionWithAttributions(
-    id: string
-  ): Promise<CompositionWithAttributions | null> {
-    return CompositionRepository.getWithAttributions(id);
-  }
-
-  static async updateComposition(id: string, input: UpdateCompositionInput): Promise<Composition> {
-    // Normalize the title if provided
-    const normalizedInput = {
-      ...input,
-      ...(input.title ? { title: CompositionService.normalizeTitle(input.title) } : {}),
-      ...(input.language ? { language: CompositionService.normalizeLanguage(input.language) } : {}),
-    };
-
-    return CompositionRepository.update(id, normalizedInput);
-  }
-
-  static async getVersionHistory(id: string): Promise<CompositionVersion[]> {
-    return CompositionRepository.getVersionHistory(id);
-  }
-
-  static async searchCompositions(
-    params: CompositionSearchParams
-  ): Promise<CompositionSearchResult> {
-    if (params.query) {
-      return CompositionRepository.searchByTitle(params.query, params.limit);
-    }
-
-    if (params.tradition) {
-      return CompositionRepository.getByTradition(params.tradition, params.limit, params.nextToken);
-    }
-
-    if (params.language) {
-      return CompositionRepository.getByLanguage(
-        CompositionService.normalizeLanguage(params.language),
-        params.limit,
-        params.nextToken
+  /**
+   * Create a new composition with business logic validation
+   */
+  static async create(input: CreateCompositionInput): Promise<Composition> {
+    // Business logic: Validate that required fields are present for carnatic compositions
+    if (input.tradition === 'carnatic' && !input.language) {
+      throw new ApplicationError(
+        ErrorCode.GENERAL_VALIDATION_ERROR,
+        'Language is required for carnatic compositions'
       );
     }
 
-    if (params.artistId) {
-      // Get attributions
-      const attributions = await CompositionRepository.getCompositionsByArtistId(
-        params.artistId,
-        params.limit,
-        params.nextToken
+    // Business logic: Ensure title uniqueness (basic check)
+    const existing = await CompositionRepository.search({
+      query: input.title,
+      limit: 1,
+    });
+
+    if (existing.items.some(item => item.title.toLowerCase() === input.title.toLowerCase())) {
+      throw new ApplicationError(
+        ErrorCode.COMPOSITION_ALREADY_EXISTS,
+        `Composition with title "${input.title}" already exists`
       );
-
-      // Get compositions for each attribution (now returns denormalized data)
-      const compositions = await Promise.all(
-        attributions.items.map(attr => CompositionService.getComposition(attr.compositionId))
-      );
-
-      // Filter out any null results
-      const validCompositions = compositions.filter(Boolean) as Composition[];
-
-      return {
-        items: validCompositions,
-        nextToken: attributions.nextToken,
-        hasMore: attributions.hasMore,
-      };
     }
 
-    // Return empty results if no search criteria
-    return { items: [], hasMore: false };
+    return CompositionRepository.create(input);
   }
 
+  /**
+   * Get composition by ID
+   */
+  static async getById(id: string): Promise<Composition | null> {
+    return CompositionRepository.getById(id);
+  }
+
+  /**
+   * Update composition with business logic
+   */
+  static async update(id: string, input: UpdateCompositionInput): Promise<Composition> {
+    const existing = await CompositionRepository.getById(id);
+    if (!existing) {
+      throw new ApplicationError(
+        ErrorCode.COMPOSITION_NOT_FOUND,
+        `Composition with ID ${id} not found`
+      );
+    }
+
+    // Business logic: Prevent changing tradition if attributions exist
+    if (input.tradition && input.tradition !== existing.tradition) {
+      const attributions = await CompositionRepository.getAttributionsByCompositionId(id);
+      if (attributions.items.length > 0) {
+        throw new ApplicationError(
+          ErrorCode.GENERAL_VALIDATION_ERROR,
+          'Cannot change tradition when composition has artist attributions'
+        );
+      }
+    }
+
+    return CompositionRepository.update(id, input);
+  }
+
+  /**
+   * Search compositions with enhanced business logic
+   */
+  static async search(params: CompositionSearchParams): Promise<CompositionSearchResult> {
+    return CompositionRepository.search(params);
+  }
+
+  /**
+   * Get popular compositions
+   */
+  static async getPopular(limit = 10): Promise<Composition[]> {
+    return CompositionRepository.getPopular(limit);
+  }
+
+  /**
+   * Get composition by source URL
+   */
+  static async getBySourceUrl(sourceUrl: string): Promise<Composition | null> {
+    return CompositionRepository.getBySourceUrl(sourceUrl);
+  }
+
+  /**
+   * Increment view count for a composition
+   */
   static async incrementViewCount(id: string): Promise<void> {
     return CompositionRepository.incrementViewCount(id);
-  }
-
-  // Attribution Methods
-  static async createAttribution(input: CreateAttributionInput): Promise<CompositionAttribution> {
-    return CompositionRepository.createAttribution(input);
-  }
-
-  static async updateAttribution(input: UpdateAttributionInput): Promise<CompositionAttribution> {
-    return CompositionRepository.updateAttribution(input);
-  }
-
-  static async getAttribution(
-    compositionId: string,
-    artistId: string
-  ): Promise<CompositionAttribution | null> {
-    return CompositionRepository.getAttribution(compositionId, artistId);
-  }
-
-  static async searchAttributions(
-    params: AttributionSearchParams
-  ): Promise<AttributionSearchResult> {
-    if (params.compositionId) {
-      return CompositionRepository.getAttributionsByCompositionId(params.compositionId);
-    }
-
-    if (params.artistId) {
-      return CompositionRepository.getCompositionsByArtistId(
-        params.artistId,
-        params.limit,
-        params.nextToken
-      );
-    }
-
-    if (params.attributionType === 'disputed') {
-      return CompositionRepository.getDisputedAttributions(params.limit, params.nextToken);
-    }
-
-    // Return empty results if no search criteria
-    return { items: [], hasMore: false };
-  }
-
-  static async verifyAttribution(
-    compositionId: string,
-    artistId: string,
-    userId: string
-  ): Promise<CompositionAttribution> {
-    return CompositionRepository.verifyAttribution(compositionId, artistId, userId);
-  }
-
-  // Helper Methods
-  private static normalizeTitle(title: string): string {
-    return title.trim();
-  }
-
-  private static normalizeLanguage(language: string): string {
-    // Common languages in Indian classical music
-    const languageMap: Record<string, string> = {
-      sanskrit: 'Sanskrit',
-      tamil: 'Tamil',
-      telugu: 'Telugu',
-      kannada: 'Kannada',
-      hindi: 'Hindi',
-      urdu: 'Urdu',
-      marathi: 'Marathi',
-      gujarati: 'Gujarati',
-      bengali: 'Bengali',
-      punjabi: 'Punjabi',
-      malayalam: 'Malayalam',
-    };
-
-    const lowerLanguage = language.toLowerCase();
-
-    // Return standardized language if known
-    if (languageMap[lowerLanguage]) {
-      return languageMap[lowerLanguage];
-    }
-
-    // Otherwise return with first letter capitalized
-    return language.charAt(0).toUpperCase() + language.slice(1).toLowerCase();
   }
 }

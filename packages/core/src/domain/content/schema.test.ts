@@ -30,10 +30,6 @@ describe('Content Schema', () => {
       expect(result.status).toBe(ContentStatus.PUBLISHED);
       expect(result.visibility).toBe(ContentVisibility.PUBLIC);
       expect(result.category).toBe(ContentCategory.GENERAL);
-      expect(result.version).toBe('v1');
-      expect(result.isLatest).toBe(true);
-      expect(result.editedBy).toEqual([]);
-      expect(result.viewCount).toBe(0);
     });
 
     it('should validate content with full auxiliary data', () => {

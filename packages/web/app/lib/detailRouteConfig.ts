@@ -145,15 +145,30 @@ export const detailConfigs: Record<string, DetailConfig> = {
     ],
 
     getContentSections: composition => [
-      ...(composition.lyrics
+      // Display structured verses if available, otherwise fall back to simple lyrics
+      ...(composition.structuredVerses && composition.structuredVerses.length > 0
         ? [
             {
               title: 'Lyrics',
-              content: composition.lyrics,
+              content: composition.structuredVerses
+                .sort((a: any, b: any) => a.order - b.order)
+                .map(
+                  (verse: any) =>
+                    `${verse.type.charAt(0).toUpperCase() + verse.type.slice(1)}:\n${verse.text}`
+                )
+                .join('\n\n'),
               format: 'pre-line' as const,
             },
           ]
-        : []),
+        : composition.lyrics
+          ? [
+              {
+                title: 'Lyrics',
+                content: composition.lyrics,
+                format: 'pre-line' as const,
+              },
+            ]
+          : []),
       ...(composition.meaning
         ? [
             {

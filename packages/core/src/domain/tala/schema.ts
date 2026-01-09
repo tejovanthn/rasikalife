@@ -30,12 +30,10 @@ export const updateTalaSchema = z.object({
 export const talaSchema = z.object({
   ...talaBaseFields,
   id: z.string(),
-  version: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
   viewCount: z.number().int().default(0),
   editedBy: z.array(z.string()),
-  isLatest: z.boolean().default(true),
 });
 
 // Export inferred types

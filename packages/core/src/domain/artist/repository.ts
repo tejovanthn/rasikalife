@@ -1,4 +1,6 @@
-import { putItem, query, scan, updateItem } from '../../db';
+import { createQuery, putItem, scan, updateItem } from '../../db';
+import { ErrorCode } from '../../constants';
+import { ApplicationError } from '../../types/common';
 import { getByGlobalIndex, getByPrimaryKey } from '../../shared/accessPatterns';
 import { createPaginatedResponse } from '../../shared/pagination';
 import { scoreSearchResults } from '../../shared/search';
@@ -15,14 +17,50 @@ import {
   type ArtistSearchParams,
   type ArtistSearchResult,
   type Tradition,
-  type UpdateArtistDynamoItem,
   VerificationStatus,
 } from './types';
+
+const populateIndexes = (
+  artist: {
+    name?: string;
+    instruments?: string[];
+    traditions?: string[];
+    location?: { country?: string; state?: string; city?: string };
+    viewCount?: number;
+  },
+  id: string
+) => ({
+  ...(artist.name && {
+    GSI1PK: formatIndexKey('ARTIST_NAME', artist.name.toLowerCase()),
+    GSI1SK: formatKey(EntityPrefix.ARTIST, id),
+    searchName: artist.name.toLowerCase(),
+  }),
+  ...(artist.instruments?.length && {
+    GSI2PK: formatIndexKey('INSTRUMENT', artist.instruments[0]),
+    GSI2SK: formatKey(EntityPrefix.ARTIST, id),
+  }),
+  ...(artist.traditions?.length && {
+    GSI3PK: formatIndexKey('TRADITION', artist.traditions[0]),
+    GSI3SK: formatKey(EntityPrefix.ARTIST, id),
+  }),
+  ...(artist.location && {
+    GSI4PK: formatIndexKey(
+      'LOCATION',
+      [artist.location.country, artist.location.state, artist.location.city]
+        .filter(Boolean)
+        .join('#')
+    ),
+    GSI4SK: formatKey(EntityPrefix.ARTIST, id),
+  }),
+  ...(artist.viewCount !== undefined && {
+    GSI5PK: 'POPULARITY',
+    GSI5SK: `VIEWS#${String(artist.viewCount).padStart(10, '0')}#${id}`,
+  }),
+});
 
 export class ArtistRepository {
   static async create(input: unknown): Promise<ArtistDynamoItem> {
     const validatedInput = createArtistSchema.parse(input);
-
     const baseItem = await createBaseItem(EntityPrefix.ARTIST);
 
     const artistItem: ArtistDynamoItem = {
@@ -33,41 +71,8 @@ export class ArtistRepository {
       viewCount: 0,
       favoriteCount: 0,
       popularityScore: 0,
-      searchName: validatedInput.name.toLowerCase(), // For case-insensitive search
-
-      // GSI fields for search
-      GSI1PK: formatIndexKey('ARTIST_NAME', validatedInput.name.toLowerCase()),
-      GSI1SK: formatKey(EntityPrefix.ARTIST, baseItem.id),
+      ...populateIndexes({ ...validatedInput, viewCount: 0 }, baseItem.id),
     };
-
-    // Add instrument index if provided
-    if (validatedInput.instruments.length > 0) {
-      artistItem.GSI2PK = formatIndexKey('INSTRUMENT', validatedInput.instruments[0]);
-      artistItem.GSI2SK = formatKey(EntityPrefix.ARTIST, baseItem.id);
-    }
-
-    // Add tradition index
-    artistItem.GSI3PK = formatIndexKey('TRADITION', validatedInput.traditions[0]);
-    artistItem.GSI3SK = formatKey(EntityPrefix.ARTIST, baseItem.id);
-
-    // Add popularity index (GSI5 for popularity)
-    // Uses view count as popularity proxy with padded values for proper numeric sorting
-    artistItem.GSI5PK = 'POPULARITY';
-    artistItem.GSI5SK = `VIEWS#${String(artistItem.viewCount).padStart(10, '0')}#${baseItem.id}`;
-
-    // Add location index if provided
-    if (validatedInput.location) {
-      const locationKey = [
-        validatedInput.location.country,
-        validatedInput.location.state,
-        validatedInput.location.city,
-      ]
-        .filter(Boolean)
-        .join('#');
-
-      artistItem.GSI4PK = formatIndexKey('LOCATION', locationKey);
-      artistItem.GSI4SK = formatKey(EntityPrefix.ARTIST, baseItem.id);
-    }
 
     await putItem(artistItem);
     return artistItem;
@@ -78,63 +83,40 @@ export class ArtistRepository {
   }
 
   static async update(id: string, input: unknown): Promise<Artist> {
-    const validatedInput: UpdateArtistDynamoItem = updateArtistSchema.parse({
+    const validatedInput = updateArtistSchema.parse({
       id,
       ...(input || {}),
     });
 
-    // Update GSI fields if name is changing
-    if (validatedInput.name) {
-      validatedInput.GSI1PK = formatIndexKey('ARTIST_NAME', validatedInput.name.toLowerCase());
+    // Get current artist to merge with updates for GSI population
+    const current = await ArtistRepository.getById(id);
+    if (!current) {
+      throw new ApplicationError(ErrorCode.ARTIST_NOT_FOUND, `Artist ${id} not found`);
     }
 
-    // Update other GSI fields as needed
-    if (validatedInput.instruments?.length) {
-      validatedInput.GSI2PK = formatIndexKey('INSTRUMENT', validatedInput.instruments[0]);
-    }
+    const merged = { ...current, ...validatedInput };
+    const updates = {
+      ...validatedInput,
+      ...populateIndexes(merged, id),
+    };
 
-    if (validatedInput.traditions?.length) {
-      validatedInput.GSI3PK = formatIndexKey('TRADITION', validatedInput.traditions[0]);
-    }
-
-    if (validatedInput.location) {
-      const locationKey = [
-        validatedInput.location.country,
-        validatedInput.location.state,
-        validatedInput.location.city,
-      ]
-        .filter(Boolean)
-        .join('#');
-
-      validatedInput.GSI4PK = formatIndexKey('LOCATION', locationKey);
-    }
-
-    return updateItem<ArtistDynamoItem>(
+    await updateItem(
       {
         PK: formatKey(EntityPrefix.ARTIST, id),
         SK: SecondaryPrefix.METADATA,
       },
-      validatedInput
+      updates
     );
+
+    return ArtistRepository.getById(id) as Promise<Artist>;
   }
 
   /**
-   * Search artists by name using optimized DynamoDB scan with filters
+   * WARNING: This uses a table scan and will not scale beyond ~1000 artists.
+   * For production fuzzy search, integrate ElasticSearch, Algolia, or similar.
    *
-   * Since DynamoDB doesn't excel at partial text search and our GSI1 structure
-   * uses exact artist names as partition keys, this implementation uses an
-   * optimized scan operation with improved filtering and scoring.
-   *
-   * Optimization improvements over previous version:
-   * - Reduced scan multiplier from 3x to 2x for better efficiency
-   * - Uses case-insensitive searchName field for more reliable matching
-   * - Maintains pagination support via nextToken
-   * - Applies search scoring to rank results by relevance
-   *
-   * @param name Search term to match against artist names
-   * @param limit Maximum number of results to return
-   * @param nextToken Pagination token for continued search
-   * @returns Promise resolving to paginated search results
+   * This is acceptable for MVP / low-traffic scenarios only.
+   * DynamoDB doesn't support partial text matching on GSI keys.
    */
   static async searchByName(
     name: string,
@@ -142,8 +124,6 @@ export class ArtistRepository {
     nextToken?: string
   ): Promise<ArtistSearchResult> {
     const searchTerm = name.toLowerCase();
-
-    // Use optimized scan with improved filtering
     const result = await scan<ArtistDynamoItem>({
       FilterExpression:
         'begins_with(PK, :pkPrefix) AND SK = :skValue AND contains(#searchName, :searchTerm)',
@@ -242,5 +222,52 @@ export class ArtistRepository {
 
     // Return empty results if no search criteria
     return { items: [], hasMore: false };
+  }
+
+  static async getPopular(limit = 10): Promise<Artist[]> {
+    const result = await createQuery<ArtistDynamoItem>()
+      .withIndex('GSI5')
+      .withPartitionKey('GSI5PK', 'POPULARITY')
+      .withSortOrder(false) // Descending order by view count
+      .withLimit(limit)
+      .execute();
+
+    return result.items;
+  }
+
+  static async incrementViewCount(id: string): Promise<void> {
+    const { UpdateCommand, GetCommand } = await import('@aws-sdk/lib-dynamodb');
+    const { docClient, getTableName } = await import('../../db/client');
+
+    // Get current view count to calculate new GSI5SK
+    const current = await docClient.send(
+      new GetCommand({
+        TableName: getTableName(),
+        Key: {
+          PK: formatKey(EntityPrefix.ARTIST, id),
+          SK: SecondaryPrefix.METADATA,
+        },
+        ProjectionExpression: 'viewCount',
+      })
+    );
+
+    const currentViewCount = current.Item?.viewCount || 0;
+    const newViewCount = currentViewCount + 1;
+    const newGSI5SK = `VIEWS#${String(newViewCount).padStart(10, '0')}#${id}`;
+
+    await docClient.send(
+      new UpdateCommand({
+        TableName: getTableName(),
+        Key: {
+          PK: formatKey(EntityPrefix.ARTIST, id),
+          SK: SecondaryPrefix.METADATA,
+        },
+        UpdateExpression: 'ADD viewCount :increment SET GSI5SK = :newGSI5SK',
+        ExpressionAttributeValues: {
+          ':increment': 1,
+          ':newGSI5SK': newGSI5SK,
+        },
+      })
+    );
   }
 }

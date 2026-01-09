@@ -1,6 +1,6 @@
+import type { Composition } from '@rasika/core';
 import { Await, Link, useLoaderData } from '@remix-run/react';
 import { Suspense } from 'react';
-import type { Composition } from '@rasika/core';
 import { OptimisticViewCounter } from '~/components/OptimisticViewCounter';
 import {
   RelatedCompositions as RelatedCompositionsComponent,
@@ -41,6 +41,42 @@ function CompositionCustomSections() {
           <p className="text-lg text-muted-foreground">
             Also known as: {composition.alternativeTitles.join(', ')}
           </p>
+        </section>
+      )}
+
+      {/* Source Attribution */}
+      {(composition.sourceUrl || composition.lastUpdated) && (
+        <section className="mb-8">
+          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-sm font-semibold text-blue-900 mb-2">Source Information</h3>
+            <div className="space-y-2">
+              {composition.sourceUrl && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-blue-700">Original source:</span>
+                  <a
+                    href={composition.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    karnatik.com
+                  </a>
+                </div>
+              )}
+              {composition.lastUpdated && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-blue-700">Last updated:</span>
+                  <span className="text-sm text-blue-600">
+                    {new Date(composition.lastUpdated).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
       )}
 
@@ -86,21 +122,10 @@ function CompositionCustomSections() {
 function RelatedCompositions() {
   const { entity: composition, relatedItems } = useLoaderData<{
     entity: Composition;
-    relatedItems: Promise<Composition[]>;
+    relatedItems: Composition[];
   }>();
 
-  return (
-    <Suspense fallback={<RelatedCompositionsSkeleton />}>
-      <Await resolve={relatedItems}>
-        {compositions => (
-          <RelatedCompositionsComponent
-            compositions={compositions}
-            ragaName={composition.ragaName}
-          />
-        )}
-      </Await>
-    </Suspense>
-  );
+  return <RelatedCompositionsComponent compositions={relatedItems} />;
 }
 
 export function ErrorBoundary() {
