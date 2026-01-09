@@ -39,6 +39,9 @@ importers:
       '@aws-sdk/util-dynamodb':
         specifier: ^3.856.0
         version: 3.856.0(@aws-sdk/client-dynamodb@3.856.0)
+      electrodb:
+        specifier: ^2.12.0
+        version: 2.15.1(@aws-sdk/client-dynamodb@3.856.0)
       ksuid:
         specifier: ^3.0.0
         version: 3.0.0
@@ -2957,6 +2960,9 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
+  electrodb@2.15.1:
+    resolution: {integrity: sha512-sY1riyPbHG6DpmwakoSd2YxGSupFcc2Wiur8Y2PRHYNaCMG/tmBrzNRcMJt019o3YEU6xbYGCWyBkEhOZU7iAA==}
+
   electron-to-chromium@1.5.192:
     resolution: {integrity: sha512-rP8Ez0w7UNw/9j5eSXCe10o1g/8B1P5SM90PCCMVkIRQn2R0LEHWz4Eh9RnxkniuDe1W0cTSOB3MLlkTGDcuCg==}
 
@@ -3565,6 +3571,9 @@ packages:
 
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
+
+  jsonschema@1.2.7:
+    resolution: {integrity: sha512-3dFMg9hmI9LdHag/BRIhMefCfbq1hicvYMy8YhZQorAdzOzWz7NjniSpn39yjpzUAMIWtGyyZuH2KNBloH7ZLw==}
 
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
@@ -8320,7 +8329,7 @@ snapshots:
       '@babel/plugin-syntax-typescript': 7.27.1(@babel/core@7.28.0)
       '@vanilla-extract/babel-plugin-debug-ids': 1.2.2
       '@vanilla-extract/css': 1.17.4
-      esbuild: 0.17.6
+      esbuild: 0.17.19
       eval: 0.1.8
       find-up: 5.0.0
       javascript-stringify: 2.1.0
@@ -8857,6 +8866,14 @@ snapshots:
   eastasianwidth@0.2.0: {}
 
   ee-first@1.1.1: {}
+
+  electrodb@2.15.1(@aws-sdk/client-dynamodb@3.856.0):
+    dependencies:
+      '@aws-sdk/lib-dynamodb': 3.856.0(@aws-sdk/client-dynamodb@3.856.0)
+      '@aws-sdk/util-dynamodb': 3.856.0(@aws-sdk/client-dynamodb@3.856.0)
+      jsonschema: 1.2.7
+    transitivePeerDependencies:
+      - '@aws-sdk/client-dynamodb'
 
   electron-to-chromium@1.5.192: {}
 
@@ -9644,6 +9661,8 @@ snapshots:
       universalify: 2.0.1
     optionalDependencies:
       graceful-fs: 4.2.11
+
+  jsonschema@1.2.7: {}
 
   kleur@4.1.5: {}
 

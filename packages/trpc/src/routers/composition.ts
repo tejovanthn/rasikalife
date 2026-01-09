@@ -1,126 +1,25 @@
-import {
-  CompositionRepository,
-  attributionSchema,
-  createCompositionSchema,
-  updateAttributionSchema,
-  updateCompositionSchema,
-} from '@rasika/core';
 import { z } from 'zod';
-import { idWithViewTrackingSchema } from '../schemas';
-import {
-  attributionSearchParamsSchema,
-  compositionSearchParamsSchema,
-} from '../schemas/composition';
-import { createRouter, rateLimitedProcedure, searchProcedure, writeProcedure } from '../server';
+import { createTRPCRouter, publicProcedure } from '../trpc';
+import { CompositionRepository, Composition } from '@rasikalife/core/composition';
 
-export const compositionRouter = createRouter({
-  // Composition Queries
-  getById: rateLimitedProcedure.input(idWithViewTrackingSchema).query(async ({ input, ctx }) => {
-    const composition = await CompositionRepository.getById(input.id);
+export const compositionRouter = createTRPCRouter({
+  get: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ input }) => CompositionRepository.getById(input.id)),
 
-    // Track view if enabled and not a bot
-    if (composition && input.trackView && !ctx.isBot) {
-      await CompositionRepository.incrementViewCount(input.id);
-    }
+  create: publicProcedure
+    .input(Composition.CreateCompositionSchema)
+    .mutation(async ({ input }) => CompositionRepository.create(input)),
 
-    return composition;
-  }),
+  update: publicProcedure
+    .input(z.object({ id: z.string(), data: Composition.UpdateCompositionSchema }))
+    .mutation(async ({ input }) => CompositionRepository.update(input.id, input.data)),
 
-  getWithAttributions: rateLimitedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        trackView: z.boolean().default(true),
-      })
-    )
-    .query(async ({ input, ctx }) => {
-      const composition = await CompositionRepository.getWithAttributions(input.id);
+  delete: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => CompositionRepository.delete(input.id)),
 
-      // Track view if enabled and not a bot
-      if (composition && input.trackView && !ctx.isBot) {
-        await CompositionRepository.incrementViewCount(input.id);
-      }
-
-      return composition;
-    }),
-
-  search: searchProcedure.input(compositionSearchParamsSchema).query(async ({ input }) => {
-    return CompositionRepository.search(input);
-  }),
-
-  getPopular: rateLimitedProcedure
-    .input(z.object({ limit: z.number().min(1).max(50).default(10) }))
-    .query(async ({ input }) => {
-      return CompositionRepository.getPopular(input.limit);
-    }),
-
-  getBySourceUrl: rateLimitedProcedure
-    .input(z.object({ sourceUrl: z.string().url() }))
-    .query(async ({ input }) => {
-      return CompositionRepository.getBySourceUrl(input.sourceUrl);
-    }),
-
-  // Composition Mutations
-  create: writeProcedure.input(createCompositionSchema).mutation(async ({ input, ctx }) => {
-    return CompositionRepository.create({
-      ...input,
-      editorId: ctx.user.id,
-    });
-  }),
-
-  update: writeProcedure.input(updateCompositionSchema).mutation(async ({ input, ctx }) => {
-    const { id, ...updateData } = input;
-    return CompositionRepository.update(id, {
-      ...updateData,
-      id,
-      editorId: ctx.user.id,
-    });
-  }),
-
-  // Attribution Queries
-  getAttribution: rateLimitedProcedure
-    .input(
-      z.object({
-        compositionId: z.string(),
-        artistId: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      return CompositionRepository.getAttribution(input.compositionId, input.artistId);
-    }),
-
-  searchAttributions: searchProcedure
-    .input(attributionSearchParamsSchema)
-    .query(async ({ input }) => {
-      return CompositionRepository.searchAttributions(input);
-    }),
-
-  // Attribution Mutations
-  createAttribution: writeProcedure.input(attributionSchema).mutation(async ({ input, ctx }) => {
-    return CompositionRepository.createAttribution({
-      ...input,
-      addedBy: ctx.user.id,
-    });
-  }),
-
-  updateAttribution: writeProcedure
-    .input(updateAttributionSchema)
-    .mutation(async ({ input, ctx }) => {
-      return CompositionRepository.updateAttribution(input);
-    }),
-
-  verifyAttribution: writeProcedure
-    .input(
-      z.object({
-        compositionId: z.string(),
-        artistId: z.string(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      return CompositionRepository.verifyAttribution(
-        input.compositionId,
-        input.artistId,
-        ctx.user.id
-      );
-    }),
+  byArtist: publicProcedure
+    .input(z.object({ artistId: z.string() }))
+    .query(async ({ input }) => CompositionRepository.getByArtistId(input.artistId)),
 });

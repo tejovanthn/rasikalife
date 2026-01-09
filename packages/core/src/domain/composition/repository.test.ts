@@ -1,23 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Tradition } from '../artist';
 import { CompositionRepository } from './repository';
-import type { CreateAttributionInput, CreateCompositionInput } from './schema';
-import { AttributionConfidence, AttributionType } from './types';
+import { CreateCompositionInput } from './types';
 
-// Simple, direct mocking
-vi.mock('../../db', () => ({
-  batchPutItems: vi.fn().mockResolvedValue(undefined),
-  getItem: vi.fn().mockResolvedValue(null),
-  getByPrimaryKey: vi.fn().mockResolvedValue(null),
-  putItem: vi.fn().mockResolvedValue(undefined),
-  updateItem: vi.fn().mockResolvedValue(undefined),
-  query: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
+// Mock the utils module
+vi.mock('../../utils', () => ({
+  generateId: vi.fn(() => 'test-composition-id'),
 }));
 
-vi.mock('../../shared/accessPatterns', () => ({
-  getAllByPartitionKey: vi.fn().mockResolvedValue({ items: [], lastEvaluatedKey: undefined }),
-  getByGlobalIndex: vi.fn().mockResolvedValue({ items: [], hasMore: false }),
-  getByPrimaryKey: vi.fn().mockResolvedValue(null),
+// Mock the entities
+vi.mock('../../db/entities', () => ({
+  CompositionEntity: {
+    create: vi.fn(),
+    get: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    query: {
+      byArtist: vi.fn(() => ({
+        go: vi.fn(),
+      })),
+    },
+  },
 }));
 
 describe('CompositionRepository', () => {
@@ -26,92 +28,134 @@ describe('CompositionRepository', () => {
   });
 
   describe('create', () => {
-    it('should create a composition successfully', async () => {
+    it('should create composition with generated ID and timestamps', async () => {
       const input: CreateCompositionInput = {
-        title: 'Vathapi Ganapathim',
-        language: 'Sanskrit',
-        tradition: Tradition.CARNATIC,
-        editorId: 'user-123',
+        title: 'Bhaja Govindam',
+        artistId: 'artist-123',
       };
 
-      const result = await CompositionRepository.create(input);
+      const mockComposition = {
+        id: 'test-composition-id',
+        ...input,
+        createdAt: '2025-01-09T00:00:00.000Z',
+        updatedAt: '2025-01-09T00:00:00.000Z',
+      };
 
-      expect(result).toMatchObject({
-        title: 'Vathapi Ganapathim',
-        language: 'Sanskrit',
-        tradition: Tradition.CARNATIC,
+      const { CompositionEntity } = await import('../../db/entities');
+      vi.mocked(CompositionEntity.create).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: mockComposition }),
+      } as any);
+
+      const composition = await CompositionRepository.create(input);
+
+      expect(CompositionEntity.create).toHaveBeenCalledWith({
+        id: 'test-composition-id',
+        ...input,
       });
-      expect(result.id).toBeDefined();
-      expect(result.createdAt).toBeDefined();
-      expect(result.editedBy).toEqual(['user-123']);
+      expect(composition).toEqual(mockComposition);
     });
   });
 
   describe('getById', () => {
+    it('should return composition when found', async () => {
+      const mockComposition = {
+        id: 'test-composition-id',
+        title: 'Test Composition',
+        artistId: 'artist-123',
+        createdAt: '2025-01-09T00:00:00.000Z',
+        updatedAt: '2025-01-09T00:00:00.000Z',
+      };
+
+      const { CompositionEntity } = await import('../../db/entities');
+      vi.mocked(CompositionEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: mockComposition }),
+      } as any);
+
+      const composition = await CompositionRepository.getById('test-composition-id');
+
+      expect(CompositionEntity.get).toHaveBeenCalledWith({ id: 'test-composition-id' });
+      expect(composition).toEqual(mockComposition);
+    });
+
     it('should return null when composition not found', async () => {
-      const result = await CompositionRepository.getById('nonexistent');
-      expect(result).toBeNull();
+      const { CompositionEntity } = await import('../../db/entities');
+      vi.mocked(CompositionEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: null }),
+      } as any);
+
+      const composition = await CompositionRepository.getById('non-existent-id');
+
+      expect(composition).toBeNull();
+    });
+  });
+
+  describe('getByArtistId', () => {
+    it('should return compositions by artist ID', async () => {
+      const mockCompositions = [
+        {
+          id: 'comp-1',
+          title: 'Composition 1',
+          artistId: 'artist-123',
+          createdAt: '2025-01-09T00:00:00.000Z',
+          updatedAt: '2025-01-09T00:00:00.000Z',
+        },
+        {
+          id: 'comp-2',
+          title: 'Composition 2',
+          artistId: 'artist-123',
+          createdAt: '2025-01-09T01:00:00.000Z',
+          updatedAt: '2025-01-09T01:00:00.000Z',
+        },
+      ];
+
+      const { CompositionEntity } = await import('../../db/entities');
+      vi.mocked(CompositionEntity.query.byArtist).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: mockCompositions }),
+      } as any);
+
+      const compositions = await CompositionRepository.getByArtistId('artist-123');
+
+      expect(CompositionEntity.query.byArtist).toHaveBeenCalledWith({ artistId: 'artist-123' });
+      expect(compositions).toEqual(mockCompositions);
     });
   });
 
   describe('update', () => {
-    it('should throw error when composition not found', async () => {
-      const input = { title: 'Updated Title', editorId: 'user-456' };
-
-      await expect(CompositionRepository.update('nonexistent', input)).rejects.toThrow(
-        'Composition nonexistent not found'
-      );
-    });
-  });
-
-  describe('incrementViewCount', () => {
-    it('should handle non-existent composition gracefully', async () => {
-      // This should not throw since incrementViewCount returns early when entity not found
-      await CompositionRepository.incrementViewCount('nonexistent');
-      // If we get here without throwing, the test passes
-      expect(true).toBe(true);
-    });
-  });
-
-  describe('createAttribution', () => {
-    it('should create attribution successfully', async () => {
-      const input: CreateAttributionInput = {
-        compositionId: 'comp-123',
-        artistId: 'artist-456',
-        attributionType: AttributionType.PRIMARY,
-        confidence: AttributionConfidence.HIGH,
-        addedBy: 'user-123',
+    it('should update composition successfully', async () => {
+      const updateInput = { title: 'Updated Title' };
+      const mockUpdatedComposition = {
+        id: 'test-composition-id',
+        title: 'Updated Title',
+        artistId: 'artist-123',
+        createdAt: '2025-01-09T00:00:00.000Z',
+        updatedAt: '2025-01-09T01:00:00.000Z',
       };
 
-      const result = await CompositionRepository.createAttribution(input);
+      const { CompositionEntity } = await import('../../db/entities');
+      vi.mocked(CompositionEntity.update).mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          go: vi.fn().mockResolvedValue({ data: mockUpdatedComposition }),
+        }),
+      } as any);
 
-      expect(result).toMatchObject({
-        compositionId: 'comp-123',
-        artistId: 'artist-456',
-        attributionType: AttributionType.PRIMARY,
-      });
+      const composition = await CompositionRepository.update('test-composition-id', updateInput);
+
+      expect(CompositionEntity.update).toHaveBeenCalledWith({ id: 'test-composition-id' });
+      expect(composition).toEqual(mockUpdatedComposition);
     });
   });
 
-  describe('verifyAttribution', () => {
-    it('should throw error when attribution not found', async () => {
-      await expect(
-        CompositionRepository.verifyAttribution('comp-123', 'artist-456', 'user-789')
-      ).rejects.toThrow('Attribution for composition comp-123 and artist artist-456 not found');
-    });
-  });
+  describe('delete', () => {
+    it('should delete composition successfully', async () => {
+      const { CompositionEntity } = await import('../../db/entities');
+      vi.mocked(CompositionEntity.delete).mockReturnValue({
+        go: vi.fn().mockResolvedValue({}),
+      } as any);
 
-  describe('search operations', () => {
-    it('should return empty results when searching by title', async () => {
-      const result = await CompositionRepository.searchByTitle('nonexistent');
-      expect(result.items).toHaveLength(0);
-      expect(result.hasMore).toBe(false);
-    });
+      const result = await CompositionRepository.delete('test-composition-id');
 
-    it('should return empty results when getting compositions by artist', async () => {
-      const result = await CompositionRepository.getCompositionsByArtistId('nonexistent');
-      expect(result.items).toHaveLength(0);
-      expect(result.hasMore).toBe(false);
+      expect(CompositionEntity.delete).toHaveBeenCalledWith({ id: 'test-composition-id' });
+      expect(result).toBe(true);
     });
   });
 });

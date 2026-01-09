@@ -1,5 +1,15 @@
-// ../../domain/composition/index.ts
+// Repository
 export { CompositionRepository } from './repository';
-export { CompositionService } from './service';
-export * from './schema';
-export * from './types';
+
+// Types
+export type {
+  Composition,
+  CreateCompositionInput,
+  UpdateCompositionInput,
+} from './types';
+
+// Schemas
+export {
+  CreateCompositionSchema,
+  UpdateCompositionSchema,
+} from './schema';

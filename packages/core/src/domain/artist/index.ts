@@ -1,4 +1,15 @@
-// ../../domain/artist/index.ts
+// Repository
 export { ArtistRepository } from './repository';
-export * from './schema';
-export * from './types';
+
+// Types
+export type {
+  Artist,
+  CreateArtistInput,
+  UpdateArtistInput,
+} from './types';
+
+// Schemas
+export {
+  CreateArtistSchema,
+  UpdateArtistSchema,
+} from './schema';
