@@ -22,11 +22,27 @@ import { getTala } from '../tala';
 export type CreateCompositionInput = z.infer<typeof CreateCompositionSchema>;
 export type UpdateCompositionInput = z.infer<typeof UpdateCompositionSchema>;
 
+// Alias for backward compatibility during transition
+export type Lyrics = Array<{
+  type: string;
+  order: number;
+  text: string;
+  number?: number;
+  ragaName?: string;
+}>;
+
 export interface CompositionWithRelations {
   id: string;
   title: string;
-  artistId: string;
-  artistName: string;
+  composer: { id: string; name: string };
+  language: string;
+  lyricsV1: Array<{
+    type: string;
+    order: number;
+    text: string;
+    number?: number;
+    ragaName?: string;
+  }>;
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
   createdAt: string;
@@ -70,18 +86,15 @@ export async function createComposition(input: CreateCompositionInput): Promise<
   const { ragaIds = [], talaIds = [], ...data } = input;
 
   // Fetch related entities for denormalization
-  const [artist, nameMaps] = await Promise.all([
-    getArtist(data.artistId),
-    createNameMaps(ragaIds, talaIds),
-  ]);
-
-  if (!artist) throw new Error('Artist not found');
+  const nameMaps = await createNameMaps(ragaIds, talaIds);
 
   const result = await CompositionEntity.create({
     id: generateId(),
     title: data.title,
-    artistId: data.artistId,
-    artistName: artist.name,
+    composerId: data.composer.id,
+    composer: data.composer,
+    language: data.language,
+    lyricsV1: data.lyricsV1 || [],
     ragas: nameMaps.ragas,
     talas: nameMaps.talas,
   }).go();
@@ -110,8 +123,9 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
   return {
     id: comp.id,
     title: comp.title,
-    artistId: comp.artistId,
-    artistName: comp.artistName,
+    composer: comp.composer,
+    language: comp.language,
+    lyricsV1: comp.lyricsV1 || [],
     ragas: comp.ragas || [],
     talas: comp.talas || [],
     createdAt: comp.createdAt,
@@ -119,27 +133,24 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
   };
 }
 
-export async function getCompositionsByArtist(
-  artistId: string
+export async function getCompositionsByComposer(
+  composerId: string
 ): Promise<CompositionWithRelations[]> {
-  const result = await CompositionEntity.query.byArtist({ artistId }).go();
+  const result = await CompositionEntity.query.byComposer({ composerId }).go();
   const compositions = result.data || [];
 
   // Get relations for each composition in parallel
-  const compositionsWithRelations = await Promise.all(
-    compositions.map(async composition => {
-      return {
-        id: composition.id,
-        title: composition.title,
-        artistId: composition.artistId,
-        artistName: composition.artistName,
-        ragas: composition.ragas || [],
-        talas: composition.talas || [],
-        createdAt: composition.createdAt,
-        updatedAt: composition.updatedAt,
-      };
-    })
-  );
+  const compositionsWithRelations = compositions.map(composition => ({
+    id: composition.id,
+    title: composition.title,
+    composer: composition.composer,
+    language: composition.language,
+    lyricsV1: composition.lyricsV1 || [],
+    ragas: composition.ragas || [],
+    talas: composition.talas || [],
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt,
+  }));
 
   return compositionsWithRelations;
 }
@@ -154,6 +165,11 @@ export async function updateComposition(
   const definedData = Object.fromEntries(
     Object.entries(compositionData).filter(([_, value]) => value !== undefined)
   );
+
+  // Update composerId if composer is being updated
+  if (input.composer) {
+    definedData.composerId = input.composer.id;
+  }
 
   const result = await CompositionEntity.update({ id }).set(definedData).go();
 
@@ -230,18 +246,17 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
   });
 
   // For each composition, we need to enrich it with relations
-  const enrichedCompositions = await Promise.all(
-    (result.data || []).map(composition => ({
-      id: composition.id,
-      title: composition.title,
-      artistId: composition.artistId,
-      artistName: composition.artistName,
-      ragas: composition.ragas || [],
-      talas: composition.talas || [],
-      createdAt: composition.createdAt,
-      updatedAt: composition.updatedAt,
-    }))
-  );
+  const enrichedCompositions = (result.data || []).map(composition => ({
+    id: composition.id,
+    title: composition.title,
+    composer: composition.composer,
+    language: composition.language,
+    lyricsV1: composition.lyricsV1 || [],
+    ragas: composition.ragas || [],
+    talas: composition.talas || [],
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt,
+  }));
 
   return {
     items: enrichedCompositions,

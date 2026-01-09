@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createComposition,
   getComposition,
-  getCompositionsByArtist,
+  getCompositionsByComposer,
   updateComposition,
   deleteComposition,
 } from './index';
@@ -44,7 +44,7 @@ vi.mock('./entity', () => ({
     update: vi.fn(),
     delete: vi.fn(),
     query: {
-      byArtist: vi.fn(),
+      byComposer: vi.fn(),
     },
   },
 }));
@@ -58,20 +58,23 @@ describe('Composition', () => {
     it('should create composition with denormalized data and junction records', async () => {
       const input: CreateCompositionInput = {
         title: 'Raga Bhairavi',
-        artistId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Sanskrit',
+        lyricsV1: [],
         ragaIds: ['raga-456'],
         talaIds: ['tala-789'],
       };
 
-      const mockArtist = { id: 'artist-123', name: 'Test Artist' };
       const mockRaga = { id: 'raga-456', name: 'Bhairavi' };
       const mockTala = { id: 'tala-789', name: 'Adi' };
 
       const mockComposition = {
         id: 'test-composition-id',
         title: 'Raga Bhairavi',
-        artistId: 'artist-123',
-        artistName: 'Test Artist',
+        composerId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Sanskrit',
+        lyricsV1: [],
         ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
         talas: [{ id: 'tala-789', name: 'Adi' }],
         createdAt: '2025-01-09T00:00:00.000Z',
@@ -79,14 +82,12 @@ describe('Composition', () => {
       };
 
       // Mock dependencies
-      const { getArtist } = await import('../artist');
       const { getRaga } = await import('../raga');
       const { getTala } = await import('../tala');
       const { createCompositionRaga } = await import('../composition_raga');
       const { createCompositionTala } = await import('../composition_tala');
       const { CompositionEntity } = await import('./entity');
 
-      vi.mocked(getArtist).mockResolvedValue(mockArtist);
       vi.mocked(getRaga).mockResolvedValue(mockRaga);
       vi.mocked(getTala).mockResolvedValue(mockTala);
       vi.mocked(createCompositionRaga).mockResolvedValue({} as any);
@@ -101,8 +102,10 @@ describe('Composition', () => {
       expect(CompositionEntity.create).toHaveBeenCalledWith({
         id: 'test-composition-id',
         title: 'Raga Bhairavi',
-        artistId: 'artist-123',
-        artistName: 'Test Artist',
+        composerId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Sanskrit',
+        lyricsV1: [],
         ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
         talas: [{ id: 'tala-789', name: 'Adi' }],
       });
@@ -123,25 +126,26 @@ describe('Composition', () => {
     it('should create composition without relationships', async () => {
       const input: CreateCompositionInput = {
         title: 'Simple Composition',
-        artistId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Tamil',
+        lyricsV1: [],
       };
 
-      const mockArtist = { id: 'artist-123', name: 'Test Artist' };
       const mockComposition = {
         id: 'test-composition-id',
         title: 'Simple Composition',
-        artistId: 'artist-123',
-        artistName: 'Test Artist',
+        composerId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Tamil',
+        lyricsV1: [],
         ragas: [],
         talas: [],
         createdAt: '2025-01-09T00:00:00.000Z',
         updatedAt: '2025-01-09T00:00:00.000Z',
       };
 
-      const { getArtist } = await import('../artist');
       const { CompositionEntity } = await import('./entity');
 
-      vi.mocked(getArtist).mockResolvedValue(mockArtist);
       vi.mocked(CompositionEntity.create).mockReturnValue({
         go: vi.fn().mockResolvedValue({ data: mockComposition }),
       } as any);
@@ -151,8 +155,10 @@ describe('Composition', () => {
       expect(CompositionEntity.create).toHaveBeenCalledWith({
         id: 'test-composition-id',
         title: 'Simple Composition',
-        artistId: 'artist-123',
-        artistName: 'Test Artist',
+        composerId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Tamil',
+        lyricsV1: [],
         ragas: [],
         talas: [],
       });
@@ -160,22 +166,12 @@ describe('Composition', () => {
       expect(result).toEqual(mockComposition);
     });
 
-    it('should throw error when artist not found', async () => {
-      const input: CreateCompositionInput = {
-        title: 'Test Composition',
-        artistId: 'non-existent-artist',
-      };
-
-      const { getArtist } = await import('../artist');
-      vi.mocked(getArtist).mockResolvedValue(null);
-
-      await expect(createComposition(input)).rejects.toThrow('Artist not found');
-    });
-
     it('should throw error when creation fails', async () => {
       const input: CreateCompositionInput = {
         title: 'Test Composition',
-        artistId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Tamil',
+        lyricsV1: [],
       };
 
       const mockArtist = { id: 'artist-123', name: 'Test Artist' };
@@ -197,8 +193,10 @@ describe('Composition', () => {
       const mockComposition = {
         id: 'comp-123',
         title: 'Test Composition',
-        artistId: 'artist-123',
-        artistName: 'Test Artist',
+        composerId: 'artist-123',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Sanskrit',
+        lyricsV1: [],
         ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
         talas: [{ id: 'tala-789', name: 'Adi' }],
         createdAt: '2025-01-09T00:00:00.000Z',
@@ -213,7 +211,17 @@ describe('Composition', () => {
       const result = await getComposition('comp-123');
 
       expect(CompositionEntity.get).toHaveBeenCalledWith({ id: 'comp-123' });
-      expect(result).toEqual(mockComposition);
+      expect(result).toEqual({
+        id: 'comp-123',
+        title: 'Test Composition',
+        composer: { id: 'artist-123', name: 'Test Artist' },
+        language: 'Sanskrit',
+        lyricsV1: [],
+        ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
+        talas: [{ id: 'tala-789', name: 'Adi' }],
+        createdAt: '2025-01-09T00:00:00.000Z',
+        updatedAt: '2025-01-09T00:00:00.000Z',
+      });
     });
 
     it('should return null when composition not found', async () => {
@@ -228,25 +236,17 @@ describe('Composition', () => {
     });
   });
 
-  describe('getCompositionsByArtist', () => {
-    it('should return compositions for artist', async () => {
+  describe('getCompositionsByComposer', () => {
+    it('should return compositions for given composer', async () => {
       const mockCompositions = [
         {
           id: 'comp-1',
           title: 'Composition 1',
-          artistId: 'artist-123',
-          artistName: 'Test Artist',
+          composerId: 'artist-123',
+          composer: { id: 'artist-123', name: 'Test Artist' },
+          language: 'Tamil',
+          lyricsV1: [],
           ragas: [],
-          talas: [],
-          createdAt: '2025-01-09T00:00:00.000Z',
-          updatedAt: '2025-01-09T00:00:00.000Z',
-        },
-        {
-          id: 'comp-2',
-          title: 'Composition 2',
-          artistId: 'artist-123',
-          artistName: 'Test Artist',
-          ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
           talas: [],
           createdAt: '2025-01-09T00:00:00.000Z',
           updatedAt: '2025-01-09T00:00:00.000Z',
@@ -254,23 +254,35 @@ describe('Composition', () => {
       ];
 
       const { CompositionEntity } = await import('./entity');
-      vi.mocked(CompositionEntity.query.byArtist).mockReturnValue({
+      vi.mocked(CompositionEntity.query.byComposer).mockReturnValue({
         go: vi.fn().mockResolvedValue({ data: mockCompositions }),
       } as any);
 
-      const result = await getCompositionsByArtist('artist-123');
+      const result = await getCompositionsByComposer('artist-123');
 
-      expect(CompositionEntity.query.byArtist).toHaveBeenCalledWith({ artistId: 'artist-123' });
-      expect(result).toEqual(mockCompositions);
+      expect(CompositionEntity.query.byComposer).toHaveBeenCalledWith({ composerId: 'artist-123' });
+      expect(result).toEqual([
+        {
+          id: 'comp-1',
+          title: 'Composition 1',
+          composer: { id: 'artist-123', name: 'Test Artist' },
+          language: 'Tamil',
+          lyricsV1: [],
+          ragas: [],
+          talas: [],
+          createdAt: '2025-01-09T00:00:00.000Z',
+          updatedAt: '2025-01-09T00:00:00.000Z',
+        },
+      ]);
     });
 
     it('should return empty array when no compositions found', async () => {
       const { CompositionEntity } = await import('./entity');
-      vi.mocked(CompositionEntity.query.byArtist).mockReturnValue({
+      vi.mocked(CompositionEntity.query.byComposer).mockReturnValue({
         go: vi.fn().mockResolvedValue({ data: [] }),
       } as any);
 
-      const result = await getCompositionsByArtist('artist-123');
+      const result = await getCompositionsByComposer('artist-123');
 
       expect(result).toEqual([]);
     });

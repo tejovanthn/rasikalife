@@ -1,4 +1,4 @@
-import { ContentCategory, ContentService, ContentStatus, ContentVisibility } from '@rasika/core';
+import { ContentCategory, Content, ContentStatus, ContentVisibility } from '@rasika/core';
 
 const data = [
   {
@@ -1107,7 +1107,7 @@ Thank you for your support. Your generosity helps keep the tradition of Carnatic
 const main = async () =>
   await Promise.all(
     data.map(async item => {
-      await ContentService.create(item);
+      await Content.createContent(item);
     })
   );
 

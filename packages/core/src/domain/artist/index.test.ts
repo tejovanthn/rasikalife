@@ -10,9 +10,14 @@ vi.mock('./entity', () => ({
   ArtistEntity: {
     create: vi.fn(),
     get: vi.fn(),
-    scan: { go: vi.fn() },
     update: vi.fn(),
     delete: vi.fn(),
+    scan: {
+      go: vi.fn(),
+    },
+    query: {
+      byName: vi.fn(),
+    },
   },
 }));
 

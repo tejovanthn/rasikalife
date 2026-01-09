@@ -3,14 +3,46 @@ import { z } from 'zod';
 // Input schemas for API operations
 export const CreateCompositionSchema = z.object({
   title: z.string().min(1).max(500),
-  artistId: z.string().min(1),
+  composer: z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+  }),
+  language: z.string().min(1),
+  lyricsV1: z
+    .array(
+      z.object({
+        type: z.string(),
+        order: z.number(),
+        text: z.string(),
+        number: z.number().optional(),
+        ragaName: z.string().optional(),
+      })
+    )
+    .optional(),
   ragaIds: z.array(z.string()).optional(),
   talaIds: z.array(z.string()).optional(),
 });
 
 export const UpdateCompositionSchema = z.object({
   title: z.string().min(1).max(500).optional(),
-  artistId: z.string().min(1).optional(),
+  composer: z
+    .object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+    })
+    .optional(),
+  language: z.string().min(1).optional(),
+  lyricsV1: z
+    .array(
+      z.object({
+        type: z.string(),
+        order: z.number(),
+        text: z.string(),
+        number: z.number().optional(),
+        ragaName: z.string().optional(),
+      })
+    )
+    .optional(),
   ragaIds: z.array(z.string()).optional(),
   talaIds: z.array(z.string()).optional(),
 });

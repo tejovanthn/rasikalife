@@ -26,6 +26,11 @@ export async function getArtist(id: string): Promise<Artist | null> {
   return result.data || null;
 }
 
+export async function getArtistByName(name: string): Promise<Artist | null> {
+  const result = await ArtistEntity.query.byName({ name }).go();
+  return result.data?.[0] || null;
+}
+
 export async function updateArtist(id: string, input: UpdateArtistInput): Promise<Artist> {
   const result = await ArtistEntity.update({ id }).set(input).go();
 

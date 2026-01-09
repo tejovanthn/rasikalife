@@ -18,13 +18,36 @@ export const CompositionEntity = new Entity(
         type: 'string',
         required: true,
       },
-      artistId: {
+      composerId: {
         type: 'string',
         required: true,
       },
-      artistName: {
+      composer: {
+        type: 'map',
+        properties: {
+          id: { type: 'string', required: true },
+          name: { type: 'string', required: true },
+        },
+        required: true,
+      },
+      language: {
         type: 'string',
         required: true,
+      },
+      lyricsV1: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            type: { type: 'string', required: true },
+            order: { type: 'number', required: true },
+            text: { type: 'string', required: true },
+            number: { type: 'number', required: false },
+            ragaName: { type: 'string', required: false },
+          },
+        },
+        required: false,
+        default: () => [],
       },
       ragas: {
         type: 'list',
@@ -77,15 +100,28 @@ export const CompositionEntity = new Entity(
           template: '#METADATA',
         },
       },
-      byArtist: {
+      byComposer: {
         index: 'gsi2',
         pk: {
           field: 'gsi2pk',
-          composite: ['artistId'],
-          template: 'ARTIST#${artistId}',
+          composite: ['composerId'],
+          template: 'ARTIST#${composerId}',
         },
         sk: {
           field: 'gsi2sk',
+          composite: ['id'],
+          template: 'COMPOSITION#${id}',
+        },
+      },
+      byLanguage: {
+        index: 'gsi3',
+        pk: {
+          field: 'gsi3pk',
+          composite: ['language'],
+          template: 'LANGUAGE#${language}',
+        },
+        sk: {
+          field: 'gsi3sk',
           composite: ['id'],
           template: 'COMPOSITION#${id}',
         },
