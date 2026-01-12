@@ -181,7 +181,7 @@ export async function updateComposition(
   if (ragaIds !== undefined) {
     // Delete existing raga relationships
     const existingRagas = await getCompositionRagas(id);
-    await Promise.all(existingRagas.map(raga => deleteCompositionRaga(id, raga.ragaId)));
+    await Promise.all(existingRagas.items.map(raga => deleteCompositionRaga(id, raga.ragaId)));
 
     // Create new raga relationships
     if (ragaIds.length > 0) {
@@ -200,7 +200,7 @@ export async function updateComposition(
   if (talaIds !== undefined) {
     // Delete existing tala relationships
     const existingTalas = await getCompositionTalas(id);
-    await Promise.all(existingTalas.map(tala => deleteCompositionTala(id, tala.talaId)));
+    await Promise.all(existingTalas.items.map(tala => deleteCompositionTala(id, tala.talaId)));
 
     // Create new tala relationships
     if (talaIds.length > 0) {
@@ -226,12 +226,31 @@ export async function deleteComposition(id: string): Promise<void> {
   ]);
 
   await Promise.all([
-    ...existingRagas.map(raga => deleteCompositionRaga(id, raga.ragaId)),
-    ...existingTalas.map(tala => deleteCompositionTala(id, tala.talaId)),
+    ...existingRagas.items.map(raga => deleteCompositionRaga(id, raga.ragaId)),
+    ...existingTalas.items.map(tala => deleteCompositionTala(id, tala.talaId)),
   ]);
 
-  // Delete the composition
+  // Delete composition
   await CompositionEntity.delete({ id }).go();
+}
+
+export async function getCompositionsByName(name: string): Promise<CompositionWithRelations[]> {
+  const result = await CompositionEntity.query.byName({ title: name }).go();
+  const compositions = result.data || [];
+
+  const compositionsWithRelations = compositions.map(composition => ({
+    id: composition.id,
+    title: composition.title,
+    composer: composition.composer,
+    language: composition.language,
+    lyricsV1: composition.lyricsV1 || [],
+    ragas: composition.ragas || [],
+    talas: composition.talas || [],
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt,
+  }));
+
+  return compositionsWithRelations;
 }
 
 export async function listCompositions(params?: { limit?: number; nextToken?: string }): Promise<{
@@ -240,13 +259,19 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
   hasMore: boolean;
 }> {
   const limit = params?.limit || 20;
+
+  // For now, scan all compositions since GSI5 might not be populated
+  // TODO: Use GSI5 once all compositions are migrated
   const result = await CompositionEntity.scan.go({
     limit,
     cursor: params?.nextToken,
   });
 
+  // Sort by title for consistent ordering
+  const sortedCompositions = (result.data || []).sort((a, b) => a.title.localeCompare(b.title));
+
   // For each composition, we need to enrich it with relations
-  const enrichedCompositions = (result.data || []).map(composition => ({
+  const enrichedCompositions = sortedCompositions.map(composition => ({
     id: composition.id,
     title: composition.title,
     composer: composition.composer,

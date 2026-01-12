@@ -2,28 +2,28 @@ import { Link } from '@remix-run/react';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 
-interface ArtistCardProps {
-  artist: {
+interface RagaCardProps {
+  raga: {
     id: string;
     name: string;
     createdAt: string;
   };
 }
 
-export function ArtistCard({ artist }: ArtistCardProps) {
+export function RagaCard({ raga }: RagaCardProps) {
   return (
     <Link
-      to={`/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`}
+      to={`/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
       className="block transition-transform hover:scale-[1.02]"
     >
       <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{artist.name}</CardTitle>
-          <Badge variant="secondary">Artist</Badge>
+          <CardTitle className="text-lg">{raga.name}</CardTitle>
+          <Badge variant="secondary">Raga</Badge>
         </CardHeader>
         <CardContent className="pt-0">
           <p className="text-sm text-muted-foreground">
-            Added {new Date(artist.createdAt).toLocaleDateString()}
+            Added {new Date(raga.createdAt).toLocaleDateString()}
           </p>
         </CardContent>
       </Card>

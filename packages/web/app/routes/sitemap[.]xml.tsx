@@ -1,132 +1,117 @@
 import type { LoaderFunction } from '@remix-run/node';
 import { client } from '~/api.server';
+import { convert } from 'url-slug';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const baseUrl = 'https://rasika.life';
 
   try {
-    // Get all compositions, artists, ragas, and talas for sitemap
-    const [compositions, artists, ragas, talas] = await Promise.all([
-      client.composition.search.query({ limit: 1000 }),
-      client.artist.search.query({ limit: 1000 }),
-      client.raga.search.query({ limit: 1000 }),
-      client.tala.search.query({ limit: 1000 }),
+    // Collect all entities using existing list APIs
+    const [artists, compositions, ragas, talas] = await Promise.all([
+      collectAllEntities(client.artist.list, 'artists'),
+      collectAllEntities(client.composition.list, 'compositions'),
+      collectAllEntities(client.raga.list, 'ragas'),
+      collectAllEntities(client.tala.list, 'talas'),
     ]);
 
-    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Static pages -->
-  <url>
-    <loc>${baseUrl}/</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/carnatic</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/carnatic/compositions</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/carnatic/artists</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/carnatic/ragas</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>${baseUrl}/carnatic/talas</loc>
-    <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
+    // Generate URLs directly without generic dependencies
+    const generateEntityUrl = (type: string, name: string, id: string) => {
+      const slug = convert(`${name}-${id}`, { camelCase: false });
+      return `${baseUrl}/carnatic/${type}/${slug}`;
+    };
 
-  <!-- Dynamic compositions -->
-  ${compositions.items
-    .map(
-      composition => `
-  <url>
-    <loc>${baseUrl}/carnatic/compositions/${composition.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')}-${composition.id}</loc>
-    <lastmod>${new Date(composition.updatedAt).toISOString()}</lastmod>
+    // Generate XML sitemap
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${artists
+  .map(
+    (artist: any) => `  <url>
+    <loc>${generateEntityUrl('artists', artist.name, artist.id)}</loc>
+    <lastmod>${artist.updatedAt || artist.createdAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>`
-    )
-    .join('')}
+  )
+  .join('\n')}
 
-  <!-- Dynamic artists -->
-  ${artists.items
-    .map(
-      artist => `
-  <url>
-    <loc>${baseUrl}/carnatic/artists/${artist.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')}-${artist.id}</loc>
-    <lastmod>${new Date(artist.updatedAt).toISOString()}</lastmod>
+${compositions
+  .map(
+    (comp: any) => `  <url>
+    <loc>${generateEntityUrl('compositions', comp.title, comp.id)}</loc>
+    <lastmod>${comp.updatedAt || comp.createdAt}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>`
+  )
+  .join('\n')}
+
+${ragas
+  .map(
+    (raga: any) => `  <url>
+    <loc>${generateEntityUrl('ragas', raga.name, raga.id)}</loc>
+    <lastmod>${raga.updatedAt || raga.createdAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`
-    )
-    .join('')}
+  )
+  .join('\n')}
 
-  <!-- Dynamic ragas -->
-  ${ragas.items
-    .map(
-      raga => `
-  <url>
-    <loc>${baseUrl}/carnatic/ragas/${raga.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')}-${raga.id}</loc>
-    <lastmod>${new Date(raga.updatedAt).toISOString()}</lastmod>
+${talas
+  .map(
+    (tala: any) => `  <url>
+    <loc>${generateEntityUrl('talas', tala.name, tala.id)}</loc>
+    <lastmod>${tala.updatedAt || tala.createdAt}</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
+    <priority>0.5</priority>
   </url>`
-    )
-    .join('')}
-
-  <!-- Dynamic talas -->
-  ${talas.items
-    .map(
-      tala => `
-  <url>
-    <loc>${baseUrl}/carnatic/talas/${tala.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '-')
-      .replace(/-+/g, '-')}-${tala.id}</loc>
-    <lastmod>${new Date(tala.updatedAt).toISOString()}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>`
-    )
-    .join('')}
+  )
+  .join('\n')}
 </urlset>`;
 
-    return new Response(sitemap, {
+    return new Response(xml, {
       status: 200,
       headers: {
         'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': 'public, max-age=86400', // 24 hours cache
       },
     });
   } catch (error) {
     console.error('Error generating sitemap:', error);
-    return new Response('Error generating sitemap', { status: 500 });
+
+    // Return minimal sitemap on error
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`;
+
+    return new Response(xml, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/xml',
+        'Cache-Control': 'public, max-age=3600', // 1 hour fallback cache
+      },
+    });
   }
 };
+
+// Helper function to collect all entities with pagination
+async function collectAllEntities(listFn: any, type: string) {
+  const entities: any[] = [];
+  let nextToken: string | undefined;
+
+  do {
+    const result = await listFn.query({
+      limit: 1000, // Respect user's 1000 item limit
+      nextToken,
+    });
+    entities.push(...result.items);
+    nextToken = result.nextToken;
+  } while (nextToken);
+
+  return entities;
+}

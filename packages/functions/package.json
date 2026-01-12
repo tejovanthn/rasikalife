@@ -2,7 +2,10 @@
   "name": "@rasika/functions",
   "version": "0.0.0",
   "exports": {
-    "./*": ["./src/*/index.ts", "./src/*.ts"]
+    "./*": [
+      "./src/*/index.ts",
+      "./src/*.ts"
+    ]
   },
   "types": "./src/index.ts",
   "dependencies": {
@@ -13,7 +16,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.152",
+    "@types/aws-lambda": "^8.10.159",
     "sst": "ion"
   }
 }

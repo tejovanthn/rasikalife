@@ -1,103 +1,194 @@
-import { Link, useLoaderData } from '@remix-run/react';
-import { GenericDetailRoute, GenericErrorBoundary } from '~/components/shared';
-import { detailConfigs } from '~/lib/detailRouteConfig';
-import { entityUrls } from '~/lib/entityUtils';
-import { ragaSuite } from '~/lib/genericFactories';
+import { json, type MetaFunction } from '@remix-run/node';
+import { useLoaderData, Link } from '@remix-run/react';
+import { client } from '~/api.server';
 
-const config = detailConfigs.ragas;
+export async function loader({ params }: { params: { ragaid?: string } }) {
+  const { ragaid } = params;
 
-export const loader = ragaSuite.loaders.detail;
-export const meta = ragaSuite.meta.detail;
+  if (!ragaid) {
+    throw new Response('Raga ID is required', { status: 400 });
+  }
+
+  const slugId = ragaid.split('-').pop();
+
+  if (!slugId) {
+    throw new Response('Invalid URL format', { status: 400 });
+  }
+
+  try {
+    const raga = await client.raga.get.query({ id: slugId });
+
+    if (!raga) {
+      throw new Response('Raga not found', { status: 404 });
+    }
+
+    return json({
+      raga,
+      breadcrumbs: [
+        { name: 'Home', href: '/' },
+        { name: 'Carnatic', href: '/carnatic' },
+        { name: 'Ragas', href: '/carnatic/ragas' },
+        { name: raga.name, href: `/carnatic/ragas/${ragaid}` },
+      ],
+    });
+  } catch (error) {
+    console.error('Failed to load raga:', error);
+    throw new Response('Failed to load raga', { status: 500 });
+  }
+}
+
+export const meta: MetaFunction = ({ data }) => {
+  const raga = (data as any)?.raga;
+
+  if (raga) {
+    return [
+      { title: `${raga.name} Raga - Indian Classical Music - Rasika.life` },
+      {
+        name: 'description',
+        content: `Learn about the ${raga.name} raga in Indian classical music. Discover this traditional melodic mode used in Carnatic and Hindustani traditions.`,
+      },
+      {
+        name: 'keywords',
+        content: `${raga.name} raga, Indian classical raga, Carnatic raga, Hindustani raga, melodic mode, classical music scale`,
+      },
+      // Open Graph tags for social sharing
+      { property: 'og:title', content: `${raga.name} Raga - Indian Classical Music` },
+      {
+        property: 'og:description',
+        content: `Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`,
+      },
+      { property: 'og:type', content: 'article' },
+      {
+        property: 'og:url',
+        content: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+      },
+      // Twitter Card tags
+      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:title', content: `${raga.name} Raga` },
+      { name: 'twitter:description', content: `Indian classical raga ${raga.name}` },
+      // Canonical URL
+      {
+        tagName: 'link',
+        rel: 'canonical',
+        href: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+      },
+      // Breadcrumb structured data
+      {
+        tagName: 'script',
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://rasika.life' },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Carnatic',
+              item: 'https://rasika.life/carnatic',
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: 'Ragas',
+              item: 'https://rasika.life/carnatic/ragas',
+            },
+            {
+              '@type': 'ListItem',
+              position: 4,
+              name: `${raga.name} Raga`,
+              item: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+            },
+          ],
+        }),
+      },
+    ];
+  }
+
+  return [
+    { title: 'Raga - Rasika.life' },
+    {
+      name: 'description',
+      content: 'Explore detailed information about Indian classical ragas.',
+    },
+  ];
+};
+
+// Raga type from @rasika/core domain/raga
+type Raga = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export default function RagaDetails() {
-  return <GenericDetailRoute config={config} />;
-}
-
-function RagaCustomSections() {
-  const { entity: raga } = useLoaderData<{ entity: any }>();
+  const { raga } = useLoaderData<{
+    raga: Raga;
+  }>();
 
   return (
-    <section className="mb-12">
-      <h2 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight mb-4">
-        Musical Characteristics
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {raga.arohana && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Arohana (Ascending)</h3>
-            <p className="text-gray-700 font-mono">{raga.arohana}</p>
-          </div>
-        )}
+    <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">{raga.name}</h1>
+        <p className="text-lg text-muted-foreground">Indian Classical Raga</p>
+      </header>
 
-        {raga.avarohana && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Avarohana (Descending)</h3>
-            <p className="text-gray-700 font-mono">{raga.avarohana}</p>
-          </div>
-        )}
-
-        {raga.mood && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Associated Mood</h3>
-            <p className="text-gray-700">{raga.mood}</p>
-          </div>
-        )}
-
-        {raga.timeOfDay && (
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Auspicious Time</h3>
-            <p className="text-gray-700">{raga.timeOfDay}</p>
-          </div>
-        )}
-      </div>
-
-      {raga.characteristicPhrases && raga.characteristicPhrases.length > 0 && (
-        <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <h3 className="font-semibold text-lg mb-2 text-blue-900">Characteristic Phrases</h3>
-          <ul className="space-y-1">
-            {raga.characteristicPhrases.map((phrase: string, index: number) => (
-              <li key={index} className="text-blue-700 font-mono">
-                • {phrase}
-              </li>
-            ))}
-          </ul>
+      <section className="mb-8 p-6 bg-muted rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">About</h2>
+        <div className="space-y-2 text-sm">
+          <p>
+            <strong>Name:</strong> {raga.name}
+          </p>
+          <p>
+            <strong>Added:</strong> {new Date(raga.createdAt).toLocaleDateString()}
+          </p>
         </div>
-      )}
-    </section>
-  );
-}
+      </section>
 
-function RelatedCompositions() {
-  const { relatedItems: relatedCompositions } = useLoaderData<{ relatedItems: any[] }>();
-
-  if (relatedCompositions.length === 0) return null;
-
-  return (
-    <section className="mb-12">
-      <h2 className="scroll-m-20 border-b pb-2 text-2xl font-semibold tracking-tight mb-6">
-        Compositions in this Raga
-      </h2>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {relatedCompositions.map(composition => (
+      {/* Cross-linking section */}
+      <section className="mt-8 pt-8 border-t">
+        <h2 className="text-xl font-semibold mb-4">Explore Related Content</h2>
+        <div className="grid gap-4 md:grid-cols-3">
           <Link
-            key={composition.id}
-            to={entityUrls.detail('compositions', composition.title, composition.id)}
-            className="block p-4 border rounded-lg hover:shadow-md transition-shadow bg-white"
+            to="/carnatic/ragas"
+            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
           >
-            <div className="flex items-center space-x-3">
-              <div>
-                <div className="font-medium">{composition.title}</div>
-                <div className="text-sm text-gray-600">Composition</div>
-              </div>
-            </div>
+            <h3 className="font-medium">All Ragas</h3>
+            <p className="text-sm text-muted-foreground">Browse other ragas</p>
           </Link>
-        ))}
-      </div>
-    </section>
+
+          <Link
+            to="/carnatic/compositions"
+            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
+          >
+            <h3 className="font-medium">Compositions</h3>
+            <p className="text-sm text-muted-foreground">Find compositions in this raga</p>
+          </Link>
+
+          <Link
+            to="/carnatic"
+            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
+          >
+            <h3 className="font-medium">Carnatic Music</h3>
+            <p className="text-sm text-muted-foreground">Learn about the tradition</p>
+          </Link>
+        </div>
+      </section>
+    </main>
   );
 }
 
 export function ErrorBoundary() {
-  const props = ragaSuite.components.errorBoundaryProps;
-  return <GenericErrorBoundary {...props} />;
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
+      <p className="text-muted-foreground">
+        We're having trouble loading this raga. Please try again later.
+      </p>
+      <Link to="/carnatic/ragas" className="text-blue-600 hover:underline">
+        Back to Ragas
+      </Link>
+    </div>
+  );
 }

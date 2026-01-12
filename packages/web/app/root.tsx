@@ -44,6 +44,12 @@ export const links: LinksFunction = () => [
     rel: 'manifest',
     href: '/manifest.json',
   },
+  // DNS prefetch for external resources
+  { rel: 'dns-prefetch', href: '//fonts.googleapis.com' },
+  { rel: 'dns-prefetch', href: '//fonts.gstatic.com' },
+  // Preconnect to critical origins
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
 ];
 
 export async function loader({ request }: LoaderFunctionArgs) {

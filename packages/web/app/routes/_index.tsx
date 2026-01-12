@@ -1,14 +1,15 @@
 import type { LoaderFunction, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { type RouterOutput, client } from '~/api.server';
-import { EntityCard, SectionHeader } from '~/components/shared';
-import type { EntityCardField } from '~/components/shared';
+import { client } from '~/api.server';
+import { SectionHeader } from '~/components/shared';
+import { CompositionCard } from '~/components/CompositionCard';
+import { ArtistCard } from '~/components/ArtistCard';
 
 type LoaderData = {
-  popularCompositions: RouterOutput['composition']['search']['items'];
-  recentCompositions: RouterOutput['composition']['search']['items'];
-  featuredArtists: RouterOutput['artist']['getPopular'];
+  popularCompositions: any[];
+  recentCompositions: any[];
+  featuredArtists: any[];
 };
 
 export const meta: MetaFunction = () => {
@@ -32,21 +33,54 @@ export const meta: MetaFunction = () => {
     },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://rasika.life' },
+    { property: 'og:image', content: 'https://rasika.life/og-image.jpg' },
+    // Structured data for organization
+    {
+      tagName: 'script',
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Rasika.life',
+        url: 'https://rasika.life',
+        description: 'Indian Classical Music Database',
+        sameAs: [
+          // Add social media URLs when available
+        ],
+      }),
+    },
+    // Website structured data
+    {
+      tagName: 'script',
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        name: 'Rasika.life',
+        url: 'https://rasika.life',
+        description: 'Explore the world of Indian classical music',
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: 'https://rasika.life/search?q={search_term_string}',
+          'query-input': 'required name=search_term_string',
+        },
+      }),
+    },
   ];
 };
 
 export const loader: LoaderFunction = async () => {
   try {
     const [popularCompositions, recentCompositions, featuredArtists] = await Promise.all([
-      client.composition.search.query({ limit: 6 }),
-      client.composition.search.query({ limit: 4 }),
-      client.artist.getPopular.query({ limit: 8 }),
+      client.composition.list.query({ limit: 6 }),
+      client.composition.list.query({ limit: 4 }),
+      client.artist.list.query({ limit: 8 }),
     ]);
 
     return json<LoaderData>({
       popularCompositions: popularCompositions.items,
       recentCompositions: recentCompositions.items,
-      featuredArtists,
+      featuredArtists: featuredArtists.items,
     });
   } catch (error) {
     console.error('Error loading homepage data:', error);
@@ -57,51 +91,6 @@ export const loader: LoaderFunction = async () => {
       featuredArtists: [],
     });
   }
-};
-
-const CompositionCard = ({
-  composition,
-}: { composition: LoaderData['popularCompositions'][0] }) => {
-  const fields: EntityCardField[] = [
-    {
-      label: 'Raga',
-      value:
-        composition.ragaIds && composition.ragaIds.length > 0
-          ? `${composition.ragaIds.length} raga${composition.ragaIds.length > 1 ? 's' : ''}`
-          : 'Unknown',
-    },
-    {
-      label: 'Tala',
-      value:
-        composition.talaIds && composition.talaIds.length > 0
-          ? `${composition.talaIds.length} tala${composition.talaIds.length > 1 ? 's' : ''}`
-          : 'Unknown',
-    },
-  ];
-
-  return (
-    <EntityCard
-      id={composition.id}
-      title={composition.title}
-      type="compositions"
-      fields={fields}
-      description={composition.meaning}
-    />
-  );
-};
-
-const ArtistCard = ({ artist }: { artist: LoaderData['featuredArtists'][0] }) => {
-  return (
-    <EntityCard
-      id={artist.id}
-      title={artist.name}
-      type="artists"
-      subtitle={artist.artistType}
-      metadata={{ viewCount: artist.viewCount }}
-      compact
-      className="text-center"
-    />
-  );
 };
 
 export default function HomePage() {
@@ -154,7 +143,7 @@ export default function HomePage() {
         <SectionHeader title="Featured Artists" viewAllPath="/carnatic/artists" />
 
         {featuredArtists.length > 0 ? (
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {featuredArtists.map(artist => (
               <ArtistCard key={artist.id} artist={artist} />
             ))}
