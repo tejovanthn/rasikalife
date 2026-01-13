@@ -1,6 +1,7 @@
 import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
+import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
 // Artist type from @rasika/core domain/artist
 type Artist = {
@@ -10,7 +11,12 @@ type Artist = {
   updatedAt: string;
 };
 
-export async function loader({ params }: { params: { artistid?: string } }) {
+export async function loader({
+  params,
+  request,
+}: { params: { artistid?: string }; request: Request }) {
+  console.log('🎨 ArtistDetails loader called for:', new URL(request.url).pathname);
+
   const { artistid } = params;
 
   if (!artistid) {
@@ -30,14 +36,16 @@ export async function loader({ params }: { params: { artistid?: string } }) {
       throw new Response('Artist not found', { status: 404 });
     }
 
+    // Fetch compositions by this artist (limit to 6 for preview)
+    const result = await client.composition.byComposer.query({
+      composerId: artist.id,
+      limit: 6,
+    });
+
     return json({
       artist,
-      breadcrumbs: [
-        { name: 'Home', href: '/' },
-        { name: 'Carnatic', href: '/carnatic' },
-        { name: 'Artists', href: '/carnatic/artists' },
-        { name: artist.name, href: `/carnatic/artists/${artistid}` },
-      ],
+      compositions: result.items,
+      hasMoreCompositions: result.hasMore,
     });
   } catch (error) {
     console.error('Failed to load artist:', error);
@@ -125,17 +133,22 @@ export const meta: MetaFunction = ({ data }) => {
   ];
 };
 
-interface Artist {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export default function ArtistDetails() {
-  const { artist } = useLoaderData<{
+  const location = useLocation();
+  console.log('🎨 Rendering ArtistDetails component for:', location.pathname);
+
+  const { artist, compositions, hasMoreCompositions } = useLoaderData<{
     artist: Artist;
+    compositions: any[];
+    hasMoreCompositions: boolean;
   }>();
+
+  // Check if we're on a nested route (like /compositions)
+  const isNestedRoute = location.pathname.includes('/compositions');
+
+  if (isNestedRoute) {
+    return <Outlet />;
+  }
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -155,6 +168,14 @@ export default function ArtistDetails() {
           </p>
         </div>
       </section>
+
+      <EntityCompositions
+        compositions={compositions}
+        entityType="artist"
+        entitySlug={`${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`}
+        showViewMore={hasMoreCompositions}
+        customHeading={`Compositions by ${artist.name}`}
+      />
 
       {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">

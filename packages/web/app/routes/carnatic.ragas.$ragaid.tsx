@@ -1,6 +1,7 @@
 import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
+import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
 export async function loader({ params }: { params: { ragaid?: string } }) {
   const { ragaid } = params;
@@ -22,14 +23,16 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
       throw new Response('Raga not found', { status: 404 });
     }
 
+    // Fetch compositions in this raga (limit to 6 for preview)
+    const compositions = await client.composition.byRaga.query({
+      ragaId: raga.id,
+      limit: 6,
+    });
+
     return json({
       raga,
-      breadcrumbs: [
-        { name: 'Home', href: '/' },
-        { name: 'Carnatic', href: '/carnatic' },
-        { name: 'Ragas', href: '/carnatic/ragas' },
-        { name: raga.name, href: `/carnatic/ragas/${ragaid}` },
-      ],
+      compositions: compositions.items,
+      hasMoreCompositions: compositions.hasMore,
     });
   } catch (error) {
     console.error('Failed to load raga:', error);
@@ -123,9 +126,20 @@ type Raga = {
 };
 
 export default function RagaDetails() {
-  const { raga } = useLoaderData<{
+  const location = useLocation();
+
+  const { raga, compositions, hasMoreCompositions } = useLoaderData<{
     raga: Raga;
+    compositions: any[];
+    hasMoreCompositions: boolean;
   }>();
+
+  // Check if we're on a nested route (like /compositions)
+  const isNestedRoute = location.pathname.includes('/compositions');
+
+  if (isNestedRoute) {
+    return <Outlet />;
+  }
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -145,6 +159,14 @@ export default function RagaDetails() {
           </p>
         </div>
       </section>
+
+      <EntityCompositions
+        compositions={compositions}
+        entityType="raga"
+        entitySlug={`${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
+        showViewMore={hasMoreCompositions}
+        customHeading={`Compositions in ${raga.name} raga`}
+      />
 
       {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">

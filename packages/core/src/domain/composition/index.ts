@@ -7,13 +7,13 @@ import {
   createCompositionRaga,
   deleteCompositionRaga,
   getCompositionRagas,
-  getCompositionsByRaga,
+  getCompositionsByRaga as getRagaJunctionRecords,
 } from '../composition_raga';
 import {
   createCompositionTala,
   deleteCompositionTala,
   getCompositionTalas,
-  getCompositionsByTala,
+  getCompositionsByTala as getTalaJunctionRecords,
 } from '../composition_tala';
 import { getArtist } from '../artist';
 import { getRaga } from '../raga';
@@ -134,13 +134,23 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
 }
 
 export async function getCompositionsByComposer(
-  composerId: string
-): Promise<CompositionWithRelations[]> {
-  const result = await CompositionEntity.query.byComposer({ composerId }).go();
+  composerId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionWithRelations[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 20;
+
+  const result = await CompositionEntity.query.byComposer({ composerId }).go({
+    limit,
+    cursor: params?.nextToken,
+  });
   const compositions = result.data || [];
 
-  // Get relations for each composition in parallel
-  const compositionsWithRelations = compositions.map(composition => ({
+  // Transform to CompositionWithRelations
+  const items = compositions.map(composition => ({
     id: composition.id,
     title: composition.title,
     composer: composition.composer,
@@ -152,7 +162,134 @@ export async function getCompositionsByComposer(
     updatedAt: composition.updatedAt,
   }));
 
-  return compositionsWithRelations;
+  return {
+    items,
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
+export async function getCompositionsByRaga(
+  ragaId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionWithRelations[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 20;
+
+  const junctionResult = await getRagaJunctionRecords(ragaId, {
+    limit,
+    nextToken: params?.nextToken,
+  });
+
+  if (!junctionResult.items?.length) {
+    return { items: [], hasMore: false };
+  }
+
+  // Batch fetch full compositions
+  const compositionIds = junctionResult.items.map(j => ({ id: j.compositionId }));
+  const compositions = await CompositionEntity.get(compositionIds).go();
+
+  // Transform to CompositionWithRelations
+  const items = (compositions.data || []).map(composition => ({
+    id: composition.id,
+    title: composition.title,
+    composer: composition.composer,
+    language: composition.language,
+    lyricsV1: composition.lyricsV1 || [],
+    ragas: composition.ragas || [],
+    talas: composition.talas || [],
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt,
+  }));
+
+  return {
+    items,
+    nextToken: junctionResult.nextToken,
+    hasMore: junctionResult.hasMore,
+  };
+}
+
+export async function getCompositionsByTala(
+  talaId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionWithRelations[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 20;
+
+  const junctionResult = await getTalaJunctionRecords(talaId, {
+    limit,
+    nextToken: params?.nextToken,
+  });
+
+  if (!junctionResult.items?.length) {
+    return { items: [], hasMore: false };
+  }
+
+  // Batch fetch full compositions
+  const compositionIds = junctionResult.items.map(j => ({ id: j.compositionId }));
+  const compositions = await CompositionEntity.get(compositionIds).go();
+
+  // Transform to CompositionWithRelations
+  const items = (compositions.data || []).map(composition => ({
+    id: composition.id,
+    title: composition.title,
+    composer: composition.composer,
+    language: composition.language,
+    lyricsV1: composition.lyricsV1 || [],
+    ragas: composition.ragas || [],
+    talas: composition.talas || [],
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt,
+  }));
+
+  return {
+    items,
+    nextToken: junctionResult.nextToken,
+    hasMore: junctionResult.hasMore,
+  };
+}
+
+export async function getCompositionsByLanguage(
+  language: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionWithRelations[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 20;
+
+  const result = await CompositionEntity.query.byLanguage({ language }).go({
+    limit,
+    cursor: params?.nextToken,
+  });
+
+  const compositions = result.data || [];
+
+  // Transform to CompositionWithRelations
+  const items = compositions.map(composition => ({
+    id: composition.id,
+    title: composition.title,
+    composer: composition.composer,
+    language: composition.language,
+    lyricsV1: composition.lyricsV1 || [],
+    ragas: composition.ragas || [],
+    talas: composition.talas || [],
+    createdAt: composition.createdAt,
+    updatedAt: composition.updatedAt,
+  }));
+
+  return {
+    items,
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
 }
 
 export async function updateComposition(
@@ -235,7 +372,10 @@ export async function deleteComposition(id: string): Promise<void> {
 }
 
 export async function getCompositionsByName(name: string): Promise<CompositionWithRelations[]> {
-  const result = await CompositionEntity.query.byName({ title: name }).go();
+  // Explicitly set a high limit to ensure all matching compositions are returned
+  const result = await CompositionEntity.query.byName({ title: name }).go({
+    limit: 1000, // High limit to get all matching compositions
+  });
   const compositions = result.data || [];
 
   const compositionsWithRelations = compositions.map(composition => ({

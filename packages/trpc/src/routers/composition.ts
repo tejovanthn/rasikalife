@@ -31,10 +31,66 @@ export const compositionRouter = createTRPCRouter({
     .mutation(({ input }) => Composition.deleteComposition(input.id)),
 
   byComposer: publicProcedure
-    .input(z.object({ composerId: z.string().min(1) }))
-    .query(({ input }) => Composition.getCompositionsByComposer(input.composerId)),
+    .input(
+      z.object({
+        composerId: z.string().min(1),
+        limit: z.number().min(1).max(100).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      Composition.getCompositionsByComposer(input.composerId, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
+
+  byRaga: publicProcedure
+    .input(
+      z.object({
+        ragaId: z.string().min(1),
+        limit: z.number().min(1).max(100).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      Composition.getCompositionsByRaga(input.ragaId, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
+
+  byTala: publicProcedure
+    .input(
+      z.object({
+        talaId: z.string().min(1),
+        limit: z.number().min(1).max(100).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      Composition.getCompositionsByTala(input.talaId, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
 
   byName: publicProcedure
     .input(z.object({ name: z.string().min(1) }))
     .query(({ input }) => Composition.getCompositionsByName(input.name)),
+
+  byLanguage: publicProcedure
+    .input(
+      z.object({
+        language: z.string().min(1),
+        limit: z.number().min(1).max(100).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      Composition.getCompositionsByLanguage(input.language, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
 });

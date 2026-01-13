@@ -1,6 +1,10 @@
 import { type LoaderFunction, type MetaFunction, json } from '@remix-run/node';
 import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
 import { client } from '~/api.server';
+import { ArtistCard } from '~/components/ArtistCard';
+import { EmptyState } from '~/components/shared/EmptyState';
+import { EntityPagination } from '~/components/EntityPagination';
+
 // Artist type from @rasika/core domain/artist
 type Artist = {
   id: string;
@@ -8,17 +12,6 @@ type Artist = {
   createdAt: string;
   updatedAt: string;
 };
-import { ArtistCard } from '~/components/ArtistCard';
-import { EmptyState } from '~/components/shared/EmptyState';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '~/components/ui/pagination';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -90,54 +83,12 @@ export default function ArtistsIndex() {
             ))}
           </div>
 
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                {currentPage > 1 ? (
-                  <Link to="/carnatic/artists">
-                    <PaginationPrevious />
-                  </Link>
-                ) : (
-                  <PaginationPrevious className="pointer-events-none opacity-50" />
-                )}
-              </PaginationItem>
-
-              <PaginationItem>
-                <Link
-                  to="/carnatic/artists"
-                  className={
-                    currentPage === 1
-                      ? 'px-3 py-2 rounded-md bg-primary text-primary-foreground'
-                      : 'px-3 py-2 rounded-md hover:bg-accent'
-                  }
-                >
-                  1
-                </Link>
-              </PaginationItem>
-
-              {currentPage > 2 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationLink isActive>{currentPage}</PaginationLink>
-                </PaginationItem>
-              )}
-
-              {hasMore && (
-                <PaginationItem>
-                  <Link
-                    to={`?page=${currentPage + 1}&nextToken=${encodeURIComponent(nextToken || '')}`}
-                  >
-                    <PaginationNext />
-                  </Link>
-                </PaginationItem>
-              )}
-            </PaginationContent>
-          </Pagination>
+          <EntityPagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            nextToken={nextToken}
+            baseUrl="/carnatic/artists"
+          />
         </>
       )}
     </main>

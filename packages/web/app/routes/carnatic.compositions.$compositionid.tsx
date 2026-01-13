@@ -1,6 +1,7 @@
 import { json, type MetaFunction } from '@remix-run/node';
 import { useLoaderData, Link } from '@remix-run/react';
 import { client } from '~/api.server';
+import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
 export async function loader({ params }: { params: { compositionid?: string } }) {
   const { compositionid } = params;
@@ -22,22 +23,44 @@ export async function loader({ params }: { params: { compositionid?: string } })
       throw new Response('Composition not found', { status: 404 });
     }
 
-    // Get related compositions by the same composer
-    const relatedCompositions = await client.composition.byComposer.query({
+    // Get 7 related compositions by composer (6 to show + 1 to check for more)
+    const composerResult = await client.composition.byComposer.query({
       composerId: composition.composer.id,
+      limit: 7,
     });
+
+    const filteredCompositionsByComposer = composerResult.items.filter(
+      (c: any) => c.id !== composition.id
+    );
+    const relatedCompositionsByComposer = filteredCompositionsByComposer.slice(0, 6);
+    const hasMoreCompositionsByComposer =
+      composerResult.hasMore || filteredCompositionsByComposer.length > 6;
+
+    // Get compositions in the same raga(s) if the composition has ragas
+    let relatedCompositionsByRaga: any[] = [];
+    let hasMoreCompositionsByRaga = false;
+
+    if (composition.ragas && composition.ragas.length > 0) {
+      // Use the first raga for related compositions (most compositions have one primary raga)
+      const primaryRaga = composition.ragas[0];
+      const ragaResult = await client.composition.byRaga.query({
+        ragaId: primaryRaga.id,
+        limit: 7, // 6 to show + 1 to check for more
+      });
+
+      const filteredCompositionsByRaga = ragaResult.items.filter(
+        (c: any) => c.id !== composition.id
+      );
+      relatedCompositionsByRaga = filteredCompositionsByRaga.slice(0, 6);
+      hasMoreCompositionsByRaga = ragaResult.hasMore || filteredCompositionsByRaga.length > 6;
+    }
 
     return json({
       composition,
-      relatedCompositions: relatedCompositions
-        .filter((c: any) => c.id !== composition.id)
-        .slice(0, 6),
-      breadcrumbs: [
-        { name: 'Home', href: '/' },
-        { name: 'Carnatic', href: '/carnatic' },
-        { name: 'Compositions', href: '/carnatic/compositions' },
-        { name: composition.title, href: `/carnatic/compositions/${compositionid}` },
-      ],
+      relatedCompositionsByComposer,
+      hasMoreCompositionsByComposer,
+      relatedCompositionsByRaga,
+      hasMoreCompositionsByRaga,
     });
   } catch (error) {
     console.error('Failed to load composition:', error);
@@ -160,18 +183,29 @@ type Composition = {
     number?: number;
     ragaName?: string;
   }>;
+  ragas: Array<{ id: string; name: string }>;
+  talas: Array<{ id: string; name: string }>;
   createdAt: string;
   updatedAt: string;
 };
 
 export default function CompositionDetails() {
-  const { composition, relatedCompositions } = useLoaderData<{
+  const {
+    composition,
+    relatedCompositionsByComposer,
+    hasMoreCompositionsByComposer,
+    relatedCompositionsByRaga,
+    hasMoreCompositionsByRaga,
+  } = useLoaderData<{
     composition: Composition;
-    relatedCompositions: Composition[];
+    relatedCompositionsByComposer: any[];
+    hasMoreCompositionsByComposer: boolean;
+    relatedCompositionsByRaga: any[];
+    hasMoreCompositionsByRaga: boolean;
   }>();
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="max-w-4xl m-auto">
       <header className="mb-8">
         <h1 className="text-4xl font-bold mb-2">{composition.title}</h1>
         <p className="text-xl text-muted-foreground">by {composition.composer.name}</p>
@@ -185,11 +219,55 @@ export default function CompositionDetails() {
             <strong>Title:</strong> {composition.title}
           </p>
           <p>
-            <strong>Composer:</strong> {composition.composer.name}
+            <strong>Composer:</strong>{' '}
+            <Link
+              to={`/carnatic/artists/${composition.composer.name.toLowerCase().replace(/\s+/g, '-')}-${composition.composer.id}`}
+              className="text-primary hover:underline"
+            >
+              {composition.composer.name}
+            </Link>
           </p>
           <p>
-            <strong>Language:</strong> {composition.language}
+            <strong>Language:</strong>{' '}
+            <Link
+              to={`/carnatic/languages/${encodeURIComponent(composition.language)}`}
+              className="text-primary hover:underline"
+            >
+              {composition.language}
+            </Link>
           </p>
+          {composition.ragas && composition.ragas.length > 0 && (
+            <p>
+              <strong>Raga{composition.ragas.length > 1 ? 's' : ''}:</strong>{' '}
+              {composition.ragas.map((r, index) => (
+                <span key={r.id}>
+                  {index > 0 && ', '}
+                  <Link
+                    to={`/carnatic/ragas/${r.name.toLowerCase().replace(/\s+/g, '-')}-${r.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    {r.name}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          )}
+          {composition.talas && composition.talas.length > 0 && (
+            <p>
+              <strong>Tala{composition.talas.length > 1 ? 's' : ''}:</strong>{' '}
+              {composition.talas.map((t, index) => (
+                <span key={t.id}>
+                  {index > 0 && ', '}
+                  <Link
+                    to={`/carnatic/talas/${t.name.toLowerCase().replace(/\s+/g, '-')}-${t.id}`}
+                    className="text-primary hover:underline"
+                  >
+                    {t.name}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          )}
           <p>
             <strong>Added:</strong> {new Date(composition.createdAt).toLocaleDateString()}
           </p>
@@ -212,31 +290,27 @@ export default function CompositionDetails() {
         </section>
       )}
 
-      {relatedCompositions.length > 0 && (
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            More compositions by{' '}
-            <Link
-              to={`/carnatic/artists/${composition.composer.name.toLowerCase().replace(/\s+/g, '-')}-${composition.composer.id}`}
-              className="text-primary hover:underline"
-            >
-              {composition.composer.name}
-            </Link>
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            {relatedCompositions.map((comp: any) => (
-              <Link
-                key={comp.id}
-                to={`/carnatic/compositions/${comp.title.toLowerCase().replace(/\s+/g, '-')}-${comp.id}`}
-                className="block p-4 border rounded-lg hover:shadow-md transition-shadow hover:border-primary/50"
-              >
-                <h3 className="font-medium">{comp.title}</h3>
-                <p className="text-sm text-muted-foreground">{comp.language}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+      {relatedCompositionsByComposer.length > 0 && (
+        <EntityCompositions
+          compositions={relatedCompositionsByComposer}
+          entityType="artist"
+          entitySlug={`${composition.composer.name.toLowerCase().replace(/\s+/g, '-')}-${composition.composer.id}`}
+          showViewMore={hasMoreCompositionsByComposer}
+          customHeading={`More compositions by ${composition.composer.name}`}
+        />
       )}
+
+      {relatedCompositionsByRaga.length > 0 &&
+        composition.ragas &&
+        composition.ragas.length > 0 && (
+          <EntityCompositions
+            compositions={relatedCompositionsByRaga}
+            entityType="raga"
+            entitySlug={`${composition.ragas[0].name.toLowerCase().replace(/\s+/g, '-')}-${composition.ragas[0].id}`}
+            showViewMore={hasMoreCompositionsByRaga}
+            customHeading={`More compositions in ${composition.ragas[0].name} raga`}
+          />
+        )}
 
       {/* Cross-linking to related musical elements */}
       <section className="mt-8 pt-8 border-t">
@@ -267,20 +341,6 @@ export default function CompositionDetails() {
           </Link>
         </div>
       </section>
-    </main>
-  );
-}
-
-export function ErrorBoundary() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-      <p className="text-muted-foreground">
-        We're having trouble loading this composition. Please try again later.
-      </p>
-      <Link to="/carnatic/compositions" className="text-blue-600 hover:underline">
-        Back to Compositions
-      </Link>
     </div>
   );
 }

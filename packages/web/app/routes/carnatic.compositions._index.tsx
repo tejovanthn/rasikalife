@@ -3,15 +3,7 @@ import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '~/components/ui/pagination';
+import { EntityPagination } from '~/components/EntityPagination';
 
 // Composition type from @rasika/core domain/composition
 type Composition = {
@@ -78,7 +70,7 @@ export default function CompositionsIndex() {
   const prevPageToken = searchParams.get('prevToken');
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="max-w-6xl">
       <header className="mb-8">
         <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
           Compositions
@@ -98,70 +90,14 @@ export default function CompositionsIndex() {
             ))}
           </div>
 
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                {currentPage > 1 ? (
-                  <Link to="/carnatic/compositions">
-                    <PaginationPrevious />
-                  </Link>
-                ) : (
-                  <PaginationPrevious className="pointer-events-none opacity-50" />
-                )}
-              </PaginationItem>
-
-              <PaginationItem>
-                <Link
-                  to="/carnatic/compositions"
-                  className={
-                    currentPage === 1
-                      ? 'px-3 py-2 rounded-md bg-primary text-primary-foreground'
-                      : 'px-3 py-2 rounded-md hover:bg-accent'
-                  }
-                >
-                  1
-                </Link>
-              </PaginationItem>
-
-              {currentPage > 2 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationLink isActive>{currentPage}</PaginationLink>
-                </PaginationItem>
-              )}
-
-              {hasMore && (
-                <PaginationItem>
-                  <Link
-                    to={`?page=${currentPage + 1}&nextToken=${encodeURIComponent(nextToken || '')}`}
-                  >
-                    <PaginationNext />
-                  </Link>
-                </PaginationItem>
-              )}
-            </PaginationContent>
-          </Pagination>
+          <EntityPagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            nextToken={nextToken}
+            baseUrl="/carnatic/compositions"
+          />
         </>
       )}
-    </main>
-  );
-}
-
-export function ErrorBoundary() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-      <p className="text-muted-foreground">
-        We're having trouble loading the compositions. Please try again later.
-      </p>
-      <Link to="/carnatic/compositions" className="text-blue-600 hover:underline">
-        Back to Compositions
-      </Link>
     </div>
   );
 }

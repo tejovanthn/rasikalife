@@ -11,11 +11,21 @@ interface CompositionCardProps {
       name: string;
     };
     language: string;
+    ragas?: Array<{ id: string; name: string }>;
+    talas?: Array<{ id: string; name: string }>;
     createdAt: string;
   };
+  showRagas?: boolean;
+  showTalas?: boolean;
+  showComposer?: boolean;
 }
 
-export function CompositionCard({ composition }: CompositionCardProps) {
+export function CompositionCard({
+  composition,
+  showRagas = true,
+  showTalas = true,
+  showComposer = true,
+}: CompositionCardProps) {
   return (
     <Link
       to={`/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`}
@@ -26,15 +36,26 @@ export function CompositionCard({ composition }: CompositionCardProps) {
           <CardTitle className="text-lg leading-tight">{composition.title}</CardTitle>
           <div className="flex flex-wrap gap-1">
             <Badge variant="outline">{composition.language}</Badge>
+            {showRagas &&
+              composition.ragas &&
+              composition.ragas.map(raga => (
+                <Badge key={raga.id} variant="secondary">
+                  {raga.name}
+                </Badge>
+              ))}
+            {showTalas &&
+              composition.talas &&
+              composition.talas.map(tala => (
+                <Badge key={tala.id} variant="secondary">
+                  {tala.name}
+                </Badge>
+              ))}
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground mb-2">
-            Composer: {composition.composer.name}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Added {new Date(composition.createdAt).toLocaleDateString()}
-          </p>
+          {showComposer && (
+            <p className="text-sm text-muted-foreground">Composer: {composition.composer.name}</p>
+          )}
         </CardContent>
       </Card>
     </Link>

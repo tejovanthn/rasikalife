@@ -1,6 +1,7 @@
 import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
+import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
 export async function loader({ params }: { params: { talaid?: string } }) {
   const { talaid } = params;
@@ -22,14 +23,16 @@ export async function loader({ params }: { params: { talaid?: string } }) {
       throw new Response('Tala not found', { status: 404 });
     }
 
+    // Fetch compositions in this tala (limit to 6 for preview)
+    const compositions = await client.composition.byTala.query({
+      talaId: tala.id,
+      limit: 6,
+    });
+
     return json({
       tala,
-      breadcrumbs: [
-        { name: 'Home', href: '/' },
-        { name: 'Carnatic', href: '/carnatic' },
-        { name: 'Talas', href: '/carnatic/talas' },
-        { name: tala.name, href: `/carnatic/talas/${talaid}` },
-      ],
+      compositions: compositions.items,
+      hasMoreCompositions: compositions.hasMore,
     });
   } catch (error) {
     console.error('Failed to load tala:', error);
@@ -123,9 +126,20 @@ type Tala = {
 };
 
 export default function TalaDetails() {
-  const { tala } = useLoaderData<{
+  const location = useLocation();
+
+  const { tala, compositions, hasMoreCompositions } = useLoaderData<{
     tala: Tala;
+    compositions: any[];
+    hasMoreCompositions: boolean;
   }>();
+
+  // Check if we're on a nested route (like /compositions)
+  const isNestedRoute = location.pathname.includes('/compositions');
+
+  if (isNestedRoute) {
+    return <Outlet />;
+  }
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -145,6 +159,13 @@ export default function TalaDetails() {
           </p>
         </div>
       </section>
+
+      <EntityCompositions
+        compositions={compositions}
+        entityType="tala"
+        entitySlug={`${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`}
+        showViewMore={hasMoreCompositions}
+      />
 
       {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">

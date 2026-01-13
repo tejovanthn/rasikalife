@@ -3,15 +3,7 @@ import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
 import { client } from '~/api.server';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '~/components/ui/pagination';
+import { EntityPagination } from '~/components/EntityPagination';
 
 // Raga type from @rasika/core domain/raga
 type Raga = {
@@ -89,54 +81,12 @@ export default function RagasIndex() {
             ))}
           </div>
 
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                {currentPage > 1 ? (
-                  <Link to="/carnatic/ragas">
-                    <PaginationPrevious />
-                  </Link>
-                ) : (
-                  <PaginationPrevious className="pointer-events-none opacity-50" />
-                )}
-              </PaginationItem>
-
-              <PaginationItem>
-                <Link
-                  to="/carnatic/ragas"
-                  className={
-                    currentPage === 1
-                      ? 'px-3 py-2 rounded-md bg-primary text-primary-foreground'
-                      : 'px-3 py-2 rounded-md hover:bg-accent'
-                  }
-                >
-                  1
-                </Link>
-              </PaginationItem>
-
-              {currentPage > 2 && (
-                <PaginationItem>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              )}
-
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationLink isActive>{currentPage}</PaginationLink>
-                </PaginationItem>
-              )}
-
-              {hasMore && (
-                <PaginationItem>
-                  <Link
-                    to={`?page=${currentPage + 1}&nextToken=${encodeURIComponent(nextToken || '')}`}
-                  >
-                    <PaginationNext />
-                  </Link>
-                </PaginationItem>
-              )}
-            </PaginationContent>
-          </Pagination>
+          <EntityPagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            nextToken={nextToken}
+            baseUrl="/carnatic/ragas"
+          />
         </>
       )}
     </main>
