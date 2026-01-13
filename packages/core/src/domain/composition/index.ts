@@ -260,18 +260,14 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
 }> {
   const limit = params?.limit || 20;
 
-  // For now, scan all compositions since GSI5 might not be populated
-  // TODO: Use GSI5 once all compositions are migrated
-  const result = await CompositionEntity.scan.go({
+  // Query the list index for efficient sorted retrieval
+  const result = await CompositionEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,
   });
 
-  // Sort by title for consistent ordering
-  const sortedCompositions = (result.data || []).sort((a, b) => a.title.localeCompare(b.title));
-
   // For each composition, we need to enrich it with relations
-  const enrichedCompositions = sortedCompositions.map(composition => ({
+  const enrichedCompositions = (result.data || []).map(composition => ({
     id: composition.id,
     title: composition.title,
     composer: composition.composer,
