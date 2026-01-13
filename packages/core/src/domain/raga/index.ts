@@ -51,7 +51,9 @@ export async function listRagas(params?: { limit?: number; nextToken?: string })
   hasMore: boolean;
 }> {
   const limit = params?.limit || 20;
-  const result = await RagaEntity.scan.go({
+
+  // Query the list index for efficient sorted retrieval
+  const result = await RagaEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,
   });

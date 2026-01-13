@@ -51,7 +51,9 @@ export async function listArtists(params?: { limit?: number; nextToken?: string 
   hasMore: boolean;
 }> {
   const limit = params?.limit || 20;
-  const result = await ArtistEntity.scan.go({
+
+  // Query the list index for efficient sorted retrieval (PK = ARTIST_LIST, results sorted by SK = name#id)
+  const result = await ArtistEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,
   });

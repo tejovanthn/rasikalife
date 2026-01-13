@@ -142,6 +142,19 @@ export const ContentEntity = new Entity(
           template: 'CONTENT#${id}',
         },
       },
+      list: {
+        index: 'gsi3',
+        pk: {
+          field: 'gsi3pk',
+          composite: [],
+          template: 'CONTENT_LIST',
+        },
+        sk: {
+          field: 'gsi3sk',
+          composite: ['updatedAt', 'id'],
+          template: '${updatedAt}#${id}',
+        },
+      },
     },
   },
   { client: dynamoClient, table: process.env.DYNAMODB_TABLE || 'RasikaLifeTable' }

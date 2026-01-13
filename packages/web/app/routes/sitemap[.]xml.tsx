@@ -106,7 +106,7 @@ async function collectAllEntities(listFn: any, type: string) {
 
   do {
     const result = await listFn.query({
-      limit: 1000, // Respect user's 1000 item limit
+      limit: 100,
       nextToken,
     });
     entities.push(...result.items);

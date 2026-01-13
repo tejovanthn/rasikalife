@@ -18,14 +18,48 @@ export async function createCompositionTala(
   return result.data as CompositionTala;
 }
 
-export async function getCompositionTalas(compositionId: string): Promise<CompositionTala[]> {
-  const result = await CompositionTalaEntity.query.primary({ compositionId }).go();
-  return result.data || [];
+export async function getCompositionTalas(
+  compositionId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionTala[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 50;
+
+  const result = await CompositionTalaEntity.query.primary({ compositionId }).go({
+    limit,
+    cursor: params?.nextToken,
+  });
+
+  return {
+    items: result.data || [],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
 }
 
-export async function getCompositionsByTala(talaId: string): Promise<CompositionTala[]> {
-  const result = await CompositionTalaEntity.query.byTala({ talaId }).go();
-  return result.data || [];
+export async function getCompositionsByTala(
+  talaId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionTala[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 50;
+
+  const result = await CompositionTalaEntity.query.byTala({ talaId }).go({
+    limit,
+    cursor: params?.nextToken,
+  });
+
+  return {
+    items: result.data || [],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
 }
 
 export async function deleteCompositionTala(compositionId: string, talaId: string): Promise<void> {

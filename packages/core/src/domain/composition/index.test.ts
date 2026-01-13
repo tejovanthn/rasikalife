@@ -322,8 +322,14 @@ describe('Composition', () => {
       );
       const { CompositionEntity } = await import('./entity');
 
-      vi.mocked(getCompositionRagas).mockResolvedValue(existingRagas);
-      vi.mocked(getCompositionTalas).mockResolvedValue(existingTalas);
+      vi.mocked(getCompositionRagas).mockResolvedValue({
+        items: existingRagas,
+        hasMore: false,
+      });
+      vi.mocked(getCompositionTalas).mockResolvedValue({
+        items: existingTalas,
+        hasMore: false,
+      });
       vi.mocked(deleteCompositionRaga).mockResolvedValue(undefined);
       vi.mocked(deleteCompositionTala).mockResolvedValue(undefined);
       vi.mocked(createCompositionRaga).mockResolvedValue({} as any);
@@ -381,8 +387,14 @@ describe('Composition', () => {
       const { getCompositionTalas, deleteCompositionTala } = await import('../composition_tala');
       const { CompositionEntity } = await import('./entity');
 
-      vi.mocked(getCompositionRagas).mockResolvedValue(existingRagas);
-      vi.mocked(getCompositionTalas).mockResolvedValue(existingTalas);
+      vi.mocked(getCompositionRagas).mockResolvedValue({
+        items: existingRagas,
+        hasMore: false,
+      });
+      vi.mocked(getCompositionTalas).mockResolvedValue({
+        items: existingTalas,
+        hasMore: false,
+      });
       vi.mocked(deleteCompositionRaga).mockResolvedValue(undefined);
       vi.mocked(deleteCompositionTala).mockResolvedValue(undefined);
       vi.mocked(CompositionEntity.delete).mockReturnValue({

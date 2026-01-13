@@ -1,13 +1,12 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { convert } from 'url-slug';
-import { entityConfigs } from './routeConfig';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Enhanced slugify function using entity configs
+// Enhanced slugify function
 export const slugify = ({
   name,
   type,
@@ -21,12 +20,7 @@ export const slugify = ({
     camelCase: false,
   });
 
-  // Use entity configs for consistent URL generation
-  if (type && entityConfigs[type]) {
-    return `${entityConfigs[type].basePath}/${slug}`;
-  }
-
-  // Fallback for backward compatibility
+  // Generate URLs based on entity type
   if (type === 'compositions' || (!type && id)) {
     return `/carnatic/compositions/${slug}`;
   }

@@ -7,6 +7,9 @@ export default $config({
       name: 'rasika',
       removal: input?.stage === 'prod' ? 'retain' : 'remove',
       home: 'aws',
+      providers: {
+        aws: { region: 'us-east-1' },
+      },
     };
   },
   async run() {
@@ -15,7 +18,6 @@ export default $config({
     return {
       site: infra.site.url,
       trpc: infra.trpc.url,
-      client: infra.client.url,
     };
   },
 });

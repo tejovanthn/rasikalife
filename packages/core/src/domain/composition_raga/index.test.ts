@@ -89,7 +89,11 @@ describe('CompositionRaga', () => {
       expect(CompositionRagaEntity.query.primary).toHaveBeenCalledWith({
         compositionId: 'comp-123',
       });
-      expect(result).toEqual(mockRelationships);
+      expect(result).toEqual({
+        items: mockRelationships,
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
 
     it('should return empty array when no relationships found', async () => {
@@ -100,7 +104,11 @@ describe('CompositionRaga', () => {
 
       const result = await getCompositionRagas('comp-123');
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({
+        items: [],
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
   });
 
@@ -127,7 +135,11 @@ describe('CompositionRaga', () => {
       const result = await getCompositionsByRaga('raga-456');
 
       expect(CompositionRagaEntity.query.byRaga).toHaveBeenCalledWith({ ragaId: 'raga-456' });
-      expect(result).toEqual(mockRelationships);
+      expect(result).toEqual({
+        items: mockRelationships,
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
   });
 

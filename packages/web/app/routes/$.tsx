@@ -1,23 +1,7 @@
 import { type LoaderFunctionArgs, type MetaFunction, json } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import Markdown from 'react-markdown';
-import type { SitemapFunction } from 'remix-sitemap';
-import { serverOnly$ } from 'vite-env-only/macros';
 import { client } from '~/api.server';
-
-export const sitemap: SitemapFunction = serverOnly$(async () => {
-  const list: { loc: string; lastmod: string }[] = [];
-  const allPaths = await client.content.allPaths.query();
-
-  allPaths.data.forEach(({ path, updatedAt }) => {
-    list.push({
-      loc: path,
-      lastmod: new Date(updatedAt).toISOString(),
-    });
-  });
-
-  return list;
-});
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
@@ -56,28 +40,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     metaTags.push({ name: 'robots', content: contentMeta.robots });
   }
 
-  if (contentMeta?.canonical) {
-    metaTags.push({ tagName: 'link', rel: 'canonical', href: contentMeta.canonical });
-  }
-
-  // Open Graph tags
-  if (contentMeta?.ogTitle) {
-    metaTags.push({ property: 'og:title', content: contentMeta.ogTitle });
-  }
-  if (contentMeta?.ogDescription) {
-    metaTags.push({ property: 'og:description', content: contentMeta.ogDescription });
-  }
-  if (contentMeta?.ogImage) {
-    metaTags.push({ property: 'og:image', content: contentMeta.ogImage });
-  }
-
-  // Twitter Card tags
-  if (contentMeta?.twitterCard) {
-    metaTags.push({ name: 'twitter:card', content: contentMeta.twitterCard });
-  }
-  if (contentMeta?.twitterSite) {
-    metaTags.push({ name: 'twitter:site', content: contentMeta.twitterSite });
-  }
+  // Additional meta fields can be added to Content entity when needed
 
   return metaTags;
 };
@@ -92,10 +55,10 @@ export default function CatchAll() {
       {contentData.navigation?.breadcrumbs && (
         <nav className="mb-6" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
-            {contentData.navigation.breadcrumbs.map((crumb, index) => (
+            {contentData.navigation?.breadcrumbs?.map((crumb, index) => (
               <li key={crumb.path} className="flex items-center">
                 {index > 0 && <span className="mx-2">/</span>}
-                {index === contentData.navigation.breadcrumbs?.length - 1 ? (
+                {index === (contentData.navigation?.breadcrumbs?.length || 0) - 1 ? (
                   <span className="font-medium text-foreground">{crumb.label}</span>
                 ) : (
                   <Link to={crumb.path} className="hover:text-foreground transition-colors">

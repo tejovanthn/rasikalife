@@ -1,5 +1,5 @@
-import { json, type LoaderFunction, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { type LoaderFunction, type MetaFunction, json } from '@remix-run/node';
+import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
 import { client } from '~/api.server';
 // Artist type from @rasika/core domain/artist
 type Artist = {
@@ -22,32 +22,20 @@ import {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const page = Number.parseInt(url.searchParams.get('page') || '1', 10);
-  const limit = 12; // Items per page
+  const nextToken = url.searchParams.get('nextToken');
+  const itemsPerPage = 36;
 
   try {
-    // For now, fetch all items and paginate client-side
-    // TODO: Implement proper server-side pagination with cursors when API supports it
     const results = await client.artist.list.query({
-      limit: 1000, // Get all items for now
+      limit: itemsPerPage,
+      nextToken: nextToken || undefined,
     });
 
-    const allItems = results.items || [];
-    const totalItems = allItems.length;
-    const totalPages = Math.ceil(totalItems / limit);
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedArtists = allItems.slice(startIndex, endIndex);
-
     return json({
-      artists: paginatedArtists,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.max(1, totalPages),
-        totalItems,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
+      artists: (results.items || []).slice(0, 12),
+      nextToken: results.nextToken,
+      hasMore: results.hasMore,
+      prevToken: nextToken,
     });
   } catch (error) {
     console.error('Failed to load artists:', error);
@@ -72,16 +60,14 @@ export const meta: MetaFunction = () => {
 };
 
 export default function ArtistsIndex() {
-  const { artists, pagination } = useLoaderData<{
+  const { artists, nextToken, hasMore } = useLoaderData<{
     artists: Artist[];
-    pagination: {
-      currentPage: number;
-      totalPages: number;
-      totalItems: number;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-    };
+    nextToken: string | null;
+    hasMore: boolean;
   }>();
+
+  const [searchParams] = useSearchParams();
+  const currentPage = Number.parseInt(searchParams.get('page') || '1', 10);
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -99,63 +85,59 @@ export default function ArtistsIndex() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
-            {artists.map((artist: any) => (
+            {artists.map(artist => (
               <ArtistCard key={artist.id} artist={artist} />
             ))}
           </div>
 
-          {pagination.totalPages > 1 && (
-            <Pagination>
-              <PaginationContent>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                {currentPage > 1 ? (
+                  <Link to="/carnatic/artists">
+                    <PaginationPrevious />
+                  </Link>
+                ) : (
+                  <PaginationPrevious className="pointer-events-none opacity-50" />
+                )}
+              </PaginationItem>
+
+              <PaginationItem>
+                <Link
+                  to="/carnatic/artists"
+                  className={
+                    currentPage === 1
+                      ? 'px-3 py-2 rounded-md bg-primary text-primary-foreground'
+                      : 'px-3 py-2 rounded-md hover:bg-accent'
+                  }
+                >
+                  1
+                </Link>
+              </PaginationItem>
+
+              {currentPage > 2 && (
                 <PaginationItem>
-                  {pagination.hasPrevPage ? (
-                    <Link to={`?page=${pagination.currentPage - 1}`}>
-                      <PaginationPrevious />
-                    </Link>
-                  ) : (
-                    <PaginationPrevious className="pointer-events-none opacity-50" />
-                  )}
+                  <PaginationEllipsis />
                 </PaginationItem>
+              )}
 
-                {/* Page numbers */}
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                  .filter(page => {
-                    const distance = Math.abs(page - pagination.currentPage);
-                    return (
-                      distance === 0 ||
-                      distance === 1 ||
-                      page === 1 ||
-                      page === pagination.totalPages
-                    );
-                  })
-                  .map((page, index, array) => {
-                    const prevPage = array[index - 1];
-                    const showEllipsis = prevPage && page - prevPage > 1;
-
-                    return (
-                      <PaginationItem key={page}>
-                        {showEllipsis && <PaginationEllipsis />}
-                        <Link to={`?page=${page}`}>
-                          <PaginationLink isActive={page === pagination.currentPage}>
-                            {page}
-                          </PaginationLink>
-                        </Link>
-                      </PaginationItem>
-                    );
-                  })}
-
+              {currentPage > 1 && (
                 <PaginationItem>
-                  {pagination.hasNextPage ? (
-                    <Link to={`?page=${pagination.currentPage + 1}`}>
-                      <PaginationNext />
-                    </Link>
-                  ) : (
-                    <PaginationNext className="pointer-events-none opacity-50" />
-                  )}
+                  <PaginationLink isActive>{currentPage}</PaginationLink>
                 </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
+              )}
+
+              {hasMore && (
+                <PaginationItem>
+                  <Link
+                    to={`?page=${currentPage + 1}&nextToken=${encodeURIComponent(nextToken || '')}`}
+                  >
+                    <PaginationNext />
+                  </Link>
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
         </>
       )}
     </main>

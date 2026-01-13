@@ -58,6 +58,19 @@ export const ArtistEntity = new Entity(
           template: 'ARTIST#${id}',
         },
       },
+      list: {
+        index: 'gsi2',
+        pk: {
+          field: 'gsi2pk',
+          composite: [],
+          template: 'ARTIST_LIST',
+        },
+        sk: {
+          field: 'gsi2sk',
+          composite: ['name', 'id'],
+          template: '${name}#${id}',
+        },
+      },
     },
   },
   { client: dynamoClient, table: process.env.DYNAMODB_TABLE || 'RasikaLifeTable' }

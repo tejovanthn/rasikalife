@@ -23,8 +23,8 @@ export async function loader({ params }: { params: { compositionid?: string } })
     }
 
     // Get related compositions by the same composer
-    const relatedCompositions = await client.composition.byArtist.query({
-      artistId: composition.composer.id,
+    const relatedCompositions = await client.composition.byComposer.query({
+      composerId: composition.composer.id,
     });
 
     return json({

@@ -18,14 +18,48 @@ export async function createCompositionRaga(
   return result.data as CompositionRaga;
 }
 
-export async function getCompositionRagas(compositionId: string): Promise<CompositionRaga[]> {
-  const result = await CompositionRagaEntity.query.primary({ compositionId }).go();
-  return result.data || [];
+export async function getCompositionRagas(
+  compositionId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionRaga[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 50;
+
+  const result = await CompositionRagaEntity.query.primary({ compositionId }).go({
+    limit,
+    cursor: params?.nextToken,
+  });
+
+  return {
+    items: result.data || [],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
 }
 
-export async function getCompositionsByRaga(ragaId: string): Promise<CompositionRaga[]> {
-  const result = await CompositionRagaEntity.query.byRaga({ ragaId }).go();
-  return result.data || [];
+export async function getCompositionsByRaga(
+  ragaId: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{
+  items: CompositionRaga[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 50;
+
+  const result = await CompositionRagaEntity.query.byRaga({ ragaId }).go({
+    limit,
+    cursor: params?.nextToken,
+  });
+
+  return {
+    items: result.data || [],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
 }
 
 export async function deleteCompositionRaga(compositionId: string, ragaId: string): Promise<void> {

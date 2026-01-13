@@ -9,18 +9,8 @@ import { createReadableStreamFromReadable } from '@remix-run/node';
 import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
-import { createSitemapGenerator } from 'remix-sitemap';
 
 const ABORT_DELAY = 5_000;
-
-const { isSitemapUrl, sitemap } = createSitemapGenerator({
-  siteUrl: 'https://rasika.life',
-  generateRobotsTxt: true,
-  headers: {
-    'Cache-Control': 'public, max-age 86400, stale-while-revalidate 86400',
-  },
-  // configure other things here
-});
 
 export default async function handleRequest(
   request: Request,
@@ -32,8 +22,6 @@ export default async function handleRequest(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loadContext: AppLoadContext
 ) {
-  if (isSitemapUrl(request)) return await sitemap(request, remixContext);
-
   return isbot(request.headers.get('user-agent') || '')
     ? handleBotRequest(request, responseStatusCode, responseHeaders, remixContext)
     : handleBrowserRequest(request, responseStatusCode, responseHeaders, remixContext);

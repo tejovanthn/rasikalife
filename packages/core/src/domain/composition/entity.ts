@@ -126,6 +126,32 @@ export const CompositionEntity = new Entity(
           template: 'COMPOSITION#${id}',
         },
       },
+      byName: {
+        index: 'gsi4',
+        pk: {
+          field: 'gsi4pk',
+          composite: ['title'],
+          template: 'COMPOSITION_NAME#${title}',
+        },
+        sk: {
+          field: 'gsi4sk',
+          composite: ['id'],
+          template: 'COMPOSITION#${id}',
+        },
+      },
+      list: {
+        index: 'gsi5',
+        pk: {
+          field: 'gsi5pk',
+          composite: [],
+          template: 'COMPOSITION_LIST',
+        },
+        sk: {
+          field: 'gsi5sk',
+          composite: ['title', 'id'],
+          template: '${title}#${id}',
+        },
+      },
     },
   },
   { client: dynamoClient, table: process.env.DYNAMODB_TABLE || 'RasikaLifeTable' }

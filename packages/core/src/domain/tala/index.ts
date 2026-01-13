@@ -51,7 +51,9 @@ export async function listTalas(params?: { limit?: number; nextToken?: string })
   hasMore: boolean;
 }> {
   const limit = params?.limit || 20;
-  const result = await TalaEntity.scan.go({
+
+  // Query the list index for efficient sorted retrieval
+  const result = await TalaEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,
   });

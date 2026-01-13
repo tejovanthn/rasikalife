@@ -124,9 +124,12 @@ export async function listContents(params?: { limit?: number; nextToken?: string
   hasMore: boolean;
 }> {
   const limit = params?.limit || 20;
-  const result = await ContentEntity.scan.go({
+
+  // Query the list index for efficient sorted retrieval (sorted by updatedAt, newest first)
+  const result = await ContentEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,
+    order: 'desc', // Newest content first
   });
 
   const enrichedContents = (result.data || []).map(content => ({
@@ -145,6 +148,51 @@ export async function listContents(params?: { limit?: number; nextToken?: string
 
   return {
     items: enrichedContents,
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
+export async function listPublishedContents(params?: {
+  limit?: number;
+  nextToken?: string;
+}): Promise<{
+  items: ContentWithRelations[];
+  nextToken?: string;
+  hasMore: boolean;
+}> {
+  const limit = params?.limit || 100;
+
+  // Query the list index and fetch more items to account for filtering
+  // We fetch 3x the requested limit to have a buffer for filtering
+  const fetchLimit = Math.min(limit * 3, 1000);
+
+  const result = await ContentEntity.query.list({}).go({
+    limit: fetchLimit,
+    cursor: params?.nextToken,
+    order: 'desc', // Newest content first
+  });
+
+  // Filter for published and public content
+  const publishedContents = (result.data || [])
+    .filter(content => content.status === 'published' && content.visibility === 'public')
+    .slice(0, limit) // Take only the requested limit
+    .map(content => ({
+      id: content.id,
+      path: content.path,
+      content: content.content,
+      category: content.category,
+      status: content.status,
+      visibility: content.visibility,
+      editorId: content.editorId,
+      meta: content.meta,
+      navigation: content.navigation,
+      createdAt: content.createdAt,
+      updatedAt: content.updatedAt,
+    }));
+
+  return {
+    items: publishedContents,
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };

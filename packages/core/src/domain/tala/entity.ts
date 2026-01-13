@@ -58,6 +58,19 @@ export const TalaEntity = new Entity(
           template: 'TALA#${id}',
         },
       },
+      list: {
+        index: 'gsi2',
+        pk: {
+          field: 'gsi2pk',
+          composite: [],
+          template: 'TALA_LIST',
+        },
+        sk: {
+          field: 'gsi2sk',
+          composite: ['name', 'id'],
+          template: '${name}#${id}',
+        },
+      },
     },
   },
   { client: dynamoClient, table: process.env.DYNAMODB_TABLE || 'RasikaLifeTable' }

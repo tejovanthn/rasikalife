@@ -30,7 +30,11 @@ export const compositionRouter = createTRPCRouter({
     .input(z.object({ id: z.string().min(1) }))
     .mutation(({ input }) => Composition.deleteComposition(input.id)),
 
-  byArtist: publicProcedure
-    .input(z.object({ artistId: z.string().min(1) }))
-    .query(({ input }) => Composition.getCompositionsByArtist(input.artistId)),
+  byComposer: publicProcedure
+    .input(z.object({ composerId: z.string().min(1) }))
+    .query(({ input }) => Composition.getCompositionsByComposer(input.composerId)),
+
+  byName: publicProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .query(({ input }) => Composition.getCompositionsByName(input.name)),
 });

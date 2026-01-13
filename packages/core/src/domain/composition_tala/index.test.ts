@@ -89,7 +89,11 @@ describe('CompositionTala', () => {
       expect(CompositionTalaEntity.query.primary).toHaveBeenCalledWith({
         compositionId: 'comp-123',
       });
-      expect(result).toEqual(mockRelationships);
+      expect(result).toEqual({
+        items: mockRelationships,
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
   });
 
@@ -116,7 +120,11 @@ describe('CompositionTala', () => {
       const result = await getCompositionsByTala('tala-456');
 
       expect(CompositionTalaEntity.query.byTala).toHaveBeenCalledWith({ talaId: 'tala-456' });
-      expect(result).toEqual(mockRelationships);
+      expect(result).toEqual({
+        items: mockRelationships,
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
   });
 
