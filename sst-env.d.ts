@@ -17,7 +17,7 @@ declare module "sst" {
       "type": "sst.aws.Dynamo"
     }
     "RasikaWeb": {
-      "type": "sst.aws.Remix"
+      "type": "sst.aws.React"
       "url": string
     }
   }

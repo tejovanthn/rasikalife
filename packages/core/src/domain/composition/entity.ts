@@ -73,6 +73,10 @@ export const CompositionEntity = new Entity(
         required: false,
         default: () => [],
       },
+      sourceAttribution: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

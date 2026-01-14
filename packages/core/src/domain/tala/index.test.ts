@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createTala, getTala, getTalaByName, updateTala, deleteTala } from './index';
+import { createTala, deleteTala, getTala, getTalaByName, updateTala } from './index';
 import type { CreateTalaInput, UpdateTalaInput } from './index';
 
 vi.mock('../../utils', () => ({

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createComposition,
+  deleteComposition,
   getComposition,
   getCompositionsByComposer,
   updateComposition,
-  deleteComposition,
 } from './index';
 import type { CreateCompositionInput, UpdateCompositionInput } from './index';
 

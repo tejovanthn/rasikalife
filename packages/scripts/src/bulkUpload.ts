@@ -191,7 +191,7 @@ async function main() {
       const composerId = await getOrCreateArtist(composerName);
 
       const existingCompositions = await Composition.getCompositionsByComposer(composerId);
-      const exists = existingCompositions.some(c => c.title === comp.title);
+      const exists = existingCompositions.items.some(c => c.title === comp.title);
 
       if (exists) {
         console.warn(`⏭️  Skipping existing composition: "${comp.title}" by ${composerName}`);
@@ -212,6 +212,7 @@ async function main() {
         lyricsV1: comp.lyrics ?? undefined,
         ragaIds,
         talaIds,
+        sourceAttribution: comp.sourceAttribution,
       });
 
       console.log(`✅ Created composition: ${comp.title}`);

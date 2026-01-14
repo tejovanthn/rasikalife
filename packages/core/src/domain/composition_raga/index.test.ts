@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createCompositionRaga,
+  deleteCompositionRaga,
   getCompositionRagas,
   getCompositionsByRaga,
-  deleteCompositionRaga,
 } from './index';
 import type { CreateCompositionRagaInput } from './index';
 

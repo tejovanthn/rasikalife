@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createCompositionTala,
+  deleteCompositionTala,
   getCompositionTalas,
   getCompositionsByTala,
-  deleteCompositionTala,
 } from './index';
 import type { CreateCompositionTalaInput } from './index';
 

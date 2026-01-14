@@ -1,7 +1,7 @@
+import type { z } from 'zod';
 import { generateId } from '../../utils';
 import { CompositionTalaEntity } from './entity';
 import type { CompositionTala } from './entity';
-import type { z } from 'zod';
 import type { CreateCompositionTalaSchema } from './schema';
 
 export type CreateCompositionTalaInput = z.infer<typeof CreateCompositionTalaSchema>;

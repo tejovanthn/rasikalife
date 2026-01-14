@@ -1,7 +1,7 @@
+import type { z } from 'zod';
 import { generateId } from '../../utils';
 import { TalaEntity } from './entity';
 import type { Tala } from './entity';
-import type { z } from 'zod';
 import type { CreateTalaSchema, UpdateTalaSchema } from './schema';
 
 export type CreateTalaInput = z.infer<typeof CreateTalaSchema>;

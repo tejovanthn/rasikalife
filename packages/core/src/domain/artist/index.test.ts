@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createArtist, deleteArtist, getArtist, updateArtist, listArtists } from '.';
+import { createArtist, deleteArtist, getArtist, listArtists, updateArtist } from '.';
 import type { CreateArtistInput } from '.';
 
 vi.mock('../../utils', () => ({

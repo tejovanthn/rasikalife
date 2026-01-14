@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createRaga, getRaga, getRagaByName, updateRaga, deleteRaga } from './index';
+import { createRaga, deleteRaga, getRaga, getRagaByName, updateRaga } from './index';
 import type { CreateRagaInput, UpdateRagaInput } from './index';
 
 vi.mock('../../utils', () => ({

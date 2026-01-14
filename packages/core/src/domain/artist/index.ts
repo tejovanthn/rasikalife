@@ -1,7 +1,7 @@
+import type { z } from 'zod';
 import { generateId } from '../../utils';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
-import type { z } from 'zod';
 import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
 
 export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;

@@ -1,5 +1,5 @@
-import { Resource } from 'sst';
 import { Composition } from '@rasika/core';
+import { Resource } from 'sst';
 
 async function testList() {
   process.env.DYNAMODB_TABLE = Resource.RasikaTable.name;

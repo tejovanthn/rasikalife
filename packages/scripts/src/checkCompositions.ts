@@ -1,5 +1,5 @@
-import { Resource } from 'sst';
 import { CompositionEntity } from '@rasika/core/domain/composition/entity';
+import { Resource } from 'sst';
 
 async function checkCompositions() {
   process.env.DYNAMODB_TABLE = Resource.RasikaTable.name;

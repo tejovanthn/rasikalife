@@ -193,9 +193,9 @@ importers:
       react-router:
         specifier: ^7.12.0
         version: 7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      remix-themes:
-        specifier: ^1.6.1
-        version: 1.6.1
+      react-router-theme:
+        specifier: ^1.2.1
+        version: 1.2.1(react@18.3.1)
       tailwind-merge:
         specifier: ^2.6.0
         version: 2.6.0
@@ -3597,6 +3597,11 @@ packages:
       '@types/react':
         optional: true
 
+  react-router-theme@1.2.1:
+    resolution: {integrity: sha512-BiZYd33v5zR4c/QVojlty9w6y1dSeV+aQT/0syfIA7QHKoIeNqvfo/nDqeGfhz+2d0aBLWyDyrNFXTzSmGE+1A==}
+    peerDependencies:
+      react: '>=18.0.0'
+
   react-router@7.12.0:
     resolution: {integrity: sha512-kTPDYPFzDVGIIGNLS5VJykK0HfHLY5MF3b+xj0/tTyNYL1gF1qs7u67Z9jEhQk2sQ98SUaHxlG31g1JtF7IfVw==}
     engines: {node: '>=20.0.0'}
@@ -3637,12 +3642,6 @@ packages:
 
   remark-rehype@11.1.2:
     resolution: {integrity: sha512-Dh7l57ianaEoIpzbp0PC9UKAdCSVklD8E5Rpw7ETfbTl3FqcOOgq5q2LVDhgGCkaBv7p24JXikPdvhhmHvKMsw==}
-
-  remix-themes@1.6.1:
-    resolution: {integrity: sha512-wqJyNKJ2hiOweycQzsAk7CZm+2mKNAbW2QZcX0riw52XepAxf9R2v8NYyeUz+uWmb3Fulyi71s4aipNRTxCysw==}
-    peerDependencies:
-      '@remix-run/react': '>= 1'
-      '@remix-run/server-runtime': '>= 1'
 
   require-directory@2.1.1:
     resolution: {integrity: sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==}
@@ -8599,6 +8598,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.27
 
+  react-router-theme@1.2.1(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
   react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       cookie: 1.1.1
@@ -8645,8 +8648,6 @@ snapshots:
       mdast-util-to-hast: 13.2.1
       unified: 11.0.5
       vfile: 6.0.3
-
-  remix-themes@1.6.1: {}
 
   require-directory@2.1.1: {}
 

@@ -21,6 +21,7 @@ export const CreateCompositionSchema = z.object({
     .optional(),
   ragaIds: z.array(z.string()).optional(),
   talaIds: z.array(z.string()).optional(),
+  sourceAttribution: z.string().optional(),
 });
 
 export const UpdateCompositionSchema = z.object({

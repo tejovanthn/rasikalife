@@ -1,8 +1,8 @@
-import { appRouter } from './routers';
 import {
   type CreateAWSLambdaContextOptions,
   awsLambdaRequestHandler,
 } from '@trpc/server/adapters/aws-lambda';
+import { appRouter } from './routers';
 
 export type { AppRouter } from './routers';
 

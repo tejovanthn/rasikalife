@@ -1,8 +1,6 @@
-import { generateId } from '../../utils';
-import { CompositionEntity } from './entity';
-import type { Composition } from './entity';
 import type { z } from 'zod';
-import type { CreateCompositionSchema, UpdateCompositionSchema } from './schema';
+import { generateId } from '../../utils';
+import { getArtist } from '../artist';
 import {
   createCompositionRaga,
   deleteCompositionRaga,
@@ -15,9 +13,11 @@ import {
   getCompositionTalas,
   getCompositionsByTala as getTalaJunctionRecords,
 } from '../composition_tala';
-import { getArtist } from '../artist';
 import { getRaga } from '../raga';
 import { getTala } from '../tala';
+import { CompositionEntity } from './entity';
+import type { Composition } from './entity';
+import type { CreateCompositionSchema, UpdateCompositionSchema } from './schema';
 
 export type CreateCompositionInput = z.infer<typeof CreateCompositionSchema>;
 export type UpdateCompositionInput = z.infer<typeof UpdateCompositionSchema>;
@@ -83,7 +83,7 @@ async function createNameMaps(
 }
 
 export async function createComposition(input: CreateCompositionInput): Promise<Composition> {
-  const { ragaIds = [], talaIds = [], ...data } = input;
+  const { ragaIds = [], talaIds = [], sourceAttribution, ...data } = input;
 
   // Fetch related entities for denormalization
   const nameMaps = await createNameMaps(ragaIds, talaIds);
@@ -97,6 +97,7 @@ export async function createComposition(input: CreateCompositionInput): Promise<
     lyricsV1: data.lyricsV1 || [],
     ragas: nameMaps.ragas,
     talas: nameMaps.talas,
+    sourceAttribution,
   }).go();
 
   if (!result.data) throw new Error('Failed to create composition');

@@ -1,7 +1,7 @@
+import type { z } from 'zod';
 import { generateId } from '../../utils';
 import { ContentEntity } from './entity';
 import type { Content } from './entity';
-import type { z } from 'zod';
 import type { CreateContentSchema, UpdateContentSchema } from './schema';
 
 export type CreateContentInput = z.infer<typeof CreateContentSchema>;
