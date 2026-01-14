@@ -28,7 +28,6 @@ export const Header = () => {
     { href: '/carnatic/talas', label: 'Talas' },
     { href: '/carnatic/languages', label: 'Languages' },
     { href: '/about', label: 'About' },
-    { label: 'mode-toggle', component: <ModeToggle /> },
   ];
 
   return (
@@ -47,25 +46,22 @@ export const Header = () => {
             </div>
             <div className="hidden md:block">
               <nav className="ml-10 flex items-baseline space-x-4" aria-label="Main navigation">
-                {navLinks.map(link =>
-                  link.component ? (
-                    <div key={link.label}>{link.component}</div>
-                  ) : (
-                    <NavLink
-                      key={link.label}
-                      to={link.href}
-                      className={({ isActive }) =>
-                        `px-3 py-2 rounded-md text-sm font-medium ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`
-                      }
-                    >
-                      {link.label}
-                    </NavLink>
-                  )
-                )}
+                {navLinks.map(link => (
+                  <NavLink
+                    key={link.label}
+                    to={link.href}
+                    className={({ isActive }) =>
+                      `px-3 py-2 rounded-md text-sm font-medium ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`
+                    }
+                  >
+                    {link.label}
+                  </NavLink>
+                ))}
+                <ModeToggle />
               </nav>
             </div>
           </div>
@@ -90,25 +86,25 @@ export const Header = () => {
                   className="flex flex-col space-y-4 mt-4"
                   aria-label="Main navigation"
                 >
-                  {navLinks.map(link =>
-                    link.component ? (
-                      <div key={link.label}>{link.component}</div>
-                    ) : (
-                      <NavLink
-                        key={link.label}
-                        to={link.href}
-                        className={({ isActive }) =>
-                          `block px-3 py-2 rounded-md text-base font-medium ${
-                            isActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`
-                        }
-                      >
-                        {link.label}
-                      </NavLink>
-                    )
-                  )}
+                  {navLinks.map(link => (
+                    <NavLink
+                      key={link.label}
+                      to={link.href}
+                      className={({ isActive }) =>
+                        `block px-3 py-2 rounded-md text-base font-medium ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`
+                      }
+                    >
+                      {link.label}
+                    </NavLink>
+                  ))}
+                  <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-base font-medium text-muted-foreground">Theme</span>
+                    <ModeToggle />
+                  </div>
                 </nav>
               </SheetContent>
             </Sheet>

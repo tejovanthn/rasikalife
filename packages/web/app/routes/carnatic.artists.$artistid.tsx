@@ -3,7 +3,7 @@ import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { generateArtistOGImage } from '~/lib/og';
-import { ShareButtons } from '~/components/ui/share-buttons';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { Breadcrumb } from '~/components/Breadcrumb';
 
 // Artist type from @rasika/core domain/artist
@@ -182,19 +182,13 @@ export default function ArtistDetails() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
-      <header className="mb-8">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
-            <p className="text-lg text-muted-foreground">Indian Classical Music Artist</p>
-          </div>
-          <ShareButtons
-            url={shareUrl}
-            title={`${artist.name} - Indian Classical Music Artist`}
-            description={`Learn about ${artist.name} and their contributions to Indian classical music`}
-          />
-        </div>
-      </header>
+      <DetailPageHeader
+        title={artist.name}
+        subtitle="Indian Classical Music Artist"
+        shareUrl={shareUrl}
+        shareTitle={`${artist.name} - Indian Classical Music Artist`}
+        shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
+      />
 
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

@@ -94,7 +94,12 @@ export default function ArtistCompositions() {
             ))}
           </div>
 
-          <EntityPagination currentPage={currentPage} hasMore={hasMore} nextToken={nextToken} />
+          <EntityPagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            nextToken={nextToken}
+            prevToken={prevToken}
+          />
         </>
       )}
     </main>

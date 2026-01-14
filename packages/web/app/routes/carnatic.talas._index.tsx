@@ -53,10 +53,11 @@ export const meta: MetaFunction = () => {
 };
 
 export default function TalasIndex() {
-  const { talas, nextToken, hasMore } = useLoaderData<{
+  const { talas, nextToken, hasMore, prevToken } = useLoaderData<{
     talas: Tala[];
     nextToken: string | null;
     hasMore: boolean;
+    prevToken: string | null;
   }>();
 
   const [searchParams] = useSearchParams();
@@ -83,6 +84,7 @@ export default function TalasIndex() {
             currentPage={currentPage}
             hasMore={hasMore}
             nextToken={nextToken}
+            prevToken={prevToken}
             baseUrl="/carnatic/talas"
           />
         </>

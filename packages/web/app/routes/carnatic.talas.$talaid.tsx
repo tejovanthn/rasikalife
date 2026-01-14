@@ -3,6 +3,7 @@ import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 
 export async function loader({ params }: { params: { talaid?: string } }) {
   const { talaid } = params;
@@ -142,6 +143,8 @@ export default function TalaDetails() {
     return <Outlet />;
   }
 
+  const shareUrl = `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`;
+
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
     { label: 'Carnatic', path: '/carnatic' },
@@ -155,10 +158,13 @@ export default function TalaDetails() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{tala.name}</h1>
-        <p className="text-lg text-muted-foreground">Indian Classical Tala</p>
-      </header>
+      <DetailPageHeader
+        title={tala.name}
+        subtitle="Indian Classical Tala"
+        shareUrl={shareUrl}
+        shareTitle={`${tala.name} Tala - Indian Classical Music`}
+        shareDescription={`Learn about the ${tala.name} tala, a fundamental rhythmic cycle in Indian classical music`}
+      />
 
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

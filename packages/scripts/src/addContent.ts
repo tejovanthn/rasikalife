@@ -26,7 +26,7 @@ At Rasika.life, we:
 
 ## Our Commitment to Ethical Data Collection
 
-We believe in the power of shared knowledge and the importance of giving credit where it's due. Our database has been carefully compiled from various reputable sources across the web, including <attribute placeholder>. We're committed to transparent attribution - you'll find source credits for every piece of information in our database.
+We believe in the power of shared knowledge and the importance of giving credit where it's due. Our database has been carefully compiled from various reputable sources across the web, including karnatik.com and other respected Carnatic music resources. We're committed to transparent attribution - you'll find source credits for every piece of information in our database.
 
 ## Our Vision
 

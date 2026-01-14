@@ -92,6 +92,7 @@ export default function CompositionsIndex() {
             currentPage={currentPage}
             hasMore={hasMore}
             nextToken={nextToken}
+            prevToken={prevToken}
             baseUrl="/carnatic/compositions"
           />
         </>

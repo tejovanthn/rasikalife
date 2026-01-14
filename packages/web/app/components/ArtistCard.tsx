@@ -13,12 +13,12 @@ export function ArtistCard({ artist }: ArtistCardProps) {
   return (
     <Link
       to={`/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`}
-      className="block transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+      className="block cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
       aria-label={`View artist: ${artist.name}`}
     >
       <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{artist.name}</CardTitle>
+          <CardTitle className="text-lg hover:underline">{artist.name}</CardTitle>
           <Badge variant="secondary">Artist</Badge>
         </CardHeader>
       </Card>

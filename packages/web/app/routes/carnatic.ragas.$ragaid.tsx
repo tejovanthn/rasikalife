@@ -3,6 +3,7 @@ import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 
 export async function loader({ params }: { params: { ragaid?: string } }) {
   const { ragaid } = params;
@@ -142,6 +143,8 @@ export default function RagaDetails() {
     return <Outlet />;
   }
 
+  const shareUrl = `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`;
+
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
     { label: 'Carnatic', path: '/carnatic' },
@@ -155,10 +158,13 @@ export default function RagaDetails() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
-      <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{raga.name}</h1>
-        <p className="text-lg text-muted-foreground">Indian Classical Raga</p>
-      </header>
+      <DetailPageHeader
+        title={raga.name}
+        subtitle="Indian Classical Raga"
+        shareUrl={shareUrl}
+        shareTitle={`${raga.name} Raga - Indian Classical Music`}
+        shareDescription={`Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`}
+      />
 
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
