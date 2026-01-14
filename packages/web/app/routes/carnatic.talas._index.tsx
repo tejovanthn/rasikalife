@@ -1,3 +1,4 @@
+import { data } from 'react-router';
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
