@@ -38,7 +38,11 @@ export const Header = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/">
-                <img className="h-8 w-8" src="/android-chrome-192x192.png" alt="Logo" />
+                <img
+                  className="h-8 w-8"
+                  src="/android-chrome-192x192.png"
+                  alt="Rasika.life - Indian Classical Music Database"
+                />
               </Link>
             </div>
             <div className="hidden md:block">

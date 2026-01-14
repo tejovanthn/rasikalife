@@ -33,7 +33,8 @@
     "remix-themes": "^1.6.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "url-slug": "^4.0.1"
+    "url-slug": "^4.0.1",
+    "web-vitals": "^5.1.0"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.17.3",

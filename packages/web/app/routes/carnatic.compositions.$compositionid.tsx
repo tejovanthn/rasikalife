@@ -2,6 +2,8 @@ import { json, type MetaFunction } from '@remix-run/node';
 import { useLoaderData, Link } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { generateCompositionOGImage } from '~/lib/og';
+import { ShareButtons } from '~/components/ui/share-buttons';
 
 export async function loader({ params }: { params: { compositionid?: string } }) {
   const { compositionid } = params;
@@ -93,6 +95,10 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:url',
         content: `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`,
       },
+      {
+        property: 'og:image',
+        content: generateCompositionOGImage(composition),
+      },
       // Twitter Card tags
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: `${composition.title} - ${composition.composer.name}` },
@@ -100,6 +106,11 @@ export const meta: MetaFunction = ({ data }) => {
         name: 'twitter:description',
         content: `Indian classical ${composition.language} composition`,
       },
+      // Article meta tags
+      { property: 'article:author', content: composition.composer.name },
+      { property: 'article:published_time', content: composition.createdAt },
+      { property: 'article:modified_time', content: composition.updatedAt },
+      { property: 'article:section', content: 'Music Composition' },
       // Canonical URL
       {
         tagName: 'link',
@@ -204,12 +215,23 @@ export default function CompositionDetails() {
     hasMoreCompositionsByRaga: boolean;
   }>();
 
+  const shareUrl = `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`;
+
   return (
     <div className="max-w-4xl m-auto">
       <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{composition.title}</h1>
-        <p className="text-xl text-muted-foreground">by {composition.composer.name}</p>
-        <p className="text-lg text-muted-foreground">Language: {composition.language}</p>
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold mb-2">{composition.title}</h1>
+            <p className="text-xl text-muted-foreground">by {composition.composer.name}</p>
+            <p className="text-lg text-muted-foreground">Language: {composition.language}</p>
+          </div>
+          <ShareButtons
+            url={shareUrl}
+            title={`${composition.title} - ${composition.composer.name}`}
+            description={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
+          />
+        </div>
       </header>
 
       <section className="mb-8 p-6 bg-muted rounded-lg">

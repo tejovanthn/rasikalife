@@ -2,6 +2,8 @@ import { json, type MetaFunction } from '@remix-run/node';
 import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { generateArtistOGImage } from '~/lib/og';
+import { ShareButtons } from '~/components/ui/share-buttons';
 
 // Artist type from @rasika/core domain/artist
 type Artist = {
@@ -78,6 +80,10 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:url',
         content: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
       },
+      {
+        property: 'og:image',
+        content: generateArtistOGImage(artist),
+      },
       // Profile-specific Open Graph
       { property: 'profile:first_name', content: artist.name.split(' ')[0] },
       { property: 'profile:last_name', content: artist.name.split(' ').slice(1).join(' ') },
@@ -121,6 +127,19 @@ export const meta: MetaFunction = ({ data }) => {
           ],
         }),
       },
+      // Person structured data
+      {
+        tagName: 'script',
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          name: artist.name,
+          description: `Renowned classical musician in Indian classical music`,
+          url: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
+          knowsAbout: ['Carnatic Music', 'Indian Classical Music'],
+        }),
+      },
     ];
   }
 
@@ -146,6 +165,8 @@ export default function ArtistDetails() {
   // Check if we're on a nested route (like /compositions)
   const isNestedRoute = location.pathname.includes('/compositions');
 
+  const shareUrl = `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`;
+
   if (isNestedRoute) {
     return <Outlet />;
   }
@@ -153,8 +174,17 @@ export default function ArtistDetails() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <header className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
-        <p className="text-lg text-muted-foreground">Indian Classical Music Artist</p>
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <h1 className="text-4xl font-bold mb-2">{artist.name}</h1>
+            <p className="text-lg text-muted-foreground">Indian Classical Music Artist</p>
+          </div>
+          <ShareButtons
+            url={shareUrl}
+            title={`${artist.name} - Indian Classical Music Artist`}
+            description={`Learn about ${artist.name} and their contributions to Indian classical music`}
+          />
+        </div>
       </header>
 
       <section className="mb-8 p-6 bg-muted rounded-lg">
