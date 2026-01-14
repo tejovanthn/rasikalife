@@ -5,12 +5,14 @@ import { Resource } from 'sst';
 // Parse command line arguments
 // Usage: sst shell tsx src/bulkUpload.ts [--drop|-d] [limit]
 // --drop or -d: Drop all existing data before uploading
-// limit: Number of compositions to process (default: 1000)
+// limit: Number of compositions to process (default: 1000 in non-prod, unlimited in prod)
 const args = process.argv.slice(2);
 const shouldDropData =
   args.includes('--drop') || args.includes('-d') || process.env.DROP_DATA === 'true';
 const limitArg = args.find(arg => !arg.startsWith('-') && /^\d+$/.test(arg));
-const limit = limitArg ? Number.parseInt(limitArg, 10) : 1000;
+const isProd = process.env.SST_STAGE === 'prod';
+const defaultLimit = isProd ? undefined : 1000;
+const limit = limitArg ? Number.parseInt(limitArg, 10) : defaultLimit;
 
 interface NormalizedComposition {
   title: string | null;
@@ -230,11 +232,11 @@ async function main() {
   const rawData = fs.readFileSync(filePath, 'utf-8');
   const allCompositions: NormalizedComposition[] = JSON.parse(rawData);
 
-  // Limit to specified number for testing
-  const compositions = allCompositions.slice(0, limit);
+  // Limit to specified number for testing (unlimited in prod)
+  const compositions = limit ? allCompositions.slice(0, limit) : allCompositions;
 
   console.log(
-    `🎵 Found ${allCompositions.length} total compositions, processing first ${compositions.length} (${shouldDropData ? 'with' : 'without'} data drop)`
+    `🎵 Found ${allCompositions.length} total compositions, processing ${limit ? `first ${compositions.length}` : 'all'} (${shouldDropData ? 'with' : 'without'} data drop)`
   );
 
   let processed = 0;
