@@ -55,9 +55,7 @@ export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
 ];
 
-function Layout({ children }: { children: React.ReactNode }) {
-  const { theme } = useContext(ThemeContext);
-
+function Layout({ children, theme }: { children: React.ReactNode; theme: string }) {
   useEffect(() => {
     logAnalyticsEvent('page_view', {
       page_title: window.document.title,
@@ -67,7 +65,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" data-theme={theme} className={theme === 'dark' ? 'dark' : ''}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -92,7 +90,7 @@ export default function AppWithProviders() {
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
-      <Layout>
+      <Layout theme={theme}>
         <Outlet />
       </Layout>
     </ThemeContext.Provider>
