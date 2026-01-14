@@ -4,7 +4,7 @@ const bucket = new sst.aws.Bucket('RasikaBucket', {
   public: true,
 });
 
-const site = new sst.aws.Remix('RasikaWeb', {
+const site = new sst.aws.React('RasikaWeb', {
   link: [bucket, trpc],
   path: 'packages/web/',
   domain: {
