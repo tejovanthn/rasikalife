@@ -1,5 +1,4 @@
 import { createCookieSessionStorage } from 'react-router';
-import { createThemeSessionResolver } from 'remix-themes';
 import { Resource } from 'sst/resource';
 
 // You can default to 'development' if process.env.NODE_ENV is not set
@@ -17,4 +16,22 @@ const sessionStorage = createCookieSessionStorage({
   },
 });
 
-export const themeSessionResolver = createThemeSessionResolver(sessionStorage);
+export const themeSessionResolver = {
+  async getTheme(request: Request) {
+    const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+    return session.get('theme') || 'light';
+  },
+  async setTheme(theme: string) {
+    const session = await sessionStorage.getSession();
+    session.set('theme', theme);
+    return {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+    };
+  },
+  async commit(request: Request) {
+    const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+    return {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+    };
+  },
+};

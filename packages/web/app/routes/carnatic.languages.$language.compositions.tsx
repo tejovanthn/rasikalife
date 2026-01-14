@@ -1,9 +1,9 @@
-import { data, type LoaderFunction } from 'react-router';
-import { useLoaderData, Link, useSearchParams } from 'react-router';
+import { type LoaderFunction, data } from 'react-router';
+import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
-import { EmptyState } from '~/components/shared/EmptyState';
 import { EntityPagination } from '~/components/EntityPagination';
+import { EmptyState } from '~/components/shared/EmptyState';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { language } = params;

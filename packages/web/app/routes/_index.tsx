@@ -2,9 +2,9 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
-import { SectionHeader } from '~/components/shared';
-import { CompositionCard } from '~/components/CompositionCard';
 import { ArtistCard } from '~/components/ArtistCard';
+import { CompositionCard } from '~/components/CompositionCard';
+import { SectionHeader } from '~/components/shared';
 
 type LoaderData = {
   popularCompositions: any[];

@@ -1,10 +1,10 @@
-import { data, type MetaFunction } from 'react-router';
-import { useLoaderData, Link, Outlet, useLocation } from 'react-router';
+import { type MetaFunction, data } from 'react-router';
+import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
+import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { generateArtistOGImage } from '~/lib/og';
-import { DetailPageHeader } from '~/components/DetailPageHeader';
-import { Breadcrumb } from '~/components/Breadcrumb';
 
 // Artist type from @rasika/core domain/artist
 type Artist = {
@@ -180,7 +180,7 @@ export default function ArtistDetails() {
   ];
 
   return (
-    (<main className="container mx-auto px-4 py-8 max-w-4xl">
+    <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={artist.name}
@@ -236,6 +236,6 @@ export default function ArtistDetails() {
           </Link>
         </div>
       </section>
-    </main>)
+    </main>
   );
 }

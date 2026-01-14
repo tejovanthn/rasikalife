@@ -5,9 +5,9 @@ import { PassThrough } from 'node:stream';
  * For more information, see https://remix.run/file-conventions/entry.server
  */
 import { createReadableStreamFromReadable } from '@react-router/node';
-import { ServerRouter } from 'react-router';
 import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
+import { ServerRouter } from 'react-router';
 
 const ABORT_DELAY = 5_000;
 

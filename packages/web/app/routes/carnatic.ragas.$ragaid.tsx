@@ -1,9 +1,9 @@
-import { data, type MetaFunction } from 'react-router';
-import { useLoaderData, Link, Outlet, useLocation } from 'react-router';
+import { type MetaFunction, data } from 'react-router';
+import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
-import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
 export async function loader({ params }: { params: { ragaid?: string } }) {
   const { ragaid } = params;
@@ -156,7 +156,7 @@ export default function RagaDetails() {
   ];
 
   return (
-    (<main className="container mx-auto px-4 py-8 max-w-4xl">
+    <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={raga.name}
@@ -212,7 +212,7 @@ export default function RagaDetails() {
           </Link>
         </div>
       </section>
-    </main>)
+    </main>
   );
 }
 

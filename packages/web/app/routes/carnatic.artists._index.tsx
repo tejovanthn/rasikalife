@@ -2,8 +2,8 @@ import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
-import { EmptyState } from '~/components/shared/EmptyState';
 import { EntityPagination } from '~/components/EntityPagination';
+import { EmptyState } from '~/components/shared/EmptyState';
 
 // Artist type from @rasika/core domain/artist
 type Artist = {

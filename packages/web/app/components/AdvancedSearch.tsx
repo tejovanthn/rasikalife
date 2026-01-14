@@ -1,6 +1,6 @@
-import { Form, useSearchParams, useSubmit } from 'react-router';
 import { Filter, Search, X } from 'lucide-react';
 import { useState } from 'react';
+import { Form, useSearchParams, useSubmit } from 'react-router';
 import { useHydrated } from '~/lib/progressive-enhancement';
 
 interface SearchFilters {

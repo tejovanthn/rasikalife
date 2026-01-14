@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 
 interface CompositionCardProps {
   composition: {
@@ -29,7 +29,7 @@ export function CompositionCard({
   showLanguage = true,
 }: CompositionCardProps) {
   return (
-    (<Link
+    <Link
       to={`/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`}
       className="block cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
       aria-label={`View composition: ${composition.title} by ${composition.composer.name}`}
@@ -63,6 +63,6 @@ export function CompositionCard({
           )}
         </CardContent>
       </Card>
-    </Link>)
+    </Link>
   );
 }

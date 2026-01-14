@@ -1,9 +1,9 @@
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
+import { EntityPagination } from '~/components/EntityPagination';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { EntityPagination } from '~/components/EntityPagination';
 
 // Raga type from @rasika/core domain/raga
 type Raga = {

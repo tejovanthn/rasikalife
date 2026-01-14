@@ -1,6 +1,6 @@
-import { Link, NavLink } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet';
 

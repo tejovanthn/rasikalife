@@ -1,6 +1,6 @@
-import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
-import { data, Link, useLoaderData } from 'react-router';
 import Markdown from 'react-markdown';
+import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
+import { Link, data, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

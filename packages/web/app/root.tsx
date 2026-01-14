@@ -1,4 +1,6 @@
-import type { LinksFunction, LoaderFunctionArgs } from 'react-router';
+import clsx from 'clsx';
+import { useContext, useEffect } from 'react';
+import type { LinksFunction } from 'react-router';
 import {
   Link,
   Links,
@@ -7,19 +9,20 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
-  useLoaderData,
   useRouteError,
   useRouteLoaderData,
 } from 'react-router';
-import clsx from 'clsx';
-import { useEffect } from 'react';
-import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes';
+import { useFetcher, useLoaderData } from 'react-router';
+import { useTheme } from 'react-router-theme';
+import { ThemeContext } from './components/theme-context';
+
+// Export loader and action from react-router-theme
+export { loader, action } from 'react-router-theme';
 
 import { Footer } from './components/footer';
 import { Header } from './components/header';
 import { logAnalyticsEvent } from './firebase';
 import styles from './globals.css?url';
-import { themeSessionResolver } from './sessions.server';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: styles },
@@ -52,16 +55,8 @@ export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
 ];
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const { getTheme } = await themeSessionResolver(request);
-  return {
-    theme: getTheme() || 'light', // Default to light theme
-  };
-}
-
 function Layout({ children }: { children: React.ReactNode }) {
-  const data = useLoaderData<typeof loader>();
-  const [theme] = useTheme();
+  const { theme } = useContext(ThemeContext);
 
   useEffect(() => {
     logAnalyticsEvent('page_view', {
@@ -72,12 +67,11 @@ function Layout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <html lang="en" className={clsx(theme)}>
+    <html lang="en" data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
-        <PreventFlashOnWrongTheme ssrTheme={Boolean(data?.theme)} />
         <Links />
       </head>
       <body>
@@ -92,24 +86,32 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppWithProviders() {
-  const data = useLoaderData<typeof loader>();
+  const loaderData = useLoaderData() as { theme: string };
+  const fetcher = useFetcher();
+  const [theme, setTheme] = useTheme(loaderData, fetcher);
+
   return (
-    <ThemeProvider specifiedTheme={(data?.theme as any) || null} themeAction="/action/set-theme">
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       <Layout>
         <Outlet />
       </Layout>
-    </ThemeProvider>
+    </ThemeContext.Provider>
   );
 }
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  const data = useRouteLoaderData<typeof loader>('root');
 
   return (
-    <ThemeProvider specifiedTheme={(data?.theme as any) || null} themeAction="/action/set-theme">
-      <Layout>
-        <div className="container mx-auto">
+    <html lang="en">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <div className="container mx-auto p-8">
           <h1 className="text-2xl font-bold">
             {isRouteErrorResponse(error)
               ? `${error.status} ${error.statusText}`
@@ -119,7 +121,8 @@ export function ErrorBoundary() {
           </h1>
           <Link to="/">Go back to home</Link>
         </div>
-      </Layout>
-    </ThemeProvider>
+        <Scripts />
+      </body>
+    </html>
   );
 }

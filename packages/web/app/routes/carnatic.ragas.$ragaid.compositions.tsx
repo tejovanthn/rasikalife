@@ -1,9 +1,16 @@
-import { data, type LoaderFunction } from 'react-router';
-import { useLoaderData, Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router';
+import { type LoaderFunction, data } from 'react-router';
+import {
+  Link,
+  useLoaderData,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
-import { EmptyState } from '~/components/shared/EmptyState';
 import { EntityPagination } from '~/components/EntityPagination';
+import { EmptyState } from '~/components/shared/EmptyState';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { ragaid } = params;
@@ -64,7 +71,7 @@ export default function RagaCompositions() {
   const currentPage = Number.parseInt(searchParams.get('page') || '1', 10);
 
   return (
-    (<div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
         <Link
           to={`/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
@@ -98,6 +105,6 @@ export default function RagaCompositions() {
           />
         </>
       )}
-    </div>)
+    </div>
   );
 }

@@ -1,6 +1,6 @@
-import { Link, useFetcher } from 'react-router';
 import { Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Link, useFetcher } from 'react-router';
 import { useHydrated } from '~/lib/progressive-enhancement';
 
 interface SearchResult {

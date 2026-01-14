@@ -1,6 +1,6 @@
 import type { LoaderFunction } from 'react-router';
-import { client } from '~/api.server';
 import { convert } from 'url-slug';
+import { client } from '~/api.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const baseUrl = 'https://rasika.life';

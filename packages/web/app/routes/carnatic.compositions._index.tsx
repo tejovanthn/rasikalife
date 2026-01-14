@@ -2,8 +2,8 @@ import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
-import { EmptyState } from '~/components/shared/EmptyState';
 import { EntityPagination } from '~/components/EntityPagination';
+import { EmptyState } from '~/components/shared/EmptyState';
 
 // Composition type from @rasika/core domain/composition
 type Composition = {

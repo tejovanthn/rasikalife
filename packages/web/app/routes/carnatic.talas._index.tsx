@@ -1,9 +1,9 @@
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
+import { EntityPagination } from '~/components/EntityPagination';
 import { TalaCard } from '~/components/TalaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { EntityPagination } from '~/components/EntityPagination';
 
 // Tala type from @rasika/core domain/tala
 type Tala = {

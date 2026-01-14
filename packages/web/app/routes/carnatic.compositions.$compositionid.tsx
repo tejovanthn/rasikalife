@@ -1,10 +1,33 @@
-import { data, type MetaFunction, type LinksFunction } from 'react-router';
-import { useLoaderData, Link } from 'react-router';
+import { type LinksFunction, type MetaFunction, data } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
-import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import { generateCompositionOGImage } from '~/lib/og';
-import { ShareButtons } from '~/components/ui/share-buttons';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { ShareButtons } from '~/components/ui/share-buttons';
+import { generateCompositionOGImage } from '~/lib/og';
+// TODO: Extract shared types to avoid duplication across packages
+// This type should be imported from @rasika/core but there's a namespace issue
+type Composition = {
+  id: string;
+  title: string;
+  composer: {
+    id: string;
+    name: string;
+  };
+  language: string;
+  lyricsV1?: Array<{
+    type: string;
+    order: number;
+    text: string;
+    number?: number;
+    ragaName?: string;
+  }>;
+  ragas: Array<{ id: string; name: string }>;
+  talas: Array<{ id: string; name: string }>;
+  sourceAttribution?: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export async function loader({ params }: { params: { compositionid?: string } }) {
   const { compositionid } = params;
@@ -191,28 +214,6 @@ export const links: LinksFunction = () => {
   ];
 };
 
-// Composition type from @rasika/core domain/composition
-type Composition = {
-  id: string;
-  title: string;
-  composer: {
-    id: string;
-    name: string;
-  };
-  language: string;
-  lyricsV1?: Array<{
-    type: string;
-    order: number;
-    text: string;
-    number?: number;
-    ragaName?: string;
-  }>;
-  ragas: Array<{ id: string; name: string }>;
-  talas: Array<{ id: string; name: string }>;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export default function CompositionDetails() {
   const {
     composition,
@@ -241,7 +242,7 @@ export default function CompositionDetails() {
   ];
 
   return (
-    (<div className="max-w-4xl m-auto">
+    <div className="max-w-4xl m-auto">
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -367,6 +368,19 @@ export default function CompositionDetails() {
               ))}
             </p>
           )}
+          {composition.sourceAttribution && (
+            <p>
+              <strong>Source:</strong>{' '}
+              <a
+                href={composition.sourceAttribution}
+                target="_blank"
+                rel="nofollow noreferrer"
+                className="text-primary hover:underline"
+              >
+                {composition.sourceAttribution}
+              </a>
+            </p>
+          )}
         </div>
       </section>
       {composition.lyricsV1 && composition.lyricsV1.length > 0 && (
@@ -426,6 +440,6 @@ export default function CompositionDetails() {
           </Link>
         </div>
       </section>
-    </div>)
+    </div>
   );
 }
