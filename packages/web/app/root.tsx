@@ -90,15 +90,6 @@ export default function AppWithProviders() {
   const fetcher = useFetcher();
   const [theme, setTheme] = useTheme(loaderData, fetcher, 'light');
 
-  // Update the HTML class when theme changes
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove('light', 'dark');
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    }
-  }, [theme]);
-
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
       <Layout>
