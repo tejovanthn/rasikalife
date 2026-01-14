@@ -9,6 +9,7 @@ import {
   Scripts,
   ScrollRestoration,
   isRouteErrorResponse,
+  useLocation,
   useRouteError,
   useRouteLoaderData,
 } from 'react-router';
@@ -56,13 +57,15 @@ export const links: LinksFunction = () => [
 ];
 
 function Layout({ children, theme }: { children: React.ReactNode; theme: string }) {
+  const location = useLocation();
+
   useEffect(() => {
     logAnalyticsEvent('page_view', {
       page_title: window.document.title,
       page_location: window.location.href,
-      page_path: window.location.pathname,
+      page_path: location.pathname,
     });
-  }, []);
+  }, [location.pathname]); // Track on initial load and route changes
 
   return (
     <html lang="en" data-theme={theme} className={theme === 'dark' ? 'dark' : ''}>
