@@ -1,4 +1,4 @@
-import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
+import type { LinksFunction, LoaderFunctionArgs } from 'react-router';
 import {
   Link,
   Links,
@@ -10,7 +10,7 @@ import {
   useLoaderData,
   useRouteError,
   useRouteLoaderData,
-} from '@remix-run/react';
+} from 'react-router';
 import clsx from 'clsx';
 import { useEffect } from 'react';
 import { PreventFlashOnWrongTheme, ThemeProvider, useTheme } from 'remix-themes';
@@ -94,7 +94,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 export default function AppWithProviders() {
   const data = useLoaderData<typeof loader>();
   return (
-    <ThemeProvider specifiedTheme={data?.theme || null} themeAction="/action/set-theme">
+    <ThemeProvider specifiedTheme={(data?.theme as any) || null} themeAction="/action/set-theme">
       <Layout>
         <Outlet />
       </Layout>
@@ -107,7 +107,7 @@ export function ErrorBoundary() {
   const data = useRouteLoaderData<typeof loader>('root');
 
   return (
-    <ThemeProvider specifiedTheme={data?.theme || null} themeAction="/action/set-theme">
+    <ThemeProvider specifiedTheme={(data?.theme as any) || null} themeAction="/action/set-theme">
       <Layout>
         <div className="container mx-auto">
           <h1 className="text-2xl font-bold">

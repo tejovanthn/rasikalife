@@ -4,10 +4,10 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "build": "remix vite:build",
-    "dev": "sst dev remix vite:dev",
-    "start": "remix-serve ./build/server/index.js",
-    "typecheck": "tsc"
+    "build": "react-router build",
+    "dev": "sst dev react-router dev",
+    "start": "react-router-serve ./build/server/index.js",
+    "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",
@@ -17,9 +17,10 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@rasika/core": "workspace:*",
     "@rasika/trpc": "workspace:*",
-    "@remix-run/node": "^2.17.3",
-    "@remix-run/react": "^2.17.3",
-    "@remix-run/serve": "^2.17.3",
+    "@react-router/fs-routes": "^7.12.0",
+    "@react-router/node": "^7.12.0",
+    "@react-router/remix-routes-option-adapter": "^7.12.0",
+    "@react-router/serve": "^7.12.0",
     "@trpc/client": "^11.8.1",
     "@trpc/server": "^11.8.1",
     "class-variance-authority": "^0.7.1",
@@ -30,6 +31,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.1.0",
+    "react-router": "^7.12.0",
     "remix-themes": "^1.6.1",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
@@ -37,7 +39,7 @@
     "web-vitals": "^5.1.0"
   },
   "devDependencies": {
-    "@remix-run/dev": "^2.17.3",
+    "@react-router/dev": "^7.12.0",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.23",

@@ -1,6 +1,6 @@
-import type { LoaderFunction, MetaFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import type { LoaderFunction, MetaFunction } from 'react-router';
+import { data } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 import { SectionHeader } from '~/components/shared';
 import { CompositionCard } from '~/components/CompositionCard';
@@ -77,7 +77,7 @@ export const loader: LoaderFunction = async () => {
       client.artist.list.query({ limit: 8 }),
     ]);
 
-    return json<LoaderData>({
+    return data<LoaderData>({
       popularCompositions: popularCompositions.items,
       recentCompositions: recentCompositions.items,
       featuredArtists: featuredArtists.items,
@@ -85,7 +85,7 @@ export const loader: LoaderFunction = async () => {
   } catch (error) {
     console.error('Error loading homepage data:', error);
     // Return empty arrays on error to prevent crashes
-    return json<LoaderData>({
+    return data<LoaderData>({
       popularCompositions: [],
       recentCompositions: [],
       featuredArtists: [],
