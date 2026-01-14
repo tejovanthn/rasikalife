@@ -1,6 +1,10 @@
 import type { LoaderFunction } from 'react-router';
 import { convert } from 'url-slug';
 import { client } from '~/api.server';
+import type { Artist } from '@rasika/core/domain/artist/entity';
+import type { Composition } from '@rasika/core/domain/composition/entity';
+import type { Raga } from '@rasika/core/domain/raga/entity';
+import type { Tala } from '@rasika/core/domain/tala/entity';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const baseUrl = 'https://rasika.life';
@@ -25,9 +29,9 @@ export const loader: LoaderFunction = async ({ request }) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${artists
   .map(
-    (artist: any) => `  <url>
-    <loc>${generateEntityUrl('artists', artist.name, artist.id)}</loc>
-    <lastmod>${artist.updatedAt || artist.createdAt}</lastmod>
+    artist => `  <url>
+    <loc>${generateEntityUrl('artists', (artist as Artist).name, (artist as Artist).id)}</loc>
+    <lastmod>${(artist as Artist).updatedAt || (artist as Artist).createdAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>`
@@ -36,9 +40,9 @@ ${artists
 
 ${compositions
   .map(
-    (comp: any) => `  <url>
-    <loc>${generateEntityUrl('compositions', comp.title, comp.id)}</loc>
-    <lastmod>${comp.updatedAt || comp.createdAt}</lastmod>
+    comp => `  <url>
+    <loc>${generateEntityUrl('compositions', (comp as Composition).title, (comp as Composition).id)}</loc>
+    <lastmod>${(comp as Composition).updatedAt || (comp as Composition).createdAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>`
@@ -47,9 +51,9 @@ ${compositions
 
 ${ragas
   .map(
-    (raga: any) => `  <url>
-    <loc>${generateEntityUrl('ragas', raga.name, raga.id)}</loc>
-    <lastmod>${raga.updatedAt || raga.createdAt}</lastmod>
+    raga => `  <url>
+    <loc>${generateEntityUrl('ragas', (raga as Raga).name, (raga as Raga).id)}</loc>
+    <lastmod>${(raga as Raga).updatedAt || (raga as Raga).createdAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`
@@ -58,9 +62,9 @@ ${ragas
 
 ${talas
   .map(
-    (tala: any) => `  <url>
-    <loc>${generateEntityUrl('talas', tala.name, tala.id)}</loc>
-    <lastmod>${tala.updatedAt || tala.createdAt}</lastmod>
+    tala => `  <url>
+    <loc>${generateEntityUrl('talas', (tala as Tala).name, (tala as Tala).id)}</loc>
+    <lastmod>${(tala as Tala).updatedAt || (tala as Tala).createdAt}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>`
@@ -100,7 +104,9 @@ ${talas
 };
 
 // Helper function to collect all entities with pagination
+// biome-ignore lint/suspicious/noExplicitAny: tRPC types are complex
 async function collectAllEntities(listFn: any, type: string) {
+  // biome-ignore lint/suspicious/noExplicitAny: array of entities from API
   const entities: any[] = [];
   let nextToken: string | undefined;
 

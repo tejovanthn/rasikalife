@@ -4,6 +4,8 @@ import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import type { Tala } from '@rasika/core/domain/tala/entity';
+import type { Composition } from '@rasika/core/domain/composition/entity';
 
 export async function loader({ params }: { params: { talaid?: string } }) {
   const { talaid } = params;
@@ -43,7 +45,7 @@ export async function loader({ params }: { params: { talaid?: string } }) {
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const tala = (data as any)?.tala;
+  const tala = (data as { tala?: Tala })?.tala;
 
   if (tala) {
     return [
@@ -119,20 +121,12 @@ export const meta: MetaFunction = ({ data }) => {
   ];
 };
 
-// Tala type from @rasika/core domain/tala
-type Tala = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export default function TalaDetails() {
   const location = useLocation();
 
   const { tala, compositions, hasMoreCompositions } = useLoaderData<{
     tala: Tala;
-    compositions: any[];
+    compositions: Composition[];
     hasMoreCompositions: boolean;
   }>();
 
