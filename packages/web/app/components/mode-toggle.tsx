@@ -1,6 +1,6 @@
-import { useContext } from 'react';
+import { useFetcher, useRouteLoaderData } from 'react-router';
+import { useTheme } from 'react-router-theme';
 import { Moon, Sun } from 'lucide-react';
-import { ThemeContext } from './theme-context';
 
 import { Button } from './ui/button';
 import {
@@ -11,7 +11,9 @@ import {
 } from './ui/dropdown-menu';
 
 export function ModeToggle() {
-  const { theme, setTheme } = useContext(ThemeContext);
+  const loaderData = useRouteLoaderData('root') as { theme: string };
+  const fetcher = useFetcher();
+  const [theme, setTheme] = useTheme(loaderData, fetcher);
 
   return (
     <DropdownMenu>
