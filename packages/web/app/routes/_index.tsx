@@ -100,7 +100,7 @@ export default function HomePage() {
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Hero Section */}
       <section className="text-center py-12 mb-12">
-        <h1 className="text-5xl font-bold text-foreground mb-4">Welcome to Rasika.life</h1>
+        <h1 className="hero-title">Welcome to Rasika.life</h1>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Explore the rich world of Indian classical music. Discover compositions, learn about ragas
           and talas, and connect with the beauty of classical traditions.
@@ -174,7 +174,7 @@ export default function HomePage() {
 
       {/* Quick Links */}
       <section className="bg-muted rounded-lg p-8">
-        <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Explore by Category</h2>
+        <h2 className="section-heading text-center">Explore by Category</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/carnatic/compositions"

@@ -18,6 +18,7 @@ interface CompositionCardProps {
   showRagas?: boolean;
   showTalas?: boolean;
   showComposer?: boolean;
+  showLanguage?: boolean;
 }
 
 export function CompositionCard({
@@ -25,28 +26,30 @@ export function CompositionCard({
   showRagas = true,
   showTalas = true,
   showComposer = true,
+  showLanguage = true,
 }: CompositionCardProps) {
   return (
     <Link
       to={`/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`}
-      className="block transition-transform hover:scale-[1.02]"
+      className="block transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+      aria-label={`View composition: ${composition.title} by ${composition.composer.name}`}
     >
       <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg leading-tight">{composition.title}</CardTitle>
           <div className="flex flex-wrap gap-1">
-            <Badge variant="outline">{composition.language}</Badge>
+            {showLanguage && <Badge variant="language">{composition.language}</Badge>}
             {showRagas &&
               composition.ragas &&
               composition.ragas.map(raga => (
-                <Badge key={raga.id} variant="secondary">
+                <Badge key={raga.id} variant="raga">
                   {raga.name}
                 </Badge>
               ))}
             {showTalas &&
               composition.talas &&
               composition.talas.map(tala => (
-                <Badge key={tala.id} variant="secondary">
+                <Badge key={tala.id} variant="tala">
                   {tala.name}
                 </Badge>
               ))}

@@ -72,9 +72,7 @@ export default function CompositionsIndex() {
   return (
     <div className="max-w-6xl">
       <header className="mb-8">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
-          Compositions
-        </h1>
+        <h1 className="page-title">Compositions</h1>
         <p className="text-xl text-muted-foreground">
           Explore traditional Indian classical music compositions
         </p>

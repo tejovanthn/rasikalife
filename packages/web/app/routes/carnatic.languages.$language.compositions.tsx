@@ -1,66 +1,46 @@
 import { json, type LoaderFunction } from '@remix-run/node';
-import {
-  useLoaderData,
-  Link,
-  useNavigate,
-  useSearchParams,
-  useLocation,
-  useParams,
-} from '@remix-run/react';
+import { useLoaderData, Link, useSearchParams } from '@remix-run/react';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { EntityPagination } from '~/components/EntityPagination';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
-  const { talaid } = params;
+  const { language } = params;
 
-  if (!talaid) {
-    throw new Response('Tala ID is required', { status: 400 });
+  if (!language) {
+    throw new Response('Language is required', { status: 400 });
   }
 
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const itemsPerPage = 36;
 
-  const slugId = talaid.split('-').pop();
-
-  if (!slugId) {
-    throw new Response('Invalid URL format', { status: 400 });
-  }
-
   try {
-    const tala = await client.tala.get.query({ id: slugId });
+    const decodedLanguage = decodeURIComponent(language);
 
-    if (!tala) {
-      throw new Response('Tala not found', { status: 404 });
-    }
-
-    const result = await client.composition.byTala.query({
-      talaId: tala.id,
+    const result = await client.composition.byLanguage.query({
+      language: decodedLanguage,
       limit: itemsPerPage,
       nextToken: nextToken || undefined,
     });
 
     return json({
-      tala,
+      language: decodedLanguage,
       compositions: result.items,
       hasMore: result.hasMore,
       nextToken: result.nextToken,
       prevToken: nextToken,
     });
   } catch (error) {
-    console.error('Failed to load tala compositions:', error);
+    console.error('Failed to load language compositions:', error);
     throw new Response('Failed to load compositions', { status: 500 });
   }
 };
 
-export default function TalaCompositions() {
-  const location = useLocation();
-  const { talaid } = useParams();
-
-  const { tala, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
-    tala: { id: string; name: string };
+export default function LanguageCompositions() {
+  const { language, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
+    language: string;
     compositions: any[];
     hasMore: boolean;
     nextToken: string | null;
@@ -74,25 +54,29 @@ export default function TalaCompositions() {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
         <Link
-          to={`/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`}
+          to={`/carnatic/languages/${encodeURIComponent(language)}`}
           className="text-primary hover:underline mb-2 inline-block"
         >
-          ← Back to {tala.name}
+          ← Back to {language}
         </Link>
-        <h1 className="text-3xl font-bold">Compositions in {tala.name}</h1>
-        <p className="text-muted-foreground mt-2">All compositions performed in {tala.name} tala</p>
+        <h1 className="text-3xl font-bold">Compositions in {language}</h1>
+        <p className="text-muted-foreground mt-2">All compositions in the {language} language</p>
       </div>
 
       {!compositions.length ? (
         <EmptyState
           message="No compositions found"
-          description={`There are no compositions in ${tala.name} tala in our database yet.`}
+          description={`There are no compositions in ${language} in our database yet.`}
         />
       ) : (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {compositions.map(composition => (
-              <CompositionCard key={composition.id} composition={composition} showTalas={false} />
+              <CompositionCard
+                key={composition.id}
+                composition={composition}
+                showLanguage={false}
+              />
             ))}
           </div>
 
@@ -100,7 +84,7 @@ export default function TalaCompositions() {
             currentPage={currentPage}
             hasMore={hasMore}
             nextToken={nextToken}
-            baseUrl={`/carnatic/talas/${talaid}/compositions`}
+            baseUrl={`/carnatic/languages/${encodeURIComponent(language)}/compositions`}
           />
         </>
       )}

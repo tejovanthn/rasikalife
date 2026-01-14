@@ -58,11 +58,7 @@ export function EntityCompositions({
         </h2>
         {showViewMore && (
           <Link
-            to={
-              entityType === 'language'
-                ? `/carnatic/languages/${encodeURIComponent(entitySlug)}`
-                : `/carnatic/${entityType}s/${entitySlug}/compositions`
-            }
+            to={`/carnatic/${entityType}s/${entitySlug}/compositions`}
             className="text-sm text-primary hover:underline"
           >
             View all compositions →
@@ -78,6 +74,7 @@ export function EntityCompositions({
             showRagas={entityType !== 'raga'}
             showTalas={entityType !== 'tala'}
             showComposer={entityType !== 'artist'}
+            showLanguage={entityType !== 'language'}
           />
         ))}
       </div>

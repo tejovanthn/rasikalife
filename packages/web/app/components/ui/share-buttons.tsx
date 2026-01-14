@@ -18,7 +18,6 @@ export function ShareButtons({ url, title, description }: ShareButtonsProps) {
         });
       } catch (error) {
         // User cancelled share or error occurred
-        console.log('Share cancelled or failed:', error);
       }
     } else {
       // Fallback: copy to clipboard

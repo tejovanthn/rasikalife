@@ -6,7 +6,6 @@ interface ArtistCardProps {
   artist: {
     id: string;
     name: string;
-    createdAt: string;
   };
 }
 
@@ -14,18 +13,14 @@ export function ArtistCard({ artist }: ArtistCardProps) {
   return (
     <Link
       to={`/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`}
-      className="block transition-transform hover:scale-[1.02]"
+      className="block transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+      aria-label={`View artist: ${artist.name}`}
     >
       <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">{artist.name}</CardTitle>
           <Badge variant="secondary">Artist</Badge>
         </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">
-            Added {new Date(artist.createdAt).toLocaleDateString()}
-          </p>
-        </CardContent>
       </Card>
     </Link>
   );

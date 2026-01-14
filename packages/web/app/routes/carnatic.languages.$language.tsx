@@ -1,5 +1,5 @@
 import { json, type LoaderFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
@@ -34,6 +34,13 @@ export default function LanguageDetails() {
     compositions: any[];
     hasMoreCompositions: boolean;
   }>();
+
+  // Check if we're on a nested route (like /compositions)
+  const isNestedRoute = useLocation().pathname.includes('/compositions');
+
+  if (isNestedRoute) {
+    return <Outlet />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

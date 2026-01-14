@@ -6,7 +6,6 @@ interface RagaCardProps {
   raga: {
     id: string;
     name: string;
-    createdAt: string;
   };
 }
 
@@ -14,18 +13,14 @@ export function RagaCard({ raga }: RagaCardProps) {
   return (
     <Link
       to={`/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
-      className="block transition-transform hover:scale-[1.02]"
+      className="block transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+      aria-label={`View raga: ${raga.name}`}
     >
       <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">{raga.name}</CardTitle>
-          <Badge variant="secondary">Raga</Badge>
+          <Badge variant="raga">Raga</Badge>
         </CardHeader>
-        <CardContent className="pt-0">
-          <p className="text-sm text-muted-foreground">
-            Added {new Date(raga.createdAt).toLocaleDateString()}
-          </p>
-        </CardContent>
       </Card>
     </Link>
   );

@@ -118,14 +118,14 @@ export default function CarnaticIndex() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Hero Section */}
-      <section className="text-center py-12 mb-12">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">Carnatic Music</h1>
+      <section className="centered-section">
+        <h1 className="hero-title">Carnatic Music</h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
           Immerse yourself in the ancient tradition of South Indian classical music. Explore the
           intricate ragas, complex talas, and beautiful compositions that form the foundation of
           this rich musical heritage.
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+        <div className="category-grid">
           <Link
             to="/carnatic/compositions"
             className="p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition-colors"
@@ -146,6 +146,13 @@ export default function CarnaticIndex() {
           >
             <h3 className="font-semibold text-purple-900">Talas</h3>
             <p className="text-xs text-purple-700 mt-1">Rhythmic Cycles</p>
+          </Link>
+          <Link
+            to="/carnatic/languages"
+            className="p-4 bg-red-50 rounded-lg text-center hover:bg-red-100 transition-colors"
+          >
+            <h3 className="font-semibold text-red-900">Languages</h3>
+            <p className="text-xs text-red-700 mt-1">Classical Languages</p>
           </Link>
           <Link
             to="/carnatic/artists"

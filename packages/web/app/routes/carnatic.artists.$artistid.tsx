@@ -4,6 +4,7 @@ import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { generateArtistOGImage } from '~/lib/og';
 import { ShareButtons } from '~/components/ui/share-buttons';
+import { Breadcrumb } from '~/components/Breadcrumb';
 
 // Artist type from @rasika/core domain/artist
 type Artist = {
@@ -17,8 +18,6 @@ export async function loader({
   params,
   request,
 }: { params: { artistid?: string }; request: Request }) {
-  console.log('🎨 ArtistDetails loader called for:', new URL(request.url).pathname);
-
   const { artistid } = params;
 
   if (!artistid) {
@@ -135,7 +134,7 @@ export const meta: MetaFunction = ({ data }) => {
           '@context': 'https://schema.org',
           '@type': 'Person',
           name: artist.name,
-          description: `Renowned classical musician in Indian classical music`,
+          description: 'Renowned classical musician in Indian classical music',
           url: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
           knowsAbout: ['Carnatic Music', 'Indian Classical Music'],
         }),
@@ -154,7 +153,6 @@ export const meta: MetaFunction = ({ data }) => {
 
 export default function ArtistDetails() {
   const location = useLocation();
-  console.log('🎨 Rendering ArtistDetails component for:', location.pathname);
 
   const { artist, compositions, hasMoreCompositions } = useLoaderData<{
     artist: Artist;
@@ -171,8 +169,19 @@ export default function ArtistDetails() {
     return <Outlet />;
   }
 
+  const breadcrumbItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Carnatic', path: '/carnatic' },
+    { label: 'Artists', path: '/carnatic/artists' },
+    {
+      label: artist.name,
+      path: `/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
+    },
+  ];
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <Breadcrumb items={breadcrumbItems} />
       <header className="mb-8">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">

@@ -78,3 +78,60 @@
     @apply leading-7 [&:not(:first-child)]:mt-3;
   }
 }
+
+@layer utilities {
+  /* Page titles - used for main headings on index pages */
+  .page-title {
+    @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-4;
+  }
+
+  /* Hero titles - used for main headings in hero sections */
+  .hero-title {
+    @apply text-5xl font-bold mb-4;
+  }
+
+  /* Section headings - used for secondary headings */
+  .section-heading {
+    @apply text-2xl font-bold mb-6;
+  }
+
+  /* Error messages - used for error states */
+  .error-heading {
+    @apply text-2xl font-bold text-red-600;
+  }
+
+  /* Card link styles - used for navigation links in cards */
+  .card-link {
+    @apply text-blue-600 hover:text-blue-800 font-medium text-sm;
+  }
+
+  /* Category card styles - used for category navigation cards */
+  .category-card {
+    @apply p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition-colors;
+  }
+
+  /* Category card title - used for titles within category cards */
+  .category-card-title {
+    @apply font-semibold text-blue-900;
+  }
+
+  /* Category card subtitle - used for subtitles within category cards */
+  .category-card-subtitle {
+    @apply text-xs text-blue-700 mt-1;
+  }
+
+  /* Hero description - used for description text in hero sections */
+  .hero-description {
+    @apply text-xl text-muted-foreground mb-8 max-w-3xl mx-auto;
+  }
+
+  /* Centered section - used for centered content sections */
+  .centered-section {
+    @apply text-center py-12 mb-12;
+  }
+
+  /* Grid layout for categories - used for category grids */
+  .category-grid {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4 max-w-2xl mx-auto;
+  }
+}

@@ -2,6 +2,7 @@ import { json, type MetaFunction } from '@remix-run/node';
 import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { Breadcrumb } from '~/components/Breadcrumb';
 
 export async function loader({ params }: { params: { talaid?: string } }) {
   const { talaid } = params;
@@ -141,8 +142,19 @@ export default function TalaDetails() {
     return <Outlet />;
   }
 
+  const breadcrumbItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Carnatic', path: '/carnatic' },
+    { label: 'Talas', path: '/carnatic/talas' },
+    {
+      label: tala.name,
+      path: `/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+    },
+  ];
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <Breadcrumb items={breadcrumbItems} />
       <header className="mb-8">
         <h1 className="text-4xl font-bold mb-2">{tala.name}</h1>
         <p className="text-lg text-muted-foreground">Indian Classical Tala</p>

@@ -1,5 +1,12 @@
 import { json, type LoaderFunction } from '@remix-run/node';
-import { useLoaderData, Link, useNavigate, useSearchParams, useLocation } from '@remix-run/react';
+import {
+  useLoaderData,
+  Link,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+  useParams,
+} from '@remix-run/react';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -50,6 +57,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export default function RagaCompositions() {
   const location = useLocation();
+  const { ragaid } = useParams();
 
   const { raga, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
     raga: { id: string; name: string };
@@ -90,7 +98,12 @@ export default function RagaCompositions() {
             ))}
           </div>
 
-          <EntityPagination currentPage={currentPage} hasMore={hasMore} nextToken={nextToken} />
+          <EntityPagination
+            currentPage={currentPage}
+            hasMore={hasMore}
+            nextToken={nextToken}
+            baseUrl={`/carnatic/ragas/${ragaid}/compositions`}
+          />
         </>
       )}
     </div>

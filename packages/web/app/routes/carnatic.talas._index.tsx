@@ -65,9 +65,7 @@ export default function TalasIndex() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <header className="mb-8">
-        <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
-          Talas
-        </h1>
+        <h1 className="page-title">Talas</h1>
         <p className="text-xl text-muted-foreground">Explore traditional Indian classical talas</p>
       </header>
 

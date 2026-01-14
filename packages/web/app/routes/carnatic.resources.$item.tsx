@@ -6,8 +6,6 @@ import { client } from '~/api.server';
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
 
-  console.log(url.pathname);
-
   const response = await client.content.byPath.query({ path: url.pathname });
   if (!response.data?.content) {
     throw new Response(null, {

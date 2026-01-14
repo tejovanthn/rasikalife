@@ -1,25 +1,24 @@
-import { Link } from '@remix-run/react';
+import { Link, NavLink } from '@remix-run/react';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '~/components/ui/sheet';
 
 import { ModeToggle } from './mode-toggle';
 
-const NavLink = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => (
-  <a href={href} className="px-3 py-2 rounded-md text-sm font-medium">
-    {children}
-  </a>
-);
-
 export const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const mobileNavRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (isSidebarOpen && mobileNavRef.current) {
+      // Focus the first link when menu opens
+      const firstLink = mobileNavRef.current.querySelector('a');
+      if (firstLink) {
+        firstLink.focus();
+      }
+    }
+  }, [isSidebarOpen]);
 
   const navLinks = [
     { href: '/', label: 'Home' },
@@ -27,6 +26,7 @@ export const Header = () => {
     { href: '/carnatic/artists', label: 'Artists' },
     { href: '/carnatic/ragas', label: 'Ragas' },
     { href: '/carnatic/talas', label: 'Talas' },
+    { href: '/carnatic/languages', label: 'Languages' },
     { href: '/about', label: 'About' },
     { label: 'mode-toggle', component: <ModeToggle /> },
   ];
@@ -46,17 +46,27 @@ export const Header = () => {
               </Link>
             </div>
             <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
+              <nav className="ml-10 flex items-baseline space-x-4" aria-label="Main navigation">
                 {navLinks.map(link =>
                   link.component ? (
                     <div key={link.label}>{link.component}</div>
                   ) : (
-                    <NavLink key={link.label} href={link.href}>
+                    <NavLink
+                      key={link.label}
+                      to={link.href}
+                      className={({ isActive }) =>
+                        `px-3 py-2 rounded-md text-sm font-medium ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`
+                      }
+                    >
                       {link.label}
                     </NavLink>
                   )
                 )}
-              </div>
+              </nav>
             </div>
           </div>
           <div className="md:hidden">
@@ -75,12 +85,26 @@ export const Header = () => {
                 )}
               </SheetTrigger>
               <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-                <nav className="flex flex-col space-y-4 mt-4">
+                <nav
+                  ref={mobileNavRef}
+                  className="flex flex-col space-y-4 mt-4"
+                  aria-label="Main navigation"
+                >
                   {navLinks.map(link =>
                     link.component ? (
                       <div key={link.label}>{link.component}</div>
                     ) : (
-                      <NavLink key={link.label} href={link.href}>
+                      <NavLink
+                        key={link.label}
+                        to={link.href}
+                        className={({ isActive }) =>
+                          `block px-3 py-2 rounded-md text-base font-medium ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`
+                        }
+                      >
                         {link.label}
                       </NavLink>
                     )

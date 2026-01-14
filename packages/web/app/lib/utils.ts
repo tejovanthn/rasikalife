@@ -65,11 +65,11 @@ export const buildSearchParams = (
 ): URLSearchParams => {
   const searchParams = new URLSearchParams();
 
-  Object.entries(params).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== '' && value !== 'all') {
       searchParams.set(key, value.toString());
     }
-  });
+  }
 
   return searchParams;
 };

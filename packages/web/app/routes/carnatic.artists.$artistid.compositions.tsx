@@ -6,8 +6,6 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { EntityPagination } from '~/components/EntityPagination';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
-  console.log('🎵 ArtistCompositions loader called for:', new URL(request.url).pathname);
-
   const { artistid } = params;
 
   if (!artistid) {
@@ -53,7 +51,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export default function ArtistCompositions() {
   const location = useLocation();
-  console.log('🎵 Rendering ArtistCompositions component for:', location.pathname);
 
   const { artist, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
     artist: { id: string; name: string };
