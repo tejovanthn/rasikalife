@@ -1,4 +1,4 @@
-import type { LoaderFunction } from '@remix-run/node';
+import type { LoaderFunction } from 'react-router';
 import { client } from '~/api.server';
 import { convert } from 'url-slug';
 

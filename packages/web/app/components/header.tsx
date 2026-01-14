@@ -1,4 +1,4 @@
-import { Link, NavLink } from '@remix-run/react';
+import { Link, NavLink } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '~/components/ui/button';

@@ -1,4 +1,4 @@
-import { Link } from '@remix-run/react';
+import { Link } from 'react-router';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from './EmptyState';
 

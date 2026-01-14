@@ -1,5 +1,5 @@
-import { redirect } from '@remix-run/node';
-import type { LoaderFunction } from '@remix-run/node';
+import { redirect } from 'react-router';
+import type { LoaderFunction } from 'react-router';
 
 export const loader: LoaderFunction = async ({ params }) => {
   const { artistid } = params;

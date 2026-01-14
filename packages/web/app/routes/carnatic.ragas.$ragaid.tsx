@@ -1,5 +1,5 @@
-import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
+import { data, type MetaFunction } from 'react-router';
+import { useLoaderData, Link, Outlet, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -31,7 +31,7 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
       limit: 6,
     });
 
-    return json({
+    return data({
       raga,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
@@ -156,7 +156,7 @@ export default function RagaDetails() {
   ];
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
+    (<main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={raga.name}
@@ -165,7 +165,6 @@ export default function RagaDetails() {
         shareTitle={`${raga.name} Raga - Indian Classical Music`}
         shareDescription={`Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`}
       />
-
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
         <div className="space-y-2 text-sm">
@@ -177,7 +176,6 @@ export default function RagaDetails() {
           </p>
         </div>
       </section>
-
       <EntityCompositions
         compositions={compositions}
         entityType="raga"
@@ -185,7 +183,6 @@ export default function RagaDetails() {
         showViewMore={hasMoreCompositions}
         customHeading={`Compositions in ${raga.name} raga`}
       />
-
       {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">
         <h2 className="text-xl font-semibold mb-4">Explore Related Content</h2>
@@ -215,7 +212,7 @@ export default function RagaDetails() {
           </Link>
         </div>
       </section>
-    </main>
+    </main>)
   );
 }
 

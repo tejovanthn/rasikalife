@@ -1,10 +1,10 @@
-import type { ActionFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import type { ActionFunction } from 'react-router';
+import { data } from 'react-router';
 import { client } from '~/api.server';
 
 export const action: ActionFunction = async ({ request }) => {
   if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, { status: 405 });
+    return data({ error: 'Method not allowed' }, { status: 405 });
   }
 
   try {
@@ -14,7 +14,7 @@ export const action: ActionFunction = async ({ request }) => {
     const action = formData.get('action')?.toString();
 
     if (!entityId || !entityType || action !== 'trackView') {
-      return json({ error: 'Invalid request' }, { status: 400 });
+      return data({ error: 'Invalid request' }, { status: 400 });
     }
 
     // Track the view via tRPC by calling getById with trackView: true
@@ -33,10 +33,10 @@ export const action: ActionFunction = async ({ request }) => {
         result = await client.tala.getById({ id: entityId, trackView: true });
         break;
       default:
-        return json({ error: 'Unsupported entity type' }, { status: 400 });
+        return data({ error: 'Unsupported entity type' }, { status: 400 });
     }
 
-    return json(
+    return data(
       {
         success: true,
         viewCount: result.viewCount,
@@ -49,6 +49,6 @@ export const action: ActionFunction = async ({ request }) => {
     );
   } catch (error) {
     console.error('Error tracking view:', error);
-    return json({ error: 'Failed to track view' }, { status: 500 });
+    return data({ error: 'Failed to track view' }, { status: 500 });
   }
 };

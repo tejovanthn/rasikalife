@@ -1,5 +1,5 @@
-import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
+import { data, type MetaFunction } from 'react-router';
+import { useLoaderData, Link, Outlet, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { generateArtistOGImage } from '~/lib/og';
@@ -43,7 +43,7 @@ export async function loader({
       limit: 6,
     });
 
-    return json({
+    return data({
       artist,
       compositions: result.items,
       hasMoreCompositions: result.hasMore,
@@ -180,7 +180,7 @@ export default function ArtistDetails() {
   ];
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
+    (<main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={artist.name}
@@ -189,7 +189,6 @@ export default function ArtistDetails() {
         shareTitle={`${artist.name} - Indian Classical Music Artist`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
       />
-
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
         <div className="space-y-2 text-sm">
@@ -201,7 +200,6 @@ export default function ArtistDetails() {
           </p>
         </div>
       </section>
-
       <EntityCompositions
         compositions={compositions}
         entityType="artist"
@@ -209,7 +207,6 @@ export default function ArtistDetails() {
         showViewMore={hasMoreCompositions}
         customHeading={`Compositions by ${artist.name}`}
       />
-
       {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">
         <h2 className="text-xl font-semibold mb-4">Explore More</h2>
@@ -239,6 +236,6 @@ export default function ArtistDetails() {
           </Link>
         </div>
       </section>
-    </main>
+    </main>)
   );
 }

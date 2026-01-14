@@ -1,6 +1,6 @@
-import type { LoaderFunction, MetaFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import type { LoaderFunction, MetaFunction } from 'react-router';
+import { data } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import { type RouterOutput, client } from '~/api.server';
 import { slugify } from '~/lib/carnaticUtils';
 
@@ -43,7 +43,7 @@ export const loader: LoaderFunction = async () => {
       client.tala.search.query({ limit: 6 }),
     ]);
 
-    return json<LoaderData>({
+    return data<LoaderData>({
       recentCompositions: recentCompositions.items,
       popularArtists,
       recentRagas: recentRagas.items,
@@ -51,7 +51,7 @@ export const loader: LoaderFunction = async () => {
     });
   } catch (error) {
     console.error('Error loading carnatic homepage:', error);
-    return json<LoaderData>({
+    return data<LoaderData>({
       recentCompositions: [],
       popularArtists: [],
       recentRagas: [],

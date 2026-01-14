@@ -1,5 +1,5 @@
-import { type LoaderFunctionArgs, json } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
+import { type LoaderFunctionArgs, json } from 'react-router';
+import { useLoaderData } from 'react-router';
 import Markdown from 'react-markdown';
 import { client } from '~/api.server';
 
@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  return json({ content: response.data?.content });
+  return data({ content: response.data?.content });
 };
 
 export default function CatchAll() {

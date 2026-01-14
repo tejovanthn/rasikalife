@@ -1,12 +1,5 @@
-import { json, type LoaderFunction } from '@remix-run/node';
-import {
-  useLoaderData,
-  Link,
-  useNavigate,
-  useSearchParams,
-  useLocation,
-  useParams,
-} from '@remix-run/react';
+import { data, type LoaderFunction } from 'react-router';
+import { useLoaderData, Link, useNavigate, useSearchParams, useLocation, useParams } from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -42,7 +35,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
-    return json({
+    return data({
       raga,
       compositions: result.items,
       hasMore: result.hasMore,
@@ -71,7 +64,7 @@ export default function RagaCompositions() {
   const currentPage = Number.parseInt(searchParams.get('page') || '1', 10);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
+    (<div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
         <Link
           to={`/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
@@ -84,7 +77,6 @@ export default function RagaCompositions() {
           All compositions performed in the {raga.name} raga
         </p>
       </div>
-
       {!compositions.length ? (
         <EmptyState
           message="No compositions found"
@@ -106,6 +98,6 @@ export default function RagaCompositions() {
           />
         </>
       )}
-    </div>
+    </div>)
   );
 }

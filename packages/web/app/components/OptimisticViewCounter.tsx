@@ -1,4 +1,4 @@
-import { useFetcher, useNavigation } from '@remix-run/react';
+import { useFetcher, useNavigation } from 'react-router';
 import { Eye } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useHydrated } from '~/lib/progressive-enhancement';

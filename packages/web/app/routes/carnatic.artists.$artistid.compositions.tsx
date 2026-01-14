@@ -1,5 +1,5 @@
-import { json, type LoaderFunction } from '@remix-run/node';
-import { useLoaderData, Link, useNavigate, useSearchParams, useLocation } from '@remix-run/react';
+import { data, type LoaderFunction } from 'react-router';
+import { useLoaderData, Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -36,7 +36,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
-    return json({
+    return data({
       artist,
       compositions: result.items,
       hasMore: result.hasMore,
@@ -65,7 +65,7 @@ export default function ArtistCompositions() {
   const prevPageToken = searchParams.get('prevToken');
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-6xl">
+    (<main className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
         <Link
           to={`/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`}
@@ -76,7 +76,6 @@ export default function ArtistCompositions() {
         <h1 className="text-3xl font-bold">Compositions by {artist.name}</h1>
         <p className="text-muted-foreground mt-2">All compositions composed by {artist.name}</p>
       </div>
-
       {!compositions.length ? (
         <EmptyState
           message="No compositions found"
@@ -102,6 +101,6 @@ export default function ArtistCompositions() {
           />
         </>
       )}
-    </main>
+    </main>)
   );
 }

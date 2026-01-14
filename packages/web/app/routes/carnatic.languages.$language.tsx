@@ -1,5 +1,5 @@
-import { json, type LoaderFunction } from '@remix-run/node';
-import { useLoaderData, Link, Outlet, useLocation } from '@remix-run/react';
+import { data, type LoaderFunction } from 'react-router';
+import { useLoaderData, Link, Outlet, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 
@@ -17,7 +17,7 @@ export const loader: LoaderFunction = async ({ params }) => {
       limit: 7,
     });
 
-    return json({
+    return data({
       language: decodeURIComponent(language),
       compositions: compositions.items.slice(0, 6),
       hasMoreCompositions: compositions.hasMore || compositions.items.length > 6,

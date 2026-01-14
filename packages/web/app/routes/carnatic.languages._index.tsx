@@ -1,5 +1,5 @@
-import { type MetaFunction, json } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { type MetaFunction, json } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 
 // Common languages used in Carnatic music
 const LANGUAGES = [
@@ -16,7 +16,7 @@ const LANGUAGES = [
 ];
 
 export const loader = async () => {
-  return json({
+  return data({
     languages: LANGUAGES,
   });
 };

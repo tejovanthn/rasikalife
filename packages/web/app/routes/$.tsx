@@ -1,5 +1,5 @@
-import { type LoaderFunctionArgs, type MetaFunction, json } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
+import { data, Link, useLoaderData } from 'react-router';
 import Markdown from 'react-markdown';
 import { client } from '~/api.server';
 
@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     });
   }
 
-  return json({ contentData: response.data });
+  return data({ contentData: response.data });
 };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

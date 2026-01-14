@@ -1,5 +1,5 @@
-import type { LoaderFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
+import type { LoaderFunction } from 'react-router';
+import { data } from 'react-router';
 import { type RouterOutput, client } from '~/api.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -9,7 +9,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const limit = Number.parseInt(url.searchParams.get('limit') || '10');
 
   if (!query || query.length < 2) {
-    return json({ error: 'Query must be at least 2 characters' }, { status: 400 });
+    return data({ error: 'Query must be at least 2 characters' }, { status: 400 });
   }
 
   try {
@@ -118,13 +118,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       }));
     }
 
-    return json(results, {
+    return data(results, {
       headers: {
         'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
       },
     });
   } catch (error) {
     console.error('Search API error:', error);
-    return json({ error: 'Search failed' }, { status: 500 });
+    return data({ error: 'Search failed' }, { status: 500 });
   }
 };

@@ -1,5 +1,5 @@
-import { type LoaderFunction, type MetaFunction, json } from '@remix-run/node';
-import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
+import { type LoaderFunction, type MetaFunction, json } from 'react-router';
+import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -29,7 +29,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       nextToken: nextToken || undefined,
     });
 
-    return json({
+    return data({
       compositions: results.items || [],
       nextToken: results.nextToken,
       hasMore: results.hasMore,

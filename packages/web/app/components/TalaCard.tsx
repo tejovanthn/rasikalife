@@ -1,4 +1,4 @@
-import { Link } from '@remix-run/react';
+import { Link } from 'react-router';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
 
@@ -11,7 +11,7 @@ interface TalaCardProps {
 
 export function TalaCard({ tala }: TalaCardProps) {
   return (
-    <Link
+    (<Link
       to={`/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`}
       className="block cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
       aria-label={`View tala: ${tala.name}`}
@@ -22,6 +22,6 @@ export function TalaCard({ tala }: TalaCardProps) {
           <Badge variant="tala">Tala</Badge>
         </CardHeader>
       </Card>
-    </Link>
+    </Link>)
   );
 }

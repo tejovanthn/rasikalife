@@ -1,5 +1,5 @@
-import { json, type MetaFunction, type LinksFunction } from '@remix-run/node';
-import { useLoaderData, Link } from '@remix-run/react';
+import { data, type MetaFunction, type LinksFunction } from 'react-router';
+import { useLoaderData, Link } from 'react-router';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { generateCompositionOGImage } from '~/lib/og';
@@ -69,7 +69,7 @@ export async function loader({ params }: { params: { compositionid?: string } })
       }
     }
 
-    return json({
+    return data({
       composition,
       relatedCompositionsByComposer,
       hasMoreCompositionsByComposer,
@@ -241,7 +241,7 @@ export default function CompositionDetails() {
   ];
 
   return (
-    <div className="max-w-4xl m-auto">
+    (<div className="max-w-4xl m-auto">
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -288,7 +288,6 @@ export default function CompositionDetails() {
           }),
         }}
       />
-
       <Breadcrumb items={breadcrumbItems} />
       <header className="mb-8">
         <div className="flex items-start justify-between mb-4">
@@ -312,7 +311,6 @@ export default function CompositionDetails() {
           />
         </div>
       </header>
-
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
         <div className="space-y-2 text-sm">
@@ -371,7 +369,6 @@ export default function CompositionDetails() {
           )}
         </div>
       </section>
-
       {composition.lyricsV1 && composition.lyricsV1.length > 0 && (
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Lyrics</h2>
@@ -390,7 +387,6 @@ export default function CompositionDetails() {
           </div>
         </section>
       )}
-
       {relatedCompositionsByComposer.length > 0 && (
         <EntityCompositions
           compositions={relatedCompositionsByComposer}
@@ -400,7 +396,6 @@ export default function CompositionDetails() {
           customHeading={`More compositions by ${composition.composer.name}`}
         />
       )}
-
       {relatedCompositionsByRaga.length > 0 &&
         composition.ragas &&
         composition.ragas.length > 0 && (
@@ -412,7 +407,6 @@ export default function CompositionDetails() {
             customHeading={`More compositions in ${composition.ragas[0].name}`}
           />
         )}
-
       <section className="mt-12 pt-8 border-t">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link
@@ -432,6 +426,6 @@ export default function CompositionDetails() {
           </Link>
         </div>
       </section>
-    </div>
+    </div>)
   );
 }
