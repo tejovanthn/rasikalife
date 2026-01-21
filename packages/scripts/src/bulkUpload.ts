@@ -11,7 +11,7 @@ const shouldDropData =
   args.includes('--drop') || args.includes('-d') || process.env.DROP_DATA === 'true';
 const limitArg = args.find(arg => !arg.startsWith('-') && /^\d+$/.test(arg));
 const isProd = process.env.SST_STAGE === 'prod';
-const defaultLimit = isProd ? undefined : 1000;
+const defaultLimit = undefined; //isProd ? undefined : 1000;
 const limit = limitArg ? Number.parseInt(limitArg, 10) : defaultLimit;
 
 interface NormalizedComposition {
