@@ -4,6 +4,7 @@ import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 
 export async function loader({ params }: { params: { ragaid?: string } }) {
   const { ragaid } = params;
@@ -76,36 +77,6 @@ export const meta: MetaFunction = ({ data }) => {
         tagName: 'link',
         rel: 'canonical',
         href: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
-      },
-      // Breadcrumb structured data
-      {
-        tagName: 'script',
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://rasika.life' },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Carnatic',
-              item: 'https://rasika.life/carnatic',
-            },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: 'Ragas',
-              item: 'https://rasika.life/carnatic/ragas',
-            },
-            {
-              '@type': 'ListItem',
-              position: 4,
-              name: `${raga.name} Raga`,
-              item: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
-            },
-          ],
-        }),
       },
     ];
   }
@@ -212,6 +183,19 @@ export default function RagaDetails() {
           </Link>
         </div>
       </section>
+
+      {/* Structured Data for SEO */}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Ragas', item: 'https://rasika.life/carnatic/ragas' },
+          {
+            name: `${raga.name} Raga`,
+            item: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+          },
+        ]}
+      />
     </main>
   );
 }

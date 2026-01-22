@@ -5,6 +5,7 @@ import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
 import { CompositionCard } from '~/components/CompositionCard';
 import { SectionHeader } from '~/components/shared';
+import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
 
 type LoaderData = {
   popularCompositions: any[];
@@ -34,38 +35,6 @@ export const meta: MetaFunction = () => {
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://rasika.life' },
     { property: 'og:image', content: 'https://rasika.life/og-image.jpg' },
-    // Structured data for organization
-    {
-      tagName: 'script',
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'Organization',
-        name: 'Rasika.life',
-        url: 'https://rasika.life',
-        description: 'Indian Classical Music Database',
-        sameAs: [
-          // Add social media URLs when available
-        ],
-      }),
-    },
-    // Website structured data
-    {
-      tagName: 'script',
-      type: 'application/ld+json',
-      innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'WebSite',
-        name: 'Rasika.life',
-        url: 'https://rasika.life',
-        description: 'Explore the world of Indian classical music',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: 'https://rasika.life/search?q={search_term_string}',
-          'query-input': 'required name=search_term_string',
-        },
-      }),
-    },
   ];
 };
 
@@ -206,6 +175,10 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+
+      {/* Structured Data for SEO */}
+      <OrganizationStructuredData />
+      <WebsiteStructuredData />
     </main>
   );
 }

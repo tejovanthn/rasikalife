@@ -1,6 +1,7 @@
 import type { LoaderFunction } from 'react-router';
 import { data } from 'react-router';
 import { type RouterOutput, client } from '~/api.server';
+import { generateCompositionUrl } from '~/lib/url-slug';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -63,7 +64,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         id: item.id,
         title: item.title,
         type: 'composition' as const,
-        url: `/carnatic/compositions/${item.title.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${item.id}`,
+        url: generateCompositionUrl(item.title, item.id),
         raga:
           item.ragaIds && item.ragaIds.length > 0
             ? `${item.ragaIds.length} raga${item.ragaIds.length > 1 ? 's' : ''}`

@@ -21,6 +21,7 @@ import { ThemeContext } from './components/theme-context';
 export { loader, action } from 'react-router-theme';
 
 import { Footer } from './components/footer';
+import { GlobalLoader } from './components/global-loader';
 import { Header } from './components/header';
 import { logAnalyticsEvent } from './firebase';
 import styles from './globals.css?url';
@@ -56,8 +57,6 @@ export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
 ];
 
-console.log(process.versions)
-
 function Layout({ children, theme }: { children: React.ReactNode; theme: string }) {
   const location = useLocation();
 
@@ -78,8 +77,9 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
         <Links />
       </head>
       <body>
+        <GlobalLoader />
         <Header />
-        <div className="">{children}</div>
+        <div className="-mt-4 md:mt-0">{children}</div>
         <Footer />
         <ScrollRestoration />
         <Scripts />
@@ -105,24 +105,103 @@ export default function AppWithProviders() {
 export function ErrorBoundary() {
   const error = useRouteError();
 
+  const getErrorContent = () => {
+    if (isRouteErrorResponse(error)) {
+      switch (error.status) {
+        case 404:
+          return {
+            title: '404 - Page Not Found',
+            message:
+              "We couldn't find the page you're looking for. It might have been moved or deleted.",
+            suggestions: [
+              'Check the URL for typos',
+              'Go back to the homepage',
+              'Browse our collections of compositions, artists, ragas, and talas',
+            ],
+          };
+        case 500:
+          return {
+            title: '500 - Server Error',
+            message: 'Something went wrong on our end. Please try again later.',
+            suggestions: [
+              'Refresh the page',
+              'Go back to the homepage',
+              'If the problem persists, please contact support',
+            ],
+          };
+        default:
+          return {
+            title: `${error.status} ${error.statusText}`,
+            message: 'An unexpected error occurred.',
+            suggestions: ['Go back to the homepage', 'Try again later'],
+          };
+      }
+    }
+
+    if (error instanceof Error) {
+      return {
+        title: 'Error',
+        message: error.message,
+        suggestions: ['Go back to the homepage', 'Try again later'],
+      };
+    }
+
+    return {
+      title: 'Unknown Error',
+      message: 'An unexpected error occurred.',
+      suggestions: ['Go back to the homepage', 'Try again later'],
+    };
+  };
+
+  const { title, message, suggestions } = getErrorContent();
+
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{title}</title>
         <Meta />
         <Links />
       </head>
       <body>
-        <div className="container mx-auto p-8">
-          <h1 className="text-2xl font-bold">
-            {isRouteErrorResponse(error)
-              ? `${error.status} ${error.statusText}`
-              : error instanceof Error
-                ? error.message
-                : 'Unknown Error'}
-          </h1>
-          <Link to="/">Go back to home</Link>
+        <div className="min-h-screen flex items-center justify-center bg-background px-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-6xl font-bold text-primary">
+                {isRouteErrorResponse(error) ? error.status : '⚠️'}
+              </h1>
+              <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+              <p className="text-muted-foreground">{message}</p>
+            </div>
+
+            {suggestions.length > 0 && (
+              <div className="space-y-2 text-left">
+                <h3 className="text-sm font-semibold text-foreground">What you can do:</h3>
+                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                  {suggestions.map((suggestion, index) => (
+                    <li key={index}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+              >
+                Go to Homepage
+              </Link>
+              <button
+                type="button"
+                onClick={() => window.history.back()}
+                className="inline-flex items-center justify-center px-6 py-3 border border-border rounded-md font-medium hover:bg-muted transition-colors"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
         </div>
         <Scripts />
       </body>

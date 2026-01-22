@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { generateCompositionUrl } from '~/lib/url-slug';
 
 interface CompositionCardProps {
   composition: {
@@ -30,16 +31,16 @@ export function CompositionCard({
 }: CompositionCardProps) {
   return (
     <Link
-      to={`/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`}
+      to={generateCompositionUrl(composition.title, composition.id)}
       className="block cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
       aria-label={`View composition: ${composition.title} by ${composition.composer.name}`}
     >
       <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg leading-tight hover:underline">
+          <CardTitle className="text-lg leading-tight hover:underline line-clamp-2">
             {composition.title}
           </CardTitle>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5 mt-2">
             {showLanguage && <Badge variant="language">{composition.language}</Badge>}
             {showRagas &&
               composition.ragas &&

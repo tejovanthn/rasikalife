@@ -1,11 +1,12 @@
+import type { Composition } from '@rasika/core/domain/composition/entity';
+import type { Tala } from '@rasika/core/domain/tala/entity';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import type { Tala } from '@rasika/core/domain/tala/entity';
-import type { Composition } from '@rasika/core/domain/composition/entity';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 
 export async function loader({ params }: { params: { talaid?: string } }) {
   const { talaid } = params;
@@ -205,6 +206,19 @@ export default function TalaDetails() {
           </Link>
         </div>
       </section>
+
+      {/* Structured Data for SEO */}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Talas', item: 'https://rasika.life/carnatic/talas' },
+          {
+            name: `${tala.name} Tala`,
+            item: `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+          },
+        ]}
+      />
     </main>
   );
 }

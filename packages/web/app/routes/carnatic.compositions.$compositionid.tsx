@@ -3,8 +3,13 @@ import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import {
+  BreadcrumbStructuredData,
+  MusicCompositionStructuredData,
+} from '~/components/structured-data';
 import { ShareButtons } from '~/components/ui/share-buttons';
 import { generateCompositionOGImage } from '~/lib/og';
+import { generateCompositionUrl, parseSlug } from '~/lib/url-slug';
 // TODO: Extract shared types to avoid duplication across packages
 // This type should be imported from @rasika/core but there's a namespace issue
 type Composition = {
@@ -36,7 +41,12 @@ export async function loader({ params }: { params: { compositionid?: string } })
     throw new Response('Composition ID is required', { status: 400 });
   }
 
-  const slugId = compositionid.split('-').pop();
+  const parsed = parseSlug(compositionid);
+  if (!parsed) {
+    throw new Response('Invalid URL format', { status: 400 });
+  }
+
+  const { id: slugId } = parsed;
 
   if (!slugId) {
     throw new Response('Invalid URL format', { status: 400 });
@@ -132,7 +142,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'music.song' },
       {
         property: 'og:url',
-        content: `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`,
+        content: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
       },
       {
         property: 'og:image',
@@ -153,7 +163,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`,
+        href: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
       },
       // Breadcrumb structured data for SEO
       {
@@ -178,7 +188,7 @@ export const meta: MetaFunction = ({ data }) => {
               '@type': 'ListItem',
               position: 4,
               name: composition.title,
-              item: `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`,
+              item: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
             },
           ],
         },
@@ -229,7 +239,7 @@ export default function CompositionDetails() {
     hasMoreCompositionsByRaga: boolean;
   }>();
 
-  const shareUrl = `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`;
+  const shareUrl = `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -237,7 +247,7 @@ export default function CompositionDetails() {
     { label: 'Compositions', path: '/carnatic/compositions' },
     {
       label: composition.title,
-      path: `/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`,
+      path: generateCompositionUrl(composition.title, composition.id),
     },
   ];
 
@@ -268,27 +278,13 @@ export default function CompositionDetails() {
                 '@type': 'ListItem',
                 position: 4,
                 name: composition.title,
-                item: `https://rasika.life/carnatic/compositions/${composition.title.toLowerCase().replace(/\s+/g, '-')}-${composition.id}`,
+                item: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
               },
             ],
           }),
         }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'MusicComposition',
-            name: composition.title,
-            composer: {
-              '@type': 'Person',
-              name: composition.composer.name,
-            },
-            inLanguage: composition.language,
-          }),
-        }}
-      />
+
       <Breadcrumb items={breadcrumbItems} />
       <header className="mb-8">
         <div className="flex items-start justify-between mb-4">
@@ -440,6 +436,30 @@ export default function CompositionDetails() {
           </Link>
         </div>
       </section>
+
+      {/* Structured Data for SEO */}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Compositions', item: 'https://rasika.life/carnatic/compositions' },
+          {
+            name: composition.title,
+            item: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+          },
+        ]}
+      />
+      <MusicCompositionStructuredData
+        composition={{
+          title: composition.title,
+          composer: composition.composer,
+          ragas: composition.ragas,
+          talas: composition.talas,
+          language: composition.language,
+          url: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+          datePublished: composition.createdAt,
+        }}
+      />
     </div>
   );
 }

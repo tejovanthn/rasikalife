@@ -32,9 +32,27 @@ export function ShareButtons({ url, title, description }: ShareButtonsProps) {
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={handleShare} className="flex items-center gap-2">
-      <Share2 className="h-4 w-4" />
-      Share
-    </Button>
+    <>
+      {/* Desktop: Inline button */}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleShare}
+        className="hidden md:flex items-center gap-2"
+      >
+        <Share2 className="h-4 w-4" />
+        Share
+      </Button>
+
+      {/* Mobile: FAB (Floating Action Button) */}
+      <Button
+        onClick={handleShare}
+        size="icon"
+        className="md:hidden fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-40"
+        aria-label="Share this page"
+      >
+        <Share2 className="h-6 w-6" />
+      </Button>
+    </>
   );
 }

@@ -27,11 +27,11 @@ const FooterSection = ({
   isOpen: boolean;
   onToggle: () => void;
 }) => (
-  <div className="border-b border-border pb-4 mb-4 md:border-0 md:pb-0 md:mb-0">
+  <div className="border-b border-border pb-2 mb-2 md:border-0 md:pb-0 md:mb-0">
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center justify-between w-full md:hidden text-left font-semibold mb-2"
+      className="flex items-center justify-between w-full md:hidden text-left font-semibold mb-2 min-h-[44px] py-2"
       aria-expanded={isOpen}
     >
       {title}
@@ -79,7 +79,7 @@ export const Footer = () => {
     <footer className="bg-background border-t">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FooterSection
               title="About & Legal"
               links={aboutLinks}

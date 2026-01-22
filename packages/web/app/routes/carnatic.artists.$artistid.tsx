@@ -4,6 +4,7 @@ import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { BreadcrumbStructuredData, PersonStructuredData } from '~/components/structured-data';
 import { generateArtistOGImage } from '~/lib/og';
 
 // Artist type from @rasika/core domain/artist
@@ -95,49 +96,6 @@ export const meta: MetaFunction = ({ data }) => {
         tagName: 'link',
         rel: 'canonical',
         href: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
-      },
-      // Breadcrumb structured data
-      {
-        tagName: 'script',
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://rasika.life' },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Carnatic',
-              item: 'https://rasika.life/carnatic',
-            },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: 'Artists',
-              item: 'https://rasika.life/carnatic/artists',
-            },
-            {
-              '@type': 'ListItem',
-              position: 4,
-              name: artist.name,
-              item: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
-            },
-          ],
-        }),
-      },
-      // Person structured data
-      {
-        tagName: 'script',
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'Person',
-          name: artist.name,
-          description: 'Renowned classical musician in Indian classical music',
-          url: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
-          knowsAbout: ['Carnatic Music', 'Indian Classical Music'],
-        }),
       },
     ];
   }
@@ -236,6 +194,25 @@ export default function ArtistDetails() {
           </Link>
         </div>
       </section>
+
+      {/* Structured Data for SEO */}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Artists', item: 'https://rasika.life/carnatic/artists' },
+          {
+            name: artist.name,
+            item: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
+          },
+        ]}
+      />
+      <PersonStructuredData
+        person={{
+          name: artist.name,
+          url: `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`,
+        }}
+      />
     </main>
   );
 }
