@@ -7,17 +7,3 @@ export default function CompositionsLayout() {
     </main>
   );
 }
-
-export function ErrorBoundary() {
-  return (
-    <div className="text-center py-8">
-      <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
-      <p className="text-muted-foreground mb-4">
-        We're having trouble loading the compositions. Please try again later.
-      </p>
-      <a href="/carnatic/compositions" className="text-blue-600 hover:underline">
-        Back to Compositions
-      </a>
-    </div>
-  );
-}

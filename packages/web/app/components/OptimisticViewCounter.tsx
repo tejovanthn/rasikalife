@@ -50,7 +50,7 @@ export function OptimisticViewCounter({
   // Reset tracking state when navigating to a new entity
   useEffect(() => {
     setHasTracked(wasServerTracked);
-  }, [entityId, wasServerTracked]);
+  }, [wasServerTracked]);
 
   // Handle fetcher response
   useEffect(() => {

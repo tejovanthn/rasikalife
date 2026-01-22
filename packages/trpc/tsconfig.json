@@ -4,8 +4,10 @@
     "module": "ES2020",
     "moduleResolution": "bundler",
     "baseUrl": ".",
-    "outDir": "dist",
-    "rootDir": "src"
+    "paths": {
+      "@rasika/core": ["../core/src"]
+    },
+    "outDir": "dist"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

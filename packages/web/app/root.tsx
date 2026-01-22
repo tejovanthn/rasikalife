@@ -1,3 +1,4 @@
+import { ApplicationError, ErrorCode } from '@rasika/core';
 import clsx from 'clsx';
 import { useContext, useEffect } from 'react';
 import type { LinksFunction } from 'react-router';
@@ -106,6 +107,38 @@ export function ErrorBoundary() {
   const error = useRouteError();
 
   const getErrorContent = () => {
+    if (error instanceof ApplicationError) {
+      switch (error.code) {
+        case ErrorCode.ARTIST_NOT_FOUND:
+          return {
+            title: '404 - Artist Not Found',
+            message: error.message,
+            suggestions: [
+              'Check the artist name or ID',
+              'Browse other artists',
+              'Go back to the artists list',
+            ],
+          };
+        case ErrorCode.COMPOSITION_NOT_FOUND:
+          return {
+            title: '404 - Composition Not Found',
+            message: error.message,
+            suggestions: [
+              'Check the composition title or ID',
+              'Browse other compositions',
+              'Go back to the compositions list',
+            ],
+          };
+        // Add more specific cases as needed
+        default:
+          return {
+            title: 'Application Error',
+            message: error.message,
+            suggestions: ['Go back to the homepage', 'Try again later'],
+          };
+      }
+    }
+
     if (isRouteErrorResponse(error)) {
       switch (error.status) {
         case 404:
@@ -180,7 +213,7 @@ export function ErrorBoundary() {
                 <h3 className="text-sm font-semibold text-foreground">What you can do:</h3>
                 <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
                   {suggestions.map((suggestion, index) => (
-                    <li key={index}>{suggestion}</li>
+                    <li key={suggestion}>{suggestion}</li>
                   ))}
                 </ul>
               </div>

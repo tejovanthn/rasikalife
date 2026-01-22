@@ -1,3 +1,4 @@
+import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { Composition } from '@rasika/core/domain/composition/entity';
 import type { Tala } from '@rasika/core/domain/tala/entity';
 import { type MetaFunction, data } from 'react-router';
@@ -24,10 +25,6 @@ export async function loader({ params }: { params: { talaid?: string } }) {
   try {
     const tala = await client.tala.get.query({ id: slugId });
 
-    if (!tala) {
-      throw new Response('Tala not found', { status: 404 });
-    }
-
     // Fetch compositions in this tala (limit to 6 for preview)
     const compositions = await client.composition.byTala.query({
       talaId: tala.id,
@@ -41,6 +38,12 @@ export async function loader({ params }: { params: { talaid?: string } }) {
     });
   } catch (error) {
     console.error('Failed to load tala:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.TALA_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+      // Handle other error codes as needed
+    }
     throw new Response('Failed to load tala', { status: 500 });
   }
 }
@@ -220,19 +223,5 @@ export default function TalaDetails() {
         ]}
       />
     </main>
-  );
-}
-
-export function ErrorBoundary() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-      <p className="text-muted-foreground">
-        We're having trouble loading this tala. Please try again later.
-      </p>
-      <Link to="/carnatic/talas" className="text-blue-600 hover:underline">
-        Back to Talas
-      </Link>
-    </div>
   );
 }

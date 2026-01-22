@@ -1,6 +1,6 @@
 interface StructuredDataProps {
   type: 'organization' | 'website' | 'breadcrumb' | 'person' | 'music';
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 export function StructuredData({ type, data }: StructuredDataProps) {
@@ -24,7 +24,7 @@ export function StructuredData({ type, data }: StructuredDataProps) {
   return (
     <script
       type="application/ld+json"
-      // eslint-disable-next-line react/no-danger
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
       dangerouslySetInnerHTML={{
         __html: JSON.stringify(structuredData),
       }}

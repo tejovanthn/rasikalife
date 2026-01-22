@@ -1,10 +1,10 @@
-import type { LoaderFunction } from 'react-router';
-import { convert } from 'url-slug';
-import { client } from '~/api.server';
 import type { Artist } from '@rasika/core/domain/artist/entity';
 import type { Composition } from '@rasika/core/domain/composition/entity';
 import type { Raga } from '@rasika/core/domain/raga/entity';
 import type { Tala } from '@rasika/core/domain/tala/entity';
+import type { LoaderFunction } from 'react-router';
+import { convert } from 'url-slug';
+import { client } from '~/api.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const baseUrl = 'https://rasika.life';

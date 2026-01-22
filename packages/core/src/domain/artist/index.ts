@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { ApplicationError, ErrorCode } from '../constants';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
 import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
@@ -15,15 +16,23 @@ export async function createArtist(input: CreateArtistInput): Promise<Artist> {
   }).go();
 
   if (!result.data) {
-    throw new Error(`Failed to create artist: ${JSON.stringify(input)}`);
+    throw new ApplicationError(
+      ErrorCode.ARTIST_CREATE_FAILED,
+      `Failed to create artist: ${input.name}`
+    );
   }
 
   return result.data as Artist;
 }
 
-export async function getArtist(id: string): Promise<Artist | null> {
+export async function getArtist(id: string): Promise<Artist> {
   const result = await ArtistEntity.get({ id }).go();
-  return result.data || null;
+
+  if (!result.data) {
+    throw new ApplicationError(ErrorCode.ARTIST_NOT_FOUND, `Artist with ID ${id} not found`);
+  }
+
+  return result.data as Artist;
 }
 
 export async function getArtistByName(name: string): Promise<Artist | null> {
@@ -35,7 +44,7 @@ export async function updateArtist(id: string, input: UpdateArtistInput): Promis
   const result = await ArtistEntity.update({ id }).set(input).go();
 
   if (!result.data) {
-    throw new Error(`Artist ${id} not found or update failed`);
+    throw new ApplicationError(ErrorCode.ARTIST_NOT_FOUND, `Artist with ID ${id} not found`);
   }
 
   return result.data as Artist;

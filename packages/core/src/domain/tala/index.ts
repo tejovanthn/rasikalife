@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { ApplicationError, ErrorCode } from '../constants';
 import { TalaEntity } from './entity';
 import type { Tala } from './entity';
 import type { CreateTalaSchema, UpdateTalaSchema } from './schema';
@@ -21,9 +22,12 @@ export async function createTala(input: CreateTalaInput): Promise<Tala> {
   return result.data as Tala;
 }
 
-export async function getTala(id: string): Promise<Tala | null> {
+export async function getTala(id: string): Promise<Tala> {
   const result = await TalaEntity.get({ id }).go();
-  return result.data || null;
+  if (!result.data) {
+    throw new ApplicationError(ErrorCode.TALA_NOT_FOUND, `Tala with ID ${id} not found`);
+  }
+  return result.data as Tala;
 }
 
 export async function getTalaByName(name: string): Promise<Tala | null> {

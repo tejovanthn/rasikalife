@@ -1,3 +1,4 @@
+import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { type LinksFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
@@ -33,12 +34,8 @@ export async function loader({ params }: { params: { compositionid?: string } })
   try {
     const composition = await client.composition.get.query({ id: slugId });
 
-    if (!composition) {
-      throw new Response('Composition not found', { status: 404 });
-    }
-
     // Get related compositions with error handling for network issues
-    let relatedCompositionsByComposer: any[] = [];
+    let relatedCompositionsByComposer: CompositionWithRelations[] = [];
     let hasMoreCompositionsByComposer = false;
 
     try {
@@ -47,7 +44,7 @@ export async function loader({ params }: { params: { compositionid?: string } })
         limit: 7,
       });
 
-      const filteredCompositions = composerResult.items.filter((c: any) => c.id !== composition.id);
+      const filteredCompositions = composerResult.items.filter(c => c.id !== composition.id);
       relatedCompositionsByComposer = filteredCompositions.slice(0, 6);
       hasMoreCompositionsByComposer = composerResult.hasMore || filteredCompositions.length > 6;
     } catch (error) {
@@ -58,7 +55,7 @@ export async function loader({ params }: { params: { compositionid?: string } })
     }
 
     // Get compositions in the same raga(s) if the composition has ragas
-    let relatedCompositionsByRaga: any[] = [];
+    let relatedCompositionsByRaga: CompositionWithRelations[] = [];
     let hasMoreCompositionsByRaga = false;
 
     if (composition.ragas && composition.ragas.length > 0) {
@@ -69,7 +66,7 @@ export async function loader({ params }: { params: { compositionid?: string } })
           limit: 7,
         });
 
-        const filteredCompositions = ragaResult.items.filter((c: any) => c.id !== composition.id);
+        const filteredCompositions = ragaResult.items.filter(c => c.id !== composition.id);
         relatedCompositionsByRaga = filteredCompositions.slice(0, 6);
         hasMoreCompositionsByRaga = ragaResult.hasMore || filteredCompositions.length > 6;
       } catch (error) {
@@ -89,6 +86,12 @@ export async function loader({ params }: { params: { compositionid?: string } })
     });
   } catch (error) {
     console.error('Failed to load composition:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.COMPOSITION_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+      // Handle other error codes as needed
+    }
     // Check if this is a tRPC error due to server being down
     if (error instanceof Error && error.message.includes('fetch')) {
       console.error('tRPC server appears to be down. Please ensure SST dev is running.');
@@ -98,7 +101,7 @@ export async function loader({ params }: { params: { compositionid?: string } })
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const composition = (data as any)?.composition;
+  const composition = (data as { composition?: CompositionWithRelations })?.composition;
 
   if (composition) {
     return [
@@ -238,6 +241,7 @@ export default function CompositionDetails() {
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             '@context': 'https://schema.org',
@@ -359,8 +363,8 @@ export default function CompositionDetails() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Lyrics</h2>
           <div className="space-y-4">
-            {composition.lyricsV1.map((lyric: any, index: number) => (
-              <div key={index} className="p-4 bg-muted rounded-lg">
+            {composition.lyricsV1.map(lyric => (
+              <div key={`${lyric.type}-${lyric.order}`} className="p-4 bg-muted rounded-lg">
                 {lyric.type && (
                   <h3 className="text-lg font-semibold mb-2 capitalize">{lyric.type}</h3>
                 )}

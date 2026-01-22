@@ -13,6 +13,7 @@ import {
   getCompositionTalas,
   getCompositionsByTala as getTalaJunctionRecords,
 } from '../composition_tala';
+import { ApplicationError, ErrorCode } from '../constants';
 import { getRaga } from '../raga';
 import { getTala } from '../tala';
 import { CompositionEntity } from './entity';
@@ -117,9 +118,14 @@ export async function createComposition(input: CreateCompositionInput): Promise<
 }
 
 // Single efficient query (addresses N+1 feedback)
-export async function getComposition(id: string): Promise<CompositionWithRelations | null> {
+export async function getComposition(id: string): Promise<CompositionWithRelations> {
   const result = await CompositionEntity.get({ id }).go();
-  if (!result.data) return null;
+  if (!result.data) {
+    throw new ApplicationError(
+      ErrorCode.COMPOSITION_NOT_FOUND,
+      `Composition with ID ${id} not found`
+    );
+  }
 
   const comp = result.data;
   return {

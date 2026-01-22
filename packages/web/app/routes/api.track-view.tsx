@@ -18,7 +18,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
 
     // Track the view via tRPC by calling getById with trackView: true
-    let result;
+    let result: { viewCount: number } | undefined;
     switch (entityType) {
       case 'composition':
         result = await client.composition.getById({ id: entityId, trackView: true });

@@ -1,3 +1,5 @@
+import { ApplicationError, ErrorCode } from '@rasika/core';
+import type { CompositionType } from '@rasika/core/types/entities';
 import { type LoaderFunction, data } from 'react-router';
 import {
   Link,
@@ -32,10 +34,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   try {
     const tala = await client.tala.get.query({ id: slugId });
 
-    if (!tala) {
-      throw new Response('Tala not found', { status: 404 });
-    }
-
     const result = await client.composition.byTala.query({
       talaId: tala.id,
       limit: itemsPerPage,
@@ -51,6 +49,12 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     });
   } catch (error) {
     console.error('Failed to load tala compositions:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.TALA_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+      // Handle other error codes as needed
+    }
     throw new Response('Failed to load compositions', { status: 500 });
   }
 };
@@ -61,7 +65,7 @@ export default function TalaCompositions() {
 
   const { tala, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
     tala: { id: string; name: string };
-    compositions: any[];
+    compositions: CompositionType[];
     hasMore: boolean;
     nextToken: string | null;
     prevToken: string | null;

@@ -191,6 +191,12 @@ export function GlobalSearch() {
             <div
               className="fixed inset-0 bg-black bg-opacity-25"
               onClick={() => setIsOpen(false)}
+              onKeyDown={e => {
+                if (e.key === 'Escape') {
+                  setIsOpen(false);
+                }
+              }}
+              tabIndex={-1}
             />
 
             <div

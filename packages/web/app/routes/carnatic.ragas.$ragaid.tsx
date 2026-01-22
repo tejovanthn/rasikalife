@@ -1,4 +1,5 @@
-import type { RagaType } from '@rasika/core/types/entities';
+import { ApplicationError, ErrorCode } from '@rasika/core';
+import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
@@ -23,10 +24,6 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
   try {
     const raga = await client.raga.get.query({ id: slugId });
 
-    if (!raga) {
-      throw new Response('Raga not found', { status: 404 });
-    }
-
     // Fetch compositions in this raga (limit to 6 for preview)
     const compositions = await client.composition.byRaga.query({
       ragaId: raga.id,
@@ -40,12 +37,18 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
     });
   } catch (error) {
     console.error('Failed to load raga:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.RAGA_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+      // Handle other error codes as needed
+    }
     throw new Response('Failed to load raga', { status: 500 });
   }
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const raga = (data as any)?.raga;
+  const raga = (data as { raga?: RagaType })?.raga;
 
   if (raga) {
     return [
@@ -96,7 +99,7 @@ export default function RagaDetails() {
 
   const { raga, compositions, hasMoreCompositions } = useLoaderData<{
     raga: RagaType;
-    compositions: any[];
+    compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
   }>();
 
@@ -190,19 +193,5 @@ export default function RagaDetails() {
         ]}
       />
     </main>
-  );
-}
-
-export function ErrorBoundary() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-      <p className="text-muted-foreground">
-        We're having trouble loading this raga. Please try again later.
-      </p>
-      <Link to="/carnatic/ragas" className="text-blue-600 hover:underline">
-        Back to Ragas
-      </Link>
-    </div>
   );
 }

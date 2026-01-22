@@ -1,5 +1,6 @@
 import type { Artist } from '@rasika/core';
-import type { ArtistType } from '@rasika/core/types/entities';
+import { ApplicationError, ErrorCode } from '@rasika/core';
+import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
@@ -28,10 +29,6 @@ export async function loader({
   try {
     const artist = await client.artist.get.query({ id: slugId });
 
-    if (!artist) {
-      throw new Response('Artist not found', { status: 404 });
-    }
-
     // Fetch compositions by this artist (limit to 6 for preview)
     const result = await client.composition.byComposer.query({
       composerId: artist.id,
@@ -45,12 +42,18 @@ export async function loader({
     });
   } catch (error) {
     console.error('Failed to load artist:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.ARTIST_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+      // Handle other error codes as needed
+    }
     throw new Response('Failed to load artist', { status: 500 });
   }
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const artist = (data as any)?.artist;
+  const artist = (data as { artist?: ArtistType })?.artist;
 
   if (artist) {
     return [
@@ -108,7 +111,7 @@ export default function ArtistDetails() {
 
   const { artist, compositions, hasMoreCompositions } = useLoaderData<{
     artist: ArtistType;
-    compositions: any[];
+    compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
   }>();
 

@@ -1,6 +1,6 @@
-import { data } from 'react-router';
 import Markdown from 'react-markdown';
-import { type LoaderFunctionArgs, json } from 'react-router';
+import { data } from 'react-router';
+import type { LoaderFunctionArgs } from 'react-router';
 import { useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 

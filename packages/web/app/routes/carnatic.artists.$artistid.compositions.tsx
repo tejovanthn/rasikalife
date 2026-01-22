@@ -1,3 +1,5 @@
+import { ApplicationError, ErrorCode } from '@rasika/core';
+import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { type LoaderFunction, data } from 'react-router';
 import { Link, useLoaderData, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
@@ -25,10 +27,6 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   try {
     const artist = await client.artist.get.query({ id: slugId });
 
-    if (!artist) {
-      throw new Response('Artist not found', { status: 404 });
-    }
-
     // Get compositions by this artist with pagination
     const result = await client.composition.byComposer.query({
       composerId: artist.id,
@@ -45,6 +43,12 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     });
   } catch (error) {
     console.error('Failed to load artist compositions:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.ARTIST_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+      // Handle other error codes as needed
+    }
     throw new Response('Failed to load compositions', { status: 500 });
   }
 };
@@ -54,7 +58,7 @@ export default function ArtistCompositions() {
 
   const { artist, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
     artist: { id: string; name: string };
-    compositions: any[];
+    compositions: CompositionWithRelations[];
     hasMore: boolean;
     nextToken: string | null;
     prevToken: string | null;

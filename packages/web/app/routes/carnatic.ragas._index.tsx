@@ -1,6 +1,6 @@
 import type { RagaType } from '@rasika/core/types/entities';
 import { data } from 'react-router';
-import { type LoaderFunction, type MetaFunction, json } from 'react-router';
+import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
@@ -82,19 +82,5 @@ export default function RagasIndex() {
         </>
       )}
     </main>
-  );
-}
-
-export function ErrorBoundary() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-      <p className="text-muted-foreground">
-        We're having trouble loading the ragas. Please try again later.
-      </p>
-      <Link to="/carnatic/ragas" className="text-blue-600 hover:underline">
-        Back to Ragas
-      </Link>
-    </div>
   );
 }

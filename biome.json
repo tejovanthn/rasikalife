@@ -121,6 +121,19 @@
           }
         }
       }
+    },
+    {
+      "include": ["packages/web/.react-router"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "off"
+          },
+          "complexity": {
+            "noBannedTypes": "off"
+          }
+        }
+      }
     }
   ]
 }

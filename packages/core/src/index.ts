@@ -15,3 +15,6 @@ export * from './types/entities';
 
 // Utility exports
 export * from './types';
+
+// Error exports
+export * from './constants';

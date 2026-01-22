@@ -1,3 +1,4 @@
+import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
@@ -8,9 +9,9 @@ import { SectionHeader } from '~/components/shared';
 import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
 
 type LoaderData = {
-  popularCompositions: any[];
-  recentCompositions: any[];
-  featuredArtists: any[];
+  popularCompositions: CompositionWithRelations[];
+  recentCompositions: CompositionWithRelations[];
+  featuredArtists: ArtistType[];
 };
 
 export const meta: MetaFunction = () => {

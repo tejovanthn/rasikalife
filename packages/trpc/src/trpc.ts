@@ -1,15 +1,17 @@
 import { initTRPC } from '@trpc/server';
+import { ZodError } from 'zod';
+import { ApplicationError } from '../../core/src/constants';
 
 const t = initTRPC.create({
   errorFormatter({ shape, error }) {
+    const isAppError = error.cause instanceof ApplicationError;
+
     return {
       ...shape,
       data: {
         ...shape.data,
-        zodError:
-          error.cause instanceof Error && error.cause.name === 'ZodError'
-            ? error.cause.flatten()
-            : null,
+        code: isAppError ? error.cause.code : undefined,
+        zodError: error.cause instanceof ZodError ? error.cause.flatten() : null,
       },
     };
   },

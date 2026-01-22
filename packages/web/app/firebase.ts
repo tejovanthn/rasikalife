@@ -63,11 +63,7 @@ export const analytics = isSupported().then(yes => {
   return null;
 });
 
-export const logAnalyticsEvent = (
-  event: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params: Record<string, any>
-) => {
+export const logAnalyticsEvent = (event: string, params: Record<string, unknown>) => {
   analytics.then(analyticsInstance => {
     if (analyticsInstance) {
       logEvent(analyticsInstance, event, params);

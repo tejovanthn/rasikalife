@@ -1,3 +1,5 @@
+import { ApplicationError } from '@rasika/core';
+import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { type LoaderFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
@@ -24,6 +26,9 @@ export const loader: LoaderFunction = async ({ params }) => {
     });
   } catch (error) {
     console.error('Failed to load language compositions:', error);
+    if (error instanceof ApplicationError) {
+      // Handle application errors
+    }
     throw new Response('Failed to load compositions', { status: 500 });
   }
 };
@@ -31,7 +36,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 export default function LanguageDetails() {
   const { language, compositions, hasMoreCompositions } = useLoaderData<{
     language: string;
-    compositions: any[];
+    compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
   }>();
 
