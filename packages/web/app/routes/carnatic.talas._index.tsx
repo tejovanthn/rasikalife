@@ -1,3 +1,4 @@
+import type { TalaType } from '@rasika/core/types/entities';
 import { data } from 'react-router';
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -5,14 +6,6 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { TalaCard } from '~/components/TalaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-
-// Tala type from @rasika/core domain/tala
-type Tala = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -55,7 +48,7 @@ export const meta: MetaFunction = () => {
 
 export default function TalasIndex() {
   const { talas, nextToken, hasMore, prevToken } = useLoaderData<{
-    talas: Tala[];
+    talas: TalaType[];
     nextToken: string | null;
     hasMore: boolean;
     prevToken: string | null;

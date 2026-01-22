@@ -1,3 +1,4 @@
+import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { data } from 'react-router';
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -5,19 +6,6 @@ import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
-
-// Composition type from @rasika/core domain/composition
-type Composition = {
-  id: string;
-  title: string;
-  composer: {
-    id: string;
-    name: string;
-  };
-  language: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -60,7 +48,7 @@ export const meta: MetaFunction = () => {
 
 export default function CompositionsIndex() {
   const { compositions, nextToken, hasMore, prevToken } = useLoaderData<{
-    compositions: Composition[];
+    compositions: CompositionWithRelations[];
     nextToken: string | null;
     hasMore: boolean;
     prevToken: string | null;

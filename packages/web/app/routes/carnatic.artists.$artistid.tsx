@@ -1,3 +1,5 @@
+import type { Artist } from '@rasika/core';
+import type { ArtistType } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
@@ -6,14 +8,6 @@ import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData, PersonStructuredData } from '~/components/structured-data';
 import { generateArtistOGImage } from '~/lib/og';
-
-// Artist type from @rasika/core domain/artist
-type Artist = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export async function loader({
   params,
@@ -113,7 +107,7 @@ export default function ArtistDetails() {
   const location = useLocation();
 
   const { artist, compositions, hasMoreCompositions } = useLoaderData<{
-    artist: Artist;
+    artist: ArtistType;
     compositions: any[];
     hasMoreCompositions: boolean;
   }>();

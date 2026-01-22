@@ -10,5 +10,8 @@ export * as Content from './domain/content';
 // Database exports
 export { RasikaLifeService } from './shared/electrodb';
 
+// Entity type exports
+export * from './types/entities';
+
 // Utility exports
 export * from './types';

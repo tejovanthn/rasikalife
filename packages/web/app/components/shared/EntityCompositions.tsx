@@ -1,30 +1,10 @@
+import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { Link } from 'react-router';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EmptyState } from './EmptyState';
 
-type Composition = {
-  id: string;
-  title: string;
-  composer: {
-    id: string;
-    name: string;
-  };
-  language: string;
-  lyricsV1?: Array<{
-    type: string;
-    order: number;
-    text: string;
-    number?: number;
-    ragaName?: string;
-  }>;
-  ragas: Array<{ id: string; name: string }>;
-  talas: Array<{ id: string; name: string }>;
-  createdAt: string;
-  updatedAt: string;
-};
-
 type EntityCompositionsProps = {
-  compositions: Composition[];
+  compositions: CompositionWithRelations[];
   entityType: 'artist' | 'raga' | 'tala' | 'language';
   entitySlug: string;
   showViewMore?: boolean;

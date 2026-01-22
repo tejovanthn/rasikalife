@@ -261,19 +261,24 @@ describe('Composition', () => {
       const result = await getCompositionsByComposer('artist-123');
 
       expect(CompositionEntity.query.byComposer).toHaveBeenCalledWith({ composerId: 'artist-123' });
-      expect(result).toEqual([
-        {
-          id: 'comp-1',
-          title: 'Composition 1',
-          composer: { id: 'artist-123', name: 'Test Artist' },
-          language: 'Tamil',
-          lyricsV1: [],
-          ragas: [],
-          talas: [],
-          createdAt: '2025-01-09T00:00:00.000Z',
-          updatedAt: '2025-01-09T00:00:00.000Z',
-        },
-      ]);
+      expect(result).toEqual({
+        items: [
+          {
+            id: 'comp-1',
+            title: 'Composition 1',
+            composer: { id: 'artist-123', name: 'Test Artist' },
+            language: 'Tamil',
+            lyricsV1: [],
+            ragas: [],
+            talas: [],
+            sourceAttribution: undefined,
+            createdAt: '2025-01-09T00:00:00.000Z',
+            updatedAt: '2025-01-09T00:00:00.000Z',
+          },
+        ],
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
 
     it('should return empty array when no compositions found', async () => {
@@ -284,7 +289,11 @@ describe('Composition', () => {
 
       const result = await getCompositionsByComposer('artist-123');
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({
+        items: [],
+        nextToken: undefined,
+        hasMore: false,
+      });
     });
   });
 

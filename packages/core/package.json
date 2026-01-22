@@ -40,6 +40,11 @@
       "types": "./src/types/index.ts",
       "import": "./src/types/index.js",
       "require": "./src/types/index.js"
+    },
+    "./types/entities": {
+      "types": "./src/types/entities.ts",
+      "import": "./src/types/entities.js",
+      "require": "./src/types/entities.js"
     }
   },
   "scripts": {

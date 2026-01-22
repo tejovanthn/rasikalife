@@ -1,3 +1,4 @@
+import type { ArtistType } from '@rasika/core/types/entities';
 import { data } from 'react-router';
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -5,14 +6,6 @@ import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
-
-// Artist type from @rasika/core domain/artist
-type Artist = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -55,7 +48,7 @@ export const meta: MetaFunction = () => {
 
 export default function ArtistsIndex() {
   const { artists, nextToken, hasMore } = useLoaderData<{
-    artists: Artist[];
+    artists: ArtistType[];
     nextToken: string | null;
     hasMore: boolean;
   }>();

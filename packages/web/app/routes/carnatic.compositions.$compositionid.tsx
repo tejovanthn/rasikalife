@@ -1,3 +1,4 @@
+import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { type LinksFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
@@ -10,29 +11,6 @@ import {
 import { ShareButtons } from '~/components/ui/share-buttons';
 import { generateCompositionOGImage } from '~/lib/og';
 import { generateCompositionUrl, parseSlug } from '~/lib/url-slug';
-// TODO: Extract shared types to avoid duplication across packages
-// This type should be imported from @rasika/core but there's a namespace issue
-type Composition = {
-  id: string;
-  title: string;
-  composer: {
-    id: string;
-    name: string;
-  };
-  language: string;
-  lyricsV1?: Array<{
-    type: string;
-    order: number;
-    text: string;
-    number?: number;
-    ragaName?: string;
-  }>;
-  ragas: Array<{ id: string; name: string }>;
-  talas: Array<{ id: string; name: string }>;
-  sourceAttribution?: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export async function loader({ params }: { params: { compositionid?: string } }) {
   const { compositionid } = params;
@@ -231,12 +209,16 @@ export default function CompositionDetails() {
     hasMoreCompositionsByComposer,
     relatedCompositionsByRaga,
     hasMoreCompositionsByRaga,
+    relatedCompositionsByTala,
+    hasMoreCompositionsByTala,
   } = useLoaderData<{
-    composition: Composition;
-    relatedCompositionsByComposer: any[];
+    composition: CompositionWithRelations;
+    relatedCompositionsByComposer: CompositionWithRelations[];
     hasMoreCompositionsByComposer: boolean;
-    relatedCompositionsByRaga: any[];
+    relatedCompositionsByRaga: CompositionWithRelations[];
     hasMoreCompositionsByRaga: boolean;
+    relatedCompositionsByTala: CompositionWithRelations[];
+    hasMoreCompositionsByTala: boolean;
   }>();
 
   const shareUrl = `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`;
@@ -289,17 +271,7 @@ export default function CompositionDetails() {
       <header className="mb-8">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <h1 className="text-4xl font-bold mb-2">{composition.title}</h1>
-            <p className="text-xl text-muted-foreground">by {composition.composer.name}</p>
-            <p className="text-lg text-muted-foreground">
-              Language:{' '}
-              <Link
-                to={`/carnatic/languages/${encodeURIComponent(composition.language)}`}
-                className="text-primary hover:underline"
-              >
-                {composition.language}
-              </Link>
-            </p>
+            <h1 className="text-4xl font-bold">{composition.title}</h1>
           </div>
           <ShareButtons
             url={shareUrl}
@@ -332,10 +304,10 @@ export default function CompositionDetails() {
               {composition.language}
             </Link>
           </p>
-          {composition.ragas && composition.ragas.length > 0 && (
-            <p>
-              <strong>Ragas:</strong>{' '}
-              {composition.ragas.map((raga, index) => (
+          <p>
+            <strong>Ragas:</strong>{' '}
+            {composition.ragas && composition.ragas.length > 0 ? (
+              composition.ragas.map((raga, index) => (
                 <span key={raga.id}>
                   {index > 0 && ', '}
                   <Link
@@ -345,13 +317,15 @@ export default function CompositionDetails() {
                     {raga.name}
                   </Link>
                 </span>
-              ))}
-            </p>
-          )}
-          {composition.talas && composition.talas.length > 0 && (
-            <p>
-              <strong>Talas:</strong>{' '}
-              {composition.talas.map((tala, index) => (
+              ))
+            ) : (
+              <span className="text-muted-foreground">unknown</span>
+            )}
+          </p>
+          <p>
+            <strong>Talas:</strong>{' '}
+            {composition.talas && composition.talas.length > 0 ? (
+              composition.talas.map((tala, index) => (
                 <span key={tala.id}>
                   {index > 0 && ', '}
                   <Link
@@ -361,9 +335,11 @@ export default function CompositionDetails() {
                     {tala.name}
                   </Link>
                 </span>
-              ))}
-            </p>
-          )}
+              ))
+            ) : (
+              <span className="text-muted-foreground">unknown</span>
+            )}
+          </p>
           {composition.sourceAttribution && (
             <p>
               <strong>Source:</strong>{' '}

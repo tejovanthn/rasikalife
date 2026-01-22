@@ -1,3 +1,4 @@
+import type { RagaType } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
@@ -90,19 +91,11 @@ export const meta: MetaFunction = ({ data }) => {
   ];
 };
 
-// Raga type from @rasika/core domain/raga
-type Raga = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export default function RagaDetails() {
   const location = useLocation();
 
   const { raga, compositions, hasMoreCompositions } = useLoaderData<{
-    raga: Raga;
+    raga: RagaType;
     compositions: any[];
     hasMoreCompositions: boolean;
   }>();

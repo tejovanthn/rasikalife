@@ -1,3 +1,4 @@
+import type { RagaType } from '@rasika/core/types/entities';
 import { data } from 'react-router';
 import { type LoaderFunction, type MetaFunction, json } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -5,14 +6,6 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-
-// Raga type from @rasika/core domain/raga
-type Raga = {
-  id: string;
-  name: string;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -55,7 +48,7 @@ export const meta: MetaFunction = () => {
 
 export default function RagasIndex() {
   const { ragas, nextToken, hasMore } = useLoaderData<{
-    ragas: Raga[];
+    ragas: RagaType[];
     nextToken: string | null;
     hasMore: boolean;
   }>();

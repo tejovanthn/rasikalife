@@ -45,6 +45,7 @@ export interface CompositionWithRelations {
   }>;
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
+  sourceAttribution?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -129,6 +130,7 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
     lyricsV1: comp.lyricsV1 || [],
     ragas: comp.ragas || [],
     talas: comp.talas || [],
+    sourceAttribution: comp.sourceAttribution,
     createdAt: comp.createdAt,
     updatedAt: comp.updatedAt,
   };
@@ -159,6 +161,7 @@ export async function getCompositionsByComposer(
     lyricsV1: composition.lyricsV1 || [],
     ragas: composition.ragas || [],
     talas: composition.talas || [],
+    sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
   }));
@@ -202,6 +205,7 @@ export async function getCompositionsByRaga(
     lyricsV1: composition.lyricsV1 || [],
     ragas: composition.ragas || [],
     talas: composition.talas || [],
+    sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
   }));
@@ -245,6 +249,7 @@ export async function getCompositionsByTala(
     lyricsV1: composition.lyricsV1 || [],
     ragas: composition.ragas || [],
     talas: composition.talas || [],
+    sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
   }));
@@ -282,6 +287,7 @@ export async function getCompositionsByLanguage(
     lyricsV1: composition.lyricsV1 || [],
     ragas: composition.ragas || [],
     talas: composition.talas || [],
+    sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
   }));
@@ -387,6 +393,7 @@ export async function getCompositionsByName(name: string): Promise<CompositionWi
     lyricsV1: composition.lyricsV1 || [],
     ragas: composition.ragas || [],
     talas: composition.talas || [],
+    sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
   }));
@@ -416,6 +423,7 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
     lyricsV1: composition.lyricsV1 || [],
     ragas: composition.ragas || [],
     talas: composition.talas || [],
+    sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
   }));
