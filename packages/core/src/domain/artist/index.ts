@@ -1,6 +1,6 @@
+import { ApplicationError, ErrorCode } from '@/constants';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { ApplicationError, ErrorCode } from '../constants';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
 import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
@@ -25,11 +25,11 @@ export async function createArtist(input: CreateArtistInput): Promise<Artist> {
   return result.data as Artist;
 }
 
-export async function getArtist(id: string): Promise<Artist> {
+export async function getArtist(id: string): Promise<Artist | null> {
   const result = await ArtistEntity.get({ id }).go();
 
   if (!result.data) {
-    throw new ApplicationError(ErrorCode.ARTIST_NOT_FOUND, `Artist with ID ${id} not found`);
+    return null;
   }
 
   return result.data as Artist;

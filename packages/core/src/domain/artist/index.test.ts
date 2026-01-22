@@ -135,7 +135,7 @@ describe('Artist', () => {
       } as any);
 
       await expect(updateArtist('test-id-123', updateInput)).rejects.toThrow(
-        'Artist test-id-123 not found'
+        'Artist with ID test-id-123 not found'
       );
     });
   });

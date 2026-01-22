@@ -1,6 +1,6 @@
+import { ApplicationError, ErrorCode } from '@/constants';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { ApplicationError, ErrorCode } from '../constants';
 import { RagaEntity } from './entity';
 import type { Raga } from './entity';
 import type { CreateRagaSchema, UpdateRagaSchema } from './schema';
@@ -22,10 +22,10 @@ export async function createRaga(input: CreateRagaInput): Promise<Raga> {
   return result.data as Raga;
 }
 
-export async function getRaga(id: string): Promise<Raga> {
+export async function getRaga(id: string): Promise<Raga | null> {
   const result = await RagaEntity.get({ id }).go();
   if (!result.data) {
-    throw new ApplicationError(ErrorCode.RAGA_NOT_FOUND, `Raga with ID ${id} not found`);
+    return null;
   }
   return result.data as Raga;
 }
