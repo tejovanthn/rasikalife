@@ -56,6 +56,8 @@ export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
 ];
 
+console.log(process.versions)
+
 function Layout({ children, theme }: { children: React.ReactNode; theme: string }) {
   const location = useLocation();
 

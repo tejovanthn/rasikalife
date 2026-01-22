@@ -10,12 +10,14 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "sst": "^0.1.111"
+    "sst": "^3.17.37"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
