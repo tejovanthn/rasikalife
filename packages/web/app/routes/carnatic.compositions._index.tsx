@@ -10,9 +10,28 @@ import { EmptyState } from '~/components/shared/EmptyState';
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const query = url.searchParams.get('q');
   const itemsPerPage = 36;
 
   try {
+    if (query) {
+      // Use searchWithFullData to get enriched results in a single request
+      const searchResults = await client.search.searchWithFullData.query({
+        query,
+        limit: itemsPerPage,
+        offset: 0,
+        filters: ['compositionTitle', 'lyrics'],
+      });
+
+      return data({
+        compositions: searchResults.compositions,
+        nextToken: null,
+        hasMore: searchResults.compositions.length >= itemsPerPage,
+        prevToken: null,
+        searchQuery: query,
+      });
+    }
+
     const results = await client.composition.list.query({
       limit: itemsPerPage,
       nextToken: nextToken || undefined,
@@ -23,6 +42,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,
+      searchQuery: null,
     });
   } catch (error) {
     console.error('Failed to load compositions:', error);
@@ -47,11 +67,12 @@ export const meta: MetaFunction = () => {
 };
 
 export default function CompositionsIndex() {
-  const { compositions, nextToken, hasMore, prevToken } = useLoaderData<{
+  const { compositions, nextToken, hasMore, prevToken, searchQuery } = useLoaderData<{
     compositions: CompositionWithRelations[];
     nextToken: string | null;
     hasMore: boolean;
     prevToken: string | null;
+    searchQuery: string | null;
   }>();
 
   const [searchParams] = useSearchParams();
@@ -62,9 +83,13 @@ export default function CompositionsIndex() {
     <div className="max-w-6xl">
       <header className="mb-8">
         <h1 className="page-title">Compositions</h1>
-        <p className="text-xl text-muted-foreground">
-          Explore traditional Indian classical music compositions
-        </p>
+        {searchQuery ? (
+          <p className="text-xl text-muted-foreground">Search results for "{searchQuery}"</p>
+        ) : (
+          <p className="text-xl text-muted-foreground">
+            Explore traditional Indian classical music compositions
+          </p>
+        )}
       </header>
 
       {compositions.length === 0 ? (

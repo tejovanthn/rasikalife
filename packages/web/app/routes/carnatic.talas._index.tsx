@@ -10,9 +10,36 @@ import { EmptyState } from '~/components/shared/EmptyState';
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const query = url.searchParams.get('q');
   const itemsPerPage = 36;
 
   try {
+    if (query) {
+      const results = await client.search.search.query({
+        query,
+        limit: itemsPerPage,
+        offset: nextToken ? Number.parseInt(nextToken, 10) : 0,
+      });
+
+      return data({
+        talas: results.items
+          .filter(item => item.type === 'tala')
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            aksharas: 0,
+            description: '',
+            viewCount: 0,
+            createdAt: '',
+            updatedAt: '',
+          })),
+        nextToken: null,
+        hasMore: false,
+        prevToken: null,
+        searchQuery: query,
+      });
+    }
+
     const results = await client.tala.list.query({
       limit: itemsPerPage,
       nextToken: nextToken || undefined,
@@ -23,6 +50,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,
+      searchQuery: null,
     });
   } catch (error) {
     console.error('Failed to load talas:', error);
@@ -47,11 +75,12 @@ export const meta: MetaFunction = () => {
 };
 
 export default function TalasIndex() {
-  const { talas, nextToken, hasMore, prevToken } = useLoaderData<{
+  const { talas, nextToken, hasMore, prevToken, searchQuery } = useLoaderData<{
     talas: TalaType[];
     nextToken: string | null;
     hasMore: boolean;
     prevToken: string | null;
+    searchQuery: string | null;
   }>();
 
   const [searchParams] = useSearchParams();
@@ -61,7 +90,13 @@ export default function TalasIndex() {
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <header className="mb-8">
         <h1 className="page-title">Talas</h1>
-        <p className="text-xl text-muted-foreground">Explore traditional Indian classical talas</p>
+        {searchQuery ? (
+          <p className="text-xl text-muted-foreground">Search results for "{searchQuery}"</p>
+        ) : (
+          <p className="text-xl text-muted-foreground">
+            Explore traditional Indian classical talas
+          </p>
+        )}
       </header>
 
       {talas.length === 0 ? (

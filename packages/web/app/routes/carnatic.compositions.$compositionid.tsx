@@ -1,4 +1,3 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { type LinksFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
@@ -10,6 +9,7 @@ import {
   MusicCompositionStructuredData,
 } from '~/components/structured-data';
 import { ShareButtons } from '~/components/ui/share-buttons';
+import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateCompositionOGImage } from '~/lib/og';
 import { generateCompositionUrl, parseSlug } from '~/lib/url-slug';
 

@@ -1,6 +1,6 @@
 // infra/search.ts
 
-import { database } from "./database";
+import { database } from './database';
 
 const searchBucket = new sst.aws.Bucket('SearchIndexBucket', {
   public: false,

@@ -12,5 +12,13 @@ export const searchRouter = createTRPCRouter({
     })
   ),
 
+  searchWithFullData: publicProcedure.input(Search.SearchInputSchema).query(({ input }) =>
+    Search.searchWithFullData(input.query, {
+      filters: input.filters,
+      limit: input.limit,
+      offset: input.offset,
+    })
+  ),
+
   health: publicProcedure.query(() => Search.getHealth()),
 });

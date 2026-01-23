@@ -4,6 +4,14 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 import { ApplicationError, ErrorCode } from '@rasika/core';
 import Fuse, { type FuseResult, type FuseResultMatch } from 'fuse.js';
+import { ArtistEntity } from '../artist/entity';
+import type { Artist } from '../artist/entity';
+import { CompositionEntity } from '../composition/entity';
+import type { CompositionWithRelations } from '../composition/index';
+import { RagaEntity } from '../raga/entity';
+import type { Raga } from '../raga/entity';
+import { TalaEntity } from '../tala/entity';
+import type { Tala } from '../tala/entity';
 import type { SearchableField } from './schema';
 import type {
   HealthStatus,
@@ -43,13 +51,14 @@ function createFuseOptions(filterFields?: SearchableField[]) {
     keys: filteredKeys,
     threshold: 0.4,
     distance: 100,
+    minMatchCharLength: 2,
     ignoreLocation: true,
     isCaseSensitive: false,
     ignoreDiacritics: true,
     includeScore: true,
     includeMatches: true,
     shouldSort: true,
-    findAllMatches: false,
+    findAllMatches: true,
   };
 }
 
@@ -75,10 +84,36 @@ export async function search(query: string, options: SearchOptions = {}): Promis
     const documents = index.documents;
 
     const fuseOptions = createFuseOptions(filters);
-    const fuse = new Fuse<SearchDocument>(documents, fuseOptions);
 
-    const rawResults = fuse.search(query, {
-      limit: limit + offset,
+    // Search each entity type separately to ensure balanced results
+    const entityTypes = ['artist', 'raga', 'tala', 'composition'] as const;
+    const resultsByType: Record<string, FuseResult<SearchDocument>[]> = {};
+
+    for (const entityType of entityTypes) {
+      const typeDocuments = documents.filter(d => d.entityType === entityType);
+      const fuse = new Fuse<SearchDocument>(typeDocuments, fuseOptions);
+      resultsByType[entityType] = fuse.search(query);
+    }
+
+    // Interleave results from each type, sorted by score within each type
+    const rawResults: FuseResult<SearchDocument>[] = [];
+    const maxPerType = Math.ceil(limit / entityTypes.length);
+
+    for (const entityType of entityTypes) {
+      rawResults.push(...resultsByType[entityType].slice(0, maxPerType));
+    }
+
+    // Sort all results by score (lower is better in Fuse)
+    rawResults.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+
+    console.log('Search results:', {
+      query,
+      byType: {
+        artists: resultsByType.artist?.length ?? 0,
+        compositions: resultsByType.composition?.length ?? 0,
+        ragas: resultsByType.raga?.length ?? 0,
+        talas: resultsByType.tala?.length ?? 0,
+      },
     });
 
     const paginatedResults = rawResults.slice(offset, offset + limit);
@@ -88,6 +123,7 @@ export async function search(query: string, options: SearchOptions = {}): Promis
         id: result.item.id,
         type: result.item.entityType,
         name: result.item.displayName,
+        score: result.score ?? 1,
         highlights: transformMatchesToHighlights(result.matches || []),
       })
     );
@@ -115,6 +151,81 @@ export async function search(query: string, options: SearchOptions = {}): Promis
       `Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
   }
+}
+
+export interface SearchWithFullDataResponse {
+  compositions: CompositionWithRelations[];
+  artists: Artist[];
+  ragas: Raga[];
+  talas: Tala[];
+  total: number;
+}
+
+/**
+ * Search with full entity data - returns enriched results with all relations
+ * Uses batch fetches to avoid N+1 queries
+ */
+export async function searchWithFullData(
+  query: string,
+  options: SearchOptions = {}
+): Promise<SearchWithFullDataResponse> {
+  const { filters, limit = 20, offset = 0 } = options;
+
+  // First, run the regular search to get IDs
+  const searchResponse = await search(query, { filters, limit, offset });
+
+  // Group results by entity type
+  const compositionIds: Array<{ id: string }> = [];
+  const artistIds: Array<{ id: string }> = [];
+  const ragaIds: Array<{ id: string }> = [];
+  const talaIds: Array<{ id: string }> = [];
+
+  for (const item of searchResponse.items) {
+    switch (item.type) {
+      case 'composition':
+        compositionIds.push({ id: item.id });
+        break;
+      case 'artist':
+        artistIds.push({ id: item.id });
+        break;
+      case 'raga':
+        ragaIds.push({ id: item.id });
+        break;
+      case 'tala':
+        talaIds.push({ id: item.id });
+        break;
+    }
+  }
+
+  // Batch fetch full entity data in parallel
+  const [compositionsResult, artistsResult, ragasResult, talasResult] = await Promise.all([
+    compositionIds.length > 0 ? CompositionEntity.get(compositionIds).go() : { data: [] },
+    artistIds.length > 0 ? ArtistEntity.get(artistIds).go() : { data: [] },
+    ragaIds.length > 0 ? RagaEntity.get(ragaIds).go() : { data: [] },
+    talaIds.length > 0 ? TalaEntity.get(talaIds).go() : { data: [] },
+  ]);
+
+  // Transform compositions to CompositionWithRelations format
+  const compositions: CompositionWithRelations[] = (compositionsResult.data || []).map(comp => ({
+    id: comp.id,
+    title: comp.title,
+    composer: comp.composer,
+    language: comp.language,
+    lyricsV1: comp.lyricsV1 || [],
+    ragas: comp.ragas || [],
+    talas: comp.talas || [],
+    sourceAttribution: comp.sourceAttribution,
+    createdAt: comp.createdAt,
+    updatedAt: comp.updatedAt,
+  }));
+
+  return {
+    compositions,
+    artists: artistsResult.data || [],
+    ragas: ragasResult.data || [],
+    talas: talasResult.data || [],
+    total: searchResponse.total,
+  };
 }
 
 async function loadIndex(): Promise<SearchIndex> {

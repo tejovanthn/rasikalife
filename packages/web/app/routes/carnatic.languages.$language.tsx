@@ -1,9 +1,9 @@
-import { ApplicationError } from '@rasika/core';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { type LoaderFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { ApplicationError } from '~/lib/errors';
 
 export const loader: LoaderFunction = async ({ params }) => {
   const { language } = params;

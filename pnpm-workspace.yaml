@@ -1,7 +1,9 @@
 packages:
   - packages/*
+
 onlyBuiltDependencies:
   - '@biomejs/biome'
   - aws-sdk
   - esbuild
   - protobufjs
+  - vite-plugin-node-externals

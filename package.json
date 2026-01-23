@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@uidotdev/usehooks": "^2.4.1",
     "sst": "^3.17.37"
   },
   "devDependencies": {

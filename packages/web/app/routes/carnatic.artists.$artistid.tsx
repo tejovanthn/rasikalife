@@ -1,5 +1,3 @@
-import type { Artist } from '@rasika/core';
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
@@ -8,6 +6,8 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData, PersonStructuredData } from '~/components/structured-data';
+import type { Artist } from '~/lib/errors';
+import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistOGImage } from '~/lib/og';
 
 export async function loader({

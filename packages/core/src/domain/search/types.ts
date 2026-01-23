@@ -28,6 +28,7 @@ export interface SearchResultItem {
   id: string;
   type: EntityType;
   name: string;
+  score: number;
   highlights: Array<{
     field: SearchableField;
     text: string;

@@ -1,4 +1,3 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { Composition } from '@rasika/core/domain/composition/entity';
 import type { Tala } from '@rasika/core/domain/tala/entity';
 import { type MetaFunction, data } from 'react-router';
@@ -8,6 +7,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { ApplicationError, ErrorCode } from '~/lib/errors';
 
 export async function loader({ params }: { params: { talaid?: string } }) {
   const { talaid } = params;

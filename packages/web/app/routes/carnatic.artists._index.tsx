@@ -1,4 +1,3 @@
-import { ApplicationError } from '@rasika/core';
 import type { ArtistType } from '@rasika/core/types/entities';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
@@ -7,13 +6,42 @@ import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { ApplicationError } from '~/lib/errors';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const query = url.searchParams.get('q');
   const itemsPerPage = 36;
 
   try {
+    if (query) {
+      const results = await client.search.search.query({
+        query,
+        limit: itemsPerPage,
+        offset: nextToken ? Number.parseInt(nextToken, 10) : 0,
+      });
+
+      return data({
+        artists: results.items
+          .filter(item => item.type === 'artist')
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            artistType: 'vocalist' as const,
+            traditions: [],
+            isVerified: false,
+            viewCount: 0,
+            createdAt: '',
+            updatedAt: '',
+          })),
+        nextToken: null,
+        hasMore: false,
+        prevToken: null,
+        searchQuery: query,
+      });
+    }
+
     const results = await client.artist.list.query({
       limit: itemsPerPage,
       nextToken: nextToken || undefined,
@@ -24,11 +52,12 @@ export const loader: LoaderFunction = async ({ request }) => {
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,
+      searchQuery: null,
     });
   } catch (error) {
     console.error('Failed to load artists:', error);
     if (error instanceof ApplicationError) {
-      throw new Response(error.message, { status: 500 }); // Keep 500 for now, could map to specific codes later
+      throw new Response(error.message, { status: 500 });
     }
     throw new Response('Failed to load artists', { status: 500 });
   }
@@ -51,10 +80,11 @@ export const meta: MetaFunction = () => {
 };
 
 export default function ArtistsIndex() {
-  const { artists, nextToken, hasMore } = useLoaderData<{
+  const { artists, nextToken, hasMore, searchQuery } = useLoaderData<{
     artists: ArtistType[];
     nextToken: string | null;
     hasMore: boolean;
+    searchQuery: string | null;
   }>();
 
   const [searchParams] = useSearchParams();
@@ -64,9 +94,13 @@ export default function ArtistsIndex() {
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <header className="mb-8">
         <h1 className="page-title">Artists</h1>
-        <p className="text-xl text-muted-foreground">
-          Explore renowned artists of Indian classical music
-        </p>
+        {searchQuery ? (
+          <p className="text-xl text-muted-foreground">Search results for "{searchQuery}"</p>
+        ) : (
+          <p className="text-xl text-muted-foreground">
+            Explore renowned artists of Indian classical music
+          </p>
+        )}
       </header>
 
       {artists.length === 0 ? (

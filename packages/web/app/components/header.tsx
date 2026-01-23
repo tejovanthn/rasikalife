@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from '~/components/ui/sheet';
 
+import { GlobalSearch } from './GlobalSearch';
 import { ModeToggle } from './mode-toggle';
 
 export const Header = () => {
@@ -69,9 +70,12 @@ export const Header = () => {
                     {link.label}
                   </NavLink>
                 ))}
-                <ModeToggle />
               </nav>
             </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <GlobalSearch />
+            <ModeToggle />
           </div>
           <div className="md:hidden">
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -118,9 +122,11 @@ export const Header = () => {
                       {link.label}
                     </NavLink>
                   ))}
-                  <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-base font-medium text-muted-foreground">Theme</span>
-                    <ModeToggle />
+                  <div className="pt-4 border-t border-border mt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-medium text-muted-foreground">Theme</span>
+                      <ModeToggle />
+                    </div>
                   </div>
                 </nav>
               </SheetContent>

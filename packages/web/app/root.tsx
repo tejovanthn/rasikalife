@@ -1,4 +1,3 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import clsx from 'clsx';
 import { useContext, useEffect } from 'react';
 import type { LinksFunction } from 'react-router';
@@ -16,6 +15,7 @@ import {
 } from 'react-router';
 import { useFetcher, useLoaderData } from 'react-router';
 import { useTheme } from 'react-router-theme';
+import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ThemeContext } from './components/theme-context';
 
 // Export loader and action from react-router-theme

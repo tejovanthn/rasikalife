@@ -1,68 +1,240 @@
-import { Search, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Link, useFetcher } from 'react-router';
+import { useDebounce } from '@uidotdev/usehooks';
+import { Search as SearchIcon, X } from 'lucide-react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { Link, useFetcher, useNavigate } from 'react-router';
 import { useHydrated } from '~/lib/progressive-enhancement';
-
-interface SearchResult {
-  id: string;
-  title?: string;
-  name?: string;
-  type: 'composition' | 'artist' | 'raga' | 'tala';
-  url: string;
-  raga?: string;
-  tala?: string;
-  artistType?: string;
-  melakarta?: number;
-  aksharas?: number;
-}
+import {
+  generateArtistUrl,
+  generateCompositionUrl,
+  generateRagaUrl,
+  generateTalaUrl,
+} from '~/lib/url-slug';
+import type { SearchEntityType, SearchResultItem } from '~/types/search';
 
 interface SearchResults {
-  compositions: SearchResult[];
-  artists: SearchResult[];
-  ragas: SearchResult[];
-  talas: SearchResult[];
+  compositions: SearchResultItem[];
+  artists: SearchResultItem[];
+  ragas: SearchResultItem[];
+  talas: SearchResultItem[];
+}
+
+type FilterType = SearchEntityType | 'all';
+
+type SearchState = {
+  isOpen: boolean;
+  query: string;
+  results: SearchResults | null;
+  isLoading: boolean;
+  selectedIndex: number;
+  filter: FilterType;
+};
+
+type SearchAction =
+  | { type: 'OPEN' }
+  | { type: 'CLOSE' }
+  | { type: 'SET_QUERY'; query: string }
+  | { type: 'SET_RESULTS'; results: SearchResults }
+  | { type: 'CLEAR_RESULTS' }
+  | { type: 'SET_LOADING'; isLoading: boolean }
+  | { type: 'SELECT_NEXT'; maxIndex: number }
+  | { type: 'SELECT_PREV' }
+  | { type: 'SELECT_RESET' }
+  | { type: 'SET_FILTER'; filter: FilterType };
+
+const initialState: SearchState = {
+  isOpen: false,
+  query: '',
+  results: null,
+  isLoading: false,
+  selectedIndex: -1,
+  filter: 'all',
+};
+
+function searchReducer(state: SearchState, action: SearchAction): SearchState {
+  switch (action.type) {
+    case 'OPEN':
+      return { ...state, isOpen: true };
+    case 'CLOSE':
+      return { ...initialState };
+    case 'SET_QUERY':
+      return { ...state, query: action.query };
+    case 'SET_RESULTS':
+      return { ...state, results: action.results, isLoading: false };
+    case 'CLEAR_RESULTS':
+      return { ...state, results: null, selectedIndex: -1 };
+    case 'SET_LOADING':
+      return {
+        ...state,
+        isLoading: action.isLoading,
+        results: action.isLoading ? null : state.results,
+      };
+    case 'SELECT_NEXT':
+      return { ...state, selectedIndex: Math.min(state.selectedIndex + 1, action.maxIndex) };
+    case 'SELECT_PREV':
+      return { ...state, selectedIndex: Math.max(state.selectedIndex - 1, -1) };
+    case 'SELECT_RESET':
+      return { ...state, selectedIndex: -1 };
+    case 'SET_FILTER':
+      return { ...state, filter: action.filter, selectedIndex: -1 };
+    default:
+      return state;
+  }
+}
+
+function getEntityUrl(item: SearchResultItem): string {
+  switch (item.type) {
+    case 'composition':
+      return generateCompositionUrl(item.name, item.id);
+    case 'artist':
+      return generateArtistUrl(item.name, item.id);
+    case 'raga':
+      return generateRagaUrl(item.name, item.id);
+    case 'tala':
+      return generateTalaUrl(item.name, item.id);
+  }
+}
+
+function getHighlightText(item: SearchResultItem, field: string): string | undefined {
+  return item.highlights.find(h => h.field === field)?.text;
+}
+
+const RESULT_SECTIONS = [
+  {
+    key: 'compositions',
+    label: 'Compositions',
+    filterType: 'composition',
+    path: '/carnatic/compositions',
+  },
+  { key: 'artists', label: 'Artists', filterType: 'artist', path: '/carnatic/artists' },
+  { key: 'ragas', label: 'Ragas', filterType: 'raga', path: '/carnatic/ragas' },
+  { key: 'talas', label: 'Talas', filterType: 'tala', path: '/carnatic/talas' },
+] as const;
+
+function ResultItem({
+  result,
+  globalIndex,
+  selectedIndex,
+  onResultClick,
+}: {
+  result: SearchResultItem;
+  globalIndex: number;
+  selectedIndex: number;
+  onResultClick: () => void;
+}) {
+  const url = getEntityUrl(result);
+  const ragaHighlight = getHighlightText(result, 'ragaName');
+  const talaHighlight = getHighlightText(result, 'talaName');
+
+  return (
+    <Link
+      id={`result-${result.id}`}
+      to={url}
+      onClick={onResultClick}
+      className={`block px-4 py-3 border-b border-border last:border-b-0 transition-colors ${
+        selectedIndex === globalIndex ? 'bg-accent/50 border-accent' : 'hover:bg-accent/20'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-medium text-foreground">{result.name}</div>
+          <div className="text-sm text-muted-foreground">
+            {result.type === 'composition' && (
+              <span>
+                {ragaHighlight && `Raga: ${ragaHighlight}`}
+                {ragaHighlight && talaHighlight && ' • '}
+                {talaHighlight && `Tala: ${talaHighlight}`}
+              </span>
+            )}
+            {result.type === 'artist' && <span>Artist</span>}
+            {result.type === 'raga' && <span>Raga</span>}
+            {result.type === 'tala' && <span>Tala</span>}
+          </div>
+        </div>
+        <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-1 rounded">
+          {result.type}
+        </span>
+      </div>
+    </Link>
+  );
 }
 
 export function GlobalSearch() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResults | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [state, dispatch] = useReducer(searchReducer, initialState);
+  const { isOpen, query, results, isLoading, selectedIndex, filter } = state;
 
   const isHydrated = useHydrated();
+  const navigate = useNavigate();
   const fetcher = useFetcher<SearchResults>();
   const searchRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const latestQueryRef = useRef<string>('');
 
-  // Debounced search
+  const debouncedQuery = useDebounce(query, 300);
+
+  const handleFilterChange = useCallback((newFilter: FilterType) => {
+    dispatch({ type: 'SET_FILTER', filter: newFilter });
+  }, []);
+
+  const getVisibleResults = useCallback((): SearchResultItem[] => {
+    if (!results) return [];
+
+    if (filter === 'all') {
+      // Ranked list sorted by score
+      return [...results.compositions, ...results.artists, ...results.ragas, ...results.talas].sort(
+        (a, b) => (a.score ?? 1) - (b.score ?? 1)
+      );
+    }
+
+    // Filtered by specific type
+    const all: SearchResultItem[] = [];
+    for (const section of RESULT_SECTIONS) {
+      if (filter === section.filterType) {
+        all.push(...results[section.key]);
+      }
+    }
+    return all;
+  }, [results, filter]);
+
+  const scrollSelectedIntoView = useCallback((result: SearchResultItem | undefined) => {
+    if (!result) return;
+    const element = document.getElementById(`result-${result.id}`);
+    element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, []);
+
+  // Reset selection when results change (filter change already resets in reducer)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on results change
   useEffect(() => {
-    if (query.length < 2) {
-      setResults(null);
+    dispatch({ type: 'SELECT_RESET' });
+  }, [results]);
+
+  // Sync fetcher.data to state only if query matches
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data) {
+      if (latestQueryRef.current === debouncedQuery) {
+        dispatch({ type: 'SET_RESULTS', results: fetcher.data });
+      }
+    }
+  }, [fetcher.state, fetcher.data, debouncedQuery]);
+
+  // Trigger search when debounced query changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: fetcher.load is stable, including fetcher causes infinite loop
+  useEffect(() => {
+    if (debouncedQuery.length < 3) {
+      dispatch({ type: 'CLEAR_RESULTS' });
       return;
     }
 
-    const timeoutId = setTimeout(() => {
-      setIsLoading(true);
-      fetcher.load(`/api/search?q=${encodeURIComponent(query)}`);
-    }, 300);
+    latestQueryRef.current = debouncedQuery;
+    dispatch({ type: 'SET_LOADING', isLoading: true });
+    fetcher.load(`/api/search?q=${encodeURIComponent(debouncedQuery)}`);
+  }, [debouncedQuery]);
 
-    return () => clearTimeout(timeoutId);
-  }, [query, fetcher]);
-
-  // Handle fetcher results
-  useEffect(() => {
-    if (fetcher.data && fetcher.state === 'idle') {
-      setResults(fetcher.data);
-      setIsLoading(false);
-    }
-  }, [fetcher.data, fetcher.state]);
-
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (resultsRef.current && !resultsRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        dispatch({ type: 'CLOSE' });
       }
     };
 
@@ -70,45 +242,38 @@ export function GlobalSearch() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Enhanced keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Global shortcuts (only when hydrated)
       if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
         event.preventDefault();
-        setIsOpen(true);
-        setTimeout(() => searchRef.current?.focus(), 0);
+        previousFocus.current = document.activeElement as HTMLElement;
+        dispatch({ type: 'OPEN' });
       }
 
       if (event.key === 'Escape') {
-        setIsOpen(false);
-        setQuery('');
-        setResults(null);
-        setSelectedIndex(-1);
+        dispatch({ type: 'CLOSE' });
+        previousFocus.current?.focus();
       }
 
-      // Navigation within search results
       if (isOpen && results) {
-        const allResults = [
-          ...results.compositions,
-          ...results.artists,
-          ...results.ragas,
-          ...results.talas,
-        ];
+        const visibleResults = getVisibleResults();
+        const maxIndex = visibleResults.length - 1;
 
         switch (event.key) {
           case 'ArrowDown':
             event.preventDefault();
-            setSelectedIndex(prev => Math.min(prev + 1, allResults.length - 1));
+            dispatch({ type: 'SELECT_NEXT', maxIndex });
+            scrollSelectedIntoView(visibleResults[Math.min(selectedIndex + 1, maxIndex)]);
             break;
           case 'ArrowUp':
             event.preventDefault();
-            setSelectedIndex(prev => Math.max(prev - 1, -1));
+            dispatch({ type: 'SELECT_PREV' });
+            scrollSelectedIntoView(visibleResults[selectedIndex - 1]);
             break;
           case 'Enter':
-            if (selectedIndex >= 0 && allResults[selectedIndex]) {
-              // Navigate to selected item
-              window.location.href = allResults[selectedIndex].url;
+            if (selectedIndex >= 0 && visibleResults[selectedIndex]) {
+              dispatch({ type: 'CLOSE' });
+              navigate(getEntityUrl(visibleResults[selectedIndex]));
             }
             break;
         }
@@ -119,183 +284,223 @@ export function GlobalSearch() {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isHydrated, isOpen, results, selectedIndex]);
+  }, [
+    isHydrated,
+    isOpen,
+    results,
+    selectedIndex,
+    getVisibleResults,
+    scrollSelectedIntoView,
+    navigate,
+  ]);
 
   const handleResultClick = () => {
-    setIsOpen(false);
-    setQuery('');
-    setResults(null);
-    setSelectedIndex(-1);
+    dispatch({ type: 'CLOSE' });
   };
 
-  const ResultItem = ({ result, index }: { result: SearchResult; index: number }) => (
-    <Link
-      to={result.url}
-      onClick={handleResultClick}
-      className={`block px-4 py-3 border-b border-border last:border-b-0 transition-colors ${
-        selectedIndex === index ? 'bg-accent/50 border-accent' : 'hover:bg-accent/20'
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="font-medium text-foreground">{result.title || result.name}</div>
-          <div className="text-sm text-muted-foreground">
-            {result.type === 'composition' && (
-              <span>
-                {result.raga && `Raga: ${result.raga}`}
-                {result.raga && result.tala && ' • '}
-                {result.tala && `Tala: ${result.tala}`}
-              </span>
-            )}
-            {result.type === 'artist' && <span>{result.artistType}</span>}
-            {result.type === 'raga' && result.melakarta && (
-              <span>Melakarta: {result.melakarta}</span>
-            )}
-            {result.type === 'tala' && result.aksharas && <span>{result.aksharas} aksharas</span>}
-          </div>
-        </div>
-        <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-1 rounded">
-          {result.type}
-        </span>
-      </div>
-    </Link>
+  // Focus input when modal opens
+  useEffect(() => {
+    if (isOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Calculate which sections to show based on filter
+  const visibleSections = RESULT_SECTIONS.filter(
+    section => filter === 'all' || filter === section.filterType
   );
 
   return (
     <>
-      {/* Search trigger button - Progressive Enhancement */}
       {isHydrated ? (
         <button
+          ref={triggerRef}
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            previousFocus.current = document.activeElement as HTMLElement;
+            dispatch({ type: 'OPEN' });
+          }}
           className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors"
         >
-          <Search size={16} />
+          <SearchIcon size={16} />
           <span>Search...</span>
           <span className="hidden sm:inline text-xs text-muted-foreground">⌘K</span>
         </button>
-      ) : (
-        <Link
-          to="/carnatic/compositions"
-          className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors"
-        >
-          <Search size={16} />
-          <span>Browse...</span>
-        </Link>
-      )}
+      ) : null}
 
-      {/* Search modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-start justify-center px-4 pt-16">
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay is decorative, keyboard handled globally */}
             <div
               className="fixed inset-0 bg-black bg-opacity-25"
-              onClick={() => setIsOpen(false)}
-              onKeyDown={e => {
-                if (e.key === 'Escape') {
-                  setIsOpen(false);
-                }
-              }}
-              tabIndex={-1}
+              onClick={() => dispatch({ type: 'CLOSE' })}
+              aria-hidden="true"
             />
 
             <div
               ref={resultsRef}
               className="relative bg-background rounded-lg shadow-xl w-full max-w-2xl border"
             >
-              {/* Search input */}
               <div className="flex items-center border-b border-border px-4">
-                <Search size={20} className="text-muted-foreground" />
+                <SearchIcon size={20} className="text-muted-foreground" />
                 <input
                   ref={searchRef}
                   type="text"
                   value={query}
-                  onChange={e => setQuery(e.target.value)}
+                  onChange={e => dispatch({ type: 'SET_QUERY', query: e.target.value })}
                   placeholder="Search compositions, artists, ragas, talas..."
+                  aria-label="Search"
+                  role="combobox"
+                  aria-expanded={isOpen && results !== null}
+                  aria-controls="search-results"
                   className="flex-1 px-4 py-4 text-lg placeholder:text-muted-foreground outline-none bg-transparent"
                 />
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => dispatch({ type: 'CLOSE' })}
                   className="p-2 text-muted-foreground hover:text-foreground"
                 >
                   <X size={20} />
                 </button>
               </div>
 
-              {/* Results */}
-              <div className="max-h-96 overflow-y-auto">
+              <div className="max-h-96 overflow-y-auto" id="search-results" aria-live="polite">
                 {isLoading && (
                   <div className="px-4 py-8 text-center text-muted-foreground">Searching...</div>
                 )}
 
-                {results &&
-                  !isLoading &&
-                  (() => {
-                    let itemIndex = 0;
-                    return (
-                      <>
-                        {results.compositions.length > 0 && (
-                          <div>
-                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted">
-                              Compositions
-                            </div>
-                            {results.compositions.map(result => (
-                              <ResultItem key={result.id} result={result} index={itemIndex++} />
-                            ))}
-                          </div>
-                        )}
+                {results && !isLoading && (
+                  <>
+                    <div
+                      className="flex border-b border-border overflow-x-auto scrollbar-none"
+                      role="tablist"
+                    >
+                      {(['all', 'composition', 'artist', 'raga', 'tala'] as const).map(type => (
+                        <button
+                          key={type}
+                          type="button"
+                          role="tab"
+                          aria-selected={filter === type}
+                          onClick={() => handleFilterChange(type)}
+                          className={`px-4 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap ${
+                            filter === type
+                              ? 'border-b-2 border-primary text-primary'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
+                        </button>
+                      ))}
+                    </div>
 
-                        {results.artists.length > 0 && (
-                          <div>
-                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted">
-                              Artists
-                            </div>
-                            {results.artists.map(result => (
-                              <ResultItem key={result.id} result={result} index={itemIndex++} />
-                            ))}
-                          </div>
-                        )}
+                    {filter === 'all'
+                      ? // Ranked list view for "All" - sorted by relevance score
+                        (() => {
+                          const allResults = [
+                            ...results.compositions,
+                            ...results.artists,
+                            ...results.ragas,
+                            ...results.talas,
+                          ].sort((a, b) => (a.score ?? 1) - (b.score ?? 1));
 
-                        {results.ragas.length > 0 && (
-                          <div>
-                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted">
-                              Ragas
-                            </div>
-                            {results.ragas.map(result => (
-                              <ResultItem key={result.id} result={result} index={itemIndex++} />
-                            ))}
-                          </div>
-                        )}
+                          if (allResults.length === 0) return null;
 
-                        {results.talas.length > 0 && (
-                          <div>
-                            <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted">
-                              Talas
+                          return (
+                            <div>
+                              {allResults.map((result, index) => (
+                                <ResultItem
+                                  key={result.id}
+                                  result={result}
+                                  globalIndex={index}
+                                  selectedIndex={selectedIndex}
+                                  onResultClick={handleResultClick}
+                                />
+                              ))}
                             </div>
-                            {results.talas.map(result => (
-                              <ResultItem key={result.id} result={result} index={itemIndex++} />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
+                          );
+                        })()
+                      : // Grouped view for specific type filters
+                        (() => {
+                          let globalIndex = 0;
+                          return visibleSections.map(section => {
+                            const sectionResults = results[section.key];
+                            if (sectionResults.length === 0) return null;
 
-                {results && Object.values(results).every(arr => arr.length === 0) && (
-                  <div className="px-4 py-8 text-center text-muted-foreground">
-                    No results found for "{query}"
-                  </div>
+                            const sectionStartIndex = globalIndex;
+                            globalIndex += sectionResults.length;
+
+                            return (
+                              <div key={section.key}>
+                                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted flex justify-between">
+                                  <span>{section.label}</span>
+                                  <Link
+                                    to={`${section.path}?q=${encodeURIComponent(query)}`}
+                                    onClick={handleResultClick}
+                                    className="text-primary hover:underline"
+                                  >
+                                    View all →
+                                  </Link>
+                                </div>
+                                {sectionResults.map((result, index) => (
+                                  <ResultItem
+                                    key={result.id}
+                                    result={result}
+                                    globalIndex={sectionStartIndex + index}
+                                    selectedIndex={selectedIndex}
+                                    onResultClick={handleResultClick}
+                                  />
+                                ))}
+                              </div>
+                            );
+                          });
+                        })()}
+
+                    {Object.values(results).every(arr => arr.length === 0) && (
+                      <div className="px-4 py-8 text-center text-muted-foreground">
+                        No results found for &quot;{query}&quot;
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {query.length < 2 && !isLoading && (
-                  <div className="px-4 py-8 text-center text-muted-foreground">
-                    Type at least 2 characters to search
+                {query.length < 3 && !isLoading && !results && (
+                  <div className="px-4 py-8" aria-live="polite">
+                    <div className="text-sm text-muted-foreground mb-4">Browse by category</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        to="/carnatic/compositions"
+                        onClick={handleResultClick}
+                        className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
+                      >
+                        Compositions
+                      </Link>
+                      <Link
+                        to="/carnatic/artists"
+                        onClick={handleResultClick}
+                        className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
+                      >
+                        Artists
+                      </Link>
+                      <Link
+                        to="/carnatic/ragas"
+                        onClick={handleResultClick}
+                        className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
+                      >
+                        Ragas
+                      </Link>
+                      <Link
+                        to="/carnatic/talas"
+                        onClick={handleResultClick}
+                        className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
+                      >
+                        Talas
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
 
-              {/* Footer */}
               <div className="border-t border-border px-4 py-3 text-xs text-muted-foreground flex justify-between">
                 <span>Press ↵ to select, ↑↓ to navigate</span>
                 <span>ESC to close</span>
