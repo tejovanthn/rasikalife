@@ -14,6 +14,11 @@ export enum ErrorCode {
   // Validation and data errors
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   DATABASE_ERROR = 'DATABASE_ERROR',
+
+  // Search errors
+  SEARCH_INDEX_ERROR = 'SEARCH_INDEX_ERROR',
+  SEARCH_INDEX_BUILD_FAILED = 'SEARCH_INDEX_BUILD_FAILED',
+  SEARCH_QUERY_FAILED = 'SEARCH_QUERY_FAILED',
 }
 
 export class ApplicationError extends Error {

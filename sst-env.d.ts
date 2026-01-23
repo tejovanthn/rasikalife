@@ -23,6 +23,15 @@ declare module "sst" {
       "type": "sst.aws.React"
       "url": string
     }
+    "SearchIndexBucket": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "SearchReindex": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />

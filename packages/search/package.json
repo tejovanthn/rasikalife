@@ -1,0 +1,20 @@
+{
+  "name": "@rasika/search",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Search handlers and utilities for Rasika.life Indian classical arts community platform",
+  "main": "./src/index.ts",
+  "type": "module",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@rasika/core": "workspace:*",
+    "@aws-sdk/client-s3": "^3.972.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.30",
+    "typescript": "^5.9.3"
+  }
+}

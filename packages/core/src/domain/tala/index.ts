@@ -1,4 +1,4 @@
-import { ApplicationError, ErrorCode } from '@/constants';
+import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
 import { TalaEntity } from './entity';

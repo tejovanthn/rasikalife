@@ -1,7 +1,6 @@
 ---
 description: Develop a comprehensive spec for a new feature using multi-agent iteration
-agent: build
-model: anthropic/claude-sonnet-4-5
+agent: build 
 ---
 
 You will receive a requirements document for a new feature, and use the Docs Fetcher, Application Architect, and DHH Code Reviewer subagents to develop a great spec for it.
