@@ -18,7 +18,7 @@ export const app = initializeApp(firebaseConfig);
 
 // Initialize Analytics conditionally
 export const analytics = isSupported().then(yes => {
-  if (yes) {
+  if (yes && process.env.STAGE === 'prod') {
     const analyticsInstance = getAnalytics(app);
 
     // Track Core Web Vitals
