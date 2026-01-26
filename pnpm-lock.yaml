@@ -12,8 +12,8 @@ importers:
         specifier: ^2.4.1
         version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       sst:
-        specifier: ^3.17.37
-        version: 3.17.37
+        specifier: ^3.17.38
+        version: 3.17.38
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.9.4
@@ -34,20 +34,20 @@ importers:
   packages/core:
     dependencies:
       '@aws-sdk/client-dynamodb':
-        specifier: ^3.974.0
-        version: 3.974.0
+        specifier: ^3.975.0
+        version: 3.975.0
       '@aws-sdk/client-s3':
-        specifier: ^3.974.0
-        version: 3.974.0
+        specifier: ^3.975.0
+        version: 3.975.0
       '@aws-sdk/lib-dynamodb':
-        specifier: ^3.974.0
-        version: 3.974.0(@aws-sdk/client-dynamodb@3.974.0)
+        specifier: ^3.975.0
+        version: 3.975.0(@aws-sdk/client-dynamodb@3.975.0)
       '@aws-sdk/util-dynamodb':
-        specifier: ^3.974.0
-        version: 3.974.0(@aws-sdk/client-dynamodb@3.974.0)
+        specifier: ^3.975.0
+        version: 3.975.0(@aws-sdk/client-dynamodb@3.975.0)
       electrodb:
         specifier: ^2.15.1
-        version: 2.15.1(@aws-sdk/client-dynamodb@3.974.0)
+        version: 2.15.1(@aws-sdk/client-dynamodb@3.975.0)
       fuse.js:
         specifier: ^7.1.0
         version: 7.1.0
@@ -87,7 +87,7 @@ importers:
         version: 11.0.0-rc.467
       sst:
         specifier: ion
-        version: 3.17.37
+        version: 3.17.38
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -99,8 +99,8 @@ importers:
   packages/scripts:
     dependencies:
       '@aws-sdk/client-dynamodb':
-        specifier: ^3.974.0
-        version: 3.974.0
+        specifier: ^3.975.0
+        version: 3.975.0
       '@rasika/core':
         specifier: workspace:*
         version: link:../core
@@ -112,8 +112,8 @@ importers:
   packages/search:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.974.0
-        version: 3.974.0
+        specifier: ^3.975.0
+        version: 3.975.0
       '@rasika/core':
         specifier: workspace:*
         version: link:../core
@@ -174,17 +174,17 @@ importers:
         specifier: workspace:*
         version: link:../trpc
       '@react-router/fs-routes':
-        specifier: ^7.12.0
-        version: 7.12.0(@react-router/dev@7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(@react-router/dev@7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)
       '@react-router/node':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
       '@react-router/remix-routes-option-adapter':
-        specifier: ^7.12.0
-        version: 7.12.0(@react-router/dev@7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(@react-router/dev@7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)
       '@react-router/serve':
-        specifier: ^7.12.0
-        version: 7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+        specifier: ^7.13.0
+        version: 7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
       '@trpc/client':
         specifier: ^11.8.1
         version: 11.8.1(@trpc/server@11.8.1(typescript@5.9.3))(typescript@5.9.3)
@@ -216,8 +216,8 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0(@types/react@18.3.27)(react@18.3.1)
       react-router:
-        specifier: ^7.12.0
-        version: 7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^7.13.0
+        version: 7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-router-theme:
         specifier: ^1.2.1
         version: 1.2.1(react@18.3.1)
@@ -235,8 +235,8 @@ importers:
         version: 5.1.0
     devDependencies:
       '@react-router/dev':
-        specifier: ^7.12.0
-        version: 7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))
+        specifier: ^7.13.0
+        version: 7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))
       '@types/react':
         specifier: ^18.3.27
         version: 18.3.27
@@ -301,12 +301,12 @@ packages:
   '@aws-crypto/util@5.2.0':
     resolution: {integrity: sha512-4RkU9EsI6ZpBve5fseQlGNUWKMa1RLPQ1dnjnQoe07ldfIzcsGb5hC5W0Dm7u423KWzawlrpbjXBrXCEv9zazQ==}
 
-  '@aws-sdk/client-dynamodb@3.974.0':
-    resolution: {integrity: sha512-Nw4/sL0IbBMvQdBvLlnBTFBrG+Aqg22ewMVJWOXSVdktfomtpPJ+jpJXBMJDMF9LsrgTNF/zsSVRJSEHYlBkOA==}
+  '@aws-sdk/client-dynamodb@3.975.0':
+    resolution: {integrity: sha512-Cq6oGb8XswG56YhF2kHmxuyEnMNayDpL8xDxp9E4zIUqDeSLCKE6lCaqZzo5zpngzqLluFsJbCC9jrMzZejMAA==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/client-s3@3.974.0':
-    resolution: {integrity: sha512-X+vpXNJ8cU8Iw1FtDgDHxo9z6RxlXfcTtpdGnKws4rk+tCYKSAor/DG6BRMzbh4E5xAA7DiU1Ny3BTrRRSt/Yg==}
+  '@aws-sdk/client-s3@3.975.0':
+    resolution: {integrity: sha512-aF1M/iMD29BPcpxjqoym0YFa4WR9Xie1/IhVumwOGH6TB45DaqYO7vLwantDBcYNRn/cZH6DFHksO7RmwTFBhw==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-sso@3.974.0':
@@ -317,8 +317,8 @@ packages:
     resolution: {integrity: sha512-nEeUW2M9F+xdIaD98F5MBcQ4ITtykj3yKbgFZ6J0JtL3bq+Z90szQ6Yy8H/BLPYXTs3V4n9ifnBo8cprRDiE6A==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/core@3.973.0':
-    resolution: {integrity: sha512-qy3Fmt8z4PRInM3ZqJmHihQ2tfCdj/MzbGaZpuHjYjgl1/Gcar4Pyp/zzHXh9hGEb61WNbWgsJcDUhnGIiX1TA==}
+  '@aws-sdk/core@3.973.1':
+    resolution: {integrity: sha512-Ocubx42QsMyVs9ANSmFpRm0S+hubWljpPLjOi9UFrtcnVJjrVJTzQ51sN0e5g4e8i8QZ7uY73zosLmgYL7kZTQ==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/crc64-nvme@3.972.0':
@@ -329,8 +329,8 @@ packages:
     resolution: {integrity: sha512-/etNHqnx96phy/SjI0HRC588o4vKH5F0xfkZ13yAATV7aNrb+5gYGNE6ePWafP+FuZ3HkULSSlJFj0AxgrAqYw==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/credential-provider-http@3.972.1':
-    resolution: {integrity: sha512-AeopObGW5lpWbDRZ+t4EAtS7wdfSrHPLeFts7jaBzgIaCCD7TL7jAyAB9Y5bCLOPF+17+GL54djCCsjePljUAw==}
+  '@aws-sdk/credential-provider-http@3.972.2':
+    resolution: {integrity: sha512-mXgdaUfe5oM+tWKyeZ7Vh/iQ94FrkMky1uuzwTOmFADiRcSk5uHy/e3boEFedXiT/PRGzgBmqvJVK4F6lUISCg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/credential-provider-ini@3.972.1':
@@ -357,21 +357,21 @@ packages:
     resolution: {integrity: sha512-YMDeYgi0u687Ay0dAq/pFPKuijrlKTgsaB/UATbxCs/FzZfMiG4If5ksywHmmW7MiYUF8VVv+uou3TczvLrN4w==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/dynamodb-codec@3.972.1':
-    resolution: {integrity: sha512-epXDCJWnaPraPQ8ZXE1AA6T/wMPw+jQqtQThuOTHFyvjAFezGAYqF+DHBUsJE7DqZXRLRR3v4ammtTaYC6uhvQ==}
+  '@aws-sdk/dynamodb-codec@3.972.2':
+    resolution: {integrity: sha512-K9CDUrjDSFhVeGibVjdKd+plE25EEo7DMAIl+mYaJ+ySXsQxdPgEmOYDmZq3iq3mpkkV0lG8XWM/oaQ+q+5aCQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@aws-sdk/client-dynamodb': 3.974.0
+      '@aws-sdk/client-dynamodb': 3.975.0
 
   '@aws-sdk/endpoint-cache@3.972.1':
     resolution: {integrity: sha512-w9TVoCUNwPG4njcbnZpSQaOZ1BF2z1Guox8NltoXm7oS1+q/8iHeG8eqY9TlGQsKLNA4KfnKUEAx4rlEc6Qv6w==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/lib-dynamodb@3.974.0':
-    resolution: {integrity: sha512-nYIWJZDRWZxfpWh/z+RfcCHgvG3kKwX3DbEwnD0Wf98H/M0Trj0vf74GSpXQt2X0lZuYZjqPDnJF3Y24Ksvxmw==}
+  '@aws-sdk/lib-dynamodb@3.975.0':
+    resolution: {integrity: sha512-BEhzr8atBFT8mJ8KuFne3OHj81zsqQWLP1Is2zzbzbZy4Mjbm1nRceNEwZ603tp9oFrV2mwTNLagFDPEudJC/g==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@aws-sdk/client-dynamodb': 3.974.0
+      '@aws-sdk/client-dynamodb': 3.975.0
 
   '@aws-sdk/middleware-bucket-endpoint@3.972.1':
     resolution: {integrity: sha512-YVvoitBdE8WOpHqIXvv49efT73F4bJ99XH2bi3Dn3mx7WngI4RwHwn/zF5i0q1Wdi5frGSCNF3vuh+pY817//w==}
@@ -409,16 +409,16 @@ packages:
     resolution: {integrity: sha512-0bcKFXWx+NZ7tIlOo7KjQ+O2rydiHdIQahrq+fN6k9Osky29v17guy68urUKfhTobR6iY6KvxkroFWaFtTgS5w==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/middleware-sdk-s3@3.972.1':
-    resolution: {integrity: sha512-q/hK0ZNf/aafFRv2wIlDM3p+izi5cXwktVNvRvW646A0MvVZmT4/vwadv/jPA9AORFbnpyf/0luxiMz181f9yg==}
+  '@aws-sdk/middleware-sdk-s3@3.972.2':
+    resolution: {integrity: sha512-5f9x9/G+StE8+7wd9EVDF3d+J74xK+WBA3FhZwLSkf3pHFGLKzlmUfxJJE1kkXkbj/j/H+Dh3zL/hrtQE9hNsg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/middleware-ssec@3.972.1':
     resolution: {integrity: sha512-fLtRTPd/MxJT2drJKft2GVGKm35PiNEeQ1Dvz1vc/WhhgAteYrp4f1SfSgjgLaYWGMExESJL4bt8Dxqp6tVsog==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/middleware-user-agent@3.972.1':
-    resolution: {integrity: sha512-6SVg4pY/9Oq9MLzO48xuM3lsOb8Rxg55qprEtFRpkUmuvKij31f5SQHEGxuiZ4RqIKrfjr2WMuIgXvqJ0eJsPA==}
+  '@aws-sdk/middleware-user-agent@3.972.2':
+    resolution: {integrity: sha512-d+Exq074wy0X6wvShg/kmZVtkah+28vMuqCtuY3cydg8LUZOJBtbAolCpEJizSyb8mJJZF9BjWaTANXL4OYnkg==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/nested-clients@3.974.0':
@@ -453,11 +453,11 @@ packages:
     resolution: {integrity: sha512-XnNit6H9PPHhqUXW/usjX6JeJ6Pm8ZNqivTjmNjgWHeOfVpblUc/MTic02UmCNR0jJLPjQ3mBKiMen0tnkNQjQ==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/util-dynamodb@3.974.0':
-    resolution: {integrity: sha512-n/VlmXl4Yp9RS3i9+ALSr7Y+f1VrKJGX88Q8C67cg+xWzgv0n1+sE/7ZAxJZKEBNpP9tjmpgqWej8f1pWalbIA==}
+  '@aws-sdk/util-dynamodb@3.975.0':
+    resolution: {integrity: sha512-ZsziF8m5Syn+kA2YJLEG2kk6zfxea8yRl/7SkSFpAls8RFYkt8EUmVUMBhX2hBpGw+nbZL7+AcRi4S2LxAcYWA==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@aws-sdk/client-dynamodb': 3.974.0
+      '@aws-sdk/client-dynamodb': 3.975.0
 
   '@aws-sdk/util-endpoints@3.972.0':
     resolution: {integrity: sha512-6JHsl1V/a1ZW8D8AFfd4R52fwZPnZ5H4U6DS8m/bWT8qad72NvbOFAC7U2cDtFs2TShqUO3TEiX/EJibtY3ijg==}
@@ -1618,14 +1618,14 @@ packages:
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
 
-  '@react-router/dev@7.12.0':
-    resolution: {integrity: sha512-5GpwXgq4pnOVeG7l6ADkCHA1rthJus1q/A3NRYJAIypclUQDYAzg1/fDNjvaKuTSrq+Nr3u6aj2v+oC+47MX6g==}
+  '@react-router/dev@7.13.0':
+    resolution: {integrity: sha512-0vRfTrS6wIXr9j0STu614Cv2ytMr21evnv1r+DXPv5cJ4q0V2x2kBAXC8TAqEXkpN5vdhbXBlbGQ821zwOfhvg==}
     engines: {node: '>=20.0.0'}
     hasBin: true
     peerDependencies:
-      '@react-router/serve': ^7.12.0
+      '@react-router/serve': ^7.13.0
       '@vitejs/plugin-rsc': ~0.5.7
-      react-router: ^7.12.0
+      react-router: ^7.13.0
       react-server-dom-webpack: ^19.2.3
       typescript: ^5.1.0
       vite: ^5.1.0 || ^6.0.0 || ^7.0.0
@@ -1642,56 +1642,56 @@ packages:
       wrangler:
         optional: true
 
-  '@react-router/express@7.12.0':
-    resolution: {integrity: sha512-uAK+zF93M6XauGeXLh/UBh+3HrwiA/9lUS+eChjQ0a5FzjLpsc6ciUqF5oHh3lwWzLU7u7tj4qoeucUn6SInTw==}
+  '@react-router/express@7.13.0':
+    resolution: {integrity: sha512-9az5P7sjbfxb0l4TtS5tlyV2tI8ZY4dWeuddxK2JLtgWwe+MGGSEO62fY87PidmgTqpQXguT6iyR5RXP9gJucA==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       express: ^4.17.1 || ^5
-      react-router: 7.12.0
+      react-router: 7.13.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/fs-routes@7.12.0':
-    resolution: {integrity: sha512-otlOIrIsJsqY5ACfgMsIkHPq1rfuvdwxBGWZRSscU+HK+BcHAz8ZDq+wYDGonOLcU6wUn33+G+/1skznIV1L8A==}
+  '@react-router/fs-routes@7.13.0':
+    resolution: {integrity: sha512-S7rilodzsn+8oKHk3VHo+M3gKB2znHZoUJEu1wD6ZTtb1sj+vkV/36M+bfbqXnbpXKs4+z3J4CWj53lpzEDiWA==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@react-router/dev': ^7.12.0
+      '@react-router/dev': ^7.13.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/node@7.12.0':
-    resolution: {integrity: sha512-o/t10Cse4LK8kFefqJ8JjC6Ng6YuKD2I87S2AiJs17YAYtXU5W731ZqB73AWyCDd2G14R0dSuqXiASRNK/xLjg==}
+  '@react-router/node@7.13.0':
+    resolution: {integrity: sha512-Mhr3fAou19oc/S93tKMIBHwCPfqLpWyWM/m0NWd3pJh/wZin8/9KhAdjwxhYbXw1TrTBZBLDENa35uZ+Y7oh3A==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      react-router: 7.12.0
+      react-router: 7.13.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/remix-routes-option-adapter@7.12.0':
-    resolution: {integrity: sha512-0UwBglZcYJPtwVUbgJRYnw/+dSeawYVe7vY+gjzHS7j+QsMtZv6NryXuU6Bs2DPxwqUo4cV8C+PegCbglAjPKA==}
+  '@react-router/remix-routes-option-adapter@7.13.0':
+    resolution: {integrity: sha512-Ydnx4mv+E6ZFtf91g188ieHzakExMkRS1ki/x2osrwN75q8Kq8yZlzKky3Fyr0wpsBiZA7SeZBZKaRX2QW4BqQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@react-router/dev': ^7.12.0
+      '@react-router/dev': ^7.13.0
       typescript: ^5.1.0
     peerDependenciesMeta:
       typescript:
         optional: true
 
-  '@react-router/serve@7.12.0':
-    resolution: {integrity: sha512-j1ltgU7s3wAwOosZ5oxgHSsmVyK706gY/yIs8qVmC239wQ3zr3eqaXk3TVVLMeRy+eDgPNmgc6oNJv2o328VgA==}
+  '@react-router/serve@7.13.0':
+    resolution: {integrity: sha512-bgpA3YdUvuSAQa0vRM9xeZaBsglgUvxsVCUqdJpxF87ZF9pT5uoAITrWYd1soDB8jSksnH3btJEXHasvG7cikA==}
     engines: {node: '>=20.0.0'}
     hasBin: true
     peerDependencies:
-      react-router: 7.12.0
+      react-router: 7.13.0
 
-  '@remix-run/node-fetch-server@0.9.0':
-    resolution: {integrity: sha512-SoLMv7dbH+njWzXnOY6fI08dFMI5+/dQ+vY3n8RnnbdG7MdJEgiP28Xj/xWlnRnED/aB6SFw56Zop+LbmaaKqA==}
+  '@remix-run/node-fetch-server@0.13.0':
+    resolution: {integrity: sha512-1EsNo0ZpgXu/90AWoRZf/oE3RVTUS80tiTUpt+hv5pjtAkw7icN4WskDwz/KdAw5ARbJLMhZBrO1NqThmy/McA==}
 
   '@rollup/rollup-android-arm-eabi@4.56.0':
     resolution: {integrity: sha512-LNKIPA5k8PF1+jAFomGe3qN3bbIgJe/IlpDBwuVjrDKrJhVWywgnJvflMt/zkbVNLFtF1+94SljYQS6e99klnw==}
@@ -2229,8 +2229,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.9.17:
-    resolution: {integrity: sha512-agD0MgJFUP/4nvjqzIB29zRPUuCF7Ge6mEv9s8dHrtYD7QWXRcx75rOADE/d5ah1NI+0vkDl0yorDd5U852IQQ==}
+  baseline-browser-mapping@2.9.18:
+    resolution: {integrity: sha512-e23vBV1ZLfjb9apvfPk4rHVu2ry6RIr2Wfs+O324okSidrX7pTAnEJPCh/O5BtRlr7QtZI7ktOP3vsqr7Z5XoA==}
     hasBin: true
 
   basic-auth@2.0.1:
@@ -2297,8 +2297,8 @@ packages:
     resolution: {integrity: sha512-QOSvevhslijgYwRx6Rv7zKdMF8lbRmx+uQGx2+vDc+KI/eBnsy9kit5aj23AgGu3pa4t9AgwbnXWqS+iOY+2aA==}
     engines: {node: '>= 6'}
 
-  caniuse-lite@1.0.30001765:
-    resolution: {integrity: sha512-LWcNtSyZrakjECqmpP4qdg0MMGdN368D7X8XvvAqOcqMv0RxnlqVKZl2V6/mBR68oYMxOZPLw/gO7DuisMHUvQ==}
+  caniuse-lite@1.0.30001766:
+    resolution: {integrity: sha512-4C0lfJ0/YPjJQHagaE9x2Elb69CIqEPZeG0anQt9SIvIoOH4a4uaRl73IavyO+0qZh6MDLH//DrXThEYKHkmYA==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -2495,8 +2495,8 @@ packages:
   electrodb@2.15.1:
     resolution: {integrity: sha512-sY1riyPbHG6DpmwakoSd2YxGSupFcc2Wiur8Y2PRHYNaCMG/tmBrzNRcMJt019o3YEU6xbYGCWyBkEhOZU7iAA==}
 
-  electron-to-chromium@1.5.277:
-    resolution: {integrity: sha512-wKXFZw4erWmmOz5N/grBoJ2XrNJGDFMu2+W5ACHza5rHtvsqrK4gb6rnLC7XxKB9WlJ+RmyQatuEXmtm86xbnw==}
+  electron-to-chromium@1.5.278:
+    resolution: {integrity: sha512-dQ0tM1svDRQOwxnXxm+twlGTjr9Upvt8UFWAgmLsxEzFQxhbti4VwxmMjsDxVC51Zo84swW7FVCXEV+VAkhuPw==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -3472,8 +3472,8 @@ packages:
     peerDependencies:
       react: '>=18.0.0'
 
-  react-router@7.12.0:
-    resolution: {integrity: sha512-kTPDYPFzDVGIIGNLS5VJykK0HfHLY5MF3b+xj0/tTyNYL1gF1qs7u67Z9jEhQk2sQ98SUaHxlG31g1JtF7IfVw==}
+  react-router@7.13.0:
+    resolution: {integrity: sha512-PZgus8ETambRT17BUm/LL8lX3Of+oiLaPuVTRH3l1eLvSPpKO3AvhAEb5N7ihAFZQrYDqkvvWfFh9p0z9VsjLw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -3650,48 +3650,48 @@ packages:
   space-separated-tokens@2.0.2:
     resolution: {integrity: sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q==}
 
-  sst-darwin-arm64@3.17.37:
-    resolution: {integrity: sha512-Rp/vqVggpRgUECSYpMy9WgAOxu2ztni/lxBflJG8+z/KXNBvRpfOwtIcHWHMVV/W9dG8020H5VTr9gBxl6e2SQ==}
+  sst-darwin-arm64@3.17.38:
+    resolution: {integrity: sha512-2qEu/jRRBGQbMzkJKy4cypX+LdjInKtn1VrPHeggHD0/DsXLUBVdj/WyYb9ZxbsZEUcA9xZDR2+FBZ7lQzaDcw==}
     cpu: [arm64]
     os: [darwin]
 
-  sst-darwin-x64@3.17.37:
-    resolution: {integrity: sha512-a6/Ob2atAmcwFRIFk/W79/qibF5wdvNtI0WlfQqb6p1F2GwZghma2nrmdq4L1/isjuJGWpqVJqrvpjIR3bABOg==}
+  sst-darwin-x64@3.17.38:
+    resolution: {integrity: sha512-um13cWbRK5rfsYuLxS97gaSkFVd6jCzI+k6wlpJaOcJ5IZiH5UdFIz+ZE/7iCfNTEiwDT+RMw2nGL9a+07Vtww==}
     cpu: [x64]
     os: [darwin]
 
-  sst-linux-arm64@3.17.37:
-    resolution: {integrity: sha512-Ha6bFgUg+7BM7ToZ5BCMB0SfC7aYj5/zNWzTShJNClKYT8Apes5mNGFD2+OSuKWAHDwjokmVyC3ulbv3SwcDfQ==}
+  sst-linux-arm64@3.17.38:
+    resolution: {integrity: sha512-gMxYJmpytntqZOf9SZfMnj+v6E0vZ8dAT5XnaKQhETSwuN6WH/OWHgx4bnp7bMQfdvm1uYNB+p7GRopIRRPePQ==}
     cpu: [arm64]
     os: [linux]
 
-  sst-linux-x64@3.17.37:
-    resolution: {integrity: sha512-xkR5vRl4K0ZpRwuzRUIOe2YAL4MEmQJPj4GTHTpuj2X2TwA8lm6hP2hs41PdwQwQ+doTE+ZIZq4LZvW4b+Of1A==}
+  sst-linux-x64@3.17.38:
+    resolution: {integrity: sha512-vwzfHhCugRTWevoA2qcl339yQhc8+vVdAqA11Qcats7LvaM6KxN9SqY00SfHPZxmm2odnefDg8z4b3Qvdo2NAw==}
     cpu: [x64]
     os: [linux]
 
-  sst-linux-x86@3.17.37:
-    resolution: {integrity: sha512-HXnG1A25QQ7apBP6IEHAFOmj2vu9g/LdscV7lDWQXpmaSU7KQax7uaGMDTBYVtNw5UPOiSkLQDSaVCFbyh5lGw==}
+  sst-linux-x86@3.17.38:
+    resolution: {integrity: sha512-rxG2YsN2XnykCvJ1ZquZIXbEOWIdLdcJ1ir9hcqb31cLrH0z2EN5F/IsioH9mLRVJnbmY3JewNk+C9mMB2a8zA==}
     cpu: [x86]
     os: [linux]
 
-  sst-win32-arm64@3.17.37:
-    resolution: {integrity: sha512-URAxb0l9KSUtO/qPcEOQIu/6yBrc4J6rVAHUJ/i8l/cOfOkBiWzL9kW5edp5CtQllZQ2WDGUPY+SB7Cqdt4yyg==}
+  sst-win32-arm64@3.17.38:
+    resolution: {integrity: sha512-aPTaLqJ4bEEfQwaxnteFXHAePw4Po1Be0tsdTuNUPDhhyv1CV5xSl4nppb4q/Qn1dGxaU6L4zCzZkshWskGIOg==}
     cpu: [arm64]
     os: [win32]
 
-  sst-win32-x64@3.17.37:
-    resolution: {integrity: sha512-Ctgy6jIbekE59rnG1YuKaRCS3m2HDf0j/C5HwAsy7BxvhVZhQXRug2aYG/qe3KUcL/TWVvrc6gsyYuyzyjFqMw==}
+  sst-win32-x64@3.17.38:
+    resolution: {integrity: sha512-X2kx6MOK1tZ0JhMqDisB60fJCOSxot5q7NPFMna5hj7cgJaQfj0NAgQqGJkLEB8iVWyxi6e5o1oJLg+vH452HQ==}
     cpu: [x64]
     os: [win32]
 
-  sst-win32-x86@3.17.37:
-    resolution: {integrity: sha512-SFNnQbPMiVf47/Ho9XbQ+5Pg/YbI4YOhSL6/U9VGQ6rhjqwTBsOd6uMja8/6mc0FWcqXBMUZk9xHhVC+L+CDzA==}
+  sst-win32-x86@3.17.38:
+    resolution: {integrity: sha512-W5PxA4uhpXMzWNT0/sMrmU27fn1DCaReGwVwJGEZapu9GKTix41uaP+pyd9fwjiAHVILIdxqe7+BkZfH+mvzbg==}
     cpu: [x86]
     os: [win32]
 
-  sst@3.17.37:
-    resolution: {integrity: sha512-tB2miMmbIRB2v5wtNk18TrjCH6Wv4Yhu0IChKvDXp8+WvDbzPoIC7Yhn/lzFZ8fnDyBIXA9U89HxDVeJAYaavw==}
+  sst@3.17.38:
+    resolution: {integrity: sha512-AshCCzogYVVTgLV7SBQ2hkmctAI0QV4pJmHwsyrX1ruSCvH18ccGgX/kux6/AFfaKrT7GmuVuQ2Zsz25GPXEiA==}
     hasBin: true
 
   stackback@0.0.2:
@@ -4164,18 +4164,18 @@ snapshots:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.8.1
 
-  '@aws-sdk/client-dynamodb@3.974.0':
+  '@aws-sdk/client-dynamodb@3.975.0':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/credential-provider-node': 3.972.1
-      '@aws-sdk/dynamodb-codec': 3.972.1(@aws-sdk/client-dynamodb@3.974.0)
+      '@aws-sdk/dynamodb-codec': 3.972.2(@aws-sdk/client-dynamodb@3.975.0)
       '@aws-sdk/middleware-endpoint-discovery': 3.972.1
       '@aws-sdk/middleware-host-header': 3.972.1
       '@aws-sdk/middleware-logger': 3.972.1
       '@aws-sdk/middleware-recursion-detection': 3.972.1
-      '@aws-sdk/middleware-user-agent': 3.972.1
+      '@aws-sdk/middleware-user-agent': 3.972.2
       '@aws-sdk/region-config-resolver': 3.972.1
       '@aws-sdk/types': 3.973.0
       '@aws-sdk/util-endpoints': 3.972.0
@@ -4211,12 +4211,12 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-s3@3.974.0':
+  '@aws-sdk/client-s3@3.975.0':
     dependencies:
       '@aws-crypto/sha1-browser': 5.2.0
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/credential-provider-node': 3.972.1
       '@aws-sdk/middleware-bucket-endpoint': 3.972.1
       '@aws-sdk/middleware-expect-continue': 3.972.1
@@ -4225,9 +4225,9 @@ snapshots:
       '@aws-sdk/middleware-location-constraint': 3.972.1
       '@aws-sdk/middleware-logger': 3.972.1
       '@aws-sdk/middleware-recursion-detection': 3.972.1
-      '@aws-sdk/middleware-sdk-s3': 3.972.1
+      '@aws-sdk/middleware-sdk-s3': 3.972.2
       '@aws-sdk/middleware-ssec': 3.972.1
-      '@aws-sdk/middleware-user-agent': 3.972.1
+      '@aws-sdk/middleware-user-agent': 3.972.2
       '@aws-sdk/region-config-resolver': 3.972.1
       '@aws-sdk/signature-v4-multi-region': 3.972.0
       '@aws-sdk/types': 3.973.0
@@ -4275,11 +4275,11 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/middleware-host-header': 3.972.1
       '@aws-sdk/middleware-logger': 3.972.1
       '@aws-sdk/middleware-recursion-detection': 3.972.1
-      '@aws-sdk/middleware-user-agent': 3.972.1
+      '@aws-sdk/middleware-user-agent': 3.972.2
       '@aws-sdk/region-config-resolver': 3.972.1
       '@aws-sdk/types': 3.973.0
       '@aws-sdk/util-endpoints': 3.972.0
@@ -4330,7 +4330,7 @@ snapshots:
       '@smithy/util-utf8': 4.2.0
       tslib: 2.8.1
 
-  '@aws-sdk/core@3.973.0':
+  '@aws-sdk/core@3.973.1':
     dependencies:
       '@aws-sdk/types': 3.973.0
       '@aws-sdk/xml-builder': 3.972.1
@@ -4353,15 +4353,15 @@ snapshots:
 
   '@aws-sdk/credential-provider-env@3.972.1':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/types': 3.973.0
       '@smithy/property-provider': 4.2.8
       '@smithy/types': 4.12.0
       tslib: 2.8.1
 
-  '@aws-sdk/credential-provider-http@3.972.1':
+  '@aws-sdk/credential-provider-http@3.972.2':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/types': 3.973.0
       '@smithy/fetch-http-handler': 5.3.9
       '@smithy/node-http-handler': 4.4.8
@@ -4374,9 +4374,9 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.972.1':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/credential-provider-env': 3.972.1
-      '@aws-sdk/credential-provider-http': 3.972.1
+      '@aws-sdk/credential-provider-http': 3.972.2
       '@aws-sdk/credential-provider-login': 3.972.1
       '@aws-sdk/credential-provider-process': 3.972.1
       '@aws-sdk/credential-provider-sso': 3.972.1
@@ -4393,7 +4393,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-login@3.972.1':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/nested-clients': 3.974.0
       '@aws-sdk/types': 3.973.0
       '@smithy/property-provider': 4.2.8
@@ -4407,7 +4407,7 @@ snapshots:
   '@aws-sdk/credential-provider-node@3.972.1':
     dependencies:
       '@aws-sdk/credential-provider-env': 3.972.1
-      '@aws-sdk/credential-provider-http': 3.972.1
+      '@aws-sdk/credential-provider-http': 3.972.2
       '@aws-sdk/credential-provider-ini': 3.972.1
       '@aws-sdk/credential-provider-process': 3.972.1
       '@aws-sdk/credential-provider-sso': 3.972.1
@@ -4423,7 +4423,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-process@3.972.1':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/types': 3.973.0
       '@smithy/property-provider': 4.2.8
       '@smithy/shared-ini-file-loader': 4.4.3
@@ -4433,7 +4433,7 @@ snapshots:
   '@aws-sdk/credential-provider-sso@3.972.1':
     dependencies:
       '@aws-sdk/client-sso': 3.974.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/token-providers': 3.974.0
       '@aws-sdk/types': 3.973.0
       '@smithy/property-provider': 4.2.8
@@ -4445,7 +4445,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.972.1':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/nested-clients': 3.974.0
       '@aws-sdk/types': 3.973.0
       '@smithy/property-provider': 4.2.8
@@ -4455,10 +4455,10 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/dynamodb-codec@3.972.1(@aws-sdk/client-dynamodb@3.974.0)':
+  '@aws-sdk/dynamodb-codec@3.972.2(@aws-sdk/client-dynamodb@3.975.0)':
     dependencies:
-      '@aws-sdk/client-dynamodb': 3.974.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/client-dynamodb': 3.975.0
+      '@aws-sdk/core': 3.973.1
       '@smithy/core': 3.21.1
       '@smithy/smithy-client': 4.10.12
       '@smithy/types': 4.12.0
@@ -4470,11 +4470,11 @@ snapshots:
       mnemonist: 0.38.3
       tslib: 2.8.1
 
-  '@aws-sdk/lib-dynamodb@3.974.0(@aws-sdk/client-dynamodb@3.974.0)':
+  '@aws-sdk/lib-dynamodb@3.975.0(@aws-sdk/client-dynamodb@3.975.0)':
     dependencies:
-      '@aws-sdk/client-dynamodb': 3.974.0
-      '@aws-sdk/core': 3.973.0
-      '@aws-sdk/util-dynamodb': 3.974.0(@aws-sdk/client-dynamodb@3.974.0)
+      '@aws-sdk/client-dynamodb': 3.975.0
+      '@aws-sdk/core': 3.973.1
+      '@aws-sdk/util-dynamodb': 3.975.0(@aws-sdk/client-dynamodb@3.975.0)
       '@smithy/core': 3.21.1
       '@smithy/smithy-client': 4.10.12
       '@smithy/types': 4.12.0
@@ -4511,7 +4511,7 @@ snapshots:
       '@aws-crypto/crc32': 5.2.0
       '@aws-crypto/crc32c': 5.2.0
       '@aws-crypto/util': 5.2.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/crc64-nvme': 3.972.0
       '@aws-sdk/types': 3.973.0
       '@smithy/is-array-buffer': 4.2.0
@@ -4567,9 +4567,9 @@ snapshots:
       '@smithy/util-utf8': 4.2.0
       tslib: 2.8.1
 
-  '@aws-sdk/middleware-sdk-s3@3.972.1':
+  '@aws-sdk/middleware-sdk-s3@3.972.2':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/types': 3.973.0
       '@aws-sdk/util-arn-parser': 3.972.1
       '@smithy/core': 3.21.1
@@ -4590,9 +4590,9 @@ snapshots:
       '@smithy/types': 4.12.0
       tslib: 2.8.1
 
-  '@aws-sdk/middleware-user-agent@3.972.1':
+  '@aws-sdk/middleware-user-agent@3.972.2':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/types': 3.973.0
       '@aws-sdk/util-endpoints': 3.972.0
       '@smithy/core': 3.21.1
@@ -4604,11 +4604,11 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/middleware-host-header': 3.972.1
       '@aws-sdk/middleware-logger': 3.972.1
       '@aws-sdk/middleware-recursion-detection': 3.972.1
-      '@aws-sdk/middleware-user-agent': 3.972.1
+      '@aws-sdk/middleware-user-agent': 3.972.2
       '@aws-sdk/region-config-resolver': 3.972.1
       '@aws-sdk/types': 3.973.0
       '@aws-sdk/util-endpoints': 3.972.0
@@ -4662,7 +4662,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.974.0':
     dependencies:
-      '@aws-sdk/core': 3.973.0
+      '@aws-sdk/core': 3.973.1
       '@aws-sdk/nested-clients': 3.974.0
       '@aws-sdk/types': 3.973.0
       '@smithy/property-provider': 4.2.8
@@ -4690,9 +4690,9 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@aws-sdk/util-dynamodb@3.974.0(@aws-sdk/client-dynamodb@3.974.0)':
+  '@aws-sdk/util-dynamodb@3.975.0(@aws-sdk/client-dynamodb@3.975.0)':
     dependencies:
-      '@aws-sdk/client-dynamodb': 3.974.0
+      '@aws-sdk/client-dynamodb': 3.975.0
       tslib: 2.8.1
 
   '@aws-sdk/util-endpoints@3.972.0':
@@ -4716,7 +4716,7 @@ snapshots:
 
   '@aws-sdk/util-user-agent-node@3.972.1':
     dependencies:
-      '@aws-sdk/middleware-user-agent': 3.972.1
+      '@aws-sdk/middleware-user-agent': 3.972.2
       '@aws-sdk/types': 3.973.0
       '@smithy/node-config-provider': 4.3.8
       '@smithy/types': 4.12.0
@@ -5869,7 +5869,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@react-router/dev@7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))':
+  '@react-router/dev@7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))':
     dependencies:
       '@babel/core': 7.28.6
       '@babel/generator': 7.28.6
@@ -5878,8 +5878,8 @@ snapshots:
       '@babel/preset-typescript': 7.28.5(@babel/core@7.28.6)
       '@babel/traverse': 7.28.6
       '@babel/types': 7.28.6
-      '@react-router/node': 7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
-      '@remix-run/node-fetch-server': 0.9.0
+      '@react-router/node': 7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@remix-run/node-fetch-server': 0.13.0
       arg: 5.0.2
       babel-dead-code-elimination: 1.0.12
       chokidar: 4.0.3
@@ -5895,14 +5895,14 @@ snapshots:
       pkg-types: 2.3.0
       prettier: 3.8.1
       react-refresh: 0.14.2
-      react-router: 7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-router: 7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       semver: 7.7.3
       tinyglobby: 0.2.15
       valibot: 1.2.0(typescript@5.9.3)
       vite: 5.4.21(@types/node@25.0.10)
       vite-node: 3.2.4(@types/node@25.0.10)
     optionalDependencies:
-      '@react-router/serve': 7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@react-router/serve': 7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@types/node'
@@ -5916,50 +5916,50 @@ snapshots:
       - supports-color
       - terser
 
-  '@react-router/express@7.12.0(express@4.22.1)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
+  '@react-router/express@7.13.0(express@4.22.1)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
     dependencies:
-      '@react-router/node': 7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@react-router/node': 7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
       express: 4.22.1
-      react-router: 7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-router: 7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/fs-routes@7.12.0(@react-router/dev@7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)':
+  '@react-router/fs-routes@7.13.0(@react-router/dev@7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)':
     dependencies:
-      '@react-router/dev': 7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))
+      '@react-router/dev': 7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))
       minimatch: 9.0.5
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/node@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
+  '@react-router/node@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      react-router: 7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-router: 7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/remix-routes-option-adapter@7.12.0(@react-router/dev@7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)':
+  '@react-router/remix-routes-option-adapter@7.13.0(@react-router/dev@7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10)))(typescript@5.9.3)':
     dependencies:
-      '@react-router/dev': 7.12.0(@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))
+      '@react-router/dev': 7.13.0(@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3))(@types/node@25.0.10)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)(vite@5.4.21(@types/node@25.0.10))
     optionalDependencies:
       typescript: 5.9.3
 
-  '@react-router/serve@7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
+  '@react-router/serve@7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)':
     dependencies:
       '@mjackson/node-fetch-server': 0.2.0
-      '@react-router/express': 7.12.0(express@4.22.1)(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
-      '@react-router/node': 7.12.0(react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@react-router/express': 7.13.0(express@4.22.1)(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@react-router/node': 7.13.0(react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
       compression: 1.8.1
       express: 4.22.1
       get-port: 5.1.1
       morgan: 1.10.1
-      react-router: 7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-router: 7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
       - typescript
 
-  '@remix-run/node-fetch-server@0.9.0': {}
+  '@remix-run/node-fetch-server@0.13.0': {}
 
   '@rollup/rollup-android-arm-eabi@4.56.0':
     optional: true
@@ -6564,7 +6564,7 @@ snapshots:
   autoprefixer@10.4.23(postcss@8.5.6):
     dependencies:
       browserslist: 4.28.1
-      caniuse-lite: 1.0.30001765
+      caniuse-lite: 1.0.30001766
       fraction.js: 5.3.4
       picocolors: 1.1.1
       postcss: 8.5.6
@@ -6606,7 +6606,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.9.17: {}
+  baseline-browser-mapping@2.9.18: {}
 
   basic-auth@2.0.1:
     dependencies:
@@ -6662,9 +6662,9 @@ snapshots:
 
   browserslist@4.28.1:
     dependencies:
-      baseline-browser-mapping: 2.9.17
-      caniuse-lite: 1.0.30001765
-      electron-to-chromium: 1.5.277
+      baseline-browser-mapping: 2.9.18
+      caniuse-lite: 1.0.30001766
+      electron-to-chromium: 1.5.278
       node-releases: 2.0.27
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
 
@@ -6699,7 +6699,7 @@ snapshots:
 
   camelcase-css@2.0.1: {}
 
-  caniuse-lite@1.0.30001765: {}
+  caniuse-lite@1.0.30001766: {}
 
   ccount@2.0.1: {}
 
@@ -6870,15 +6870,15 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  electrodb@2.15.1(@aws-sdk/client-dynamodb@3.974.0):
+  electrodb@2.15.1(@aws-sdk/client-dynamodb@3.975.0):
     dependencies:
-      '@aws-sdk/lib-dynamodb': 3.974.0(@aws-sdk/client-dynamodb@3.974.0)
-      '@aws-sdk/util-dynamodb': 3.974.0(@aws-sdk/client-dynamodb@3.974.0)
+      '@aws-sdk/lib-dynamodb': 3.975.0(@aws-sdk/client-dynamodb@3.975.0)
+      '@aws-sdk/util-dynamodb': 3.975.0(@aws-sdk/client-dynamodb@3.975.0)
       jsonschema: 1.2.7
     transitivePeerDependencies:
       - '@aws-sdk/client-dynamodb'
 
-  electron-to-chromium@1.5.277: {}
+  electron-to-chromium@1.5.278: {}
 
   emoji-regex@8.0.0: {}
 
@@ -8069,7 +8069,7 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  react-router@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-router@7.13.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       cookie: 1.1.1
       react: 18.3.1
@@ -8317,31 +8317,31 @@ snapshots:
 
   space-separated-tokens@2.0.2: {}
 
-  sst-darwin-arm64@3.17.37:
+  sst-darwin-arm64@3.17.38:
     optional: true
 
-  sst-darwin-x64@3.17.37:
+  sst-darwin-x64@3.17.38:
     optional: true
 
-  sst-linux-arm64@3.17.37:
+  sst-linux-arm64@3.17.38:
     optional: true
 
-  sst-linux-x64@3.17.37:
+  sst-linux-x64@3.17.38:
     optional: true
 
-  sst-linux-x86@3.17.37:
+  sst-linux-x86@3.17.38:
     optional: true
 
-  sst-win32-arm64@3.17.37:
+  sst-win32-arm64@3.17.38:
     optional: true
 
-  sst-win32-x64@3.17.37:
+  sst-win32-x64@3.17.38:
     optional: true
 
-  sst-win32-x86@3.17.37:
+  sst-win32-x86@3.17.38:
     optional: true
 
-  sst@3.17.37:
+  sst@3.17.38:
     dependencies:
       aws-sdk: 2.1692.0
       aws4fetch: 1.0.18
@@ -8349,14 +8349,14 @@ snapshots:
       opencontrol: 0.0.6
       openid-client: 5.6.4
     optionalDependencies:
-      sst-darwin-arm64: 3.17.37
-      sst-darwin-x64: 3.17.37
-      sst-linux-arm64: 3.17.37
-      sst-linux-x64: 3.17.37
-      sst-linux-x86: 3.17.37
-      sst-win32-arm64: 3.17.37
-      sst-win32-x64: 3.17.37
-      sst-win32-x86: 3.17.37
+      sst-darwin-arm64: 3.17.38
+      sst-darwin-x64: 3.17.38
+      sst-linux-arm64: 3.17.38
+      sst-linux-x64: 3.17.38
+      sst-linux-x86: 3.17.38
+      sst-win32-arm64: 3.17.38
+      sst-win32-x64: 3.17.38
+      sst-win32-x86: 3.17.38
     transitivePeerDependencies:
       - supports-color
 

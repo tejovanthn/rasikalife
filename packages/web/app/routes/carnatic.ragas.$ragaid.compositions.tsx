@@ -34,6 +34,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   try {
     const raga = await client.raga.get.query({ id: slugId });
 
+    if (!raga) {
+      throw new Response('Raga not found', { status: 404 });
+    }
+
     const result = await client.composition.byRaga.query({
       ragaId: raga.id,
       limit: itemsPerPage,

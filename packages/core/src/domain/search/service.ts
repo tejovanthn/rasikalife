@@ -312,3 +312,20 @@ export async function getHealth(): Promise<HealthStatus> {
     };
   }
 }
+
+export interface DocumentsResponse {
+  documents: SearchDocument[];
+  builtAt: string;
+}
+
+/**
+ * Get all documents from the search index.
+ * Useful for generating sitemaps without re-scanning the database.
+ */
+export async function getDocuments(): Promise<DocumentsResponse> {
+  const index = await loadIndex();
+  return {
+    documents: index.documents,
+    builtAt: index.builtAt,
+  };
+}

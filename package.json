@@ -10,13 +10,15 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@uidotdev/usehooks": "^2.4.1",
-    "sst": "^3.17.37"
+    "sst": "^3.17.38"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

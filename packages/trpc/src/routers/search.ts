@@ -21,4 +21,7 @@ export const searchRouter = createTRPCRouter({
   ),
 
   health: publicProcedure.query(() => Search.getHealth()),
+
+  /** Get all indexed documents - useful for sitemap generation */
+  documents: publicProcedure.query(() => Search.getDocuments()),
 });

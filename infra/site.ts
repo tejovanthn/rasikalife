@@ -15,8 +15,8 @@ const site = new sst.aws.React('RasikaWeb', {
     }),
   },
   environment: {
-    STAGE: $app.stage 
-  }
+    STAGE: $app.stage,
+  },
 });
 
 export { bucket, site };

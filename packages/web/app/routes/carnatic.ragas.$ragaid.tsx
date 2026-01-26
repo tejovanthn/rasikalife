@@ -24,6 +24,10 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
   try {
     const raga = await client.raga.get.query({ id: slugId });
 
+    if (!raga) {
+      throw new Response('Raga not found', { status: 404 });
+    }
+
     // Fetch compositions in this raga (limit to 6 for preview)
     const compositions = await client.composition.byRaga.query({
       ragaId: raga.id,

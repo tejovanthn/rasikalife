@@ -34,6 +34,10 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   try {
     const tala = await client.tala.get.query({ id: slugId });
 
+    if (!tala) {
+      throw new Response('Tala not found', { status: 404 });
+    }
+
     const result = await client.composition.byTala.query({
       talaId: tala.id,
       limit: itemsPerPage,

@@ -25,6 +25,10 @@ export async function loader({ params }: { params: { talaid?: string } }) {
   try {
     const tala = await client.tala.get.query({ id: slugId });
 
+    if (!tala) {
+      throw new Response('Tala not found', { status: 404 });
+    }
+
     // Fetch compositions in this tala (limit to 6 for preview)
     const compositions = await client.composition.byTala.query({
       talaId: tala.id,

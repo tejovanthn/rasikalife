@@ -1,75 +1,52 @@
-import type { Artist } from '@rasika/core/domain/artist/entity';
-import type { Composition } from '@rasika/core/domain/composition/entity';
-import type { Raga } from '@rasika/core/domain/raga/entity';
-import type { Tala } from '@rasika/core/domain/tala/entity';
 import type { LoaderFunction } from 'react-router';
 import { convert } from 'url-slug';
 import { client } from '~/api.server';
 
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader: LoaderFunction = async () => {
   const baseUrl = 'https://rasika.life';
 
   try {
-    // Collect all entities using existing list APIs
-    const [artists, compositions, ragas, talas] = await Promise.all([
-      collectAllEntities(client.artist.list, 'artists'),
-      collectAllEntities(client.composition.list, 'compositions'),
-      collectAllEntities(client.raga.list, 'ragas'),
-      collectAllEntities(client.tala.list, 'talas'),
-    ]);
+    // Use the search index instead of scanning the database again
+    const { documents, builtAt } = await client.search.documents.query();
 
-    // Generate URLs directly without generic dependencies
+    // Generate URL for each entity
     const generateEntityUrl = (type: string, name: string, id: string) => {
       const slug = convert(`${name}-${id}`, { camelCase: false });
       return `${baseUrl}/carnatic/${type}/${slug}`;
     };
 
-    // Generate XML sitemap
+    // Priority and change frequency by entity type
+    const entityConfig = {
+      artist: { urlPath: 'artists', priority: 0.6 },
+      composition: { urlPath: 'compositions', priority: 0.7 },
+      raga: { urlPath: 'ragas', priority: 0.5 },
+      tala: { urlPath: 'talas', priority: 0.5 },
+    } as const;
+
+    // Generate XML sitemap entries from indexed documents
+    const entries = documents
+      .map(doc => {
+        const config = entityConfig[doc.entityType];
+        const url = generateEntityUrl(config.urlPath, doc.displayName, doc.id);
+
+        return `  <url>
+    <loc>${url}</loc>
+    <lastmod>${doc.indexedAt}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>${config.priority}</priority>
+  </url>`;
+      })
+      .join('\n');
+
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${artists
-  .map(
-    artist => `  <url>
-    <loc>${generateEntityUrl('artists', (artist as Artist).name, (artist as Artist).id)}</loc>
-    <lastmod>${(artist as Artist).updatedAt || (artist as Artist).createdAt}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>`
-  )
-  .join('\n')}
-
-${compositions
-  .map(
-    comp => `  <url>
-    <loc>${generateEntityUrl('compositions', (comp as Composition).title, (comp as Composition).id)}</loc>
-    <lastmod>${(comp as Composition).updatedAt || (comp as Composition).createdAt}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>`
-  )
-  .join('\n')}
-
-${ragas
-  .map(
-    raga => `  <url>
-    <loc>${generateEntityUrl('ragas', (raga as Raga).name, (raga as Raga).id)}</loc>
-    <lastmod>${(raga as Raga).updatedAt || (raga as Raga).createdAt}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>`
-  )
-  .join('\n')}
-
-${talas
-  .map(
-    tala => `  <url>
-    <loc>${generateEntityUrl('talas', (tala as Tala).name, (tala as Tala).id)}</loc>
-    <lastmod>${(tala as Tala).updatedAt || (tala as Tala).createdAt}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>`
-  )
-  .join('\n')}
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${builtAt}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+${entries}
 </urlset>`;
 
     return new Response(xml, {
@@ -102,22 +79,3 @@ ${talas
     });
   }
 };
-
-// Helper function to collect all entities with pagination
-// biome-ignore lint/suspicious/noExplicitAny: tRPC types are complex
-async function collectAllEntities(listFn: any, type: string) {
-  // biome-ignore lint/suspicious/noExplicitAny: array of entities from API
-  const entities: any[] = [];
-  let nextToken: string | undefined;
-
-  do {
-    const result = await listFn.query({
-      limit: 100,
-      nextToken,
-    });
-    entities.push(...result.items);
-    nextToken = result.nextToken;
-  } while (nextToken);
-
-  return entities;
-}
