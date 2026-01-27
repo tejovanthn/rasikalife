@@ -6,7 +6,6 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData, PersonStructuredData } from '~/components/structured-data';
-import type { Artist } from '~/lib/errors';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistOGImage } from '~/lib/og';
 

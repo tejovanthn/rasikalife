@@ -14,6 +14,7 @@ import { TalaEntity } from '../tala/entity';
 import type { Tala } from '../tala/entity';
 import type { SearchableField } from './schema';
 import type {
+  EntityType,
   HealthStatus,
   SearchDocument,
   SearchIndex,
@@ -322,10 +323,29 @@ export interface DocumentsResponse {
  * Get all documents from the search index.
  * Useful for generating sitemaps without re-scanning the database.
  */
-export async function getDocuments(): Promise<DocumentsResponse> {
+export async function getDocuments(
+  type?: EntityType,
+  startsWith?: string
+): Promise<DocumentsResponse> {
   const index = await loadIndex();
+
+  let documents = index.documents;
+  if (type) {
+    documents = documents.filter(doc => doc.entityType === type);
+  }
+
+  if (startsWith) {
+    const prefix = startsWith.toLowerCase();
+    // Special handling for 'other' or numeric/special chars if needed,
+    // but strict prefix matching is requested.
+    // If startsWith is '1', it matches '1...'
+    // If startsWith is 'other', we might want non-alpha?
+    // For now, let's implement strict prefix.
+    documents = documents.filter(doc => doc.displayName.toLowerCase().startsWith(prefix));
+  }
+
   return {
-    documents: index.documents,
+    documents,
     builtAt: index.builtAt,
   };
 }

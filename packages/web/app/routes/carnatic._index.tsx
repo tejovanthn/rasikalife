@@ -5,10 +5,10 @@ import { type RouterOutput, client } from '~/api.server';
 import { slugify } from '~/lib/carnaticUtils';
 
 type LoaderData = {
-  recentCompositions: RouterOutput['composition']['search']['items'];
-  popularArtists: RouterOutput['artist']['getPopular'];
-  recentRagas: RouterOutput['raga']['search']['items'];
-  recentTalas: RouterOutput['tala']['search']['items'];
+  recentCompositions: RouterOutput['composition']['list']['items'];
+  popularArtists: RouterOutput['artist']['list']['items'];
+  recentRagas: RouterOutput['raga']['list']['items'];
+  recentTalas: RouterOutput['tala']['list']['items'];
 };
 
 export const meta: MetaFunction = () => {
@@ -37,15 +37,15 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async () => {
   try {
     const [recentCompositions, popularArtists, recentRagas, recentTalas] = await Promise.all([
-      client.composition.search.query({ limit: 8 }),
-      client.artist.getPopular({ limit: 8 }),
-      client.raga.search.query({ limit: 6 }),
-      client.tala.search.query({ limit: 6 }),
+      client.composition.list.query({ limit: 8 }),
+      client.artist.list.query({ limit: 8 }),
+      client.raga.list.query({ limit: 6 }),
+      client.tala.list.query({ limit: 6 }),
     ]);
 
     return data<LoaderData>({
       recentCompositions: recentCompositions.items,
-      popularArtists,
+      popularArtists: popularArtists.items,
       recentRagas: recentRagas.items,
       recentTalas: recentTalas.items,
     });
@@ -67,14 +67,14 @@ const CompositionCard = ({ composition }: { composition: LoaderData['recentCompo
   >
     <h3 className="font-medium text-gray-900 mb-1">{composition.title}</h3>
     <div className="text-xs text-gray-600 space-y-1">
-      {composition.ragaIds && composition.ragaIds.length > 0 && (
+      {composition.ragas && composition.ragas.length > 0 && (
         <div>
-          Raga: {composition.ragaIds.length} raga{composition.ragaIds.length > 1 ? 's' : ''}
+          Raga: {composition.ragas.length} raga{composition.ragas.length > 1 ? 's' : ''}
         </div>
       )}
-      {composition.talaIds && composition.talaIds.length > 0 && (
+      {composition.talas && composition.talas.length > 0 && (
         <div>
-          Tala: {composition.talaIds.length} tala{composition.talaIds.length > 1 ? 's' : ''}
+          Tala: {composition.talas.length} tala{composition.talas.length > 1 ? 's' : ''}
         </div>
       )}
     </div>
@@ -87,7 +87,6 @@ const ArtistCard = ({ artist }: { artist: LoaderData['popularArtists'][0] }) => 
     className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white text-center"
   >
     <h3 className="font-medium text-gray-900 text-sm">{artist.name}</h3>
-    <p className="text-xs text-gray-600 mt-1">{artist.artistType}</p>
   </Link>
 );
 
@@ -97,7 +96,6 @@ const RagaCard = ({ raga }: { raga: LoaderData['recentRagas'][0] }) => (
     className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white"
   >
     <h3 className="font-medium text-gray-900 mb-1">{raga.name}</h3>
-    {raga.melakarta && <p className="text-xs text-gray-600">Melakarta: {raga.melakarta}</p>}
   </Link>
 );
 
@@ -107,7 +105,6 @@ const TalaCard = ({ tala }: { tala: LoaderData['recentTalas'][0] }) => (
     className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white"
   >
     <h3 className="font-medium text-gray-900 mb-1">{tala.name}</h3>
-    {tala.aksharas && <p className="text-xs text-gray-600">{tala.aksharas} aksharas</p>}
   </Link>
 );
 
