@@ -18,7 +18,7 @@ export const getDomain = (prefix = ''): MyDomain => {
 
   return {
     name: prefix ? `${prefix}.${domainName}` : domainName,
-    redirects: prefix ? redirects : undefined,
+    redirects: prefix === '' ? redirects : undefined,
     dns,
   };
 };
