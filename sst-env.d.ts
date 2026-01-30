@@ -6,6 +6,18 @@
 
 declare module "sst" {
   export interface Resource {
+    "GoogleClientId": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "GoogleClientSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "RasikaAuth": {
+      "type": "sst.aws.Auth"
+      "url": string
+    }
     "RasikaBucket": {
       "name": string
       "type": "sst.aws.Bucket"

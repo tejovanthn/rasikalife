@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import { useContext, useEffect } from 'react';
-import type { LinksFunction } from 'react-router';
+import type { ActionFunctionArgs, LinksFunction, LoaderFunctionArgs } from 'react-router';
 import {
   Link,
   Links,
@@ -8,6 +8,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  data,
   isRouteErrorResponse,
   useLocation,
   useRouteError,
@@ -16,10 +17,69 @@ import {
 import { useFetcher, useLoaderData } from 'react-router';
 import { useTheme } from 'react-router-theme';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { createServerClient } from '~/api.server';
+import { verifyAuth, setTokens } from '~/lib/auth.server';
+import { AuthContext } from './components/auth-context';
 import { ThemeContext } from './components/theme-context';
+import { themeSessionResolver } from './sessions.server';
 
-// Export loader and action from react-router-theme
-export { loader, action } from 'react-router-theme';
+// User type from auth
+export interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+}
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  // Get theme
+  const theme = await themeSessionResolver.getTheme(request);
+
+  // Get auth status
+  const { user: authSubject, newTokens } = await verifyAuth(request);
+
+  let user: AuthUser | null = null;
+  const headers = new Headers();
+
+  if (authSubject?.userID) {
+    try {
+      // Fetch full user data via tRPC with authenticated client
+      const trpcClient = await createServerClient(request);
+      const dbUser = await trpcClient.user.me.query();
+      if (dbUser) {
+        user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          picture: dbUser.picture,
+        };
+      }
+    } catch (err) {
+      // User not found in DB, continue without user
+      console.error('[root.loader] Error fetching user:', err);
+    }
+
+    // If tokens were refreshed, update session
+    if (newTokens) {
+      const cookieHeader = await setTokens(request, newTokens.access, newTokens.refresh);
+      headers.append('Set-Cookie', cookieHeader);
+    }
+  }
+
+  return data({ theme, user }, { headers });
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData();
+  const theme = formData.get('theme');
+
+  if (typeof theme === 'string' && (theme === 'light' || theme === 'dark')) {
+    const headers = await themeSessionResolver.setTheme(theme);
+    return data({ success: true }, { headers });
+  }
+
+  return data({ success: false });
+}
 
 import { Footer } from './components/footer';
 import { GlobalLoader } from './components/global-loader';
@@ -90,16 +150,18 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
 }
 
 export default function AppWithProviders() {
-  const loaderData = useLoaderData() as { theme: string };
+  const loaderData = useLoaderData() as { theme: string; user: AuthUser | null };
   const fetcher = useFetcher();
   const [theme, setTheme] = useTheme(loaderData, fetcher, 'light');
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
-      <Layout theme={theme}>
-        <Outlet />
-      </Layout>
-    </ThemeContext.Provider>
+    <AuthContext.Provider value={{ user: loaderData.user }}>
+      <ThemeContext.Provider value={{ theme, setTheme }}>
+        <Layout theme={theme}>
+          <Outlet />
+        </Layout>
+      </ThemeContext.Provider>
+    </AuthContext.Provider>
   );
 }
 

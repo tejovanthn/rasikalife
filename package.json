@@ -15,7 +15,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@openauthjs/openauth": "^0.4.3",
     "@uidotdev/usehooks": "^2.4.1",
+    "arctic": "^3.7.0",
+    "hono": "^4.11.7",
     "sst": "^3.17.38"
   },
   "devDependencies": {

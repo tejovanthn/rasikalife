@@ -12,6 +12,7 @@
     "test:coverage": "sst shell vitest run -- --coverage"
   },
   "dependencies": {
+    "@openauthjs/openauth": "^0.4.3",
     "@rasika/core": "workspace:*",
     "@trpc/client": "^11.8.1",
     "@trpc/server": "^11.8.1",

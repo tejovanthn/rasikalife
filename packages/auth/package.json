@@ -6,9 +6,10 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.750.0",
+    "@openauthjs/openauth": "^0.4.3",
     "@rasika/core": "workspace:*",
-    "@trpc/client": "11.0.0-rc.467",
-    "@trpc/server": "11.0.0-rc.467",
+    "hono": "^4.11.7",
     "sst": "ion",
     "zod": "^3.25.76"
   },

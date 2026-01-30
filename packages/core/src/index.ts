@@ -7,6 +7,10 @@ export * as CompositionRaga from './domain/composition_raga';
 export * as CompositionTala from './domain/composition_tala';
 export * as Content from './domain/content';
 export * as Search from './domain/search';
+export * as User from './domain/user';
+
+// Auth exports
+export { authSubjects, type AuthSubjects } from './auth-subjects';
 
 // Database exports
 export { RasikaLifeService } from './shared/electrodb';

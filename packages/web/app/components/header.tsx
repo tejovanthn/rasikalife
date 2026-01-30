@@ -1,8 +1,16 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { Menu, X } from 'lucide-react';
+import { LogOut, Menu, User, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink } from 'react-router';
+import { Form, Link, NavLink } from 'react-router';
+import { useAuth } from '~/components/auth-context';
 import { Button } from '~/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '~/components/ui/dropdown-menu';
 import {
   Sheet,
   SheetContent,
@@ -18,6 +26,7 @@ import { ModeToggle } from './mode-toggle';
 export const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const mobileNavRef = useRef<HTMLElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (isSidebarOpen && mobileNavRef.current) {
@@ -73,9 +82,44 @@ export const Header = () => {
               </nav>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-4">
             <GlobalSearch />
             <ModeToggle />
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2 px-2">
+                    {user.picture ? (
+                      <img src={user.picture} alt={user.name} className="h-8 w-8 rounded-full" />
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
+                    <span className="hidden lg:inline text-sm font-medium">
+                      {user.name.split(' ')[0]}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Form method="post" action="/auth/logout" className="w-full">
+                      <button type="submit" className="flex w-full items-center gap-2">
+                        <LogOut className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </Form>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth/login">Login</Link>
+              </Button>
+            )}
           </div>
           <div className="md:hidden">
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
@@ -122,11 +166,47 @@ export const Header = () => {
                       {link.label}
                     </NavLink>
                   ))}
-                  <div className="pt-4 border-t border-border mt-4">
+                  <div className="pt-4 border-t border-border mt-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-base font-medium text-muted-foreground">Theme</span>
                       <ModeToggle />
                     </div>
+                    {user ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 px-3">
+                          {user.picture ? (
+                            <img
+                              src={user.picture}
+                              alt={user.name}
+                              className="h-8 w-8 rounded-full"
+                            />
+                          ) : (
+                            <User className="h-8 w-8 rounded-full bg-muted p-1" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{user.name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                          </div>
+                        </div>
+                        <Form method="post" action="/auth/logout">
+                          <Button
+                            type="submit"
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => setIsSidebarOpen(false)}
+                          >
+                            <LogOut className="h-4 w-4 mr-2" />
+                            Logout
+                          </Button>
+                        </Form>
+                      </div>
+                    ) : (
+                      <Button asChild variant="outline" className="w-full">
+                        <Link to="/auth/login" onClick={() => setIsSidebarOpen(false)}>
+                          Login with Google
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </nav>
               </SheetContent>

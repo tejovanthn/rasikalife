@@ -10,6 +10,7 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@openauthjs/openauth": "^0.4.3",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-navigation-menu": "^1.2.14",
@@ -36,7 +37,8 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "url-slug": "^4.0.1",
-    "web-vitals": "^5.1.0"
+    "web-vitals": "^5.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@react-router/dev": "^7.13.0",
