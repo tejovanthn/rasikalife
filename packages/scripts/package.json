@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.975.0",
+    "@aws-sdk/client-dynamodb": "^3.980.0",
     "@rasika/core": "workspace:*"
   },
   "devDependencies": {

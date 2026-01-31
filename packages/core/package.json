@@ -37,6 +37,10 @@
     "./types/entities": {
       "types": "./src/types/entities.ts",
       "import": "./src/types/entities.ts"
+    },
+    "./auth": {
+      "types": "./src/auth/roles.ts",
+      "import": "./src/auth/roles.ts"
     }
   },
   "scripts": {
@@ -49,10 +53,10 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.975.0",
-    "@aws-sdk/client-s3": "^3.975.0",
-    "@aws-sdk/lib-dynamodb": "^3.975.0",
-    "@aws-sdk/util-dynamodb": "^3.975.0",
+    "@aws-sdk/client-dynamodb": "^3.980.0",
+    "@aws-sdk/client-s3": "^3.980.0",
+    "@aws-sdk/lib-dynamodb": "^3.980.0",
+    "@aws-sdk/util-dynamodb": "^3.980.0",
     "@openauthjs/openauth": "^0.4.3",
     "electrodb": "^2.15.1",
     "fuse.js": "^7.1.0",

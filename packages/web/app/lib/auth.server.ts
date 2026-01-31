@@ -1,12 +1,12 @@
+import type { AppRouter } from '@rasika/trpc';
 import { createClient } from '@openauthjs/openauth/client';
-import { authSubjects } from '@rasika/core';
-import { createCookieSessionStorage } from 'react-router';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import { Auth } from '@rasika/core';
+import { createCookieSessionStorage, redirect } from 'react-router';
 import { Resource } from 'sst';
 
-// Session secret should be set in environment
 const sessionSecret = process.env.SESSION_SECRET || 'dev-secret-change-in-production';
 
-// Session storage configuration for tokens
 const storage = createCookieSessionStorage({
   cookie: {
     name: 'rasika_session',
@@ -14,33 +14,28 @@ const storage = createCookieSessionStorage({
     secrets: [sessionSecret],
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: 60 * 60 * 24 * 30,
     httpOnly: true,
   },
 });
 
-// Create OpenAuth client
 export const authClient = createClient({
   clientID: 'rasika-web',
   issuer: Resource.RasikaAuth.url,
 });
 
-// Get the session from the request
 export async function getSession(request: Request) {
   return storage.getSession(request.headers.get('Cookie'));
 }
 
-// Commit the session (save changes)
 export async function commitSession(session: Awaited<ReturnType<typeof getSession>>) {
   return storage.commitSession(session);
 }
 
-// Destroy the session (logout)
 export async function destroySession(session: Awaited<ReturnType<typeof getSession>>) {
   return storage.destroySession(session);
 }
 
-// Get tokens from session
 export async function getTokens(
   request: Request
 ): Promise<{ access: string; refresh: string } | null> {
@@ -55,7 +50,6 @@ export async function getTokens(
   return { access, refresh };
 }
 
-// Set tokens in session and return cookie header
 export async function setTokens(
   request: Request,
   accessToken: string,
@@ -67,7 +61,6 @@ export async function setTokens(
   return commitSession(session);
 }
 
-// Clear tokens from session
 export async function clearTokens(request: Request): Promise<string> {
   const session = await getSession(request);
   session.unset('access_token');
@@ -75,31 +68,117 @@ export async function clearTokens(request: Request): Promise<string> {
   return destroySession(session);
 }
 
-// Verify auth and get user subject
-export async function verifyAuth(request: Request): Promise<{
-  user: { userID: string } | null;
-  newTokens?: { access: string; refresh: string };
-}> {
+export interface SessionUser {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+  role: (typeof Auth.ROLE)[keyof typeof Auth.ROLE];
+}
+
+export async function getUser(request: Request): Promise<SessionUser | null> {
   const tokens = await getTokens(request);
 
   if (!tokens) {
-    return { user: null };
+    return null;
   }
 
   try {
-    const verified = await authClient.verify(authSubjects, tokens.access, {
+    const verified = await authClient.verify(Auth.subjects, tokens.access, {
       refresh: tokens.refresh,
     });
 
-    if (verified.err) {
-      return { user: null };
+    if (verified.err || !verified.subject) {
+      return null;
+    }
+
+    const userId = verified.subject.properties.userID;
+
+    if (!userId) {
+      return null;
+    }
+
+    // Use tRPC to fetch user data (inline client to avoid circular dependency with api.server.ts)
+    const trpc = createTRPCClient<AppRouter>({
+      links: [
+        httpBatchLink({
+          url: Resource.RasikaTRPC.url,
+          headers: () => ({
+            Authorization: `Bearer ${tokens.access}`,
+          }),
+        }),
+      ],
+    });
+    const user = await trpc.user.me.query();
+
+    if (!user) {
+      return null;
     }
 
     return {
-      user: verified.subject.properties,
-      newTokens: verified.tokens,
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture,
+      role: user.role as SessionUser['role'],
     };
   } catch {
-    return { user: null };
+    return null;
   }
+}
+
+export async function requireUser(request: Request, redirectTo = '/login') {
+  const user = await getUser(request);
+
+  if (!user) {
+    const searchParams = new URLSearchParams([['redirectTo', redirectTo]]);
+    throw redirect(`/login?${searchParams}`);
+  }
+
+  return user;
+}
+
+export async function requirePermission(
+  request: Request,
+  permission: string,
+  redirectTo = '/unauthorized'
+) {
+  const user = await requireUser(request);
+
+  if (!Auth.can(user.role, permission as Parameters<typeof Auth.can>[1])) {
+    throw redirect(redirectTo);
+  }
+
+  return user;
+}
+
+export async function requireRole(
+  request: Request,
+  role: (typeof Auth.ROLE)[keyof typeof Auth.ROLE],
+  redirectTo = '/unauthorized'
+) {
+  const user = await requireUser(request);
+
+  if (user.role !== role && user.role !== Auth.ROLE.ADMIN) {
+    throw redirect(redirectTo);
+  }
+
+  return user;
+}
+
+export async function requireModerator(request: Request) {
+  return requireRole(request, Auth.ROLE.MODERATOR);
+}
+
+export async function requireAdmin(request: Request) {
+  return requireRole(request, Auth.ROLE.ADMIN);
+}
+
+export async function logout(request: Request) {
+  const session = await getSession(request);
+  return redirect('/', {
+    headers: {
+      'Set-Cookie': await storage.destroySession(session),
+    },
+  });
 }

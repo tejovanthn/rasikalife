@@ -1,12 +1,13 @@
 import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
+import { ROLE } from '../../auth/roles';
 import { dynamoClient } from '../../db/client';
 
 export const UserEntity = new Entity(
   {
     model: {
       entity: 'user',
-      version: '1',
+      version: '2',
       service: 'rasikalife',
     },
     attributes: {
@@ -29,6 +30,12 @@ export const UserEntity = new Entity(
       googleId: {
         type: 'string',
         required: true,
+      },
+      role: {
+        type: 'string',
+        enum: Object.values(ROLE),
+        required: true,
+        default: () => ROLE.EDITOR,
       },
       createdAt: {
         type: 'string',

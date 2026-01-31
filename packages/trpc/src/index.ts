@@ -1,5 +1,5 @@
 import { createClient } from '@openauthjs/openauth/client';
-import { User, authSubjects } from '@rasika/core';
+import { Auth, User } from '@rasika/core';
 import type { inferRouterOutputs } from '@trpc/server';
 import {
   type CreateAWSLambdaContextOptions,
@@ -50,7 +50,7 @@ const createContext = async ({
     try {
       // Verify JWT token with OpenAuth
       const authClient = getAuthClient();
-      const verified = await authClient.verify(authSubjects, token);
+      const verified = await authClient.verify(Auth.subjects, token);
 
       if (!verified.err && verified.subject) {
         const userId = verified.subject.properties.userID;

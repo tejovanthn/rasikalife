@@ -8,9 +8,10 @@ export * as CompositionTala from './domain/composition_tala';
 export * as Content from './domain/content';
 export * as Search from './domain/search';
 export * as User from './domain/user';
+export * as ChangeHistory from './domain/change-history';
 
 // Auth exports
-export { authSubjects, type AuthSubjects } from './auth-subjects';
+export * as Auth from './auth';
 
 // Database exports
 export { RasikaLifeService } from './shared/electrodb';

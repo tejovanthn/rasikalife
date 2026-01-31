@@ -1,7 +1,7 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { issuer } from '@openauthjs/openauth';
 import { GoogleProvider } from '@openauthjs/openauth/provider/google';
-import { authSubjects, User } from '@rasika/core';
+import { Auth, User } from '@rasika/core';
 import { handle } from 'hono/aws-lambda';
 import { Resource } from 'sst';
 
@@ -66,7 +66,7 @@ const app = issuer({
       scopes: ['openid', 'email', 'profile'],
     }),
   },
-  subjects: authSubjects,
+  subjects: Auth.subjects,
   async success(ctx, value) {
     if (value.provider === 'google') {
       const tokenset = value.tokenset;

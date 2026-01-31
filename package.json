@@ -10,7 +10,9 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -26,6 +28,7 @@
     "@tsconfig/node20": "^20.1.8",
     "@types/aws-lambda": "8.10.138",
     "globals": "^15.15.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

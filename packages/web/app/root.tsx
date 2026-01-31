@@ -16,57 +16,21 @@ import {
 } from 'react-router';
 import { useFetcher, useLoaderData } from 'react-router';
 import { useTheme } from 'react-router-theme';
-import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { createServerClient } from '~/api.server';
-import { verifyAuth, setTokens } from '~/lib/auth.server';
+import { type SessionUser, getUser } from '~/lib/auth.server';
+import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { AuthContext } from './components/auth-context';
 import { ThemeContext } from './components/theme-context';
 import { themeSessionResolver } from './sessions.server';
 
-// User type from auth
-export interface AuthUser {
-  id: string;
-  email: string;
-  name: string;
-  picture?: string;
-}
+export type { SessionUser } from '~/lib/auth.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  // Get theme
   const theme = await themeSessionResolver.getTheme(request);
 
-  // Get auth status
-  const { user: authSubject, newTokens } = await verifyAuth(request);
+  const user = await getUser(request);
 
-  let user: AuthUser | null = null;
-  const headers = new Headers();
-
-  if (authSubject?.userID) {
-    try {
-      // Fetch full user data via tRPC with authenticated client
-      const trpcClient = await createServerClient(request);
-      const dbUser = await trpcClient.user.me.query();
-      if (dbUser) {
-        user = {
-          id: dbUser.id,
-          email: dbUser.email,
-          name: dbUser.name,
-          picture: dbUser.picture,
-        };
-      }
-    } catch (err) {
-      // User not found in DB, continue without user
-      console.error('[root.loader] Error fetching user:', err);
-    }
-
-    // If tokens were refreshed, update session
-    if (newTokens) {
-      const cookieHeader = await setTokens(request, newTokens.access, newTokens.refresh);
-      headers.append('Set-Cookie', cookieHeader);
-    }
-  }
-
-  return data({ theme, user }, { headers });
+  return data({ theme, user });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -150,7 +114,7 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
 }
 
 export default function AppWithProviders() {
-  const loaderData = useLoaderData() as { theme: string; user: AuthUser | null };
+  const loaderData = useLoaderData() as { theme: string; user: SessionUser | null };
   const fetcher = useFetcher();
   const [theme, setTheme] = useTheme(loaderData, fetcher, 'light');
 

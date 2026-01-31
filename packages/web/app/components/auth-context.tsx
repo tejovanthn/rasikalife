@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react';
-import type { AuthUser } from '~/root';
+import type { SessionUser } from '~/lib/auth.server';
 
 interface AuthContextValue {
-  user: AuthUser | null;
+  user: SessionUser | null;
 }
 
 export const AuthContext = createContext<AuthContextValue>({ user: null });

@@ -14,8 +14,8 @@
   "dependencies": {
     "@openauthjs/openauth": "^0.4.3",
     "@rasika/core": "workspace:*",
-    "@trpc/client": "^11.8.1",
-    "@trpc/server": "^11.8.1",
+    "@trpc/client": "^11.9.0",
+    "@trpc/server": "^11.9.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

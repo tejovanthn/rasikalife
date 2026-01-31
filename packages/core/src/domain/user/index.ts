@@ -1,5 +1,6 @@
 import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
+import { ROLE } from '../../auth/roles';
 import { generateId } from '../../utils';
 import { UserEntity } from './entity';
 import type { User } from './entity';
@@ -42,7 +43,7 @@ export async function getUserByGoogleId(googleId: string): Promise<User | null> 
 }
 
 export async function updateUser(id: string, input: UpdateUserInput): Promise<User> {
-  const result = await UserEntity.update({ id }).set(input).go();
+  const result = await UserEntity.update({ id }).set(input).go({ response: 'all_new' });
 
   if (!result.data) {
     throw new ApplicationError(ErrorCode.USER_NOT_FOUND, `User with ID ${id} not found`);
@@ -54,7 +55,20 @@ export async function updateUser(id: string, input: UpdateUserInput): Promise<Us
 export async function updateLastSignedIn(id: string): Promise<User> {
   const result = await UserEntity.update({ id })
     .set({ lastSignedInAt: new Date().toISOString() })
-    .go();
+    .go({ response: 'all_new' });
+
+  if (!result.data) {
+    throw new ApplicationError(ErrorCode.USER_NOT_FOUND, `User with ID ${id} not found`);
+  }
+
+  return result.data as User;
+}
+
+export async function updateUserRole(
+  id: string,
+  role: (typeof ROLE)[keyof typeof ROLE]
+): Promise<User> {
+  const result = await UserEntity.update({ id }).set({ role }).go({ response: 'all_new' });
 
   if (!result.data) {
     throw new ApplicationError(ErrorCode.USER_NOT_FOUND, `User with ID ${id} not found`);
@@ -69,28 +83,45 @@ export async function findOrCreateUser(profile: {
   picture?: string;
   googleId: string;
 }): Promise<User> {
-  // First try to find by Google ID (existing user with this Google account)
   const userByGoogleId = await getUserByGoogleId(profile.googleId);
   if (userByGoogleId) {
     return updateLastSignedIn(userByGoogleId.id);
   }
 
-  // Then try to find by email (existing user, link Google account)
   const userByEmail = await getUserByEmail(profile.email);
   if (userByEmail) {
-    // Update Google ID to link accounts and update last signed in
     return updateUser(userByEmail.id, {
       googleId: profile.googleId,
     });
   }
 
-  // Create new user with our own KSUID
   const id = generateId();
   return createUser({
     id,
+    role: ROLE.EDITOR,
     ...profile,
   });
 }
 
+export async function listAllUsers(): Promise<User[]> {
+  const { dynamoClient } = await import('../../db/client');
+  const { DynamoDBDocumentClient, ScanCommand } = await import('@aws-sdk/lib-dynamodb');
+  const { DynamoDBClient } = await import('@aws-sdk/client-dynamodb');
+  const client = DynamoDBDocumentClient.from(new DynamoDBClient());
+  const tableName = process.env.DYNAMODB_TABLE || 'RasikaLifeTable';
+
+  const result = await client.send(
+    new ScanCommand({
+      TableName: tableName,
+      FilterExpression: 'begins_with(pk, :prefix)',
+      ExpressionAttributeValues: {
+        ':prefix': 'USER#',
+      },
+    })
+  );
+
+  return (result.Items || []) as User[];
+}
+
 export type { User } from './entity';
-export { CreateUserSchema, UpdateUserSchema } from './schema';
+export { CreateUserSchema, UpdateUserSchema, UpdateUserRoleSchema } from './schema';
