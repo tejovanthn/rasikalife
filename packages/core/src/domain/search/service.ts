@@ -218,6 +218,8 @@ export async function searchWithFullData(
     sourceAttribution: comp.sourceAttribution,
     createdAt: comp.createdAt,
     updatedAt: comp.updatedAt,
+    version: comp.version,
+    lastEditedBy: comp.lastEditedBy,
   }));
 
   return {

@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
-import { authClient, getSession, commitSession } from '~/lib/auth.server';
+import { authClient, commitSession, getSession } from '~/lib/auth.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -10,6 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Check for error from OpenAuth
   const error = url.searchParams.get('error');
   if (error) {
+    console.error('[auth.callback] Error from OpenAuth:', error);
     // Clear PKCE challenge so user can retry
     const session = await getSession(request);
     session.unset('pkce_challenge');
@@ -54,6 +55,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const exchanged = await authClient.exchange(code, callbackUrl, challenge.verifier);
 
     if (exchanged.err) {
+      console.error('[auth.callback] Exchange failed:', exchanged.err);
       return redirect('/?error=exchange_failed');
     }
 
@@ -70,7 +72,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         'Set-Cookie': await commitSession(session),
       },
     });
-  } catch {
+  } catch (error) {
+    console.error('[auth.callback] Unexpected error:', error);
     return redirect('/?error=unexpected');
   }
 }

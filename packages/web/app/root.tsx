@@ -48,6 +48,7 @@ export async function action({ request }: ActionFunctionArgs) {
 import { Footer } from './components/footer';
 import { GlobalLoader } from './components/global-loader';
 import { Header } from './components/header';
+import { Toaster } from './components/ui/sonner';
 import { logAnalyticsEvent } from './firebase';
 import styles from './globals.css?url';
 
@@ -123,6 +124,7 @@ export default function AppWithProviders() {
       <ThemeContext.Provider value={{ theme, setTheme }}>
         <Layout theme={theme}>
           <Outlet />
+          <Toaster />
         </Layout>
       </ThemeContext.Provider>
     </AuthContext.Provider>

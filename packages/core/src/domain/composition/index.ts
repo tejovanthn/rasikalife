@@ -49,6 +49,8 @@ export interface CompositionWithRelations {
   sourceAttribution?: string;
   createdAt: string;
   updatedAt: string;
+  version: number;
+  lastEditedBy?: string;
 }
 
 // Generic junction creation helper (addresses DHH duplication feedback)
@@ -136,6 +138,8 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
     sourceAttribution: comp.sourceAttribution,
     createdAt: comp.createdAt,
     updatedAt: comp.updatedAt,
+    version: comp.version,
+    lastEditedBy: comp.lastEditedBy,
   };
 }
 
@@ -167,6 +171,8 @@ export async function getCompositionsByComposer(
     sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
+    version: composition.version,
+    lastEditedBy: composition.lastEditedBy,
   }));
 
   return {
@@ -211,6 +217,8 @@ export async function getCompositionsByRaga(
     sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
+    version: composition.version,
+    lastEditedBy: composition.lastEditedBy,
   }));
 
   return {
@@ -255,6 +263,8 @@ export async function getCompositionsByTala(
     sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
+    version: composition.version,
+    lastEditedBy: composition.lastEditedBy,
   }));
 
   return {
@@ -293,6 +303,8 @@ export async function getCompositionsByLanguage(
     sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
+    version: composition.version,
+    lastEditedBy: composition.lastEditedBy,
   }));
 
   return {
@@ -318,13 +330,7 @@ export async function updateComposition(
     definedData.composerId = input.composer.id;
   }
 
-  const result = await CompositionEntity.update({ id }).set(definedData).go();
-
-  if (!result.data) {
-    throw new Error(`Composition ${id} not found`);
-  }
-
-  // Handle raga relationships
+  // Handle raga relationships and denormalized data
   if (ragaIds !== undefined) {
     // Delete existing raga relationships
     const existingRagas = await getCompositionRagas(id);
@@ -341,9 +347,15 @@ export async function updateComposition(
         )
       );
     }
+
+    // Update denormalized raga data in composition entity
+    const ragaEntities = await Promise.all(ragaIds.map(ragaId => getRaga(ragaId)));
+    definedData.ragas = ragaEntities
+      .filter((r): r is NonNullable<typeof r> => r !== null)
+      .map(r => ({ id: r.id, name: r.name }));
   }
 
-  // Handle tala relationships
+  // Handle tala relationships and denormalized data
   if (talaIds !== undefined) {
     // Delete existing tala relationships
     const existingTalas = await getCompositionTalas(id);
@@ -360,6 +372,19 @@ export async function updateComposition(
         )
       );
     }
+
+    // Update denormalized tala data in composition entity
+    const talaEntities = await Promise.all(talaIds.map(talaId => getTala(talaId)));
+    definedData.talas = talaEntities
+      .filter((t): t is NonNullable<typeof t> => t !== null)
+      .map(t => ({ id: t.id, name: t.name }));
+  }
+
+  // Update composition with all changes including denormalized data
+  const result = await CompositionEntity.update({ id }).set(definedData).go();
+
+  if (!result.data) {
+    throw new Error(`Composition ${id} not found`);
   }
 
   return result.data as Composition;
@@ -399,6 +424,8 @@ export async function getCompositionsByName(name: string): Promise<CompositionWi
     sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
+    version: composition.version,
+    lastEditedBy: composition.lastEditedBy,
   }));
 
   return compositionsWithRelations;
@@ -429,6 +456,8 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
     sourceAttribution: composition.sourceAttribution,
     createdAt: composition.createdAt,
     updatedAt: composition.updatedAt,
+    version: composition.version,
+    lastEditedBy: composition.lastEditedBy,
   }));
 
   return {

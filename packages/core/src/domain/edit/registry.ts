@@ -1,0 +1,80 @@
+import type { z } from 'zod';
+import type { Artist } from '../artist';
+import type { Composition, CompositionWithRelations } from '../composition';
+import type { Raga } from '../raga';
+import type { Tala } from '../tala';
+import type { EditEntityType } from './types';
+
+export type GetEntityFunction<T = unknown> = (id: string) => Promise<T | null>;
+export type UpdateEntityFunction<T = unknown> = (id: string, input: unknown) => Promise<T>;
+
+export interface EditHandler {
+  getEntity: GetEntityFunction;
+  updateEntity: UpdateEntityFunction;
+  updateSchema: z.ZodType;
+}
+
+async function getCompositionHandler() {
+  const mod = await import('../composition');
+  return {
+    getEntity: mod.getComposition as GetEntityFunction<CompositionWithRelations>,
+    updateEntity: mod.updateComposition as UpdateEntityFunction<Composition>,
+    updateSchema: (await import('../composition/schema')).UpdateCompositionSchema,
+  };
+}
+
+async function getArtistHandler() {
+  const mod = await import('../artist');
+  return {
+    getEntity: mod.getArtist as GetEntityFunction<Artist>,
+    updateEntity: mod.updateArtist as UpdateEntityFunction<Artist>,
+    updateSchema: (await import('../artist/schema')).UpdateArtistSchema,
+  };
+}
+
+async function getRagaHandler() {
+  const mod = await import('../raga');
+  return {
+    getEntity: mod.getRaga as GetEntityFunction<Raga>,
+    updateEntity: mod.updateRaga as UpdateEntityFunction<Raga>,
+    updateSchema: (await import('../raga/schema')).UpdateRagaSchema,
+  };
+}
+
+async function getTalaHandler() {
+  const mod = await import('../tala');
+  return {
+    getEntity: mod.getTala as GetEntityFunction<Tala>,
+    updateEntity: mod.updateTala as UpdateEntityFunction<Tala>,
+    updateSchema: (await import('../tala/schema')).UpdateTalaSchema,
+  };
+}
+
+const handlerCache: Partial<Record<EditEntityType, EditHandler>> = {};
+
+export async function getHandler(entityType: EditEntityType): Promise<EditHandler> {
+  if (handlerCache[entityType]) {
+    return handlerCache[entityType] as EditHandler;
+  }
+
+  let handler: EditHandler;
+  switch (entityType) {
+    case 'composition':
+      handler = await getCompositionHandler();
+      break;
+    case 'artist':
+      handler = await getArtistHandler();
+      break;
+    case 'raga':
+      handler = await getRagaHandler();
+      break;
+    case 'tala':
+      handler = await getTalaHandler();
+      break;
+    default:
+      throw new Error(`No handler registered for entity type: ${entityType}`);
+  }
+
+  handlerCache[entityType] = handler;
+  return handler;
+}

@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import {
   Pagination,
   PaginationContent,
@@ -28,7 +27,7 @@ export function EntityPagination({
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <Link
+            <PaginationLink
               to={baseUrl}
               className={
                 currentPage === 1
@@ -37,7 +36,7 @@ export function EntityPagination({
               }
             >
               1
-            </Link>
+            </PaginationLink>
           </PaginationItem>
 
           {currentPage > 2 && (
@@ -54,11 +53,9 @@ export function EntityPagination({
 
           {hasMore && (
             <PaginationItem>
-              <Link
+              <PaginationNext
                 to={`${baseUrl}?page=${currentPage + 1}&nextToken=${encodeURIComponent(nextToken || '')}`}
-              >
-                <PaginationNext />
-              </Link>
+              />
             </PaginationItem>
           )}
         </PaginationContent>

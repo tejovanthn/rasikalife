@@ -1,6 +1,7 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { cascadeTalaNameUpdate } from '../cascade';
+import { createFailedError, notFoundError } from '../helpers';
 import { TalaEntity } from './entity';
 import type { Tala } from './entity';
 import type { CreateTalaSchema, UpdateTalaSchema } from './schema';
@@ -16,7 +17,7 @@ export async function createTala(input: CreateTalaInput): Promise<Tala> {
   }).go();
 
   if (!result.data) {
-    throw new Error(`Failed to create tala: ${JSON.stringify(input)}`);
+    throw createFailedError('tala', input.name);
   }
 
   return result.data as Tala;
@@ -39,7 +40,11 @@ export async function updateTala(id: string, input: UpdateTalaInput): Promise<Ta
   const result = await TalaEntity.update({ id }).set(input).go();
 
   if (!result.data) {
-    throw new Error(`Tala ${id} not found or update failed`);
+    throw notFoundError('tala', id);
+  }
+
+  if (input.name) {
+    await cascadeTalaNameUpdate(id, input.name);
   }
 
   return result.data as Tala;
@@ -56,7 +61,6 @@ export async function listTalas(params?: { limit?: number; nextToken?: string })
 }> {
   const limit = params?.limit || 20;
 
-  // Query the list index for efficient sorted retrieval
   const result = await TalaEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,

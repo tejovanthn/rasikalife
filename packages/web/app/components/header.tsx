@@ -106,11 +106,26 @@ export const Header = () => {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
+                    <Link to="/my-edits" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      My Edits
+                    </Link>
+                  </DropdownMenuItem>
+                  {(user.role === 'moderator' || user.role === 'admin') && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/moderator/edits" className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Moderator Queue
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
                     <Form method="post" action="/auth/logout" className="w-full">
-                      <button type="submit" className="flex w-full items-center gap-2">
-                        <LogOut className="h-4 w-4" />
+                      <Button type="submit" variant="outline" className="w-full justify-start">
+                        <LogOut className="h-4 w-4 mr-2" />
                         Logout
-                      </button>
+                      </Button>
                     </Form>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -188,6 +203,24 @@ export const Header = () => {
                             <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                           </div>
                         </div>
+                        <Link
+                          to="/my-edits"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <User className="h-4 w-4" />
+                          My Edits
+                        </Link>
+                        {(user.role === 'moderator' || user.role === 'admin') && (
+                          <Link
+                            to="/moderator/edits"
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                            onClick={() => setIsSidebarOpen(false)}
+                          >
+                            <User className="h-4 w-4" />
+                            Moderator Queue
+                          </Link>
+                        )}
                         <Form method="post" action="/auth/logout">
                           <Button
                             type="submit"

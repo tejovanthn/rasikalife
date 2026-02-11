@@ -87,30 +87,121 @@ if (error) {
 }
 ```
 
+## How to Verify Which Layer is Failing
+
+The auth flow has two main layers:
+1. **OpenAuth Issuer (Lambda)**: Handles Google OAuth and creates internal auth codes
+2. **Remix App**: Exchanges issuer codes for tokens and manages sessions
+
+Check the SST Lambda logs for the complete flow:
+```
+✓ GET /authorize               - Start auth flow
+✓ GET /google/authorize        - Redirect to Google
+✓ GET /google/callback         - Google returns with code
+✓ POST /token                  - Remix exchanges code (THIS IS KEY!)
+```
+
+**If `POST /token` is missing**, the Remix callback didn't run successfully. Check:
+- Browser console for `[auth.callback]` error logs
+- Browser network tab for redirects to `/?error=...`
+- Session cookies might be cleared (hot reload during flow)
+
 ## Debugging
 
-If the issue persists, add temporary logging to trace the flow:
+### Existing Error Logging (already in codebase):
 
-### In `auth.login.tsx`:
+The codebase includes minimal error logging that triggers only when failures occur:
+
+**In `auth.callback.tsx`:**
+- `[auth.callback] Error from OpenAuth:` - Issuer returned an error parameter
+- `[auth.callback] Exchange failed:` - Token exchange failed (check error details)
+- `[auth.callback] Unexpected error:` - Exception during token exchange
+
+**In `packages/auth/src/issuer.ts`:**
+- `[issuer] OAuth error:` - Google OAuth failed (includes error, description, URL, headers)
+
+### Adding Verbose Debug Logging
+
+If you need to trace the full auth flow to diagnose sporadic failures, temporarily add these console logs:
+
+#### In `packages/web/app/routes/auth.callback.tsx`:
+
 ```typescript
-console.log('[auth.login] Starting auth flow', {
-  callbackUrl,
-  timestamp: new Date().toISOString(),
+export async function loader({ request }: LoaderFunctionArgs) {
+  console.log('[auth.callback] Invoked');  // ADD THIS
+  const url = new URL(request.url);
+  const code = url.searchParams.get('code');
+  const state = url.searchParams.get('state');
+
+  console.log('[auth.callback] Params:', {  // ADD THIS
+    hasCode: !!code,
+    hasState: !!state,
+    code: code?.substring(0, 20) + '...',
+    state: state?.substring(0, 20) + '...',
+  });
+
+  // ... existing error check ...
+
+  try {
+    const callbackUrl = `${url.origin}/auth/callback`;
+    console.log('[auth.callback] Exchanging code with issuer...', { callbackUrl });  // ADD THIS
+    const exchanged = await authClient.exchange(code, callbackUrl, challenge.verifier);
+
+    if (exchanged.err) {
+      console.error('[auth.callback] Exchange failed:', exchanged.err);
+      return redirect('/?error=exchange_failed');
+    }
+
+    console.log('[auth.callback] Exchange successful, storing tokens');  // ADD THIS
+    // Store tokens in session...
+
+    console.log('[auth.callback] Redirecting to home with session');  // ADD THIS
+    return redirect('/', {
+      headers: {
+        'Set-Cookie': await commitSession(session),
+      },
+    });
+  } catch (error) {
+    console.error('[auth.callback] Unexpected error:', error);
+    return redirect('/?error=unexpected');
+  }
+}
+```
+
+#### In `packages/auth/src/issuer.ts`:
+
+```typescript
+const app = issuer({
+  allow: async input => {
+    console.log('[issuer] Validating redirectURI:', input.redirectURI);  // ADD THIS
+    const url = new URL(input.redirectURI);
+    // ... rest of validation ...
+  },
+  providers: { /* ... */ },
+  async success(ctx, value) {
+    console.log('[issuer] Success callback invoked for provider:', value.provider);  // ADD THIS
+    if (value.provider === 'google') {
+      // ... rest of success handler ...
+    }
+  },
 });
 ```
 
-### In `auth.callback.tsx`:
-```typescript
-console.log('[auth.callback] Received callback', {
-  code: code?.substring(0, 10) + '...',
-  state: state?.substring(0, 10) + '...',
-  expectedState: challenge.state?.substring(0, 10) + '...',
-  statesMatch: challenge.state === state,
-});
-```
+#### What to Look For:
 
-### In the Lambda (SST dev console):
-Check for duplicate requests to `/google/callback` - they would indicate the browser is sending multiple redirects.
+Once you've added the logs, try to reproduce the issue and check:
+
+**Browser Console (Remix logs):**
+- Does `[auth.callback] Invoked` appear? If not, the redirect from issuer failed
+- Does `[auth.callback] Exchanging code with issuer...` appear? If not, it failed before the exchange
+- Do you see `Exchange successful` or `Exchange failed`? This tells you if the token exchange worked
+
+**SST Lambda Logs:**
+- Is `[issuer] Success callback invoked` present? If not, Google OAuth failed
+- Check for duplicate `/google/callback` requests - indicates concurrent auth flows
+- Verify `POST /token` appears after the success callback - this is the Remix app exchanging codes
+
+**Remember to remove these verbose logs after debugging** to keep production logs clean.
 
 ## Related Files
 

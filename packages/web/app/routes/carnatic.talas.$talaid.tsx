@@ -1,15 +1,22 @@
 import type { Composition } from '@rasika/core/domain/composition/entity';
+import type { Edit } from '@rasika/core/domain/edit/client';
 import type { Tala } from '@rasika/core/domain/tala/entity';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
+import { formatDate } from '~/lib/utils';
 
-export async function loader({ params }: { params: { talaid?: string } }) {
+export async function loader({
+  params,
+  request,
+}: { params: { talaid?: string }; request: Request }) {
   const { talaid } = params;
 
   if (!talaid) {
@@ -23,6 +30,7 @@ export async function loader({ params }: { params: { talaid?: string } }) {
   }
 
   try {
+    const client = await createServerClient(request);
     const tala = await client.tala.get.query({ id: slugId });
 
     if (!tala) {
@@ -35,10 +43,21 @@ export async function loader({ params }: { params: { talaid?: string } }) {
       limit: 6,
     });
 
+    // Check if user has an active edit for this tala
+    const user = await getUser(request);
+    let activeEdit: Edit | null = null;
+    if (user) {
+      activeEdit = await client.edit.getActiveEditForEntity.query({
+        entityType: 'tala',
+        entityId: tala.id,
+      });
+    }
+
     return data({
       tala,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
+      activeEdit,
     });
   } catch (error) {
     console.error('Failed to load tala:', error);
@@ -132,10 +151,11 @@ export const meta: MetaFunction = ({ data }) => {
 export default function TalaDetails() {
   const location = useLocation();
 
-  const { tala, compositions, hasMoreCompositions } = useLoaderData<{
+  const { tala, compositions, hasMoreCompositions, activeEdit } = useLoaderData<{
     tala: Tala;
     compositions: Composition[];
     hasMoreCompositions: boolean;
+    activeEdit: Edit | null;
   }>();
 
   // Check if we're on a nested route (like /compositions)
@@ -166,6 +186,8 @@ export default function TalaDetails() {
         shareUrl={shareUrl}
         shareTitle={`${tala.name} Tala - Indian Classical Music`}
         shareDescription={`Learn about the ${tala.name} tala, a fundamental rhythmic cycle in Indian classical music`}
+        editUrl={`${generateTalaUrl(tala.name, tala.id)}/edit`}
+        activeEdit={activeEdit}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
@@ -174,7 +196,7 @@ export default function TalaDetails() {
             <strong>Name:</strong> {tala.name}
           </p>
           <p>
-            <strong>Added:</strong> {new Date(tala.createdAt).toLocaleDateString()}
+            <strong>Added:</strong> {formatDate(tala.createdAt)}
           </p>
         </div>
       </section>

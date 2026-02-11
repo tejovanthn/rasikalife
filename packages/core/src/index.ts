@@ -10,6 +10,24 @@ export * as Search from './domain/search';
 export * as User from './domain/user';
 export * as ChangeHistory from './domain/change-history';
 
+// Edit types (browser-safe exports)
+export { EditStatus, EditEntityTypes, type EditEntityType, type Edit } from './domain/edit/types';
+
+// Edit service functions (server-side only)
+export {
+  createDraft,
+  submitEdit,
+  withdrawEdit,
+  approveEdit,
+  rejectEdit,
+  getEditById,
+  getPendingEdits,
+  getUserEdits,
+  getEntityEdits,
+  updateDraft,
+  getActiveEditForEntity,
+} from './domain/edit/service';
+
 // Auth exports
 export * as Auth from './auth';
 

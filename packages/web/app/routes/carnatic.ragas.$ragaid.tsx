@@ -1,14 +1,21 @@
+import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
+import { formatDate } from '~/lib/utils';
 
-export async function loader({ params }: { params: { ragaid?: string } }) {
+export async function loader({
+  params,
+  request,
+}: { params: { ragaid?: string }; request: Request }) {
   const { ragaid } = params;
 
   if (!ragaid) {
@@ -22,6 +29,7 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
   }
 
   try {
+    const client = await createServerClient(request);
     const raga = await client.raga.get.query({ id: slugId });
 
     if (!raga) {
@@ -34,10 +42,21 @@ export async function loader({ params }: { params: { ragaid?: string } }) {
       limit: 6,
     });
 
+    // Check if user has an active edit for this raga
+    const user = await getUser(request);
+    let activeEdit: Edit | null = null;
+    if (user) {
+      activeEdit = await client.edit.getActiveEditForEntity.query({
+        entityType: 'raga',
+        entityId: raga.id,
+      });
+    }
+
     return data({
       raga,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
+      activeEdit,
     });
   } catch (error) {
     console.error('Failed to load raga:', error);
@@ -101,10 +120,11 @@ export const meta: MetaFunction = ({ data }) => {
 export default function RagaDetails() {
   const location = useLocation();
 
-  const { raga, compositions, hasMoreCompositions } = useLoaderData<{
+  const { raga, compositions, hasMoreCompositions, activeEdit } = useLoaderData<{
     raga: RagaType;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
+    activeEdit: Edit | null;
   }>();
 
   // Check if we're on a nested route (like /compositions)
@@ -135,6 +155,8 @@ export default function RagaDetails() {
         shareUrl={shareUrl}
         shareTitle={`${raga.name} Raga - Indian Classical Music`}
         shareDescription={`Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`}
+        editUrl={`${generateRagaUrl(raga.name, raga.id)}/edit`}
+        activeEdit={activeEdit}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
@@ -143,7 +165,7 @@ export default function RagaDetails() {
             <strong>Name:</strong> {raga.name}
           </p>
           <p>
-            <strong>Added:</strong> {new Date(raga.createdAt).toLocaleDateString()}
+            <strong>Added:</strong> {formatDate(raga.createdAt)}
           </p>
         </div>
       </section>

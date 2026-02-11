@@ -66,6 +66,17 @@ const app = issuer({
       scopes: ['openid', 'email', 'profile'],
     }),
   },
+  // Add error handler to log OAuth errors
+  error(ctx, error) {
+    console.error('[issuer] OAuth error:', {
+      error: error.error,
+      description: error.description,
+      url: ctx.req.url,
+      headers: Object.fromEntries(ctx.req.raw.headers.entries()),
+    });
+    // Continue with default error handling
+    return ctx.error(error.error, error.description);
+  },
   subjects: Auth.subjects,
   async success(ctx, value) {
     if (value.provider === 'google') {

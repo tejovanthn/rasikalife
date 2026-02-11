@@ -1,6 +1,14 @@
 import { type ClassValue, clsx } from 'clsx';
+import dayjs from 'dayjs';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { twMerge } from 'tailwind-merge';
 import { convert } from 'url-slug';
+
+dayjs.extend(localizedFormat);
+dayjs.extend(advancedFormat);
+dayjs.extend(relativeTime);
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -49,9 +57,22 @@ export const truncateText = (text: string, maxLength: number): string => {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
 };
 
-// Utility for formatting dates
-export const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString();
+// Utility for formatting dates (SSR-safe using dayjs)
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  return dayjs(dateString).format('DD/MM/YYYY');
+};
+
+// Utility for formatting dates with locale
+export const formatDateLocale = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  return dayjs(dateString).format('LL');
+};
+
+// Utility for relative time (e.g., "3 days ago")
+export const formatRelativeTime = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  return dayjs(dateString).fromNow();
 };
 
 // Utility for formatting numbers

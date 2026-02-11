@@ -10,9 +10,7 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -20,12 +18,12 @@
     "@openauthjs/openauth": "^0.4.3",
     "@uidotdev/usehooks": "^2.4.1",
     "arctic": "^3.7.0",
-    "hono": "^4.11.7",
+    "hono": "^4.11.9",
     "sst": "^3.17.38"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@tsconfig/node20": "^20.1.8",
+    "@tsconfig/node20": "^20.1.9",
     "@types/aws-lambda": "8.10.138",
     "globals": "^15.15.0",
     "tsx": "^4.21.0",

@@ -14,7 +14,9 @@ export function generateSlug(title: string): string {
 
 /**
  * Parse a slug from a route parameter, extracting the title and ID
- * @param param - The route parameter (e.g., "title-slug-id")
+ * KSUID is always 27 characters and contains hyphens, so we extract from the end
+ * Also handles ID-only URLs (just the 27-char KSUID without a title prefix)
+ * @param param - The route parameter (e.g., "title-slug-id" or just "id")
  * @returns Object with title and id, or null if invalid
  */
 export function parseSlug(param: string): { title: string; id: string } | null {
@@ -22,21 +24,24 @@ export function parseSlug(param: string): { title: string; id: string } | null {
     // URL decode first to handle encoded special characters
     const decoded = decodeURIComponent(param);
 
-    // Find the last hyphen to separate title from ID
-    const lastHyphenIndex = decoded.lastIndexOf('-');
-
-    if (lastHyphenIndex === -1) {
-      return null; // No hyphen found
+    // Handle ID-only URLs (exactly 27 characters = KSUID only)
+    if (decoded.length === 27) {
+      return { title: '', id: decoded };
     }
 
-    const title = decoded.substring(0, lastHyphenIndex);
-    const id = decoded.substring(lastHyphenIndex + 1);
-
-    if (!title || !id) {
-      return null; // Empty title or ID
+    // KSUID is always 27 characters, extract from the end
+    if (decoded.length < 28) {
+      return null; // Not enough characters for a valid slug
     }
 
-    return { title, id };
+    const id = decoded.slice(-27);
+    const title = decoded.slice(0, -28); // Everything before the ID and its preceding hyphen
+
+    if (!id) {
+      return null; // Empty ID
+    }
+
+    return { title: title || '', id };
   } catch (error) {
     // Invalid URL encoding
     return null;

@@ -1,6 +1,8 @@
 import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { cascadeRagaNameUpdate } from '../cascade';
+import { createFailedError, notFoundError } from '../helpers';
 import { RagaEntity } from './entity';
 import type { Raga } from './entity';
 import type { CreateRagaSchema, UpdateRagaSchema } from './schema';
@@ -16,7 +18,7 @@ export async function createRaga(input: CreateRagaInput): Promise<Raga> {
   }).go();
 
   if (!result.data) {
-    throw new Error(`Failed to create raga: ${JSON.stringify(input)}`);
+    throw createFailedError('raga', input.name);
   }
 
   return result.data as Raga;
@@ -39,7 +41,11 @@ export async function updateRaga(id: string, input: UpdateRagaInput): Promise<Ra
   const result = await RagaEntity.update({ id }).set(input).go();
 
   if (!result.data) {
-    throw new Error(`Raga ${id} not found or update failed`);
+    throw notFoundError('raga', id);
+  }
+
+  if (input.name) {
+    await cascadeRagaNameUpdate(id, input.name);
   }
 
   return result.data as Raga;

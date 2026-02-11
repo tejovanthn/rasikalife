@@ -1,13 +1,17 @@
+import type { Edit } from '@rasika/core/domain/edit/client';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import { type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData, PersonStructuredData } from '~/components/structured-data';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistOGImage } from '~/lib/og';
+import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
+import { formatDate } from '~/lib/utils';
 
 export async function loader({
   params,
@@ -19,40 +23,61 @@ export async function loader({
     throw new Response('Artist ID is required', { status: 400 });
   }
 
-  const slugId = artistid.split('-').pop();
+  const parsed = parseSlug(artistid);
 
-  if (!slugId) {
+  if (!parsed) {
     throw new Response('Invalid URL format', { status: 400 });
   }
 
+  const { id: slugId } = parsed;
+
   try {
+    const client = await createServerClient(request);
     const artist = await client.artist.get.query({ id: slugId });
 
-    // Fetch compositions by this artist (limit to 6 for preview)
+    if (!artist) {
+      throw new Response('Artist not found', { status: 404 });
+    }
+
     const result = await client.composition.byComposer.query({
       composerId: artist.id,
       limit: 6,
     });
 
+    const user = await getUser(request);
+    let activeEdit: Edit | null = null;
+    if (user) {
+      activeEdit = await client.edit.getActiveEditForEntity.query({
+        entityType: 'artist',
+        entityId: artist.id,
+      });
+    }
+
     return data({
       artist,
       compositions: result.items,
       hasMoreCompositions: result.hasMore,
+      activeEdit,
+      formattedDate: formatDate(artist.createdAt),
     });
   } catch (error) {
     console.error('Failed to load artist:', error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.ARTIST_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response('Artist not found', { status: 404 });
       }
-      // Handle other error codes as needed
+    }
+    // Check if it's a "not found" type error from the API
+    if (error instanceof Error && error.message.includes('not found')) {
+      throw new Response('Artist not found', { status: 404 });
     }
     throw new Response('Failed to load artist', { status: 500 });
   }
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const artist = (data as { artist?: ArtistType })?.artist;
+  const artistData = data as { artist?: ArtistType } | undefined;
+  const artist = artistData?.artist;
 
   if (artist) {
     return [
@@ -65,7 +90,6 @@ export const meta: MetaFunction = ({ data }) => {
         name: 'keywords',
         content: `${artist.name}, Indian classical music artist, Carnatic musician, Hindustani artist, classical music`,
       },
-      // Open Graph tags for social sharing
       { property: 'og:title', content: `${artist.name} - Indian Classical Music Artist` },
       {
         property: 'og:description',
@@ -80,14 +104,11 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:image',
         content: generateArtistOGImage(artist),
       },
-      // Profile-specific Open Graph
       { property: 'profile:first_name', content: artist.name.split(' ')[0] },
       { property: 'profile:last_name', content: artist.name.split(' ').slice(1).join(' ') },
-      // Twitter Card tags
       { name: 'twitter:card', content: 'summary' },
       { name: 'twitter:title', content: `${artist.name} - Artist` },
       { name: 'twitter:description', content: `Indian classical music artist ${artist.name}` },
-      // Canonical URL
       {
         tagName: 'link',
         rel: 'canonical',
@@ -108,13 +129,16 @@ export const meta: MetaFunction = ({ data }) => {
 export default function ArtistDetails() {
   const location = useLocation();
 
-  const { artist, compositions, hasMoreCompositions } = useLoaderData<{
+  const loaderData = useLoaderData<{
     artist: ArtistType;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
+    activeEdit: Edit | null;
+    formattedDate: string;
   }>();
 
-  // Check if we're on a nested route (like /compositions)
+  const { artist, compositions, hasMoreCompositions, activeEdit, formattedDate } = loaderData;
+
   const isNestedRoute = location.pathname.includes('/compositions');
 
   const shareUrl = `https://rasika.life/carnatic/artists/${artist.name.toLowerCase().replace(/\s+/g, '-')}-${artist.id}`;
@@ -142,6 +166,8 @@ export default function ArtistDetails() {
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - Indian Classical Music Artist`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
+        editUrl={`${generateArtistUrl(artist.name, artist.id)}/edit`}
+        activeEdit={activeEdit}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
@@ -150,7 +176,7 @@ export default function ArtistDetails() {
             <strong>Name:</strong> {artist.name}
           </p>
           <p>
-            <strong>Added:</strong> {new Date(artist.createdAt).toLocaleDateString()}
+            <strong>Added:</strong> {formattedDate}
           </p>
         </div>
       </section>
@@ -161,7 +187,6 @@ export default function ArtistDetails() {
         showViewMore={hasMoreCompositions}
         customHeading={`Compositions by ${artist.name}`}
       />
-      {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">
         <h2 className="text-xl font-semibold mb-4">Explore More</h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -191,7 +216,6 @@ export default function ArtistDetails() {
         </div>
       </section>
 
-      {/* Structured Data for SEO */}
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },

@@ -36,8 +36,12 @@
 - Educational partnerships with music schools
 
 ## Technology Philosophy
-- Single-table DynamoDB design for performance and cost efficiency
-- Domain-driven development with collocated tests
-- Versioned content for wiki-style collaboration
-- Karma-based access control for community management
-- Event sourcing for audit trails and analytics
+- Single-table DynamoDB design for performance and cost efficiency (ADR-001)
+- Domain-driven development with collocated tests (ADR-009)
+- Versioned content for wiki-style collaboration (ADR-006)
+- Karma-based access control for community management (ADR-007)
+- Event sourcing for audit trails and analytics (ADR-009)
+- Comprehensive testing strategy (ADR-008)
+- Type-safe API layer with tRPC (ADR-003)
+- Full-stack Remix framework (ADR-004)
+- SST v3 serverless infrastructure (ADR-002)

@@ -1,19 +1,26 @@
+import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
+import { Pencil } from 'lucide-react';
 import { type LinksFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import {
   BreadcrumbStructuredData,
   MusicCompositionStructuredData,
 } from '~/components/structured-data';
 import { ShareButtons } from '~/components/ui/share-buttons';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateCompositionOGImage } from '~/lib/og';
 import { generateCompositionUrl, parseSlug } from '~/lib/url-slug';
 
-export async function loader({ params }: { params: { compositionid?: string } }) {
+export async function loader({
+  params,
+  request,
+}: { params: { compositionid?: string }; request: Request }) {
   const { compositionid } = params;
 
   if (!compositionid) {
@@ -32,6 +39,7 @@ export async function loader({ params }: { params: { compositionid?: string } })
   }
 
   try {
+    const client = await createServerClient(request);
     const composition = await client.composition.get.query({ id: slugId });
 
     // Get related compositions with error handling for network issues
@@ -77,12 +85,23 @@ export async function loader({ params }: { params: { compositionid?: string } })
       }
     }
 
+    // Check if user has an active edit for this composition
+    const user = await getUser(request);
+    let activeEdit: Edit | null = null;
+    if (user) {
+      activeEdit = await client.edit.getActiveEditForEntity.query({
+        entityType: 'composition',
+        entityId: composition.id,
+      });
+    }
+
     return data({
       composition,
       relatedCompositionsByComposer,
       hasMoreCompositionsByComposer,
       relatedCompositionsByRaga,
       hasMoreCompositionsByRaga,
+      activeEdit,
     });
   } catch (error) {
     console.error('Failed to load composition:', error);
@@ -214,6 +233,7 @@ export default function CompositionDetails() {
     hasMoreCompositionsByRaga,
     relatedCompositionsByTala,
     hasMoreCompositionsByTala,
+    activeEdit,
   } = useLoaderData<{
     composition: CompositionWithRelations;
     relatedCompositionsByComposer: CompositionWithRelations[];
@@ -222,6 +242,7 @@ export default function CompositionDetails() {
     hasMoreCompositionsByRaga: boolean;
     relatedCompositionsByTala: CompositionWithRelations[];
     hasMoreCompositionsByTala: boolean;
+    activeEdit: Edit | null;
   }>();
 
   const shareUrl = `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`;
@@ -272,18 +293,15 @@ export default function CompositionDetails() {
       />
 
       <Breadcrumb items={breadcrumbItems} />
-      <header className="mb-8">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
-            <h1 className="text-4xl font-bold">{composition.title}</h1>
-          </div>
-          <ShareButtons
-            url={shareUrl}
-            title={`${composition.title} - ${composition.composer.name}`}
-            description={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
-          />
-        </div>
-      </header>
+      <DetailPageHeader
+        title={composition.title}
+        subtitle={`Composition by ${composition.composer.name}`}
+        shareUrl={shareUrl}
+        shareTitle={`${composition.title} - ${composition.composer.name}`}
+        shareDescription={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
+        editUrl={`${generateCompositionUrl(composition.title, composition.id)}/edit`}
+        activeEdit={activeEdit}
+      />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
         <div className="space-y-2 text-sm">

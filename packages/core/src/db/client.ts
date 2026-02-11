@@ -12,3 +12,5 @@ export const dynamoClient = DynamoDBDocumentClient.from(client, {
     convertClassInstanceToMap: true,
   },
 });
+
+export const TABLE_NAME = process.env.DYNAMODB_TABLE || 'RasikaLifeTable';

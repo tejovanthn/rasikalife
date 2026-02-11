@@ -90,6 +90,15 @@ export const CompositionEntity = new Entity(
         set: () => new Date().toISOString(),
         watch: '*',
       },
+      version: {
+        type: 'number',
+        required: true,
+        default: () => 1,
+      },
+      lastEditedBy: {
+        type: 'string',
+        required: false,
+      },
     },
     indexes: {
       primary: {

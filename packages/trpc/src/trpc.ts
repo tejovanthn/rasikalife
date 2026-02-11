@@ -3,6 +3,7 @@ import { TRPCError, initTRPC } from '@trpc/server';
 import type { CreateAWSLambdaContextOptions } from '@trpc/server/adapters/aws-lambda';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { ZodError } from 'zod';
+import { ROLE, type Role } from '../../core/src/auth/roles';
 import { ApplicationError } from '../../core/src/constants';
 
 export interface Context {
@@ -56,6 +57,25 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
     throw new TRPCError({
       code: 'FORBIDDEN',
       message: 'Admin access required',
+    });
+  }
+
+  return next({ ctx });
+});
+
+export const moderatorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in',
+    });
+  }
+
+  const moderatorRoles: Role[] = [ROLE.MODERATOR, ROLE.ADMIN];
+  if (!moderatorRoles.includes(ctx.user.role as Role)) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Moderator access required',
     });
   }
 

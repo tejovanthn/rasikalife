@@ -1,6 +1,8 @@
 import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { cascadeComposerNameUpdate } from '../cascade';
+import { createFailedError, notFoundError } from '../helpers';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
 import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
@@ -16,10 +18,7 @@ export async function createArtist(input: CreateArtistInput): Promise<Artist> {
   }).go();
 
   if (!result.data) {
-    throw new ApplicationError(
-      ErrorCode.ARTIST_CREATE_FAILED,
-      `Failed to create artist: ${input.name}`
-    );
+    throw createFailedError('artist', input.name);
   }
 
   return result.data as Artist;
@@ -44,7 +43,11 @@ export async function updateArtist(id: string, input: UpdateArtistInput): Promis
   const result = await ArtistEntity.update({ id }).set(input).go();
 
   if (!result.data) {
-    throw new ApplicationError(ErrorCode.ARTIST_NOT_FOUND, `Artist with ID ${id} not found`);
+    throw notFoundError('artist', id);
+  }
+
+  if (input.name) {
+    await cascadeComposerNameUpdate(id, input.name);
   }
 
   return result.data as Artist;
@@ -61,7 +64,6 @@ export async function listArtists(params?: { limit?: number; nextToken?: string 
 }> {
   const limit = params?.limit || 20;
 
-  // Query the list index for efficient sorted retrieval (PK = ARTIST_LIST, results sorted by SK = name#id)
   const result = await ArtistEntity.query.list({}).go({
     limit,
     cursor: params?.nextToken,

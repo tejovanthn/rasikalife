@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { slugify } from '~/lib/carnaticUtils';
+import { formatDate } from '~/lib/utils';
 
 export interface EntityCardField {
   label: string;
@@ -136,9 +137,7 @@ export function EntityCard({
           <div
             className={`flex justify-between items-center mt-3 text-muted-foreground ${compact ? 'text-xs' : 'text-xs'}`}
           >
-            {metadata.updatedAt && (
-              <span>Updated {new Date(metadata.updatedAt).toLocaleDateString()}</span>
-            )}
+            {metadata.updatedAt && <span>Updated {formatDate(metadata.updatedAt)}</span>}
             {metadata.viewCount && <span>{metadata.viewCount} views</span>}
           </div>
         )}

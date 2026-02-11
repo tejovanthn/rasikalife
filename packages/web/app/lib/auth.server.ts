@@ -1,7 +1,7 @@
-import type { AppRouter } from '@rasika/trpc';
 import { createClient } from '@openauthjs/openauth/client';
-import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { Auth } from '@rasika/core';
+import type { AppRouter } from '@rasika/trpc';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { createCookieSessionStorage, redirect } from 'react-router';
 import { Resource } from 'sst';
 
@@ -127,26 +127,23 @@ export async function getUser(request: Request): Promise<SessionUser | null> {
   }
 }
 
-export async function requireUser(request: Request, redirectTo = '/login') {
+export async function requireUser(request: Request, redirectTo?: string) {
   const user = await getUser(request);
 
   if (!user) {
-    const searchParams = new URLSearchParams([['redirectTo', redirectTo]]);
-    throw redirect(`/login?${searchParams}`);
+    const url = redirectTo ?? new URL(request.url).pathname;
+    const searchParams = new URLSearchParams([['redirectTo', url]]);
+    throw redirect(`/auth/login?${searchParams}`);
   }
 
   return user;
 }
 
-export async function requirePermission(
-  request: Request,
-  permission: string,
-  redirectTo = '/unauthorized'
-) {
-  const user = await requireUser(request);
+export async function requirePermission(request: Request, permission: string, redirectTo?: string) {
+  const user = await requireUser(request, redirectTo);
 
   if (!Auth.can(user.role, permission as Parameters<typeof Auth.can>[1])) {
-    throw redirect(redirectTo);
+    throw redirect(redirectTo ?? '/');
   }
 
   return user;
@@ -155,12 +152,12 @@ export async function requirePermission(
 export async function requireRole(
   request: Request,
   role: (typeof Auth.ROLE)[keyof typeof Auth.ROLE],
-  redirectTo = '/unauthorized'
+  redirectTo?: string
 ) {
-  const user = await requireUser(request);
+  const user = await requireUser(request, redirectTo);
 
   if (user.role !== role && user.role !== Auth.ROLE.ADMIN) {
-    throw redirect(redirectTo);
+    throw redirect(redirectTo ?? '/');
   }
 
   return user;
