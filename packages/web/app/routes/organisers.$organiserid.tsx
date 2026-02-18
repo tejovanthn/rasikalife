@@ -1,13 +1,11 @@
-import { Calendar, MapPin } from 'lucide-react';
-import { Link, data, useLoaderData } from 'react-router';
+import { data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { Badge } from '~/components/ui/badge';
-import { Card, CardContent } from '~/components/ui/card';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateEventUrl, parseSlug } from '~/lib/url-slug';
+import { parseSlug } from '~/lib/url-slug';
 
 interface OrganiserDetail {
   id: string;
@@ -100,60 +98,13 @@ export default function OrganiserDetailPage() {
         {events.length === 0 ? (
           <EmptyState message="No events by this organiser yet." />
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4 md:grid-cols-2">
             {events
               .sort(
                 (a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
               )
               .map(event => (
-                <Link
-                  key={event.id}
-                  to={generateEventUrl(event.title, event.id)}
-                  className="block no-underline"
-                >
-                  <Card className="hover:border-primary/50 transition-colors">
-                    <CardContent className="py-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-foreground">{event.title}</p>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(event.startDateTime).toLocaleDateString('en-IN', {
-                                weekday: 'short',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                              {', '}
-                              {new Date(event.startDateTime).toLocaleTimeString('en-IN', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                              })}
-                            </span>
-                            {event.venueName && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {event.venueName}
-                              </span>
-                            )}
-                          </div>
-                          {event.artists && event.artists.length > 0 && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {event.artists
-                                .map(a => `${a.title ? `${a.title} ` : ''}${a.name}`)
-                                .join(', ')}
-                            </p>
-                          )}
-                        </div>
-                        {event.entryType && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0">
-                            {event.entryType}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <EventCard key={event.id} event={event} />
               ))}
           </div>
         )}

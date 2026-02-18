@@ -1,5 +1,5 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { LogOut, Menu, User, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Form, Link, NavLink } from 'react-router';
 import { useAuth } from '~/components/auth-context';
@@ -39,13 +39,15 @@ export const Header = () => {
   }, [isSidebarOpen]);
 
   const navLinks = [
-    { href: '/', label: 'Home' },
     { href: '/carnatic/compositions', label: 'Compositions' },
     { href: '/artists', label: 'Artists' },
     { href: '/carnatic/ragas', label: 'Ragas' },
-    { href: '/carnatic/talas', label: 'Talas' },
-    { href: '/carnatic/languages', label: 'Languages' },
-    { href: '/about', label: 'About' },
+  ];
+
+  const eventLinks = [
+    { href: '/events', label: 'Events' },
+    { href: '/venues', label: 'Venues' },
+    { href: '/organisers', label: 'Organisers' },
   ];
 
   return (
@@ -63,7 +65,7 @@ export const Header = () => {
               </Link>
             </div>
             <div className="hidden md:block">
-              <nav className="ml-10 flex items-baseline space-x-4" aria-label="Main navigation">
+              <nav className="ml-10 flex items-baseline space-x-1" aria-label="Main navigation">
                 {navLinks.map(link => (
                   <NavLink
                     key={link.label}
@@ -79,6 +81,21 @@ export const Header = () => {
                     {link.label}
                   </NavLink>
                 ))}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 outline-none"
+                  >
+                    Events
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {eventLinks.map(link => (
+                      <DropdownMenuItem key={link.href} asChild>
+                        <Link to={link.href}>{link.label}</Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </nav>
             </div>
           </div>
@@ -190,6 +207,27 @@ export const Header = () => {
                       {link.label}
                     </NavLink>
                   ))}
+                  <div className="border-t border-border pt-2">
+                    <p className="px-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Events
+                    </p>
+                    {eventLinks.map(link => (
+                      <NavLink
+                        key={link.href}
+                        to={link.href}
+                        onClick={() => setIsSidebarOpen(false)}
+                        className={({ isActive }) =>
+                          `block px-3 py-2 rounded-md text-base font-medium ${
+                            isActive
+                              ? 'bg-primary text-primary-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`
+                        }
+                      >
+                        {link.label}
+                      </NavLink>
+                    ))}
+                  </div>
                   <div className="pt-4 border-t border-border mt-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-base font-medium text-muted-foreground">Theme</span>

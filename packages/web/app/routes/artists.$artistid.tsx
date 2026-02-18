@@ -165,6 +165,12 @@ export default function ArtistDetails() {
 
   const shareUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`;
 
+  const specializations = [
+    ...new Set(artistEvents.map(e => e.role).filter((r): r is string => !!r)),
+  ].map(role => `${role.charAt(0).toUpperCase()}${role.slice(1)} Artist`);
+  const subtitle =
+    specializations.length > 0 ? specializations.join(' & ') : 'Indian Classical Music Artist';
+
   if (isNestedRoute) {
     return <Outlet />;
   }
@@ -183,9 +189,9 @@ export default function ArtistDetails() {
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={artist.name}
-        subtitle="Indian Classical Music Artist"
+        subtitle={subtitle}
         shareUrl={shareUrl}
-        shareTitle={`${artist.name} - Indian Classical Music Artist`}
+        shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
         editUrl={`${generateArtistUrl(artist.name, artist.id)}/edit`}
         activeEdit={activeEdit}
@@ -201,13 +207,15 @@ export default function ArtistDetails() {
           </p>
         </div>
       </section>
-      <EntityCompositions
-        compositions={compositions}
-        entityType="artist"
-        entitySlug={`${generateSlug(artist.name)}-${artist.id}`}
-        showViewMore={hasMoreCompositions}
-        customHeading={`Compositions by ${artist.name}`}
-      />
+      {compositions.length > 0 && (
+        <EntityCompositions
+          compositions={compositions}
+          entityType="artist"
+          entitySlug={`${generateSlug(artist.name)}-${artist.id}`}
+          showViewMore={hasMoreCompositions}
+          customHeading={`Compositions by ${artist.name}`}
+        />
+      )}
       {artistEvents.length > 0 && (
         <section className="mt-8">
           <h2 className="section-heading mb-4">Events</h2>
