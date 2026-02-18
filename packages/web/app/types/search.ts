@@ -1,12 +1,14 @@
 // Search result types - mirrors @rasika/core to avoid bundling Node.js dependencies
-export type SearchEntityType = 'artist' | 'raga' | 'tala' | 'composition';
+export type SearchEntityType =
+  | 'artist'
+  | 'raga'
+  | 'tala'
+  | 'composition'
+  | 'venue'
+  | 'organiser'
+  | 'event';
 
-export type SearchableField =
-  | 'artistName'
-  | 'ragaName'
-  | 'talaName'
-  | 'compositionTitle'
-  | 'lyrics';
+export type SearchableField = 'name' | 'description';
 
 export interface SearchHighlight {
   field: SearchableField;

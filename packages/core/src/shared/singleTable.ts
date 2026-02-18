@@ -12,6 +12,8 @@ export enum EntityPrefix {
   COLLECTION = 'COLLECTION',
   PERFORMANCE = 'PERFORMANCE',
   RECORDING = 'RECORDING',
+  FESTIVAL = 'FESTIVAL',
+  ORGANISER = 'ORGANISER',
 }
 
 export enum SecondaryPrefix {

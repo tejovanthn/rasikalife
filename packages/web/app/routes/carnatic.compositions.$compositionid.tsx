@@ -15,7 +15,14 @@ import { ShareButtons } from '~/components/ui/share-buttons';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateCompositionOGImage } from '~/lib/og';
-import { generateCompositionUrl, parseSlug } from '~/lib/url-slug';
+import {
+  generateArtistUrl,
+  generateCompositionUrl,
+  generateRagaUrl,
+  generateSlug,
+  generateTalaUrl,
+  parseSlug,
+} from '~/lib/url-slug';
 
 export async function loader({
   params,
@@ -311,7 +318,7 @@ export default function CompositionDetails() {
           <p>
             <strong>Composer:</strong>{' '}
             <Link
-              to={`/carnatic/artists/${composition.composer.name.toLowerCase().replace(/\s+/g, '-')}-${composition.composer.id}`}
+              to={generateArtistUrl(composition.composer.name, composition.composer.id)}
               className="text-primary hover:underline"
             >
               {composition.composer.name}
@@ -333,7 +340,7 @@ export default function CompositionDetails() {
                 <span key={raga.id}>
                   {index > 0 && ', '}
                   <Link
-                    to={`/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
+                    to={generateRagaUrl(raga.name, raga.id)}
                     className="text-primary hover:underline"
                   >
                     {raga.name}
@@ -351,7 +358,7 @@ export default function CompositionDetails() {
                 <span key={tala.id}>
                   {index > 0 && ', '}
                   <Link
-                    to={`/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`}
+                    to={generateTalaUrl(tala.name, tala.id)}
                     className="text-primary hover:underline"
                   >
                     {tala.name}
@@ -399,7 +406,7 @@ export default function CompositionDetails() {
         <EntityCompositions
           compositions={relatedCompositionsByComposer}
           entityType="artist"
-          entitySlug={`${composition.composer.name.toLowerCase().replace(/\s+/g, '-')}-${composition.composer.id}`}
+          entitySlug={`${generateSlug(composition.composer.name)}-${composition.composer.id}`}
           showViewMore={hasMoreCompositionsByComposer}
           customHeading={`More compositions by ${composition.composer.name}`}
         />
@@ -410,7 +417,7 @@ export default function CompositionDetails() {
           <EntityCompositions
             compositions={relatedCompositionsByRaga}
             entityType="raga"
-            entitySlug={`${composition.ragas[0].name.toLowerCase().replace(/\s+/g, '-')}-${composition.ragas[0].id}`}
+            entitySlug={`${generateSlug(composition.ragas[0].name)}-${composition.ragas[0].id}`}
             showViewMore={hasMoreCompositionsByRaga}
             customHeading={`More compositions in ${composition.ragas[0].name}`}
           />

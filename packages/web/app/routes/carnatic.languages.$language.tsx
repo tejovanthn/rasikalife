@@ -94,7 +94,7 @@ export default function LanguageDetails() {
           </Link>
 
           <Link
-            to="/carnatic/artists"
+            to="/artists"
             className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
           >
             <h3 className="font-medium">Artists</h3>

@@ -1,5 +1,5 @@
 import { useDebounce } from '@uidotdev/usehooks';
-import { Loader2, Search, X } from 'lucide-react';
+import { Loader2, Plus, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useFetcher } from 'react-router';
 import { Input } from '~/components/ui/input';
@@ -21,6 +21,8 @@ interface SingleSelectProps {
   error?: string;
   inputId?: string;
   fieldName?: string;
+  /** When provided, shows a "Create new" option when query has no matches. Called with the query text. */
+  createNew?: (name: string) => void;
 }
 
 // Multi-select props
@@ -34,6 +36,8 @@ interface MultiSelectProps {
   error?: string;
   inputId?: string;
   fieldName?: string;
+  /** When provided, shows a "Create new" option when query has no matches. Called with the query text. */
+  createNew?: (name: string) => void;
 }
 
 type SearchSelectProps = SingleSelectProps | MultiSelectProps;
@@ -49,6 +53,7 @@ export function SearchSelect(props: SearchSelectProps) {
     inputId,
     fieldName,
     multiple = false,
+    createNew,
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -62,6 +67,14 @@ export function SearchSelect(props: SearchSelectProps) {
 
   const results = fetcher.data ?? [];
   const isLoading = fetcher.state === 'loading';
+
+  // Sync query text when value changes externally (e.g. loader data arriving)
+  const valueName = multiple ? '' : ((value as Entity | null)?.name ?? '');
+  useEffect(() => {
+    if (!multiple && !isOpen) {
+      setQuery(valueName);
+    }
+  }, [multiple, isOpen, valueName]);
 
   // Only search when debounced query changes and dropdown is open
   useEffect(() => {
@@ -176,8 +189,22 @@ export function SearchSelect(props: SearchSelectProps) {
         availableResults.length === 0 &&
         !isLoading &&
         fetcher.data && (
-          <div className="absolute z-10 w-full mt-1 py-2 px-3 bg-popover border rounded-md shadow-lg text-sm text-muted-foreground">
-            No results found
+          <div className="absolute z-10 w-full mt-1 py-1 bg-popover border rounded-md shadow-lg">
+            {createNew ? (
+              <button
+                type="button"
+                className="w-full px-4 py-2 text-left text-sm hover:bg-accent focus:bg-accent outline-none flex items-center gap-2"
+                onClick={() => {
+                  createNew(query);
+                  setIsOpen(false);
+                }}
+              >
+                <Plus className="h-3 w-3" />
+                Create &quot;{query}&quot;
+              </button>
+            ) : (
+              <div className="py-1 px-3 text-sm text-muted-foreground">No results found</div>
+            )}
           </div>
         )}
 

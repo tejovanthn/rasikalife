@@ -29,7 +29,7 @@ export const searchRouter = createTRPCRouter({
 
   searchArtists: publicProcedure.input(searchInputSchema).query(({ input }) =>
     Search.search(input.query, {
-      filters: ['artistName'],
+      filters: ['name'],
       limit: input.limit,
       offset: input.offset,
     }).then(result => ({
@@ -42,7 +42,7 @@ export const searchRouter = createTRPCRouter({
 
   searchRagas: publicProcedure.input(searchInputSchema).query(({ input }) =>
     Search.search(input.query, {
-      filters: ['ragaName'],
+      filters: ['name'],
       limit: input.limit,
       offset: input.offset,
     }).then(result => ({
@@ -55,13 +55,51 @@ export const searchRouter = createTRPCRouter({
 
   searchTalas: publicProcedure.input(searchInputSchema).query(({ input }) =>
     Search.search(input.query, {
-      filters: ['talaName'],
+      filters: ['name'],
       limit: input.limit,
       offset: input.offset,
     }).then(result => ({
       ...result,
       items: result.items
         .filter(item => item.type === 'tala')
+        .map(item => ({ id: item.id, name: item.name })),
+    }))
+  ),
+
+  searchVenues: publicProcedure.input(searchInputSchema).query(({ input }) =>
+    Search.search(input.query, {
+      filters: ['name'],
+      limit: input.limit,
+      offset: input.offset,
+    }).then(result => ({
+      ...result,
+      items: result.items
+        .filter(item => item.type === 'venue')
+        .map(item => ({ id: item.id, name: item.name })),
+    }))
+  ),
+
+  searchOrganisers: publicProcedure.input(searchInputSchema).query(({ input }) =>
+    Search.search(input.query, {
+      filters: ['name'],
+      limit: input.limit,
+      offset: input.offset,
+    }).then(result => ({
+      ...result,
+      items: result.items
+        .filter(item => item.type === 'organiser')
+        .map(item => ({ id: item.id, name: item.name })),
+    }))
+  ),
+
+  searchEvents: publicProcedure.input(searchInputSchema).query(({ input }) =>
+    Search.search(input.query, {
+      limit: input.limit,
+      offset: input.offset,
+    }).then(result => ({
+      ...result,
+      items: result.items
+        .filter(item => item.type === 'event')
         .map(item => ({ id: item.id, name: item.name })),
     }))
   ),
@@ -73,7 +111,7 @@ export const searchRouter = createTRPCRouter({
     .input(
       z
         .object({
-          type: z.enum(['artist', 'raga', 'tala', 'composition']),
+          type: z.enum(['artist', 'raga', 'tala', 'composition', 'venue', 'organiser', 'event']),
           startsWith: z.string().optional(),
         })
         .optional()

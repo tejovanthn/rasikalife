@@ -18,6 +18,22 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: true,
       },
+      title: {
+        type: 'string',
+        required: false,
+      },
+      gurus: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            id: { type: 'string', required: false },
+            name: { type: 'string', required: true },
+          },
+        },
+        required: false,
+        default: () => [],
+      },
       createdAt: {
         type: 'string',
         required: true,

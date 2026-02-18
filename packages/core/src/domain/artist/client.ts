@@ -17,6 +17,8 @@ export type UpdateArtistInput = z.infer<typeof UpdateArtistSchema>;
 export interface Artist {
   id: string;
   name: string;
+  title?: string;
+  gurus?: Array<{ id?: string; name: string }>;
   createdAt: string;
   updatedAt: string;
 }

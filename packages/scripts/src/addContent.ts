@@ -1,5 +1,4 @@
-import { ContentCategory, ContentStatus, ContentVisibility } from '@rasika/core';
-import { Resource } from 'sst';
+import { ContentCategory, ContentStatus, ContentVisibility } from '@rasika/core/types';
 
 const data = [
   {
@@ -1105,18 +1104,14 @@ Thank you for your support. Your generosity helps keep the tradition of Carnatic
   },
 ];
 
-const main = async () => {
-  process.env.DYNAMODB_TABLE = Resource.RasikaTable.name;
-
-  const { Content } = await import('@rasika/core');
+export async function seedContent() {
+  const Content = await import('@rasika/core/domain/content');
 
   await Promise.all(
     data.map(async item => {
       await Content.createContent(item);
     })
   );
-};
 
-main().then(() => {
-  // Content added successfully
-});
+  console.log('Content seeded successfully!');
+}

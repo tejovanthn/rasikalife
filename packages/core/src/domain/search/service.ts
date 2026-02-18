@@ -8,10 +8,16 @@ import { ArtistEntity } from '../artist/entity';
 import type { Artist } from '../artist/entity';
 import { CompositionEntity } from '../composition/entity';
 import type { CompositionWithRelations } from '../composition/index';
+import { EventEntity } from '../event/entity';
+import type { Event } from '../event/entity';
+import { OrganiserEntity } from '../organiser/entity';
+import type { Organiser } from '../organiser/entity';
 import { RagaEntity } from '../raga/entity';
 import type { Raga } from '../raga/entity';
 import { TalaEntity } from '../tala/entity';
 import type { Tala } from '../tala/entity';
+import { VenueEntity } from '../venue/entity';
+import type { Venue } from '../venue/entity';
 import type { SearchableField } from './schema';
 import type {
   EntityType,
@@ -37,11 +43,8 @@ interface SearchOptions {
 
 function createFuseOptions(filterFields?: SearchableField[]) {
   const allKeys: Array<{ name: keyof SearchDocument; weight: number }> = [
-    { name: 'artistName', weight: 1.0 },
-    { name: 'ragaName', weight: 1.0 },
-    { name: 'talaName', weight: 1.0 },
-    { name: 'compositionTitle', weight: 1.0 },
-    { name: 'lyrics', weight: 1.0 },
+    { name: 'name', weight: 1.0 },
+    { name: 'description', weight: 0.8 },
   ];
 
   const filteredKeys = filterFields
@@ -87,7 +90,15 @@ export async function search(query: string, options: SearchOptions = {}): Promis
     const fuseOptions = createFuseOptions(filters);
 
     // Search each entity type separately to ensure balanced results
-    const entityTypes = ['artist', 'raga', 'tala', 'composition'] as const;
+    const entityTypes = [
+      'artist',
+      'raga',
+      'tala',
+      'composition',
+      'venue',
+      'organiser',
+      'event',
+    ] as const;
     const resultsByType: Record<string, FuseResult<SearchDocument>[]> = {};
 
     for (const entityType of entityTypes) {
@@ -109,12 +120,7 @@ export async function search(query: string, options: SearchOptions = {}): Promis
 
     console.log('Search results:', {
       query,
-      byType: {
-        artists: resultsByType.artist?.length ?? 0,
-        compositions: resultsByType.composition?.length ?? 0,
-        ragas: resultsByType.raga?.length ?? 0,
-        talas: resultsByType.tala?.length ?? 0,
-      },
+      byType: Object.fromEntries(entityTypes.map(t => [t, resultsByType[t]?.length ?? 0])),
     });
 
     const paginatedResults = rawResults.slice(offset, offset + limit);
@@ -159,6 +165,9 @@ export interface SearchWithFullDataResponse {
   artists: Artist[];
   ragas: Raga[];
   talas: Tala[];
+  venues: Venue[];
+  organisers: Organiser[];
+  events: Event[];
   total: number;
 }
 
@@ -180,6 +189,9 @@ export async function searchWithFullData(
   const artistIds: Array<{ id: string }> = [];
   const ragaIds: Array<{ id: string }> = [];
   const talaIds: Array<{ id: string }> = [];
+  const venueIds: Array<{ id: string }> = [];
+  const organiserIds: Array<{ id: string }> = [];
+  const eventIds: Array<{ id: string }> = [];
 
   for (const item of searchResponse.items) {
     switch (item.type) {
@@ -195,15 +207,35 @@ export async function searchWithFullData(
       case 'tala':
         talaIds.push({ id: item.id });
         break;
+      case 'venue':
+        venueIds.push({ id: item.id });
+        break;
+      case 'organiser':
+        organiserIds.push({ id: item.id });
+        break;
+      case 'event':
+        eventIds.push({ id: item.id });
+        break;
     }
   }
 
   // Batch fetch full entity data in parallel
-  const [compositionsResult, artistsResult, ragasResult, talasResult] = await Promise.all([
+  const [
+    compositionsResult,
+    artistsResult,
+    ragasResult,
+    talasResult,
+    venuesResult,
+    organisersResult,
+    eventsResult,
+  ] = await Promise.all([
     compositionIds.length > 0 ? CompositionEntity.get(compositionIds).go() : { data: [] },
     artistIds.length > 0 ? ArtistEntity.get(artistIds).go() : { data: [] },
     ragaIds.length > 0 ? RagaEntity.get(ragaIds).go() : { data: [] },
     talaIds.length > 0 ? TalaEntity.get(talaIds).go() : { data: [] },
+    venueIds.length > 0 ? VenueEntity.get(venueIds).go() : { data: [] },
+    organiserIds.length > 0 ? OrganiserEntity.get(organiserIds).go() : { data: [] },
+    eventIds.length > 0 ? EventEntity.get(eventIds).go() : { data: [] },
   ]);
 
   // Transform compositions to CompositionWithRelations format
@@ -227,6 +259,9 @@ export async function searchWithFullData(
     artists: artistsResult.data || [],
     ragas: ragasResult.data || [],
     talas: talasResult.data || [],
+    venues: (venuesResult.data || []) as Venue[],
+    organisers: (organisersResult.data || []) as Organiser[],
+    events: (eventsResult.data || []) as Event[],
     total: searchResponse.total,
   };
 }

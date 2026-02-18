@@ -3,20 +3,28 @@ import { artistRouter } from './artist';
 import { compositionRouter } from './composition';
 import { contentRouter } from './content';
 import { editRouter } from './edit';
+import { eventRouter } from './event';
+import { festivalRouter } from './festival';
+import { organiserRouter } from './organiser';
 import { ragaRouter } from './raga';
 import { searchRouter } from './search';
 import { talaRouter } from './tala';
 import { userRouter } from './user';
+import { venueRouter } from './venue';
 
 export const appRouter = createTRPCRouter({
   artist: artistRouter,
   composition: compositionRouter,
   content: contentRouter,
   edit: editRouter,
+  event: eventRouter,
+  festival: festivalRouter,
+  organiser: organiserRouter,
   raga: ragaRouter,
   search: searchRouter,
   tala: talaRouter,
   user: userRouter,
+  venue: venueRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -63,6 +63,25 @@ export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   return next({ ctx });
 });
 
+export const editorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  if (!ctx.user) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be logged in',
+    });
+  }
+
+  const editorRoles: Role[] = [ROLE.EDITOR, ROLE.MODERATOR, ROLE.ADMIN];
+  if (!editorRoles.includes(ctx.user.role as Role)) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'Editor access required',
+    });
+  }
+
+  return next({ ctx });
+});
+
 export const moderatorProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({

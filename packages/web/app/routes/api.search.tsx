@@ -29,6 +29,9 @@ export const loader: LoaderFunction = async ({ request }) => {
       artists: result.items.filter(item => item.type === 'artist').slice(0, RESULTS_PER_TYPE),
       ragas: result.items.filter(item => item.type === 'raga').slice(0, RESULTS_PER_TYPE),
       talas: result.items.filter(item => item.type === 'tala').slice(0, RESULTS_PER_TYPE),
+      venues: result.items.filter(item => item.type === 'venue').slice(0, RESULTS_PER_TYPE),
+      organisers: result.items.filter(item => item.type === 'organiser').slice(0, RESULTS_PER_TYPE),
+      events: result.items.filter(item => item.type === 'event').slice(0, RESULTS_PER_TYPE),
     };
 
     return data(searchResults, {

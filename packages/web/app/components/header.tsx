@@ -41,7 +41,7 @@ export const Header = () => {
   const navLinks = [
     { href: '/', label: 'Home' },
     { href: '/carnatic/compositions', label: 'Compositions' },
-    { href: '/carnatic/artists', label: 'Artists' },
+    { href: '/artists', label: 'Artists' },
     { href: '/carnatic/ragas', label: 'Ragas' },
     { href: '/carnatic/talas', label: 'Talas' },
     { href: '/carnatic/languages', label: 'Languages' },
@@ -112,12 +112,20 @@ export const Header = () => {
                     </Link>
                   </DropdownMenuItem>
                   {(user.role === 'moderator' || user.role === 'admin') && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/moderator/edits" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Moderator Queue
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/edits" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Edit Queue
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/events" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Event Queue
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -136,7 +144,8 @@ export const Header = () => {
               </Button>
             )}
           </div>
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <GlobalSearch />
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-11 w-11">
@@ -212,14 +221,24 @@ export const Header = () => {
                           My Edits
                         </Link>
                         {(user.role === 'moderator' || user.role === 'admin') && (
-                          <Link
-                            to="/moderator/edits"
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
-                            onClick={() => setIsSidebarOpen(false)}
-                          >
-                            <User className="h-4 w-4" />
-                            Moderator Queue
-                          </Link>
+                          <>
+                            <Link
+                              to="/moderator/edits"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <User className="h-4 w-4" />
+                              Edit Queue
+                            </Link>
+                            <Link
+                              to="/moderator/events"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <User className="h-4 w-4" />
+                              Event Queue
+                            </Link>
+                          </>
                         )}
                         <Form method="post" action="/auth/logout">
                           <Button

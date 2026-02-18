@@ -6,6 +6,14 @@
 
 declare module "sst" {
   export interface Resource {
+    "EventPosters": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "GeminiApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "GoogleClientId": {
       "type": "sst.sst.Secret"
       "value": string

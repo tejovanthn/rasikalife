@@ -4,12 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "cli": "sst shell -- tsx src/cli.ts",
+    "prod-cli": "sst shell --stage prod -- tsx src/cli.ts",
     "shell": "sst shell tsx",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.987.0",
-    "@rasika/core": "workspace:*"
+    "@aws-sdk/client-dynamodb": "^3.991.0",
+    "@rasika/core": "workspace:*",
+    "commander": "^14.0.3"
   },
   "devDependencies": {
     "tsx": "^4.21.0"

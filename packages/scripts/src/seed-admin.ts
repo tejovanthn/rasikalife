@@ -1,17 +1,6 @@
-import { Resource } from 'sst';
-
-async function seedAdmin() {
-  process.env.DYNAMODB_TABLE = Resource.RasikaTable.name;
-
-  const { Auth, User } = await import('@rasika/core');
-
-  const email = process.argv[2];
-
-  if (!email) {
-    console.error('Usage: pnpm seed:admin <user-email>');
-    console.error('Example: pnpm seed:admin admin@example.com');
-    process.exit(1);
-  }
+export async function seedAdmin(email: string) {
+  const Auth = await import('@rasika/core/auth');
+  const User = await import('@rasika/core/domain/user');
 
   console.log(`Looking for user with email: ${email}`);
 
@@ -31,8 +20,3 @@ async function seedAdmin() {
   console.log(`Role updated to: ${updatedUser.role}`);
   console.log('Done!');
 }
-
-seedAdmin().catch(error => {
-  console.error('Error:', error);
-  process.exit(1);
-});

@@ -8,79 +8,118 @@
   "exports": {
     ".": {
       "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./utils": {
       "types": "./src/utils/index.ts",
-      "import": "./src/utils/index.ts"
+      "import": "./src/utils/index.ts",
+      "default": "./src/utils/index.ts"
     },
     "./domain/edit/types": {
       "types": "./src/domain/edit/types.ts",
-      "import": "./src/domain/edit/types.ts"
+      "import": "./src/domain/edit/types.ts",
+      "default": "./src/domain/edit/types.ts"
     },
     "./domain/artist/client": {
       "types": "./src/domain/artist/client.ts",
-      "import": "./src/domain/artist/client.ts"
+      "import": "./src/domain/artist/client.ts",
+      "default": "./src/domain/artist/client.ts"
     },
     "./domain/raga/client": {
       "types": "./src/domain/raga/client.ts",
-      "import": "./src/domain/raga/client.ts"
+      "import": "./src/domain/raga/client.ts",
+      "default": "./src/domain/raga/client.ts"
     },
     "./domain/tala/client": {
       "types": "./src/domain/tala/client.ts",
-      "import": "./src/domain/tala/client.ts"
+      "import": "./src/domain/tala/client.ts",
+      "default": "./src/domain/tala/client.ts"
     },
     "./domain/composition/client": {
       "types": "./src/domain/composition/client.ts",
-      "import": "./src/domain/composition/client.ts"
+      "import": "./src/domain/composition/client.ts",
+      "default": "./src/domain/composition/client.ts"
     },
     "./domain/edit/client": {
       "types": "./src/domain/edit/client.ts",
-      "import": "./src/domain/edit/client.ts"
+      "import": "./src/domain/edit/client.ts",
+      "default": "./src/domain/edit/client.ts"
     },
     "./domain/change-history/client": {
       "types": "./src/domain/change-history/client.ts",
-      "import": "./src/domain/change-history/client.ts"
+      "import": "./src/domain/change-history/client.ts",
+      "default": "./src/domain/change-history/client.ts"
     },
     "./domain/user/client": {
       "types": "./src/domain/user/client.ts",
-      "import": "./src/domain/user/client.ts"
+      "import": "./src/domain/user/client.ts",
+      "default": "./src/domain/user/client.ts"
     },
     "./domain/content/client": {
       "types": "./src/domain/content/client.ts",
-      "import": "./src/domain/content/client.ts"
+      "import": "./src/domain/content/client.ts",
+      "default": "./src/domain/content/client.ts"
     },
     "./domain/search/client": {
       "types": "./src/domain/search/client.ts",
-      "import": "./src/domain/search/client.ts"
+      "import": "./src/domain/search/client.ts",
+      "default": "./src/domain/search/client.ts"
+    },
+    "./domain/event/client": {
+      "types": "./src/domain/event/client.ts",
+      "import": "./src/domain/event/client.ts",
+      "default": "./src/domain/event/client.ts"
+    },
+    "./domain/festival/client": {
+      "types": "./src/domain/festival/client.ts",
+      "import": "./src/domain/festival/client.ts",
+      "default": "./src/domain/festival/client.ts"
+    },
+    "./domain/venue/client": {
+      "types": "./src/domain/venue/client.ts",
+      "import": "./src/domain/venue/client.ts",
+      "default": "./src/domain/venue/client.ts"
+    },
+    "./domain/organiser/client": {
+      "types": "./src/domain/organiser/client.ts",
+      "import": "./src/domain/organiser/client.ts",
+      "default": "./src/domain/organiser/client.ts"
     },
     "./domain/*": {
       "types": "./src/domain/*/index.ts",
-      "import": "./src/domain/*/index.ts"
+      "import": "./src/domain/*/index.ts",
+      "default": "./src/domain/*/index.ts"
     },
     "./shared/*": {
       "types": "./src/shared/*/index.ts",
-      "import": "./src/shared/*/index.ts"
+      "import": "./src/shared/*/index.ts",
+      "default": "./src/shared/*/index.ts"
     },
     "./db": {
       "types": "./src/db/index.ts",
-      "import": "./src/db/index.ts"
+      "import": "./src/db/index.ts",
+      "default": "./src/db/index.ts"
     },
     "./constants": {
       "types": "./src/constants.ts",
-      "import": "./src/constants.ts"
+      "import": "./src/constants.ts",
+      "default": "./src/constants.ts"
     },
     "./types": {
       "types": "./src/types.ts",
-      "import": "./src/types.ts"
+      "import": "./src/types.ts",
+      "default": "./src/types.ts"
     },
     "./types/entities": {
       "types": "./src/types/entities.ts",
-      "import": "./src/types/entities.ts"
+      "import": "./src/types/entities.ts",
+      "default": "./src/types/entities.ts"
     },
     "./auth": {
       "types": "./src/auth/roles.ts",
-      "import": "./src/auth/roles.ts"
+      "import": "./src/auth/roles.ts",
+      "default": "./src/auth/roles.ts"
     }
   },
   "scripts": {
@@ -93,15 +132,18 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.987.0",
-    "@aws-sdk/client-s3": "^3.987.0",
-    "@aws-sdk/lib-dynamodb": "^3.987.0",
-    "@aws-sdk/util-dynamodb": "^3.987.0",
+    "@aws-sdk/client-dynamodb": "^3.991.0",
+    "@aws-sdk/client-s3": "^3.991.0",
+    "@aws-sdk/lib-dynamodb": "^3.991.0",
+    "@aws-sdk/s3-request-presigner": "^3.991.0",
+    "@aws-sdk/util-dynamodb": "^3.991.0",
+    "@google/genai": "^1.41.0",
     "@openauthjs/openauth": "^0.4.3",
     "electrodb": "^2.15.1",
     "fuse.js": "^7.1.0",
     "ksuid": "^3.0.0",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.25.1"
   },
   "devDependencies": {
     "@types/node": "^20.19.33",

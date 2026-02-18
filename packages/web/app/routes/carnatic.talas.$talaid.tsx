@@ -10,7 +10,7 @@ import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
+import { generateSlug, generateTalaUrl, parseSlug } from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
 
 export async function loader({
@@ -94,7 +94,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'article' },
       {
         property: 'og:url',
-        content: `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+        content: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
       },
       // Twitter Card tags
       { name: 'twitter:card', content: 'summary' },
@@ -104,7 +104,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+        href: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
       },
       // Breadcrumb structured data
       {
@@ -131,7 +131,7 @@ export const meta: MetaFunction = ({ data }) => {
               '@type': 'ListItem',
               position: 4,
               name: `${tala.name} Tala`,
-              item: `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+              item: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
             },
           ],
         }),
@@ -165,7 +165,7 @@ export default function TalaDetails() {
     return <Outlet />;
   }
 
-  const shareUrl = `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`;
+  const shareUrl = `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -173,7 +173,7 @@ export default function TalaDetails() {
     { label: 'Talas', path: '/carnatic/talas' },
     {
       label: tala.name,
-      path: `/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+      path: generateTalaUrl(tala.name, tala.id),
     },
   ];
 
@@ -203,7 +203,7 @@ export default function TalaDetails() {
       <EntityCompositions
         compositions={compositions}
         entityType="tala"
-        entitySlug={`${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`}
+        entitySlug={`${generateSlug(tala.name)}-${tala.id}`}
         showViewMore={hasMoreCompositions}
       />
       {/* Cross-linking section */}
@@ -244,7 +244,7 @@ export default function TalaDetails() {
           { name: 'Talas', item: 'https://rasika.life/carnatic/talas' },
           {
             name: `${tala.name} Tala`,
-            item: `https://rasika.life/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`,
+            item: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
           },
         ]}
       />

@@ -152,11 +152,18 @@ export default function CarnaticIndex() {
             <p className="text-xs text-red-700 mt-1">Classical Languages</p>
           </Link>
           <Link
-            to="/carnatic/artists"
+            to="/artists"
             className="p-4 bg-orange-50 rounded-lg text-center hover:bg-orange-100 transition-colors"
           >
             <h3 className="font-semibold text-orange-900">Artists</h3>
             <p className="text-xs text-orange-700 mt-1">Master Musicians</p>
+          </Link>
+          <Link
+            to="/carnatic/events"
+            className="p-4 bg-amber-50 rounded-lg text-center hover:bg-amber-100 transition-colors"
+          >
+            <h3 className="font-semibold text-amber-900">Events</h3>
+            <p className="text-xs text-amber-700 mt-1">Concerts & Festivals</p>
           </Link>
         </div>
       </section>
@@ -190,10 +197,7 @@ export default function CarnaticIndex() {
       <section className="mb-12">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Popular Artists</h2>
-          <Link
-            to="/carnatic/artists"
-            className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-          >
+          <Link to="/artists" className="text-blue-600 hover:text-blue-800 font-medium text-sm">
             View All →
           </Link>
         </div>

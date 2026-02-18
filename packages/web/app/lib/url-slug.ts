@@ -65,7 +65,7 @@ export function generateCompositionUrl(title: string, id: string): string {
  * @returns Full URL path with proper encoding
  */
 export function generateArtistUrl(name: string, id: string): string {
-  return `/carnatic/artists/${generateSlug(name)}-${id}`;
+  return `/artists/${generateSlug(name)}-${id}`;
 }
 
 /**
@@ -95,4 +95,20 @@ export function generateTalaUrl(name: string, id: string): string {
  */
 export function generateLanguageUrl(name: string): string {
   return `/carnatic/languages/${generateSlug(name)}`;
+}
+
+export function generateEventUrl(title: string, id: string): string {
+  return `/events/${generateSlug(title)}-${id}`;
+}
+
+export function generateFestivalUrl(name: string, id: string): string {
+  return `/festivals/${generateSlug(name)}-${id}`;
+}
+
+export function generateVenueUrl(name: string, id: string): string {
+  return `/venues/${generateSlug(name)}-${id}`;
+}
+
+export function generateOrganiserUrl(name: string, id: string): string {
+  return `/organisers/${generateSlug(name)}-${id}`;
 }

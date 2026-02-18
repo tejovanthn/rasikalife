@@ -9,7 +9,7 @@ import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
+import { generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
 
 export async function loader({
@@ -93,7 +93,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'article' },
       {
         property: 'og:url',
-        content: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+        content: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
       },
       // Twitter Card tags
       { name: 'twitter:card', content: 'summary' },
@@ -103,7 +103,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+        href: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
       },
     ];
   }
@@ -134,7 +134,7 @@ export default function RagaDetails() {
     return <Outlet />;
   }
 
-  const shareUrl = `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`;
+  const shareUrl = `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -142,7 +142,7 @@ export default function RagaDetails() {
     { label: 'Ragas', path: '/carnatic/ragas' },
     {
       label: raga.name,
-      path: `/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+      path: generateRagaUrl(raga.name, raga.id),
     },
   ];
 
@@ -172,7 +172,7 @@ export default function RagaDetails() {
       <EntityCompositions
         compositions={compositions}
         entityType="raga"
-        entitySlug={`${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`}
+        entitySlug={`${generateSlug(raga.name)}-${raga.id}`}
         showViewMore={hasMoreCompositions}
         customHeading={`Compositions in ${raga.name} raga`}
       />
@@ -214,7 +214,7 @@ export default function RagaDetails() {
           { name: 'Ragas', item: 'https://rasika.life/carnatic/ragas' },
           {
             name: `${raga.name} Raga`,
-            item: `https://rasika.life/carnatic/ragas/${raga.name.toLowerCase().replace(/\s+/g, '-')}-${raga.id}`,
+            item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
           },
         ]}
       />

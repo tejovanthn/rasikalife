@@ -9,8 +9,9 @@ const googleClientSecret = new sst.Secret('GoogleClientSecret');
 export const auth = new sst.aws.Auth('RasikaAuth', {
   domain: getDomain('auth'),
   issuer: {
-    handler: 'packages/auth/src/issuer.handler',
+    handler: './packages/auth/src/issuer.handler',
     link: [database, googleClientId, googleClientSecret, bucket],
+    dev: false,
     environment: {
       DYNAMODB_TABLE: database.name,
       AWS_REGION: undefined,

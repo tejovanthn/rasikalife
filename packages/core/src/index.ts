@@ -9,6 +9,11 @@ export * as Content from './domain/content';
 export * as Search from './domain/search';
 export * as User from './domain/user';
 export * as ChangeHistory from './domain/change-history';
+export * as Event from './domain/event';
+export * as EventArtist from './domain/event-artist';
+export * as Festival from './domain/festival';
+export * as Venue from './domain/venue';
+export * as Organiser from './domain/organiser';
 
 // Edit types (browser-safe exports)
 export { EditStatus, EditEntityTypes, type EditEntityType, type Edit } from './domain/edit/types';

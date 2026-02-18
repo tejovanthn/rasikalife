@@ -2,16 +2,20 @@
 
 import type { SearchableField } from './schema';
 
-export type EntityType = 'artist' | 'raga' | 'tala' | 'composition';
+export type EntityType =
+  | 'artist'
+  | 'raga'
+  | 'tala'
+  | 'composition'
+  | 'venue'
+  | 'organiser'
+  | 'event';
 
 export interface SearchDocument {
   id: string;
   entityType: EntityType;
-  artistName: string;
-  ragaName: string;
-  talaName: string;
-  compositionTitle: string;
-  lyrics: string;
+  name: string;
+  description: string;
   displayName: string;
   indexedAt: string;
 }

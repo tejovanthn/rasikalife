@@ -1,4 +1,5 @@
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
+import { Calendar, MapPin } from 'lucide-react';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
@@ -7,11 +8,22 @@ import { ArtistCard } from '~/components/ArtistCard';
 import { CompositionCard } from '~/components/CompositionCard';
 import { SectionHeader } from '~/components/shared';
 import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
+import { Card, CardContent } from '~/components/ui/card';
+import { generateEventUrl } from '~/lib/url-slug';
+
+interface UpcomingEvent {
+  id: string;
+  title: string;
+  startDateTime: string;
+  venueName?: string;
+  artists?: Array<{ title?: string; name: string }>;
+}
 
 type LoaderData = {
   popularCompositions: CompositionWithRelations[];
   recentCompositions: CompositionWithRelations[];
   featuredArtists: ArtistType[];
+  upcomingEvents: UpcomingEvent[];
 };
 
 export const meta: MetaFunction = () => {
@@ -41,16 +53,19 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async () => {
   try {
-    const [popularCompositions, recentCompositions, featuredArtists] = await Promise.all([
-      client.composition.list.query({ limit: 6 }),
-      client.composition.list.query({ limit: 4 }),
-      client.artist.list.query({ limit: 8 }),
-    ]);
+    const [popularCompositions, recentCompositions, featuredArtists, upcomingEvents] =
+      await Promise.all([
+        client.composition.list.query({ limit: 6 }),
+        client.composition.list.query({ limit: 4 }),
+        client.artist.list.query({ limit: 8 }),
+        client.event.listUpcoming.query({ limit: 4 }),
+      ]);
 
     return data<LoaderData>({
       popularCompositions: popularCompositions.items,
       recentCompositions: recentCompositions.items,
       featuredArtists: featuredArtists.items,
+      upcomingEvents: upcomingEvents.items,
     });
   } catch (error) {
     console.error('Error loading homepage data:', error);
@@ -59,12 +74,14 @@ export const loader: LoaderFunction = async () => {
       popularCompositions: [],
       recentCompositions: [],
       featuredArtists: [],
+      upcomingEvents: [],
     });
   }
 };
 
 export default function HomePage() {
-  const { popularCompositions, recentCompositions, featuredArtists } = useLoaderData<LoaderData>();
+  const { popularCompositions, recentCompositions, featuredArtists, upcomingEvents } =
+    useLoaderData<LoaderData>();
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -83,7 +100,7 @@ export default function HomePage() {
             Browse Compositions
           </Link>
           <Link
-            to="/carnatic/artists"
+            to="/artists"
             className="inline-block px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors"
           >
             Explore Artists
@@ -110,7 +127,7 @@ export default function HomePage() {
 
       {/* Featured Artists */}
       <section className="mb-12">
-        <SectionHeader title="Featured Artists" viewAllPath="/carnatic/artists" />
+        <SectionHeader title="Featured Artists" viewAllPath="/artists" />
 
         {featuredArtists.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -142,6 +159,51 @@ export default function HomePage() {
         )}
       </section>
 
+      {/* Upcoming Events */}
+      {upcomingEvents.length > 0 && (
+        <section className="mb-12">
+          <SectionHeader title="Upcoming Events" viewAllPath="/events" />
+          <div className="grid gap-4 md:grid-cols-2">
+            {upcomingEvents.map(event => (
+              <Link
+                key={event.id}
+                to={generateEventUrl(event.title, event.id)}
+                className="block no-underline"
+              >
+                <Card className="h-full hover:border-primary/50 transition-colors">
+                  <CardContent className="py-4">
+                    <h3 className="font-semibold text-foreground truncate">{event.title}</h3>
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {new Date(event.startDateTime).toLocaleDateString('en-IN', {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                      {event.venueName && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {event.venueName}
+                        </span>
+                      )}
+                    </div>
+                    {event.artists && event.artists.length > 0 && (
+                      <p className="text-sm text-muted-foreground mt-1 truncate">
+                        {event.artists
+                          .map(a => `${a.title ? `${a.title} ` : ''}${a.name}`)
+                          .join(', ')}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Quick Links */}
       <section className="bg-muted rounded-lg p-8">
         <h2 className="section-heading text-center">Explore by Category</h2>
@@ -168,11 +230,25 @@ export default function HomePage() {
             <p className="text-sm text-muted-foreground mt-1">Learn about rhythmic cycles</p>
           </Link>
           <Link
-            to="/carnatic/artists"
+            to="/artists"
             className="p-4 bg-card rounded-lg text-center hover:shadow-md transition-shadow border border-border"
           >
             <h3 className="font-semibold text-lg text-card-foreground">Artists</h3>
             <p className="text-sm text-muted-foreground mt-1">Meet classical masters</p>
+          </Link>
+          <Link
+            to="/events"
+            className="p-4 bg-card rounded-lg text-center hover:shadow-md transition-shadow border border-border"
+          >
+            <h3 className="font-semibold text-lg text-card-foreground">Events</h3>
+            <p className="text-sm text-muted-foreground mt-1">Find upcoming performances</p>
+          </Link>
+          <Link
+            to="/festivals"
+            className="p-4 bg-card rounded-lg text-center hover:shadow-md transition-shadow border border-border"
+          >
+            <h3 className="font-semibold text-lg text-card-foreground">Festivals</h3>
+            <p className="text-sm text-muted-foreground mt-1">Browse festival schedules</p>
           </Link>
         </div>
       </section>

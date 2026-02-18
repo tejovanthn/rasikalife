@@ -185,7 +185,7 @@ function entityPath(entityType: string, entityId: string) {
     case 'composition':
       return `/carnatic/compositions/${entityId}`;
     case 'artist':
-      return `/carnatic/artists/${entityId}`;
+      return `/artists/${entityId}`;
     case 'raga':
       return `/carnatic/ragas/${entityId}`;
     case 'tala':

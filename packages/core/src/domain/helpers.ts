@@ -1,6 +1,15 @@
 import { ApplicationError, type ErrorCode } from '../constants';
 
-export type EntityType = 'artist' | 'raga' | 'tala' | 'composition' | 'edit';
+export type EntityType =
+  | 'artist'
+  | 'raga'
+  | 'tala'
+  | 'composition'
+  | 'edit'
+  | 'venue'
+  | 'organiser'
+  | 'festival'
+  | 'event';
 
 export function notFoundError(entity: EntityType, id: string): ApplicationError {
   const code = `${entity.toUpperCase()}_NOT_FOUND` as ErrorCode;

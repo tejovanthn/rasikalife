@@ -33,7 +33,7 @@ export const slugify = ({
     return `/carnatic/compositions/${slug}`;
   }
   if (type === 'artists') {
-    return `/carnatic/artists/${slug}`;
+    return `/artists/${slug}`;
   }
   if (type === 'ragas') {
     return `/carnatic/ragas/${slug}`;

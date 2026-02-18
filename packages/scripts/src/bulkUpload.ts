@@ -1,18 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Resource } from 'sst';
-
-// Parse command line arguments
-// Usage: sst shell tsx src/bulkUpload.ts [--drop|-d] [limit]
-// --drop or -d: Drop all existing data before uploading
-// limit: Number of compositions to process (default: 1000 in non-prod, unlimited in prod)
-const args = process.argv.slice(2);
-const shouldDropData =
-  args.includes('--drop') || args.includes('-d') || process.env.DROP_DATA === 'true';
-const limitArg = args.find(arg => !arg.startsWith('-') && /^\d+$/.test(arg));
-const isProd = process.env.SST_STAGE === 'prod';
-const defaultLimit = undefined; //isProd ? undefined : 1000;
-const limit = limitArg ? Number.parseInt(limitArg, 10) : defaultLimit;
 
 interface NormalizedComposition {
   title: string | null;
@@ -38,6 +25,7 @@ interface NormalizedComposition {
 }
 
 async function dropAllData() {
+  const { Resource } = await import('sst');
   const { DynamoDBClient } = await import('@aws-sdk/client-dynamodb');
   const client = new DynamoDBClient({
     region: process.env.AWS_REGION || 'us-east-1',
@@ -96,10 +84,13 @@ async function dropAllData() {
   console.log('✅ All data dropped successfully');
 }
 
-async function main() {
-  process.env.DYNAMODB_TABLE = Resource.RasikaTable.name;
+export async function bulkUpload(opts: { drop?: boolean; limit?: number } = {}) {
+  const { drop: shouldDropData = false, limit } = opts;
 
-  const { Artist, Composition, Raga, Tala } = await import('@rasika/core');
+  const Artist = await import('@rasika/core/domain/artist');
+  const Composition = await import('@rasika/core/domain/composition');
+  const Raga = await import('@rasika/core/domain/raga');
+  const Tala = await import('@rasika/core/domain/tala');
 
   if (shouldDropData) {
     await dropAllData();
@@ -266,5 +257,3 @@ async function main() {
   console.log(`🎼 Ragas created/found: ${ragaCache.size}`);
   console.log(`🥁 Talas created/found: ${talaCache.size}`);
 }
-
-main().catch(console.error);

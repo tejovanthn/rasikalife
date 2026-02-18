@@ -1,4 +1,5 @@
-import { Auth, User } from '@rasika/core';
+import * as Auth from '@rasika/core/auth';
+import * as User from '@rasika/core/domain/user';
 import { describe, expect, it } from 'vitest';
 
 describe('seed-admin', () => {

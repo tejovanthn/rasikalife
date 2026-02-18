@@ -13,6 +13,7 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { generateTalaUrl } from '~/lib/url-slug';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { talaid } = params;
@@ -82,7 +83,7 @@ export default function TalaCompositions() {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-8">
         <Link
-          to={`/carnatic/talas/${tala.name.toLowerCase().replace(/\s+/g, '-')}-${tala.id}`}
+          to={generateTalaUrl(tala.name, tala.id)}
           className="text-primary hover:underline mb-2 inline-block"
         >
           ← Back to {tala.name}

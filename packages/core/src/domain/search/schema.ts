@@ -2,13 +2,7 @@
 
 import { z } from 'zod';
 
-export const SearchableFieldSchema = z.enum([
-  'artistName',
-  'ragaName',
-  'talaName',
-  'compositionTitle',
-  'lyrics',
-]);
+export const SearchableFieldSchema = z.enum(['name', 'description']);
 
 export type SearchableField = z.infer<typeof SearchableFieldSchema>;
 

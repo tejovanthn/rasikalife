@@ -1,5 +1,5 @@
 interface StructuredDataProps {
-  type: 'organization' | 'website' | 'breadcrumb' | 'person' | 'music';
+  type: 'organization' | 'website' | 'breadcrumb' | 'person' | 'music' | 'event' | 'festival';
   data: Record<string, unknown>;
 }
 
@@ -17,7 +17,11 @@ export function StructuredData({ type, data }: StructuredDataProps) {
               ? 'Person'
               : type === 'music'
                 ? 'MusicComposition'
-                : 'Thing',
+                : type === 'event'
+                  ? 'MusicEvent'
+                  : type === 'festival'
+                    ? 'Festival'
+                    : 'Thing',
     ...data,
   };
 
@@ -145,6 +149,90 @@ export function MusicCompositionStructuredData({
           'Carnatic Music',
           composition.composer.name,
         ].filter(Boolean),
+      }}
+    />
+  );
+}
+
+export function EventStructuredData({
+  event,
+}: {
+  event: {
+    title: string;
+    description?: string;
+    startDateTime: string;
+    endDateTime?: string;
+    venueName?: string;
+    organiserName?: string;
+    posterUrl?: string;
+    entryType?: string;
+    artists?: Array<{ name: string }>;
+    url: string;
+  };
+}) {
+  return (
+    <StructuredData
+      type="event"
+      data={{
+        name: event.title,
+        description: event.description || `${event.title} - Indian classical arts event`,
+        startDate: event.startDateTime,
+        endDate: event.endDateTime,
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        eventStatus: 'https://schema.org/EventScheduled',
+        image: event.posterUrl,
+        url: event.url,
+        location: event.venueName
+          ? {
+              '@type': 'Place',
+              name: event.venueName,
+            }
+          : undefined,
+        organizer: event.organiserName
+          ? {
+              '@type': 'Organization',
+              name: event.organiserName,
+            }
+          : undefined,
+        performer: event.artists?.map(a => ({
+          '@type': 'Person',
+          name: a.name,
+        })),
+        isAccessibleForFree: event.entryType === 'free',
+      }}
+    />
+  );
+}
+
+export function FestivalStructuredData({
+  festival,
+}: {
+  festival: {
+    name: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    organiserName?: string;
+    posterUrl?: string;
+    url: string;
+  };
+}) {
+  return (
+    <StructuredData
+      type="festival"
+      data={{
+        name: festival.name,
+        description: festival.description || `${festival.name} - Indian classical arts festival`,
+        startDate: festival.startDate,
+        endDate: festival.endDate,
+        image: festival.posterUrl,
+        url: festival.url,
+        organizer: festival.organiserName
+          ? {
+              '@type': 'Organization',
+              name: festival.organiserName,
+            }
+          : undefined,
       }}
     />
   );

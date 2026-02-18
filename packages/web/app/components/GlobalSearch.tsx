@@ -6,8 +6,11 @@ import { useHydrated } from '~/lib/progressive-enhancement';
 import {
   generateArtistUrl,
   generateCompositionUrl,
+  generateEventUrl,
+  generateOrganiserUrl,
   generateRagaUrl,
   generateTalaUrl,
+  generateVenueUrl,
 } from '~/lib/url-slug';
 import type { SearchEntityType, SearchResultItem } from '~/types/search';
 
@@ -16,6 +19,9 @@ interface SearchResults {
   artists: SearchResultItem[];
   ragas: SearchResultItem[];
   talas: SearchResultItem[];
+  venues: SearchResultItem[];
+  organisers: SearchResultItem[];
+  events: SearchResultItem[];
 }
 
 type FilterType = SearchEntityType | 'all';
@@ -91,11 +97,13 @@ function getEntityUrl(item: SearchResultItem): string {
       return generateRagaUrl(item.name, item.id);
     case 'tala':
       return generateTalaUrl(item.name, item.id);
+    case 'venue':
+      return generateVenueUrl(item.name, item.id);
+    case 'organiser':
+      return generateOrganiserUrl(item.name, item.id);
+    case 'event':
+      return generateEventUrl(item.name, item.id);
   }
-}
-
-function getHighlightText(item: SearchResultItem, field: string): string | undefined {
-  return item.highlights.find(h => h.field === field)?.text;
 }
 
 const RESULT_SECTIONS = [
@@ -105,10 +113,24 @@ const RESULT_SECTIONS = [
     filterType: 'composition',
     path: '/carnatic/compositions',
   },
-  { key: 'artists', label: 'Artists', filterType: 'artist', path: '/carnatic/artists' },
+  { key: 'artists', label: 'Artists', filterType: 'artist', path: '/artists' },
   { key: 'ragas', label: 'Ragas', filterType: 'raga', path: '/carnatic/ragas' },
   { key: 'talas', label: 'Talas', filterType: 'tala', path: '/carnatic/talas' },
+  { key: 'venues', label: 'Venues', filterType: 'venue', path: '/venues' },
+  { key: 'organisers', label: 'Organisers', filterType: 'organiser', path: '/organisers' },
+  { key: 'events', label: 'Events', filterType: 'event', path: '/events' },
 ] as const;
+
+const FILTER_TABS: FilterType[] = [
+  'all',
+  'composition',
+  'artist',
+  'raga',
+  'tala',
+  'venue',
+  'organiser',
+  'event',
+];
 
 function ResultItem({
   result,
@@ -122,8 +144,6 @@ function ResultItem({
   onResultClick: () => void;
 }) {
   const url = getEntityUrl(result);
-  const ragaHighlight = getHighlightText(result, 'ragaName');
-  const talaHighlight = getHighlightText(result, 'talaName');
 
   return (
     <Link
@@ -138,16 +158,13 @@ function ResultItem({
         <div>
           <div className="font-medium text-foreground">{result.name}</div>
           <div className="text-sm text-muted-foreground">
-            {result.type === 'composition' && (
-              <span>
-                {ragaHighlight && `Raga: ${ragaHighlight}`}
-                {ragaHighlight && talaHighlight && ' • '}
-                {talaHighlight && `Tala: ${talaHighlight}`}
-              </span>
-            )}
+            {result.type === 'composition' && <span>Composition</span>}
             {result.type === 'artist' && <span>Artist</span>}
             {result.type === 'raga' && <span>Raga</span>}
             {result.type === 'tala' && <span>Tala</span>}
+            {result.type === 'venue' && <span>Venue</span>}
+            {result.type === 'organiser' && <span>Organiser</span>}
+            {result.type === 'event' && <span>Event</span>}
           </div>
         </div>
         <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-1 rounded">
@@ -182,9 +199,15 @@ export function GlobalSearch() {
 
     if (filter === 'all') {
       // Ranked list sorted by score
-      return [...results.compositions, ...results.artists, ...results.ragas, ...results.talas].sort(
-        (a, b) => (a.score ?? 1) - (b.score ?? 1)
-      );
+      return [
+        ...results.compositions,
+        ...results.artists,
+        ...results.ragas,
+        ...results.talas,
+        ...results.venues,
+        ...results.organisers,
+        ...results.events,
+      ].sort((a, b) => (a.score ?? 1) - (b.score ?? 1));
     }
 
     // Filtered by specific type
@@ -323,7 +346,7 @@ export function GlobalSearch() {
           className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors"
         >
           <SearchIcon size={16} />
-          <span>Search...</span>
+          <span className="hidden sm:inline">Search...</span>
           <span className="hidden sm:inline text-xs text-muted-foreground">⌘K</span>
         </button>
       ) : null}
@@ -349,7 +372,7 @@ export function GlobalSearch() {
                   type="text"
                   value={query}
                   onChange={e => dispatch({ type: 'SET_QUERY', query: e.target.value })}
-                  placeholder="Search compositions, artists, ragas, talas..."
+                  placeholder="Search compositions, artists, ragas, events..."
                   aria-label="Search"
                   role="combobox"
                   aria-expanded={isOpen && results !== null}
@@ -376,7 +399,7 @@ export function GlobalSearch() {
                       className="flex border-b border-border overflow-x-auto scrollbar-none"
                       role="tablist"
                     >
-                      {(['all', 'composition', 'artist', 'raga', 'tala'] as const).map(type => (
+                      {FILTER_TABS.map(type => (
                         <button
                           key={type}
                           type="button"
@@ -402,6 +425,9 @@ export function GlobalSearch() {
                             ...results.artists,
                             ...results.ragas,
                             ...results.talas,
+                            ...results.venues,
+                            ...results.organisers,
+                            ...results.events,
                           ].sort((a, b) => (a.score ?? 1) - (b.score ?? 1));
 
                           if (allResults.length === 0) return null;
@@ -476,7 +502,7 @@ export function GlobalSearch() {
                         Compositions
                       </Link>
                       <Link
-                        to="/carnatic/artists"
+                        to="/artists"
                         onClick={handleResultClick}
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
@@ -495,6 +521,13 @@ export function GlobalSearch() {
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
                         Talas
+                      </Link>
+                      <Link
+                        to="/events"
+                        onClick={handleResultClick}
+                        className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
+                      >
+                        Events
                       </Link>
                     </div>
                   </div>

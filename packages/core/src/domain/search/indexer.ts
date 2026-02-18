@@ -4,8 +4,11 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import Fuse from 'fuse.js';
 import { listArtists } from '../artist';
 import { listCompositions } from '../composition';
+import { listApprovedEvents } from '../event';
+import { listOrganisers } from '../organiser';
 import { listRagas } from '../raga';
 import { listTalas } from '../tala';
+import { listVenues } from '../venue';
 import { transformToSearchDocuments } from './transformer';
 import type { SearchDocument, SearchIndex } from './types';
 
@@ -37,23 +40,31 @@ async function fetchAllPaginated<T>(
 export async function buildSearchIndex(): Promise<SearchIndex> {
   console.log('Starting search index build');
 
-  const [artists, ragas, talas, compositions] = await Promise.all([
+  const [artists, ragas, talas, compositions, venues, organisers, events] = await Promise.all([
     fetchAllPaginated(listArtists),
     fetchAllPaginated(listRagas),
     fetchAllPaginated(listTalas),
     fetchAllPaginated(listCompositions),
+    fetchAllPaginated(listVenues),
+    fetchAllPaginated(listOrganisers),
+    fetchAllPaginated(listApprovedEvents),
   ]);
 
   console.log(
-    `Fetched entities: ${artists.length} artists, ${ragas.length} ragas, ${talas.length} talas, ${compositions.length} compositions`
+    `Fetched entities: ${artists.length} artists, ${ragas.length} ragas, ${talas.length} talas, ${compositions.length} compositions, ${venues.length} venues, ${organisers.length} organisers, ${events.length} events`
   );
 
-  const documents = transformToSearchDocuments(artists, ragas, talas, compositions);
-
-  const fuseIndex = Fuse.createIndex(
-    ['artistName', 'ragaName', 'talaName', 'compositionTitle', 'lyrics'],
-    documents
+  const documents = transformToSearchDocuments(
+    artists,
+    ragas,
+    talas,
+    compositions,
+    venues,
+    organisers,
+    events
   );
+
+  const fuseIndex = Fuse.createIndex(['name', 'description'], documents);
 
   const searchIndex: SearchIndex = {
     version: 1,

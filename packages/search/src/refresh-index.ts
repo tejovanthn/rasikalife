@@ -1,6 +1,6 @@
 // packages/search/src/refresh-index.ts
 
-import { Search } from '@rasika/core';
+import * as Search from '@rasika/core/domain/search';
 
 export async function handler(): Promise<void> {
   console.log('Starting scheduled index refresh');

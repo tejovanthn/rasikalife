@@ -7,7 +7,9 @@
     "build": "react-router build",
     "dev": "sst dev react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "test:e2e": "playwright test tests/e2e",
+    "test:e2e:ui": "playwright test --ui tests/e2e"
   },
   "dependencies": {
     "@openauthjs/openauth": "^0.4.3",
@@ -49,6 +51,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@react-router/dev": "^7.13.0",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
