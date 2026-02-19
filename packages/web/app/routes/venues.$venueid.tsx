@@ -1,4 +1,4 @@
-import { ExternalLink, MapPin, Pencil } from 'lucide-react';
+import { ExternalLink, MapPin, Pencil, Trash2 } from 'lucide-react';
 import { data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -53,7 +53,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       throw new Response('Venue not found', { status: 404 });
     }
 
-    return data({ venue, events: eventsResult.items, user });
+    return data({
+      venue,
+      events: eventsResult.items,
+      user,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
+    });
   } catch (error) {
     console.error('Failed to load venue:', error);
     if (error instanceof ApplicationError) {
@@ -94,10 +99,11 @@ function formatAddress(address: VenueDetail['address']): string | null {
 }
 
 export default function VenueDetailPage() {
-  const { venue, events, user } = useLoaderData<{
+  const { venue, events, user, isModerator } = useLoaderData<{
     venue: VenueDetail;
     events: EventItem[];
     user: { id: string } | null;
+    isModerator: boolean;
   }>();
 
   const addressStr = formatAddress(venue.address);
@@ -114,15 +120,26 @@ export default function VenueDetailPage() {
       <div className="mt-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-bold">{venue.name}</h1>
-          {user && (
-            <a
-              href={`${generateVenueUrl(venue.name, venue.id)}/edit`}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Pencil className="h-4 w-4" />
-              Edit
-            </a>
-          )}
+          <div className="flex items-center gap-2">
+            {user && (
+              <a
+                href={`${generateVenueUrl(venue.name, venue.id)}/edit`}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </a>
+            )}
+            {isModerator && (
+              <a
+                href={`/moderator/request-deletion?entityType=venue&entityId=${venue.id}`}
+                className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </a>
+            )}
+          </div>
         </div>
 
         {addressStr && (

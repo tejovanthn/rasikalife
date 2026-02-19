@@ -1,6 +1,7 @@
 import { Slot } from '@radix-ui/react-slot';
 import { type VariantProps, cva } from 'class-variance-authority';
 import * as React from 'react';
+import { useNavigation } from 'react-router';
 import { cn } from '~/lib/utils';
 
 const buttonVariants = cva(
@@ -36,10 +37,19 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, disabled, type, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
+    const navigation = useNavigation();
+    const isNavigating = navigation.state !== 'idle' && type !== 'button' && type !== 'reset';
+
     return (
-      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        type={type}
+        disabled={disabled || isNavigating}
+        {...props}
+      />
     );
   }
 );

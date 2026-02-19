@@ -31,6 +31,10 @@ export async function getArtist(id: string): Promise<Artist | null> {
     return null;
   }
 
+  if (result.data.deletedAt) {
+    return null;
+  }
+
   return result.data as Artist;
 }
 
@@ -57,6 +61,10 @@ export async function deleteArtist(id: string): Promise<void> {
   await ArtistEntity.delete({ id }).go();
 }
 
+export async function softDeleteArtist(id: string): Promise<void> {
+  await ArtistEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function listArtists(params?: { limit?: number; nextToken?: string }): Promise<{
   items: Artist[];
   nextToken?: string;
@@ -64,10 +72,13 @@ export async function listArtists(params?: { limit?: number; nextToken?: string 
 }> {
   const limit = params?.limit || 20;
 
-  const result = await ArtistEntity.query.list({}).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await ArtistEntity.query
+    .list({})
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   return {
     items: result.data || [],

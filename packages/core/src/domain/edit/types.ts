@@ -13,6 +13,13 @@ export const EditStatus = {
 
 export type EditStatus = (typeof EditStatus)[keyof typeof EditStatus];
 
+export const EditOperation = {
+  UPDATE: 'update',
+  DELETE: 'delete',
+} as const;
+
+export type EditOperation = (typeof EditOperation)[keyof typeof EditOperation];
+
 export const EditEntityTypes = {
   COMPOSITION: 'composition',
   ARTIST: 'artist',
@@ -35,6 +42,7 @@ export interface Edit {
   entityId: string;
   userId: string;
   status: EditStatus;
+  operation?: EditOperation;
   proposedValues: Record<string, unknown>;
   userNote?: string;
   moderatorId?: string;
@@ -47,7 +55,7 @@ export interface Edit {
 
 export type EditInput = Pick<
   Edit,
-  'entityType' | 'entityId' | 'userId' | 'proposedValues' | 'userNote'
+  'entityType' | 'entityId' | 'userId' | 'proposedValues' | 'userNote' | 'operation'
 >;
 
 export type EditFilters = {

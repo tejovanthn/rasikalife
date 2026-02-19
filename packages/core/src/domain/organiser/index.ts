@@ -30,6 +30,10 @@ export async function getOrganiser(id: string): Promise<Organiser | null> {
     return null;
   }
 
+  if (result.data.deletedAt) {
+    return null;
+  }
+
   return result.data as Organiser;
 }
 
@@ -58,6 +62,10 @@ export async function deleteOrganiser(id: string): Promise<void> {
   await OrganiserEntity.delete({ id }).go();
 }
 
+export async function softDeleteOrganiser(id: string): Promise<void> {
+  await OrganiserEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function listOrganisers(params?: {
   limit?: number;
   nextToken?: string;
@@ -68,10 +76,13 @@ export async function listOrganisers(params?: {
 }> {
   const limit = params?.limit || 20;
 
-  const result = await OrganiserEntity.query.list({}).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await OrganiserEntity.query
+    .list({})
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   return {
     items: result.data || [],

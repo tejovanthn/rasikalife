@@ -16,7 +16,14 @@ export * as Venue from './domain/venue';
 export * as Organiser from './domain/organiser';
 
 // Edit types (browser-safe exports)
-export { EditStatus, EditEntityTypes, type EditEntityType, type Edit } from './domain/edit/types';
+export {
+  EditStatus,
+  EditEntityTypes,
+  EditOperation,
+  type EditEntityType,
+  type Edit,
+  type EditOperation as EditOperationType,
+} from './domain/edit/types';
 
 // Edit service functions (server-side only)
 export {
@@ -31,6 +38,7 @@ export {
   getEntityEdits,
   updateDraft,
   getActiveEditForEntity,
+  requestDeletion,
 } from './domain/edit/service';
 
 // Auth exports

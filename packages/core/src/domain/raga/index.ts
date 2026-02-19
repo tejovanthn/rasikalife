@@ -29,6 +29,9 @@ export async function getRaga(id: string): Promise<Raga | null> {
   if (!result.data) {
     return null;
   }
+  if (result.data.deletedAt) {
+    return null;
+  }
   return result.data as Raga;
 }
 
@@ -55,6 +58,10 @@ export async function deleteRaga(id: string): Promise<void> {
   await RagaEntity.delete({ id }).go();
 }
 
+export async function softDeleteRaga(id: string): Promise<void> {
+  await RagaEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function listRagas(params?: { limit?: number; nextToken?: string }): Promise<{
   items: Raga[];
   nextToken?: string;
@@ -63,10 +70,13 @@ export async function listRagas(params?: { limit?: number; nextToken?: string })
   const limit = params?.limit || 20;
 
   // Query the list index for efficient sorted retrieval
-  const result = await RagaEntity.query.list({}).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await RagaEntity.query
+    .list({})
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   return {
     items: result.data || [],

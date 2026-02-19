@@ -192,6 +192,7 @@ export async function listSubmittedEvents(params?: {
   const limit = params?.limit || 20;
   const result = await EventEntity.query
     .byStatus({ status: 'submitted' })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit, cursor: params?.nextToken });
 
   return {
@@ -205,6 +206,10 @@ export async function getEvent(id: string): Promise<Event | null> {
   const result = await EventEntity.get({ id }).go();
 
   if (!result.data) {
+    return null;
+  }
+
+  if (result.data.deletedAt) {
     return null;
   }
 
@@ -267,6 +272,10 @@ export async function deleteEvent(id: string): Promise<void> {
   await EventEntity.delete({ id }).go();
 }
 
+export async function softDeleteEvent(id: string): Promise<void> {
+  await EventEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function listUpcomingEvents(params?: {
   limit?: number;
   nextToken?: string;
@@ -275,6 +284,7 @@ export async function listUpcomingEvents(params?: {
   const result = await EventEntity.query
     .byStatus({ status: 'approved' })
     .gt({ startDateTime: new Date().toISOString() })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit, cursor: params?.nextToken });
 
   return {
@@ -290,6 +300,7 @@ export async function listEventsByFestival(
 ): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
   const result = await EventEntity.query
     .byFestival({ festivalId })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit: params?.limit || 50, cursor: params?.nextToken });
 
   return {
@@ -305,6 +316,7 @@ export async function listEventsByVenue(
 ): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
   const result = await EventEntity.query
     .byVenue({ venueId })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit: params?.limit || 20, cursor: params?.nextToken });
 
   return {
@@ -320,6 +332,7 @@ export async function listEventsByOrganiser(
 ): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
   const result = await EventEntity.query
     .byOrganiser({ organiserId })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit: params?.limit || 20, cursor: params?.nextToken });
 
   return {
@@ -337,6 +350,7 @@ export async function listEventsByArtForm(
   const result = await EventEntity.query
     .byArtForm({ artForm })
     .gt({ startDateTime: new Date().toISOString() })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit, cursor: params?.nextToken });
 
   return {
@@ -461,6 +475,7 @@ export async function listApprovedEvents(params?: {
   const limit = params?.limit || 100;
   const result = await EventEntity.query
     .byStatus({ status: 'approved' })
+    .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit, cursor: params?.nextToken });
 
   return {
@@ -477,6 +492,7 @@ export async function listApprovedEventsByMonth(yearMonth: string): Promise<Even
     const result = await EventEntity.query
       .byStatus({ status: 'approved' })
       .begins({ startDateTime: yearMonth })
+      .where((attr, op) => op.notExists(attr.deletedAt))
       .go({ limit: 100, cursor });
     all.push(...((result.data || []) as Event[]));
     cursor = result.cursor || undefined;

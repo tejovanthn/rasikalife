@@ -126,6 +126,10 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
     return null;
   }
 
+  if (result.data.deletedAt) {
+    return null;
+  }
+
   const comp = result.data;
   return {
     id: comp.id,
@@ -153,10 +157,13 @@ export async function getCompositionsByComposer(
 }> {
   const limit = params?.limit || 20;
 
-  const result = await CompositionEntity.query.byComposer({ composerId }).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await CompositionEntity.query
+    .byComposer({ composerId })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
   const compositions = result.data || [];
 
   // Transform to CompositionWithRelations
@@ -205,21 +212,23 @@ export async function getCompositionsByRaga(
   const compositionIds = junctionResult.items.map(j => ({ id: j.compositionId }));
   const compositions = await CompositionEntity.get(compositionIds).go();
 
-  // Transform to CompositionWithRelations
-  const items = (compositions.data || []).map(composition => ({
-    id: composition.id,
-    title: composition.title,
-    composer: composition.composer,
-    language: composition.language,
-    lyricsV1: composition.lyricsV1 || [],
-    ragas: composition.ragas || [],
-    talas: composition.talas || [],
-    sourceAttribution: composition.sourceAttribution,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt,
-    version: composition.version,
-    lastEditedBy: composition.lastEditedBy,
-  }));
+  // Transform to CompositionWithRelations, filtering out soft-deleted
+  const items = (compositions.data || [])
+    .filter(composition => !composition.deletedAt)
+    .map(composition => ({
+      id: composition.id,
+      title: composition.title,
+      composer: composition.composer,
+      language: composition.language,
+      lyricsV1: composition.lyricsV1 || [],
+      ragas: composition.ragas || [],
+      talas: composition.talas || [],
+      sourceAttribution: composition.sourceAttribution,
+      createdAt: composition.createdAt,
+      updatedAt: composition.updatedAt,
+      version: composition.version,
+      lastEditedBy: composition.lastEditedBy,
+    }));
 
   return {
     items,
@@ -251,21 +260,23 @@ export async function getCompositionsByTala(
   const compositionIds = junctionResult.items.map(j => ({ id: j.compositionId }));
   const compositions = await CompositionEntity.get(compositionIds).go();
 
-  // Transform to CompositionWithRelations
-  const items = (compositions.data || []).map(composition => ({
-    id: composition.id,
-    title: composition.title,
-    composer: composition.composer,
-    language: composition.language,
-    lyricsV1: composition.lyricsV1 || [],
-    ragas: composition.ragas || [],
-    talas: composition.talas || [],
-    sourceAttribution: composition.sourceAttribution,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt,
-    version: composition.version,
-    lastEditedBy: composition.lastEditedBy,
-  }));
+  // Transform to CompositionWithRelations, filtering out soft-deleted
+  const items = (compositions.data || [])
+    .filter(composition => !composition.deletedAt)
+    .map(composition => ({
+      id: composition.id,
+      title: composition.title,
+      composer: composition.composer,
+      language: composition.language,
+      lyricsV1: composition.lyricsV1 || [],
+      ragas: composition.ragas || [],
+      talas: composition.talas || [],
+      sourceAttribution: composition.sourceAttribution,
+      createdAt: composition.createdAt,
+      updatedAt: composition.updatedAt,
+      version: composition.version,
+      lastEditedBy: composition.lastEditedBy,
+    }));
 
   return {
     items,
@@ -284,10 +295,13 @@ export async function getCompositionsByLanguage(
 }> {
   const limit = params?.limit || 20;
 
-  const result = await CompositionEntity.query.byLanguage({ language }).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await CompositionEntity.query
+    .byLanguage({ language })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   const compositions = result.data || [];
 
@@ -390,6 +404,10 @@ export async function updateComposition(
   return result.data as Composition;
 }
 
+export async function softDeleteComposition(id: string): Promise<void> {
+  await CompositionEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function deleteComposition(id: string): Promise<void> {
   // Delete junction table records first
   const [existingRagas, existingTalas] = await Promise.all([
@@ -408,9 +426,12 @@ export async function deleteComposition(id: string): Promise<void> {
 
 export async function getCompositionsByName(name: string): Promise<CompositionWithRelations[]> {
   // Explicitly set a high limit to ensure all matching compositions are returned
-  const result = await CompositionEntity.query.byName({ title: name }).go({
-    limit: 1000, // High limit to get all matching compositions
-  });
+  const result = await CompositionEntity.query
+    .byName({ title: name })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit: 1000, // High limit to get all matching compositions
+    });
   const compositions = result.data || [];
 
   const compositionsWithRelations = compositions.map(composition => ({
@@ -439,10 +460,13 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
   const limit = params?.limit || 20;
 
   // Query the list index for efficient sorted retrieval
-  const result = await CompositionEntity.query.list({}).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await CompositionEntity.query
+    .list({})
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   // For each composition, we need to enrich it with relations
   const enrichedCompositions = (result.data || []).map(composition => ({

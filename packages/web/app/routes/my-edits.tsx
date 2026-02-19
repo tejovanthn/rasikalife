@@ -115,6 +115,21 @@ export async function loader({ request }: { request: Request }) {
           }
         }
 
+        // For delete operations, skip diff computation
+        if (edit.operation === 'delete') {
+          let entityName = 'Unknown';
+          let entitySlug = edit.entityId;
+          if (currentEntity.title) {
+            entityName = currentEntity.title as string;
+          } else if (currentEntity.name) {
+            entityName = currentEntity.name as string;
+          }
+          if (currentEntity.slug) {
+            entitySlug = currentEntity.slug as string;
+          }
+          return { ...edit, diff: [], entityName, entitySlug } as EditWithDiff;
+        }
+
         const diff = computeEditDiff(currentEntity, enrichedProposedValues);
 
         // Extract entity name and slug for display
@@ -298,7 +313,11 @@ function EditModal({
           <div>
             <h3 className="text-sm font-medium mb-2">Proposed Changes</h3>
             <div className="space-y-2">
-              {(edit as EditWithDiff).diff && (edit as EditWithDiff).diff.length > 0 ? (
+              {edit.operation === 'delete' ? (
+                <div className="bg-red-50 dark:bg-red-950 rounded p-4 text-sm text-red-800 dark:text-red-200 text-center font-medium">
+                  This is a deletion request
+                </div>
+              ) : (edit as EditWithDiff).diff && (edit as EditWithDiff).diff.length > 0 ? (
                 (edit as EditWithDiff).diff.map(change => (
                   <div key={change.field} className="bg-muted rounded p-3">
                     <div className="font-medium text-foreground mb-1.5">{change.field}</div>

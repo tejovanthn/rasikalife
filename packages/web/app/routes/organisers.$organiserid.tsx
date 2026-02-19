@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -46,7 +46,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       throw new Response('Organiser not found', { status: 404 });
     }
 
-    return data({ organiser, events: eventsResult.items, user });
+    return data({
+      organiser,
+      events: eventsResult.items,
+      user,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
+    });
   } catch (error) {
     console.error('Failed to load organiser:', error);
     if (error instanceof ApplicationError) {
@@ -77,10 +82,11 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
 };
 
 export default function OrganiserDetailPage() {
-  const { organiser, events, user } = useLoaderData<{
+  const { organiser, events, user, isModerator } = useLoaderData<{
     organiser: OrganiserDetail;
     events: EventItem[];
     user: { id: string } | null;
+    isModerator: boolean;
   }>();
 
   return (
@@ -95,15 +101,26 @@ export default function OrganiserDetailPage() {
       <div className="mt-6">
         <div className="flex items-center justify-between gap-4">
           <h1 className="text-3xl font-bold">{organiser.name}</h1>
-          {user && (
-            <a
-              href={`${generateOrganiserUrl(organiser.name, organiser.id)}/edit`}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Pencil className="h-4 w-4" />
-              Edit
-            </a>
-          )}
+          <div className="flex items-center gap-2">
+            {user && (
+              <a
+                href={`${generateOrganiserUrl(organiser.name, organiser.id)}/edit`}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </a>
+            )}
+            {isModerator && (
+              <a
+                href={`/moderator/request-deletion?entityType=organiser&entityId=${organiser.id}`}
+                className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </a>
+            )}
+          </div>
         </div>
         <p className="text-muted-foreground mt-1">Event Organiser</p>
       </div>

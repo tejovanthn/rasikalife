@@ -240,6 +240,7 @@ describe('Event', () => {
 
       const { EventEntity } = await import('./entity');
       const mockGt = vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: mockEvents,
           cursor: 'next-token',
@@ -269,6 +270,7 @@ describe('Event', () => {
 
       const { EventEntity } = await import('./entity');
       vi.mocked(EventEntity.query.byFestival).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: mockEvents,
           cursor: null,
@@ -290,6 +292,7 @@ describe('Event', () => {
     it('should return events at a venue', async () => {
       const { EventEntity } = await import('./entity');
       vi.mocked(EventEntity.query.byVenue).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: [], cursor: null }),
       } as any);
 
@@ -304,6 +307,7 @@ describe('Event', () => {
     it('should return events by an organiser', async () => {
       const { EventEntity } = await import('./entity');
       vi.mocked(EventEntity.query.byOrganiser).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: [], cursor: null }),
       } as any);
 

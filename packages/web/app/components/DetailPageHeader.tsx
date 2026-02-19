@@ -1,6 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditStatus } from '@rasika/core/domain/edit/client';
-import { Eye, Pencil } from 'lucide-react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { ShareButtons } from '~/components/ui/share-buttons';
@@ -13,6 +13,8 @@ interface DetailPageHeaderProps {
   shareDescription: string;
   editUrl?: string;
   activeEdit?: Edit | null;
+  requestDeletionUrl?: string;
+  isModerator?: boolean;
 }
 
 export function DetailPageHeader({
@@ -23,6 +25,8 @@ export function DetailPageHeader({
   shareDescription,
   editUrl,
   activeEdit,
+  requestDeletionUrl,
+  isModerator,
 }: DetailPageHeaderProps) {
   const getEditButton = () => {
     if (!editUrl) return null;
@@ -68,6 +72,14 @@ export function DetailPageHeader({
         </div>
         <div className="flex items-center gap-3">
           {getEditButton()}
+          {isModerator && requestDeletionUrl && (
+            <Button asChild variant="destructive" size="sm">
+              <Link to={requestDeletionUrl}>
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Link>
+            </Button>
+          )}
           <ShareButtons url={shareUrl} title={shareTitle} description={shareDescription} />
         </div>
       </div>

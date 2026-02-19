@@ -166,6 +166,7 @@ describe('Organiser', () => {
 
       const { OrganiserEntity } = await import('./entity');
       vi.mocked(OrganiserEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: mockOrganisers,
           cursor: 'next-token-123',
@@ -184,6 +185,7 @@ describe('Organiser', () => {
     it('should return empty result when no organisers found', async () => {
       const { OrganiserEntity } = await import('./entity');
       vi.mocked(OrganiserEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: [],
           cursor: null,

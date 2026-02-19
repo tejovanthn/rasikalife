@@ -57,6 +57,7 @@ export async function loader({
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       activeEdit,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
     console.error('Failed to load raga:', error);
@@ -120,11 +121,12 @@ export const meta: MetaFunction = ({ data }) => {
 export default function RagaDetails() {
   const location = useLocation();
 
-  const { raga, compositions, hasMoreCompositions, activeEdit } = useLoaderData<{
+  const { raga, compositions, hasMoreCompositions, activeEdit, isModerator } = useLoaderData<{
     raga: RagaType;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
     activeEdit: Edit | null;
+    isModerator: boolean;
   }>();
 
   // Check if we're on a nested route (like /compositions)
@@ -157,6 +159,8 @@ export default function RagaDetails() {
         shareDescription={`Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`}
         editUrl={`${generateRagaUrl(raga.name, raga.id)}/edit`}
         activeEdit={activeEdit}
+        isModerator={isModerator}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=raga&entityId=${raga.id}`}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

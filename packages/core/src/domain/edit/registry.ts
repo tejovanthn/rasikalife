@@ -10,10 +10,12 @@ import type { EditEntityType } from './types';
 
 export type GetEntityFunction<T = unknown> = (id: string) => Promise<T | null>;
 export type UpdateEntityFunction<T = unknown> = (id: string, input: unknown) => Promise<T>;
+export type DeleteEntityFunction = (id: string) => Promise<void>;
 
 export interface EditHandler {
   getEntity: GetEntityFunction;
   updateEntity: UpdateEntityFunction;
+  deleteEntity: DeleteEntityFunction;
   updateSchema: z.ZodType;
 }
 
@@ -22,6 +24,7 @@ async function getCompositionHandler() {
   return {
     getEntity: mod.getComposition as GetEntityFunction<CompositionWithRelations>,
     updateEntity: mod.updateComposition as UpdateEntityFunction<Composition>,
+    deleteEntity: mod.softDeleteComposition as DeleteEntityFunction,
     updateSchema: (await import('../composition/schema')).UpdateCompositionSchema,
   };
 }
@@ -31,6 +34,7 @@ async function getArtistHandler() {
   return {
     getEntity: mod.getArtist as GetEntityFunction<Artist>,
     updateEntity: mod.updateArtist as UpdateEntityFunction<Artist>,
+    deleteEntity: mod.softDeleteArtist as DeleteEntityFunction,
     updateSchema: (await import('../artist/schema')).UpdateArtistSchema,
   };
 }
@@ -40,6 +44,7 @@ async function getRagaHandler() {
   return {
     getEntity: mod.getRaga as GetEntityFunction<Raga>,
     updateEntity: mod.updateRaga as UpdateEntityFunction<Raga>,
+    deleteEntity: mod.softDeleteRaga as DeleteEntityFunction,
     updateSchema: (await import('../raga/schema')).UpdateRagaSchema,
   };
 }
@@ -49,6 +54,7 @@ async function getTalaHandler() {
   return {
     getEntity: mod.getTala as GetEntityFunction<Tala>,
     updateEntity: mod.updateTala as UpdateEntityFunction<Tala>,
+    deleteEntity: mod.softDeleteTala as DeleteEntityFunction,
     updateSchema: (await import('../tala/schema')).UpdateTalaSchema,
   };
 }
@@ -58,6 +64,7 @@ async function getVenueHandler() {
   return {
     getEntity: mod.getVenue as GetEntityFunction<Venue>,
     updateEntity: mod.updateVenue as UpdateEntityFunction<Venue>,
+    deleteEntity: mod.softDeleteVenue as DeleteEntityFunction,
     updateSchema: (await import('../venue/schema')).UpdateVenueSchema,
   };
 }
@@ -67,6 +74,7 @@ async function getOrganiserHandler() {
   return {
     getEntity: mod.getOrganiser as GetEntityFunction<Organiser>,
     updateEntity: mod.updateOrganiser as UpdateEntityFunction<Organiser>,
+    deleteEntity: mod.softDeleteOrganiser as DeleteEntityFunction,
     updateSchema: (await import('../organiser/schema')).UpdateOrganiserSchema,
   };
 }
@@ -76,6 +84,7 @@ async function getEventHandler() {
   return {
     getEntity: mod.getEvent as GetEntityFunction<Event>,
     updateEntity: mod.updateApprovedEvent as UpdateEntityFunction<Event>,
+    deleteEntity: mod.softDeleteEvent as DeleteEntityFunction,
     updateSchema: (await import('../event/schema')).UpdateEventSchema,
   };
 }

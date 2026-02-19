@@ -4,7 +4,7 @@ import { dynamoClient } from '../../db/client';
 import { generateId } from '../../utils';
 import { EditEntity } from './entity';
 import { getHandler } from './registry';
-import { EditStatus } from './types';
+import { EditOperation, EditStatus } from './types';
 import type { Edit, EditEntityType, EditFilters, EditInput, PendingEditFilters } from './types';
 
 export type { Edit };
@@ -22,16 +22,20 @@ export async function createDraft(input: EditInput): Promise<Edit> {
     );
   }
 
-  // Validate proposed values against entity-specific update schema
-  const validationResult = handler.updateSchema.safeParse(input.proposedValues);
-  if (!validationResult.success) {
-    const errorMessages = validationResult.error.errors
-      .map(e => `${e.path.join('.')}: ${e.message}`)
-      .join(', ');
-    throw new ApplicationError(
-      ErrorCode.VALIDATION_ERROR,
-      `Invalid proposed values for ${input.entityType}: ${errorMessages}`
-    );
+  const isDelete = input.operation === EditOperation.DELETE;
+
+  // For update operations, validate proposed values against entity-specific update schema
+  if (!isDelete) {
+    const validationResult = handler.updateSchema.safeParse(input.proposedValues);
+    if (!validationResult.success) {
+      const errorMessages = validationResult.error.errors
+        .map(e => `${e.path.join('.')}: ${e.message}`)
+        .join(', ');
+      throw new ApplicationError(
+        ErrorCode.VALIDATION_ERROR,
+        `Invalid proposed values for ${input.entityType}: ${errorMessages}`
+      );
+    }
   }
 
   const result = await EditEntity.create({
@@ -40,7 +44,8 @@ export async function createDraft(input: EditInput): Promise<Edit> {
     entityId: input.entityId,
     userId: input.userId,
     status: EditStatus.DRAFT,
-    proposedValues: input.proposedValues,
+    operation: input.operation ?? EditOperation.UPDATE,
+    proposedValues: isDelete ? {} : input.proposedValues,
     userNote: input.userNote,
   }).go();
 
@@ -126,7 +131,11 @@ export async function approveEdit(editId: string, moderatorId: string): Promise<
   }
 
   const handler = await getHandler(edit.entityType as EditEntityType);
-  await handler.updateEntity(edit.entityId, edit.proposedValues);
+  if (edit.operation === EditOperation.DELETE) {
+    await handler.deleteEntity(edit.entityId);
+  } else {
+    await handler.updateEntity(edit.entityId, edit.proposedValues);
+  }
 
   const result = await EditEntity.update({ id: editId })
     .set({
@@ -353,6 +362,41 @@ export async function updateDraft(
   await dynamoClient.send(command);
 
   return (await getEditById(editId)) as Edit;
+}
+
+export async function requestDeletion(
+  entityType: EditEntityType,
+  entityId: string,
+  moderatorId: string,
+  userNote?: string
+): Promise<Edit> {
+  // Check for any existing draft or submitted delete edit for this entity
+  const existingEdits = await getEntityEdits(entityType, entityId);
+  const existingDeleteEdit = existingEdits.items.find(
+    e =>
+      e.operation === EditOperation.DELETE &&
+      (e.status === EditStatus.SUBMITTED || e.status === EditStatus.DRAFT)
+  );
+  if (existingDeleteEdit) {
+    throw new ApplicationError(
+      ErrorCode.VALIDATION_ERROR,
+      'A deletion request is already pending for this entity'
+    );
+  }
+
+  // Create draft with delete operation
+  const draft = await createDraft({
+    entityType,
+    entityId,
+    userId: moderatorId,
+    proposedValues: {},
+    operation: EditOperation.DELETE,
+    userNote,
+  });
+
+  // Immediately submit
+  const submitted = await submitEdit(draft.id, moderatorId);
+  return submitted;
 }
 
 export async function getActiveEditForEntity(

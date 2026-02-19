@@ -1,4 +1,14 @@
-import { Calendar, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Ticket } from 'lucide-react';
+import {
+  Calendar,
+  ExternalLink,
+  Globe,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Ticket,
+  Trash2,
+} from 'lucide-react';
 import { Link, data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -63,7 +73,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const user = await getUser(request);
     const serverClient = await createServerClient(request);
     const event = await serverClient.event.get.query({ id });
-    return data({ event, user });
+    return data({ event, user, isModerator: user?.role === 'moderator' || user?.role === 'admin' });
   } catch (error) {
     console.error('Failed to load event:', error);
     if (error instanceof ApplicationError) {
@@ -103,7 +113,11 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
 };
 
 export default function EventDetail() {
-  const { event, user } = useLoaderData<{ event: EventDetail; user: { id: string } | null }>();
+  const { event, user, isModerator } = useLoaderData<{
+    event: EventDetail;
+    user: { id: string } | null;
+    isModerator: boolean;
+  }>();
 
   const startDate = new Date(event.startDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
@@ -134,15 +148,26 @@ export default function EventDetail() {
           <div>
             <div className="flex items-start justify-between gap-4">
               <h1 className="text-3xl font-bold">{event.title}</h1>
-              {user && event.status === 'approved' && (
-                <a
-                  href={`${generateEventUrl(event.title, event.id)}/edit`}
-                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-2"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </a>
-              )}
+              <div className="flex items-center gap-2 shrink-0 mt-2">
+                {user && event.status === 'approved' && (
+                  <a
+                    href={`${generateEventUrl(event.title, event.id)}/edit`}
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </a>
+                )}
+                {isModerator && (
+                  <a
+                    href={`/moderator/request-deletion?entityType=event&entityId=${event.id}`}
+                    className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </a>
+                )}
+              </div>
             </div>
             {event.festivalName && (
               <p className="text-lg text-muted-foreground mt-1">

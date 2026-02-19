@@ -37,6 +37,12 @@ export const EditEntity = new Entity(
         type: 'any',
         required: true,
       },
+      operation: {
+        type: 'string',
+        enum: ['update', 'delete'],
+        required: false,
+        default: () => 'update',
+      },
       userNote: {
         type: 'string',
         required: false,

@@ -28,6 +28,9 @@ export async function getTala(id: string): Promise<Tala | null> {
   if (!result.data) {
     return null;
   }
+  if (result.data.deletedAt) {
+    return null;
+  }
   return result.data as Tala;
 }
 
@@ -54,6 +57,10 @@ export async function deleteTala(id: string): Promise<void> {
   await TalaEntity.delete({ id }).go();
 }
 
+export async function softDeleteTala(id: string): Promise<void> {
+  await TalaEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function listTalas(params?: { limit?: number; nextToken?: string }): Promise<{
   items: Tala[];
   nextToken?: string;
@@ -61,10 +68,13 @@ export async function listTalas(params?: { limit?: number; nextToken?: string })
 }> {
   const limit = params?.limit || 20;
 
-  const result = await TalaEntity.query.list({}).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await TalaEntity.query
+    .list({})
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   return {
     items: result.data || [],

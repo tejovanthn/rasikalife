@@ -112,6 +112,11 @@ export async function loader({ request }: { request: Request }) {
           }
         }
 
+        // For delete operations, skip diff computation
+        if (edit.operation === 'delete') {
+          return { ...edit, diff: [] } as EditWithDiff;
+        }
+
         const diff = computeEditDiff(currentEntity, enrichedProposedValues);
         return { ...edit, diff } as EditWithDiff;
       } catch (error) {
@@ -272,7 +277,15 @@ export default function ModeratorEdits() {
         id: 'changes',
         header: 'Proposed Changes',
         cell: ({ row }) => {
-          const diff = row.original.diff;
+          const edit = row.original;
+          if (edit.operation === 'delete') {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                Deletion Request
+              </span>
+            );
+          }
+          const diff = edit.diff;
           return (
             <div className="text-xs space-y-1 max-w-md">
               {diff && diff.length > 0 ? (

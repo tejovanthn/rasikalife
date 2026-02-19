@@ -170,6 +170,7 @@ describe('Venue', () => {
 
       const { VenueEntity } = await import('./entity');
       vi.mocked(VenueEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: mockVenues,
           cursor: 'next-token-123',
@@ -188,6 +189,7 @@ describe('Venue', () => {
     it('should return empty result when no venues found', async () => {
       const { VenueEntity } = await import('./entity');
       vi.mocked(VenueEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: [],
           cursor: null,

@@ -99,6 +99,10 @@ export const CompositionEntity = new Entity(
         type: 'string',
         required: false,
       },
+      deletedAt: {
+        type: 'string',
+        required: false,
+      },
     },
     indexes: {
       primary: {

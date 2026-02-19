@@ -59,6 +59,7 @@
       "**/cdk.out/**",
       "**/coverage/**",
       "**/.next/**",
+      "**/.react-router/**",
       "**/*.d.ts"
     ]
   },

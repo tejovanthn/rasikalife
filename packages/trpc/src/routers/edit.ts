@@ -9,6 +9,7 @@ import {
   getPendingEdits,
   getUserEdits,
   rejectEdit,
+  requestDeletion,
   submitEdit,
   updateDraft,
   withdrawEdit,
@@ -174,6 +175,23 @@ export const editRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       return getActiveEditForEntity(ctx.user.id, input.entityType, input.entityId);
+    }),
+
+  requestDeletion: moderatorProcedure
+    .input(
+      z.object({
+        entityType: editEntityTypeSchema,
+        entityId: z.string().min(1),
+        userNote: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return requestDeletion(
+        input.entityType as EditEntityType,
+        input.entityId,
+        ctx.user.id,
+        input.userNote
+      );
     }),
 
   saveChanges: protectedProcedure

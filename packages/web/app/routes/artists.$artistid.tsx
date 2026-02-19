@@ -69,6 +69,7 @@ export async function loader({
       artistEvents: eventsResult.items,
       activeEdit,
       formattedDate: formatDate(artist.createdAt),
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
     console.error('Failed to load artist:', error);
@@ -155,10 +156,18 @@ export default function ArtistDetails() {
     artistEvents: ArtistEvent[];
     activeEdit: Edit | null;
     formattedDate: string;
+    isModerator: boolean;
   }>();
 
-  const { artist, compositions, hasMoreCompositions, artistEvents, activeEdit, formattedDate } =
-    loaderData;
+  const {
+    artist,
+    compositions,
+    hasMoreCompositions,
+    artistEvents,
+    activeEdit,
+    formattedDate,
+    isModerator,
+  } = loaderData;
 
   const isNestedRoute =
     location.pathname.includes('/compositions') || location.pathname.includes('/events');
@@ -195,6 +204,8 @@ export default function ArtistDetails() {
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
         editUrl={`${generateArtistUrl(artist.name, artist.id)}/edit`}
         activeEdit={activeEdit}
+        isModerator={isModerator}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=artist&entityId=${artist.id}`}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

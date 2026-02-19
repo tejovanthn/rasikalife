@@ -58,6 +58,7 @@ export async function loader({
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       activeEdit,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
     console.error('Failed to load tala:', error);
@@ -151,11 +152,12 @@ export const meta: MetaFunction = ({ data }) => {
 export default function TalaDetails() {
   const location = useLocation();
 
-  const { tala, compositions, hasMoreCompositions, activeEdit } = useLoaderData<{
+  const { tala, compositions, hasMoreCompositions, activeEdit, isModerator } = useLoaderData<{
     tala: Tala;
     compositions: Composition[];
     hasMoreCompositions: boolean;
     activeEdit: Edit | null;
+    isModerator: boolean;
   }>();
 
   // Check if we're on a nested route (like /compositions)
@@ -188,6 +190,8 @@ export default function TalaDetails() {
         shareDescription={`Learn about the ${tala.name} tala, a fundamental rhythmic cycle in Indian classical music`}
         editUrl={`${generateTalaUrl(tala.name, tala.id)}/edit`}
         activeEdit={activeEdit}
+        isModerator={isModerator}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=tala&entityId=${tala.id}`}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

@@ -172,6 +172,7 @@ describe('Artist', () => {
 
       const { ArtistEntity } = await import('./entity');
       vi.mocked(ArtistEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: mockArtists,
           cursor: 'next-token-123',
@@ -190,6 +191,7 @@ describe('Artist', () => {
     it('should return empty result when no artists found', async () => {
       const { ArtistEntity } = await import('./entity');
       vi.mocked(ArtistEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: [],
           cursor: null,
@@ -208,6 +210,7 @@ describe('Artist', () => {
     it('should use default limit when not specified', async () => {
       const { ArtistEntity } = await import('./entity');
       vi.mocked(ArtistEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({
           data: [],
           cursor: null,

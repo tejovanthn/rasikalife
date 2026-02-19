@@ -31,6 +31,10 @@ export async function getVenue(id: string): Promise<Venue | null> {
     return null;
   }
 
+  if (result.data.deletedAt) {
+    return null;
+  }
+
   return result.data as Venue;
 }
 
@@ -60,6 +64,10 @@ export async function deleteVenue(id: string): Promise<void> {
   await VenueEntity.delete({ id }).go();
 }
 
+export async function softDeleteVenue(id: string): Promise<void> {
+  await VenueEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+}
+
 export async function listVenues(params?: { limit?: number; nextToken?: string }): Promise<{
   items: Venue[];
   nextToken?: string;
@@ -67,10 +75,13 @@ export async function listVenues(params?: { limit?: number; nextToken?: string }
 }> {
   const limit = params?.limit || 20;
 
-  const result = await VenueEntity.query.list({}).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await VenueEntity.query
+    .list({})
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   return {
     items: result.data || [],
@@ -89,10 +100,13 @@ export async function listVenuesByCity(
 }> {
   const limit = params?.limit || 20;
 
-  const result = await VenueEntity.query.byCity({ city }).go({
-    limit,
-    cursor: params?.nextToken,
-  });
+  const result = await VenueEntity.query
+    .byCity({ city })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({
+      limit,
+      cursor: params?.nextToken,
+    });
 
   return {
     items: result.data || [],

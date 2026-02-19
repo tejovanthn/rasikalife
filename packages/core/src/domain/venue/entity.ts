@@ -37,6 +37,10 @@ export const VenueEntity = new Entity(
         type: 'string',
         required: false,
       },
+      deletedAt: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

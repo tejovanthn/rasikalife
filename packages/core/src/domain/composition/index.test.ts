@@ -265,6 +265,7 @@ describe('Composition', () => {
 
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.byComposer).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: mockCompositions }),
       } as any);
 
@@ -294,6 +295,7 @@ describe('Composition', () => {
     it('should return empty array when no compositions found', async () => {
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.byComposer).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: [] }),
       } as any);
 
@@ -476,6 +478,7 @@ describe('Composition', () => {
 
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.byLanguage).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: mockCompositions }),
       } as any);
 
@@ -505,6 +508,7 @@ describe('Composition', () => {
     it('should return empty array when no compositions found', async () => {
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.byLanguage).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: [] }),
       } as any);
 
@@ -538,6 +542,7 @@ describe('Composition', () => {
 
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.byName).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: mockCompositions }),
       } as any);
 
@@ -563,6 +568,7 @@ describe('Composition', () => {
     it('should return empty array when no compositions found', async () => {
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.byName).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: [] }),
       } as any);
 
@@ -592,6 +598,7 @@ describe('Composition', () => {
 
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: mockCompositions, cursor: 'next-token' }),
       } as any);
 
@@ -621,6 +628,7 @@ describe('Composition', () => {
     it('should use default limit when not specified', async () => {
       const { CompositionEntity } = await import('./entity');
       vi.mocked(CompositionEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
         go: vi.fn().mockResolvedValue({ data: [], cursor: null }),
       } as any);
 

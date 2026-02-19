@@ -18,6 +18,10 @@ export const OrganiserEntity = new Entity(
         type: 'string',
         required: true,
       },
+      deletedAt: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

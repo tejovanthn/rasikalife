@@ -34,6 +34,10 @@ export const ArtistEntity = new Entity(
         required: false,
         default: () => [],
       },
+      deletedAt: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

@@ -109,6 +109,7 @@ export async function loader({
       relatedCompositionsByRaga,
       hasMoreCompositionsByRaga,
       activeEdit,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
     console.error('Failed to load composition:', error);
@@ -241,6 +242,7 @@ export default function CompositionDetails() {
     relatedCompositionsByTala,
     hasMoreCompositionsByTala,
     activeEdit,
+    isModerator,
   } = useLoaderData<{
     composition: CompositionWithRelations;
     relatedCompositionsByComposer: CompositionWithRelations[];
@@ -250,6 +252,7 @@ export default function CompositionDetails() {
     relatedCompositionsByTala: CompositionWithRelations[];
     hasMoreCompositionsByTala: boolean;
     activeEdit: Edit | null;
+    isModerator: boolean;
   }>();
 
   const shareUrl = `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`;
@@ -308,6 +311,8 @@ export default function CompositionDetails() {
         shareDescription={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
         editUrl={`${generateCompositionUrl(composition.title, composition.id)}/edit`}
         activeEdit={activeEdit}
+        isModerator={isModerator}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=composition&entityId=${composition.id}`}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

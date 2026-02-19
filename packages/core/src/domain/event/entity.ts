@@ -83,6 +83,9 @@ export const EventEntity = new Entity(
       extractionRawResponse: { type: 'string', required: false },
       extractionTimestamp: { type: 'string', required: false },
 
+      // Soft delete
+      deletedAt: { type: 'string', required: false },
+
       // Ownership & timestamps
       createdBy: { type: 'string', required: true },
       createdAt: {
