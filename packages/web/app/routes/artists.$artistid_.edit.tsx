@@ -126,7 +126,6 @@ export default function EditArtist() {
   const { artist, user, activeEdit } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
   const artistUrl = generateArtistUrl(artist.name, artist.id);
 
   // Use draft values if editing an existing draft, otherwise use current entity values
@@ -198,9 +197,8 @@ export default function EditArtist() {
                 type="submit"
                 name="intent"
                 value="save-draft"
-                disabled={isSubmitting}
               >
-                {isSubmitting && navigation.formData?.get('intent') === 'save-draft' ? (
+                {navigation.formData?.get('intent') === 'save-draft' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Saving...
@@ -217,9 +215,8 @@ export default function EditArtist() {
                 type="submit"
                 name="intent"
                 value="submit"
-                disabled={isSubmitting}
               >
-                {isSubmitting && navigation.formData?.get('intent') === 'submit' ? (
+                {navigation.formData?.get('intent') === 'submit' ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Submitting...

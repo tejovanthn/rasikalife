@@ -120,7 +120,6 @@ export default function RequestDeletion() {
   const loaderData = useLoaderData<typeof loader>() as LoaderData;
   const { entityName, entityType, entityId, alreadyPending } = loaderData;
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-lg">
@@ -168,11 +167,11 @@ export default function RequestDeletion() {
             </div>
 
             <div className="flex items-center gap-3 pt-2">
-              <Button type="submit" variant="destructive" disabled={isSubmitting}>
+              <Button type="submit" variant="destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
-                {isSubmitting ? 'Submitting…' : 'Submit Deletion Request'}
+                {navigation.state === 'submitting' ? 'Submitting…' : 'Submit Deletion Request'}
               </Button>
-              <Button type="button" variant="outline" disabled={isSubmitting} onClick={() => history.back()}>
+              <Button type="button" variant="outline" disabled={navigation.state === 'submitting'} onClick={() => history.back()}>
                 Cancel
               </Button>
             </div>

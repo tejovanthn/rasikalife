@@ -199,7 +199,6 @@ export default function EditEvent() {
   const { event, activeEdit } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === 'submitting';
   const eventUrl = generateEventUrl(event.title, event.id);
 
   const proposed = activeEdit?.proposedValues || {};
@@ -456,9 +455,8 @@ export default function EditEvent() {
                 type="submit"
                 name="intent"
                 value="save-draft"
-                disabled={isSubmitting}
               >
-                {isSubmitting && navigation.formData?.get('intent') === 'save-draft' ? (
+                {navigation.formData?.get('intent') === 'save-draft' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Saving...
@@ -475,9 +473,8 @@ export default function EditEvent() {
                 type="submit"
                 name="intent"
                 value="submit"
-                disabled={isSubmitting}
               >
-                {isSubmitting && navigation.formData?.get('intent') === 'submit' ? (
+                {navigation.formData?.get('intent') === 'submit' ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Submitting...
