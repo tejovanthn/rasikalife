@@ -65,6 +65,91 @@ export async function cascadeRagaNameUpdate(ragaId: string, newName: string): Pr
   );
 }
 
+export async function cascadeVenueNameUpdate(venueId: string, newName: string): Promise<void> {
+  const { EventEntity } = await import('./event/entity');
+
+  const result = await EventEntity.query.byVenue({ venueId }).go({ limit: CASCADE_BATCH_SIZE });
+  const items = (result.data as Array<{ id: string }>) || [];
+  const now = new Date().toISOString();
+
+  await Promise.all(
+    items.map(item =>
+      dynamoClient.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: {
+            pk: `EVENT#${item.id}`,
+            sk: '#METADATA',
+          },
+          UpdateExpression: 'SET venueName = :venueName, updatedAt = :updatedAt',
+          ExpressionAttributeValues: { ':venueName': newName, ':updatedAt': now },
+        })
+      )
+    )
+  );
+}
+
+export async function cascadeOrganiserNameUpdate(
+  organiserId: string,
+  newName: string
+): Promise<void> {
+  const { EventEntity } = await import('./event/entity');
+
+  const result = await EventEntity.query
+    .byOrganiser({ organiserId })
+    .go({ limit: CASCADE_BATCH_SIZE });
+  const items = (result.data as Array<{ id: string }>) || [];
+  const now = new Date().toISOString();
+
+  await Promise.all(
+    items.map(item =>
+      dynamoClient.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: {
+            pk: `EVENT#${item.id}`,
+            sk: '#METADATA',
+          },
+          UpdateExpression: 'SET organiserName = :organiserName, updatedAt = :updatedAt',
+          ExpressionAttributeValues: { ':organiserName': newName, ':updatedAt': now },
+        })
+      )
+    )
+  );
+}
+
+export async function cascadeEventMetadataToArtists(
+  eventId: string,
+  newTitle: string,
+  newStartDateTime: string
+): Promise<void> {
+  const { EventArtistEntity } = await import('./event-artist/entity');
+
+  const result = await EventArtistEntity.query.primary({ eventId }).go();
+  const items = (result.data as Array<{ eventId: string; artistId: string }>) || [];
+  const now = new Date().toISOString();
+
+  await Promise.all(
+    items.map(item =>
+      dynamoClient.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: {
+            pk: `EVENT#${item.eventId}`,
+            sk: `ARTIST#${item.artistId}`,
+          },
+          UpdateExpression:
+            'SET eventTitle = :eventTitle, eventStartDateTime = :eventStartDateTime',
+          ExpressionAttributeValues: {
+            ':eventTitle': newTitle,
+            ':eventStartDateTime': newStartDateTime,
+          },
+        })
+      )
+    )
+  );
+}
+
 export async function cascadeTalaNameUpdate(talaId: string, newName: string): Promise<void> {
   const { CompositionTalaEntity } = await import('./composition_tala/entity');
   const { CompositionEntity } = await import('./composition/entity');

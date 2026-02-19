@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { cascadeOrganiserNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { OrganiserEntity } from './entity';
 import type { Organiser } from './entity';
@@ -38,10 +39,16 @@ export async function getOrganiserByName(name: string): Promise<Organiser | null
 }
 
 export async function updateOrganiser(id: string, input: UpdateOrganiserInput): Promise<Organiser> {
-  const result = await OrganiserEntity.update({ id }).set(input).go();
+  const current = await getOrganiser(id);
+
+  const result = await OrganiserEntity.update({ id }).set(input).go({ response: 'all_new' });
 
   if (!result.data) {
     throw notFoundError('organiser', id);
+  }
+
+  if (input.name && current && input.name !== current.name) {
+    await cascadeOrganiserNameUpdate(id, input.name);
   }
 
   return result.data as Organiser;

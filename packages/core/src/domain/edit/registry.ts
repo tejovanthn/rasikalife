@@ -1,8 +1,11 @@
 import type { z } from 'zod';
 import type { Artist } from '../artist';
 import type { Composition, CompositionWithRelations } from '../composition';
+import type { Event } from '../event/entity';
+import type { Organiser } from '../organiser/entity';
 import type { Raga } from '../raga';
 import type { Tala } from '../tala';
+import type { Venue } from '../venue/entity';
 import type { EditEntityType } from './types';
 
 export type GetEntityFunction<T = unknown> = (id: string) => Promise<T | null>;
@@ -50,6 +53,33 @@ async function getTalaHandler() {
   };
 }
 
+async function getVenueHandler() {
+  const mod = await import('../venue');
+  return {
+    getEntity: mod.getVenue as GetEntityFunction<Venue>,
+    updateEntity: mod.updateVenue as UpdateEntityFunction<Venue>,
+    updateSchema: (await import('../venue/schema')).UpdateVenueSchema,
+  };
+}
+
+async function getOrganiserHandler() {
+  const mod = await import('../organiser');
+  return {
+    getEntity: mod.getOrganiser as GetEntityFunction<Organiser>,
+    updateEntity: mod.updateOrganiser as UpdateEntityFunction<Organiser>,
+    updateSchema: (await import('../organiser/schema')).UpdateOrganiserSchema,
+  };
+}
+
+async function getEventHandler() {
+  const mod = await import('../event');
+  return {
+    getEntity: mod.getEvent as GetEntityFunction<Event>,
+    updateEntity: mod.updateApprovedEvent as UpdateEntityFunction<Event>,
+    updateSchema: (await import('../event/schema')).UpdateEventSchema,
+  };
+}
+
 const handlerCache: Partial<Record<EditEntityType, EditHandler>> = {};
 
 export async function getHandler(entityType: EditEntityType): Promise<EditHandler> {
@@ -70,6 +100,15 @@ export async function getHandler(entityType: EditEntityType): Promise<EditHandle
       break;
     case 'tala':
       handler = await getTalaHandler();
+      break;
+    case 'venue':
+      handler = await getVenueHandler();
+      break;
+    case 'organiser':
+      handler = await getOrganiserHandler();
+      break;
+    case 'event':
+      handler = await getEventHandler();
       break;
     default:
       throw new Error(`No handler registered for entity type: ${entityType}`);

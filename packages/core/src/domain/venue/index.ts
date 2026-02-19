@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { cascadeVenueNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { VenueEntity } from './entity';
 import type { Venue } from './entity';
@@ -39,11 +40,17 @@ export async function getVenueByName(name: string): Promise<Venue | null> {
 }
 
 export async function updateVenue(id: string, input: UpdateVenueInput): Promise<Venue> {
+  const current = await getVenue(id);
+
   const updateData = input.address?.city ? { ...input, city: input.address.city } : input;
-  const result = await VenueEntity.update({ id }).set(updateData).go();
+  const result = await VenueEntity.update({ id }).set(updateData).go({ response: 'all_new' });
 
   if (!result.data) {
     throw notFoundError('venue', id);
+  }
+
+  if (input.name && current && input.name !== current.name) {
+    await cascadeVenueNameUpdate(id, input.name);
   }
 
   return result.data as Venue;

@@ -82,9 +82,7 @@ export const Header = () => {
                   </NavLink>
                 ))}
                 <DropdownMenu>
-                  <DropdownMenuTrigger
-                    className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 outline-none"
-                  >
+                  <DropdownMenuTrigger className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 outline-none">
                     Events
                     <ChevronDown className="h-3.5 w-3.5" />
                   </DropdownMenuTrigger>

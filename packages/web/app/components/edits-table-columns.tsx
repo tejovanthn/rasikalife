@@ -24,6 +24,12 @@ function entityPath(entityType: string, entityId: string): string {
       return `/carnatic/ragas/${entityId}`;
     case 'tala':
       return `/carnatic/talas/${entityId}`;
+    case 'venue':
+      return `/venues/${entityId}`;
+    case 'organiser':
+      return `/organisers/${entityId}`;
+    case 'event':
+      return `/events/${entityId}`;
     default:
       return '#';
   }

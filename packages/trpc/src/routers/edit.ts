@@ -23,6 +23,9 @@ const editEntityTypeSchema = z.enum([
   EditEntityTypes.ARTIST,
   EditEntityTypes.RAGA,
   EditEntityTypes.TALA,
+  EditEntityTypes.EVENT,
+  EditEntityTypes.VENUE,
+  EditEntityTypes.ORGANISER,
 ]);
 
 const editStatusSchema = z.enum([

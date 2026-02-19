@@ -1,11 +1,12 @@
-import { Calendar, ExternalLink, Globe, Mail, MapPin, Phone, Ticket } from 'lucide-react';
+import { Calendar, ExternalLink, Globe, Mail, MapPin, Pencil, Phone, Ticket } from 'lucide-react';
 import { Link, data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import {
   generateArtistUrl,
@@ -19,6 +20,7 @@ import {
 interface EventDetail {
   id: string;
   title: string;
+  status?: string;
   description?: string;
   startDateTime: string;
   endDateTime?: string;
@@ -48,7 +50,7 @@ interface EventDetail {
   sponsors?: Array<{ name: string; type?: string }>;
 }
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ request, params }) => {
   const { eventid } = params;
   if (!eventid) {
     throw new Response('Event ID is required', { status: 400 });
@@ -58,8 +60,10 @@ export const loader: LoaderFunction = async ({ params }) => {
   const id = parsed ? parsed.id : eventid;
 
   try {
-    const event = await client.event.get.query({ id });
-    return data({ event });
+    const user = await getUser(request);
+    const serverClient = await createServerClient(request);
+    const event = await serverClient.event.get.query({ id });
+    return data({ event, user });
   } catch (error) {
     console.error('Failed to load event:', error);
     if (error instanceof ApplicationError) {
@@ -99,7 +103,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
 };
 
 export default function EventDetail() {
-  const { event } = useLoaderData<{ event: EventDetail }>();
+  const { event, user } = useLoaderData<{ event: EventDetail; user: { id: string } | null }>();
 
   const startDate = new Date(event.startDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
@@ -128,7 +132,18 @@ export default function EventDetail() {
         {/* Details */}
         <div className="space-y-6">
           <div>
-            <h1 className="text-3xl font-bold">{event.title}</h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-bold">{event.title}</h1>
+              {user && event.status === 'approved' && (
+                <a
+                  href={`${generateEventUrl(event.title, event.id)}/edit`}
+                  className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-2"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </a>
+              )}
+            </div>
             {event.festivalName && (
               <p className="text-lg text-muted-foreground mt-1">
                 Part of{' '}

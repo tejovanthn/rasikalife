@@ -1,5 +1,7 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { cascadeEventMetadataToArtists } from '../cascade';
+import { deleteEventArtist } from '../event-artist';
 import { EventArtistEntity } from '../event-artist/entity';
 import { createFestival } from '../festival';
 import { createFailedError, notFoundError } from '../helpers';
@@ -219,6 +221,46 @@ export async function updateEvent(id: string, input: UpdateEventInput): Promise<
   }
 
   return result.data as Event;
+}
+
+export async function updateApprovedEvent(id: string, input: UpdateEventInput): Promise<Event> {
+  const current = await getEvent(id);
+  if (!current) {
+    throw notFoundError('event', id);
+  }
+
+  await updateEvent(id, input);
+
+  const newTitle = input.title ?? current.title;
+  const newStartDateTime = input.startDateTime ?? current.startDateTime;
+
+  if (
+    (input.title && input.title !== current.title) ||
+    (input.startDateTime && input.startDateTime !== current.startDateTime)
+  ) {
+    await cascadeEventMetadataToArtists(id, newTitle, newStartDateTime);
+  }
+
+  if (input.artists !== undefined) {
+    const existingResult = await EventArtistEntity.query.primary({ eventId: id }).go();
+    const existingArtists = (
+      existingResult.data as Array<{ eventId: string; artistId: string }>
+    ).filter(a => a.artistId);
+
+    const newArtistIds = new Set((input.artists || []).filter(a => a.id).map(a => a.id as string));
+    const existingArtistIds = new Set(existingArtists.map(a => a.artistId));
+
+    const toRemove = existingArtists.filter(a => !newArtistIds.has(a.artistId));
+    const toAdd = (input.artists || []).filter(a => a.id && !existingArtistIds.has(a.id as string));
+
+    await Promise.all(toRemove.map(a => deleteEventArtist(id, a.artistId)));
+
+    if (toAdd.length > 0) {
+      await createEventArtistJunctions(id, newTitle, newStartDateTime, toAdd);
+    }
+  }
+
+  return (await getEvent(id)) as Event;
 }
 
 export async function deleteEvent(id: string): Promise<void> {

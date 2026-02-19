@@ -63,6 +63,21 @@ export async function loader({ request }: { request: Request }) {
             currentEntity = tala as unknown as Record<string, unknown>;
             break;
           }
+          case 'venue': {
+            const venue = await serverClient.venue.get.query({ id: edit.entityId });
+            currentEntity = venue as unknown as Record<string, unknown>;
+            break;
+          }
+          case 'organiser': {
+            const organiser = await serverClient.organiser.get.query({ id: edit.entityId });
+            currentEntity = organiser as unknown as Record<string, unknown>;
+            break;
+          }
+          case 'event': {
+            const event = await serverClient.event.get.query({ id: edit.entityId });
+            currentEntity = event as unknown as Record<string, unknown>;
+            break;
+          }
         }
 
         // Enrich proposedValues with raga/tala names for better diff display
@@ -190,6 +205,12 @@ function entityPath(entityType: string, entityId: string) {
       return `/carnatic/ragas/${entityId}`;
     case 'tala':
       return `/carnatic/talas/${entityId}`;
+    case 'venue':
+      return `/venues/${entityId}`;
+    case 'organiser':
+      return `/organisers/${entityId}`;
+    case 'event':
+      return `/events/${entityId}`;
     default:
       return '#';
   }

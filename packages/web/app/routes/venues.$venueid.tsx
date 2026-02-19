@@ -1,12 +1,13 @@
-import { ExternalLink, MapPin } from 'lucide-react';
+import { ExternalLink, MapPin, Pencil } from 'lucide-react';
 import { data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { parseSlug } from '~/lib/url-slug';
+import { generateVenueUrl, parseSlug } from '~/lib/url-slug';
 
 interface VenueDetail {
   id: string;
@@ -31,7 +32,7 @@ interface EventItem {
   entryType?: string;
 }
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ request, params }) => {
   const { venueid } = params;
   if (!venueid) {
     throw new Response('Venue ID is required', { status: 400 });
@@ -41,16 +42,18 @@ export const loader: LoaderFunction = async ({ params }) => {
   const id = parsed ? parsed.id : venueid;
 
   try {
+    const user = await getUser(request);
+    const serverClient = await createServerClient(request);
     const [venue, eventsResult] = await Promise.all([
-      client.venue.get.query({ id }),
-      client.event.byVenue.query({ venueId: id, limit: 50 }),
+      serverClient.venue.get.query({ id }),
+      serverClient.event.byVenue.query({ venueId: id, limit: 50 }),
     ]);
 
     if (!venue) {
       throw new Response('Venue not found', { status: 404 });
     }
 
-    return data({ venue, events: eventsResult.items });
+    return data({ venue, events: eventsResult.items, user });
   } catch (error) {
     console.error('Failed to load venue:', error);
     if (error instanceof ApplicationError) {
@@ -91,9 +94,10 @@ function formatAddress(address: VenueDetail['address']): string | null {
 }
 
 export default function VenueDetailPage() {
-  const { venue, events } = useLoaderData<{
+  const { venue, events, user } = useLoaderData<{
     venue: VenueDetail;
     events: EventItem[];
+    user: { id: string } | null;
   }>();
 
   const addressStr = formatAddress(venue.address);
@@ -108,7 +112,18 @@ export default function VenueDetailPage() {
       />
 
       <div className="mt-6 space-y-4">
-        <h1 className="text-3xl font-bold">{venue.name}</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-3xl font-bold">{venue.name}</h1>
+          {user && (
+            <a
+              href={`${generateVenueUrl(venue.name, venue.id)}/edit`}
+              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </a>
+          )}
+        </div>
 
         {addressStr && (
           <div className="flex items-start gap-2 text-muted-foreground">

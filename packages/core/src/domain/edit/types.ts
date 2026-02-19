@@ -18,6 +18,9 @@ export const EditEntityTypes = {
   ARTIST: 'artist',
   RAGA: 'raga',
   TALA: 'tala',
+  EVENT: 'event',
+  VENUE: 'venue',
+  ORGANISER: 'organiser',
 } as const;
 
 export type EditEntityType = (typeof EditEntityTypes)[keyof typeof EditEntityTypes];
