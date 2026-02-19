@@ -22,6 +22,10 @@ export const TalaEntity = new Entity(
         type: 'string',
         required: false,
       },
+      mergedIntoId: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

@@ -39,6 +39,7 @@ export {
   updateDraft,
   getActiveEditForEntity,
   requestDeletion,
+  requestMerge,
 } from './domain/edit/service';
 
 // Auth exports

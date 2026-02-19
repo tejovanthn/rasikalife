@@ -1,6 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
-import { type MetaFunction, data } from 'react-router';
+import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -9,7 +9,7 @@ import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
+import { generateRagaUrl, generateSlug } from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
 
 export async function loader({
@@ -34,6 +34,13 @@ export async function loader({
 
     if (!raga) {
       throw new Response('Raga not found', { status: 404 });
+    }
+
+    if (raga.mergedIntoId) {
+      const canonical = await client.raga.get.query({ id: raga.mergedIntoId });
+      if (canonical && !canonical.mergedIntoId) {
+        throw redirect(generateRagaUrl(canonical.name, canonical.id), 301);
+      }
     }
 
     // Fetch compositions in this raga (limit to 6 for preview)
@@ -161,6 +168,7 @@ export default function RagaDetails() {
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=raga&entityId=${raga.id}`}
+        mergeUrl={isModerator ? `/moderator/merge?entityType=raga&entityId=${raga.id}` : undefined}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

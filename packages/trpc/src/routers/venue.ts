@@ -1,6 +1,6 @@
 import { Venue } from '@rasika/core';
 import { z } from 'zod';
-import { createTRPCRouter, editorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const venueRouter = createTRPCRouter({
   get: publicProcedure
@@ -39,4 +39,20 @@ export const venueRouter = createTRPCRouter({
   update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Venue.UpdateVenueSchema }))
     .mutation(({ input }) => Venue.updateVenue(input.id, input.data)),
+
+  getMergeSuggestion: moderatorProcedure
+    .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const [entityA, entityB, scoreA, scoreB] = await Promise.all([
+        Venue.getVenue(input.idA),
+        Venue.getVenue(input.idB),
+        Venue.getVenueMergeScore(input.idA),
+        Venue.getVenueMergeScore(input.idB),
+      ]);
+      return {
+        entityA: entityA ? { id: entityA.id, name: entityA.name, score: scoreA } : null,
+        entityB: entityB ? { id: entityB.id, name: entityB.name, score: scoreB } : null,
+        suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
+      };
+    }),
 });

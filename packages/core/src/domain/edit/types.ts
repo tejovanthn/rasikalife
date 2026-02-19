@@ -16,6 +16,7 @@ export type EditStatus = (typeof EditStatus)[keyof typeof EditStatus];
 export const EditOperation = {
   UPDATE: 'update',
   DELETE: 'delete',
+  MERGE: 'merge',
 } as const;
 
 export type EditOperation = (typeof EditOperation)[keyof typeof EditOperation];

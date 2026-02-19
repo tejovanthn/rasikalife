@@ -1,7 +1,7 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import { Calendar } from 'lucide-react';
-import { type MetaFunction, data } from 'react-router';
+import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -40,6 +40,13 @@ export async function loader({
 
     if (!artist) {
       throw new Response('Artist not found', { status: 404 });
+    }
+
+    if (artist.mergedIntoId) {
+      const canonical = await client.artist.get.query({ id: artist.mergedIntoId });
+      if (canonical && !canonical.mergedIntoId) {
+        throw redirect(generateArtistUrl(canonical.name, canonical.id), 301);
+      }
     }
 
     const [result, eventsResult] = await Promise.all([
@@ -206,6 +213,9 @@ export default function ArtistDetails() {
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=artist&entityId=${artist.id}`}
+        mergeUrl={
+          isModerator ? `/moderator/merge?entityType=artist&entityId=${artist.id}` : undefined
+        }
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

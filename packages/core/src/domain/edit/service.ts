@@ -133,6 +133,9 @@ export async function approveEdit(editId: string, moderatorId: string): Promise<
   const handler = await getHandler(edit.entityType as EditEntityType);
   if (edit.operation === EditOperation.DELETE) {
     await handler.deleteEntity(edit.entityId);
+  } else if (edit.operation === EditOperation.MERGE) {
+    const mergeTargetId = edit.proposedValues.mergeTargetId as string;
+    await handler.mergeEntity(edit.entityId, mergeTargetId);
   } else {
     await handler.updateEntity(edit.entityId, edit.proposedValues);
   }
@@ -396,6 +399,48 @@ export async function requestDeletion(
 
   // Immediately submit
   const submitted = await submitEdit(draft.id, moderatorId);
+  return submitted;
+}
+
+export async function requestMerge(
+  entityType: EditEntityType,
+  loserId: string,
+  canonicalId: string,
+  moderatorId: string,
+  userNote?: string
+): Promise<Edit> {
+  // Check for any existing pending merge edit for this entity
+  const existingEdits = await getEntityEdits(entityType, loserId);
+  const existingMergeEdit = existingEdits.items.find(
+    e =>
+      e.operation === EditOperation.MERGE &&
+      (e.status === EditStatus.SUBMITTED || e.status === EditStatus.DRAFT)
+  );
+  if (existingMergeEdit) {
+    throw new ApplicationError(
+      ErrorCode.VALIDATION_ERROR,
+      'A merge request is already pending for this entity'
+    );
+  }
+
+  // Create draft with merge operation — skip schema validation (no updateSchema for merge)
+  const result = await EditEntity.create({
+    id: generateId(),
+    entityType,
+    entityId: loserId,
+    userId: moderatorId,
+    status: EditStatus.DRAFT,
+    operation: EditOperation.MERGE,
+    proposedValues: { mergeTargetId: canonicalId },
+    userNote,
+  }).go();
+
+  if (!result.data) {
+    throw new ApplicationError(ErrorCode.DATABASE_ERROR, 'Failed to create merge draft');
+  }
+
+  // Immediately submit
+  const submitted = await submitEdit(result.data.id, moderatorId);
   return submitted;
 }
 

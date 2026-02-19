@@ -1,6 +1,6 @@
 import { Tala } from '@rasika/core';
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '../trpc';
+import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const talaRouter = createTRPCRouter({
   get: publicProcedure
@@ -33,4 +33,20 @@ export const talaRouter = createTRPCRouter({
   getByName: publicProcedure
     .input(z.object({ name: z.string().min(1) }))
     .query(({ input }) => Tala.getTalaByName(input.name)),
+
+  getMergeSuggestion: moderatorProcedure
+    .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const [entityA, entityB, scoreA, scoreB] = await Promise.all([
+        Tala.getTala(input.idA),
+        Tala.getTala(input.idB),
+        Tala.getTalaMergeScore(input.idA),
+        Tala.getTalaMergeScore(input.idB),
+      ]);
+      return {
+        entityA: entityA ? { id: entityA.id, name: entityA.name, score: scoreA } : null,
+        entityB: entityB ? { id: entityB.id, name: entityB.name, score: scoreB } : null,
+        suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
+      };
+    }),
 });

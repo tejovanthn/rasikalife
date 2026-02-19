@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeOrganiserNameUpdate } from '../cascade';
+import { cascadeOrganiserMerge, cascadeOrganiserNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { OrganiserEntity } from './entity';
 import type { Organiser } from './entity';
@@ -30,7 +30,7 @@ export async function getOrganiser(id: string): Promise<Organiser | null> {
     return null;
   }
 
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
 
@@ -89,6 +89,28 @@ export async function listOrganisers(params?: {
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+export async function mergeOrganiser(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getOrganiser(canonicalId);
+  if (!canonical) throw notFoundError('organiser', canonicalId);
+  const loser = await OrganiserEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('organiser', loserId);
+
+  await cascadeOrganiserMerge(loserId, canonicalId, canonical.name);
+  await OrganiserEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getOrganiserMergeScore(id: string): Promise<number> {
+  const { EventEntity } = await import('../event/entity');
+
+  const [eventResult] = await Promise.all([
+    EventEntity.query.byOrganiser({ organiserId: id }).go({ attributes: ['id'] as never[] }),
+  ]);
+
+  return (eventResult.data || []).length;
 }
 
 export type { Organiser } from './entity';

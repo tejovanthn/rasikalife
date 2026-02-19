@@ -192,12 +192,7 @@ export default function EditArtist() {
                 <ArrowLeft className="h-4 w-4" />
                 Cancel
               </a>
-              <Button
-                variant="ghost"
-                type="submit"
-                name="intent"
-                value="save-draft"
-              >
+              <Button variant="ghost" type="submit" name="intent" value="save-draft">
                 {navigation.formData?.get('intent') === 'save-draft' ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -210,12 +205,7 @@ export default function EditArtist() {
                   </>
                 )}
               </Button>
-              <Button
-                variant="default"
-                type="submit"
-                name="intent"
-                value="submit"
-              >
+              <Button variant="default" type="submit" name="intent" value="submit">
                 {navigation.formData?.get('intent') === 'submit' ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

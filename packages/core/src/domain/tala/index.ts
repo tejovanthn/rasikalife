@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeTalaNameUpdate } from '../cascade';
+import { cascadeTalaMerge, cascadeTalaNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { TalaEntity } from './entity';
 import type { Tala } from './entity';
@@ -28,7 +28,7 @@ export async function getTala(id: string): Promise<Tala | null> {
   if (!result.data) {
     return null;
   }
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
   return result.data as Tala;
@@ -81,6 +81,28 @@ export async function listTalas(params?: { limit?: number; nextToken?: string })
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+export async function mergeTala(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getTala(canonicalId);
+  if (!canonical) throw notFoundError('tala', canonicalId);
+  const loser = await TalaEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('tala', loserId);
+
+  await cascadeTalaMerge(loserId, canonicalId, canonical.name);
+  await TalaEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getTalaMergeScore(id: string): Promise<number> {
+  const { CompositionTalaEntity } = await import('../composition_tala/entity');
+
+  const result = await CompositionTalaEntity.query
+    .byTala({ talaId: id })
+    .go({ attributes: ['compositionId'] as never[] });
+
+  return (result.data || []).length;
 }
 
 export type { Tala } from './entity';

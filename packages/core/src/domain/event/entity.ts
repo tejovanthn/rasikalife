@@ -85,6 +85,7 @@ export const EventEntity = new Entity(
 
       // Soft delete
       deletedAt: { type: 'string', required: false },
+      mergedIntoId: { type: 'string', required: false },
 
       // Ownership & timestamps
       createdBy: { type: 'string', required: true },

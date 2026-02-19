@@ -53,4 +53,5 @@ export interface CompositionWithRelations {
   updatedAt: string;
   version: number;
   lastEditedBy?: string;
+  mergedIntoId?: string;
 }

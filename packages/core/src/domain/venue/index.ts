@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeVenueNameUpdate } from '../cascade';
+import { cascadeVenueMerge, cascadeVenueNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { VenueEntity } from './entity';
 import type { Venue } from './entity';
@@ -31,7 +31,7 @@ export async function getVenue(id: string): Promise<Venue | null> {
     return null;
   }
 
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
 
@@ -113,6 +113,36 @@ export async function listVenuesByCity(
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+export async function mergeVenue(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getVenue(canonicalId);
+  if (!canonical) throw notFoundError('venue', canonicalId);
+  const loser = await VenueEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('venue', loserId);
+
+  await cascadeVenueMerge(loserId, canonicalId, canonical.name);
+  await VenueEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getVenueMergeScore(id: string): Promise<number> {
+  const { EventEntity } = await import('../event/entity');
+
+  const [eventResult, venue] = await Promise.all([
+    EventEntity.query.byVenue({ venueId: id }).go({ attributes: ['id'] as never[] }),
+    VenueEntity.get({ id }).go(),
+  ]);
+
+  let score = (eventResult.data || []).length;
+  if (venue.data) {
+    if (venue.data.address?.street) score += 1;
+    if (venue.data.address?.city) score += 1;
+    if (venue.data.address?.state) score += 1;
+    if (venue.data.mapLink) score += 1;
+  }
+  return score;
 }
 
 export type { Venue } from './entity';

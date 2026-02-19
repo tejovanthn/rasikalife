@@ -1,7 +1,7 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { Pencil } from 'lucide-react';
-import { type LinksFunction, type MetaFunction, data } from 'react-router';
+import { type LinksFunction, type MetaFunction, data, redirect } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -48,6 +48,13 @@ export async function loader({
   try {
     const client = await createServerClient(request);
     const composition = await client.composition.get.query({ id: slugId });
+
+    if (composition?.mergedIntoId) {
+      const canonical = await client.composition.get.query({ id: composition.mergedIntoId });
+      if (canonical && !canonical.mergedIntoId) {
+        throw redirect(generateCompositionUrl(canonical.title, canonical.id), 301);
+      }
+    }
 
     // Get related compositions with error handling for network issues
     let relatedCompositionsByComposer: CompositionWithRelations[] = [];
@@ -313,6 +320,11 @@ export default function CompositionDetails() {
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=composition&entityId=${composition.id}`}
+        mergeUrl={
+          isModerator
+            ? `/moderator/merge?entityType=composition&entityId=${composition.id}`
+            : undefined
+        }
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

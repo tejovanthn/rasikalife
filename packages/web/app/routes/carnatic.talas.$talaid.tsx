@@ -1,7 +1,7 @@
 import type { Composition } from '@rasika/core/domain/composition/entity';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { Tala } from '@rasika/core/domain/tala/entity';
-import { type MetaFunction, data } from 'react-router';
+import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -35,6 +35,13 @@ export async function loader({
 
     if (!tala) {
       throw new Response('Tala not found', { status: 404 });
+    }
+
+    if (tala.mergedIntoId) {
+      const canonical = await client.tala.get.query({ id: tala.mergedIntoId });
+      if (canonical && !canonical.mergedIntoId) {
+        throw redirect(generateTalaUrl(canonical.name, canonical.id), 301);
+      }
     }
 
     // Fetch compositions in this tala (limit to 6 for preview)
@@ -192,6 +199,7 @@ export default function TalaDetails() {
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=tala&entityId=${tala.id}`}
+        mergeUrl={isModerator ? `/moderator/merge?entityType=tala&entityId=${tala.id}` : undefined}
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>

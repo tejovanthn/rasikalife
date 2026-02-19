@@ -1,6 +1,6 @@
 import { Composition } from '@rasika/core';
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '../trpc';
+import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const compositionRouter = createTRPCRouter({
   get: publicProcedure
@@ -93,4 +93,20 @@ export const compositionRouter = createTRPCRouter({
         nextToken: input.nextToken,
       })
     ),
+
+  getMergeSuggestion: moderatorProcedure
+    .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const [entityA, entityB, scoreA, scoreB] = await Promise.all([
+        Composition.getComposition(input.idA),
+        Composition.getComposition(input.idB),
+        Composition.getCompositionMergeScore(input.idA),
+        Composition.getCompositionMergeScore(input.idB),
+      ]);
+      return {
+        entityA: entityA ? { id: entityA.id, name: entityA.title, score: scoreA } : null,
+        entityB: entityB ? { id: entityB.id, name: entityB.title, score: scoreB } : null,
+        suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
+      };
+    }),
 });

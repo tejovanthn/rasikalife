@@ -171,7 +171,12 @@ export default function RequestDeletion() {
                 <Trash2 className="h-4 w-4 mr-2" />
                 {navigation.state === 'submitting' ? 'Submitting…' : 'Submit Deletion Request'}
               </Button>
-              <Button type="button" variant="outline" disabled={navigation.state === 'submitting'} onClick={() => history.back()}>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={navigation.state === 'submitting'}
+                onClick={() => history.back()}
+              >
                 Cancel
               </Button>
             </div>

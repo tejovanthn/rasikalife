@@ -10,6 +10,7 @@ import {
   getUserEdits,
   rejectEdit,
   requestDeletion,
+  requestMerge,
   submitEdit,
   updateDraft,
   withdrawEdit,
@@ -189,6 +190,25 @@ export const editRouter = createTRPCRouter({
       return requestDeletion(
         input.entityType as EditEntityType,
         input.entityId,
+        ctx.user.id,
+        input.userNote
+      );
+    }),
+
+  requestMerge: moderatorProcedure
+    .input(
+      z.object({
+        entityType: editEntityTypeSchema,
+        entityId: z.string().min(1),
+        mergeTargetId: z.string().min(1),
+        userNote: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      return requestMerge(
+        input.entityType as EditEntityType,
+        input.entityId,
+        input.mergeTargetId,
         ctx.user.id,
         input.userNote
       );

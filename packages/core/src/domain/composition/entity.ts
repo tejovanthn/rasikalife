@@ -103,6 +103,10 @@ export const CompositionEntity = new Entity(
         type: 'string',
         required: false,
       },
+      mergedIntoId: {
+        type: 'string',
+        required: false,
+      },
     },
     indexes: {
       primary: {

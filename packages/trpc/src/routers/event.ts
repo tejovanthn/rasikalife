@@ -342,4 +342,20 @@ export const eventRouter = createTRPCRouter({
       }
       return event;
     }),
+
+  getMergeSuggestion: moderatorProcedure
+    .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const [entityA, entityB, scoreA, scoreB] = await Promise.all([
+        Event.getEvent(input.idA),
+        Event.getEvent(input.idB),
+        Event.getEventMergeScore(input.idA),
+        Event.getEventMergeScore(input.idB),
+      ]);
+      return {
+        entityA: entityA ? { id: entityA.id, name: entityA.title, score: scoreA } : null,
+        entityB: entityB ? { id: entityB.id, name: entityB.title, score: scoreB } : null,
+        suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
+      };
+    }),
 });

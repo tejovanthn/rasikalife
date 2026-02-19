@@ -1,7 +1,6 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeRagaNameUpdate } from '../cascade';
+import { cascadeRagaMerge, cascadeRagaNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { RagaEntity } from './entity';
 import type { Raga } from './entity';
@@ -29,7 +28,7 @@ export async function getRaga(id: string): Promise<Raga | null> {
   if (!result.data) {
     return null;
   }
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
   return result.data as Raga;
@@ -83,6 +82,28 @@ export async function listRagas(params?: { limit?: number; nextToken?: string })
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+export async function mergeRaga(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getRaga(canonicalId);
+  if (!canonical) throw notFoundError('raga', canonicalId);
+  const loser = await RagaEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('raga', loserId);
+
+  await cascadeRagaMerge(loserId, canonicalId, canonical.name);
+  await RagaEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getRagaMergeScore(id: string): Promise<number> {
+  const { CompositionRagaEntity } = await import('../composition_raga/entity');
+
+  const result = await CompositionRagaEntity.query
+    .byRaga({ ragaId: id })
+    .go({ attributes: ['compositionId'] as never[] });
+
+  return (result.data || []).length;
 }
 
 export type { Raga } from './entity';

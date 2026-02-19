@@ -1,5 +1,5 @@
-import { Pencil, Trash2 } from 'lucide-react';
-import { data, useLoaderData } from 'react-router';
+import { Merge, Pencil, Trash2 } from 'lucide-react';
+import { data, redirect, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -44,6 +44,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     if (!organiser) {
       throw new Response('Organiser not found', { status: 404 });
+    }
+
+    if (organiser.mergedIntoId) {
+      const canonical = await serverClient.organiser.get.query({ id: organiser.mergedIntoId });
+      if (canonical && !canonical.mergedIntoId) {
+        throw redirect(generateOrganiserUrl(canonical.name, canonical.id), 301);
+      }
     }
 
     return data({
@@ -109,6 +116,15 @@ export default function OrganiserDetailPage() {
               >
                 <Pencil className="h-4 w-4" />
                 Edit
+              </a>
+            )}
+            {isModerator && (
+              <a
+                href={`/moderator/merge?entityType=organiser&entityId=${organiser.id}`}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Merge className="h-4 w-4" />
+                Merge
               </a>
             )}
             {isModerator && (

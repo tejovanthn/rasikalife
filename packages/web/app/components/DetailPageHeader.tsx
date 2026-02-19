@@ -1,6 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditStatus } from '@rasika/core/domain/edit/client';
-import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { Eye, Merge, Pencil, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { ShareButtons } from '~/components/ui/share-buttons';
@@ -14,6 +14,7 @@ interface DetailPageHeaderProps {
   editUrl?: string;
   activeEdit?: Edit | null;
   requestDeletionUrl?: string;
+  mergeUrl?: string;
   isModerator?: boolean;
 }
 
@@ -26,6 +27,7 @@ export function DetailPageHeader({
   editUrl,
   activeEdit,
   requestDeletionUrl,
+  mergeUrl,
   isModerator,
 }: DetailPageHeaderProps) {
   const getEditButton = () => {
@@ -72,6 +74,14 @@ export function DetailPageHeader({
         </div>
         <div className="flex items-center gap-3">
           {getEditButton()}
+          {isModerator && mergeUrl && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={mergeUrl}>
+                <Merge className="h-4 w-4" />
+                Merge
+              </Link>
+            </Button>
+          )}
           {isModerator && requestDeletionUrl && (
             <Button asChild variant="destructive" size="sm">
               <Link to={requestDeletionUrl}>

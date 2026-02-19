@@ -4,12 +4,13 @@ import {
   Globe,
   Mail,
   MapPin,
+  Merge,
   Pencil,
   Phone,
   Ticket,
   Trash2,
 } from 'lucide-react';
-import { Link, data, useLoaderData } from 'react-router';
+import { Link, data, redirect, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -73,6 +74,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const user = await getUser(request);
     const serverClient = await createServerClient(request);
     const event = await serverClient.event.get.query({ id });
+
+    if (event?.mergedIntoId) {
+      const canonical = await serverClient.event.get.query({ id: event.mergedIntoId });
+      if (canonical && !canonical.mergedIntoId) {
+        throw redirect(generateEventUrl(canonical.title, canonical.id), 301);
+      }
+    }
+
     return data({ event, user, isModerator: user?.role === 'moderator' || user?.role === 'admin' });
   } catch (error) {
     console.error('Failed to load event:', error);
@@ -156,6 +165,15 @@ export default function EventDetail() {
                   >
                     <Pencil className="h-4 w-4" />
                     Edit
+                  </a>
+                )}
+                {isModerator && (
+                  <a
+                    href={`/moderator/merge?entityType=event&entityId=${event.id}`}
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Merge className="h-4 w-4" />
+                    Merge
                   </a>
                 )}
                 {isModerator && (

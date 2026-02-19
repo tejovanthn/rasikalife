@@ -1,7 +1,6 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeComposerNameUpdate } from '../cascade';
+import { cascadeArtistMerge, cascadeComposerNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
@@ -31,7 +30,7 @@ export async function getArtist(id: string): Promise<Artist | null> {
     return null;
   }
 
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
 
@@ -85,6 +84,36 @@ export async function listArtists(params?: { limit?: number; nextToken?: string 
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+export async function mergeArtist(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getArtist(canonicalId);
+  if (!canonical) throw notFoundError('artist', canonicalId);
+  const loser = await ArtistEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('artist', loserId);
+
+  await cascadeArtistMerge(loserId, canonicalId, canonical.name);
+  await ArtistEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getArtistMergeScore(id: string): Promise<number> {
+  const { EventArtistEntity } = await import('../event-artist/entity');
+  const { CompositionEntity } = await import('../composition/entity');
+
+  const [eventResult, compResult, artist] = await Promise.all([
+    EventArtistEntity.query.byArtist({ artistId: id }).go({ attributes: ['artistId'] as never[] }),
+    CompositionEntity.query.byComposer({ composerId: id }).go({ attributes: ['id'] as never[] }),
+    ArtistEntity.get({ id }).go(),
+  ]);
+
+  let score = (eventResult.data || []).length + (compResult.data || []).length;
+  if (artist.data) {
+    if (artist.data.title) score += 1;
+    if (artist.data.gurus && artist.data.gurus.length > 0) score += 1;
+  }
+  return score;
 }
 
 export type { Artist } from './entity';

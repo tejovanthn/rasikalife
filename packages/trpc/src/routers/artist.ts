@@ -1,6 +1,6 @@
 import { Artist } from '@rasika/core';
 import { z } from 'zod';
-import { createTRPCRouter, publicProcedure } from '../trpc';
+import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const artistRouter = createTRPCRouter({
   get: publicProcedure
@@ -29,4 +29,20 @@ export const artistRouter = createTRPCRouter({
   delete: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
     .mutation(({ input }) => Artist.deleteArtist(input.id)),
+
+  getMergeSuggestion: moderatorProcedure
+    .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const [entityA, entityB, scoreA, scoreB] = await Promise.all([
+        Artist.getArtist(input.idA),
+        Artist.getArtist(input.idB),
+        Artist.getArtistMergeScore(input.idA),
+        Artist.getArtistMergeScore(input.idB),
+      ]);
+      return {
+        entityA: entityA ? { id: entityA.id, name: entityA.name, score: scoreA } : null,
+        entityB: entityB ? { id: entityB.id, name: entityB.name, score: scoreB } : null,
+        suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
+      };
+    }),
 });

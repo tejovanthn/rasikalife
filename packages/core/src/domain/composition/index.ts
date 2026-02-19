@@ -1,4 +1,3 @@
-import { ApplicationError, ErrorCode } from '@rasika/core';
 import type { z } from 'zod';
 import { generateId } from '../../utils';
 import { getArtist } from '../artist';
@@ -14,6 +13,7 @@ import {
   getCompositionTalas,
   getCompositionsByTala as getTalaJunctionRecords,
 } from '../composition_tala';
+import { notFoundError } from '../helpers';
 import { getRaga } from '../raga';
 import { getTala } from '../tala';
 import { CompositionEntity } from './entity';
@@ -51,6 +51,7 @@ export interface CompositionWithRelations {
   updatedAt: string;
   version: number;
   lastEditedBy?: string;
+  mergedIntoId?: string;
 }
 
 // Generic junction creation helper (addresses DHH duplication feedback)
@@ -126,7 +127,7 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
     return null;
   }
 
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
 
@@ -489,6 +490,30 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+export async function mergeComposition(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getComposition(canonicalId);
+  if (!canonical) throw notFoundError('composition', canonicalId);
+  const loser = await CompositionEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('composition', loserId);
+
+  // No cascade needed — compositions are not referenced by other entities
+  await CompositionEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getCompositionMergeScore(id: string): Promise<number> {
+  const result = await CompositionEntity.get({ id }).go();
+  if (!result.data) return 0;
+
+  let score = 0;
+  if (result.data.lyricsV1 && result.data.lyricsV1.length > 0) score += 2;
+  if (result.data.ragas && result.data.ragas.length > 0) score += 1;
+  if (result.data.talas && result.data.talas.length > 0) score += 1;
+  if (result.data.sourceAttribution) score += 1;
+  return score;
 }
 
 // Types

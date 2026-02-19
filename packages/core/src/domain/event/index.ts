@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeEventMetadataToArtists } from '../cascade';
+import { cascadeEventMerge, cascadeEventMetadataToArtists } from '../cascade';
 import { deleteEventArtist } from '../event-artist';
 import { EventArtistEntity } from '../event-artist/entity';
 import { createFestival } from '../festival';
@@ -209,7 +209,7 @@ export async function getEvent(id: string): Promise<Event | null> {
     return null;
   }
 
-  if (result.data.deletedAt) {
+  if (result.data.deletedAt && !result.data.mergedIntoId) {
     return null;
   }
 
@@ -498,6 +498,34 @@ export async function listApprovedEventsByMonth(yearMonth: string): Promise<Even
     cursor = result.cursor || undefined;
   } while (cursor);
   return all;
+}
+
+export async function mergeEvent(loserId: string, canonicalId: string): Promise<void> {
+  const canonical = await getEvent(canonicalId);
+  if (!canonical) throw notFoundError('event', canonicalId);
+  const loser = await EventEntity.get({ id: loserId }).go();
+  if (!loser.data) throw notFoundError('event', loserId);
+
+  await cascadeEventMerge(loserId, canonicalId);
+  await EventEntity.update({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
+    .go();
+}
+
+export async function getEventMergeScore(id: string): Promise<number> {
+  const artistResult = await EventArtistEntity.query
+    .primary({ eventId: id })
+    .go({ attributes: ['artistId'] as never[] });
+
+  const result = await EventEntity.get({ id }).go();
+  let score = (artistResult.data || []).length;
+  if (result.data) {
+    if (result.data.description) score += 1;
+    if (result.data.venueId) score += 1;
+    if (result.data.organiserId) score += 1;
+    if (result.data.endDateTime) score += 1;
+  }
+  return score;
 }
 
 export { extractFromPoster } from './gemini';

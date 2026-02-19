@@ -38,6 +38,10 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
+      mergedIntoId: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,
