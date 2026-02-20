@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Check, Clock, Eye, X } from 'lucide-react';
 import { useMemo } from 'react';
-import type { ActionFunction, LoaderFunction } from 'react-router';
+import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Form, data, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { DataTable } from '~/components/data-table';
@@ -24,6 +24,10 @@ interface SubmittedEvent {
   submittedAt?: string;
   createdAt: string;
 }
+
+export const meta: MetaFunction = () => {
+  return [{ name: 'robots', content: 'noindex, nofollow' }];
+};
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireModerator(request);

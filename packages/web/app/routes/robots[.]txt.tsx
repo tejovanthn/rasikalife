@@ -8,21 +8,13 @@ Allow: /
 # Sitemaps
 Sitemap: https://rasika.life/sitemap.xml
 
-# Disallow admin pages
-Disallow: /carnatic/admin/
-
-# Crawl-delay for politeness
-Crawl-delay: 1
-
-# Specific rules for search engines
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Slurp
-Allow: /
+# Disallow private/utility pages
+Disallow: /auth/
+Disallow: /moderator/
+Disallow: /my-edits
+Disallow: /api/
+Disallow: /events/new
+Disallow: /*edit
 `.trim();
 
   return new Response(robotsTxt, {

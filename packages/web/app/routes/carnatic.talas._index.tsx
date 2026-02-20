@@ -71,6 +71,7 @@ export const meta: MetaFunction = () => {
       content:
         'Indian classical talas, Carnatic talas, rhythmic cycles, classical music rhythm, tala music, time cycles',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/carnatic/talas' },
   ];
 };
 

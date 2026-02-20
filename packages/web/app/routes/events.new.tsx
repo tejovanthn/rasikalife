@@ -19,6 +19,7 @@ export const meta: MetaFunction = () => {
       name: 'description',
       content: 'Upload an event poster and let AI extract event details automatically.',
     },
+    { name: 'robots', content: 'noindex, nofollow' },
   ];
 };
 

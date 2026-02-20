@@ -1,5 +1,5 @@
 import { Merge } from 'lucide-react';
-import type { ActionFunction, LoaderFunction } from 'react-router';
+import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Form, data, redirect, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Button } from '~/components/ui/button';
@@ -7,6 +7,10 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { requireModerator } from '~/lib/auth.server';
+
+export const meta: MetaFunction = () => {
+  return [{ name: 'robots', content: 'noindex, nofollow' }];
+};
 
 type EntityType = 'artist' | 'composition' | 'raga' | 'tala' | 'event' | 'venue' | 'organiser';
 

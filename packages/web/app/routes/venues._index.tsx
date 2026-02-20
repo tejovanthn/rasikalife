@@ -26,6 +26,7 @@ export const meta: MetaFunction = () => {
       name: 'description',
       content: 'Browse venues hosting Indian classical music concerts and performances.',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/venues' },
   ];
 };
 

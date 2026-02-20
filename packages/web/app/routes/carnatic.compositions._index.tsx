@@ -63,6 +63,7 @@ export const meta: MetaFunction = () => {
       content:
         'Indian classical compositions, Carnatic music, Hindustani compositions, traditional music, classical works, musical compositions',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/carnatic/compositions' },
   ];
 };
 

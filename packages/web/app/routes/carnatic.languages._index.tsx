@@ -35,6 +35,7 @@ export const meta: MetaFunction = () => {
       content:
         'Indian classical languages, Carnatic music languages, Sanskrit compositions, Telugu kritis, Tamil songs, classical music lyrics',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/carnatic/languages' },
   ];
 };
 

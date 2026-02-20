@@ -18,6 +18,7 @@ export const meta: MetaFunction = () => {
       name: 'description',
       content: 'Browse organisations and individuals who present Indian classical music events.',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/organisers' },
   ];
 };
 

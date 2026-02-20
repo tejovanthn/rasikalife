@@ -234,6 +234,7 @@ export const meta: MetaFunction = () => {
       name: 'description',
       content: 'Review and verify extracted event details before publishing.',
     },
+    { name: 'robots', content: 'noindex, nofollow' },
   ];
 };
 

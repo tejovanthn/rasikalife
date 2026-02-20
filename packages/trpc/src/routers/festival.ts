@@ -29,4 +29,8 @@ export const festivalRouter = createTRPCRouter({
         .optional()
     )
     .query(({ input }) => Festival.listFestivals(input)),
+
+  listByMonth: publicProcedure
+    .input(z.object({ yearMonth: z.string().regex(/^\d{4}-\d{2}$/) }))
+    .query(({ input }) => Festival.listApprovedFestivalsByMonth(input.yearMonth)),
 });

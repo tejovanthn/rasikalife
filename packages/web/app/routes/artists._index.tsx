@@ -76,6 +76,7 @@ export const meta: MetaFunction = () => {
       content:
         'Indian classical music artists, Carnatic musicians, Hindustani artists, classical musicians, maestros, vocalists, instrumentalists',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/artists' },
   ];
 };
 

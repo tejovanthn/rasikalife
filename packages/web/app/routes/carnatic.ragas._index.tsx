@@ -76,6 +76,7 @@ export const meta: MetaFunction = () => {
       content:
         'Indian classical ragas, Carnatic ragas, Hindustani ragas, melodic modes, classical music scales, raga music',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/carnatic/ragas' },
   ];
 };
 

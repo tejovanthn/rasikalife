@@ -9,7 +9,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Check, Clock, Edit2, Loader2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useFetcher } from 'react-router';
-import type { ActionFunction, LoaderFunction } from 'react-router';
+import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Link, data, useLoaderData, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
@@ -25,6 +25,10 @@ interface EditWithDiff extends Edit {
   entityName: string;
   entitySlug: string;
 }
+
+export const meta: MetaFunction = () => {
+  return [{ name: 'robots', content: 'noindex, nofollow' }];
+};
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireUser(request, new URL(request.url).pathname);

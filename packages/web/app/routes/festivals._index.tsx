@@ -37,6 +37,7 @@ export const meta: MetaFunction = () => {
       content:
         'Discover Indian classical music and dance festivals. Browse upcoming festival schedules and performances.',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/festivals' },
   ];
 };
 

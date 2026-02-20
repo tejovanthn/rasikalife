@@ -82,6 +82,20 @@ export async function deleteFestival(id: string): Promise<void> {
   await FestivalEntity.delete({ id }).go();
 }
 
+export async function listApprovedFestivalsByMonth(yearMonth: string): Promise<Festival[]> {
+  const all: Festival[] = [];
+  let cursor: string | undefined;
+  do {
+    const result = await FestivalEntity.query
+      .byStatus({ status: 'approved' })
+      .begins({ startDate: yearMonth })
+      .go({ limit: 100, cursor });
+    all.push(...((result.data || []) as Festival[]));
+    cursor = result.cursor || undefined;
+  } while (cursor);
+  return all;
+}
+
 export async function listFestivals(params?: {
   limit?: number;
   nextToken?: string;

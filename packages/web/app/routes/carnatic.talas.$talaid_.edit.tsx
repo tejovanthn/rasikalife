@@ -2,7 +2,7 @@ import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
 import { ArrowLeft, Loader2, Pencil, Save } from 'lucide-react';
 import { useEffect } from 'react';
-import type { ActionFunction, LoaderFunction } from 'react-router';
+import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
@@ -13,6 +13,10 @@ import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { getUser } from '~/lib/auth.server';
 import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
+
+export const meta: MetaFunction = () => {
+  return [{ name: 'robots', content: 'noindex, nofollow' }];
+};
 
 export async function loader({
   request,

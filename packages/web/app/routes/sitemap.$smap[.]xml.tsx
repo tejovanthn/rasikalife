@@ -4,6 +4,7 @@ import {
   generateArtistUrl,
   generateCompositionUrl,
   generateEventUrl,
+  generateFestivalUrl,
   generateOrganiserUrl,
   generateRagaUrl,
   generateTalaUrl,
@@ -79,22 +80,35 @@ function parseSearchType(
 
 export const loader: LoaderFunction = async ({ params }) => {
   const baseUrl = 'https://rasika.life';
-  const typeParam = params.type || '';
+  const typeParam = params.smap || '';
+
+  const temporalTypes = {
+    events: {
+      fetchByMonth: (yearMonth: string) => client.event.listByMonth.query({ yearMonth }),
+      toUrl: (item: { title: string; id: string }) =>
+        `${baseUrl}${generateEventUrl(item.title, item.id)}`,
+    },
+    festivals: {
+      fetchByMonth: (yearMonth: string) => client.festival.listByMonth.query({ yearMonth }),
+      toUrl: (item: { name: string; id: string }) =>
+        `${baseUrl}${generateFestivalUrl(item.name, item.id)}`,
+    },
+  } as const;
 
   try {
-    // --- Events: events-{YYYY-MM} ---
-    if (typeParam.startsWith('events-')) {
-      const yearMonth = typeParam.replace('events-', '');
-      if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
-        throw new Response('Not Found', { status: 404 });
+    // --- Temporal sitemaps: events-{YYYY-MM} and festivals-{YYYY-MM} ---
+    for (const [prefix, { fetchByMonth, toUrl }] of Object.entries(temporalTypes)) {
+      if (typeParam.startsWith(`${prefix}-`)) {
+        const yearMonth = typeParam.slice(prefix.length + 1);
+        if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
+          throw new Response('Not Found', { status: 404 });
+        }
+        const items = await fetchByMonth(yearMonth);
+        const entries = items
+          .map(item => buildUrlEntry(toUrl(item as never), item.updatedAt, 'weekly', 0.7))
+          .join('\n');
+        return buildSitemapXml(entries);
       }
-      const events = await client.event.listByMonth.query({ yearMonth });
-      const entries = events
-        .map(e =>
-          buildUrlEntry(`${baseUrl}${generateEventUrl(e.title, e.id)}`, e.updatedAt, 'weekly', 0.7)
-        )
-        .join('\n');
-      return buildSitemapXml(entries);
     }
 
     // --- Search-index based sitemaps ---

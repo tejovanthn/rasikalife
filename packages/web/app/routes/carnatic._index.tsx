@@ -31,6 +31,7 @@ export const meta: MetaFunction = () => {
         'Explore the rich tradition of Carnatic music with detailed information about compositions, ragas, talas, and artists.',
     },
     { property: 'og:type', content: 'website' },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/carnatic' },
   ];
 };
 

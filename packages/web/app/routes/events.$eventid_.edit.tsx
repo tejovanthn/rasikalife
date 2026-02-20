@@ -1,6 +1,7 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
 import { ArrowLeft, Loader2, Pencil, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
@@ -11,6 +12,10 @@ import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { getUser } from '~/lib/auth.server';
 import { generateEventUrl, parseSlug } from '~/lib/url-slug';
+
+export const meta: MetaFunction = () => {
+  return [{ name: 'robots', content: 'noindex, nofollow' }];
+};
 
 interface ArtistEntry {
   id?: string;

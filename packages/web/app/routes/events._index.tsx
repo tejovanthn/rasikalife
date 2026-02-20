@@ -38,6 +38,7 @@ export const meta: MetaFunction = () => {
       content:
         'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
     },
+    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/events' },
   ];
 };
 
