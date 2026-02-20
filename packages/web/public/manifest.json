@@ -33,5 +33,21 @@
   "short_name": "Rasika",
   "start_url": "https://rasika.life",
   "scope": "https://rasika.life",
-  "id": "https://rasika.life"
+  "id": "https://rasika.life",
+  "share_target": {
+    "action": "/events/new/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["image/jpeg", "image/jpg", "image/png", "image/webp", "application/pdf"]
+        }
+      ]
+    }
+  }
 }

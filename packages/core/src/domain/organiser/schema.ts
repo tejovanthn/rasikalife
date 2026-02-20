@@ -3,9 +3,7 @@ import { z } from 'zod';
 export const CreateOrganiserSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
-  organisationType: z
-    .enum(['sabha', 'trust', 'ngo', 'temple', 'university', 'other'])
-    .optional(),
+  organisationType: z.enum(['sabha', 'trust', 'ngo', 'temple', 'university', 'other']).optional(),
   city: z.string().max(100).optional(),
   address: z
     .object({
