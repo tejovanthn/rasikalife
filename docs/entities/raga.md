@@ -1,0 +1,43 @@
+# Raga Entity
+
+ElectroDB Model: `raga` v1, service: `rasikalife`
+
+## Attributes
+
+| Attribute | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string | yes | Unique identifier |
+| `name` | string | yes | Raga name |
+| `deletedAt` | string | no | Soft delete timestamp |
+| `mergedIntoId` | string | no | Merge target ID |
+| `createdAt` | string | yes | Creation timestamp |
+| `updatedAt` | string | yes | Last update timestamp |
+
+## Indexes
+
+| Index | Type | GSI | Key |
+|-------|------|-----|-----|
+| `primary` | primary | - | pk: `RAGA#${id}`, sk: `#METADATA` |
+| `byName` | GSI | gsi1 | gsi1pk: `RAGA_NAME#${name}`, gsi1sk: `RAGA#${id}` |
+| `list` | GSI | gsi2 | gsi2pk: `RAGA_LIST`, gsi2sk: `${name}#${id}` |
+
+## Functions
+
+```typescript
+import { createRaga, getRaga, getRagaByName, updateRaga, deleteRaga, softDeleteRaga, listRagas, mergeRaga, getRagaMergeScore } from '@rasika/core';
+```
+
+### CRUD
+- `createRaga(input)` → Raga
+- `getRaga(id)` → Raga | null
+- `getRagaByName(name)` → Raga | null
+- `updateRaga(id, input)` → Raga
+- `deleteRaga(id)` → void
+- `softDeleteRaga(id)` → void
+
+### Listing
+- `listRagas(params?)` → `{items: Raga[], nextToken?, hasMore}`
+
+### Merging
+- `mergeRaga(loserId, canonicalId)` → void
+- `getRagaMergeScore(id)` → number

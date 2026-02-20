@@ -77,6 +77,18 @@ export const CompositionEntity = new Entity(
         type: 'string',
         required: false,
       },
+      compositionType: {
+        type: 'string',
+        required: false,
+      },
+      description: {
+        type: 'string',
+        required: false,
+      },
+      meaning: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

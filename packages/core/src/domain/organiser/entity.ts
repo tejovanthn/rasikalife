@@ -18,6 +18,56 @@ export const OrganiserEntity = new Entity(
         type: 'string',
         required: true,
       },
+      description: {
+        type: 'string',
+        required: false,
+      },
+      organisationType: {
+        type: 'string',
+        required: false,
+      },
+      city: {
+        type: 'string',
+        required: false,
+      },
+      address: {
+        type: 'map',
+        properties: {
+          street: { type: 'string', required: false },
+          city: { type: 'string', required: false },
+          state: { type: 'string', required: false },
+          postalCode: { type: 'string', required: false },
+          country: { type: 'string', required: false },
+        },
+        required: false,
+      },
+      website: {
+        type: 'string',
+        required: false,
+      },
+      phone: {
+        type: 'string',
+        required: false,
+      },
+      email: {
+        type: 'string',
+        required: false,
+      },
+      socialLinks: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            platform: { type: 'string', required: true },
+            url: { type: 'string', required: true },
+          },
+        },
+        required: false,
+      },
+      foundedYear: {
+        type: 'number',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,
@@ -75,6 +125,19 @@ export const OrganiserEntity = new Entity(
         },
         sk: {
           field: 'gsi2sk',
+          composite: ['name', 'id'],
+          template: '${name}#${id}',
+        },
+      },
+      byCity: {
+        index: 'gsi3',
+        pk: {
+          field: 'gsi3pk',
+          composite: ['city'],
+          template: 'ORGANISER_CITY#${city}',
+        },
+        sk: {
+          field: 'gsi3sk',
           composite: ['name', 'id'],
           template: '${name}#${id}',
         },

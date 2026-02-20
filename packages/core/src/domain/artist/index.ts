@@ -112,6 +112,9 @@ export async function getArtistMergeScore(id: string): Promise<number> {
   if (artist.data) {
     if (artist.data.title) score += 1;
     if (artist.data.gurus && artist.data.gurus.length > 0) score += 1;
+    if (artist.data.biography) score += 2;
+    if (artist.data.specialisations && artist.data.specialisations.length > 0) score += 1;
+    if (artist.data.birthYear) score += 1;
   }
   return score;
 }

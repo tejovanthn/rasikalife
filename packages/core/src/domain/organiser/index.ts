@@ -91,6 +91,15 @@ export async function listOrganisers(params?: {
   };
 }
 
+export async function listOrganisersByCity(city: string): Promise<Organiser[]> {
+  const result = await OrganiserEntity.query
+    .byCity({ city })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({ pages: 'all' });
+
+  return result.data || [];
+}
+
 export async function mergeOrganiser(loserId: string, canonicalId: string): Promise<void> {
   const canonical = await getOrganiser(canonicalId);
   if (!canonical) throw notFoundError('organiser', canonicalId);
@@ -106,11 +115,18 @@ export async function mergeOrganiser(loserId: string, canonicalId: string): Prom
 export async function getOrganiserMergeScore(id: string): Promise<number> {
   const { EventEntity } = await import('../event/entity');
 
-  const [eventResult] = await Promise.all([
+  const [eventResult, organiserResult] = await Promise.all([
     EventEntity.query.byOrganiser({ organiserId: id }).go({ attributes: ['id'] as never[] }),
+    OrganiserEntity.get({ id }).go(),
   ]);
 
-  return (eventResult.data || []).length;
+  let score = (eventResult.data || []).length;
+  if (organiserResult.data) {
+    if (organiserResult.data.description) score += 2;
+    if (organiserResult.data.city) score += 1;
+    if (organiserResult.data.address) score += 1;
+  }
+  return score;
 }
 
 export type { Organiser } from './entity';

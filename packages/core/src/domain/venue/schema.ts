@@ -12,6 +12,13 @@ export const CreateVenueSchema = z.object({
     })
     .optional(),
   mapLink: z.string().url().optional(),
+  description: z.string().max(5000).optional(),
+  venueType: z
+    .enum(['concert-hall', 'auditorium', 'temple', 'open-air', 'community-hall', 'other'])
+    .optional(),
+  capacity: z.number().int().min(1).optional(),
+  website: z.string().url().optional(),
+  phone: z.string().max(30).optional(),
 });
 
 export const UpdateVenueSchema = CreateVenueSchema.partial();

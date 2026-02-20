@@ -18,6 +18,46 @@ export const RagaEntity = new Entity(
         type: 'string',
         required: true,
       },
+      description: {
+        type: 'string',
+        required: false,
+      },
+      tradition: {
+        type: 'string',
+        required: false,
+      },
+      arohanam: {
+        type: 'string',
+        required: false,
+      },
+      avarohanam: {
+        type: 'string',
+        required: false,
+      },
+      rasa: {
+        type: 'string',
+        required: false,
+      },
+      timeOfDay: {
+        type: 'string',
+        required: false,
+      },
+      season: {
+        type: 'string',
+        required: false,
+      },
+      melaNumber: {
+        type: 'number',
+        required: false,
+      },
+      parentRaga: {
+        type: 'map',
+        properties: {
+          id: { type: 'string', required: true },
+          name: { type: 'string', required: true },
+        },
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

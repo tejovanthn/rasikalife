@@ -37,6 +37,26 @@ export const VenueEntity = new Entity(
         type: 'string',
         required: false,
       },
+      description: {
+        type: 'string',
+        required: false,
+      },
+      venueType: {
+        type: 'string',
+        required: false,
+      },
+      capacity: {
+        type: 'number',
+        required: false,
+      },
+      website: {
+        type: 'string',
+        required: false,
+      },
+      phone: {
+        type: 'string',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

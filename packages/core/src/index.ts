@@ -1,5 +1,7 @@
 // Domain exports
 export * as Artist from './domain/artist';
+export * as Award from './domain/award';
+export * as ArtistAward from './domain/artist-award';
 export * as Composition from './domain/composition';
 export * as Raga from './domain/raga';
 export * as Tala from './domain/tala';

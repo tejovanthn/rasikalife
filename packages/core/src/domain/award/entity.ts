@@ -2,10 +2,10 @@ import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
 
-export const ArtistEntity = new Entity(
+export const AwardEntity = new Entity(
   {
     model: {
-      entity: 'artist',
+      entity: 'award',
       version: '1',
       service: 'rasikalife',
     },
@@ -18,55 +18,19 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: true,
       },
-      title: {
+      description: {
         type: 'string',
         required: false,
       },
-      gurus: {
-        type: 'list',
-        items: {
-          type: 'map',
-          properties: {
-            id: { type: 'string', required: false },
-            name: { type: 'string', required: true },
-          },
-        },
-        required: false,
-        default: () => [],
-      },
-      biography: {
-        type: 'string',
-        required: false,
-      },
-      specialisations: {
-        type: 'list',
-        items: { type: 'string' },
-        required: false,
-      },
-      birthYear: {
+      rank: {
         type: 'number',
         required: false,
       },
-      birthPlace: {
+      issuingOrganisationId: {
         type: 'string',
         required: false,
       },
-      website: {
-        type: 'string',
-        required: false,
-      },
-      socialLinks: {
-        type: 'list',
-        items: {
-          type: 'map',
-          properties: {
-            platform: { type: 'string', required: true },
-            url: { type: 'string', required: true },
-          },
-        },
-        required: false,
-      },
-      activeYears: {
+      issuingOrganisationName: {
         type: 'string',
         required: false,
       },
@@ -97,7 +61,7 @@ export const ArtistEntity = new Entity(
         pk: {
           field: 'pk',
           composite: ['id'],
-          template: 'ARTIST#${id}',
+          template: 'AWARD#${id}',
         },
         sk: {
           field: 'sk',
@@ -110,23 +74,23 @@ export const ArtistEntity = new Entity(
         pk: {
           field: 'gsi1pk',
           composite: ['name'],
-          template: 'ARTIST_NAME#${name}',
+          template: 'AWARD_NAME#${name}',
         },
         sk: {
           field: 'gsi1sk',
           composite: ['id'],
-          template: 'ARTIST#${id}',
+          template: 'AWARD#${id}',
         },
       },
       list: {
-        index: 'gsi2',
+        index: 'gsi6',
         pk: {
-          field: 'gsi2pk',
+          field: 'gsi6pk',
           composite: [],
-          template: 'ARTIST_LIST',
+          template: 'AWARD_LIST',
         },
         sk: {
-          field: 'gsi2sk',
+          field: 'gsi6sk',
           composite: ['name', 'id'],
           template: '${name}#${id}',
         },
@@ -136,4 +100,4 @@ export const ArtistEntity = new Entity(
   { client: dynamoClient, table: process.env.DYNAMODB_TABLE || 'RasikaLifeTable' }
 );
 
-export type Artist = EntityItem<typeof ArtistEntity>;
+export type Award = EntityItem<typeof AwardEntity>;

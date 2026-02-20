@@ -22,6 +22,11 @@ export const CreateCompositionSchema = z.object({
   ragaIds: z.array(z.string()).optional(),
   talaIds: z.array(z.string()).optional(),
   sourceAttribution: z.string().optional(),
+  compositionType: z
+    .enum(['kriti', 'varnam', 'tillana', 'javali', 'padam', 'keertanam', 'other'])
+    .optional(),
+  description: z.string().max(5000).optional(),
+  meaning: z.string().max(5000).optional(),
 });
 
 export const UpdateCompositionSchema = z.object({
@@ -46,4 +51,9 @@ export const UpdateCompositionSchema = z.object({
     .optional(),
   ragaIds: z.array(z.string()).optional(),
   talaIds: z.array(z.string()).optional(),
+  compositionType: z
+    .enum(['kriti', 'varnam', 'tillana', 'javali', 'padam', 'keertanam', 'other'])
+    .optional(),
+  description: z.string().max(5000).optional(),
+  meaning: z.string().max(5000).optional(),
 });

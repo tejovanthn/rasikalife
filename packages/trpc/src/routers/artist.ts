@@ -1,6 +1,6 @@
-import { Artist } from '@rasika/core';
+import { Artist, ArtistAward } from '@rasika/core';
 import { z } from 'zod';
-import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const artistRouter = createTRPCRouter({
   get: publicProcedure
@@ -45,4 +45,16 @@ export const artistRouter = createTRPCRouter({
         suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
       };
     }),
+
+  addAward: editorProcedure
+    .input(ArtistAward.AddArtistAwardSchema)
+    .mutation(({ input }) => ArtistAward.addArtistAward(input)),
+
+  removeAward: editorProcedure
+    .input(z.object({ artistId: z.string().min(1), awardId: z.string().min(1) }))
+    .mutation(({ input }) => ArtistAward.removeArtistAward(input.artistId, input.awardId)),
+
+  listAwards: publicProcedure
+    .input(z.object({ artistId: z.string().min(1) }))
+    .query(({ input }) => ArtistAward.getArtistAwards(input.artistId)),
 });

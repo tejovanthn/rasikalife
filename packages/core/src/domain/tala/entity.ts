@@ -18,6 +18,47 @@ export const TalaEntity = new Entity(
         type: 'string',
         required: true,
       },
+      description: {
+        type: 'string',
+        required: false,
+      },
+      tradition: {
+        type: 'string',
+        required: false,
+      },
+      aksharas: {
+        type: 'number',
+        required: false,
+      },
+      angaStructure: {
+        type: 'map',
+        properties: {
+          jati: { type: 'string', required: false },
+          angas: {
+            type: 'list',
+            items: {
+              type: 'map',
+              properties: {
+                type: { type: 'string', required: false },
+              },
+            },
+            required: false,
+          },
+          vibhags: {
+            type: 'list',
+            items: {
+              type: 'map',
+              properties: {
+                matras: { type: 'number', required: false },
+                isKhali: { type: 'boolean', required: false },
+                label: { type: 'string', required: false },
+              },
+            },
+            required: false,
+          },
+        },
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

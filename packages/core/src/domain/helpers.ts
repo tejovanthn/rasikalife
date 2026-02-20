@@ -2,6 +2,7 @@ import { ApplicationError, type ErrorCode } from '../constants';
 
 export type EntityType =
   | 'artist'
+  | 'award'
   | 'raga'
   | 'tala'
   | 'composition'
