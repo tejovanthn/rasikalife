@@ -8,6 +8,15 @@ ElectroDB Model: `organiser` v1, service: `rasikalife`
 |-----------|------|----------|-------------|
 | `id` | string | yes | Unique identifier |
 | `name` | string | yes | Organiser name |
+| `description` | string | no | Description |
+| `organisationType` | string | no | Type of organisation |
+| `city` | string | no | City |
+| `address` | map | no | `{street, city, state, postalCode, country}` |
+| `website` | string | no | Website URL |
+| `phone` | string | no | Phone number |
+| `email` | string | no | Email address |
+| `socialLinks` | list\<map\> | no | `{platform, url}[]` |
+| `foundedYear` | number | no | Year founded |
 | `deletedAt` | string | no | Soft delete timestamp |
 | `mergedIntoId` | string | no | Merge target ID |
 | `createdAt` | string | yes | Creation timestamp |
@@ -20,6 +29,7 @@ ElectroDB Model: `organiser` v1, service: `rasikalife`
 | `primary` | primary | - | pk: `ORGANISER#${id}`, sk: `#METADATA` |
 | `byName` | GSI | gsi1 | gsi1pk: `ORGANISER_NAME#${name}`, gsi1sk: `ORGANISER#${id}` |
 | `list` | GSI | gsi2 | gsi2pk: `ORGANISER_LIST`, gsi2sk: `${name}#${id}` |
+| `byCity` | GSI | gsi3 | gsi3pk: `ORGANISER_CITY#${city}`, gsi3sk: `${name}#${id}` |
 
 ## Functions
 

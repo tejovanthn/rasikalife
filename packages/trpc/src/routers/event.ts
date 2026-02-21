@@ -358,4 +358,40 @@ export const eventRouter = createTRPCRouter({
         suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
       };
     }),
+
+  listDraftEvents: moderatorProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).optional(),
+          nextToken: z.string().optional(),
+        })
+        .optional()
+    )
+    .query(({ input }) => Event.listDraftEvents(input)),
+
+  forceSubmitDraft: moderatorProcedure
+    .input(z.object({ eventId: z.string().min(1) }))
+    .mutation(({ input }) => Event.forceSubmitEvent(input.eventId)),
+
+  deleteDraftEvent: moderatorProcedure
+    .input(z.object({ eventId: z.string().min(1) }))
+    .mutation(({ input }) => Event.softDeleteEvent(input.eventId)),
+
+  reExtractDraft: moderatorProcedure
+    .input(z.object({ eventId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const existing = await Event.getEvent(input.eventId);
+      if (!existing || existing.status !== 'draft') throw new Error('Draft event not found');
+      if (!existing.posterUrl) throw new Error('No poster URL on this draft');
+
+      await Event.softDeleteEvent(input.eventId);
+
+      const { eventIds } = await Event.extractAndCreateDrafts(
+        existing.posterUploadId ?? existing.id,
+        existing.posterUrl,
+        existing.createdBy
+      );
+      return { eventIds };
+    }),
 });

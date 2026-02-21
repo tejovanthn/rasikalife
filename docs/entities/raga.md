@@ -8,6 +8,15 @@ ElectroDB Model: `raga` v1, service: `rasikalife`
 |-----------|------|----------|-------------|
 | `id` | string | yes | Unique identifier |
 | `name` | string | yes | Raga name |
+| `description` | string | no | Description |
+| `tradition` | string | no | Musical tradition |
+| `arohanam` | string | no | Ascending scale |
+| `avarohanam` | string | no | Descending scale |
+| `rasa` | string | no | Emotional mood |
+| `timeOfDay` | string | no | Traditional time of day |
+| `season` | string | no | Season |
+| `melaNumber` | number | no | Melakarta number (1-72) |
+| `parentRaga` | map | no | `{id, name}` parent raga |
 | `deletedAt` | string | no | Soft delete timestamp |
 | `mergedIntoId` | string | no | Merge target ID |
 | `createdAt` | string | yes | Creation timestamp |

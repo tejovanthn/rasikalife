@@ -11,6 +11,11 @@ ElectroDB Model: `venue` v1, service: `rasikalife`
 | `address` | map | no | `{street, city, state, postalCode, country}` |
 | `city` | string | no | City (denormalized) |
 | `mapLink` | string | no | Google Maps link |
+| `description` | string | no | Description |
+| `venueType` | string | no | Type of venue |
+| `capacity` | number | no | Seating capacity |
+| `website` | string | no | Website URL |
+| `phone` | string | no | Phone number |
 | `deletedAt` | string | no | Soft delete timestamp |
 | `mergedIntoId` | string | no | Merge target ID |
 | `createdAt` | string | yes | Creation timestamp |

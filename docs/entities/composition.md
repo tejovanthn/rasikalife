@@ -15,6 +15,9 @@ ElectroDB Model: `composition` v1, service: `rasikalife`
 | `ragas` | list\<map\> | no | `{id, name}[]` |
 | `talas` | list\<map\> | no | `{id, name}[]` |
 | `sourceAttribution` | string | no | Source attribution |
+| `compositionType` | string | no | Type of composition |
+| `description` | string | no | Description |
+| `meaning` | string | no | Meaning/translation |
 | `version` | number | yes | Version number |
 | `lastEditedBy` | string | no | Last editor ID |
 | `deletedAt` | string | no | Soft delete timestamp |

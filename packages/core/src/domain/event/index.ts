@@ -202,6 +202,38 @@ export async function listSubmittedEvents(params?: {
   };
 }
 
+export async function listDraftEvents(params?: {
+  limit?: number;
+  nextToken?: string;
+}): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
+  const limit = params?.limit || 20;
+  const result = await EventEntity.query
+    .byStatus({ status: 'draft' })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .where((attr, op) => op.exists(attr.posterUrl))
+    .go({ limit, cursor: params?.nextToken });
+
+  return {
+    items: (result.data || []) as Event[],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
+export async function forceSubmitEvent(id: string): Promise<Event> {
+  const existing = await getEvent(id);
+  if (!existing) throw notFoundError('event', id);
+  if (existing.status !== 'draft') {
+    throw createFailedError('event', `Event ${id} is not a draft`);
+  }
+
+  const result = await EventEntity.update({ id })
+    .set({ status: 'submitted', submittedAt: new Date().toISOString() })
+    .go({ response: 'all_new' });
+
+  return result.data as Event;
+}
+
 export async function getEvent(id: string): Promise<Event | null> {
   const result = await EventEntity.get({ id }).go();
 

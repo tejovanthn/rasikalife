@@ -8,6 +8,10 @@ ElectroDB Model: `tala` v1, service: `rasikalife`
 |-----------|------|----------|-------------|
 | `id` | string | yes | Unique identifier |
 | `name` | string | yes | Tala name |
+| `description` | string | no | Description |
+| `tradition` | string | no | Musical tradition |
+| `aksharas` | number | no | Number of beats |
+| `angaStructure` | map | no | `{jati, angas: {type}[], vibhags: {matras, isKhali, label}[]}` |
 | `deletedAt` | string | no | Soft delete timestamp |
 | `mergedIntoId` | string | no | Merge target ID |
 | `createdAt` | string | yes | Creation timestamp |

@@ -10,6 +10,13 @@ ElectroDB Model: `artist` v1, service: `rasikalife`
 | `name` | string | yes | Artist name |
 | `title` | string | no | Honorific (e.g., "Sri", "Smt.") |
 | `gurus` | list\<map\> | no | Teachers `{id, name}[]` |
+| `biography` | string | no | Artist biography |
+| `specialisations` | list\<string\> | no | Specializations |
+| `birthYear` | number | no | Birth year |
+| `birthPlace` | string | no | Birth place |
+| `website` | string | no | Website URL |
+| `socialLinks` | list\<map\> | no | `{platform, url}[]` |
+| `activeYears` | string | no | Active years |
 | `deletedAt` | string | no | Soft delete timestamp |
 | `mergedIntoId` | string | no | Merge target ID |
 | `createdAt` | string | yes | Creation timestamp |

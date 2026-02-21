@@ -140,6 +140,12 @@ export const Header = () => {
                           Event Queue
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/draft-events" className="flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Draft Posters
+                        </Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
@@ -273,6 +279,14 @@ export const Header = () => {
                             >
                               <User className="h-4 w-4" />
                               Event Queue
+                            </Link>
+                            <Link
+                              to="/moderator/draft-events"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <User className="h-4 w-4" />
+                              Draft Posters
                             </Link>
                           </>
                         )}
