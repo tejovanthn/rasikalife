@@ -10,7 +10,9 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -18,8 +20,8 @@
     "@openauthjs/openauth": "^0.4.3",
     "@uidotdev/usehooks": "^2.4.1",
     "arctic": "^3.7.0",
-    "hono": "^4.11.10",
-    "sst": "^3.18.10"
+    "hono": "^4.12.1",
+    "sst": "^3.19.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
