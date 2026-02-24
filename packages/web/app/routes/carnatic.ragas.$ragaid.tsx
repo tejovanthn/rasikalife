@@ -10,7 +10,8 @@ import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, generateSlug } from '~/lib/url-slug';
-import { formatDate } from '~/lib/utils';
+import { MELAKARTA_NAMES } from '~/lib/carnatic';
+import { capitalize } from '~/lib/utils';
 
 export async function loader({
   params,
@@ -49,6 +50,11 @@ export async function loader({
       limit: 6,
     });
 
+    // Fetch similar ragas from the same melakarta
+    const similarRagas = raga.melaNumber
+      ? await client.raga.byMela.query({ melaNumber: raga.melaNumber, excludeId: raga.id })
+      : [];
+
     // Check if user has an active edit for this raga
     const user = await getUser(request);
     let activeEdit: Edit | null = null;
@@ -63,6 +69,7 @@ export async function loader({
       raga,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
+      similarRagas: similarRagas.slice(0, 6),
       activeEdit,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
@@ -125,16 +132,40 @@ export const meta: MetaFunction = ({ data }) => {
   ];
 };
 
+function RagaGrid({ ragas }: { ragas: RagaType[] }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+      {ragas.map(r => (
+        <Link
+          key={r.id}
+          to={generateRagaUrl(r.name, r.id)}
+          className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors"
+        >
+          <p className="font-medium">{r.name}</p>
+          {(r.arohanam || r.avarohanam) && (
+            <div className="text-xs text-muted-foreground font-mono mt-1 space-y-0.5">
+              {r.arohanam && <p className="truncate">{r.arohanam}</p>}
+              {r.avarohanam && <p className="truncate">{r.avarohanam}</p>}
+            </div>
+          )}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 export default function RagaDetails() {
   const location = useLocation();
 
-  const { raga, compositions, hasMoreCompositions, activeEdit, isModerator } = useLoaderData<{
-    raga: RagaType;
-    compositions: CompositionWithRelations[];
-    hasMoreCompositions: boolean;
-    activeEdit: Edit | null;
-    isModerator: boolean;
-  }>();
+  const { raga, compositions, hasMoreCompositions, similarRagas, activeEdit, isModerator } =
+    useLoaderData<{
+      raga: RagaType;
+      compositions: CompositionWithRelations[];
+      hasMoreCompositions: boolean;
+      similarRagas: RagaType[];
+      activeEdit: Edit | null;
+      isModerator: boolean;
+    }>();
 
   // Check if we're on a nested route (like /compositions)
   const isNestedRoute = location.pathname.includes('/compositions');
@@ -170,15 +201,94 @@ export default function RagaDetails() {
         requestDeletionUrl={`/moderator/request-deletion?entityType=raga&entityId=${raga.id}`}
         mergeUrl={isModerator ? `/moderator/merge?entityType=raga&entityId=${raga.id}` : undefined}
       />
-      <section className="mb-8 p-6 bg-muted rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">About</h2>
-        <div className="space-y-2 text-sm">
-          <p>
-            <strong>Name:</strong> {raga.name}
-          </p>
-          <p>
-            <strong>Added:</strong> {formatDate(raga.createdAt)}
-          </p>
+      <section className="mb-8 space-y-6">
+        {raga.description && (
+          <p className="text-muted-foreground leading-relaxed">{raga.description}</p>
+        )}
+
+        {/* Scale */}
+        {(raga.arohanam || raga.avarohanam) && (
+          <div className="p-5 bg-muted rounded-lg space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Scale
+            </h2>
+            <div className="grid gap-2 text-sm">
+              {raga.arohanam && (
+                <div className="flex gap-3">
+                  <span className="w-28 shrink-0 text-muted-foreground">Arohanam</span>
+                  <span className="font-mono">{raga.arohanam}</span>
+                </div>
+              )}
+              {raga.avarohanam && (
+                <div className="flex gap-3">
+                  <span className="w-28 shrink-0 text-muted-foreground">Avarohanam</span>
+                  <span className="font-mono">{raga.avarohanam}</span>
+                </div>
+              )}
+              {raga.alternateScales && raga.alternateScales.length > 0 && (
+                <div className="flex gap-3">
+                  <span className="w-28 shrink-0 text-muted-foreground">Alternate</span>
+                  <div className="flex flex-wrap gap-1">
+                    {raga.alternateScales.map(scale => (
+                      <span
+                        key={scale}
+                        className="font-mono text-xs px-2 py-0.5 bg-background rounded border"
+                      >
+                        {scale}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Metadata grid */}
+        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
+          {raga.tradition && (
+            <div>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Tradition</dt>
+              <dd className="mt-0.5 font-medium">{capitalize(raga.tradition)}</dd>
+            </div>
+          )}
+          {raga.melaNumber && (
+            <div>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Mela</dt>
+              <dd className="mt-0.5 font-medium">{raga.melaNumber}</dd>
+            </div>
+          )}
+          {raga.parentRaga && (
+            <div>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Parent Raga</dt>
+              <dd className="mt-0.5 font-medium">
+                <Link
+                  to={generateRagaUrl(raga.parentRaga.name, raga.parentRaga.id)}
+                  className="underline underline-offset-2 hover:text-foreground"
+                >
+                  {raga.parentRaga.name}
+                </Link>
+              </dd>
+            </div>
+          )}
+          {raga.rasa && (
+            <div>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Rasa</dt>
+              <dd className="mt-0.5 font-medium">{raga.rasa}</dd>
+            </div>
+          )}
+          {raga.timeOfDay && (
+            <div>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Time of Day</dt>
+              <dd className="mt-0.5 font-medium">{capitalize(raga.timeOfDay)}</dd>
+            </div>
+          )}
+          {raga.season && (
+            <div>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Season</dt>
+              <dd className="mt-0.5 font-medium">{raga.season}</dd>
+            </div>
+          )}
         </div>
       </section>
       <EntityCompositions
@@ -188,6 +298,21 @@ export default function RagaDetails() {
         showViewMore={hasMoreCompositions}
         customHeading={`Compositions in ${raga.name} raga`}
       />
+      {/* Similar ragas from the same melakarta */}
+      {similarRagas.length > 0 && raga.melaNumber && (
+        <section className="mt-8 pt-8 border-t">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold">
+              Janya ragas of {MELAKARTA_NAMES[raga.melaNumber]}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Other ragas derived from the same parent melakarta (mela {raga.melaNumber})
+            </p>
+          </div>
+          <RagaGrid ragas={similarRagas} />
+        </section>
+      )}
+
       {/* Cross-linking section */}
       <section className="mt-8 pt-8 border-t">
         <h2 className="text-xl font-semibold mb-4">Explore Related Content</h2>

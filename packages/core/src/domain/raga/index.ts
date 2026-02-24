@@ -84,6 +84,18 @@ export async function listRagas(params?: { limit?: number; nextToken?: string })
   };
 }
 
+export async function getRagasByMelaNumber(
+  melaNumber: number,
+  excludeId?: string
+): Promise<Raga[]> {
+  const result = await RagaEntity.query
+    .list({})
+    .where((attr, op) => op.eq(attr.melaNumber, melaNumber))
+    .go({ limit: 50 });
+
+  return (result.data || []).filter(r => !r.deletedAt && r.id !== excludeId) as Raga[];
+}
+
 export async function mergeRaga(loserId: string, canonicalId: string): Promise<void> {
   const canonical = await getRaga(canonicalId);
   if (!canonical) throw notFoundError('raga', canonicalId);

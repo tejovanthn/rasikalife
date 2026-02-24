@@ -52,6 +52,12 @@ export const extractIdFromSlug = (slug: string): string | null => {
   return parts.pop() || null;
 };
 
+// Utility for capitalizing the first letter of a string
+export const capitalize = (str: string): string => {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 // Utility for formatting text
 export const truncateText = (text: string, maxLength: number): string => {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
