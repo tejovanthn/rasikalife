@@ -52,4 +52,24 @@ program
     });
   });
 
+program
+  .command('enrich-ragas')
+  .description('Enrich raga entities from data/ragas.json')
+  .option('-n, --dry-run', 'Preview changes without writing to the database')
+  .action(async (opts: { dryRun?: boolean }) => {
+    setup();
+    const { enrichRagas } = await import('./enrichRagas.js');
+    await enrichRagas({ dryRun: opts.dryRun });
+  });
+
+program
+  .command('dedup-ragas')
+  .description('Delete duplicate ragas (same name + same data), keeping the oldest')
+  .option('-n, --dry-run', 'Preview deletions without writing to the database')
+  .action(async (opts: { dryRun?: boolean }) => {
+    setup();
+    const { dedupRagas } = await import('./dedupRagas.js');
+    await dedupRagas({ dryRun: opts.dryRun });
+  });
+
 program.parseAsync(process.argv);

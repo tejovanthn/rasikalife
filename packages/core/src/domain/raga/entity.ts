@@ -34,6 +34,11 @@ export const RagaEntity = new Entity(
         type: 'string',
         required: false,
       },
+      alternateScales: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
       rasa: {
         type: 'string',
         required: false,
