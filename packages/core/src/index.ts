@@ -56,5 +56,8 @@ export * from './types/entities';
 // Utility exports
 export * from './types';
 
+// Transliteration utilities
+export * as Transliteration from './utils/transliteration';
+
 // Error exports
 export * from './constants';

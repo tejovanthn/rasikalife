@@ -137,3 +137,6 @@ export const ArtistEntity = new Entity(
 );
 
 export type Artist = EntityItem<typeof ArtistEntity>;
+
+// Alias documenting that name is stored in ITRANS
+export type ItransText = string;

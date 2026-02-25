@@ -58,3 +58,5 @@ export const getTimestampFromId = (id: string): Date => {
   const timestamp = Number.parseInt(id.substring(0, 4), 36);
   return new Date(timestamp * 1000);
 };
+
+export * from './transliteration';

@@ -1,5 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils';
 import { Pencil } from 'lucide-react';
 import { type LinksFunction, type MetaFunction, data, redirect } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
@@ -109,8 +110,21 @@ export async function loader({
       });
     }
 
+    const displayComposition = {
+      ...composition,
+      title: fromItrans(composition.title),
+      composer: { ...composition.composer, name: fromItrans(composition.composer.name) },
+      ragas: composition.ragas.map(r => ({ ...r, name: fromItrans(r.name) })),
+      talas: composition.talas.map(t => ({ ...t, name: fromItrans(t.name) })),
+      lyricsV1: composition.lyricsV1.map(l => ({
+        ...l,
+        text: fromItrans(l.text),
+        ragaName: l.ragaName ? fromItrans(l.ragaName) : l.ragaName,
+      })),
+    };
+
     return data({
-      composition,
+      composition: displayComposition,
       relatedCompositionsByComposer,
       hasMoreCompositionsByComposer,
       relatedCompositionsByRaga,

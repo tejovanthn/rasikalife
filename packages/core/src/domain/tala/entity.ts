@@ -127,3 +127,6 @@ export const TalaEntity = new Entity(
 
 // Type inference from ElectroDB entity - automatically inferred from entity configuration
 export type Tala = EntityItem<typeof TalaEntity>;
+
+// Alias documenting that name is stored in ITRANS
+export type ItransText = string;

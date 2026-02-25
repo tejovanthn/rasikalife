@@ -1,6 +1,7 @@
 import type { Composition } from '@rasika/core/domain/composition/entity';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { Tala } from '@rasika/core/domain/tala/entity';
+import { fromItrans } from '@rasika/core/utils';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -60,8 +61,13 @@ export async function loader({
       });
     }
 
+    const displayTala = {
+      ...tala,
+      name: fromItrans(tala.name),
+    };
+
     return data({
-      tala,
+      tala: displayTala,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       activeEdit,

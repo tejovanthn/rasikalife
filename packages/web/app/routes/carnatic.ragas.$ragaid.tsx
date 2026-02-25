@@ -1,5 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -8,9 +9,9 @@ import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
+import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, generateSlug } from '~/lib/url-slug';
-import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { capitalize } from '~/lib/utils';
 
 export async function loader({
@@ -65,11 +66,29 @@ export async function loader({
       });
     }
 
+    const displayRaga = {
+      ...raga,
+      name: fromItrans(raga.name),
+      arohanam: raga.arohanam ? fromItrans(raga.arohanam) : raga.arohanam,
+      avarohanam: raga.avarohanam ? fromItrans(raga.avarohanam) : raga.avarohanam,
+      alternateScales: raga.alternateScales
+        ? raga.alternateScales.map(s => fromItrans(s))
+        : raga.alternateScales,
+      parentRaga: raga.parentRaga
+        ? { ...raga.parentRaga, name: fromItrans(raga.parentRaga.name) }
+        : raga.parentRaga,
+    };
+
     return data({
-      raga,
+      raga: displayRaga,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
-      similarRagas: similarRagas.slice(0, 6),
+      similarRagas: similarRagas.slice(0, 6).map(r => ({
+        ...r,
+        name: fromItrans(r.name),
+        arohanam: r.arohanam ? fromItrans(r.arohanam) : r.arohanam,
+        avarohanam: r.avarohanam ? fromItrans(r.avarohanam) : r.avarohanam,
+      })),
       activeEdit,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });

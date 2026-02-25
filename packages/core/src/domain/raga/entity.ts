@@ -131,3 +131,6 @@ export const RagaEntity = new Entity(
 
 // Type inference from ElectroDB entity - automatically inferred from entity configuration
 export type Raga = EntityItem<typeof RagaEntity>;
+
+// Alias documenting that name, arohanam, avarohanam, alternateScales[] are stored in ITRANS
+export type ItransText = string;

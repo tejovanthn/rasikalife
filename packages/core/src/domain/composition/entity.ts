@@ -192,3 +192,6 @@ export const CompositionEntity = new Entity(
 
 // Type inference from ElectroDB entity - automatically inferred from entity configuration
 export type Composition = EntityItem<typeof CompositionEntity>;
+
+// Alias documenting that title and lyricsV1[].text are stored in ITRANS
+export type ItransText = string;

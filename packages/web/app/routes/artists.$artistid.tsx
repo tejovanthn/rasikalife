@@ -1,5 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils';
 import { Calendar } from 'lucide-react';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
@@ -69,8 +70,13 @@ export async function loader({
       });
     }
 
+    const displayArtist = {
+      ...artist,
+      name: fromItrans(artist.name),
+    };
+
     return data({
-      artist,
+      artist: displayArtist,
       compositions: result.items,
       hasMoreCompositions: result.hasMore,
       artistEvents: eventsResult.items,

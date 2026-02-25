@@ -1,4 +1,5 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -24,7 +25,11 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
 
       return data({
-        compositions: searchResults.compositions,
+        compositions: searchResults.compositions.map(c => ({
+          ...c,
+          title: fromItrans(c.title),
+          composer: { ...c.composer, name: fromItrans(c.composer.name) },
+        })),
         nextToken: null,
         hasMore: searchResults.compositions.length >= itemsPerPage,
         prevToken: null,
@@ -38,7 +43,11 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      compositions: results.items || [],
+      compositions: (results.items || []).map(c => ({
+        ...c,
+        title: fromItrans(c.title),
+        composer: { ...c.composer, name: fromItrans(c.composer.name) },
+      })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

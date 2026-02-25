@@ -1,4 +1,5 @@
 import type { TalaType } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -26,7 +27,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'tala')
           .map(item => ({
             id: item.id,
-            name: item.name,
+            name: fromItrans(item.name),
             aksharas: 0,
             description: '',
             viewCount: 0,
@@ -46,7 +47,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      talas: (results.items || []).slice(0, 12),
+      talas: (results.items || []).slice(0, 12).map(t => ({ ...t, name: fromItrans(t.name) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

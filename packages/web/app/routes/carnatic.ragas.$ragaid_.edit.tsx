@@ -130,7 +130,8 @@ export async function action({
   const proposedValues: Record<string, unknown> = {};
 
   if (name !== raga.name) proposedValues.name = name;
-  if (description !== (raga.description ?? '')) proposedValues.description = description || undefined;
+  if (description !== (raga.description ?? ''))
+    proposedValues.description = description || undefined;
   if (tradition !== (raga.tradition ?? '')) proposedValues.tradition = tradition || undefined;
   if (arohanam !== (raga.arohanam ?? '')) proposedValues.arohanam = arohanam || undefined;
   if (avarohanam !== (raga.avarohanam ?? '')) proposedValues.avarohanam = avarohanam || undefined;
@@ -140,7 +141,9 @@ export async function action({
     .map(s => s.trim())
     .filter(Boolean);
   const currentAlternateScales = raga.alternateScales ?? [];
-  if (JSON.stringify(alternateScales.sort()) !== JSON.stringify([...currentAlternateScales].sort())) {
+  if (
+    JSON.stringify(alternateScales.sort()) !== JSON.stringify([...currentAlternateScales].sort())
+  ) {
     proposedValues.alternateScales = alternateScales.length > 0 ? alternateScales : undefined;
   }
 
@@ -224,9 +227,8 @@ export default function EditRaga() {
     season: (proposed.season as string | undefined) ?? raga.season ?? '',
     melaNumber:
       (proposed.melaNumber as number | undefined) ?? raga.melaNumber ?? ('' as number | ''),
-    parentRaga: (proposed.parentRaga as { id: string; name: string } | undefined) ??
-      raga.parentRaga ??
-      null,
+    parentRaga:
+      (proposed.parentRaga as { id: string; name: string } | undefined) ?? raga.parentRaga ?? null,
     userNote: activeEdit?.userNote ?? '',
   };
 

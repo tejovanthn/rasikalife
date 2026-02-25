@@ -127,29 +127,41 @@ export async function enrichRagas(opts: { dryRun?: boolean } = {}) {
       if (parentDoc) {
         update.parentRaga = { id: parentDoc.id, name: entry.parentRaga };
       } else if (ragasJsonByName.has(entry.parentRaga.toLowerCase())) {
-        warnings.push(`parentRaga "${entry.parentRaga}" will be created — ID resolved at apply time`);
+        warnings.push(
+          `parentRaga "${entry.parentRaga}" will be created — ID resolved at apply time`
+        );
       } else {
         warnings.push(`parentRaga not found: "${entry.parentRaga}"`);
       }
     }
 
     if (Object.keys(update).length > 0) {
-      plannedUpdates.push({ ragaId: doc.id, jsonName: entry.name, dbName: doc.name, update, warnings });
+      plannedUpdates.push({
+        ragaId: doc.id,
+        jsonName: entry.name,
+        dbName: doc.name,
+        update,
+        warnings,
+      });
     }
   }
 
   // --- Preview ---
-  console.log(`\n📝 Preview: ${plannedCreates.length} to create, ${plannedUpdates.length} to update\n`);
+  console.log(
+    `\n📝 Preview: ${plannedCreates.length} to create, ${plannedUpdates.length} to update\n`
+  );
 
   if (plannedCreates.length > 0) {
-    console.log(`✨ Creates (${plannedCreates.length}) — ragas existing before today will be skipped at apply time:`);
+    console.log(
+      `✨ Creates (${plannedCreates.length}) — ragas existing before today will be skipped at apply time:`
+    );
     for (const { entry } of plannedCreates) {
       const fields = buildEnrichmentFields(entry);
       console.log(`  ${entry.name}`);
       if (entry.parentRaga) console.log(`    parentRaga: ${entry.parentRaga}`);
       for (const [field, value] of Object.entries(fields)) {
-        const display =
-          Array.isArray(value) ? `[${(value as string[]).join(' | ')}]`
+        const display = Array.isArray(value)
+          ? `[${(value as string[]).join(' | ')}]`
           : String(value);
         console.log(`    ${field}: ${display}`);
       }
@@ -162,10 +174,11 @@ export async function enrichRagas(opts: { dryRun?: boolean } = {}) {
       const label = jsonName === dbName ? jsonName : `${jsonName} → ${dbName}`;
       console.log(`  ${label}`);
       for (const [field, value] of Object.entries(update)) {
-        const display =
-          Array.isArray(value) ? `[${(value as string[]).join(' | ')}]`
-          : typeof value === 'object' ? JSON.stringify(value)
-          : String(value);
+        const display = Array.isArray(value)
+          ? `[${(value as string[]).join(' | ')}]`
+          : typeof value === 'object'
+            ? JSON.stringify(value)
+            : String(value);
         console.log(`    ${field}: ${display}`);
       }
       for (const w of warnings) {

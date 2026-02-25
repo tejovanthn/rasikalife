@@ -31,7 +31,9 @@ export const ragaRouter = createTRPCRouter({
     .mutation(({ input }) => Raga.deleteRaga(input.id)),
 
   byMela: publicProcedure
-    .input(z.object({ melaNumber: z.number().int().min(1).max(72), excludeId: z.string().optional() }))
+    .input(
+      z.object({ melaNumber: z.number().int().min(1).max(72), excludeId: z.string().optional() })
+    )
     .query(({ input }) => Raga.getRagasByMelaNumber(input.melaNumber, input.excludeId)),
 
   getByName: publicProcedure
