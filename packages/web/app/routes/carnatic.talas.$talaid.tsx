@@ -13,6 +13,7 @@ import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateSlug, generateTalaUrl, parseSlug } from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
   params,
@@ -61,9 +62,10 @@ export async function loader({
       });
     }
 
+    const script = await scriptSessionResolver.getScript(request);
     const displayTala = {
       ...tala,
-      name: fromItrans(tala.name),
+      name: fromItrans(tala.name, script),
     };
 
     return data({

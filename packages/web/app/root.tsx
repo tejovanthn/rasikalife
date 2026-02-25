@@ -11,6 +11,7 @@ import {
   data,
   isRouteErrorResponse,
   useLocation,
+  useRevalidator,
   useRouteError,
   useRouteLoaderData,
 } from 'react-router';
@@ -20,25 +21,35 @@ import { createServerClient } from '~/api.server';
 import { type SessionUser, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { AuthContext } from './components/auth-context';
+import { ScriptContext } from './components/script-context';
 import { ThemeContext } from './components/theme-context';
-import { themeSessionResolver } from './sessions.server';
+import { DISPLAY_SCRIPTS, scriptSessionResolver, themeSessionResolver } from './sessions.server';
+import type { DisplayScript } from './sessions.server';
 
 export type { SessionUser } from '~/lib/auth.server';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const theme = await themeSessionResolver.getTheme(request);
+  const [theme, script, user] = await Promise.all([
+    themeSessionResolver.getTheme(request),
+    scriptSessionResolver.getScript(request),
+    getUser(request),
+  ]);
 
-  const user = await getUser(request);
-
-  return data({ theme, user });
+  return data({ theme, script, user });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const theme = formData.get('theme');
+  const script = formData.get('script');
 
   if (typeof theme === 'string' && (theme === 'light' || theme === 'dark')) {
     const headers = await themeSessionResolver.setTheme(theme);
+    return data({ success: true }, { headers });
+  }
+
+  if (typeof script === 'string' && DISPLAY_SCRIPTS.includes(script as DisplayScript)) {
+    const headers = await scriptSessionResolver.setScript(script as DisplayScript);
     return data({ success: true }, { headers });
   }
 
@@ -115,17 +126,39 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
 }
 
 export default function AppWithProviders() {
-  const loaderData = useLoaderData() as { theme: string; user: SessionUser | null };
-  const fetcher = useFetcher();
-  const [theme, setTheme] = useTheme(loaderData, fetcher, 'light');
+  const loaderData = useLoaderData() as {
+    theme: string;
+    script: DisplayScript;
+    user: SessionUser | null;
+  };
+  const themeFetcher = useFetcher();
+  const scriptFetcher = useFetcher();
+  const revalidator = useRevalidator();
+  const [theme, setTheme] = useTheme(loaderData, themeFetcher, 'light');
+
+  const pendingScript = scriptFetcher.formData?.get('script') as DisplayScript | null;
+  const script = pendingScript ?? loaderData.script ?? 'iast';
+  const setScript = (newScript: DisplayScript) => {
+    scriptFetcher.submit({ script: newScript }, { method: 'POST', action: '/' });
+  };
+
+  useEffect(() => {
+    if (scriptFetcher.state === 'idle' && scriptFetcher.data?.success) {
+      revalidator.revalidate();
+    }
+  }, [scriptFetcher.state, scriptFetcher.data, revalidator]);
 
   return (
     <AuthContext.Provider value={{ user: loaderData.user }}>
-      <ThemeContext.Provider value={{ theme, setTheme }}>
-        <Layout theme={theme}>
-          <Outlet />
-          <Toaster />
-        </Layout>
+      <ThemeContext.Provider value={{ theme, setTheme, isPending: themeFetcher.state !== 'idle' }}>
+        <ScriptContext.Provider
+          value={{ script, setScript, isPending: scriptFetcher.state !== 'idle' }}
+        >
+          <Layout theme={theme}>
+            <Outlet />
+            <Toaster />
+          </Layout>
+        </ScriptContext.Provider>
       </ThemeContext.Provider>
     </AuthContext.Provider>
   );

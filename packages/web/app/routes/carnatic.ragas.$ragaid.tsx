@@ -13,6 +13,7 @@ import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, generateSlug } from '~/lib/url-slug';
 import { capitalize } from '~/lib/utils';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
   params,
@@ -66,16 +67,17 @@ export async function loader({
       });
     }
 
+    const script = await scriptSessionResolver.getScript(request);
     const displayRaga = {
       ...raga,
-      name: fromItrans(raga.name),
-      arohanam: raga.arohanam ? fromItrans(raga.arohanam) : raga.arohanam,
-      avarohanam: raga.avarohanam ? fromItrans(raga.avarohanam) : raga.avarohanam,
+      name: fromItrans(raga.name, script),
+      arohanam: raga.arohanam ? fromItrans(raga.arohanam, script) : raga.arohanam,
+      avarohanam: raga.avarohanam ? fromItrans(raga.avarohanam, script) : raga.avarohanam,
       alternateScales: raga.alternateScales
-        ? raga.alternateScales.map(s => fromItrans(s))
+        ? raga.alternateScales.map(s => fromItrans(s, script))
         : raga.alternateScales,
       parentRaga: raga.parentRaga
-        ? { ...raga.parentRaga, name: fromItrans(raga.parentRaga.name) }
+        ? { ...raga.parentRaga, name: fromItrans(raga.parentRaga.name, script) }
         : raga.parentRaga,
     };
 
@@ -85,9 +87,9 @@ export async function loader({
       hasMoreCompositions: compositions.hasMore,
       similarRagas: similarRagas.slice(0, 6).map(r => ({
         ...r,
-        name: fromItrans(r.name),
-        arohanam: r.arohanam ? fromItrans(r.arohanam) : r.arohanam,
-        avarohanam: r.avarohanam ? fromItrans(r.avarohanam) : r.avarohanam,
+        name: fromItrans(r.name, script),
+        arohanam: r.arohanam ? fromItrans(r.arohanam, script) : r.arohanam,
+        avarohanam: r.avarohanam ? fromItrans(r.avarohanam, script) : r.avarohanam,
       })),
       activeEdit,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',

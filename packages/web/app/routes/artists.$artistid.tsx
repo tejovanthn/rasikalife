@@ -16,6 +16,7 @@ import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistOGImage } from '~/lib/og';
 import { generateArtistUrl, generateEventUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
   params,
@@ -70,9 +71,10 @@ export async function loader({
       });
     }
 
+    const script = await scriptSessionResolver.getScript(request);
     const displayArtist = {
       ...artist,
-      name: fromItrans(artist.name),
+      name: fromItrans(artist.name, script),
     };
 
     return data({

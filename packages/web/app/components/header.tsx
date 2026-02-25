@@ -1,8 +1,10 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { Form, Link, NavLink } from 'react-router';
 import { useAuth } from '~/components/auth-context';
+import { ScriptContext } from '~/components/script-context';
+import { ThemeContext } from '~/components/theme-context';
 import { Button } from '~/components/ui/button';
 import {
   DropdownMenu,
@@ -19,14 +21,26 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '~/components/ui/sheet';
+import type { DisplayScript } from '~/sessions.server';
 
 import { GlobalSearch } from './GlobalSearch';
 import { ModeToggle } from './mode-toggle';
+import { ScriptSelector } from './script-selector';
+
+const SCRIPT_OPTIONS: { value: DisplayScript; label: string }[] = [
+  { value: 'iast', label: 'IAST' },
+  { value: 'devanagari', label: 'देवनागरी' },
+  { value: 'tamil', label: 'தமிழ்' },
+  { value: 'telugu', label: 'తెలుగు' },
+  { value: 'kannada', label: 'ಕನ್ನಡ' },
+];
 
 export const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const mobileNavRef = useRef<HTMLElement>(null);
   const { user } = useAuth();
+  const { script, setScript } = useContext(ScriptContext);
+  const { theme, setTheme } = useContext(ThemeContext);
 
   useEffect(() => {
     if (isSidebarOpen && mobileNavRef.current) {
@@ -99,6 +113,7 @@ export const Header = () => {
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <GlobalSearch />
+            <ScriptSelector />
             <ModeToggle />
             {user ? (
               <DropdownMenu>
@@ -233,9 +248,43 @@ export const Header = () => {
                     ))}
                   </div>
                   <div className="pt-4 border-t border-border mt-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-medium text-muted-foreground">Theme</span>
-                      <ModeToggle />
+                    <div className="space-y-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Script
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {SCRIPT_OPTIONS.map(option => (
+                          <Button
+                            key={option.value}
+                            variant={script === option.value ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setScript(option.value)}
+                          >
+                            {option.label}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        Theme
+                      </span>
+                      <div className="flex gap-1">
+                        <Button
+                          variant={theme === 'light' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setTheme('light')}
+                        >
+                          Light
+                        </Button>
+                        <Button
+                          variant={theme === 'dark' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setTheme('dark')}
+                        >
+                          Dark
+                        </Button>
+                      </div>
                     </div>
                     {user ? (
                       <div className="space-y-2">

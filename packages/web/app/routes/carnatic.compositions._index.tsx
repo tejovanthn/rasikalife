@@ -7,12 +7,14 @@ import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const query = url.searchParams.get('q');
   const itemsPerPage = 36;
+  const script = await scriptSessionResolver.getScript(request);
 
   try {
     if (query) {
@@ -27,8 +29,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       return data({
         compositions: searchResults.compositions.map(c => ({
           ...c,
-          title: fromItrans(c.title),
-          composer: { ...c.composer, name: fromItrans(c.composer.name) },
+          title: fromItrans(c.title, script),
+          composer: { ...c.composer, name: fromItrans(c.composer.name, script) },
         })),
         nextToken: null,
         hasMore: searchResults.compositions.length >= itemsPerPage,
@@ -45,8 +47,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     return data({
       compositions: (results.items || []).map(c => ({
         ...c,
-        title: fromItrans(c.title),
-        composer: { ...c.composer, name: fromItrans(c.composer.name) },
+        title: fromItrans(c.title, script),
+        composer: { ...c.composer, name: fromItrans(c.composer.name, script) },
       })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,

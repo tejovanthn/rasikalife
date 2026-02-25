@@ -1,4 +1,5 @@
 import type { RagaType } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -6,12 +7,14 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const query = url.searchParams.get('q');
   const itemsPerPage = 36;
+  const script = await scriptSessionResolver.getScript(request);
 
   try {
     if (query) {
@@ -26,7 +29,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'raga')
           .map(item => ({
             id: item.id,
-            name: item.name,
+            name: fromItrans(item.name, script),
             melakarta: 0,
             parentId: null,
             arkarkams: [],
@@ -51,7 +54,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      ragas: (results.items || []).slice(0, 12),
+      ragas: (results.items || [])
+        .slice(0, 12)
+        .map(r => ({ ...r, name: fromItrans(r.name, script) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

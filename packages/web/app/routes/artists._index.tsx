@@ -8,12 +8,14 @@ import { ArtistCard } from '~/components/ArtistCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { ApplicationError } from '~/lib/errors';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const query = url.searchParams.get('q');
   const itemsPerPage = 36;
+  const script = await scriptSessionResolver.getScript(request);
 
   try {
     if (query) {
@@ -28,7 +30,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'artist')
           .map(item => ({
             id: item.id,
-            name: fromItrans(item.name),
+            name: fromItrans(item.name, script),
             artistType: 'vocalist' as const,
             traditions: [],
             isVerified: false,
@@ -49,7 +51,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      artists: (results.items || []).slice(0, 12).map(a => ({ ...a, name: fromItrans(a.name) })),
+      artists: (results.items || [])
+        .slice(0, 12)
+        .map(a => ({ ...a, name: fromItrans(a.name, script) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

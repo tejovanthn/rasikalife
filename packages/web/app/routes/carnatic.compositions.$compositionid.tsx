@@ -24,6 +24,7 @@ import {
   generateTalaUrl,
   parseSlug,
 } from '~/lib/url-slug';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
   params,
@@ -110,16 +111,17 @@ export async function loader({
       });
     }
 
+    const script = await scriptSessionResolver.getScript(request);
     const displayComposition = {
       ...composition,
-      title: fromItrans(composition.title),
-      composer: { ...composition.composer, name: fromItrans(composition.composer.name) },
-      ragas: composition.ragas.map(r => ({ ...r, name: fromItrans(r.name) })),
-      talas: composition.talas.map(t => ({ ...t, name: fromItrans(t.name) })),
+      title: fromItrans(composition.title, script),
+      composer: { ...composition.composer, name: fromItrans(composition.composer.name, script) },
+      ragas: composition.ragas.map(r => ({ ...r, name: fromItrans(r.name, script) })),
+      talas: composition.talas.map(t => ({ ...t, name: fromItrans(t.name, script) })),
       lyricsV1: composition.lyricsV1.map(l => ({
         ...l,
-        text: fromItrans(l.text),
-        ragaName: l.ragaName ? fromItrans(l.ragaName) : l.ragaName,
+        text: fromItrans(l.text, script),
+        ragaName: l.ragaName ? fromItrans(l.ragaName, script) : l.ragaName,
       })),
     };
 

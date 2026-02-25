@@ -7,12 +7,14 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { TalaCard } from '~/components/TalaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const query = url.searchParams.get('q');
   const itemsPerPage = 36;
+  const script = await scriptSessionResolver.getScript(request);
 
   try {
     if (query) {
@@ -27,7 +29,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'tala')
           .map(item => ({
             id: item.id,
-            name: fromItrans(item.name),
+            name: fromItrans(item.name, script),
             aksharas: 0,
             description: '',
             viewCount: 0,
@@ -47,7 +49,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      talas: (results.items || []).slice(0, 12).map(t => ({ ...t, name: fromItrans(t.name) })),
+      talas: (results.items || [])
+        .slice(0, 12)
+        .map(t => ({ ...t, name: fromItrans(t.name, script) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

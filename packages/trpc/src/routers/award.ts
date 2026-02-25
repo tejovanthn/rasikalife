@@ -1,4 +1,4 @@
-import { Award, ArtistAward } from '@rasika/core';
+import { ArtistAward, Award } from '@rasika/core';
 import { z } from 'zod';
 import { createTRPCRouter, editorProcedure, publicProcedure } from '../trpc';
 
