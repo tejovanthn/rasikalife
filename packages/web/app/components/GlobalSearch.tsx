@@ -1,6 +1,6 @@
 import { useDebounce } from '@uidotdev/usehooks';
-import { Search as SearchIcon, X } from 'lucide-react';
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { Clock, Search as SearchIcon, X } from 'lucide-react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from 'react-router';
 import { useHydrated } from '~/lib/progressive-enhancement';
 import {
@@ -179,6 +179,8 @@ export function GlobalSearch() {
   const [state, dispatch] = useReducer(searchReducer, initialState);
   const { isOpen, query, results, isLoading, selectedIndex, filter } = state;
 
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
   const isHydrated = useHydrated();
   const navigate = useNavigate();
   const fetcher = useFetcher<SearchResults>();
@@ -189,6 +191,41 @@ export function GlobalSearch() {
   const latestQueryRef = useRef<string>('');
 
   const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('rasika:recent-searches');
+      if (stored) setRecentSearches(JSON.parse(stored));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const addRecentSearch = useCallback((q: string) => {
+    if (q.length < 3) return;
+    setRecentSearches(prev => {
+      const filtered = prev.filter(s => s !== q);
+      const updated = [q, ...filtered].slice(0, 5);
+      try {
+        localStorage.setItem('rasika:recent-searches', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  }, []);
+
+  const removeRecentSearch = useCallback((q: string) => {
+    setRecentSearches(prev => {
+      const updated = prev.filter(s => s !== q);
+      try {
+        localStorage.setItem('rasika:recent-searches', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+  }, []);
 
   const handleFilterChange = useCallback((newFilter: FilterType) => {
     dispatch({ type: 'SET_FILTER', filter: newFilter });
@@ -295,6 +332,7 @@ export function GlobalSearch() {
             break;
           case 'Enter':
             if (selectedIndex >= 0 && visibleResults[selectedIndex]) {
+              addRecentSearch(query);
               dispatch({ type: 'CLOSE' });
               navigate(getEntityUrl(visibleResults[selectedIndex]));
             }
@@ -315,9 +353,12 @@ export function GlobalSearch() {
     getVisibleResults,
     scrollSelectedIntoView,
     navigate,
+    addRecentSearch,
+    query,
   ]);
 
   const handleResultClick = () => {
+    addRecentSearch(query);
     dispatch({ type: 'CLOSE' });
   };
 
@@ -492,6 +533,33 @@ export function GlobalSearch() {
 
                 {query.length < 3 && !isLoading && !results && (
                   <div className="px-4 py-8" aria-live="polite">
+                    {recentSearches.length > 0 && (
+                      <div className="mb-6">
+                        <div className="text-sm text-muted-foreground mb-2">Recent searches</div>
+                        <div className="flex flex-col gap-1">
+                          {recentSearches.map(s => (
+                            <div key={s} className="flex items-center justify-between group">
+                              <button
+                                type="button"
+                                onClick={() => dispatch({ type: 'SET_QUERY', query: s })}
+                                className="flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors py-1 flex-1 text-left"
+                              >
+                                <Clock size={14} className="text-muted-foreground shrink-0" />
+                                {s}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => removeRecentSearch(s)}
+                                className="p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label={`Remove "${s}" from recent searches`}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="text-sm text-muted-foreground mb-4">Browse by category</div>
                     <div className="grid grid-cols-2 gap-2">
                       <Link

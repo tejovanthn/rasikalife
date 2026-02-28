@@ -8,12 +8,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.995.0",
+    "@aws-sdk/client-lambda": "^3.1000.0",
     "@rasika/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.149",
-    "@types/node": "^20.19.33",
+    "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^20.19.35",
     "typescript": "^5.9.3"
   }
 }
