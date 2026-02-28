@@ -70,6 +70,7 @@ export async function loader({
 
     return data({
       tala: displayTala,
+      rawName: tala.name,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       activeEdit,
@@ -88,7 +89,8 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const tala = (data as { tala?: Tala })?.tala;
+  const { tala, rawName } = (data as { tala?: Tala; rawName?: string }) ?? {};
+  const canonicalName = rawName ?? tala?.name ?? '';
 
   if (tala) {
     return [
@@ -110,7 +112,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'article' },
       {
         property: 'og:url',
-        content: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
+        content: `https://rasika.life${generateTalaUrl(canonicalName, tala.id)}`,
       },
       // Twitter Card tags
       { name: 'twitter:card', content: 'summary' },
@@ -120,7 +122,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
+        href: `https://rasika.life${generateTalaUrl(canonicalName, tala.id)}`,
       },
       // Breadcrumb structured data
       {
@@ -147,7 +149,7 @@ export const meta: MetaFunction = ({ data }) => {
               '@type': 'ListItem',
               position: 4,
               name: `${tala.name} Tala`,
-              item: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
+              item: `https://rasika.life${generateTalaUrl(canonicalName, tala.id)}`,
             },
           ],
         }),
@@ -167,8 +169,9 @@ export const meta: MetaFunction = ({ data }) => {
 export default function TalaDetails() {
   const location = useLocation();
 
-  const { tala, compositions, hasMoreCompositions, activeEdit, isModerator } = useLoaderData<{
+  const { tala, rawName, compositions, hasMoreCompositions, activeEdit, isModerator } = useLoaderData<{
     tala: Tala;
+    rawName: string;
     compositions: Composition[];
     hasMoreCompositions: boolean;
     activeEdit: Edit | null;
@@ -182,7 +185,7 @@ export default function TalaDetails() {
     return <Outlet />;
   }
 
-  const shareUrl = `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`;
+  const shareUrl = `https://rasika.life${generateTalaUrl(rawName, tala.id)}`;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -190,7 +193,7 @@ export default function TalaDetails() {
     { label: 'Talas', path: '/carnatic/talas' },
     {
       label: tala.name,
-      path: generateTalaUrl(tala.name, tala.id),
+      path: generateTalaUrl(rawName, tala.id),
     },
   ];
 
@@ -203,7 +206,7 @@ export default function TalaDetails() {
         shareUrl={shareUrl}
         shareTitle={`${tala.name} Tala - Indian Classical Music`}
         shareDescription={`Learn about the ${tala.name} tala, a fundamental rhythmic cycle in Indian classical music`}
-        editUrl={`${generateTalaUrl(tala.name, tala.id)}/edit`}
+        editUrl={`${generateTalaUrl(rawName, tala.id)}/edit`}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=tala&entityId=${tala.id}`}
@@ -264,7 +267,7 @@ export default function TalaDetails() {
           { name: 'Talas', item: 'https://rasika.life/carnatic/talas' },
           {
             name: `${tala.name} Tala`,
-            item: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
+            item: `https://rasika.life${generateTalaUrl(rawName, tala.id)}`,
           },
         ]}
       />

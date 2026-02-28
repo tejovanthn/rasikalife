@@ -79,6 +79,7 @@ export async function loader({
 
     return data({
       artist: displayArtist,
+      rawName: artist.name,
       compositions: result.items,
       hasMoreCompositions: result.hasMore,
       artistEvents: eventsResult.items,
@@ -102,8 +103,8 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const artistData = data as { artist?: ArtistType } | undefined;
-  const artist = artistData?.artist;
+  const { artist, rawName } = (data as { artist?: ArtistType; rawName?: string }) ?? {};
+  const canonicalName = rawName ?? artist?.name ?? '';
 
   if (artist) {
     return [
@@ -124,7 +125,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'profile' },
       {
         property: 'og:url',
-        content: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
+        content: `https://rasika.life${generateArtistUrl(canonicalName, artist.id)}`,
       },
       {
         property: 'og:image',
@@ -138,7 +139,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
+        href: `https://rasika.life${generateArtistUrl(canonicalName, artist.id)}`,
       },
     ];
   }
@@ -166,6 +167,7 @@ export default function ArtistDetails() {
 
   const loaderData = useLoaderData<{
     artist: ArtistType;
+    rawName: string;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
     artistEvents: ArtistEvent[];
@@ -176,6 +178,7 @@ export default function ArtistDetails() {
 
   const {
     artist,
+    rawName,
     compositions,
     hasMoreCompositions,
     artistEvents,
@@ -187,7 +190,7 @@ export default function ArtistDetails() {
   const isNestedRoute =
     location.pathname.includes('/compositions') || location.pathname.includes('/events');
 
-  const shareUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`;
+  const shareUrl = `https://rasika.life${generateArtistUrl(rawName, artist.id)}`;
 
   const specializations = [
     ...new Set(artistEvents.map(e => e.role).filter((r): r is string => !!r)),
@@ -204,7 +207,7 @@ export default function ArtistDetails() {
     { label: 'Artists', path: '/artists' },
     {
       label: artist.name,
-      path: generateArtistUrl(artist.name, artist.id),
+      path: generateArtistUrl(rawName, artist.id),
     },
   ];
 
@@ -217,7 +220,7 @@ export default function ArtistDetails() {
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
-        editUrl={`${generateArtistUrl(artist.name, artist.id)}/edit`}
+        editUrl={`${generateArtistUrl(rawName, artist.id)}/edit`}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=artist&entityId=${artist.id}`}
@@ -280,7 +283,7 @@ export default function ArtistDetails() {
             ))}
           </div>
           <Link
-            to={`${generateArtistUrl(artist.name, artist.id)}/events`}
+            to={`${generateArtistUrl(rawName, artist.id)}/events`}
             className="inline-block mt-3 text-sm text-primary"
           >
             View all events &rarr;
@@ -324,14 +327,14 @@ export default function ArtistDetails() {
           { name: 'Artists', item: 'https://rasika.life/artists' },
           {
             name: artist.name,
-            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
+            item: `https://rasika.life${generateArtistUrl(rawName, artist.id)}`,
           },
         ]}
       />
       <PersonStructuredData
         person={{
           name: artist.name,
-          url: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
+          url: `https://rasika.life${generateArtistUrl(rawName, artist.id)}`,
         }}
       />
     </main>

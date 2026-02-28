@@ -83,6 +83,7 @@ export async function loader({
 
     return data({
       raga: displayRaga,
+      rawName: raga.name,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       similarRagas: similarRagas.slice(0, 6).map(r => ({
@@ -107,7 +108,8 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const raga = (data as { raga?: RagaType })?.raga;
+  const { raga, rawName } = (data as { raga?: RagaType; rawName?: string }) ?? {};
+  const canonicalName = rawName ?? raga?.name ?? '';
 
   if (raga) {
     return [
@@ -129,7 +131,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'article' },
       {
         property: 'og:url',
-        content: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
+        content: `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`,
       },
       // Twitter Card tags
       { name: 'twitter:card', content: 'summary' },
@@ -139,7 +141,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
+        href: `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`,
       },
     ];
   }
@@ -178,9 +180,10 @@ function RagaGrid({ ragas }: { ragas: RagaType[] }) {
 export default function RagaDetails() {
   const location = useLocation();
 
-  const { raga, compositions, hasMoreCompositions, similarRagas, activeEdit, isModerator } =
+  const { raga, rawName, compositions, hasMoreCompositions, similarRagas, activeEdit, isModerator } =
     useLoaderData<{
       raga: RagaType;
+      rawName: string;
       compositions: CompositionWithRelations[];
       hasMoreCompositions: boolean;
       similarRagas: RagaType[];
@@ -195,7 +198,7 @@ export default function RagaDetails() {
     return <Outlet />;
   }
 
-  const shareUrl = `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`;
+  const shareUrl = `https://rasika.life${generateRagaUrl(rawName, raga.id)}`;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -203,7 +206,7 @@ export default function RagaDetails() {
     { label: 'Ragas', path: '/carnatic/ragas' },
     {
       label: raga.name,
-      path: generateRagaUrl(raga.name, raga.id),
+      path: generateRagaUrl(rawName, raga.id),
     },
   ];
 
@@ -216,7 +219,7 @@ export default function RagaDetails() {
         shareUrl={shareUrl}
         shareTitle={`${raga.name} Raga - Indian Classical Music`}
         shareDescription={`Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`}
-        editUrl={`${generateRagaUrl(raga.name, raga.id)}/edit`}
+        editUrl={`${generateRagaUrl(rawName, raga.id)}/edit`}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=raga&entityId=${raga.id}`}
@@ -372,7 +375,7 @@ export default function RagaDetails() {
           { name: 'Ragas', item: 'https://rasika.life/carnatic/ragas' },
           {
             name: `${raga.name} Raga`,
-            item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
+            item: `https://rasika.life${generateRagaUrl(rawName, raga.id)}`,
           },
         ]}
       />

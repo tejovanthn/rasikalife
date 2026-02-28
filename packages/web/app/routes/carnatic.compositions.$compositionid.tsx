@@ -127,6 +127,7 @@ export async function loader({
 
     return data({
       composition: displayComposition,
+      rawTitle: composition.title,
       relatedCompositionsByComposer,
       hasMoreCompositionsByComposer,
       relatedCompositionsByRaga,
@@ -151,7 +152,11 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const composition = (data as { composition?: CompositionWithRelations })?.composition;
+  const { composition, rawTitle } = (data as {
+    composition?: CompositionWithRelations;
+    rawTitle?: string;
+  }) ?? {};
+  const canonicalTitle = rawTitle ?? composition?.title ?? '';
 
   if (composition) {
     return [
@@ -173,7 +178,7 @@ export const meta: MetaFunction = ({ data }) => {
       { property: 'og:type', content: 'music.song' },
       {
         property: 'og:url',
-        content: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+        content: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
       },
       {
         property: 'og:image',
@@ -194,7 +199,7 @@ export const meta: MetaFunction = ({ data }) => {
       {
         tagName: 'link',
         rel: 'canonical',
-        href: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+        href: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
       },
       // Breadcrumb structured data for SEO
       {
@@ -219,7 +224,7 @@ export const meta: MetaFunction = ({ data }) => {
               '@type': 'ListItem',
               position: 4,
               name: composition.title,
-              item: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+              item: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
             },
           ],
         },
@@ -258,6 +263,7 @@ export const links: LinksFunction = () => {
 export default function CompositionDetails() {
   const {
     composition,
+    rawTitle,
     relatedCompositionsByComposer,
     hasMoreCompositionsByComposer,
     relatedCompositionsByRaga,
@@ -268,6 +274,7 @@ export default function CompositionDetails() {
     isModerator,
   } = useLoaderData<{
     composition: CompositionWithRelations;
+    rawTitle: string;
     relatedCompositionsByComposer: CompositionWithRelations[];
     hasMoreCompositionsByComposer: boolean;
     relatedCompositionsByRaga: CompositionWithRelations[];
@@ -278,7 +285,7 @@ export default function CompositionDetails() {
     isModerator: boolean;
   }>();
 
-  const shareUrl = `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`;
+  const shareUrl = `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -286,7 +293,7 @@ export default function CompositionDetails() {
     { label: 'Compositions', path: '/carnatic/compositions' },
     {
       label: composition.title,
-      path: generateCompositionUrl(composition.title, composition.id),
+      path: generateCompositionUrl(rawTitle, composition.id),
     },
   ];
 
@@ -318,7 +325,7 @@ export default function CompositionDetails() {
                 '@type': 'ListItem',
                 position: 4,
                 name: composition.title,
-                item: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+                item: `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`,
               },
             ],
           }),
@@ -332,7 +339,7 @@ export default function CompositionDetails() {
         shareUrl={shareUrl}
         shareTitle={`${composition.title} - ${composition.composer.name}`}
         shareDescription={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
-        editUrl={`${generateCompositionUrl(composition.title, composition.id)}/edit`}
+        editUrl={`${generateCompositionUrl(rawTitle, composition.id)}/edit`}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=composition&entityId=${composition.id}`}
@@ -483,7 +490,7 @@ export default function CompositionDetails() {
           { name: 'Compositions', item: 'https://rasika.life/carnatic/compositions' },
           {
             name: composition.title,
-            item: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+            item: `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`,
           },
         ]}
       />
@@ -494,7 +501,7 @@ export default function CompositionDetails() {
           ragas: composition.ragas,
           talas: composition.talas,
           language: composition.language,
-          url: `https://rasika.life${generateCompositionUrl(composition.title, composition.id)}`,
+          url: `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`,
           datePublished: composition.createdAt,
         }}
       />
