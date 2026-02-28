@@ -1,21 +1,10 @@
-import {
-  Calendar,
-  ExternalLink,
-  Globe,
-  Mail,
-  MapPin,
-  Merge,
-  Pencil,
-  Phone,
-  Ticket,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { Calendar, ExternalLink, Globe, Mail, MapPin, Phone, Ticket, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Link, data, redirect, useLoaderData } from 'react-router';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -263,6 +252,8 @@ export default function EventDetail() {
   const startDate = new Date(event.startDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
   const displayPosterUrl = event.posterUrl || festivalPosterUrl;
+  const shareUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
+  const dateStr = startDate.toLocaleDateString('en-IN', { dateStyle: 'long' });
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -273,7 +264,23 @@ export default function EventDetail() {
         ]}
       />
 
-      <div className="mt-6 grid md:grid-cols-[300px_1fr] gap-8">
+      <DetailPageHeader
+        title={event.title}
+        subtitle={event.festivalName ? `Part of ${event.festivalName}` : dateStr}
+        shareUrl={shareUrl}
+        shareTitle={event.title}
+        shareDescription={`${event.title} on ${dateStr}${event.venueName ? ` at ${event.venueName}` : ''}`}
+        editUrl={
+          user && event.status === 'approved'
+            ? `${generateEventUrl(event.title, event.id)}/edit`
+            : undefined
+        }
+        isModerator={isModerator}
+        mergeUrl={`/moderator/merge?entityType=event&entityId=${event.id}`}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=event&entityId=${event.id}`}
+      />
+
+      <div className="grid md:grid-cols-[300px_1fr] gap-8">
         {/* Poster */}
         {(displayPosterUrl || isModerator) && (
           <div>
@@ -291,51 +298,15 @@ export default function EventDetail() {
         {/* Details */}
         <div className="space-y-6">
           <div>
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-bold">{event.title}</h1>
-              <div className="flex items-center gap-2 shrink-0 mt-2">
-                {user && event.status === 'approved' && (
-                  <a
-                    href={`${generateEventUrl(event.title, event.id)}/edit`}
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </a>
-                )}
-                {isModerator && (
-                  <a
-                    href={`/moderator/merge?entityType=event&entityId=${event.id}`}
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    <Merge className="h-4 w-4" />
-                    Merge
-                  </a>
-                )}
-                {isModerator && (
-                  <a
-                    href={`/moderator/request-deletion?entityType=event&entityId=${event.id}`}
-                    className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete
-                  </a>
-                )}
-              </div>
-            </div>
-            {event.festivalName && (
-              <p className="text-lg text-muted-foreground mt-1">
+            {event.festivalName && event.festivalId && (
+              <p className="text-lg text-muted-foreground">
                 Part of{' '}
-                {event.festivalId ? (
-                  <Link
-                    to={generateFestivalUrl(event.festivalName, event.festivalId)}
-                    className="text-primary"
-                  >
-                    {event.festivalName}
-                  </Link>
-                ) : (
-                  event.festivalName
-                )}
+                <Link
+                  to={generateFestivalUrl(event.festivalName, event.festivalId)}
+                  className="text-primary"
+                >
+                  {event.festivalName}
+                </Link>
               </p>
             )}
           </div>

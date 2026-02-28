@@ -179,6 +179,9 @@ importers:
 
   packages/trpc:
     dependencies:
+      '@aws-sdk/client-lambda':
+        specifier: ^3.1000.0
+        version: 3.1000.0
       '@openauthjs/openauth':
         specifier: ^0.4.3
         version: 0.4.3(arctic@3.7.0)(hono@4.12.3)

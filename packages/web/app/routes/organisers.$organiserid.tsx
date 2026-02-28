@@ -1,8 +1,8 @@
-import { Merge, Pencil, Trash2 } from 'lucide-react';
 import { data, redirect, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { getUser } from '~/lib/auth.server';
@@ -96,6 +96,8 @@ export default function OrganiserDetailPage() {
     isModerator: boolean;
   }>();
 
+  const shareUrl = `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`;
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb
@@ -105,41 +107,17 @@ export default function OrganiserDetailPage() {
         ]}
       />
 
-      <div className="mt-6">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-bold">{organiser.name}</h1>
-          <div className="flex items-center gap-2">
-            {user && (
-              <a
-                href={`${generateOrganiserUrl(organiser.name, organiser.id)}/edit`}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </a>
-            )}
-            {isModerator && (
-              <a
-                href={`/moderator/merge?entityType=organiser&entityId=${organiser.id}`}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Merge className="h-4 w-4" />
-                Merge
-              </a>
-            )}
-            {isModerator && (
-              <a
-                href={`/moderator/request-deletion?entityType=organiser&entityId=${organiser.id}`}
-                className="inline-flex items-center gap-2 text-sm text-destructive hover:text-destructive/80 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </a>
-            )}
-          </div>
-        </div>
-        <p className="text-muted-foreground mt-1">Event Organiser</p>
-      </div>
+      <DetailPageHeader
+        title={organiser.name}
+        subtitle="Event Organiser"
+        shareUrl={shareUrl}
+        shareTitle={`${organiser.name} - Rasika.life`}
+        shareDescription={`Events organised by ${organiser.name}`}
+        editUrl={user ? `${generateOrganiserUrl(organiser.name, organiser.id)}/edit` : undefined}
+        isModerator={isModerator}
+        mergeUrl={`/moderator/merge?entityType=organiser&entityId=${organiser.id}`}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=organiser&entityId=${organiser.id}`}
+      />
 
       <section className="mt-10">
         <h2 className="section-heading mb-6">Events</h2>
