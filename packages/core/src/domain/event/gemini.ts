@@ -214,6 +214,78 @@ async function extractByType(
   return ExtractionResultSchema.parse(raw);
 }
 
+// --- Social post extraction ---
+
+const SOCIAL_POST_PROMPT = `You are an expert at identifying Indian classical arts events from social media posts.
+
+Analyze this Instagram post (caption and optional image) and determine if it announces a concert,
+recital, performance, or festival.
+
+${SHARED_EXTRACTION_RULES}
+
+SOCIAL POST SPECIFIC INSTRUCTIONS:
+- Many posts are NOT event announcements (photos, news, tributes, general content). If no event is
+  described, return isFestival=false, festival=null, events=[], confidence=0.
+- If an event is found, extract it exactly as you would from a poster.
+- The caption text provides the most reliable information — use it as the primary source.
+- If an image is provided, use it to supplement the caption (dates, venue details, artist photos).
+- Instagram captions often contain emoji, hashtags, and informal language — normalise to structured
+  data. Strip hashtags from extracted fields.
+- If the post is for a past event and no date is clear, set confidence below 0.4.
+
+Return a JSON object matching this JSON Schema:
+${extractionJsonSchema}`;
+
+export interface SocialPostInput {
+  postText?: string;
+  mediaUrl?: string;
+}
+
+export async function extractFromSocialPost(input: SocialPostInput): Promise<ExtractionResult> {
+  if (!input.postText && !input.mediaUrl) {
+    return ExtractionResultSchema.parse({
+      isFestival: false,
+      festival: null,
+      events: [],
+      confidence: 0,
+    });
+  }
+
+  const ai = getGeminiClient();
+
+  const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [];
+  parts.push({ text: SOCIAL_POST_PROMPT });
+
+  if (input.postText) {
+    parts.push({ text: `\n\nINSTAGRAM POST CAPTION:\n${input.postText}` });
+  }
+
+  if (input.mediaUrl) {
+    try {
+      const imageData = await fetchImageAsBase64(input.mediaUrl);
+      parts.push({ inlineData: { data: imageData.data, mimeType: imageData.mimeType } });
+    } catch {
+      // Image fetch failed — continue with text-only extraction
+    }
+  }
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [{ role: 'user', parts }],
+    config: {
+      responseMimeType: 'application/json',
+      temperature: 0.1,
+    },
+  });
+
+  if (!response.text) {
+    throw new Error('Empty response from Gemini API');
+  }
+
+  const raw = JSON.parse(response.text);
+  return ExtractionResultSchema.parse(raw);
+}
+
 // --- Public API ---
 
 export async function extractFromPoster(posterUrl: string): Promise<ExtractionResult> {

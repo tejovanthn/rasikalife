@@ -57,6 +57,17 @@ export const VenueEntity = new Entity(
         type: 'string',
         required: false,
       },
+      socialLinks: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            platform: { type: 'string', required: true },
+            url: { type: 'string', required: true },
+          },
+        },
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

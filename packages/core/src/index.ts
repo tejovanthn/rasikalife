@@ -16,6 +16,7 @@ export * as EventArtist from './domain/event-artist';
 export * as Festival from './domain/festival';
 export * as Venue from './domain/venue';
 export * as Organiser from './domain/organiser';
+export * as SocialPost from './domain/social-post';
 
 // Edit types (browser-safe exports)
 export {

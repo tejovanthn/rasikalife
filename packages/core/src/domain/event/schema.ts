@@ -44,6 +44,9 @@ export const CreateEventSchema = z.object({
     })
     .nullish(),
   sponsors: z.array(z.object({ name: z.string(), type: z.string().nullish() })).nullish(),
+  sourcePlatform: z.enum(['instagram']).optional(),
+  sourcePostId: z.string().optional(),
+  sourcePostUrl: z.string().optional(),
 });
 
 export const UpdateEventSchema = CreateEventSchema.partial();

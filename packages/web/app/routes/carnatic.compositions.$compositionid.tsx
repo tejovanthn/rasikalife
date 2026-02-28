@@ -12,7 +12,6 @@ import {
   BreadcrumbStructuredData,
   MusicCompositionStructuredData,
 } from '~/components/structured-data';
-import { ShareButtons } from '~/components/ui/share-buttons';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateCompositionOGImage } from '~/lib/og';

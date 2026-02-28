@@ -4,3 +4,4 @@ export * from './site';
 export * from './trpc';
 export * from './search';
 export * from './auth';
+export * from './instagram';

@@ -19,6 +19,14 @@ export const CreateVenueSchema = z.object({
   capacity: z.number().int().min(1).optional(),
   website: z.string().url().optional(),
   phone: z.string().max(30).optional(),
+  socialLinks: z
+    .array(
+      z.object({
+        platform: z.string().min(1).max(50),
+        url: z.string().url(),
+      })
+    )
+    .optional(),
 });
 
 export const UpdateVenueSchema = CreateVenueSchema.partial();

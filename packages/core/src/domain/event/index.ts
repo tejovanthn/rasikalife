@@ -560,7 +560,8 @@ export async function getEventMergeScore(id: string): Promise<number> {
   return score;
 }
 
-export { extractFromPoster } from './gemini';
+export { extractFromPoster, extractFromSocialPost } from './gemini';
+export type { SocialPostInput } from './gemini';
 export { getPosterByHash } from './poster-hash';
 export { getUploadUrl } from './s3';
 export type { Event } from './entity';

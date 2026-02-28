@@ -22,6 +22,22 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "InstagramDLQ": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
+    "InstagramPostQueue": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
+    "InstagramScraper": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "InstagramSyncOrchestrator": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "RasikaAuth": {
       "type": "sst.aws.Auth"
       "url": string

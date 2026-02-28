@@ -72,4 +72,16 @@ program
     await dedupRagas({ dryRun: opts.dryRun });
   });
 
+program
+  .command('sync:instagram')
+  .description('Scrape Instagram profiles linked to artists, venues, and organisers for event posts')
+  .option('--handle <name>', 'Scrape a single Instagram handle')
+  .option('-n, --dry-run', 'Show what would be scraped without writing to the database')
+  .option('-r, --reprocess', 'Reprocess all posts (ignore previously seen post IDs)')
+  .action(async (opts: { handle?: string; dryRun?: boolean; reprocess?: boolean }) => {
+    setup();
+    const { syncInstagram } = await import('./syncInstagram.js');
+    await syncInstagram({ handle: opts.handle, dryRun: opts.dryRun, reprocess: opts.reprocess });
+  });
+
 program.parseAsync(process.argv);

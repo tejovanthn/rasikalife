@@ -1,9 +1,12 @@
+import { Plus } from 'lucide-react';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, data, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { getUser } from '~/lib/auth.server';
 import { generateOrganiserUrl } from '~/lib/url-slug';
 
 interface OrganiserItem {
@@ -25,6 +28,7 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const user = await getUser(request);
 
   try {
     const result = await client.organiser.list.query({
@@ -36,6 +40,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       organisers: result.items,
       nextToken: result.nextToken,
       hasMore: result.hasMore,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
     console.error('Failed to load organisers:', error);
@@ -44,19 +49,30 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function OrganisersIndex() {
-  const { organisers, nextToken, hasMore } = useLoaderData<{
+  const { organisers, nextToken, hasMore, isModerator } = useLoaderData<{
     organisers: OrganiserItem[];
     nextToken: string | null;
     hasMore: boolean;
+    isModerator: boolean;
   }>();
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
-      <header className="mb-8">
-        <h1 className="page-title">Organisers</h1>
-        <p className="text-xl text-muted-foreground">
-          Organisations and individuals presenting Indian classical performances
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="page-title">Organisers</h1>
+          <p className="text-xl text-muted-foreground">
+            Organisations and individuals presenting Indian classical performances
+          </p>
+        </div>
+        {isModerator && (
+          <Link to="/organisers/new" className="shrink-0">
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Organiser
+            </Button>
+          </Link>
+        )}
       </header>
 
       {organisers.length === 0 ? (

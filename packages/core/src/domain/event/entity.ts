@@ -83,6 +83,11 @@ export const EventEntity = new Entity(
       extractionRawResponse: { type: 'string', required: false },
       extractionTimestamp: { type: 'string', required: false },
 
+      // Social post source
+      sourcePlatform: { type: 'string', required: false },
+      sourcePostId: { type: 'string', required: false },
+      sourcePostUrl: { type: 'string', required: false },
+
       // Soft delete
       deletedAt: { type: 'string', required: false },
       mergedIntoId: { type: 'string', required: false },
