@@ -1,5 +1,6 @@
 import { Artist, Event, Festival, Organiser, Search, Venue } from '@rasika/core';
 import { z } from 'zod';
+import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const eventRouter = createTRPCRouter({
@@ -300,6 +301,7 @@ export const eventRouter = createTRPCRouter({
         );
         results.push(event);
       }
+      triggerReindex();
       return results;
     }),
 
@@ -308,7 +310,9 @@ export const eventRouter = createTRPCRouter({
   approveEvent: moderatorProcedure
     .input(z.object({ eventId: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
-      return Event.approveEvent(input.eventId, ctx.user.id);
+      const result = await Event.approveEvent(input.eventId, ctx.user.id);
+      triggerReindex();
+      return result;
     }),
 
   rejectEvent: moderatorProcedure
@@ -319,7 +323,9 @@ export const eventRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return Event.rejectEvent(input.eventId, ctx.user.id, input.moderatorNote);
+      const result = await Event.rejectEvent(input.eventId, ctx.user.id, input.moderatorNote);
+      triggerReindex();
+      return result;
     }),
 
   listSubmittedEvents: moderatorProcedure
@@ -372,11 +378,19 @@ export const eventRouter = createTRPCRouter({
 
   forceSubmitDraft: moderatorProcedure
     .input(z.object({ eventId: z.string().min(1) }))
-    .mutation(({ input }) => Event.forceSubmitEvent(input.eventId)),
+    .mutation(async ({ input }) => {
+      const result = await Event.forceSubmitEvent(input.eventId);
+      triggerReindex();
+      return result;
+    }),
 
   deleteDraftEvent: moderatorProcedure
     .input(z.object({ eventId: z.string().min(1) }))
-    .mutation(({ input }) => Event.softDeleteEvent(input.eventId)),
+    .mutation(async ({ input }) => {
+      const result = await Event.softDeleteEvent(input.eventId);
+      triggerReindex();
+      return result;
+    }),
 
   reExtractDraft: moderatorProcedure
     .input(z.object({ eventId: z.string().min(1) }))

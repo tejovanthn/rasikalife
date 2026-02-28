@@ -15,6 +15,7 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     AUTH_URL: auth.url,
     EVENT_POSTERS_BUCKET: eventPostersBucket.name,
     GEMINI_API_KEY: geminiApiKey.value,
+    SEARCH_REINDEX_FUNCTION_NAME: searchReindexFunction.name,
   },
 });
 

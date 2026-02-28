@@ -1,5 +1,6 @@
 import { Artist, ArtistAward } from '@rasika/core';
 import { z } from 'zod';
+import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const artistRouter = createTRPCRouter({
@@ -20,15 +21,27 @@ export const artistRouter = createTRPCRouter({
 
   create: publicProcedure
     .input(Artist.CreateArtistSchema)
-    .mutation(({ input }) => Artist.createArtist(input)),
+    .mutation(async ({ input }) => {
+      const result = await Artist.createArtist(input);
+      triggerReindex();
+      return result;
+    }),
 
   update: publicProcedure
     .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
-    .mutation(({ input }) => Artist.updateArtist(input.id, input.data)),
+    .mutation(async ({ input }) => {
+      const result = await Artist.updateArtist(input.id, input.data);
+      triggerReindex();
+      return result;
+    }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
-    .mutation(({ input }) => Artist.deleteArtist(input.id)),
+    .mutation(async ({ input }) => {
+      const result = await Artist.deleteArtist(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
@@ -48,11 +61,19 @@ export const artistRouter = createTRPCRouter({
 
   addAward: editorProcedure
     .input(ArtistAward.AddArtistAwardSchema)
-    .mutation(({ input }) => ArtistAward.addArtistAward(input)),
+    .mutation(async ({ input }) => {
+      const result = await ArtistAward.addArtistAward(input);
+      triggerReindex();
+      return result;
+    }),
 
   removeAward: editorProcedure
     .input(z.object({ artistId: z.string().min(1), awardId: z.string().min(1) }))
-    .mutation(({ input }) => ArtistAward.removeArtistAward(input.artistId, input.awardId)),
+    .mutation(async ({ input }) => {
+      const result = await ArtistAward.removeArtistAward(input.artistId, input.awardId);
+      triggerReindex();
+      return result;
+    }),
 
   listAwards: publicProcedure
     .input(z.object({ artistId: z.string().min(1) }))

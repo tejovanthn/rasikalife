@@ -10,6 +10,9 @@ const site = new sst.aws.React('RasikaWeb', {
   environment: {
     STAGE: $app.stage,
   },
+  server: {
+    timeout: '60 seconds',
+  },
 });
 
 export { bucket, site };

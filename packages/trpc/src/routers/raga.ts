@@ -1,5 +1,6 @@
 import { Raga } from '@rasika/core';
 import { z } from 'zod';
+import { triggerReindex } from '../reindex';
 import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const ragaRouter = createTRPCRouter({
@@ -20,15 +21,27 @@ export const ragaRouter = createTRPCRouter({
 
   create: publicProcedure
     .input(Raga.CreateRagaSchema)
-    .mutation(({ input }) => Raga.createRaga(input)),
+    .mutation(async ({ input }) => {
+      const result = await Raga.createRaga(input);
+      triggerReindex();
+      return result;
+    }),
 
   update: publicProcedure
     .input(z.object({ id: z.string().min(1), data: Raga.UpdateRagaSchema }))
-    .mutation(({ input }) => Raga.updateRaga(input.id, input.data)),
+    .mutation(async ({ input }) => {
+      const result = await Raga.updateRaga(input.id, input.data);
+      triggerReindex();
+      return result;
+    }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
-    .mutation(({ input }) => Raga.deleteRaga(input.id)),
+    .mutation(async ({ input }) => {
+      const result = await Raga.deleteRaga(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   byMela: publicProcedure
     .input(

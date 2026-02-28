@@ -168,6 +168,7 @@ async function callGemini(ai: GoogleGenAI, prompt: string, imageData: ImageData)
     config: {
       responseMimeType: 'application/json',
       temperature: 0.1,
+      thinkingConfig: { thinkingBudget: 0 },
     },
   });
 

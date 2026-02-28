@@ -1,5 +1,6 @@
 import { Organiser } from '@rasika/core';
 import { z } from 'zod';
+import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const organiserRouter = createTRPCRouter({
@@ -24,11 +25,19 @@ export const organiserRouter = createTRPCRouter({
 
   create: editorProcedure
     .input(Organiser.CreateOrganiserSchema)
-    .mutation(({ input }) => Organiser.createOrganiser(input)),
+    .mutation(async ({ input }) => {
+      const result = await Organiser.createOrganiser(input);
+      triggerReindex();
+      return result;
+    }),
 
   update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Organiser.UpdateOrganiserSchema }))
-    .mutation(({ input }) => Organiser.updateOrganiser(input.id, input.data)),
+    .mutation(async ({ input }) => {
+      const result = await Organiser.updateOrganiser(input.id, input.data);
+      triggerReindex();
+      return result;
+    }),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))

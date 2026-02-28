@@ -1,5 +1,6 @@
 import { Tala } from '@rasika/core';
 import { z } from 'zod';
+import { triggerReindex } from '../reindex';
 import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const talaRouter = createTRPCRouter({
@@ -20,15 +21,27 @@ export const talaRouter = createTRPCRouter({
 
   create: publicProcedure
     .input(Tala.CreateTalaSchema)
-    .mutation(({ input }) => Tala.createTala(input)),
+    .mutation(async ({ input }) => {
+      const result = await Tala.createTala(input);
+      triggerReindex();
+      return result;
+    }),
 
   update: publicProcedure
     .input(z.object({ id: z.string().min(1), data: Tala.UpdateTalaSchema }))
-    .mutation(({ input }) => Tala.updateTala(input.id, input.data)),
+    .mutation(async ({ input }) => {
+      const result = await Tala.updateTala(input.id, input.data);
+      triggerReindex();
+      return result;
+    }),
 
   delete: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
-    .mutation(({ input }) => Tala.deleteTala(input.id)),
+    .mutation(async ({ input }) => {
+      const result = await Tala.deleteTala(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   getByName: publicProcedure
     .input(z.object({ name: z.string().min(1) }))

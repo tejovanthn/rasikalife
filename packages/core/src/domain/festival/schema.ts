@@ -10,7 +10,10 @@ export const CreateFestivalSchema = z.object({
   organiserId: z.string().optional(),
   organiserName: z.string().optional(),
   tags: z.array(z.string()).default([]),
-  sponsors: z.array(z.object({ name: z.string(), type: z.string().optional() })).optional(),
+  sponsors: z
+    .array(z.object({ name: z.string(), type: z.string().optional() }))
+    .nullish()
+    .transform((v) => v ?? undefined),
 });
 
 export const UpdateFestivalSchema = CreateFestivalSchema.partial();

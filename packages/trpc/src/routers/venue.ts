@@ -1,5 +1,6 @@
 import { Venue } from '@rasika/core';
 import { z } from 'zod';
+import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const venueRouter = createTRPCRouter({
@@ -34,11 +35,19 @@ export const venueRouter = createTRPCRouter({
 
   create: editorProcedure
     .input(Venue.CreateVenueSchema)
-    .mutation(({ input }) => Venue.createVenue(input)),
+    .mutation(async ({ input }) => {
+      const result = await Venue.createVenue(input);
+      triggerReindex();
+      return result;
+    }),
 
   update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Venue.UpdateVenueSchema }))
-    .mutation(({ input }) => Venue.updateVenue(input.id, input.data)),
+    .mutation(async ({ input }) => {
+      const result = await Venue.updateVenue(input.id, input.data);
+      triggerReindex();
+      return result;
+    }),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
