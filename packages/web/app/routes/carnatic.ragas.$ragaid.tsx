@@ -180,16 +180,23 @@ function RagaGrid({ ragas }: { ragas: RagaType[] }) {
 export default function RagaDetails() {
   const location = useLocation();
 
-  const { raga, rawName, compositions, hasMoreCompositions, similarRagas, activeEdit, isModerator } =
-    useLoaderData<{
-      raga: RagaType;
-      rawName: string;
-      compositions: CompositionWithRelations[];
-      hasMoreCompositions: boolean;
-      similarRagas: RagaType[];
-      activeEdit: Edit | null;
-      isModerator: boolean;
-    }>();
+  const {
+    raga,
+    rawName,
+    compositions,
+    hasMoreCompositions,
+    similarRagas,
+    activeEdit,
+    isModerator,
+  } = useLoaderData<{
+    raga: RagaType;
+    rawName: string;
+    compositions: CompositionWithRelations[];
+    hasMoreCompositions: boolean;
+    similarRagas: RagaType[];
+    activeEdit: Edit | null;
+    isModerator: boolean;
+  }>();
 
   // Check if we're on a nested route (like /compositions)
   const isNestedRoute = location.pathname.includes('/compositions');

@@ -9,13 +9,16 @@ import {
   Phone,
   Ticket,
   Trash2,
+  Upload,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Link, data, redirect, useLoaderData } from 'react-router';
-import type { LoaderFunction, MetaFunction } from 'react-router';
+import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -82,7 +85,23 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
-    return data({ event, user, isModerator: user?.role === 'moderator' || user?.role === 'admin' });
+    // Fetch festival poster as fallback if the event has no poster
+    let festivalPosterUrl: string | undefined;
+    if (event?.festivalId && !event?.posterUrl) {
+      try {
+        const festival = await serverClient.festival.get.query({ id: event.festivalId });
+        festivalPosterUrl = festival?.posterUrl;
+      } catch {
+        // Festival fetch failure is non-fatal
+      }
+    }
+
+    return data({
+      event,
+      user,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
+      festivalPosterUrl,
+    });
   } catch (error) {
     console.error('Failed to load event:', error);
     if (error instanceof ApplicationError) {
@@ -95,6 +114,44 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     }
     throw new Response('Failed to load event', { status: 500 });
   }
+};
+
+export const action: ActionFunction = async ({ request, params }) => {
+  const { eventid } = params;
+  if (!eventid) {
+    return data({ error: 'Event ID is required' }, { status: 400 });
+  }
+
+  const parsed = parseSlug(eventid);
+  const id = parsed ? parsed.id : eventid;
+
+  const user = await getUser(request);
+  if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {
+    return data({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  const formData = await request.formData();
+  const intent = formData.get('intent') as string;
+
+  if (intent === 'updatePoster') {
+    const posterUrl = formData.get('posterUrl') as string;
+    const posterUploadId = formData.get('posterUploadId') as string;
+
+    if (!posterUrl || !posterUploadId) {
+      return data({ error: 'Missing poster data' }, { status: 400 });
+    }
+
+    try {
+      const serverClient = await createServerClient(request);
+      await serverClient.event.updatePoster.mutate({ id, posterUrl, posterUploadId });
+      return data({ success: true });
+    } catch (error) {
+      console.error('Failed to update poster:', error);
+      return data({ error: 'Failed to update poster' }, { status: 500 });
+    }
+  }
+
+  return data({ error: 'Invalid action' }, { status: 400 });
 };
 
 export const meta: MetaFunction = ({ data: loaderData }) => {
@@ -121,15 +178,91 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
   ];
 };
 
+function PosterUploader() {
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleUpload() {
+    if (!file) return;
+    setStatus('uploading');
+    setError(null);
+
+    try {
+      const urlRes = await fetch('/events/new/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          intent: 'getUploadUrl',
+          fileName: file.name,
+          contentType: file.type,
+        }),
+      });
+      if (!urlRes.ok) throw new Error('Failed to get upload URL');
+      const { uploadUrl, posterUrl, posterUploadId } = await urlRes.json();
+
+      const s3Res = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      });
+      if (!s3Res.ok) throw new Error('Failed to upload image');
+
+      const updateForm = new FormData();
+      updateForm.append('intent', 'updatePoster');
+      updateForm.append('posterUrl', posterUrl);
+      updateForm.append('posterUploadId', posterUploadId);
+
+      const updateRes = await fetch(window.location.href, {
+        method: 'POST',
+        body: updateForm,
+        credentials: 'include',
+      });
+      if (!updateRes.ok) throw new Error('Failed to update poster');
+
+      window.location.reload();
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3 mt-4">
+      <h3 className="text-sm font-semibold">Replace Poster</h3>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={e => setFile(e.target.files?.[0] ?? null)}
+        className="text-sm w-full"
+      />
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        onClick={handleUpload}
+        disabled={!file || status === 'uploading'}
+      >
+        <Upload className="h-4 w-4 mr-2" />
+        {status === 'uploading' ? 'Uploading...' : 'Replace Poster'}
+      </Button>
+    </div>
+  );
+}
+
 export default function EventDetail() {
-  const { event, user, isModerator } = useLoaderData<{
+  const { event, user, isModerator, festivalPosterUrl } = useLoaderData<{
     event: EventDetail;
     user: { id: string } | null;
     isModerator: boolean;
+    festivalPosterUrl?: string;
   }>();
 
   const startDate = new Date(event.startDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
+  const displayPosterUrl = event.posterUrl || festivalPosterUrl;
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -142,13 +275,16 @@ export default function EventDetail() {
 
       <div className="mt-6 grid md:grid-cols-[300px_1fr] gap-8">
         {/* Poster */}
-        {event.posterUrl && (
+        {(displayPosterUrl || isModerator) && (
           <div>
-            <img
-              src={event.posterUrl}
-              alt={`${event.title} poster`}
-              className="w-full rounded-lg shadow-md"
-            />
+            {displayPosterUrl && (
+              <img
+                src={displayPosterUrl}
+                alt={`${event.title} poster`}
+                className="w-full rounded-lg shadow-md"
+              />
+            )}
+            {isModerator && <PosterUploader />}
           </div>
         )}
 

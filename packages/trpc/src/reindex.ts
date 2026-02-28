@@ -20,5 +20,5 @@ export function triggerReindex(): void {
         Payload: Buffer.from('{}'),
       })
     )
-    .catch((err) => console.error('[reindex] Failed to trigger reindex', err));
+    .catch(err => console.error('[reindex] Failed to trigger reindex', err));
 }

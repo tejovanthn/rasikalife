@@ -169,14 +169,15 @@ export const meta: MetaFunction = ({ data }) => {
 export default function TalaDetails() {
   const location = useLocation();
 
-  const { tala, rawName, compositions, hasMoreCompositions, activeEdit, isModerator } = useLoaderData<{
-    tala: Tala;
-    rawName: string;
-    compositions: Composition[];
-    hasMoreCompositions: boolean;
-    activeEdit: Edit | null;
-    isModerator: boolean;
-  }>();
+  const { tala, rawName, compositions, hasMoreCompositions, activeEdit, isModerator } =
+    useLoaderData<{
+      tala: Tala;
+      rawName: string;
+      compositions: Composition[];
+      hasMoreCompositions: boolean;
+      activeEdit: Edit | null;
+      isModerator: boolean;
+    }>();
 
   // Check if we're on a nested route (like /compositions)
   const isNestedRoute = location.pathname.includes('/compositions');

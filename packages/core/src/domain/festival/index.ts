@@ -96,6 +96,31 @@ export async function listApprovedFestivalsByMonth(yearMonth: string): Promise<F
   return all;
 }
 
+export async function listUpcomingFestivals(params?: {
+  limit?: number;
+  nextToken?: string;
+}): Promise<{ items: Festival[]; nextToken?: string; hasMore: boolean }> {
+  const limit = params?.limit || 20;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffDate = cutoff.toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
+
+  const result = await FestivalEntity.query
+    .byStatus({ status: 'approved' })
+    .gte({ startDate: cutoffDate })
+    .go({ limit: 200, cursor: params?.nextToken });
+
+  const upcoming = ((result.data || []) as Festival[]).filter(f => f.endDate >= today);
+  const page = upcoming.slice(0, limit);
+
+  return {
+    items: page,
+    nextToken: upcoming.length > limit ? result.cursor || undefined : undefined,
+    hasMore: upcoming.length > limit,
+  };
+}
+
 export async function listFestivals(params?: {
   limit?: number;
   nextToken?: string;

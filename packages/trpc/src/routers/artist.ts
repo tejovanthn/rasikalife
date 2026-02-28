@@ -19,13 +19,11 @@ export const artistRouter = createTRPCRouter({
     )
     .query(({ input }) => Artist.listArtists(input)),
 
-  create: publicProcedure
-    .input(Artist.CreateArtistSchema)
-    .mutation(async ({ input }) => {
-      const result = await Artist.createArtist(input);
-      triggerReindex();
-      return result;
-    }),
+  create: publicProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
+    const result = await Artist.createArtist(input);
+    triggerReindex();
+    return result;
+  }),
 
   update: publicProcedure
     .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
@@ -35,13 +33,11 @@ export const artistRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: publicProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .mutation(async ({ input }) => {
-      const result = await Artist.deleteArtist(input.id);
-      triggerReindex();
-      return result;
-    }),
+  delete: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
+    const result = await Artist.deleteArtist(input.id);
+    triggerReindex();
+    return result;
+  }),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
@@ -59,13 +55,11 @@ export const artistRouter = createTRPCRouter({
       };
     }),
 
-  addAward: editorProcedure
-    .input(ArtistAward.AddArtistAwardSchema)
-    .mutation(async ({ input }) => {
-      const result = await ArtistAward.addArtistAward(input);
-      triggerReindex();
-      return result;
-    }),
+  addAward: editorProcedure.input(ArtistAward.AddArtistAwardSchema).mutation(async ({ input }) => {
+    const result = await ArtistAward.addArtistAward(input);
+    triggerReindex();
+    return result;
+  }),
 
   removeAward: editorProcedure
     .input(z.object({ artistId: z.string().min(1), awardId: z.string().min(1) }))

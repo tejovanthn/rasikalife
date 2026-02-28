@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, Loader2, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
 import { data, useLoaderData, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -853,10 +853,45 @@ export default function VerifyEvents() {
   const loaderData = useLoaderData<LoaderData>();
   const navigate = useNavigate();
 
+  // Stable key scoped to this specific set of drafts
+  const storageKey = `verify-draft-${[loaderData.festival?.id ?? '', ...loaderData.events.map(e => e.id)].join('-')}`;
+
   const [festival, setFestival] = useState<DraftFestival | null>(loaderData.festival);
   const [events, setEvents] = useState<DraftEvent[]>(loaderData.events);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Tracks whether the one-time restore from sessionStorage has run
+  const [hasRestored, setHasRestored] = useState(false);
+
+  // Restore saved progress on mount (client-only via useEffect)
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved) as {
+          festival?: DraftFestival | null;
+          events?: DraftEvent[];
+          step?: number;
+        };
+        if (parsed.festival !== undefined) setFestival(parsed.festival);
+        if (parsed.events) setEvents(parsed.events);
+        if (typeof parsed.step === 'number') setCurrentStep(parsed.step);
+      }
+    } catch {
+      // sessionStorage unavailable or data corrupt — start fresh
+    }
+    setHasRestored(true);
+  }, [storageKey]);
+
+  // Auto-save to sessionStorage whenever state changes (after restore completes)
+  useEffect(() => {
+    if (!hasRestored) return;
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify({ festival, events, step: currentStep }));
+    } catch {
+      // sessionStorage unavailable — silently skip
+    }
+  }, [festival, events, currentStep, storageKey, hasRestored]);
 
   const hasFestival = festival !== null;
   const totalSteps = (hasFestival ? 1 : 0) + events.length + 1; // +1 for review
@@ -925,6 +960,11 @@ export default function VerifyEvents() {
         throw new Error(err?.error || 'Failed to submit');
       }
 
+      try {
+        sessionStorage.removeItem(storageKey);
+      } catch {
+        // ignore
+      }
       toast.success('Events submitted for review!');
       navigate('/events');
     } catch (err) {

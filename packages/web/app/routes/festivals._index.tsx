@@ -13,7 +13,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const nextToken = url.searchParams.get('nextToken');
 
   try {
-    const result = await client.festival.list.query({
+    const result = await client.festival.listUpcoming.query({
       limit: 20,
       nextToken: nextToken || undefined,
     });
@@ -62,9 +62,9 @@ export default function FestivalsIndex() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <header className="mb-8">
-        <h1 className="page-title">Festivals</h1>
+        <h1 className="page-title">Upcoming Festivals</h1>
         <p className="text-xl text-muted-foreground">
-          Indian classical arts festivals and celebrations
+          Upcoming Indian classical arts festivals and celebrations
         </p>
       </header>
 

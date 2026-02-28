@@ -13,7 +13,7 @@ export const CreateFestivalSchema = z.object({
   sponsors: z
     .array(z.object({ name: z.string(), type: z.string().optional() }))
     .nullish()
-    .transform((v) => v ?? undefined),
+    .transform(v => v ?? undefined),
 });
 
 export const UpdateFestivalSchema = CreateFestivalSchema.partial();

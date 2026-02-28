@@ -10,9 +10,7 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": ["packages/*"],
   "keywords": [],
   "author": "",
   "license": "ISC",

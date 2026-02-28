@@ -408,4 +408,21 @@ export const eventRouter = createTRPCRouter({
       );
       return { eventIds };
     }),
+
+  updatePoster: moderatorProcedure
+    .input(
+      z.object({
+        id: z.string().min(1),
+        posterUrl: z.string().url(),
+        posterUploadId: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const result = await Event.updateApprovedEvent(input.id, {
+        posterUrl: input.posterUrl,
+        posterUploadId: input.posterUploadId,
+      });
+      triggerReindex();
+      return result;
+    }),
 });

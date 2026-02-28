@@ -33,13 +33,11 @@ export const venueRouter = createTRPCRouter({
     )
     .query(({ input }) => Venue.listVenuesByCity(input.city, input)),
 
-  create: editorProcedure
-    .input(Venue.CreateVenueSchema)
-    .mutation(async ({ input }) => {
-      const result = await Venue.createVenue(input);
-      triggerReindex();
-      return result;
-    }),
+  create: editorProcedure.input(Venue.CreateVenueSchema).mutation(async ({ input }) => {
+    const result = await Venue.createVenue(input);
+    triggerReindex();
+    return result;
+  }),
 
   update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Venue.UpdateVenueSchema }))

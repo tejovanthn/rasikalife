@@ -151,10 +151,11 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const { composition, rawTitle } = (data as {
-    composition?: CompositionWithRelations;
-    rawTitle?: string;
-  }) ?? {};
+  const { composition, rawTitle } =
+    (data as {
+      composition?: CompositionWithRelations;
+      rawTitle?: string;
+    }) ?? {};
   const canonicalTitle = rawTitle ?? composition?.title ?? '';
 
   if (composition) {

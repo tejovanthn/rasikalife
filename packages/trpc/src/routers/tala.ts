@@ -19,13 +19,11 @@ export const talaRouter = createTRPCRouter({
     )
     .query(({ input }) => Tala.listTalas(input)),
 
-  create: publicProcedure
-    .input(Tala.CreateTalaSchema)
-    .mutation(async ({ input }) => {
-      const result = await Tala.createTala(input);
-      triggerReindex();
-      return result;
-    }),
+  create: publicProcedure.input(Tala.CreateTalaSchema).mutation(async ({ input }) => {
+    const result = await Tala.createTala(input);
+    triggerReindex();
+    return result;
+  }),
 
   update: publicProcedure
     .input(z.object({ id: z.string().min(1), data: Tala.UpdateTalaSchema }))
@@ -35,13 +33,11 @@ export const talaRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: publicProcedure
-    .input(z.object({ id: z.string().min(1) }))
-    .mutation(async ({ input }) => {
-      const result = await Tala.deleteTala(input.id);
-      triggerReindex();
-      return result;
-    }),
+  delete: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
+    const result = await Tala.deleteTala(input.id);
+    triggerReindex();
+    return result;
+  }),
 
   getByName: publicProcedure
     .input(z.object({ name: z.string().min(1) }))

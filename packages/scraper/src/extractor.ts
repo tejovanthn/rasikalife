@@ -43,7 +43,9 @@ async function processPost(platform: string, platformPostId: string): Promise<vo
   }
 
   if (extraction.events.length === 0 || extraction.confidence < 0.3) {
-    console.log(`[extractor] No event found in post ${platformPostId} (confidence ${extraction.confidence})`);
+    console.log(
+      `[extractor] No event found in post ${platformPostId} (confidence ${extraction.confidence})`
+    );
     await SocialPost.markSkipped(platform, platformPostId);
     return;
   }

@@ -23,13 +23,11 @@ export const organiserRouter = createTRPCRouter({
     .input(z.object({ name: z.string().min(1) }))
     .query(({ input }) => Organiser.getOrganiserByName(input.name)),
 
-  create: editorProcedure
-    .input(Organiser.CreateOrganiserSchema)
-    .mutation(async ({ input }) => {
-      const result = await Organiser.createOrganiser(input);
-      triggerReindex();
-      return result;
-    }),
+  create: editorProcedure.input(Organiser.CreateOrganiserSchema).mutation(async ({ input }) => {
+    const result = await Organiser.createOrganiser(input);
+    triggerReindex();
+    return result;
+  }),
 
   update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Organiser.UpdateOrganiserSchema }))

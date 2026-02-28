@@ -29,6 +29,7 @@ export const EditEntityTypes = {
   EVENT: 'event',
   VENUE: 'venue',
   ORGANISER: 'organiser',
+  FESTIVAL: 'festival',
 } as const;
 
 export type EditEntityType = (typeof EditEntityTypes)[keyof typeof EditEntityTypes];

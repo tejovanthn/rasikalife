@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { Artist } from '../artist';
 import type { Composition, CompositionWithRelations } from '../composition';
 import type { Event } from '../event/entity';
+import type { Festival } from '../festival/entity';
 import type { Organiser } from '../organiser/entity';
 import type { Raga } from '../raga';
 import type { Tala } from '../tala';
@@ -98,6 +99,19 @@ async function getEventHandler() {
   };
 }
 
+async function getFestivalHandler() {
+  const mod = await import('../festival');
+  return {
+    getEntity: mod.getFestival as GetEntityFunction<Festival>,
+    updateEntity: mod.updateFestival as UpdateEntityFunction<Festival>,
+    deleteEntity: mod.deleteFestival as DeleteEntityFunction,
+    mergeEntity: async () => {
+      throw new Error('Festival merge not supported');
+    },
+    updateSchema: (await import('../festival/schema')).UpdateFestivalSchema,
+  };
+}
+
 const handlerCache: Partial<Record<EditEntityType, EditHandler>> = {};
 
 export async function getHandler(entityType: EditEntityType): Promise<EditHandler> {
@@ -127,6 +141,9 @@ export async function getHandler(entityType: EditEntityType): Promise<EditHandle
       break;
     case 'event':
       handler = await getEventHandler();
+      break;
+    case 'festival':
+      handler = await getFestivalHandler();
       break;
     default:
       throw new Error(`No handler registered for entity type: ${entityType}`);

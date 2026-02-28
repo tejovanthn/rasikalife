@@ -38,13 +38,7 @@ export async function action({ request }: { request: Request }) {
   const organisationTypeRaw = formData.get('organisationType') as string | null;
   const organisationType =
     organisationTypeRaw && organisationTypeRaw !== 'none'
-      ? (organisationTypeRaw as
-          | 'sabha'
-          | 'trust'
-          | 'ngo'
-          | 'temple'
-          | 'university'
-          | 'other')
+      ? (organisationTypeRaw as 'sabha' | 'trust' | 'ngo' | 'temple' | 'university' | 'other')
       : undefined;
 
   const city = (formData.get('city') as string | null)?.trim() || undefined;
@@ -84,7 +78,7 @@ export async function action({ request }: { request: Request }) {
     console.error('Failed to create organiser:', error);
     return data({ error: 'Failed to create organiser. Please try again.' }, { status: 500 });
   }
-};
+}
 
 export default function NewOrganiser() {
   const { user } = useLoaderData<typeof loader>();

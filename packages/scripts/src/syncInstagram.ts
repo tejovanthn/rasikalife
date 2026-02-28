@@ -105,7 +105,9 @@ export async function syncInstagram(options: SyncOptions = {}): Promise<void> {
   console.log(`[sync:instagram] Found ${handles.length} handle(s) to process`);
 
   if (handles.length === 0) {
-    console.log('[sync:instagram] No Instagram handles found. Add socialLinks to artists/venues/organisers.');
+    console.log(
+      '[sync:instagram] No Instagram handles found. Add socialLinks to artists/venues/organisers.'
+    );
     return;
   }
 
@@ -113,7 +115,9 @@ export async function syncInstagram(options: SyncOptions = {}): Promise<void> {
   let newPosts = 0;
 
   for (const record of handles) {
-    console.log(`\n[sync:instagram] Scraping @${record.handle} (${record.entityType}/${record.entityId})`);
+    console.log(
+      `\n[sync:instagram] Scraping @${record.handle} (${record.entityType}/${record.entityId})`
+    );
 
     const lastPostId = reprocess
       ? undefined
@@ -158,9 +162,13 @@ export async function syncInstagram(options: SyncOptions = {}): Promise<void> {
   if (dryRun) {
     console.log(`\n[sync:instagram] Dry-run complete. Would have written ${totalPosts} post(s).`);
   } else {
-    console.log(`\n[sync:instagram] Done. Scraped ${totalPosts} post(s), wrote ${newPosts} new records.`);
+    console.log(
+      `\n[sync:instagram] Done. Scraped ${totalPosts} post(s), wrote ${newPosts} new records.`
+    );
     if (newPosts > 0) {
-      console.log('[sync:instagram] Posts are queued as "pending". Run extraction to process them.');
+      console.log(
+        '[sync:instagram] Posts are queued as "pending". Run extraction to process them.'
+      );
     }
   }
 }

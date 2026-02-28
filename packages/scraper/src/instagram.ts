@@ -108,7 +108,9 @@ async function sleep(ms: number): Promise<void> {
 async function fetchProfilePage(
   handle: string,
   cursor?: string
-): Promise<ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'] & { userId: string } | null> {
+): Promise<
+  (ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'] & { userId: string }) | null
+> {
   // First call: profile info endpoint (also returns first page of posts)
   if (!cursor) {
     const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
@@ -135,7 +137,13 @@ async function fetchProfilePage(
   const res = await fetch(url, { headers: DEFAULT_HEADERS });
   if (!res.ok) throw new Error(`Instagram GraphQL error: ${res.status}`);
 
-  const json = await res.json() as { data?: { user?: { edge_owner_to_timeline_media: ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'] } } };
+  const json = (await res.json()) as {
+    data?: {
+      user?: {
+        edge_owner_to_timeline_media: ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'];
+      };
+    };
+  };
   const media = json.data?.user?.edge_owner_to_timeline_media;
   if (!media) return null;
 
@@ -197,7 +205,13 @@ export async function scrapeInstagramProfile(
         break;
       }
 
-      const json = await res.json() as { data?: { user?: { edge_owner_to_timeline_media: ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'] } } };
+      const json = (await res.json()) as {
+        data?: {
+          user?: {
+            edge_owner_to_timeline_media: ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'];
+          };
+        };
+      };
       const media = json.data?.user?.edge_owner_to_timeline_media;
       if (!media) break;
 

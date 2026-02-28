@@ -10,9 +10,7 @@ export const CreateSocialPostSchema = z.object({
   postText: z.string().max(10000).optional(),
   mediaUrls: z.array(z.string().url()).default([]),
   postedAt: z.string().datetime({ offset: true }),
-  processingStatus: z
-    .enum(['pending', 'processed', 'skipped', 'failed'])
-    .default('pending'),
+  processingStatus: z.enum(['pending', 'processed', 'skipped', 'failed']).default('pending'),
 });
 
 export const UpdateSocialPostStatusSchema = z.object({

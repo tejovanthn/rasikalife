@@ -74,7 +74,9 @@ program
 
 program
   .command('sync:instagram')
-  .description('Scrape Instagram profiles linked to artists, venues, and organisers for event posts')
+  .description(
+    'Scrape Instagram profiles linked to artists, venues, and organisers for event posts'
+  )
   .option('--handle <name>', 'Scrape a single Instagram handle')
   .option('-n, --dry-run', 'Show what would be scraped without writing to the database')
   .option('-r, --reprocess', 'Reprocess all posts (ignore previously seen post IDs)')

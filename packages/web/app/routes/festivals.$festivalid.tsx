@@ -1,12 +1,15 @@
-import { Calendar, MapPin } from 'lucide-react';
+import { Calendar, MapPin, Pencil, Upload } from 'lucide-react';
+import { useState } from 'react';
 import { Link, data, useLoaderData } from 'react-router';
-import type { LoaderFunction, MetaFunction } from 'react-router';
-import { client } from '~/api.server';
+import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
+import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { FestivalStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import {
   generateEventUrl,
@@ -26,6 +29,7 @@ interface FestivalDetail {
   organiserId?: string;
   tags?: string[];
   sponsors?: Array<{ name: string; type?: string }>;
+  status?: string;
 }
 
 interface FestivalEvent {
@@ -39,7 +43,7 @@ interface FestivalEvent {
   entryType?: string;
 }
 
-export const loader: LoaderFunction = async ({ params }) => {
+export const loader: LoaderFunction = async ({ request, params }) => {
   const { festivalid } = params;
   if (!festivalid) {
     throw new Response('Festival ID is required', { status: 400 });
@@ -49,17 +53,25 @@ export const loader: LoaderFunction = async ({ params }) => {
   const id = parsed ? parsed.id : festivalid;
 
   try {
-    const festival = await client.festival.get.query({ id });
+    const user = await getUser(request);
+    const serverClient = await createServerClient(request);
+    const festival = await serverClient.festival.get.query({ id });
+
     if (!festival) {
       throw new Response('Festival not found', { status: 404 });
     }
 
-    const events = await client.event.byFestival.query({
+    const events = await serverClient.event.byFestival.query({
       festivalId: id,
       limit: 50,
     });
 
-    return data({ festival, events: events.items });
+    return data({
+      festival,
+      events: events.items,
+      user,
+      isModerator: user?.role === 'moderator' || user?.role === 'admin',
+    });
   } catch (error) {
     console.error('Failed to load festival:', error);
     if (error instanceof ApplicationError) {
@@ -72,6 +84,44 @@ export const loader: LoaderFunction = async ({ params }) => {
     }
     throw new Response('Failed to load festival', { status: 500 });
   }
+};
+
+export const action: ActionFunction = async ({ request, params }) => {
+  const { festivalid } = params;
+  if (!festivalid) {
+    return data({ error: 'Festival ID is required' }, { status: 400 });
+  }
+
+  const parsed = parseSlug(festivalid);
+  const id = parsed ? parsed.id : festivalid;
+
+  const user = await getUser(request);
+  if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {
+    return data({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  const formData = await request.formData();
+  const intent = formData.get('intent') as string;
+
+  if (intent === 'updatePoster') {
+    const posterUrl = formData.get('posterUrl') as string;
+    const posterUploadId = formData.get('posterUploadId') as string;
+
+    if (!posterUrl || !posterUploadId) {
+      return data({ error: 'Missing poster data' }, { status: 400 });
+    }
+
+    try {
+      const serverClient = await createServerClient(request);
+      await serverClient.festival.updatePoster.mutate({ id, posterUrl, posterUploadId });
+      return data({ success: true });
+    } catch (error) {
+      console.error('Failed to update poster:', error);
+      return data({ error: 'Failed to update poster' }, { status: 500 });
+    }
+  }
+
+  return data({ error: 'Invalid action' }, { status: 400 });
 };
 
 export const meta: MetaFunction = ({ data: loaderData }) => {
@@ -100,14 +150,89 @@ function groupEventsByDate(events: FestivalEvent[]): Map<string, FestivalEvent[]
     existing.push(event);
     groups.set(dateKey, existing);
   }
-  // Sort by date
   return new Map([...groups.entries()].sort());
 }
 
+function PosterUploader() {
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleUpload() {
+    if (!file) return;
+    setStatus('uploading');
+    setError(null);
+
+    try {
+      const urlRes = await fetch('/events/new/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          intent: 'getUploadUrl',
+          fileName: file.name,
+          contentType: file.type,
+        }),
+      });
+      if (!urlRes.ok) throw new Error('Failed to get upload URL');
+      const { uploadUrl, posterUrl, posterUploadId } = await urlRes.json();
+
+      const s3Res = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type },
+      });
+      if (!s3Res.ok) throw new Error('Failed to upload image');
+
+      const updateForm = new FormData();
+      updateForm.append('intent', 'updatePoster');
+      updateForm.append('posterUrl', posterUrl);
+      updateForm.append('posterUploadId', posterUploadId);
+
+      const updateRes = await fetch(window.location.href, {
+        method: 'POST',
+        body: updateForm,
+        credentials: 'include',
+      });
+      if (!updateRes.ok) throw new Error('Failed to update poster');
+
+      window.location.reload();
+    } catch (err) {
+      setStatus('error');
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    }
+  }
+
+  return (
+    <div className="border rounded-lg p-4 space-y-3 mt-4">
+      <h3 className="text-sm font-semibold">Replace Poster</h3>
+      <input
+        type="file"
+        accept="image/*"
+        onChange={e => setFile(e.target.files?.[0] ?? null)}
+        className="text-sm w-full"
+      />
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button
+        type="button"
+        size="sm"
+        variant="secondary"
+        onClick={handleUpload}
+        disabled={!file || status === 'uploading'}
+      >
+        <Upload className="h-4 w-4 mr-2" />
+        {status === 'uploading' ? 'Uploading...' : 'Replace Poster'}
+      </Button>
+    </div>
+  );
+}
+
 export default function FestivalDetail() {
-  const { festival, events } = useLoaderData<{
+  const { festival, events, user, isModerator } = useLoaderData<{
     festival: FestivalDetail;
     events: FestivalEvent[];
+    user: { id: string; role: string } | null;
+    isModerator: boolean;
   }>();
 
   const groupedEvents = groupEventsByDate(events);
@@ -122,16 +247,30 @@ export default function FestivalDetail() {
       />
 
       <div className="mt-6 grid md:grid-cols-[250px_1fr] gap-8">
-        {festival.posterUrl && (
-          <img
-            src={festival.posterUrl}
-            alt={`${festival.name} poster`}
-            className="w-full rounded-lg shadow-md"
-          />
-        )}
+        <div>
+          {festival.posterUrl && (
+            <img
+              src={festival.posterUrl}
+              alt={`${festival.name} poster`}
+              className="w-full rounded-lg shadow-md"
+            />
+          )}
+          {isModerator && <PosterUploader />}
+        </div>
 
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold">{festival.name}</h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl font-bold">{festival.name}</h1>
+            {user && festival.status === 'approved' && (
+              <a
+                href={`${generateFestivalUrl(festival.name, festival.id)}/edit`}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-2"
+              >
+                <Pencil className="h-4 w-4" />
+                Edit
+              </a>
+            )}
+          </div>
           {festival.description && <p className="text-muted-foreground">{festival.description}</p>}
 
           <div className="flex items-center gap-2 text-foreground">

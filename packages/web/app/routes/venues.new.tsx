@@ -81,7 +81,7 @@ export async function action({ request }: { request: Request }) {
     console.error('Failed to create venue:', error);
     return data({ error: 'Failed to create venue. Please try again.' }, { status: 500 });
   }
-};
+}
 
 export default function NewVenue() {
   const { user } = useLoaderData<typeof loader>();

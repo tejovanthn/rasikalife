@@ -59,7 +59,7 @@ export function DetailPageHeader({
   const editHref =
     activeEdit?.status === EditStatus.SUBMITTED
       ? `/my-edits?editId=${activeEdit.id}`
-      : editUrl ?? '';
+      : (editUrl ?? '');
 
   const editIcon =
     activeEdit?.status === EditStatus.SUBMITTED ? (
@@ -90,7 +90,12 @@ export function DetailPageHeader({
               </Link>
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handleShare} className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleShare}
+            className="flex items-center gap-2"
+          >
             <Share2 className="h-4 w-4" />
             Share
           </Button>
@@ -174,7 +179,12 @@ export function DetailPageHeader({
 
         {/* Edit — large primary FAB, bottommost */}
         {editUrl && (
-          <Button asChild size="icon" className="h-14 w-14 rounded-full shadow-lg" aria-label={editLabel}>
+          <Button
+            asChild
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-lg"
+            aria-label={editLabel}
+          >
             <Link to={editHref}>
               <span className="sr-only">{editLabel}</span>
               {activeEdit?.status === EditStatus.SUBMITTED ? (
