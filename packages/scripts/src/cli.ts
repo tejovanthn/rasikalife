@@ -86,4 +86,16 @@ program
     await syncInstagram({ handle: opts.handle, dryRun: opts.dryRun, reprocess: opts.reprocess });
   });
 
+program
+  .command('backfill:webp')
+  .description(
+    'Convert existing S3 poster images to WebP (skips images that already have a .webp sibling)'
+  )
+  .option('-n, --dry-run', 'Preview conversions without writing to S3')
+  .option('--prefix <prefix>', 'S3 key prefix to scan', 'posters/')
+  .action(async (opts: { dryRun?: boolean; prefix?: string }) => {
+    const { backfillWebp } = await import('./backfillWebp.js');
+    await backfillWebp({ dryRun: opts.dryRun, prefix: opts.prefix });
+  });
+
 program.parseAsync(process.argv);

@@ -5,6 +5,7 @@ import { generateId } from '../../utils';
 const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
 
 const BUCKET_NAME = process.env.EVENT_POSTERS_BUCKET || '';
+const CDN_URL = process.env.EVENT_POSTERS_CDN_URL || '';
 const PRESIGNED_URL_EXPIRY = 300; // 5 minutes
 
 export async function getUploadUrl(
@@ -24,7 +25,8 @@ export async function getUploadUrl(
     expiresIn: PRESIGNED_URL_EXPIRY,
   });
 
-  const posterUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+  const baseUrl = CDN_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
+  const posterUrl = `${baseUrl}/${key}`;
 
   return { uploadId, uploadUrl, posterUrl };
 }

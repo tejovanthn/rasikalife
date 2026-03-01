@@ -5,6 +5,7 @@ import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router'
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { PosterImage } from '~/components/PosterImage';
 import { EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -285,10 +286,11 @@ export default function EventDetail() {
         {(displayPosterUrl || isModerator) && (
           <div>
             {displayPosterUrl && (
-              <img
-                src={displayPosterUrl}
+              <PosterImage
+                posterUrl={displayPosterUrl}
                 alt={`${event.title} poster`}
                 className="w-full rounded-lg shadow-md"
+                loading="eager"
               />
             )}
             {isModerator && <PosterUploader />}

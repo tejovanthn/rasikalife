@@ -4,6 +4,7 @@ import type { MetaFunction } from 'react-router';
 import { data, useLoaderData, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
+import { PosterImage } from '~/components/PosterImage';
 import { SearchSelect } from '~/components/SearchSelect';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -413,7 +414,11 @@ function FestivalStep({
     <div className="space-y-6">
       <div className="grid md:grid-cols-[200px_1fr] gap-6">
         {posterUrl && (
-          <img src={posterUrl} alt="Poster" className="rounded-lg w-full object-cover" />
+          <PosterImage
+            posterUrl={posterUrl}
+            alt="Poster"
+            className="rounded-lg w-full object-cover"
+          />
         )}
         <div className="space-y-4">
           <div className="space-y-2">
@@ -841,7 +846,7 @@ function ReviewStep({
       {posterUrl && (
         <div>
           <h4 className="text-sm font-medium mb-2">Poster</h4>
-          <img src={posterUrl} alt="Event poster" className="max-h-48 rounded-lg" />
+          <PosterImage posterUrl={posterUrl} alt="Event poster" className="max-h-48 rounded-lg" />
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { auth } from './auth';
 import { database } from './database';
-import { eventPostersBucket, geminiApiKey } from './event-posters';
+import { eventPostersBucket, eventPostersCdn, geminiApiKey } from './event-posters';
 import { searchBucket, searchReindexFunction } from './search';
 
 const trpc = new sst.aws.Function('RasikaTRPC', {
@@ -15,6 +15,7 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     AUTH_URL: auth.url,
     EVENT_POSTERS_BUCKET: eventPostersBucket.name,
     GEMINI_API_KEY: geminiApiKey.value,
+    EVENT_POSTERS_CDN_URL: eventPostersCdn.url,
     SEARCH_REINDEX_FUNCTION_NAME: searchReindexFunction.name,
   },
 });

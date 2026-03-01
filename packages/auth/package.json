@@ -2,7 +2,10 @@
   "name": "@rasika/functions",
   "version": "0.0.0",
   "exports": {
-    "./*": ["./src/*/index.ts", "./src/*.ts"]
+    "./*": [
+      "./src/*/index.ts",
+      "./src/*.ts"
+    ]
   },
   "types": "./src/index.ts",
   "dependencies": {
@@ -10,6 +13,7 @@
     "@openauthjs/openauth": "^0.4.3",
     "@rasika/core": "workspace:*",
     "hono": "^4.12.3",
+    "sharp": "^0.34.5",
     "sst": "^3.19.3",
     "zod": "^3.25.76"
   },

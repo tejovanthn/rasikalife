@@ -6,4 +6,5 @@ onlyBuiltDependencies:
   - aws-sdk
   - esbuild
   - protobufjs
+  - sharp
   - vite-plugin-node-externals

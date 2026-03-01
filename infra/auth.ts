@@ -11,7 +11,7 @@ export const auth = new sst.aws.Auth('RasikaAuth', {
   issuer: {
     handler: './packages/auth/src/issuer.handler',
     link: [database, googleClientId, googleClientSecret, bucket],
-    dev: false,
+    dev: true,
     environment: {
       DYNAMODB_TABLE: database.name,
       AWS_REGION: undefined,

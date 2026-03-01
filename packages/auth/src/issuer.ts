@@ -3,6 +3,7 @@ import { issuer } from '@openauthjs/openauth';
 import { GoogleProvider } from '@openauthjs/openauth/provider/google';
 import { Auth, User } from '@rasika/core';
 import { handle } from 'hono/aws-lambda';
+import sharp from 'sharp';
 import { Resource } from 'sst';
 
 const s3Client = new S3Client({});
@@ -24,16 +25,21 @@ async function uploadProfilePhoto(
     }
 
     const buffer = await response.arrayBuffer();
-    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    // Convert to WebP (256x256 cover crop)
+    const webpBuffer = await sharp(Buffer.from(buffer))
+      .resize(256, 256, { fit: 'cover' })
+      .webp({ quality: 80 })
+      .toBuffer();
 
     // Upload to S3
-    const key = `profile-photos/${userId}.jpg`;
+    const key = `profile-photos/${userId}.webp`;
     await s3Client.send(
       new PutObjectCommand({
         Bucket: Resource.RasikaBucket.name,
         Key: key,
-        Body: Buffer.from(buffer),
-        ContentType: contentType,
+        Body: webpBuffer,
+        ContentType: 'image/webp',
       })
     );
 

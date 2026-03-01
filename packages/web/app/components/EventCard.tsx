@@ -1,5 +1,6 @@
 import { Calendar, MapPin } from 'lucide-react';
 import { Link } from 'react-router';
+import { PosterImage } from '~/components/PosterImage';
 import { Card, CardContent } from '~/components/ui/card';
 import { generateEventUrl } from '~/lib/url-slug';
 
@@ -28,8 +29,8 @@ export function EventCard({ event }: EventCardProps) {
     <Link to={generateEventUrl(event.title, event.id)} className="block no-underline">
       <Card className="h-full hover:border-primary/50 transition-colors">
         {event.posterUrl && (
-          <img
-            src={event.posterUrl}
+          <PosterImage
+            posterUrl={event.posterUrl}
             alt={event.title}
             className="w-full h-36 object-cover rounded-t-lg"
           />

@@ -120,7 +120,13 @@ export const Header = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-2 px-2">
                     {user.picture ? (
-                      <img src={user.picture} alt={user.name} className="h-8 w-8 rounded-full" />
+                      <img
+                        src={user.picture}
+                        alt={user.name}
+                        className="h-8 w-8 rounded-full"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : (
                       <User className="h-5 w-5" />
                     )}
@@ -294,6 +300,8 @@ export const Header = () => {
                               src={user.picture}
                               alt={user.name}
                               className="h-8 w-8 rounded-full"
+                              loading="lazy"
+                              decoding="async"
                             />
                           ) : (
                             <User className="h-8 w-8 rounded-full bg-muted p-1" />

@@ -355,6 +355,8 @@ export default function NewEvent() {
                       src={preview}
                       alt={file.name}
                       className="aspect-[3/4] w-full rounded-lg object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="aspect-[3/4] rounded-lg bg-muted flex items-center justify-center">
