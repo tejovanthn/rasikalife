@@ -13,7 +13,8 @@ Disallow: /auth/
 Disallow: /moderator/
 Disallow: /my-edits
 Disallow: /api/
-Disallow: /events/new
+Disallow: /events/new$
+Disallow: /events/new/
 Disallow: /*edit
 `.trim();
 

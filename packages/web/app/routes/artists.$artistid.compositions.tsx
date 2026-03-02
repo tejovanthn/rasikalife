@@ -1,5 +1,5 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { type LoaderFunction, data } from 'react-router';
+import { type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
@@ -7,6 +7,21 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl } from '~/lib/url-slug';
+
+export const meta: MetaFunction = ({ data }) => {
+  const loaderData = data as { artist: { id: string; name: string } } | undefined;
+  if (!loaderData) return [{ title: 'Compositions - Rasika.life' }];
+  const { artist } = loaderData;
+  const canonicalUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/compositions`;
+  return [
+    { title: `Compositions by ${artist.name} - Rasika.life` },
+    {
+      name: 'description',
+      content: `Browse all compositions by ${artist.name} in Indian classical music.`,
+    },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
+  ];
+};
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { artistid } = params;

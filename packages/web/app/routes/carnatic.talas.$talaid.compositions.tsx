@@ -1,5 +1,5 @@
 import type { CompositionType } from '@rasika/core/types/entities';
-import { type LoaderFunction, data } from 'react-router';
+import { type LoaderFunction, type MetaFunction, data } from 'react-router';
 import {
   Link,
   useLoaderData,
@@ -14,6 +14,21 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateTalaUrl } from '~/lib/url-slug';
+
+export const meta: MetaFunction = ({ data }) => {
+  const loaderData = data as { tala: { id: string; name: string } } | undefined;
+  if (!loaderData) return [{ title: 'Compositions - Rasika.life' }];
+  const { tala } = loaderData;
+  const canonicalUrl = `https://rasika.life${generateTalaUrl(tala.name, tala.id)}/compositions`;
+  return [
+    { title: `Compositions in ${tala.name} Tala - Rasika.life` },
+    {
+      name: 'description',
+      content: `Browse all Carnatic compositions set in the ${tala.name} tala.`,
+    },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
+  ];
+};
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { talaid } = params;

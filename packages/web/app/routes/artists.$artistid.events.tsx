@@ -1,12 +1,13 @@
 import { Calendar } from 'lucide-react';
-import { type LoaderFunction, data } from 'react-router';
+import { type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData, useParams, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
-import { generateEventUrl } from '~/lib/url-slug';
+import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { generateArtistUrl, generateEventUrl } from '~/lib/url-slug';
 
 interface ArtistEvent {
   eventId: string;
@@ -16,6 +17,21 @@ interface ArtistEvent {
   artistTitle?: string;
   role?: string;
 }
+
+export const meta: MetaFunction = ({ data }) => {
+  const loaderData = data as { artist: { id: string; name: string } } | undefined;
+  if (!loaderData) return [{ title: 'Events - Rasika.life' }];
+  const { artist } = loaderData;
+  const canonicalUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/events`;
+  return [
+    { title: `Events featuring ${artist.name} - Rasika.life` },
+    {
+      name: 'description',
+      content: `Browse all past and upcoming events featuring ${artist.name} in Indian classical music.`,
+    },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
+  ];
+};
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { artistid } = params;
@@ -51,6 +67,14 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     });
   } catch (error) {
     console.error('Failed to load artist events:', error);
+    if (error instanceof ApplicationError) {
+      if (error.code === ErrorCode.ARTIST_NOT_FOUND) {
+        throw new Response(error.message, { status: 404 });
+      }
+    }
+    if (error instanceof Error && error.message.toLowerCase().includes('not found')) {
+      throw new Response('Artist not found', { status: 404 });
+    }
     throw new Response('Failed to load events', { status: 500 });
   }
 };
