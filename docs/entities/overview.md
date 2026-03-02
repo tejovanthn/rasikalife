@@ -7,6 +7,7 @@ This section documents all ElectroDB entities and their related functions in the
 | Entity | File | Description |
 |--------|------|-------------|
 | [Artist](artist.md) | artist | Musicians, composers, and gurus |
+| [Award](award.md) | award | Awards and honours |
 | [Event](event.md) | event | Music events, concerts, and performances |
 | [Venue](venue.md) | venue | Event locations |
 | [Organiser](organiser.md) | organiser | Event organizers |
@@ -17,11 +18,16 @@ This section documents all ElectroDB entities and their related functions in the
 | [User](user.md) | user | Application users |
 | [Content](content.md) | content | CMS content/pages |
 | [Edit](edit.md) | edit | Edit proposals and approvals |
+| [ChangeHistory](change-history.md) | change-history | Field-level audit log for entity mutations |
+| [SocialPost](social-post.md) | social-post | Scraped social media posts for event extraction |
 
 ## Junction Tables
 
 | Entity | File | Description |
 |--------|------|-------------|
+| [ArtistAward](artist-award.md) | artist-award | Links artists to awards |
+| [CompositionRaga](composition-raga.md) | composition-raga | Links compositions to ragas |
+| [CompositionTala](composition-tala.md) | composition-tala | Links compositions to talas |
 | EventArtist | event-artist | Links events to artists |
 
 ## Common Patterns

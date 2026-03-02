@@ -1,5 +1,20 @@
 # ADR Decision Log
 
+## 2026-03-02
+
+### New ADRs Created
+- **ADR-024 (React Router v7)**: Migration from Remix v2 to React Router v7 (unified successor); supersedes ADR-004
+- **ADR-025 (shadcn/ui + Tailwind)**: Copy-owned accessible UI components on Radix UI primitives
+- **ADR-026 (Gemini AI)**: Google Gemini 2.5 Flash for structured event extraction from posters and social media posts
+- **ADR-027 (Presigned URL Uploads)**: Direct client-to-S3 uploads via presigned URLs; Lambda never handles binary data
+- **ADR-028 (CloudFront + WebP)**: S3-triggered async WebP conversion + CloudFront CDN with 1-year immutable cache for event posters
+- **ADR-029 (Instagram Scraping)**: Three-Lambda pipeline (cron → scraper → SQS → extractor) using Instagram's unofficial web API
+- **ADR-030 (Web Auth Session)**: Cookie sessions store JWTs; per-request tRPC clients with Bearer tokens; OpenAuth verifies per-request
+- **ADR-031 (Search Reindex Trigger)**: Mutations async-invoke reindex Lambda with 5-minute in-process throttle
+
+### Updated ADRs
+- **ADR-004**: Status updated to Superseded by ADR-024
+
 ## 2025-02-11
 
 ### New ADRs Created - Batch 1

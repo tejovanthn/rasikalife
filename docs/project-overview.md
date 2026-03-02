@@ -43,5 +43,5 @@
 - Event sourcing for audit trails and analytics (ADR-009)
 - Comprehensive testing strategy (ADR-008)
 - Type-safe API layer with tRPC (ADR-003)
-- Full-stack Remix framework (ADR-004)
+- React Router v7 full-stack framework (ADR-004)
 - SST v3 serverless infrastructure (ADR-002)

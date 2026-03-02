@@ -36,6 +36,9 @@ const converterFunction = {
   memory: '1024 MB',
   timeout: '5 minutes',
   link: [eventPostersBucket],
+  nodejs: {
+    install: ['sharp'],
+  },
 };
 
 eventPostersBucket.notify({

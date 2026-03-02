@@ -33,6 +33,8 @@ export function EventCard({ event }: EventCardProps) {
             posterUrl={event.posterUrl}
             alt={event.title}
             className="w-full h-36 object-cover rounded-t-lg"
+            width={400}
+            height={144}
           />
         )}
         <CardContent className="py-4">

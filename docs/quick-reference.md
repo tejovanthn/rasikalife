@@ -1,160 +1,143 @@
 # Quick Reference - Types, Constants & Utilities
 
-## Core Types
+## Core Package Import Patterns
 
-### Base Entity
+The core package exports domain namespaces for grouped imports, or individual named imports:
+
 ```typescript
-interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Namespace imports (preferred for multiple functions from one domain)
+import * as Artist from '@rasika/core/domain/artist';
+import * as Composition from '@rasika/core/domain/composition';
+
+// Or via main index (namespace re-exports)
+import { Artist, Composition, Raga } from '@rasika/core';
+
+// Individual function imports
+import { createArtist, getArtist, listArtists } from '@rasika/core/domain/artist';
+
+// Utilities
+import { generateId, getCurrentISOString } from '@rasika/core/utils';
+
+// Constants
+import { ApplicationError, ErrorCode } from '@rasika/core';
 ```
 
-### Common Interfaces
+## Pagination Types
+
 ```typescript
 interface PaginationParams {
   limit?: number;
   nextToken?: string;
 }
 
+// All list functions return this shape
 interface PaginatedResult<T> {
   items: T[];
   nextToken?: string;
   hasMore: boolean;
-  totalCount?: number;
 }
 ```
 
-## Core Enums
+## Error Handling
 
-### Entity Types
 ```typescript
-enum EntityType {
-  ARTIST = 'artist',
-  COMPOSITION = 'composition',
-  RAGA = 'raga',
-  TALA = 'tala'
-}
+import { ApplicationError, ErrorCode } from '@rasika/core';
 
-enum EntityPrefix {
-  ARTIST = 'ARTIST',
-  COMPOSITION = 'COMPOSITION',
-  RAGA = 'RAGA',
-  TALA = 'TALA'
-}
+// Throw typed errors
+throw new ApplicationError(ErrorCode.ARTIST_NOT_FOUND, `artist with ID ${id} not found`);
 
-enum SecondaryPrefix {
-  METADATA = '#METADATA'
+// Catch and check type
+if (error instanceof ApplicationError) {
+  console.error(error.code, error.message);
 }
 ```
 
-### Domain Enums
-```typescript
-enum Tradition {
-  CARNATIC = 'carnatic',
-  HINDUSTANI = 'hindustani'
-}
-```
+### ErrorCode Enum (key values)
 
-## Entity Interfaces
-
-### Artist
-```typescript
-interface Artist extends BaseEntity {
-  name: string;
-}
-```
-
-### CompositionWithRelations
-```typescript
-interface CompositionWithRelations {
-  id: string;
-  title: string;
-  artistId: string;
-  createdAt: string;
-  updatedAt: string;
-  ragas: Array<{ id: string; name: string }>;
-  talas: Array<{ id: string; name: string }>;
-  artist: { id: string; name: string } | null;
-}
-```
-
-### Raga
-```typescript
-interface Raga extends BaseEntity {
-  name: string;
-}
-```
-
-### Tala
-```typescript
-interface Tala extends BaseEntity {
-  name: string;
-}
-```
-
-## Error Constants
-
-### Error Codes
 ```typescript
 enum ErrorCode {
-  ARTIST_NOT_FOUND = 'ARTIST_NOT_FOUND',
-  COMPOSITION_NOT_FOUND = 'COMPOSITION_NOT_FOUND',
-  RAGA_NOT_FOUND = 'RAGA_NOT_FOUND',
-  TALA_NOT_FOUND = 'TALA_NOT_FOUND',
-  VALIDATION_ERROR = 'VALIDATION_ERROR',
-  DATABASE_ERROR = 'DATABASE_ERROR'
+  // Not found
+  ARTIST_NOT_FOUND, COMPOSITION_NOT_FOUND, RAGA_NOT_FOUND, TALA_NOT_FOUND,
+  USER_NOT_FOUND, VENUE_NOT_FOUND, ORGANISER_NOT_FOUND, AWARD_NOT_FOUND,
+  FESTIVAL_NOT_FOUND, EVENT_NOT_FOUND,
+
+  // Operation failures
+  ARTIST_CREATE_FAILED, ARTIST_UPDATE_FAILED, ARTIST_FETCH_FAILED,
+  RAGA_CREATE_FAILED, TALA_CREATE_FAILED, USER_CREATE_FAILED,
+  VENUE_CREATE_FAILED, ORGANISER_CREATE_FAILED, AWARD_CREATE_FAILED,
+  FESTIVAL_CREATE_FAILED, EVENT_CREATE_FAILED,
+  // (and corresponding _UPDATE_FAILED variants)
+
+  // Generic
+  VALIDATION_ERROR, DATABASE_ERROR,
+
+  // Search
+  SEARCH_INDEX_ERROR, SEARCH_INDEX_BUILD_FAILED, SEARCH_QUERY_FAILED,
 }
 ```
 
-## Basic Utility Functions
+## Utility Functions
 
 ### ID Generation
 ```typescript
-// Generate entity IDs
-generatePrefixedId(prefix: string): Promise<string>
+import { generateId } from '@rasika/core/utils';
 
-// Examples:
-const artistId = await generatePrefixedId('artist'); // artist_01FQMQZX...
-const compositionId = await generatePrefixedId('composition');
+// Returns a KSUID string (time-sortable, globally unique)
+const id = generateId(); // e.g. "2mzinCV9zyB8EBGaJuLi9KMTn15"
 ```
 
-### Date/Time Utilities
+### Date Utilities
 ```typescript
-getCurrentISOString(): string  // Current ISO datetime
+import {
+  getCurrentISOString,   // () => string — current UTC ISO timestamp
+  formatDateYYYYMMDD,    // (date: Date) => string — e.g. "2025-03-02"
+  toISOString,           // (date: Date | string | number) => string
+  addDays,               // (date: Date, days: number) => Date
+  isPast,                // (date: Date | string) => boolean
+  isFuture,              // (date: Date | string) => boolean
+  daysBetween,           // (dateA, dateB) => number
+} from '@rasika/core/utils';
 ```
 
-### Pagination Helpers
+### Transliteration
 ```typescript
-createPaginatedResponse<T>(items: T[]): PaginatedResult<T>
+import { transliterate } from '@rasika/core/utils';
+import type { TransliterationScheme } from '@rasika/core/utils';
+
+// Schemes: 'itrans' | 'iast' | 'devanagari' | 'tamil' | 'telugu' | 'kannada'
+const devanagari = transliterate('rAga', 'itrans', 'devanagari');
 ```
 
-## Basic Repository Pattern
+## Domain Error Helpers
+
 ```typescript
-interface Repository<T extends BaseEntity> {
-  create(item: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T>;
-  getById(id: string): Promise<T | null>;
-  list(params?: PaginationParams): Promise<PaginatedResult<T>>;
-}
+import { notFoundError, createFailedError } from '@rasika/core/domain/helpers';
+
+// Returns ApplicationError with the correct ErrorCode
+throw notFoundError('artist', id);        // ARTIST_NOT_FOUND
+throw createFailedError('artist', name);  // ARTIST_CREATE_FAILED
 ```
 
-## API Response Types
+## Entity Type Pattern
 
-### Composition Queries
+Entity types are derived from ElectroDB — never hand-written:
+
 ```typescript
-// Get single composition with all relations
-composition.get(id) // Returns CompositionWithRelations
+import type { EntityItem } from 'electrodb';
+import { ArtistEntity } from './entity';
 
-// Get compositions by artist with relations
-composition.byArtist(artistId) // Returns CompositionWithRelations[]
+export type Artist = EntityItem<typeof ArtistEntity>;
 ```
 
-## Basic Testing Helpers
+## Change History Constants
+
 ```typescript
-// Mock entity creation
-createMockArtist(overrides?: Partial<Artist>): Artist
-createMockComposition(overrides?: Partial<Composition>): Composition
-createMockRaga(overrides?: Partial<Raga>): Raga
-createMockTala(overrides?: Partial<Tala>): Tala
+const CHANGE_ENTITY_TYPE = {
+  COMPOSITION: 'composition',
+  RAGA: 'raga',
+  TALA: 'tala',
+  ARTIST: 'artist',
+} as const;
+
+type ChangeAction = 'create' | 'update' | 'delete' | 'rollback';
 ```

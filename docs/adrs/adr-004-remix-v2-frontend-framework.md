@@ -1,7 +1,7 @@
-# ADR-004: Remix v2 for Frontend Framework
+# ADR-004: React Router v7 for Frontend Framework
 
 ## Status
-Accepted
+Superseded by ADR-024 — originally adopted Remix v2; migrated to React Router v7 (the unified successor to Remix) when the Remix team merged the two projects. The same SSR patterns, loaders, and actions apply — the package names changed from `remix` to `react-router` and `@react-router/*`.
 
 ## Context
 We needed to choose a frontend framework that would provide:

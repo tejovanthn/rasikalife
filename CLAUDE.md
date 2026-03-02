@@ -33,9 +33,13 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 ### Monorepo Structure
 - **packages/core**: Domain logic, database operations, utilities (TypeScript)
 - **packages/trpc**: tRPC API server with domain routers
-- **packages/functions**: AWS Lambda functions  
+- **packages/functions**: AWS Lambda functions
 - **packages/scripts**: Utility scripts for data operations
-- **packages/web**: Remix-based frontend application
+- **packages/web**: React Router v7 frontend application
+- **packages/auth**: OpenID Connect issuer for authentication
+- **packages/search**: Lambda handler for periodic search index refresh
+- **packages/image-processor**: S3-triggered Lambda for image processing (Sharp)
+- **packages/scraper**: Data scraping utilities
 - **infra/**: SST infrastructure definitions
 
 ### Core Package Architecture
@@ -43,11 +47,12 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 The core package uses a domain-driven design with:
 
 - **Single-Table Design**: All entities stored in one DynamoDB table using composite keys
-- **Domain Structure**: Separate modules for artist, composition, raga, tala (more planned)
-- **Repository Pattern**: Each domain has repository, service, schema, and types
-- **Access Patterns**: Optimized for DynamoDB with GSI queries
+- **ElectroDB**: Entity modeling library wrapping DynamoDB (each domain has an `entity.ts`)
+- **Domain Structure**: artist, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, edit, search, change-history, and more
+- **Access Patterns**: Optimized for DynamoDB with GSI queries via ElectroDB
 - **KSUID IDs**: Time-sortable unique identifiers with domain prefixes
 - **Modular Exports**: Package supports selective imports via subpath exports (`@rasika/core/domain/artist`, `@rasika/core/utils`, etc.)
+- **Cascade Operations**: Cross-domain data consistency handled in `packages/core/src/domain/cascade.ts`
 
 ### Key Technical Patterns
 
@@ -62,7 +67,7 @@ The core package uses a domain-driven design with:
 - Single DynamoDB table with primary key (PK/SK) and 6 Global Secondary Indexes
 - Entity relationships managed through composite keys and access patterns
 - Pagination using Base64-encoded continuation tokens
-- Search currently uses DynamoDB scan (Elasticsearch planned for future)
+- Search uses Fuse.js with a pre-built index stored in S3, refreshed on mutations and on a schedule
 
 ### Testing Strategy
 
@@ -84,7 +89,8 @@ The core package uses a domain-driven design with:
 
 ### File Naming
 - Domain modules: `packages/core/src/domain/[entity]/`
-- Each domain has: `types.ts`, `schema.ts`, `repository.ts`, `service.ts`, `index.ts`
+- Each domain has: `entity.ts` (ElectroDB model), `schema.ts` (Zod), `client.ts` (operations), `index.ts` (exports)
+- Some domains also have `types.ts` and a `client.ts` for browser-safe exports
 - Tests: `*.test.ts` alongside implementation files
 - Barrel exports via `index.ts` files
 
@@ -105,9 +111,9 @@ The core package uses a domain-driven design with:
 When adding new domains to core package:
 
 1. Create domain directory in `packages/core/src/domain/[name]/`
-2. Implement in order: `types.ts` → `schema.ts` → `repository.ts` → `service.ts`
-3. Add comprehensive tests for each layer
-4. Export from domain `index.ts` and main package `index.ts`
+2. Implement in order: `entity.ts` (ElectroDB) → `schema.ts` (Zod) → `client.ts` (operations) → `index.ts`
+3. Add tests in `index.test.ts` alongside implementation
+4. Export from main package `index.ts` if needed
 5. Add tRPC router in `packages/trpc/src/routers/[name].ts`
 6. Register router in `packages/trpc/src/routers/index.ts`
 
@@ -115,9 +121,12 @@ When adding new domains to core package:
 
 - **SST v3**: Infrastructure and serverless deployment
 - **DynamoDB**: Primary database with AWS SDK v3
+- **ElectroDB**: Entity modeling layer over DynamoDB
 - **tRPC**: Type-safe API layer
 - **Zod**: Schema validation
 - **KSUID**: Time-sortable unique IDs
+- **Fuse.js**: Client-side fuzzy search (index stored in S3)
 - **Vitest**: Testing framework
 - **Biome**: Formatting and linting
-- **Remix**: Frontend framework (in web package)
+- **React Router v7**: Frontend framework (in web package, using `@react-router/fs-routes`)
+- **Sharp**: Image processing (in image-processor package)

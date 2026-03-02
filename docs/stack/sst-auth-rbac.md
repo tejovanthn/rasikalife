@@ -1,7 +1,9 @@
 # SST Authentication and Authorization Patterns
 
+> **Outdated** — This document describes SST v2 auth patterns. The project uses SST v3 with OpenAuth (see ADR-014 and `packages/auth/`).
+
 *Source: https://v2.sst.dev/auth*
-*Version: SST v2*
+*Version: SST v2 (project uses SST v3)*
 *Last Updated: 2025-01-30*
 
 ## Overview

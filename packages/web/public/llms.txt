@@ -1,0 +1,30 @@
+# Rasika.life
+
+> Rasika.life is a community platform for Indian classical music and arts. It documents artists, compositions, ragas, talas, events, festivals, venues, and organisers — primarily focused on Carnatic and Hindustani classical traditions.
+
+## What this site is
+
+- A comprehensive reference for Indian classical music: artists, compositions (kritis), ragas, talas, languages
+- A discovery platform for upcoming and past Carnatic and Hindustani concerts and festivals
+- A community resource for rasikas (connoisseurs) of Indian classical arts
+
+## Key sections
+
+- [Artists](https://rasika.life/artists) — Profiles of Carnatic and Hindustani musicians, vocalists, and instrumentalists
+- [Compositions](https://rasika.life/carnatic/compositions) — Kritis, varnams, and other compositions with raga, tala, and lyric information
+- [Ragas](https://rasika.life/carnatic/ragas) — Raga reference with associated compositions and artists
+- [Talas](https://rasika.life/carnatic/talas) — Tala reference with associated compositions
+- [Events](https://rasika.life/events) — Upcoming and past Indian classical music concerts and performances
+- [Festivals](https://rasika.life/festivals) — Music festivals and sabhas (e.g. Margazhi season events)
+- [Venues](https://rasika.life/venues) — Concert halls and sabha venues
+- [Organisers](https://rasika.life/organisers) — Sabhas, trusts, and organisations that present concerts
+
+## What this site is NOT
+
+- Not a streaming or audio/video platform
+- Not affiliated with any government body or official music institution
+- Not a ticketing platform (links to external ticketing where available)
+
+## Contact
+
+For corrections or contributions, visit https://rasika.life

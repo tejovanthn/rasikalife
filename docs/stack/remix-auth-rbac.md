@@ -1,5 +1,7 @@
 # Remix Authentication and Route Protection
 
+> **Outdated** — This approach was superseded by OpenAuth (see ADR-014 and `docs/stack/sst-auth-rbac.md`). The project uses OpenAuth with Google OAuth, not Remix session utilities.
+
 *Source: https://remix.run/docs/en/main/utils/sessions*
 *Version: Remix v2*
 *Last Updated: 2025-01-30*

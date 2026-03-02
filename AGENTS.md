@@ -33,11 +33,17 @@ cd packages/search && pnpm test && pnpm typecheck
 ### Running Single Tests
 ```bash
 # Core package (standard vitest)
-vitest src/domain/artist/repository.test.ts
+cd packages/core && pnpm vitest src/domain/artist/repository.test.ts
 
 # tRPC package (requires SST context)
-sst shell vitest src/routers/artist.test.ts
+cd packages/trpc && sst shell vitest src/routers/artist.test.ts
 ```
+
+### Linter Rules
+- **Production code**: No `any`, no `!`, no `forEach`
+- **Test files** (`*.test.ts`, `test/`, `mocks/`): All rules relaxed
+- **DB/Repository/Shared/Scripts/tRPC**: `any`, `forEach` allowed
+- **Web package**: `any`, `noArrayIndexKey` warnings allowed
 
 ## Code Style Guidelines
 
@@ -172,7 +178,7 @@ describe('ArtistRepository', () => {
 
   describe('create', () => {
     it('should create artist with generated ID', async () => {
- await ArtistRepository.create      const artist =(input);
+      const artist = await ArtistRepository.create(input);
       expect(artist.PK).toMatch(/^ARTIST#/);
     });
   });
@@ -184,10 +190,12 @@ describe('ArtistRepository', () => {
 - **Mocking**: Global DynamoDB mock in `test/setup.ts`
 - **Rules relaxed in tests**: `any`, `!`, `forEach` allowed
 - **Coverage excludes**: `node_modules`, `test/`, `*.test.ts`, type files
+- **Web .react-router dir**: `any`, `noBannedTypes` allowed
 
 ## Key Dependencies
 - **SST v3**: Infrastructure and serverless deployment
 - **DynamoDB**: Single-table design with AWS SDK v3
+- **ElectroDB**: DynamoDB ORM for single-table patterns
 - **tRPC v11**: Type-safe API layer
 - **Zod**: Schema validation
 - **KSUID**: Time-sortable unique IDs

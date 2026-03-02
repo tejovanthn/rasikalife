@@ -42,9 +42,17 @@ ADRs document significant technical decisions made during development, providing
 
 ### Frontend & UI
 
-4. **[ADR-004](adr-004-remix-v2-frontend-framework.md)**: Remix v2 Frontend
-   - Status: Accepted
-   - Full-stack React framework
+4. **[ADR-004](adr-004-remix-v2-frontend-framework.md)**: React Router v7 Frontend
+   - Status: Superseded by ADR-024 (originally Remix v2, migrated to React Router v7)
+   - Full-stack React framework with SSR loaders/actions
+
+24. **[ADR-024](adr-024-react-router-v7-migration.md)**: React Router v7 Migration
+    - Status: Accepted
+    - Supersedes ADR-004; mechanical migration from Remix v2 to React Router v7
+
+25. **[ADR-025](adr-025-shadcn-ui-tailwind-css.md)**: shadcn/ui + Tailwind CSS
+    - Status: Accepted
+    - Copy-owned accessible components on Radix UI primitives with Tailwind styling
 
 ### Domain & Features
 
@@ -109,8 +117,36 @@ ADRs document significant technical decisions made during development, providing
 ### Search & Discovery
 
 17. **[ADR-017](adr-017-fusejs-client-side-search.md)**: Fuse.js for Client-Side Search
-   - Status: Accepted
-   - Cost-effective fuzzy search
+    - Status: Accepted
+    - Cost-effective fuzzy search
+
+### AI & Automation
+
+26. **[ADR-026](adr-026-gemini-ai-event-extraction.md)**: Google Gemini AI for Event Extraction
+    - Status: Accepted
+    - Multimodal AI extraction of structured event data from posters and social posts
+
+29. **[ADR-029](adr-029-instagram-scraping-pipeline.md)**: Instagram Scraping Pipeline
+    - Status: Accepted
+    - Three-Lambda orchestration (cron → scraper → SQS → extractor) using Instagram's unofficial web API
+
+30. **[ADR-030](adr-030-web-auth-session-pattern.md)**: Web Auth Session Pattern
+    - Status: Accepted
+    - Cookie sessions store JWTs; per-request tRPC clients inject Bearer tokens; OpenAuth verifies on every request
+
+31. **[ADR-031](adr-031-mutation-triggered-search-reindex.md)**: Mutation-Triggered Search Reindex
+    - Status: Accepted
+    - Mutations async-invoke the reindex Lambda (fire-and-forget) with a 5-minute in-process throttle
+
+### Media & Asset Delivery
+
+27. **[ADR-027](adr-027-presigned-url-direct-uploads.md)**: Presigned URL Direct S3 Uploads
+    - Status: Accepted
+    - Client uploads directly to S3 via short-lived presigned URLs; Lambda never handles binary data
+
+28. **[ADR-028](adr-028-cloudfront-webp-image-pipeline.md)**: CloudFront CDN + Async WebP Conversion
+    - Status: Accepted
+    - S3-triggered Lambda converts uploaded images to WebP; CloudFront serves with 1-year immutable cache
 
 ### Frontend & SEO
 

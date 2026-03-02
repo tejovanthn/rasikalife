@@ -1,7 +1,11 @@
 import Markdown from 'react-markdown';
-import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { Link, data, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
+
+export const action = async (_: ActionFunctionArgs) => {
+  throw new Response(null, { status: 404, statusText: 'Not Found' });
+};
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);

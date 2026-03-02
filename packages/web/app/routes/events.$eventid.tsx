@@ -93,7 +93,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       festivalPosterUrl,
     });
   } catch (error) {
-    console.error('Failed to load event:', error);
+    if (error instanceof Response) throw error;
+    console.error(`Failed to load event [id=${id}]:`, error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.EVENT_NOT_FOUND) {
         throw new Response(error.message, { status: 404 });
@@ -158,13 +159,23 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     event.description ||
     `${event.title} on ${dateStr}${event.venueName ? ` at ${event.venueName}` : ''}`;
 
+  const canonicalUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
   return [
     { title: `${event.title} - ${dateStr} - Rasika.life` },
     { name: 'description', content: desc },
     { property: 'og:title', content: `${event.title} - ${dateStr}` },
     { property: 'og:description', content: desc },
     { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: canonicalUrl },
     ...(event.posterUrl ? [{ property: 'og:image', content: event.posterUrl }] : []),
+    {
+      name: 'twitter:card',
+      content: event.posterUrl ? 'summary_large_image' : 'summary',
+    },
+    { name: 'twitter:title', content: `${event.title} - ${dateStr}` },
+    { name: 'twitter:description', content: desc },
+    ...(event.posterUrl ? [{ name: 'twitter:image', content: event.posterUrl }] : []),
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 
@@ -291,6 +302,8 @@ export default function EventDetail() {
                 alt={`${event.title} poster`}
                 className="w-full rounded-lg shadow-md"
                 loading="eager"
+                width={300}
+                height={400}
               />
             )}
             {isModerator && <PosterUploader />}
