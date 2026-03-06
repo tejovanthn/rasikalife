@@ -1,4 +1,6 @@
 import { Artist, Event, Festival, Organiser, Search, Venue } from '@rasika/core';
+import { ApplicationError, ErrorCode } from '@rasika/core/constants';
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
@@ -9,7 +11,11 @@ export const eventRouter = createTRPCRouter({
   get: publicProcedure.input(z.object({ id: z.string().min(1) })).query(async ({ input }) => {
     const event = await Event.getEvent(input.id);
     if (!event || event.status !== 'approved') {
-      throw new Error('Event not found');
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Event not found',
+        cause: new ApplicationError(ErrorCode.EVENT_NOT_FOUND, 'Event not found'),
+      });
     }
     return event;
   }),
@@ -17,7 +23,11 @@ export const eventRouter = createTRPCRouter({
   getDraft: editorProcedure.input(z.object({ id: z.string().min(1) })).query(async ({ input }) => {
     const event = await Event.getEvent(input.id);
     if (!event) {
-      throw new Error('Draft event not found');
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Draft event not found',
+        cause: new ApplicationError(ErrorCode.EVENT_NOT_FOUND, 'Draft event not found'),
+      });
     }
     return event;
   }),
@@ -344,7 +354,11 @@ export const eventRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const event = await Event.getEvent(input.id);
       if (!event) {
-        throw new Error('Event not found');
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Event not found',
+          cause: new ApplicationError(ErrorCode.EVENT_NOT_FOUND, 'Event not found'),
+        });
       }
       return event;
     }),
@@ -396,8 +410,16 @@ export const eventRouter = createTRPCRouter({
     .input(z.object({ eventId: z.string().min(1) }))
     .mutation(async ({ input }) => {
       const existing = await Event.getEvent(input.eventId);
-      if (!existing || existing.status !== 'draft') throw new Error('Draft event not found');
-      if (!existing.posterUrl) throw new Error('No poster URL on this draft');
+      if (!existing || existing.status !== 'draft') {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Draft event not found',
+          cause: new ApplicationError(ErrorCode.EVENT_NOT_FOUND, 'Draft event not found'),
+        });
+      }
+      if (!existing.posterUrl) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'No poster URL on this draft' });
+      }
 
       await Event.softDeleteEvent(input.eventId);
 
