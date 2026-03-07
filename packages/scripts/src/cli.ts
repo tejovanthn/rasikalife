@@ -98,4 +98,14 @@ program
     await backfillWebp({ dryRun: opts.dryRun, prefix: opts.prefix });
   });
 
+program
+  .command('check:id')
+  .description('Fetch raw entity data from the table by ID (tries all entity types)')
+  .argument('<id>', 'Entity ID')
+  .action(async (id: string) => {
+    setup();
+    const { checkEvent } = await import('./check-id.js');
+    await checkEvent(id);
+  });
+
 program.parseAsync(process.argv);

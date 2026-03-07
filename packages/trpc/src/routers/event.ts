@@ -8,9 +8,13 @@ import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure 
 export const eventRouter = createTRPCRouter({
   // === QUERIES ===
 
-  get: publicProcedure.input(z.object({ id: z.string().min(1) })).query(async ({ input }) => {
+  get: publicProcedure.input(z.object({ id: z.string().min(1) })).query(async ({ input, ctx }) => {
     const event = await Event.getEvent(input.id);
     if (!event || event.status !== 'approved') {
+      const h = ctx.event.headers;
+      console.warn(
+        `event.get not found [id=${input.id}] status=${event?.status ?? 'missing'} ua="${h['user-agent'] ?? '-'}" referer="${h['referer'] ?? '-'}"`
+      );
       throw new TRPCError({
         code: 'NOT_FOUND',
         message: 'Event not found',

@@ -57,9 +57,6 @@ importers:
       hono:
         specifier: ^4.12.3
         version: 4.12.3
-      sharp:
-        specifier: ^0.34.5
-        version: 0.34.5
       sst:
         specifier: ^3.19.3
         version: 3.19.3
@@ -175,6 +172,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1000.0
         version: 3.1000.0
+      '@aws-sdk/lib-dynamodb':
+        specifier: ^3.1000.0
+        version: 3.1000.0(@aws-sdk/client-dynamodb@3.1000.0)
       '@rasika/core':
         specifier: workspace:*
         version: link:../core
