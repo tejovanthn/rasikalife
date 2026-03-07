@@ -104,6 +104,7 @@ export const loader: LoaderFunction = async ({ params }) => {
           throw new Response('Not Found', { status: 404 });
         }
         const items = await fetchByMonth(yearMonth);
+        if (items.length === 0) throw new Response('Not Found', { status: 404 });
         const entries = items
           .map(item => buildUrlEntry(toUrl(item as never), item.updatedAt, 'weekly', 0.7))
           .join('\n');
@@ -132,6 +133,7 @@ export const loader: LoaderFunction = async ({ params }) => {
       .filter(Boolean)
       .join('\n');
 
+    if (!entries) throw new Response('Not Found', { status: 404 });
     return buildSitemapXml(entries);
   } catch (error) {
     if (error instanceof Response) throw error;
