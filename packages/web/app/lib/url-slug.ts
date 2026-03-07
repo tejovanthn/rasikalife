@@ -26,6 +26,7 @@ export function parseSlug(param: string): { title: string; id: string } | null {
 
     // Handle ID-only URLs (exactly 27 characters = KSUID only)
     if (decoded.length === 27) {
+      if (!/^[0-9A-Za-z]{27}$/.test(decoded)) return null;
       return { title: '', id: decoded };
     }
 
@@ -37,8 +38,8 @@ export function parseSlug(param: string): { title: string; id: string } | null {
     const id = decoded.slice(-27);
     const title = decoded.slice(0, -28); // Everything before the ID and its preceding hyphen
 
-    if (!id) {
-      return null; // Empty ID
+    if (!id || !/^[0-9A-Za-z]{27}$/.test(id)) {
+      return null;
     }
 
     return { title: title || '', id };

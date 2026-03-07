@@ -13,7 +13,7 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateTalaUrl } from '~/lib/url-slug';
+import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
 
 export const meta: MetaFunction = ({ data }) => {
   const loaderData = data as { tala: { id: string; name: string } } | undefined;
@@ -41,11 +41,13 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const nextToken = url.searchParams.get('nextToken');
   const itemsPerPage = 36;
 
-  const slugId = talaid.split('-').pop();
+  const parsed = parseSlug(talaid);
 
-  if (!slugId) {
+  if (!parsed) {
     throw new Response('Invalid URL format', { status: 400 });
   }
+
+  const slugId = parsed.id;
 
   try {
     const tala = await client.tala.get.query({ id: slugId });

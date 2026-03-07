@@ -32,7 +32,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   const parsed = parseSlug(organiserid);
-  const id = parsed ? parsed.id : organiserid;
+  if (!parsed) {
+    throw new Response('Organiser not found', { status: 404 });
+  }
+  const { id } = parsed;
 
   try {
     const user = await getUser(request);

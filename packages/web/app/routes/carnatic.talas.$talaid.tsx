@@ -25,11 +25,13 @@ export async function loader({
     throw new Response('Tala ID is required', { status: 400 });
   }
 
-  const slugId = talaid.split('-').pop();
+  const parsed = parseSlug(talaid);
 
-  if (!slugId) {
+  if (!parsed) {
     throw new Response('Invalid URL format', { status: 400 });
   }
+
+  const slugId = parsed.id;
 
   try {
     const client = await createServerClient(request);

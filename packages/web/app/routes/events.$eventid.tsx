@@ -61,7 +61,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   const parsed = parseSlug(eventid);
-  const id = parsed ? parsed.id : eventid;
+  if (!parsed) {
+    throw new Response('Event not found', { status: 410 });
+  }
+  const { id } = parsed;
 
   try {
     const user = await getUser(request);
@@ -97,11 +100,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     console.error(`Failed to load event [id=${id}]:`, error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.EVENT_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response(error.message, { status: 410 });
       }
     }
     if (error instanceof Error && error.message.includes('not found')) {
-      throw new Response('Event not found', { status: 404 });
+      throw new Response('Event not found', { status: 410 });
     }
     throw new Response('Failed to load event', { status: 500 });
   }
@@ -114,7 +117,10 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   const parsed = parseSlug(eventid);
-  const id = parsed ? parsed.id : eventid;
+  if (!parsed) {
+    throw new Response('Event not found', { status: 410 });
+  }
+  const { id } = parsed;
 
   const user = await getUser(request);
   if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {

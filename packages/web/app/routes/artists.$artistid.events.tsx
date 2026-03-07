@@ -7,7 +7,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateArtistUrl, generateEventUrl } from '~/lib/url-slug';
+import { generateArtistUrl, generateEventUrl, parseSlug } from '~/lib/url-slug';
 
 interface ArtistEvent {
   eventId: string;
@@ -43,11 +43,13 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
 
-  const slugId = artistid.split('-').pop();
+  const parsed = parseSlug(artistid);
 
-  if (!slugId) {
+  if (!parsed) {
     throw new Response('Invalid URL format', { status: 400 });
   }
+
+  const slugId = parsed.id;
 
   try {
     const artist = await client.artist.get.query({ id: slugId });

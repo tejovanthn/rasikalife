@@ -11,7 +11,7 @@ import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateRagaUrl, generateSlug } from '~/lib/url-slug';
+import { generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -25,11 +25,13 @@ export async function loader({
     throw new Response('Raga ID is required', { status: 400 });
   }
 
-  const slugId = ragaid.split('-').pop();
+  const parsed = parseSlug(ragaid);
 
-  if (!slugId) {
+  if (!parsed) {
     throw new Response('Invalid URL format', { status: 400 });
   }
+
+  const slugId = parsed.id;
 
   try {
     const client = await createServerClient(request);

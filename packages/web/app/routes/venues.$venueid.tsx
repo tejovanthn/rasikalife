@@ -40,7 +40,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   const parsed = parseSlug(venueid);
-  const id = parsed ? parsed.id : venueid;
+  if (!parsed) {
+    throw new Response('Venue not found', { status: 404 });
+  }
+  const { id } = parsed;
 
   try {
     const user = await getUser(request);

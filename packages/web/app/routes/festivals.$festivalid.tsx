@@ -50,7 +50,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   }
 
   const parsed = parseSlug(festivalid);
-  const id = parsed ? parsed.id : festivalid;
+  if (!parsed) {
+    throw new Response('Festival not found', { status: 404 });
+  }
+  const { id } = parsed;
 
   try {
     const user = await getUser(request);
@@ -93,7 +96,10 @@ export const action: ActionFunction = async ({ request, params }) => {
   }
 
   const parsed = parseSlug(festivalid);
-  const id = parsed ? parsed.id : festivalid;
+  if (!parsed) {
+    throw new Response('Festival not found', { status: 404 });
+  }
+  const { id } = parsed;
 
   const user = await getUser(request);
   if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {

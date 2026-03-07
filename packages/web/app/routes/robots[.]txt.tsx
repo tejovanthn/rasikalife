@@ -15,7 +15,7 @@ Disallow: /my-edits
 Disallow: /api/
 Disallow: /events/new$
 Disallow: /events/new/
-Disallow: /*edit
+Disallow: /*edit$
 `.trim();
 
   return new Response(robotsTxt, {
