@@ -2,11 +2,14 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { type RouterOutput, client } from '~/api.server';
-import { slugify } from '~/lib/carnaticUtils';
+import {
+  generateCompositionUrl,
+  generateRagaUrl,
+  generateTalaUrl,
+} from '~/lib/url-slug';
 
 type LoaderData = {
   recentCompositions: RouterOutput['composition']['list']['items'];
-  popularArtists: RouterOutput['artist']['list']['items'];
   recentRagas: RouterOutput['raga']['list']['items'];
   recentTalas: RouterOutput['tala']['list']['items'];
 };
@@ -37,16 +40,14 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async () => {
   try {
-    const [recentCompositions, popularArtists, recentRagas, recentTalas] = await Promise.all([
+    const [recentCompositions, recentRagas, recentTalas] = await Promise.all([
       client.composition.list.query({ limit: 8 }),
-      client.artist.list.query({ limit: 8 }),
       client.raga.list.query({ limit: 6 }),
       client.tala.list.query({ limit: 6 }),
     ]);
 
     return data<LoaderData>({
       recentCompositions: recentCompositions.items,
-      popularArtists: popularArtists.items,
       recentRagas: recentRagas.items,
       recentTalas: recentTalas.items,
     });
@@ -54,7 +55,6 @@ export const loader: LoaderFunction = async () => {
     console.error('Error loading carnatic homepage:', error);
     return data<LoaderData>({
       recentCompositions: [],
-      popularArtists: [],
       recentRagas: [],
       recentTalas: [],
     });
@@ -63,37 +63,25 @@ export const loader: LoaderFunction = async () => {
 
 const CompositionCard = ({ composition }: { composition: LoaderData['recentCompositions'][0] }) => (
   <Link
-    to={slugify({ name: composition.title, id: composition.id, type: 'compositions' })}
+    to={generateCompositionUrl(composition.title, composition.id)}
     className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white"
   >
     <h3 className="font-medium text-gray-900 mb-1">{composition.title}</h3>
     <div className="text-xs text-gray-600 space-y-1">
       {composition.ragas && composition.ragas.length > 0 && (
-        <div>
-          Raga: {composition.ragas.length} raga{composition.ragas.length > 1 ? 's' : ''}
-        </div>
+        <div>Raga: {composition.ragas.map(r => r.name).join(', ')}</div>
       )}
       {composition.talas && composition.talas.length > 0 && (
-        <div>
-          Tala: {composition.talas.length} tala{composition.talas.length > 1 ? 's' : ''}
-        </div>
+        <div>Tala: {composition.talas.map(t => t.name).join(', ')}</div>
       )}
     </div>
   </Link>
 );
 
-const ArtistCard = ({ artist }: { artist: LoaderData['popularArtists'][0] }) => (
-  <Link
-    to={slugify({ name: artist.name, id: artist.id, type: 'artists' })}
-    className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white text-center"
-  >
-    <h3 className="font-medium text-gray-900 text-sm">{artist.name}</h3>
-  </Link>
-);
 
 const RagaCard = ({ raga }: { raga: LoaderData['recentRagas'][0] }) => (
   <Link
-    to={slugify({ name: raga.name, id: raga.id, type: 'ragas' })}
+    to={generateRagaUrl(raga.name, raga.id)}
     className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white"
   >
     <h3 className="font-medium text-gray-900 mb-1">{raga.name}</h3>
@@ -102,7 +90,7 @@ const RagaCard = ({ raga }: { raga: LoaderData['recentRagas'][0] }) => (
 
 const TalaCard = ({ tala }: { tala: LoaderData['recentTalas'][0] }) => (
   <Link
-    to={slugify({ name: tala.name, id: tala.id, type: 'talas' })}
+    to={generateTalaUrl(tala.name, tala.id)}
     className="block p-3 border rounded-lg hover:shadow-md transition-shadow bg-white"
   >
     <h3 className="font-medium text-gray-900 mb-1">{tala.name}</h3>
@@ -110,8 +98,7 @@ const TalaCard = ({ tala }: { tala: LoaderData['recentTalas'][0] }) => (
 );
 
 export default function CarnaticIndex() {
-  const { recentCompositions, popularArtists, recentRagas, recentTalas } =
-    useLoaderData<LoaderData>();
+  const { recentCompositions, recentRagas, recentTalas } = useLoaderData<LoaderData>();
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -190,28 +177,6 @@ export default function CarnaticIndex() {
         ) : (
           <div className="text-center py-8 text-gray-500">
             <p>No compositions available.</p>
-          </div>
-        )}
-      </section>
-
-      {/* Popular Artists */}
-      <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Popular Artists</h2>
-          <Link to="/artists" className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-            View All →
-          </Link>
-        </div>
-
-        {popularArtists.length > 0 ? (
-          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
-            {popularArtists.map(artist => (
-              <ArtistCard key={artist.id} artist={artist} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>No artists available.</p>
           </div>
         )}
       </section>

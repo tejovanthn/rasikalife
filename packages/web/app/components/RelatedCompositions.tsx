@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { slugify } from '~/lib/carnaticUtils';
+import { generateCompositionUrl } from '~/lib/url-slug';
 
 interface Composition {
   id: string;
@@ -40,11 +40,7 @@ export function RelatedCompositions({ compositions, ragaName }: RelatedCompositi
             <div className="flex justify-between items-start">
               <div className="flex-1">
                 <Link
-                  to={slugify({
-                    name: composition.title,
-                    id: composition.id,
-                    type: 'compositions',
-                  })}
+                  to={generateCompositionUrl(composition.title, composition.id)}
                   className="text-lg font-semibold text-primary hover:text-primary/80"
                 >
                   {composition.title}

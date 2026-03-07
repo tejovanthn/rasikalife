@@ -126,7 +126,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     const entries = documents
       .map(doc => {
         if (doc.entityType !== entityType) return '';
-        const url = `${baseUrl}${urlGenerators[doc.entityType](doc.displayName, doc.id)}`;
+        const url = `${baseUrl}${urlGenerators[doc.entityType](doc.name, doc.id)}`;
         return buildUrlEntry(url, doc.indexedAt, 'monthly', entityPriorities[doc.entityType]);
       })
       .filter(Boolean)

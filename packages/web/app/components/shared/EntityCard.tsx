@@ -1,6 +1,11 @@
 import { Link } from 'react-router';
-import { slugify } from '~/lib/carnaticUtils';
 import { formatDate } from '~/lib/utils';
+import {
+  generateArtistUrl,
+  generateCompositionUrl,
+  generateRagaUrl,
+  generateTalaUrl,
+} from '~/lib/url-slug';
 
 export interface EntityCardField {
   label: string;
@@ -61,7 +66,15 @@ export function EntityCard({
 
   return (
     <Link
-      to={slugify({ name: title, id, type })}
+      to={
+        type === 'artists'
+          ? generateArtistUrl(title, id)
+          : type === 'ragas'
+            ? generateRagaUrl(title, id)
+            : type === 'talas'
+              ? generateTalaUrl(title, id)
+              : generateCompositionUrl(title, id)
+      }
       className={`block p-4 border border-border rounded-lg hover:shadow-md transition-shadow bg-card ${className}`}
     >
       {image && !compact && (
