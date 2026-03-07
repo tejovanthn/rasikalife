@@ -7,6 +7,7 @@ import {
   generateArtistUrl,
   generateCompositionUrl,
   generateEventUrl,
+  generateFestivalUrl,
   generateOrganiserUrl,
   generateRagaUrl,
   generateTalaUrl,
@@ -22,6 +23,7 @@ interface SearchResults {
   venues: SearchResultItem[];
   organisers: SearchResultItem[];
   events: SearchResultItem[];
+  festivals: SearchResultItem[];
 }
 
 type FilterType = SearchEntityType | 'all';
@@ -103,6 +105,8 @@ function getEntityUrl(item: SearchResultItem): string {
       return generateOrganiserUrl(item.name, item.id);
     case 'event':
       return generateEventUrl(item.name, item.id);
+    case 'festival':
+      return generateFestivalUrl(item.name, item.id);
   }
 }
 
@@ -119,6 +123,7 @@ const RESULT_SECTIONS = [
   { key: 'venues', label: 'Venues', filterType: 'venue', path: '/venues' },
   { key: 'organisers', label: 'Organisers', filterType: 'organiser', path: '/organisers' },
   { key: 'events', label: 'Events', filterType: 'event', path: '/events' },
+  { key: 'festivals', label: 'Festivals', filterType: 'festival', path: '/festivals' },
 ] as const;
 
 const FILTER_TABS: FilterType[] = [
@@ -130,6 +135,7 @@ const FILTER_TABS: FilterType[] = [
   'venue',
   'organiser',
   'event',
+  'festival',
 ];
 
 function ResultItem({
@@ -165,6 +171,7 @@ function ResultItem({
             {result.type === 'venue' && <span>Venue</span>}
             {result.type === 'organiser' && <span>Organiser</span>}
             {result.type === 'event' && <span>Event</span>}
+            {result.type === 'festival' && <span>Festival</span>}
           </div>
         </div>
         <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-1 rounded">
@@ -244,6 +251,7 @@ export function GlobalSearch() {
         ...results.venues,
         ...results.organisers,
         ...results.events,
+        ...results.festivals,
       ].sort((a, b) => (a.score ?? 1) - (b.score ?? 1));
     }
 

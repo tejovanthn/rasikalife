@@ -32,6 +32,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       venues: result.items.filter(item => item.type === 'venue').slice(0, RESULTS_PER_TYPE),
       organisers: result.items.filter(item => item.type === 'organiser').slice(0, RESULTS_PER_TYPE),
       events: result.items.filter(item => item.type === 'event').slice(0, RESULTS_PER_TYPE),
+      festivals: result.items.filter(item => item.type === 'festival').slice(0, RESULTS_PER_TYPE),
     };
 
     return data(searchResults, {

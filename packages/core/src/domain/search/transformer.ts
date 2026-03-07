@@ -3,6 +3,7 @@
 import type { Artist } from '../artist';
 import type { CompositionWithRelations } from '../composition';
 import type { Event } from '../event';
+import type { Festival } from '../festival';
 import type { Organiser } from '../organiser';
 import type { Raga } from '../raga';
 import type { Tala } from '../tala';
@@ -73,6 +74,12 @@ export function transformEventToDocument(event: Event): SearchDocument {
   return createDocument(event.id, 'event', event.title, parts.filter(Boolean).join(' '));
 }
 
+export function transformFestivalToDocument(festival: Festival): SearchDocument {
+  const parts = [festival.organiserName || '', (festival.tags || []).join(' ')];
+
+  return createDocument(festival.id, 'festival', festival.name, parts.filter(Boolean).join(' '));
+}
+
 export function transformToSearchDocuments(
   artists: Artist[],
   ragas: Raga[],
@@ -80,7 +87,8 @@ export function transformToSearchDocuments(
   compositions: CompositionWithRelations[],
   venues: Venue[],
   organisers: Organiser[],
-  events: Event[]
+  events: Event[],
+  festivals: Festival[]
 ): SearchDocument[] {
   return [
     ...artists.map(transformArtistToDocument),
@@ -90,5 +98,6 @@ export function transformToSearchDocuments(
     ...venues.map(transformVenueToDocument),
     ...organisers.map(transformOrganiserToDocument),
     ...events.map(transformEventToDocument),
+    ...festivals.map(transformFestivalToDocument),
   ];
 }

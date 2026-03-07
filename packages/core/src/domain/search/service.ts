@@ -10,6 +10,8 @@ import { CompositionEntity } from '../composition/entity';
 import type { CompositionWithRelations } from '../composition/index';
 import { EventEntity } from '../event/entity';
 import type { Event } from '../event/entity';
+import { FestivalEntity } from '../festival/entity';
+import type { Festival } from '../festival/entity';
 import { OrganiserEntity } from '../organiser/entity';
 import type { Organiser } from '../organiser/entity';
 import { RagaEntity } from '../raga/entity';
@@ -98,6 +100,7 @@ export async function search(query: string, options: SearchOptions = {}): Promis
       'venue',
       'organiser',
       'event',
+      'festival',
     ] as const;
     const resultsByType: Record<string, FuseResult<SearchDocument>[]> = {};
 
@@ -168,6 +171,7 @@ export interface SearchWithFullDataResponse {
   venues: Venue[];
   organisers: Organiser[];
   events: Event[];
+  festivals: Festival[];
   total: number;
 }
 
@@ -192,6 +196,7 @@ export async function searchWithFullData(
   const venueIds: Array<{ id: string }> = [];
   const organiserIds: Array<{ id: string }> = [];
   const eventIds: Array<{ id: string }> = [];
+  const festivalIds: Array<{ id: string }> = [];
 
   for (const item of searchResponse.items) {
     switch (item.type) {
@@ -216,6 +221,9 @@ export async function searchWithFullData(
       case 'event':
         eventIds.push({ id: item.id });
         break;
+      case 'festival':
+        festivalIds.push({ id: item.id });
+        break;
     }
   }
 
@@ -228,6 +236,7 @@ export async function searchWithFullData(
     venuesResult,
     organisersResult,
     eventsResult,
+    festivalsResult,
   ] = await Promise.all([
     compositionIds.length > 0 ? CompositionEntity.get(compositionIds).go() : { data: [] },
     artistIds.length > 0 ? ArtistEntity.get(artistIds).go() : { data: [] },
@@ -236,6 +245,7 @@ export async function searchWithFullData(
     venueIds.length > 0 ? VenueEntity.get(venueIds).go() : { data: [] },
     organiserIds.length > 0 ? OrganiserEntity.get(organiserIds).go() : { data: [] },
     eventIds.length > 0 ? EventEntity.get(eventIds).go() : { data: [] },
+    festivalIds.length > 0 ? FestivalEntity.get(festivalIds).go() : { data: [] },
   ]);
 
   // Transform compositions to CompositionWithRelations format
@@ -262,6 +272,7 @@ export async function searchWithFullData(
     venues: (venuesResult.data || []) as Venue[],
     organisers: (organisersResult.data || []) as Organiser[],
     events: (eventsResult.data || []) as Event[],
+    festivals: (festivalsResult.data || []) as Festival[],
     total: searchResponse.total,
   };
 }

@@ -1,4 +1,15 @@
-import { Calendar, ExternalLink, Globe, Mail, MapPin, Phone, Ticket, Upload } from 'lucide-react';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  Ticket,
+  Upload,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, data, redirect, useLoaderData } from 'react-router';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
@@ -20,6 +31,15 @@ import {
   generateVenueUrl,
   parseSlug,
 } from '~/lib/url-slug';
+
+interface FestivalEventItem {
+  id: string;
+  title: string;
+  startDateTime: string;
+  endDateTime?: string;
+  venueName?: string;
+  artists?: Array<{ name: string; role?: string }>;
+}
 
 interface EventDetail {
   id: string;
@@ -80,10 +100,26 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     // Fetch festival poster as fallback if the event has no poster
     let festivalPosterUrl: string | undefined;
-    if (event?.festivalId && !event?.posterUrl) {
+    let festivalEvents: FestivalEventItem[] = [];
+    let prevEvent: FestivalEventItem | null = null;
+    let nextEvent: FestivalEventItem | null = null;
+
+    if (event?.festivalId) {
       try {
-        const festival = await serverClient.festival.get.query({ id: event.festivalId });
+        const [festival, festivalEventsResult] = await Promise.all([
+          event.posterUrl ? Promise.resolve(null) : serverClient.festival.get.query({ id: event.festivalId }),
+          serverClient.event.byFestival.query({ festivalId: event.festivalId, limit: 100 }),
+        ]);
         festivalPosterUrl = festival?.posterUrl;
+        festivalEvents = (festivalEventsResult.items || []) as FestivalEventItem[];
+
+        const sorted = [...festivalEvents].sort(
+          (a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
+        );
+        const idx = sorted.findIndex(e => e.id === event.id);
+        prevEvent = idx > 0 ? sorted[idx - 1] : null;
+        nextEvent = idx >= 0 && idx < sorted.length - 1 ? sorted[idx + 1] : null;
+        festivalEvents = sorted;
       } catch {
         // Festival fetch failure is non-fatal
       }
@@ -94,6 +130,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
       festivalPosterUrl,
+      festivalEvents,
+      prevEvent,
+      nextEvent,
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -260,12 +299,16 @@ function PosterUploader() {
 }
 
 export default function EventDetail() {
-  const { event, user, isModerator, festivalPosterUrl } = useLoaderData<{
-    event: EventDetail;
-    user: { id: string } | null;
-    isModerator: boolean;
-    festivalPosterUrl?: string;
-  }>();
+  const { event, user, isModerator, festivalPosterUrl, festivalEvents, prevEvent, nextEvent } =
+    useLoaderData<{
+      event: EventDetail;
+      user: { id: string } | null;
+      isModerator: boolean;
+      festivalPosterUrl?: string;
+      festivalEvents: FestivalEventItem[];
+      prevEvent: FestivalEventItem | null;
+      nextEvent: FestivalEventItem | null;
+    }>();
 
   const startDate = new Date(event.startDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
@@ -281,6 +324,33 @@ export default function EventDetail() {
           { label: event.title, path: '#' },
         ]}
       />
+
+      {(prevEvent || nextEvent) && (
+        <div className="flex items-center justify-between mb-4 gap-2">
+          {prevEvent ? (
+            <Link
+              to={generateEventUrl(prevEvent.title, prevEvent.id)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary min-w-0 max-w-[45%]"
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" />
+              <span className="truncate">{prevEvent.title}</span>
+            </Link>
+          ) : (
+            <div />
+          )}
+          {nextEvent ? (
+            <Link
+              to={generateEventUrl(nextEvent.title, nextEvent.id)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary min-w-0 max-w-[45%] text-right"
+            >
+              <span className="truncate">{nextEvent.title}</span>
+              <ChevronRight className="h-4 w-4 shrink-0" />
+            </Link>
+          ) : (
+            <div />
+          )}
+        </div>
+      )}
 
       <DetailPageHeader
         title={event.title}
@@ -535,6 +605,51 @@ export default function EventDetail() {
                 {sponsor.type && ` (${sponsor.type})`}
               </Badge>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Festival Schedule */}
+      {festivalEvents.length > 1 && event.festivalId && event.festivalName && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="section-heading">Festival Schedule</h2>
+            <Link
+              to={generateFestivalUrl(event.festivalName, event.festivalId)}
+              className="text-sm text-primary"
+            >
+              View festival
+            </Link>
+          </div>
+          <div className="space-y-1">
+            {festivalEvents.map(fe => {
+              const isCurrent = fe.id === event.id;
+              const feDate = new Date(fe.startDateTime);
+              return (
+                <Link
+                  key={fe.id}
+                  to={generateEventUrl(fe.title, fe.id)}
+                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                    isCurrent
+                      ? 'bg-primary/10 text-primary font-medium pointer-events-none'
+                      : 'hover:bg-muted text-foreground'
+                  }`}
+                  aria-current={isCurrent ? 'page' : undefined}
+                >
+                  <span className="text-muted-foreground shrink-0 w-28 text-xs">
+                    {feDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                    {', '}
+                    {feDate.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                  </span>
+                  <span className="truncate">{fe.title}</span>
+                  {fe.venueName && (
+                    <span className="text-muted-foreground text-xs ml-auto shrink-0 hidden sm:block">
+                      {fe.venueName}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

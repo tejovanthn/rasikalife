@@ -6,7 +6,8 @@ export type SearchEntityType =
   | 'composition'
   | 'venue'
   | 'organiser'
-  | 'event';
+  | 'event'
+  | 'festival';
 
 export type SearchableField = 'name' | 'description';
 

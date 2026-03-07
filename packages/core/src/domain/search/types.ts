@@ -9,7 +9,8 @@ export type EntityType =
   | 'composition'
   | 'venue'
   | 'organiser'
-  | 'event';
+  | 'event'
+  | 'festival';
 
 export interface SearchDocument {
   id: string;

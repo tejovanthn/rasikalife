@@ -60,6 +60,7 @@ export const Header = () => {
 
   const eventLinks = [
     { href: '/events', label: 'Events' },
+    { href: '/festivals', label: 'Festivals' },
     { href: '/venues', label: 'Venues' },
     { href: '/organisers', label: 'Organisers' },
   ];

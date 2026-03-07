@@ -5,6 +5,7 @@ import Fuse from 'fuse.js';
 import { listArtists } from '../artist';
 import { listCompositions } from '../composition';
 import { listApprovedEvents } from '../event';
+import { listFestivals } from '../festival';
 import { listOrganisers } from '../organiser';
 import { listRagas } from '../raga';
 import { listTalas } from '../tala';
@@ -40,18 +41,20 @@ async function fetchAllPaginated<T>(
 export async function buildSearchIndex(): Promise<SearchIndex> {
   console.log('Starting search index build');
 
-  const [artists, ragas, talas, compositions, venues, organisers, events] = await Promise.all([
-    fetchAllPaginated(listArtists),
-    fetchAllPaginated(listRagas),
-    fetchAllPaginated(listTalas),
-    fetchAllPaginated(listCompositions),
-    fetchAllPaginated(listVenues),
-    fetchAllPaginated(listOrganisers),
-    fetchAllPaginated(listApprovedEvents),
-  ]);
+  const [artists, ragas, talas, compositions, venues, organisers, events, festivals] =
+    await Promise.all([
+      fetchAllPaginated(listArtists),
+      fetchAllPaginated(listRagas),
+      fetchAllPaginated(listTalas),
+      fetchAllPaginated(listCompositions),
+      fetchAllPaginated(listVenues),
+      fetchAllPaginated(listOrganisers),
+      fetchAllPaginated(listApprovedEvents),
+      fetchAllPaginated(listFestivals),
+    ]);
 
   console.log(
-    `Fetched entities: ${artists.length} artists, ${ragas.length} ragas, ${talas.length} talas, ${compositions.length} compositions, ${venues.length} venues, ${organisers.length} organisers, ${events.length} events`
+    `Fetched entities: ${artists.length} artists, ${ragas.length} ragas, ${talas.length} talas, ${compositions.length} compositions, ${venues.length} venues, ${organisers.length} organisers, ${events.length} events, ${festivals.length} festivals`
   );
 
   const documents = transformToSearchDocuments(
@@ -61,7 +64,8 @@ export async function buildSearchIndex(): Promise<SearchIndex> {
     compositions,
     venues,
     organisers,
-    events
+    events,
+    festivals
   );
 
   const fuseIndex = Fuse.createIndex(['name', 'description'], documents);
