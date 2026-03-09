@@ -14,7 +14,7 @@ type EditWithDisplay = Edit & {
   entityName?: string;
 };
 
-function entityPath(entityType: string, entityId: string): string {
+function entityPath(entityType: string, entityId: string, editStatus: string): string {
   switch (entityType) {
     case 'composition':
       return `/carnatic/compositions/${entityId}`;
@@ -29,6 +29,9 @@ function entityPath(entityType: string, entityId: string): string {
     case 'organiser':
       return `/organisers/${entityId}`;
     case 'event':
+      if (editStatus === EditStatus.DRAFT || editStatus === EditStatus.SUBMITTED) {
+        return `/events/new/verify?eventId=${entityId}`;
+      }
       return `/events/${entityId}`;
     default:
       return '#';
@@ -72,7 +75,7 @@ export function createColumns(onViewEdit: (edit: Edit) => void): ColumnDef<EditW
         const entityName = (row.getValue('entityName') as string) || 'Unknown';
         return (
           <Link
-            to={entityPath(entityType, entitySlug)}
+            to={entityPath(entityType, entitySlug, row.original.status)}
             className="text-sm font-medium text-primary hover:text-primary/80 hover:underline"
           >
             {entityName}

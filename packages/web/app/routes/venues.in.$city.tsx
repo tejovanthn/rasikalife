@@ -4,6 +4,7 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Card, CardContent } from '~/components/ui/card';
 import { generateVenueUrl } from '~/lib/url-slug';
 
@@ -42,12 +43,14 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     return [{ title: 'Venues - Rasika.life' }];
   }
 
+  const canonicalUrl = `https://rasika.life/venues/in/${encodeURIComponent(city)}`;
   return [
     { title: `Venues in ${city} - Rasika.life` },
     {
       name: 'description',
       content: `Discover Indian classical arts venues in ${city}. Find concert halls, auditoriums, and performance spaces.`,
     },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 
@@ -105,6 +108,16 @@ export default function VenuesByCityPage() {
           ))}
         </div>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Venues', item: 'https://rasika.life/venues' },
+          {
+            name: `Venues in ${city}`,
+            item: `https://rasika.life/venues/in/${encodeURIComponent(city)}`,
+          },
+        ]}
+      />
     </main>
   );
 }

@@ -26,7 +26,7 @@ export async function checkEvent(id: string) {
   console.log(`Looking up id: ${id} in table: ${table}\n`);
 
   const results = await Promise.all(
-    ENTITY_TYPES.map(async (type) => {
+    ENTITY_TYPES.map(async type => {
       const result = await dynamoClient.send(
         new GetCommand({
           TableName: table,
@@ -37,7 +37,7 @@ export async function checkEvent(id: string) {
     })
   );
 
-  const matches = results.filter((r) => r.item != null);
+  const matches = results.filter(r => r.item != null);
 
   if (matches.length === 0) {
     console.error(`No entity with id ${id} found (hard deleted or never existed).`);

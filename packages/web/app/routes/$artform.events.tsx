@@ -5,6 +5,7 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const artForm = params.artform;
@@ -37,12 +38,15 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
 export const meta: MetaFunction<typeof loader> = ({ data: loaderData }) => {
   const label = loaderData?.label ?? 'Art Form';
+  const artForm = loaderData?.artForm;
+  const canonicalUrl = artForm ? `https://rasika.life/${artForm}/events` : undefined;
   return [
     { title: `${label} Events - Rasika.life` },
     {
       name: 'description',
       content: `Discover upcoming ${label} events, concerts, festivals, and performances.`,
     },
+    ...(canonicalUrl ? [{ tagName: 'link', rel: 'canonical', href: canonicalUrl }] : []),
   ];
 };
 
@@ -97,6 +101,13 @@ export default function ArtFormEvents() {
           </div>
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Events', item: 'https://rasika.life/events' },
+          { name: `${label} Events`, item: `https://rasika.life/${artForm}/events` },
+        ]}
+      />
     </main>
   );
 }

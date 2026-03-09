@@ -1,6 +1,7 @@
 import { data } from 'react-router';
 import type { MetaFunction } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 
 // Common languages used in Carnatic music
 const LANGUAGES = [
@@ -97,6 +98,13 @@ export default function LanguagesIndex() {
           </Link>
         </div>
       </section>
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Languages', item: 'https://rasika.life/carnatic/languages' },
+        ]}
+      />
     </main>
   );
 }

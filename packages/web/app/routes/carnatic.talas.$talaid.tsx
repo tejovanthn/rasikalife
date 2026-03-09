@@ -38,7 +38,7 @@ export async function loader({
     const tala = await client.tala.get.query({ id: slugId });
 
     if (!tala) {
-      throw new Response('Tala not found', { status: 404 });
+      throw new Response('Tala not found', { status: 410 });
     }
 
     if (tala.mergedIntoId) {
@@ -79,13 +79,16 @@ export async function loader({
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load tala:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.TALA_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response(error.message, { status: 410 });
       }
-      // Handle other error codes as needed
     }
+    if (error instanceof Error && error.message.includes('not found')) {
+      throw new Response('Tala not found', { status: 410 });
+    }
+    console.error('Failed to load tala:', error);
     throw new Response('Failed to load tala', { status: 500 });
   }
 }

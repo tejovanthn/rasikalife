@@ -6,6 +6,7 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EventCard } from '~/components/EventCard';
 import { useAuth } from '~/components/auth-context';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Button } from '~/components/ui/button';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -102,6 +103,12 @@ export default function EventsIndex() {
           </div>
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Events', item: 'https://rasika.life/events' },
+        ]}
+      />
     </main>
   );
 }

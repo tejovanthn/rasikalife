@@ -41,7 +41,7 @@ export async function loader({
     const artist = await client.artist.get.query({ id: slugId });
 
     if (!artist) {
-      throw new Response('Artist not found', { status: 404 });
+      throw new Response('Artist not found', { status: 410 });
     }
 
     if (artist.mergedIntoId) {
@@ -88,16 +88,16 @@ export async function loader({
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load artist:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.ARTIST_NOT_FOUND) {
-        throw new Response('Artist not found', { status: 404 });
+        throw new Response('Artist not found', { status: 410 });
       }
     }
-    // Check if it's a "not found" type error from the API
     if (error instanceof Error && error.message.includes('not found')) {
-      throw new Response('Artist not found', { status: 404 });
+      throw new Response('Artist not found', { status: 410 });
     }
+    console.error('Failed to load artist:', error);
     throw new Response('Failed to load artist', { status: 500 });
   }
 }

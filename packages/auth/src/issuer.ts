@@ -39,7 +39,7 @@ async function uploadProfilePhoto(
         Bucket: Resource.RasikaBucket.name,
         Key: key,
         // Body: webpBuffer,
-        Body: Buffer.from(buffer), // Upload original image without conversion for now  
+        Body: Buffer.from(buffer), // Upload original image without conversion for now
         ContentType: 'image/webp',
       })
     );

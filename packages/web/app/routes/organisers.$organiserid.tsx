@@ -5,6 +5,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateOrganiserUrl, parseSlug } from '~/lib/url-slug';
@@ -46,7 +47,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     ]);
 
     if (!organiser) {
-      throw new Response('Organiser not found', { status: 404 });
+      throw new Response('Organiser not found', { status: 410 });
     }
 
     if (organiser.mergedIntoId) {
@@ -63,15 +64,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load organiser:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.ORGANISER_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response(error.message, { status: 410 });
       }
     }
     if (error instanceof Error && error.message.includes('not found')) {
-      throw new Response('Organiser not found', { status: 404 });
+      throw new Response('Organiser not found', { status: 410 });
     }
+    console.error('Failed to load organiser:', error);
     throw new Response('Failed to load organiser', { status: 500 });
   }
 };
@@ -82,12 +84,15 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     return [{ title: 'Organiser Not Found - Rasika.life' }];
   }
 
+  const canonicalUrl = `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`;
+
   return [
     { title: `${organiser.name} - Organiser - Rasika.life` },
     {
       name: 'description',
       content: `Events organised by ${organiser.name}. Indian classical arts performances and concerts.`,
     },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 
@@ -139,6 +144,16 @@ export default function OrganiserDetailPage() {
           </div>
         )}
       </section>
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Organisers', item: 'https://rasika.life/organisers' },
+          {
+            name: organiser.name,
+            item: `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`,
+          },
+        ]}
+      />
     </main>
   );
 }

@@ -12,6 +12,7 @@ import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
 
@@ -131,6 +132,18 @@ export default function RagaCompositions() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Ragas', item: 'https://rasika.life/carnatic/ragas' },
+          { name: raga.name, item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}` },
+          {
+            name: 'Compositions',
+            item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}/compositions`,
+          },
+        ]}
+      />
     </div>
   );
 }

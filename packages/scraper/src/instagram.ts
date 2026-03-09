@@ -185,7 +185,7 @@ export async function scrapeInstagramProfile(
 
   // Paginate if needed and cursor is available
   let pageInfo = firstPage.page_info;
-  let userId = firstPage.userId;
+  const userId = firstPage.userId;
 
   while (
     !reachedSince &&

@@ -38,7 +38,7 @@ export async function loader({
     const raga = await client.raga.get.query({ id: slugId });
 
     if (!raga) {
-      throw new Response('Raga not found', { status: 404 });
+      throw new Response('Raga not found', { status: 410 });
     }
 
     if (raga.mergedIntoId) {
@@ -98,13 +98,16 @@ export async function loader({
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load raga:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.RAGA_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response(error.message, { status: 410 });
       }
-      // Handle other error codes as needed
     }
+    if (error instanceof Error && error.message.includes('not found')) {
+      throw new Response('Raga not found', { status: 410 });
+    }
+    console.error('Failed to load raga:', error);
     throw new Response('Failed to load raga', { status: 500 });
   }
 }

@@ -7,6 +7,7 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -127,6 +128,13 @@ export default function RagasIndex() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Ragas', item: 'https://rasika.life/carnatic/ragas' },
+        ]}
+      />
     </main>
   );
 }

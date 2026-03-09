@@ -4,6 +4,7 @@ import { Link, data, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
@@ -121,6 +122,12 @@ export default function VenuesIndex() {
           </div>
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Venues', item: 'https://rasika.life/venues' },
+        ]}
+      />
     </main>
   );
 }

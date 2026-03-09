@@ -17,7 +17,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { PosterImage } from '~/components/PosterImage';
-import { EventStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -91,7 +91,11 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const serverClient = await createServerClient(request);
     const event = await serverClient.event.get.query({ id });
 
-    if (event?.mergedIntoId) {
+    if (!event) {
+      throw new Response('Event not found', { status: 410 });
+    }
+
+    if (event.mergedIntoId) {
       const canonical = await serverClient.event.get.query({ id: event.mergedIntoId });
       if (canonical && !canonical.mergedIntoId) {
         throw redirect(generateEventUrl(canonical.title, canonical.id), 301);
@@ -107,7 +111,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     if (event?.festivalId) {
       try {
         const [festival, festivalEventsResult] = await Promise.all([
-          event.posterUrl ? Promise.resolve(null) : serverClient.festival.get.query({ id: event.festivalId }),
+          event.posterUrl
+            ? Promise.resolve(null)
+            : serverClient.festival.get.query({ id: event.festivalId }),
           serverClient.event.byFestival.query({ festivalId: event.festivalId, limit: 100 }),
         ]);
         festivalPosterUrl = festival?.posterUrl;
@@ -136,7 +142,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     });
   } catch (error) {
     if (error instanceof Response) throw error;
-    console.error(`Failed to load event [id=${id}]:`, error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.EVENT_NOT_FOUND) {
         throw new Response(error.message, { status: 410 });
@@ -145,6 +150,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     if (error instanceof Error && error.message.includes('not found')) {
       throw new Response('Event not found', { status: 410 });
     }
+    console.error(`Failed to load event [id=${id}]:`, error);
     throw new Response('Failed to load event', { status: 500 });
   }
 };
@@ -404,6 +410,29 @@ export default function EventDetail() {
 
           {event.description && <p className="text-muted-foreground">{event.description}</p>}
 
+          {/* Artists */}
+          {event.artists && event.artists.length > 0 && (
+            <div className="space-y-2">
+              {event.artists.map(artist => (
+                <div key={`${artist.name}-${artist.role || 'artist'}`}>
+                  <p className="font-medium text-lg">
+                    {artist.title ? `${artist.title} ` : ''}
+                    {artist.id ? (
+                      <Link to={generateArtistUrl(artist.name, artist.id)} className="text-primary">
+                        {artist.name}
+                      </Link>
+                    ) : (
+                      artist.name
+                    )}
+                  </p>
+                  {artist.role && (
+                    <p className="text-sm text-muted-foreground capitalize">{artist.role}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Date & Time */}
           <div className="flex items-center gap-2 text-foreground">
             <Calendar className="h-5 w-5 text-primary" />
@@ -470,39 +499,6 @@ export default function EventDetail() {
         </div>
       </div>
 
-      {/* Artists */}
-      {event.artists && event.artists.length > 0 && (
-        <section className="mt-8">
-          <h2 className="section-heading mb-4">Artists</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {event.artists.map(artist => (
-              <Card key={`${artist.name}-${artist.role || 'artist'}`}>
-                <CardContent className="py-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">
-                      {artist.title ? `${artist.title} ` : ''}
-                      {artist.id ? (
-                        <Link
-                          to={generateArtistUrl(artist.name, artist.id)}
-                          className="text-primary"
-                        >
-                          {artist.name}
-                        </Link>
-                      ) : (
-                        artist.name
-                      )}
-                    </p>
-                    {artist.role && (
-                      <p className="text-sm text-muted-foreground capitalize">{artist.role}</p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Ticketing */}
       {event.ticketing && (
         <section className="mt-8">
@@ -511,7 +507,11 @@ export default function EventDetail() {
             <CardContent className="py-4 space-y-2">
               {event.ticketing.url && (
                 <a
-                  href={event.ticketing.url}
+                  href={
+                    event.ticketing.url.startsWith('http')
+                      ? event.ticketing.url
+                      : `https://${event.ticketing.url}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-primary"
@@ -629,23 +629,26 @@ export default function EventDetail() {
                 <Link
                   key={fe.id}
                   to={generateEventUrl(fe.title, fe.id)}
-                  className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
+                  className={`grid grid-cols-[auto_1fr] gap-x-3 rounded-md px-3 py-2 text-sm transition-colors ${
                     isCurrent
                       ? 'bg-primary/10 text-primary font-medium pointer-events-none'
                       : 'hover:bg-muted text-foreground'
                   }`}
                   aria-current={isCurrent ? 'page' : undefined}
                 >
-                  <span className="text-muted-foreground shrink-0 w-28 text-xs">
+                  <span className="text-muted-foreground text-xs whitespace-nowrap self-start pt-0.5">
                     {feDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
                     {', '}
                     {feDate.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
                   </span>
                   <span className="truncate">{fe.title}</span>
-                  {fe.venueName && (
-                    <span className="text-muted-foreground text-xs ml-auto shrink-0 hidden sm:block">
-                      {fe.venueName}
-                    </span>
+                  {fe.artists && fe.artists.length > 0 && (
+                    <>
+                      <span />
+                      <p className="text-muted-foreground text-xs leading-relaxed">
+                        {fe.artists.map(a => a.name).join(', ')}
+                      </p>
+                    </>
                   )}
                 </Link>
               );
@@ -654,6 +657,16 @@ export default function EventDetail() {
         </section>
       )}
 
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Events', item: 'https://rasika.life/events' },
+          {
+            name: event.title,
+            item: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
+          },
+        ]}
+      />
       <EventStructuredData
         event={{
           title: event.title,
@@ -662,10 +675,17 @@ export default function EventDetail() {
           endDateTime: event.endDateTime,
           venueName: event.venueName,
           organiserName: event.organiserName,
+          organiserUrl:
+            event.organiserName && event.organiserId
+              ? `https://rasika.life${generateOrganiserUrl(event.organiserName, event.organiserId)}`
+              : undefined,
           posterUrl: event.posterUrl,
           entryType: event.entryType,
           artists: event.artists,
           url: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
+          ticketing: event.ticketing
+            ? { url: event.ticketing.url, prices: event.ticketing.prices }
+            : undefined,
         }}
       />
     </main>

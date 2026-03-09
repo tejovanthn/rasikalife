@@ -164,12 +164,45 @@ export function EventStructuredData({
     endDateTime?: string;
     venueName?: string;
     organiserName?: string;
+    organiserUrl?: string;
     posterUrl?: string;
     entryType?: string;
     artists?: Array<{ name: string }>;
     url: string;
+    ticketing?: {
+      url?: string;
+      prices?: Record<string, number>;
+    };
   };
 }) {
+  const offers = (() => {
+    if (event.entryType === 'free') {
+      return [
+        {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'INR',
+          availability: 'https://schema.org/InStock',
+        },
+      ];
+    }
+    if (event.ticketing?.prices && Object.keys(event.ticketing.prices).length > 0) {
+      return Object.entries(event.ticketing.prices).map(([, price]) => ({
+        '@type': 'Offer',
+        price: String(price),
+        priceCurrency: 'INR',
+        ...(event.ticketing?.url ? { url: event.ticketing.url } : {}),
+        availability: 'https://schema.org/InStock',
+      }));
+    }
+    if (event.ticketing?.url) {
+      return [
+        { '@type': 'Offer', url: event.ticketing.url, availability: 'https://schema.org/InStock' },
+      ];
+    }
+    return undefined;
+  })();
+
   return (
     <StructuredData
       type="event"
@@ -182,22 +215,22 @@ export function EventStructuredData({
         eventStatus: 'https://schema.org/EventScheduled',
         image: event.posterUrl,
         url: event.url,
-        location: event.venueName
-          ? {
-              '@type': 'Place',
-              name: event.venueName,
-            }
-          : undefined,
+        location: {
+          '@type': 'Place',
+          name: event.venueName || 'India',
+        },
         organizer: event.organiserName
           ? {
               '@type': 'Organization',
               name: event.organiserName,
+              ...(event.organiserUrl ? { url: event.organiserUrl } : {}),
             }
           : undefined,
         performer: event.artists?.map(a => ({
           '@type': 'Person',
           name: a.name,
         })),
+        offers,
         isAccessibleForFree: event.entryType === 'free',
       }}
     />

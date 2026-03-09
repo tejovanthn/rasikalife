@@ -6,6 +6,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateVenueUrl, parseSlug } from '~/lib/url-slug';
@@ -54,7 +55,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     ]);
 
     if (!venue) {
-      throw new Response('Venue not found', { status: 404 });
+      throw new Response('Venue not found', { status: 410 });
     }
 
     if (venue.mergedIntoId) {
@@ -71,15 +72,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load venue:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.VENUE_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response(error.message, { status: 410 });
       }
     }
     if (error instanceof Error && error.message.includes('not found')) {
-      throw new Response('Venue not found', { status: 404 });
+      throw new Response('Venue not found', { status: 410 });
     }
+    console.error('Failed to load venue:', error);
     throw new Response('Failed to load venue', { status: 500 });
   }
 };
@@ -92,6 +94,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
 
   const locationParts = [venue.address?.city, venue.address?.state].filter(Boolean);
   const locationStr = locationParts.length > 0 ? ` in ${locationParts.join(', ')}` : '';
+  const canonicalUrl = `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`;
 
   return [
     { title: `${venue.name} - Venue - Rasika.life` },
@@ -99,6 +102,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
       name: 'description',
       content: `Events and performances at ${venue.name}${locationStr}. Indian classical arts venue.`,
     },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 
@@ -179,6 +183,16 @@ export default function VenueDetailPage() {
           </div>
         )}
       </section>
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Venues', item: 'https://rasika.life/venues' },
+          {
+            name: venue.name,
+            item: `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`,
+          },
+        ]}
+      />
     </main>
   );
 }

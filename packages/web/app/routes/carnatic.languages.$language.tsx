@@ -1,9 +1,24 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { type LoaderFunction, data } from 'react-router';
+import { type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { client } from '~/api.server';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError } from '~/lib/errors';
+
+export const meta: MetaFunction = ({ data: loaderData }) => {
+  const language = (loaderData as { language: string } | undefined)?.language;
+  if (!language) return [{ title: 'Language - Rasika.life' }];
+  const canonicalUrl = `https://rasika.life/carnatic/languages/${encodeURIComponent(language)}`;
+  return [
+    { title: `${language} - Indian Classical Music Language - Rasika.life` },
+    {
+      name: 'description',
+      content: `Browse compositions and explore ${language} in Indian classical music.`,
+    },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
+  ];
+};
 
 export const loader: LoaderFunction = async ({ params }) => {
   const { language } = params;
@@ -102,6 +117,17 @@ export default function LanguageDetails() {
           </Link>
         </div>
       </section>
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Languages', item: 'https://rasika.life/carnatic/languages' },
+          {
+            name: language,
+            item: `https://rasika.life/carnatic/languages/${encodeURIComponent(language)}`,
+          },
+        ]}
+      />
     </div>
   );
 }

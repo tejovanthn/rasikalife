@@ -4,6 +4,7 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { generateFestivalUrl } from '~/lib/url-slug';
@@ -140,6 +141,12 @@ export default function FestivalsIndex() {
           </div>
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Festivals', item: 'https://rasika.life/festivals' },
+        ]}
+      />
     </main>
   );
 }

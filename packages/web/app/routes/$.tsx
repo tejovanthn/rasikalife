@@ -34,6 +34,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const metaTags = [
     { title: contentMeta?.title || 'Rasika.life' },
     { name: 'description', content: contentMeta?.description || 'Carnatic music resource' },
+    { tagName: 'link', rel: 'canonical', href: `https://rasika.life${path}` },
   ];
 
   if (contentMeta?.keywords?.length) {

@@ -12,6 +12,7 @@ import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
 
@@ -129,6 +130,18 @@ export default function TalaCompositions() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Talas', item: 'https://rasika.life/carnatic/talas' },
+          { name: tala.name, item: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}` },
+          {
+            name: 'Compositions',
+            item: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}/compositions`,
+          },
+        ]}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError } from '~/lib/errors';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -127,6 +128,12 @@ export default function ArtistsIndex() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Artists', item: 'https://rasika.life/artists' },
+        ]}
+      />
     </main>
   );
 }

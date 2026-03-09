@@ -42,7 +42,7 @@ export async function action({ request }: { request: Request }) {
   const country = (formData.get('country') as string | null)?.trim() || undefined;
   const mapLink = (formData.get('mapLink') as string | null)?.trim() || undefined;
   const capacityRaw = (formData.get('capacity') as string | null)?.trim();
-  const capacity = capacityRaw ? parseInt(capacityRaw, 10) || undefined : undefined;
+  const capacity = capacityRaw ? Number.parseInt(capacityRaw, 10) || undefined : undefined;
   const website = (formData.get('website') as string | null)?.trim() || undefined;
   const phone = (formData.get('phone') as string | null)?.trim() || undefined;
   const description = (formData.get('description') as string | null)?.trim() || undefined;

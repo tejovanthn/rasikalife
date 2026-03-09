@@ -135,17 +135,16 @@ export async function loader({
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load composition:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.COMPOSITION_NOT_FOUND) {
         throw new Response(error.message, { status: 404 });
       }
-      // Handle other error codes as needed
     }
-    // Check if this is a tRPC error due to server being down
-    if (error instanceof Error && error.message.includes('fetch')) {
-      console.error('tRPC server appears to be down. Please ensure SST dev is running.');
+    if (error instanceof Error && error.message.includes('not found')) {
+      throw new Response('Composition not found', { status: 410 });
     }
+    console.error('Failed to load composition:', error);
     throw new Response('Failed to load composition', { status: 500 });
   }
 }

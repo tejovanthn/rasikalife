@@ -5,6 +5,7 @@ import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
@@ -123,6 +124,20 @@ export default function ArtistCompositions() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Artists', item: 'https://rasika.life/artists' },
+          {
+            name: artist.name,
+            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
+          },
+          {
+            name: 'Compositions',
+            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/compositions`,
+          },
+        ]}
+      />
     </main>
   );
 }

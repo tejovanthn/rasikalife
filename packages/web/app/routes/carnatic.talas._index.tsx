@@ -7,6 +7,7 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { TalaCard } from '~/components/TalaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -124,6 +125,13 @@ export default function TalasIndex() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+          { name: 'Talas', item: 'https://rasika.life/carnatic/talas' },
+        ]}
+      />
     </main>
   );
 }

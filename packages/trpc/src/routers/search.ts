@@ -111,7 +111,16 @@ export const searchRouter = createTRPCRouter({
     .input(
       z
         .object({
-          type: z.enum(['artist', 'raga', 'tala', 'composition', 'venue', 'organiser', 'event', 'festival']),
+          type: z.enum([
+            'artist',
+            'raga',
+            'tala',
+            'composition',
+            'venue',
+            'organiser',
+            'event',
+            'festival',
+          ]),
           startsWith: z.string().optional(),
         })
         .optional()

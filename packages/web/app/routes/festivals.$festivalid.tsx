@@ -5,7 +5,7 @@ import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router'
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { FestivalStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, FestivalStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
@@ -61,7 +61,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     const festival = await serverClient.festival.get.query({ id });
 
     if (!festival) {
-      throw new Response('Festival not found', { status: 404 });
+      throw new Response('Festival not found', { status: 410 });
     }
 
     const events = await serverClient.event.byFestival.query({
@@ -76,15 +76,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
-    console.error('Failed to load festival:', error);
+    if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.FESTIVAL_NOT_FOUND) {
-        throw new Response(error.message, { status: 404 });
+        throw new Response(error.message, { status: 410 });
       }
     }
     if (error instanceof Error && error.message.includes('not found')) {
-      throw new Response('Festival not found', { status: 404 });
+      throw new Response('Festival not found', { status: 410 });
     }
+    console.error('Failed to load festival:', error);
     throw new Response('Failed to load festival', { status: 500 });
   }
 };
@@ -137,6 +138,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
   }
 
   const desc = festival.description || `${festival.name} - Indian classical arts festival`;
+  const canonicalUrl = `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`;
 
   return [
     { title: `${festival.name} - Rasika.life` },
@@ -144,7 +146,9 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     { property: 'og:title', content: festival.name },
     { property: 'og:description', content: desc },
     { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: canonicalUrl },
     ...(festival.posterUrl ? [{ property: 'og:image', content: festival.posterUrl }] : []),
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 
@@ -417,6 +421,16 @@ export default function FestivalDetail() {
         </section>
       )}
 
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Festivals', item: 'https://rasika.life/festivals' },
+          {
+            name: festival.name,
+            item: `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`,
+          },
+        ]}
+      />
       <FestivalStructuredData
         festival={{
           name: festival.name,

@@ -52,7 +52,7 @@ export async function action({ request }: { request: Request }) {
   const email = (formData.get('email') as string | null)?.trim() || undefined;
   const description = (formData.get('description') as string | null)?.trim() || undefined;
   const foundedYearRaw = (formData.get('foundedYear') as string | null)?.trim();
-  const foundedYear = foundedYearRaw ? parseInt(foundedYearRaw, 10) || undefined : undefined;
+  const foundedYear = foundedYearRaw ? Number.parseInt(foundedYearRaw, 10) || undefined : undefined;
 
   const address =
     street || addrCity || state || postalCode || country

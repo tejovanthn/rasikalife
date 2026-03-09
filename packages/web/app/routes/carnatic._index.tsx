@@ -2,11 +2,8 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { type RouterOutput, client } from '~/api.server';
-import {
-  generateCompositionUrl,
-  generateRagaUrl,
-  generateTalaUrl,
-} from '~/lib/url-slug';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { generateCompositionUrl, generateRagaUrl, generateTalaUrl } from '~/lib/url-slug';
 
 type LoaderData = {
   recentCompositions: RouterOutput['composition']['list']['items'];
@@ -77,7 +74,6 @@ const CompositionCard = ({ composition }: { composition: LoaderData['recentCompo
     </div>
   </Link>
 );
-
 
 const RagaCard = ({ raga }: { raga: LoaderData['recentRagas'][0] }) => (
   <Link
@@ -250,6 +246,12 @@ export default function CarnaticIndex() {
           </p>
         </div>
       </section>
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
+        ]}
+      />
     </main>
   );
 }

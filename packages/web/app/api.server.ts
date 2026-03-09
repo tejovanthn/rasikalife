@@ -18,8 +18,13 @@ export const client = createTRPCClient<AppRouter>({
 export async function createServerClient(request?: Request) {
   const headers: Record<string, string> = {};
 
-  // If request is provided, get JWT token and include in Authorization header
   if (request) {
+    // Forward original user-agent and referer so tRPC logs show the actual caller
+    const ua = request.headers.get('user-agent');
+    const referer = request.headers.get('referer');
+    if (ua) headers['user-agent'] = ua;
+    if (referer) headers['referer'] = referer;
+
     try {
       const tokens = await getTokens(request);
       if (tokens?.access) {

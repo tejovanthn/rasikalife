@@ -4,6 +4,7 @@ import { Link, useLoaderData, useParams, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -158,6 +159,20 @@ export default function ArtistEvents() {
           />
         </>
       )}
+      <BreadcrumbStructuredData
+        items={[
+          { name: 'Home', item: 'https://rasika.life' },
+          { name: 'Artists', item: 'https://rasika.life/artists' },
+          {
+            name: artist.name,
+            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
+          },
+          {
+            name: 'Events',
+            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/events`,
+          },
+        ]}
+      />
     </main>
   );
 }
