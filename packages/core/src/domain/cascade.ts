@@ -94,15 +94,23 @@ export async function cascadeOrganiserNameUpdate(
   newName: string
 ): Promise<void> {
   const { EventEntity } = await import('./event/entity');
+  const { AwardEntity } = await import('./award/entity');
 
-  const result = await EventEntity.query
-    .byOrganiser({ organiserId })
-    .go({ limit: CASCADE_BATCH_SIZE });
-  const items = (result.data as Array<{ id: string }>) || [];
   const now = new Date().toISOString();
 
-  await Promise.all(
-    items.map(item =>
+  const [eventResult, awardResult] = await Promise.all([
+    EventEntity.query.byOrganiser({ organiserId }).go({ limit: CASCADE_BATCH_SIZE }),
+    AwardEntity.query
+      .list({})
+      .where((attr, op) => op.eq(attr.issuingOrganisationId, organiserId))
+      .go({ pages: 'all' }),
+  ]);
+
+  const eventItems = (eventResult.data as Array<{ id: string }>) || [];
+  const awardItems = (awardResult.data as Array<{ id: string }>) || [];
+
+  await Promise.all([
+    ...eventItems.map(item =>
       dynamoClient.send(
         new UpdateCommand({
           TableName: TABLE_NAME,
@@ -114,8 +122,21 @@ export async function cascadeOrganiserNameUpdate(
           ExpressionAttributeValues: { ':organiserName': newName, ':updatedAt': now },
         })
       )
-    )
-  );
+    ),
+    ...awardItems.map(item =>
+      dynamoClient.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: {
+            pk: `AWARD#${item.id}`,
+            sk: '#METADATA',
+          },
+          UpdateExpression: 'SET issuingOrganisationName = :issuingOrganisationName, updatedAt = :updatedAt',
+          ExpressionAttributeValues: { ':issuingOrganisationName': newName, ':updatedAt': now },
+        })
+      )
+    ),
+  ]);
 }
 
 export async function cascadeEventMetadataToArtists(

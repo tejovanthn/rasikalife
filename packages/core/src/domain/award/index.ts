@@ -69,6 +69,16 @@ export async function listAwards(): Promise<Award[]> {
   });
 }
 
+export async function listAwardsByOrganiser(organiserId: string): Promise<Award[]> {
+  const result = await AwardEntity.query
+    .list({})
+    .where((attr, op) => op.eq(attr.issuingOrganisationId, organiserId))
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({ pages: 'all' });
+
+  return result.data || [];
+}
+
 export async function mergeAward(loserId: string, canonicalId: string): Promise<void> {
   const canonical = await getAward(canonicalId);
   if (!canonical) throw notFoundError('award', canonicalId);

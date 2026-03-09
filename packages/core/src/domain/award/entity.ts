@@ -34,6 +34,14 @@ export const AwardEntity = new Entity(
         type: 'string',
         required: false,
       },
+      frequency: {
+        type: 'string',
+        required: false,
+      },
+      category: {
+        type: 'string',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

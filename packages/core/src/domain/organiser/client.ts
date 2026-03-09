@@ -17,6 +17,26 @@ export type UpdateOrganiserInput = z.infer<typeof UpdateOrganiserSchema>;
 export interface Organiser {
   id: string;
   name: string;
+  description?: string;
+  organisationType?: string;
+  city?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  website?: string;
+  phone?: string;
+  email?: string;
+  socialLinks?: Array<{ platform: string; url: string }>;
+  foundedYear?: number;
+  logoUrl?: string;
+  logoUploadId?: string;
+  tags?: string[];
+  venueId?: string;
+  venueName?: string;
   createdAt: string;
   updatedAt: string;
 }

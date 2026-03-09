@@ -3,6 +3,7 @@ import type { MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { ImageUpload } from '~/components/ImageUpload';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -45,16 +46,28 @@ export async function action({ request }: { request: Request }) {
   const capacity = capacityRaw ? Number.parseInt(capacityRaw, 10) || undefined : undefined;
   const website = (formData.get('website') as string | null)?.trim() || undefined;
   const phone = (formData.get('phone') as string | null)?.trim() || undefined;
+  const email = (formData.get('email') as string | null)?.trim() || undefined;
   const description = (formData.get('description') as string | null)?.trim() || undefined;
+  const nearestTransit = (formData.get('nearestTransit') as string | null)?.trim() || undefined;
+  const foundedYearRaw = (formData.get('foundedYear') as string | null)?.trim();
+  const foundedYear = foundedYearRaw ? Number.parseInt(foundedYearRaw, 10) || undefined : undefined;
+  const photoUrl = (formData.get('photoUrl') as string | null)?.trim() || undefined;
+  const photoUploadId = (formData.get('photoUploadId') as string | null)?.trim() || undefined;
+  const amenities = formData.getAll('amenities') as string[];
+
   const venueTypeRaw = formData.get('venueType') as string | null;
   const venueType =
     venueTypeRaw && venueTypeRaw !== 'none'
       ? (venueTypeRaw as
-          | 'concert-hall'
           | 'auditorium'
-          | 'temple'
+          | 'sabha-hall'
+          | 'temple-hall'
           | 'open-air'
+          | 'pandal'
+          | 'terrace'
           | 'community-hall'
+          | 'heritage-building'
+          | 'university'
           | 'other')
       : undefined;
 
@@ -73,7 +86,33 @@ export async function action({ request }: { request: Request }) {
       capacity,
       website,
       phone,
+      email,
       description,
+      nearestTransit,
+      foundedYear,
+      photoUrl,
+      photoUploadId,
+      amenities:
+        amenities.length > 0
+          ? (amenities as (
+              | 'ac'
+              | 'parking'
+              | 'floor-seating'
+              | 'chair-seating'
+              | 'green-room'
+              | 'canteen'
+              | 'wheelchair-accessible'
+              | 'hearing-loop'
+              | 'elevator'
+              | 'restrooms'
+              | 'metro-nearby'
+              | 'bus-stop-nearby'
+              | 'sound-system'
+              | 'live-streaming'
+              | 'library'
+              | 'other'
+            )[])
+          : undefined,
     });
 
     return redirect(generateVenueUrl(venue.name, venue.id));
@@ -82,6 +121,25 @@ export async function action({ request }: { request: Request }) {
     return data({ error: 'Failed to create venue. Please try again.' }, { status: 500 });
   }
 }
+
+const VENUE_AMENITIES = [
+  'ac',
+  'parking',
+  'floor-seating',
+  'chair-seating',
+  'green-room',
+  'canteen',
+  'wheelchair-accessible',
+  'hearing-loop',
+  'elevator',
+  'restrooms',
+  'metro-nearby',
+  'bus-stop-nearby',
+  'sound-system',
+  'live-streaming',
+  'library',
+  'other',
+] as const;
 
 export default function NewVenue() {
   const { user } = useLoaderData<typeof loader>();
@@ -119,14 +177,29 @@ export default function NewVenue() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— None —</SelectItem>
-                  <SelectItem value="concert-hall">Concert Hall</SelectItem>
                   <SelectItem value="auditorium">Auditorium</SelectItem>
-                  <SelectItem value="temple">Temple</SelectItem>
+                  <SelectItem value="sabha-hall">Sabha Hall</SelectItem>
+                  <SelectItem value="temple-hall">Temple Hall</SelectItem>
                   <SelectItem value="open-air">Open Air</SelectItem>
+                  <SelectItem value="pandal">Pandal</SelectItem>
+                  <SelectItem value="terrace">Terrace</SelectItem>
                   <SelectItem value="community-hall">Community Hall</SelectItem>
+                  <SelectItem value="heritage-building">Heritage Building</SelectItem>
+                  <SelectItem value="university">University</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="foundedYear">Founded Year</Label>
+                <Input id="foundedYear" name="foundedYear" type="number" min={1800} max={2100} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="capacity">Capacity</Label>
+                <Input id="capacity" name="capacity" type="number" min={1} />
+              </div>
             </div>
 
             <fieldset className="space-y-4">
@@ -165,14 +238,25 @@ export default function NewVenue() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="nearestTransit">Nearest Transit</Label>
+              <Input
+                id="nearestTransit"
+                name="nearestTransit"
+                type="text"
+                placeholder="e.g. Chennai Central (0.5 km)"
+                maxLength={200}
+              />
+            </div>
+
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity</Label>
-                <Input id="capacity" name="capacity" type="number" min={1} />
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
                 <Input id="phone" name="phone" type="tel" maxLength={30} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" name="email" type="email" />
               </div>
             </div>
 
@@ -192,6 +276,30 @@ export default function NewVenue() {
                 placeholder="Describe the venue..."
               />
             </div>
+
+            <ImageUpload
+              urlFieldName="photoUrl"
+              uploadIdFieldName="photoUploadId"
+              entityType="venue"
+              label="Venue Photo"
+            />
+
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">Amenities</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {VENUE_AMENITIES.map((amenity) => (
+                  <label key={amenity} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="amenities"
+                      value={amenity}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <span className="text-sm">{amenity.replace(/-/g, ' ')}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
 
             {actionData && 'error' in actionData && (
               <p className="text-sm text-destructive">{actionData.error as string}</p>

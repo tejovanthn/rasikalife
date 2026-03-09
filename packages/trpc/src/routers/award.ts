@@ -24,4 +24,8 @@ export const awardRouter = createTRPCRouter({
   getRecipients: publicProcedure
     .input(z.object({ awardId: z.string().min(1) }))
     .query(({ input }) => ArtistAward.getAwardRecipients(input.awardId)),
+
+  listByOrganiser: publicProcedure
+    .input(z.object({ organiserId: z.string().min(1) }))
+    .query(({ input }) => Award.listAwardsByOrganiser(input.organiserId)),
 });

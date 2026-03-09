@@ -125,6 +125,9 @@ export async function getOrganiserMergeScore(id: string): Promise<number> {
     if (organiserResult.data.description) score += 2;
     if (organiserResult.data.city) score += 1;
     if (organiserResult.data.address) score += 1;
+    if (organiserResult.data.logoUrl) score += 1;
+    if (organiserResult.data.tags && (organiserResult.data.tags as string[]).length > 0) score += 1;
+    if (organiserResult.data.venueId) score += 1;
   }
   return score;
 }

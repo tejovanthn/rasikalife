@@ -3,6 +3,7 @@ import type { MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { ImageUpload } from '~/components/ImageUpload';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -53,6 +54,11 @@ export async function action({ request }: { request: Request }) {
   const description = (formData.get('description') as string | null)?.trim() || undefined;
   const foundedYearRaw = (formData.get('foundedYear') as string | null)?.trim();
   const foundedYear = foundedYearRaw ? Number.parseInt(foundedYearRaw, 10) || undefined : undefined;
+  const logoUrl = (formData.get('logoUrl') as string | null)?.trim() || undefined;
+  const logoUploadId = (formData.get('logoUploadId') as string | null)?.trim() || undefined;
+  const tags = formData.getAll('tags') as string[];
+  const venueName = (formData.get('venueName') as string | null)?.trim() || undefined;
+  const venueId = (formData.get('venueId') as string | null)?.trim() || undefined;
 
   const address =
     street || addrCity || state || postalCode || country
@@ -71,6 +77,32 @@ export async function action({ request }: { request: Request }) {
       email,
       description,
       foundedYear,
+      logoUrl,
+      logoUploadId,
+      tags:
+        tags.length > 0
+          ? (tags as (
+              | 'carnatic'
+              | 'hindustani'
+              | 'bharatanatyam'
+              | 'dance'
+              | 'instrumental'
+              | 'jugalbandi'
+              | 'lecture-demo'
+              | 'music-school'
+              | 'music-competition'
+              | 'award-conferring'
+              | 'publication'
+              | 'free-entry'
+              | 'ticketed'
+              | 'festival-organiser'
+              | 'year-round'
+              | 'charitable'
+              | 'other'
+            )[])
+          : undefined,
+      venueName,
+      venueId,
     });
 
     return redirect(generateOrganiserUrl(organiser.name, organiser.id));
@@ -79,6 +111,26 @@ export async function action({ request }: { request: Request }) {
     return data({ error: 'Failed to create organiser. Please try again.' }, { status: 500 });
   }
 }
+
+const ORGANISER_TAGS = [
+  'carnatic',
+  'hindustani',
+  'bharatanatyam',
+  'dance',
+  'instrumental',
+  'jugalbandi',
+  'lecture-demo',
+  'music-school',
+  'music-competition',
+  'award-conferring',
+  'publication',
+  'free-entry',
+  'ticketed',
+  'festival-organiser',
+  'year-round',
+  'charitable',
+  'other',
+] as const;
 
 export default function NewOrganiser() {
   const { user } = useLoaderData<typeof loader>();
@@ -189,6 +241,51 @@ export default function NewOrganiser() {
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 placeholder="Describe the organisation..."
               />
+            </div>
+
+            <ImageUpload
+              urlFieldName="logoUrl"
+              uploadIdFieldName="logoUploadId"
+              entityType="organiser"
+              label="Organisation Logo"
+            />
+
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">Tags</legend>
+              <div className="grid grid-cols-2 gap-2">
+                {ORGANISER_TAGS.map((tag) => (
+                  <label key={tag} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="tags"
+                      value={tag}
+                      className="h-4 w-4 rounded border-input"
+                    />
+                    <span className="text-sm">{tag.replace(/-/g, ' ')}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="venueName">Primary Venue Name</Label>
+                <Input
+                  id="venueName"
+                  name="venueName"
+                  type="text"
+                  placeholder="e.g. Music Academy"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="venueId">Venue ID (optional)</Label>
+                <Input
+                  id="venueId"
+                  name="venueId"
+                  type="text"
+                  placeholder="Link to venue record"
+                />
+              </div>
             </div>
 
             {actionData && 'error' in actionData && (

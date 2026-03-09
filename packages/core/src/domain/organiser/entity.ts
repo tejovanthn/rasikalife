@@ -68,6 +68,29 @@ export const OrganiserEntity = new Entity(
         type: 'number',
         required: false,
       },
+      logoUrl: {
+        type: 'string',
+        required: false,
+      },
+      logoUploadId: {
+        type: 'string',
+        required: false,
+      },
+      tags: {
+        type: 'list',
+        items: {
+          type: 'string',
+        },
+        required: false,
+      },
+      venueId: {
+        type: 'string',
+        required: false,
+      },
+      venueName: {
+        type: 'string',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

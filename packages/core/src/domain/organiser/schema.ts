@@ -26,6 +26,33 @@ export const CreateOrganiserSchema = z.object({
     )
     .optional(),
   foundedYear: z.number().int().min(1800).max(2100).optional(),
+  logoUrl: z.string().url().optional(),
+  logoUploadId: z.string().optional(),
+  tags: z
+    .array(
+      z.enum([
+        'carnatic',
+        'hindustani',
+        'bharatanatyam',
+        'dance',
+        'instrumental',
+        'jugalbandi',
+        'lecture-demo',
+        'music-school',
+        'music-competition',
+        'award-conferring',
+        'publication',
+        'free-entry',
+        'ticketed',
+        'festival-organiser',
+        'year-round',
+        'charitable',
+        'other',
+      ])
+    )
+    .optional(),
+  venueId: z.string().optional(),
+  venueName: z.string().max(200).optional(),
 });
 
 export const UpdateOrganiserSchema = CreateOrganiserSchema.partial();

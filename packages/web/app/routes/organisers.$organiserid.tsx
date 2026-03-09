@@ -1,18 +1,46 @@
+import {
+  Calendar,
+  ExternalLink,
+  Mail,
+  MapPin,
+  Phone,
+} from 'lucide-react';
 import { data, redirect, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
+import { Link } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateOrganiserUrl, parseSlug } from '~/lib/url-slug';
+import { generateOrganiserUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
 
 interface OrganiserDetail {
   id: string;
   name: string;
+  description?: string;
+  organisationType?: string;
+  city?: string;
+  address?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  phone?: string;
+  email?: string;
+  website?: string;
+  foundedYear?: number;
+  logoUrl?: string;
+  tags?: string[];
+  venueId?: string;
+  venueName?: string;
+  socialLinks?: Array<{ platform: string; url: string }>;
 }
 
 interface EventItem {
@@ -25,6 +53,15 @@ interface EventItem {
   tags?: string[];
   entryType?: string;
 }
+
+const ORGANISATION_TYPE_LABELS: Record<string, string> = {
+  sabha: 'Sabha',
+  trust: 'Trust',
+  ngo: 'NGO',
+  temple: 'Temple',
+  university: 'University',
+  other: 'Other',
+};
 
 export const loader: LoaderFunction = async ({ request, params }) => {
   const { organiserid } = params;
@@ -96,6 +133,13 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
   ];
 };
 
+function formatAddress(address: OrganiserDetail['address']): string | null {
+  if (!address) return null;
+  const parts = [address.street, address.city, address.state, address.postalCode, address.country];
+  const filtered = parts.filter(Boolean);
+  return filtered.length > 0 ? filtered.join(', ') : null;
+}
+
 export default function OrganiserDetailPage() {
   const { organiser, events, user, isModerator } = useLoaderData<{
     organiser: OrganiserDetail;
@@ -105,6 +149,11 @@ export default function OrganiserDetailPage() {
   }>();
 
   const shareUrl = `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`;
+  const typeLabel = organiser.organisationType
+    ? (ORGANISATION_TYPE_LABELS[organiser.organisationType] ?? organiser.organisationType)
+    : null;
+  const addressStr = formatAddress(organiser.address);
+  const locationStr = organiser.city || organiser.address?.city || null;
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -115,19 +164,149 @@ export default function OrganiserDetailPage() {
         ]}
       />
 
-      <DetailPageHeader
-        title={organiser.name}
-        subtitle="Event Organiser"
-        shareUrl={shareUrl}
-        shareTitle={`${organiser.name} - Rasika.life`}
-        shareDescription={`Events organised by ${organiser.name}`}
-        editUrl={user ? `${generateOrganiserUrl(organiser.name, organiser.id)}/edit` : undefined}
-        isModerator={isModerator}
-        mergeUrl={`/moderator/merge?entityType=organiser&entityId=${organiser.id}`}
-        requestDeletionUrl={`/moderator/request-deletion?entityType=organiser&entityId=${organiser.id}`}
-      />
+      {/* Header with logo */}
+      <div className="flex items-start gap-5 mb-2">
+        {organiser.logoUrl && (
+          <img
+            src={organiser.logoUrl}
+            alt={organiser.name}
+            className="w-20 h-20 rounded-lg object-cover border bg-muted shrink-0 mt-1"
+          />
+        )}
+        <div className="flex-1 min-w-0">
+          <DetailPageHeader
+            title={organiser.name}
+            subtitle="Event Organiser"
+            shareUrl={shareUrl}
+            shareTitle={`${organiser.name} - Rasika.life`}
+            shareDescription={`Events organised by ${organiser.name}`}
+            editUrl={user ? `${generateOrganiserUrl(organiser.name, organiser.id)}/edit` : undefined}
+            isModerator={isModerator}
+            mergeUrl={`/moderator/merge?entityType=organiser&entityId=${organiser.id}`}
+            requestDeletionUrl={`/moderator/request-deletion?entityType=organiser&entityId=${organiser.id}`}
+          />
+        </div>
+      </div>
 
-      <section className="mt-10">
+      {/* Type badge */}
+      {typeLabel && (
+        <div className="mb-4">
+          <Badge variant="outline">{typeLabel}</Badge>
+        </div>
+      )}
+
+      {/* Quick info */}
+      <div className="space-y-2 mb-8">
+        {(locationStr || addressStr) && (
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <MapPin className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <span className="text-sm">{addressStr ?? locationStr}</span>
+          </div>
+        )}
+
+        {organiser.phone && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Phone className="h-4 w-4 text-primary shrink-0" />
+            <a href={`tel:${organiser.phone}`} className="text-sm hover:text-foreground transition-colors">
+              {organiser.phone}
+            </a>
+          </div>
+        )}
+
+        {organiser.email && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Mail className="h-4 w-4 text-primary shrink-0" />
+            <a href={`mailto:${organiser.email}`} className="text-sm hover:text-foreground transition-colors">
+              {organiser.email}
+            </a>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          {organiser.website && (
+            <a
+              href={organiser.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-primary text-sm"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Website
+            </a>
+          )}
+          {organiser.foundedYear && (
+            <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              Est. {organiser.foundedYear}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Description */}
+      {organiser.description && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-2">About</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+            {organiser.description}
+          </p>
+        </section>
+      )}
+
+      {/* Primary venue */}
+      {organiser.venueName && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-2">Primary Venue</h2>
+          {organiser.venueId ? (
+            <Link
+              to={generateVenueUrl(organiser.venueName, organiser.venueId)}
+              className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {organiser.venueName}
+            </Link>
+          ) : (
+            <p className="text-sm text-muted-foreground">{organiser.venueName}</p>
+          )}
+        </section>
+      )}
+
+      {/* Tags */}
+      {organiser.tags && organiser.tags.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">Focus Areas</h2>
+          <div className="flex flex-wrap gap-2">
+            {organiser.tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag.replace(/-/g, ' ')}
+              </Badge>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Social links */}
+      {organiser.socialLinks && organiser.socialLinks.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">Social Links</h2>
+          <div className="flex flex-wrap gap-3">
+            {organiser.socialLinks.map((link) => (
+              <a
+                key={link.platform}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {link.platform}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="mt-6">
         <h2 className="section-heading mb-6">Events</h2>
 
         {events.length === 0 ? (
@@ -144,6 +323,7 @@ export default function OrganiserDetailPage() {
           </div>
         )}
       </section>
+
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },

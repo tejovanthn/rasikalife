@@ -24,7 +24,20 @@ export interface Venue {
     postalCode?: string;
     country?: string;
   };
+  city?: string;
   mapLink?: string;
+  description?: string;
+  venueType?: string;
+  capacity?: number;
+  website?: string;
+  phone?: string;
+  email?: string;
+  photoUrl?: string;
+  photoUploadId?: string;
+  amenities?: string[];
+  nearestTransit?: string;
+  foundedYear?: number;
+  socialLinks?: Array<{ platform: string; url: string }>;
   createdAt: string;
   updatedAt: string;
 }

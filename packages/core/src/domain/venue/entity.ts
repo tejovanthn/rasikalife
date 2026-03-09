@@ -57,6 +57,33 @@ export const VenueEntity = new Entity(
         type: 'string',
         required: false,
       },
+      email: {
+        type: 'string',
+        required: false,
+      },
+      photoUrl: {
+        type: 'string',
+        required: false,
+      },
+      photoUploadId: {
+        type: 'string',
+        required: false,
+      },
+      amenities: {
+        type: 'list',
+        items: {
+          type: 'string',
+        },
+        required: false,
+      },
+      nearestTransit: {
+        type: 'string',
+        required: false,
+      },
+      foundedYear: {
+        type: 'number',
+        required: false,
+      },
       socialLinks: {
         type: 'list',
         items: {
