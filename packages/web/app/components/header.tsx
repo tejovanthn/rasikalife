@@ -205,7 +205,7 @@ export const Header = () => {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[300px]">
+              <SheetContent side="left" className="w-[240px] sm:w-[300px] flex flex-col">
                 <SheetHeader>
                   <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <SheetDescription className="sr-only">
@@ -214,7 +214,7 @@ export const Header = () => {
                 </SheetHeader>
                 <nav
                   ref={mobileNavRef}
-                  className="flex flex-col space-y-4 mt-4"
+                  className="flex flex-col space-y-4 mt-4 overflow-y-auto flex-1"
                   aria-label="Main navigation"
                 >
                   {navLinks.map(link => (

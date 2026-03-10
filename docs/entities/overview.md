@@ -55,3 +55,23 @@ All entities follow these ElectroDB patterns:
 ```typescript
 import { createArtist, getArtist, listArtists, ... } from '@rasika/core';
 ```
+
+## Image Upload Domain
+
+The `Image` namespace provides presigned S3 upload URLs for entity photos and logos. It is **not** an ElectroDB entity — it is a thin wrapper around S3 that reuses the `EVENT_POSTERS_BUCKET` / `EVENT_POSTERS_CDN_URL` environment variables.
+
+```typescript
+import { Image } from '@rasika/core';
+
+const { uploadId, uploadUrl, imageUrl } = await Image.getImageUploadUrl(
+  'venue',        // or 'organiser'
+  'photo.jpg',
+  'image/jpeg'
+);
+// PUT file directly to uploadUrl, then store imageUrl on the entity
+```
+
+Key pattern: `images/{entityType}/{uploadId}/{fileName}`
+
+Exposed via tRPC as `venue.getImageUploadUrl` and `organiser.getImageUploadUrl` (both `editorProcedure`).
+Web API route: `POST /api/upload/image` — accepts `entityType`, `fileName`, `contentType` form fields; requires authentication.

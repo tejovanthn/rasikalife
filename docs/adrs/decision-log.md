@@ -1,5 +1,24 @@
 # ADR Decision Log
 
+## 2026-03-09
+
+### Venue & Organiser Edit Wizard + Image Upload
+
+**Context**: Venue and organiser edit pages exposed only a few fields (name, address, mapLink for venue; name only for organiser), leaving most schema attributes (capacity, amenities, photo, tags, social links, etc.) unreachable via the UI.
+
+**Changes**:
+- Replaced flat edit forms with multi-step CSS show/hide wizards (4 steps for venue, 3 for organiser).
+- Extended `venue.create` / `organiser.create` forms to expose all schema fields.
+- Added `Image.getImageUploadUrl` helper in `packages/core/src/domain/image/s3.ts` extending ADR-027 pattern to venue photos and organiser logos.
+- Added `venue.getImageUploadUrl` and `organiser.getImageUploadUrl` tRPC mutations (editorProcedure).
+- Added `POST /api/upload/image` web API route (auth-gated) and reusable `ImageUpload` React component.
+- Added social links (dynamic add/remove rows) to both edit wizards.
+- Updated venue and organiser detail pages to display all fields: hero photo, type badge, amenities grid, tags grid, contact row, primary venue link, social links.
+
+**Decisions**:
+- Wizard uses CSS `hidden` class (all inputs stay in DOM), preserving native `defaultValue`/`defaultChecked` and `formData.getAll()` for multi-value checkboxes — no `react-hook-form`.
+- Reuse `EVENT_POSTERS_BUCKET` for venue/organiser images with `images/{entityType}/` key prefix — no new infra required.
+
 ## 2026-03-02
 
 ### New ADRs Created

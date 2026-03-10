@@ -10,7 +10,7 @@ import * as Artist from '@rasika/core/domain/artist';
 import * as Composition from '@rasika/core/domain/composition';
 
 // Or via main index (namespace re-exports)
-import { Artist, Composition, Raga } from '@rasika/core';
+import { Artist, Composition, Raga, Venue, Organiser, Image } from '@rasika/core';
 
 // Individual function imports
 import { createArtist, getArtist, listArtists } from '@rasika/core/domain/artist';
@@ -106,6 +106,33 @@ import type { TransliterationScheme } from '@rasika/core/utils';
 
 // Schemes: 'itrans' | 'iast' | 'devanagari' | 'tamil' | 'telugu' | 'kannada'
 const devanagari = transliterate('rAga', 'itrans', 'devanagari');
+```
+
+## Image Upload Helpers
+
+```typescript
+import { Image } from '@rasika/core';
+
+// Generate presigned S3 PUT URL (5-min expiry)
+// entityType: 'venue' | 'organiser'
+const { uploadId, uploadUrl, imageUrl } = await Image.getImageUploadUrl(
+  entityType,
+  fileName,   // original filename
+  contentType // MIME type, e.g. 'image/jpeg'
+);
+
+// Then PUT the file directly:
+await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': contentType } });
+
+// Store imageUrl on entity (e.g. venue.photoUrl, organiser.logoUrl)
+```
+
+Web API route for client-side uploads:
+```typescript
+// POST /api/upload/image
+// FormData: { entityType: 'venue' | 'organiser', fileName: string, contentType: string }
+// Returns: { uploadId, uploadUrl, imageUrl }
+// Requires: authenticated session
 ```
 
 ## Domain Error Helpers
