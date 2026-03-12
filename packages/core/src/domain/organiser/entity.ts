@@ -99,6 +99,13 @@ export const OrganiserEntity = new Entity(
         type: 'string',
         required: false,
       },
+      alternateNames: {
+        type: 'list',
+        items: {
+          type: 'string',
+        },
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,

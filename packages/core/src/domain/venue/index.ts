@@ -40,7 +40,11 @@ export async function getVenue(id: string): Promise<Venue | null> {
 
 export async function getVenueByName(name: string): Promise<Venue | null> {
   const result = await VenueEntity.query.byName({ name }).go();
-  return result.data?.[0] || null;
+  const venue = result.data?.[0];
+  if (!venue) return null;
+  if (venue.deletedAt && !venue.mergedIntoId) return null;
+  if (venue.mergedIntoId) return getVenue(venue.mergedIntoId);
+  return venue as Venue;
 }
 
 export async function updateVenue(id: string, input: UpdateVenueInput): Promise<Venue> {
@@ -125,6 +129,14 @@ export async function mergeVenue(loserId: string, canonicalId: string): Promise<
   await VenueEntity.update({ id: loserId })
     .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
     .go();
+
+  const loserName = loser.data.name;
+  const existing = (canonical.alternateNames || []) as string[];
+  if (!existing.includes(loserName)) {
+    await VenueEntity.update({ id: canonicalId })
+      .set({ alternateNames: [...existing, loserName] })
+      .go();
+  }
 }
 
 export async function getVenueMergeScore(id: string): Promise<number> {

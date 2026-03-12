@@ -243,12 +243,20 @@ export const eventRouter = createTRPCRouter({
       const artistCache = new Map<string, string>();
 
       const resolveVenue = async (name?: string, id?: string) => {
-        if (id || !name) return { venueId: id, venueName: name };
+        if (id) {
+          const venue = await Venue.getVenue(id);
+          if (venue?.mergedIntoId) {
+            const canonical = await Venue.getVenue(venue.mergedIntoId);
+            if (canonical) return { venueId: canonical.id, venueName: canonical.name };
+          }
+          return { venueId: id, venueName: name };
+        }
+        if (!name) return { venueId: undefined, venueName: undefined };
         if (venueCache.has(name)) return { venueId: venueCache.get(name), venueName: name };
         const existing = await Venue.getVenueByName(name);
         if (existing) {
           venueCache.set(name, existing.id);
-          return { venueId: existing.id, venueName: name };
+          return { venueId: existing.id, venueName: existing.name };
         }
         const created = await Venue.createVenue({ name });
         venueCache.set(name, created.id);
@@ -256,13 +264,21 @@ export const eventRouter = createTRPCRouter({
       };
 
       const resolveOrganiser = async (name?: string, id?: string) => {
-        if (id || !name) return { organiserId: id, organiserName: name };
+        if (id) {
+          const organiser = await Organiser.getOrganiser(id);
+          if (organiser?.mergedIntoId) {
+            const canonical = await Organiser.getOrganiser(organiser.mergedIntoId);
+            if (canonical) return { organiserId: canonical.id, organiserName: canonical.name };
+          }
+          return { organiserId: id, organiserName: name };
+        }
+        if (!name) return { organiserId: undefined, organiserName: undefined };
         if (organiserCache.has(name))
           return { organiserId: organiserCache.get(name), organiserName: name };
         const existing = await Organiser.getOrganiserByName(name);
         if (existing) {
           organiserCache.set(name, existing.id);
-          return { organiserId: existing.id, organiserName: name };
+          return { organiserId: existing.id, organiserName: existing.name };
         }
         const created = await Organiser.createOrganiser({ name });
         organiserCache.set(name, created.id);
@@ -270,7 +286,11 @@ export const eventRouter = createTRPCRouter({
       };
 
       const resolveArtist = async (artist: { id?: string; name: string; title?: string }) => {
-        if (artist.id) return artist.id;
+        if (artist.id) {
+          const a = await Artist.getArtist(artist.id);
+          if (a?.mergedIntoId) return a.mergedIntoId;
+          return artist.id;
+        }
         const key = artist.name.toLowerCase();
         const cached = artistCache.get(key);
         if (cached) return cached;

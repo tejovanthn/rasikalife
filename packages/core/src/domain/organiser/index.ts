@@ -39,7 +39,11 @@ export async function getOrganiser(id: string): Promise<Organiser | null> {
 
 export async function getOrganiserByName(name: string): Promise<Organiser | null> {
   const result = await OrganiserEntity.query.byName({ name }).go();
-  return result.data?.[0] || null;
+  const organiser = result.data?.[0];
+  if (!organiser) return null;
+  if (organiser.deletedAt && !organiser.mergedIntoId) return null;
+  if (organiser.mergedIntoId) return getOrganiser(organiser.mergedIntoId);
+  return organiser as Organiser;
 }
 
 export async function updateOrganiser(id: string, input: UpdateOrganiserInput): Promise<Organiser> {
@@ -110,6 +114,14 @@ export async function mergeOrganiser(loserId: string, canonicalId: string): Prom
   await OrganiserEntity.update({ id: loserId })
     .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
     .go();
+
+  const loserName = loser.data.name;
+  const existing = (canonical.alternateNames || []) as string[];
+  if (!existing.includes(loserName)) {
+    await OrganiserEntity.update({ id: canonicalId })
+      .set({ alternateNames: [...existing, loserName] })
+      .go();
+  }
 }
 
 export async function getOrganiserMergeScore(id: string): Promise<number> {

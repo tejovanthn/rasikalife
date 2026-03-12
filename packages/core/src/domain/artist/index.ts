@@ -39,7 +39,11 @@ export async function getArtist(id: string): Promise<Artist | null> {
 
 export async function getArtistByName(name: string): Promise<Artist | null> {
   const result = await ArtistEntity.query.byName({ name }).go();
-  return result.data?.[0] || null;
+  const artist = result.data?.[0];
+  if (!artist) return null;
+  if (artist.deletedAt && !artist.mergedIntoId) return null;
+  if (artist.mergedIntoId) return getArtist(artist.mergedIntoId);
+  return artist as Artist;
 }
 
 export async function updateArtist(id: string, input: UpdateArtistInput): Promise<Artist> {
@@ -96,6 +100,14 @@ export async function mergeArtist(loserId: string, canonicalId: string): Promise
   await ArtistEntity.update({ id: loserId })
     .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
     .go();
+
+  const loserName = loser.data.name;
+  const existing = (canonical.alternateNames || []) as string[];
+  if (!existing.includes(loserName)) {
+    await ArtistEntity.update({ id: canonicalId })
+      .set({ alternateNames: [...existing, loserName] })
+      .go();
+  }
 }
 
 export async function getArtistMergeScore(id: string): Promise<number> {

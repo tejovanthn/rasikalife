@@ -27,7 +27,12 @@ function createDocument(
 }
 
 export function transformArtistToDocument(artist: Artist): SearchDocument {
-  return createDocument(artist.id, 'artist', artist.name, '');
+  return createDocument(
+    artist.id,
+    'artist',
+    artist.name,
+    (artist.alternateNames || []).join(' ')
+  );
 }
 
 export function transformRagaToDocument(raga: Raga): SearchDocument {
@@ -57,11 +62,17 @@ export function transformCompositionToDocument(
 }
 
 export function transformVenueToDocument(venue: Venue): SearchDocument {
-  return createDocument(venue.id, 'venue', venue.name, venue.city || '');
+  const parts = [venue.city || '', ...(venue.alternateNames || [])];
+  return createDocument(venue.id, 'venue', venue.name, parts.filter(Boolean).join(' '));
 }
 
 export function transformOrganiserToDocument(organiser: Organiser): SearchDocument {
-  return createDocument(organiser.id, 'organiser', organiser.name, '');
+  return createDocument(
+    organiser.id,
+    'organiser',
+    organiser.name,
+    (organiser.alternateNames || []).join(' ')
+  );
 }
 
 export function transformEventToDocument(event: Event): SearchDocument {
