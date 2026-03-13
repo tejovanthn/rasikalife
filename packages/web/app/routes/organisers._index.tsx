@@ -29,6 +29,7 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const page = Number(url.searchParams.get('page') || '1');
   const user = await getUser(request);
 
   try {
@@ -41,6 +42,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       organisers: result.items,
       nextToken: result.nextToken,
       hasMore: result.hasMore,
+      currentPage: page,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
@@ -50,10 +52,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function OrganisersIndex() {
-  const { organisers, nextToken, hasMore, isModerator } = useLoaderData<{
+  const { organisers, nextToken, hasMore, currentPage, isModerator } = useLoaderData<{
     organisers: OrganiserItem[];
     nextToken: string | null;
     hasMore: boolean;
+    currentPage: number;
     isModerator: boolean;
   }>();
 
@@ -98,7 +101,7 @@ export default function OrganisersIndex() {
 
           <div className="mt-8">
             <EntityPagination
-              currentPage={1}
+              currentPage={currentPage}
               hasMore={hasMore}
               nextToken={nextToken}
               baseUrl="/organisers"

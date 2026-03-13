@@ -36,6 +36,7 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const page = Number(url.searchParams.get('page') || '1');
   const user = await getUser(request);
 
   try {
@@ -48,6 +49,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       venues: result.items,
       nextToken: result.nextToken,
       hasMore: result.hasMore,
+      currentPage: page,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
@@ -57,10 +59,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function VenuesIndex() {
-  const { venues, nextToken, hasMore, isModerator } = useLoaderData<{
+  const { venues, nextToken, hasMore, currentPage, isModerator } = useLoaderData<{
     venues: VenueItem[];
     nextToken: string | null;
     hasMore: boolean;
+    currentPage: number;
     isModerator: boolean;
   }>();
 
@@ -114,7 +117,7 @@ export default function VenuesIndex() {
 
           <div className="mt-8">
             <EntityPagination
-              currentPage={1}
+              currentPage={currentPage}
               hasMore={hasMore}
               nextToken={nextToken}
               baseUrl="/venues"

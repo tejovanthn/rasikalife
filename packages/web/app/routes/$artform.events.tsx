@@ -15,6 +15,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
+  const page = Number(url.searchParams.get('page') || '1');
 
   try {
     const result = await client.event.byArtForm.query({
@@ -29,6 +30,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       events: result.items,
       nextToken: result.nextToken,
       hasMore: result.hasMore,
+      currentPage: page,
     });
   } catch (error) {
     console.error(`Failed to load ${artForm} events:`, error);
@@ -64,12 +66,13 @@ interface EventItem {
 }
 
 export default function ArtFormEvents() {
-  const { artForm, label, events, nextToken, hasMore } = useLoaderData<{
+  const { artForm, label, events, nextToken, hasMore, currentPage } = useLoaderData<{
     artForm: string;
     label: string;
     events: EventItem[];
     nextToken: string | null;
     hasMore: boolean;
+    currentPage: number;
   }>();
 
   return (
@@ -93,7 +96,7 @@ export default function ArtFormEvents() {
 
           <div className="mt-8">
             <EntityPagination
-              currentPage={1}
+              currentPage={currentPage}
               hasMore={hasMore}
               nextToken={nextToken}
               baseUrl={`/${artForm}/events`}

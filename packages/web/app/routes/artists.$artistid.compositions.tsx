@@ -85,7 +85,6 @@ export default function ArtistCompositions() {
 
   const [searchParams] = useSearchParams();
   const currentPage = Number.parseInt(searchParams.get('page') || '1', 10);
-  const prevPageToken = searchParams.get('prevToken');
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -121,6 +120,7 @@ export default function ArtistCompositions() {
             hasMore={hasMore}
             nextToken={nextToken}
             prevToken={prevToken}
+            baseUrl={`${generateArtistUrl(artist.name, artist.id)}/compositions`}
           />
         </>
       )}

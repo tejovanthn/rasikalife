@@ -90,7 +90,6 @@ export default function CompositionsIndex() {
 
   const [searchParams] = useSearchParams();
   const currentPage = Number.parseInt(searchParams.get('page') || '1', 10);
-  const prevPageToken = searchParams.get('prevToken');
 
   return (
     <div className="max-w-6xl">

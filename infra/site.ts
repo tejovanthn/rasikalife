@@ -9,6 +9,7 @@ const site = new sst.aws.React('RasikaWeb', {
   domain: getDomain(''),
   environment: {
     STAGE: $app.stage,
+    VITE_STAGE: $app.stage,
   },
   server: {
     timeout: '60 seconds',
