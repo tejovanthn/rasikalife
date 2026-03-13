@@ -329,6 +329,61 @@ function SuggestionChips({
   );
 }
 
+// --- Phones Input Component ---
+function PhonesInput({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange: (value: string | undefined) => void;
+}) {
+  const [phones, setPhones] = useState<string[]>(() => {
+    const parts = (value || '').split('\n').filter(Boolean);
+    return parts.length > 0 ? parts : [''];
+  });
+
+  const commit = (updated: string[]) => {
+    setPhones(updated);
+    const joined = updated.map(p => p.trim()).filter(Boolean).join('\n');
+    onChange(joined || undefined);
+  };
+
+  return (
+    <div className="space-y-2">
+      {phones.map((phone, i) => (
+        <div key={`phone-${i}`} className="flex gap-2">
+          <Input
+            value={phone}
+            onChange={e => commit(phones.map((p, j) => (j === i ? e.target.value : p)))}
+            placeholder="+91 98765 43210"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const filtered = phones.filter((_, j) => j !== i);
+              commit(filtered.length ? filtered : ['']);
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 text-xs px-2"
+        onClick={() => setPhones(prev => [...prev, ''])}
+      >
+        <Plus className="h-3 w-3 mr-1" />
+        Add number
+      </Button>
+    </div>
+  );
+}
+
 // --- Artist Search/Link Component ---
 function ArtistRow({
   artist,
@@ -602,6 +657,74 @@ function EventStep({
         </Select>
       </div>
 
+      {event.entryType === 'ticketed' && (
+        <div className="space-y-2">
+          <Label>Ticketing Details</Label>
+          <div className="border rounded-lg p-3 space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Booking URL</Label>
+              <Input
+                type="url"
+                value={event.ticketing?.url || ''}
+                onChange={e =>
+                  onChange({
+                    ...event,
+                    ticketing: { ...event.ticketing, url: e.target.value || undefined },
+                  })
+                }
+                placeholder="https://..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Contact Phone(s)</Label>
+                <PhonesInput
+                  value={event.ticketing?.contactPhone}
+                  onChange={contactPhone =>
+                    onChange({
+                      ...event,
+                      ticketing: { ...event.ticketing, contactPhone },
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Contact Email</Label>
+                <Input
+                  type="email"
+                  value={event.ticketing?.contactEmail || ''}
+                  onChange={e =>
+                    onChange({
+                      ...event,
+                      ticketing: {
+                        ...event.ticketing,
+                        contactEmail: e.target.value || undefined,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Ticketing Partner</Label>
+              <Input
+                value={event.ticketing?.partnerName || ''}
+                onChange={e =>
+                  onChange({
+                    ...event,
+                    ticketing: {
+                      ...event.ticketing,
+                      partnerName: e.target.value || undefined,
+                    },
+                  })
+                }
+                placeholder="e.g. BookMyShow, insider.in"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label>Venue</Label>
         <div className="border rounded-lg p-3 space-y-2">
@@ -810,6 +933,9 @@ function ReviewStep({
                         })}
                     </p>
                     {event.venue && <p className="text-muted-foreground">at {event.venue.name}</p>}
+                    {event.organiser && (
+                      <p className="text-muted-foreground">by {event.organiser.name}</p>
+                    )}
                   </div>
                   <Badge variant="outline">{event.entryType}</Badge>
                 </div>
@@ -823,6 +949,28 @@ function ReviewStep({
                         {a.role && ` (${a.role})`}
                         {a.id && ' \u2713'}
                       </span>
+                    ))}
+                  </div>
+                )}
+                {event.entryType === 'ticketed' && event.ticketing?.url && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Tickets:{' '}
+                    <a
+                      href={event.ticketing.url}
+                      className="underline hover:text-foreground"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {event.ticketing.url}
+                    </a>
+                  </p>
+                )}
+                {event.tags.length > 0 && (
+                  <div className="mt-2 flex gap-1 flex-wrap">
+                    {event.tags.map(tag => (
+                      <Badge key={tag} variant="secondary" className="text-xs">
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
                 )}
@@ -1011,6 +1159,7 @@ export default function VerifyEvents() {
 
         {!isFestivalStep && !isReviewStep && events[eventIndex] && (
           <EventStep
+            key={events[eventIndex].id}
             event={events[eventIndex]}
             suggestions={loaderData.suggestions}
             onChange={updated => {

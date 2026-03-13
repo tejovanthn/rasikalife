@@ -99,19 +99,19 @@ export default function HomePage() {
             to="/events"
             className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Browse Events
+            Events
           </Link>
           <Link
             to="/artists"
             className="inline-block px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors"
           >
-            Explore Artists
+            Artists
           </Link>
           <Link
             to="/carnatic/compositions"
             className="inline-block px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-accent transition-colors"
           >
-            Browse Compositions
+            Compositions
           </Link>
         </div>
       </section>

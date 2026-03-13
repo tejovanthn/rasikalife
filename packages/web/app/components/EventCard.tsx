@@ -12,8 +12,21 @@ interface EventCardProps {
     venueName?: string;
     artists?: Array<{ title?: string; name: string; role?: string }>;
     posterUrl?: string;
+    entryType?: string;
   };
 }
+
+const entryTypeLabel: Record<string, string> = {
+  free: 'Free',
+  ticketed: 'Ticketed',
+  'by-invitation': 'By Invitation',
+};
+
+const entryTypeClass: Record<string, string> = {
+  free: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+  ticketed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  'by-invitation': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+};
 
 function formatEventDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-IN', {
@@ -38,7 +51,16 @@ export function EventCard({ event }: EventCardProps) {
           />
         )}
         <CardContent className="py-4">
-          <h3 className="font-semibold text-foreground leading-snug mb-2">{event.title}</h3>
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-foreground leading-snug">{event.title}</h3>
+            {event.entryType && (
+              <span
+                className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${entryTypeClass[event.entryType] ?? 'bg-muted text-muted-foreground'}`}
+              >
+                {entryTypeLabel[event.entryType] ?? event.entryType}
+              </span>
+            )}
+          </div>
           <div className="space-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5 shrink-0" />

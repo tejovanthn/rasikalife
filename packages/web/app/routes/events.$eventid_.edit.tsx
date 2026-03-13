@@ -1,11 +1,12 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
-import { ArrowLeft, Loader2, Pencil, Plus, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -111,6 +112,12 @@ export async function action({
   const organiserName = formData.get('organiserName') as string;
   const entryType = formData.get('entryType') as string;
   const userNote = formData.get('userNote') as string;
+  const tagsJson = formData.get('tags') as string;
+  const tags: string[] = tagsJson ? (JSON.parse(tagsJson) as string[]) : [];
+  const ticketingUrl = (formData.get('ticketing.url') as string) || undefined;
+  const ticketingContactPhone = (formData.get('ticketing.contactPhone') as string) || undefined;
+  const ticketingContactEmail = (formData.get('ticketing.contactEmail') as string) || undefined;
+  const ticketingPartnerName = (formData.get('ticketing.partnerName') as string) || undefined;
 
   // Parse artists from form (indexed fields)
   const artists: ArtistEntry[] = [];
@@ -139,6 +146,36 @@ export async function action({
   if (organiserName !== (event.organiserName || ''))
     proposedValues.organiserName = organiserName || null;
   if (entryType !== (event.entryType || 'free')) proposedValues.entryType = entryType;
+
+  const currentTags = (event.tags as string[] | null | undefined) ?? [];
+  if (JSON.stringify(tags) !== JSON.stringify(currentTags)) proposedValues.tags = tags;
+
+  const hasTicketingFields =
+    ticketingUrl !== undefined ||
+    ticketingContactPhone !== undefined ||
+    ticketingContactEmail !== undefined ||
+    ticketingPartnerName !== undefined;
+  if (hasTicketingFields) {
+    const currentTicketing = event.ticketing as {
+      url?: string | null;
+      contactPhone?: string | null;
+      contactEmail?: string | null;
+      partnerName?: string | null;
+    } | null;
+    const ticketingChanged =
+      (ticketingUrl || '') !== (currentTicketing?.url || '') ||
+      (ticketingContactPhone || '') !== (currentTicketing?.contactPhone || '') ||
+      (ticketingContactEmail || '') !== (currentTicketing?.contactEmail || '') ||
+      (ticketingPartnerName || '') !== (currentTicketing?.partnerName || '');
+    if (ticketingChanged) {
+      proposedValues.ticketing = {
+        url: ticketingUrl || null,
+        contactPhone: ticketingContactPhone || null,
+        contactEmail: ticketingContactEmail || null,
+        partnerName: ticketingPartnerName || null,
+      };
+    }
+  }
 
   // Compare artists
   const currentArtists = (event.artists || []) as Array<{
@@ -244,6 +281,31 @@ export default function EditEvent() {
       'free',
     userNote: activeEdit?.userNote || '',
   };
+
+  const [tags, setTags] = useState<string[]>(
+    (proposed.tags as string[] | undefined) ?? (event.tags as string[] | undefined) ?? []
+  );
+  const [tagInput, setTagInput] = useState('');
+  const [currentEntryType, setCurrentEntryType] = useState(defaultValues.entryType);
+  const initialTicketing =
+    ((proposed.ticketing as {
+      url?: string;
+      contactPhone?: string;
+      contactEmail?: string;
+      partnerName?: string;
+    } | undefined) ??
+      (event.ticketing as {
+        url?: string;
+        contactPhone?: string;
+        contactEmail?: string;
+        partnerName?: string;
+      } | undefined)) ??
+    {};
+
+  const [ticketingPhones, setTicketingPhones] = useState<string[]>(() => {
+    const parts = (initialTicketing.contactPhone || '').split('\n').filter(Boolean);
+    return parts.length > 0 ? parts : [''];
+  });
 
   useEffect(() => {
     if (
@@ -358,7 +420,8 @@ export default function EditEvent() {
               <select
                 id="entryType"
                 name="entryType"
-                defaultValue={defaultValues.entryType}
+                value={currentEntryType}
+                onChange={e => setCurrentEntryType(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <option value="free">Free</option>
@@ -366,6 +429,92 @@ export default function EditEvent() {
                 <option value="by-invitation">By Invitation</option>
               </select>
             </div>
+
+            {currentEntryType === 'ticketed' && (
+              <div className="space-y-3 border rounded-lg p-4">
+                <p className="text-sm font-medium">Ticketing Details</p>
+                <div className="space-y-2">
+                  <Label htmlFor="ticketing.url" className="text-xs">
+                    Booking URL
+                  </Label>
+                  <Input
+                    id="ticketing.url"
+                    name="ticketing.url"
+                    type="url"
+                    defaultValue={initialTicketing.url || ''}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Contact Phone(s)</Label>
+                    <input
+                      type="hidden"
+                      name="ticketing.contactPhone"
+                      value={ticketingPhones.filter(Boolean).join('\n')}
+                    />
+                    {ticketingPhones.map((phone, i) => (
+                      <div key={`tphone-${i}`} className="flex gap-2">
+                        <Input
+                          value={phone}
+                          onChange={e =>
+                            setTicketingPhones(prev =>
+                              prev.map((p, j) => (j === i ? e.target.value : p))
+                            )
+                          }
+                          placeholder="+91 98765 43210"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setTicketingPhones(prev => {
+                              const filtered = prev.filter((_, j) => j !== i);
+                              return filtered.length ? filtered : [''];
+                            })
+                          }
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={() => setTicketingPhones(prev => [...prev, ''])}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add number
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ticketing.contactEmail" className="text-xs">
+                      Contact Email
+                    </Label>
+                    <Input
+                      id="ticketing.contactEmail"
+                      name="ticketing.contactEmail"
+                      type="email"
+                      defaultValue={initialTicketing.contactEmail || ''}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ticketing.partnerName" className="text-xs">
+                    Ticketing Partner
+                  </Label>
+                  <Input
+                    id="ticketing.partnerName"
+                    name="ticketing.partnerName"
+                    defaultValue={initialTicketing.partnerName || ''}
+                    placeholder="e.g. BookMyShow, insider.in"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Artists */}
             <fieldset className="space-y-3">
@@ -431,6 +580,58 @@ export default function EditEvent() {
                 </div>
               ))}
             </fieldset>
+
+            <div className="space-y-2">
+              <Label>Tags</Label>
+              <input type="hidden" name="tags" value={JSON.stringify(tags)} />
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {tags.map(tag => (
+                    <Badge key={tag} variant="secondary" className="gap-1 text-xs">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => setTags(prev => prev.filter(t => t !== tag))}
+                        className="ml-0.5 hover:text-destructive"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  value={tagInput}
+                  onChange={e => setTagInput(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const tag = tagInput.trim().toLowerCase();
+                      if (tag && !tags.includes(tag)) {
+                        setTags(prev => [...prev, tag]);
+                      }
+                      setTagInput('');
+                    }
+                  }}
+                  placeholder="Add tag and press Enter..."
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const tag = tagInput.trim().toLowerCase();
+                    if (tag && !tags.includes(tag)) {
+                      setTags(prev => [...prev, tag]);
+                    }
+                    setTagInput('');
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="userNote">Edit Note (optional)</Label>
