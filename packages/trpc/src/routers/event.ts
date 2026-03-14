@@ -1,4 +1,4 @@
-import { Artist, Event, Festival, Organiser, Search, Venue } from '@rasika/core';
+import { Artist, Auth, Event, Festival, Organiser, Search, Venue } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -308,6 +308,8 @@ export const eventRouter = createTRPCRouter({
         return created.id;
       };
 
+      const isModerator = ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
+
       // Update each draft event with verified data and submit for review
       const results = [];
       for (const eventInput of input.events) {
@@ -322,7 +324,7 @@ export const eventRouter = createTRPCRouter({
           resolvedArtists.push({ ...artist, id: artistId });
         }
 
-        const event = await Event.submitEvent(
+        await Event.submitEvent(
           id,
           {
             ...eventData,
@@ -333,6 +335,11 @@ export const eventRouter = createTRPCRouter({
           },
           ctx.user.id
         );
+
+        // Moderators and admins can publish directly without a separate review step
+        const event = isModerator
+          ? await Event.approveEvent(id, ctx.user.id)
+          : await Event.getEvent(id);
         results.push(event);
       }
       triggerReindex();

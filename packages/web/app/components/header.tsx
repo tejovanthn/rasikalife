@@ -1,5 +1,5 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { ChevronDown, LogOut, Menu, User, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, User, Users, X } from 'lucide-react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Form, Link, NavLink } from 'react-router';
 import { useAuth } from '~/components/auth-context';
@@ -169,6 +169,14 @@ export const Header = () => {
                         </Link>
                       </DropdownMenuItem>
                     </>
+                  )}
+                  {user.role === 'admin' && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/moderator/users" className="flex items-center gap-2">
+                        <Users className="h-4 w-4" />
+                        Manage Users
+                      </Link>
+                    </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -347,6 +355,16 @@ export const Header = () => {
                               Draft Posters
                             </Link>
                           </>
+                        )}
+                        {user.role === 'admin' && (
+                          <Link
+                            to="/moderator/users"
+                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                            onClick={() => setIsSidebarOpen(false)}
+                          >
+                            <Users className="h-4 w-4" />
+                            Manage Users
+                          </Link>
                         )}
                         <Form method="post" action="/auth/logout">
                           <Button

@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
+import { Auth } from '@rasika/core';
 import { requireUser } from '~/lib/auth.server';
 
 interface ExtractedArtist {
@@ -102,6 +103,7 @@ interface LoaderData {
   events: DraftEvent[];
   posterUrl: string;
   suggestions: SuggestionsMap;
+  isModerator: boolean;
 }
 
 export async function loader({
@@ -109,7 +111,8 @@ export async function loader({
 }: {
   request: Request;
 }) {
-  await requireUser(request);
+  const user = await requireUser(request);
+  const isModerator = user.role === Auth.ROLE.MODERATOR || user.role === Auth.ROLE.ADMIN;
 
   const url = new URL(request.url);
   const festivalId = url.searchParams.get('festivalId');
@@ -225,7 +228,7 @@ export async function loader({
     }
   }
 
-  return data({ festival, events, posterUrl, suggestions });
+  return data({ festival, events, posterUrl, suggestions, isModerator });
 }
 
 export const meta: MetaFunction = () => {
@@ -1004,6 +1007,7 @@ function ReviewStep({
 // --- Main Wizard ---
 export default function VerifyEvents() {
   const loaderData = useLoaderData<LoaderData>();
+  const { isModerator } = loaderData;
   const navigate = useNavigate();
 
   // Stable key scoped to this specific set of drafts
@@ -1054,7 +1058,7 @@ export default function VerifyEvents() {
 
   const getStepLabel = () => {
     if (isFestivalStep) return 'Festival Details';
-    if (isReviewStep) return 'Review & Submit';
+    if (isReviewStep) return isModerator ? 'Review & Publish' : 'Review & Submit';
     return `Event ${eventIndex + 1} — ${events[eventIndex]?.title || 'Untitled'}`;
   };
 
@@ -1118,7 +1122,7 @@ export default function VerifyEvents() {
       } catch {
         // ignore
       }
-      toast.success('Events submitted for review!');
+      toast.success(isModerator ? 'Events published!' : 'Events submitted for review!');
       navigate('/events');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit events.';
@@ -1190,12 +1194,12 @@ export default function VerifyEvents() {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
+                {isModerator ? 'Publishing...' : 'Submitting...'}
               </>
             ) : (
               <>
                 <Check className="mr-2 h-4 w-4" />
-                Submit for Review
+                {isModerator ? 'Publish' : 'Submit for Review'}
               </>
             )}
           </Button>
