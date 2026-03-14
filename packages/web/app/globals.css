@@ -79,6 +79,11 @@
   }
 }
 
+/* Unlayered — beats all @layer rules regardless of specificity */
+a.no-ext-arrow::after {
+  content: none;
+}
+
 @layer utilities {
   /* Page titles - used for main headings on index pages */
   .page-title {

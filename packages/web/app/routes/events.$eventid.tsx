@@ -131,6 +131,26 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
+    let venueMapLink: string | undefined;
+    let venueAddress: string | undefined;
+    if (event.venueId) {
+      try {
+        const venue = await serverClient.venue.get.query({ id: event.venueId });
+        venueMapLink = venue?.mapLink;
+        if (venue?.address) {
+          const parts = [
+            venue.address.street,
+            venue.address.city,
+            venue.address.state,
+            venue.address.country,
+          ].filter(Boolean);
+          if (parts.length > 0) venueAddress = parts.join(', ');
+        }
+      } catch {
+        // Non-fatal
+      }
+    }
+
     return data({
       event,
       user,
@@ -139,6 +159,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       festivalEvents,
       prevEvent,
       nextEvent,
+      venueMapLink,
+      venueAddress,
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -305,22 +327,39 @@ function PosterUploader() {
 }
 
 export default function EventDetail() {
-  const { event, user, isModerator, festivalPosterUrl, festivalEvents, prevEvent, nextEvent } =
-    useLoaderData<{
-      event: EventDetail;
-      user: { id: string } | null;
-      isModerator: boolean;
-      festivalPosterUrl?: string;
-      festivalEvents: FestivalEventItem[];
-      prevEvent: FestivalEventItem | null;
-      nextEvent: FestivalEventItem | null;
-    }>();
+  const {
+    event,
+    user,
+    isModerator,
+    festivalPosterUrl,
+    festivalEvents,
+    prevEvent,
+    nextEvent,
+    venueMapLink,
+    venueAddress,
+  } = useLoaderData<{
+    event: EventDetail;
+    user: { id: string } | null;
+    isModerator: boolean;
+    festivalPosterUrl?: string;
+    festivalEvents: FestivalEventItem[];
+    prevEvent: FestivalEventItem | null;
+    nextEvent: FestivalEventItem | null;
+    venueMapLink?: string;
+    venueAddress?: string;
+  }>();
 
   const startDate = new Date(event.startDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
   const displayPosterUrl = event.posterUrl || festivalPosterUrl;
   const shareUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
   const dateStr = startDate.toLocaleDateString('en-IN', { dateStyle: 'long' });
+
+  const venueQueryStr = [event.venueName, venueAddress].filter(Boolean).join(', ');
+  const mapsUrl =
+    venueMapLink ||
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueQueryStr)}`;
+
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -393,29 +432,15 @@ export default function EventDetail() {
         )}
 
         {/* Details */}
-        <div className="space-y-6">
-          <div>
-            {event.festivalName && event.festivalId && (
-              <p className="text-lg text-muted-foreground">
-                Part of{' '}
-                <Link
-                  to={generateFestivalUrl(event.festivalName, event.festivalId)}
-                  className="text-primary"
-                >
-                  {event.festivalName}
-                </Link>
-              </p>
-            )}
-          </div>
-
+        <div className="space-y-4">
           {event.description && <p className="text-muted-foreground">{event.description}</p>}
 
           {/* Artists */}
           {event.artists && event.artists.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {event.artists.map(artist => (
                 <div key={`${artist.name}-${artist.role || 'artist'}`}>
-                  <p className="font-medium text-lg">
+                  <p className="font-medium">
                     {artist.title ? `${artist.title} ` : ''}
                     {artist.id ? (
                       <Link to={generateArtistUrl(artist.name, artist.id)} className="text-primary">
@@ -461,18 +486,29 @@ export default function EventDetail() {
 
           {/* Venue */}
           {event.venueName && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-primary" />
-              {event.venueId ? (
-                <Link
-                  to={generateVenueUrl(event.venueName, event.venueId)}
-                  className="text-primary font-medium"
-                >
-                  {event.venueName}
-                </Link>
-              ) : (
-                <span className="font-medium">{event.venueName}</span>
-              )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                {event.venueId ? (
+                  <Link
+                    to={generateVenueUrl(event.venueName, event.venueId)}
+                    className="text-primary font-medium"
+                  >
+                    {event.venueName}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{event.venueName}</span>
+                )}
+              </div>
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-ext-arrow pl-7 flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Maps
+              </a>
             </div>
           )}
 
@@ -501,8 +537,8 @@ export default function EventDetail() {
 
       {/* Ticketing */}
       {event.ticketing && (
-        <section className="mt-8">
-          <h2 className="section-heading mb-4">Ticketing</h2>
+        <section className="mt-6">
+          <h2 className="text-base font-semibold mb-2">Ticketing</h2>
           <Card>
             <CardContent className="py-4 space-y-2">
               {event.ticketing.url && (
@@ -537,8 +573,8 @@ export default function EventDetail() {
 
       {/* Contact Info */}
       {event.contactInfo && (
-        <section className="mt-8">
-          <h2 className="section-heading mb-4">Contact</h2>
+        <section className="mt-6">
+          <h2 className="text-base font-semibold mb-2">Contact</h2>
           <Card>
             <CardContent className="py-4 space-y-2">
               {event.contactInfo.phone && (
@@ -577,8 +613,8 @@ export default function EventDetail() {
 
       {/* Organiser */}
       {event.organiserName && (
-        <section className="mt-8">
-          <h2 className="section-heading mb-4">Organised by</h2>
+        <section className="mt-6">
+          <h2 className="text-base font-semibold mb-1">Organised by</h2>
           <p className="font-medium">
             {event.organiserId ? (
               <Link
@@ -596,8 +632,8 @@ export default function EventDetail() {
 
       {/* Sponsors */}
       {event.sponsors && event.sponsors.length > 0 && (
-        <section className="mt-8">
-          <h2 className="section-heading mb-4">Sponsors</h2>
+        <section className="mt-6">
+          <h2 className="text-base font-semibold mb-2">Sponsors</h2>
           <div className="flex gap-2 flex-wrap">
             {event.sponsors.map(sponsor => (
               <Badge key={sponsor.name} variant="outline">
@@ -611,9 +647,9 @@ export default function EventDetail() {
 
       {/* Festival Schedule */}
       {festivalEvents.length > 1 && event.festivalId && event.festivalName && (
-        <section className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="section-heading">Festival Schedule</h2>
+        <section className="mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold">Festival Schedule</h2>
             <Link
               to={generateFestivalUrl(event.festivalName, event.festivalId)}
               className="text-sm text-primary"
