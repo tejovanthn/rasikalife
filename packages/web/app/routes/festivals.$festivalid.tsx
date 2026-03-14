@@ -1,9 +1,11 @@
-import { Calendar, MapPin, Pencil, Upload } from 'lucide-react';
+import { Calendar, MapPin, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { Link, data, useLoaderData } from 'react-router';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { PosterImage } from '~/components/PosterImage';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, FestivalStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -246,6 +248,15 @@ export default function FestivalDetail() {
   }>();
 
   const groupedEvents = groupEventsByDate(events);
+  const startDateStr = new Date(festival.startDate).toLocaleDateString('en-IN', {
+    dateStyle: 'long',
+  });
+  const endDateStr =
+    festival.startDate !== festival.endDate
+      ? new Date(festival.endDate).toLocaleDateString('en-IN', { dateStyle: 'long' })
+      : null;
+  const dateRangeStr = endDateStr ? `${startDateStr} – ${endDateStr}` : startDateStr;
+  const shareUrl = `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`;
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -256,31 +267,40 @@ export default function FestivalDetail() {
         ]}
       />
 
-      <div className="mt-6 grid md:grid-cols-[250px_1fr] gap-8">
-        <div>
-          {festival.posterUrl && (
-            <img
-              src={festival.posterUrl}
-              alt={`${festival.name} poster`}
-              className="w-full rounded-lg shadow-md"
-            />
-          )}
-          {isModerator && <PosterUploader />}
-        </div>
+      <DetailPageHeader
+        title={festival.name}
+        subtitle={dateRangeStr}
+        shareUrl={shareUrl}
+        shareTitle={festival.name}
+        shareDescription={`${festival.name} – ${dateRangeStr}`}
+        editUrl={
+          user && festival.status === 'approved'
+            ? `${generateFestivalUrl(festival.name, festival.id)}/edit`
+            : undefined
+        }
+        isModerator={isModerator}
+        mergeUrl={`/moderator/merge?entityType=festival&entityId=${festival.id}`}
+        requestDeletionUrl={`/moderator/request-deletion?entityType=festival&entityId=${festival.id}`}
+      />
+
+      <div className="grid md:grid-cols-[300px_1fr] gap-8">
+        {(festival.posterUrl || isModerator) && (
+          <div>
+            {festival.posterUrl && (
+              <PosterImage
+                posterUrl={festival.posterUrl}
+                alt={`${festival.name} poster`}
+                className="w-full rounded-lg shadow-md"
+                loading="eager"
+                width={300}
+                height={400}
+              />
+            )}
+            {isModerator && <PosterUploader />}
+          </div>
+        )}
 
         <div className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold">{festival.name}</h1>
-            {user && festival.status === 'approved' && (
-              <a
-                href={`${generateFestivalUrl(festival.name, festival.id)}/edit`}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors shrink-0 mt-2"
-              >
-                <Pencil className="h-4 w-4" />
-                Edit
-              </a>
-            )}
-          </div>
           {festival.description && <p className="text-muted-foreground">{festival.description}</p>}
 
           <div className="flex items-center gap-2 text-foreground">
