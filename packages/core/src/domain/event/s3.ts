@@ -8,12 +8,23 @@ const BUCKET_NAME = process.env.EVENT_POSTERS_BUCKET || '';
 const CDN_URL = process.env.EVENT_POSTERS_CDN_URL || '';
 const PRESIGNED_URL_EXPIRY = 300; // 5 minutes
 
+function extFromContentType(contentType: string): string {
+  const map: Record<string, string> = {
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'application/pdf': '.pdf',
+  };
+  return map[contentType] ?? '.jpg';
+}
+
 export async function getUploadUrl(
-  fileName: string,
+  _fileName: string,
   contentType: string
 ): Promise<{ uploadId: string; uploadUrl: string; posterUrl: string }> {
   const uploadId = generateId();
-  const key = `posters/${uploadId}/${fileName}`;
+  const key = `posters/${uploadId}${extFromContentType(contentType)}`;
 
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,

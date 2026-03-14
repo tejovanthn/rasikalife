@@ -104,23 +104,8 @@ export async function findOrCreateUser(profile: {
 }
 
 export async function listAllUsers(): Promise<User[]> {
-  const { dynamoClient } = await import('../../db/client');
-  const { DynamoDBDocumentClient, ScanCommand } = await import('@aws-sdk/lib-dynamodb');
-  const { DynamoDBClient } = await import('@aws-sdk/client-dynamodb');
-  const client = DynamoDBDocumentClient.from(new DynamoDBClient());
-  const tableName = process.env.DYNAMODB_TABLE || 'RasikaLifeTable';
-
-  const result = await client.send(
-    new ScanCommand({
-      TableName: tableName,
-      FilterExpression: 'begins_with(pk, :prefix)',
-      ExpressionAttributeValues: {
-        ':prefix': 'USER#',
-      },
-    })
-  );
-
-  return (result.Items || []) as User[];
+  const result = await UserEntity.scan.go({ pages: 'all' });
+  return result.data as User[];
 }
 
 export type { User } from './entity';

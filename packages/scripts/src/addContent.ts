@@ -13,7 +13,7 @@ Rasika.life is dedicated to becoming the ultimate digital hub for Carnatic music
 
 At Rasika.life, we:
 
-1. **Curate Comprehensive Content**: Our database includes lyrics, ragas, talas, composer information, and notations for a wide range of Carnatic compositions, all carefully sourced and attributed.
+1. **Curate Comprehensive Content**: Our database includes compositions, ragas, talas, artist profiles, and events for a wide range of Carnatic music, all carefully sourced and attributed.
 
 2. **Connect the Community**: We bring together performers, students, and rasikas (enthusiasts) from around the globe, fostering a vibrant international community.
 
@@ -33,11 +33,11 @@ We envision Rasika.life as the go-to platform for all things related to Carnatic
 
 ## Join Us
 
-Rasika.life is built by the community, for the community. We welcome volunteers who are passionate about Carnatic music to contribute their knowledge, skills, and time. Whether you're adding lyrics, updating event information, or sharing your expertise, every contribution helps enrich our collective understanding of this beautiful art form.
+Rasika.life is built by the community, for the community. We welcome volunteers who are passionate about Carnatic music to contribute their knowledge, skills, and time. Whether you're adding compositions, submitting events, correcting errors, or sharing your expertise, every contribution helps enrich our collective understanding of this beautiful art form.
 
 Be a part of our journey in making Carnatic music more accessible and appreciated worldwide, while respecting the sources of our shared knowledge. Join Rasika.life today!
 
-[Volunteer with Us](#) | [Contact Us](#)
+[Contribute Content](/contribute) | [Contact Us](/contact)
   `,
     // Auxiliary content for About page
     meta: {
@@ -202,15 +202,15 @@ Rasika.life, Bangalore, India
     content: `# Welcome to Rasika.life
 ## Your Carnatic Music Companion
 
-Discover the rich world of Carnatic music with Rasika.life, your go-to resource for lyrics, ragas, talas, and more. Whether you're a professional performer, a dedicated student, or an enthusiastic listener, our comprehensive database is designed to enrich your musical journey.
+Discover the rich world of Carnatic music with Rasika.life, your go-to resource for compositions, ragas, talas, artists, and events. Whether you're a professional performer, a dedicated student, or an enthusiastic listener, our comprehensive database is designed to enrich your musical journey.
 
 ## What We Offer
 
-- **Extensive Lyric Database**: Explore a vast collection of Carnatic compositions in their original languages.
+- **Extensive Composition Database**: Explore a vast collection of Carnatic compositions in their original languages.
 - **Raga & Tala Information**: Dive deep into the intricacies of Carnatic music theory.
-- (coming soon) **Composer Profiles**: Learn about the maestros who shaped this classical art form.
-- (coming soon) **Upcoming Events**: Stay updated with concerts and performances around the world.
-- (coming soon) **Video Archives**: Watch and learn from recorded performances, linked directly to our song database.
+- **Artist Profiles**: Learn about the performers and composers who shape this classical art form.
+- **Upcoming Events**: Stay updated with concerts and performances around the world.
+- (coming soon) **Video Archives**: Watch and learn from recorded performances, linked directly to our composition database.
 
 ## Our Commitment to Attribution
 
@@ -218,20 +218,18 @@ At Rasika.life, we believe in the power of shared knowledge. Our database has be
 
 ## Join Our Community
 
-Rasika.life is more than just a database - it's a growing community of Carnatic music lovers. Help us expand our knowledge base:
-
-- (coming soon) Contribute lyrics, notations, or translations
-- (coming soon) Update event information
-- (coming soon) Share your expertise on ragas and talas
+Rasika.life is more than just a database - it's a growing community of Carnatic music lovers. Help us expand our knowledge base by contributing compositions, correcting errors, adding event details, and sharing your expertise on ragas and talas.
 
 Together, let's create the most comprehensive and well-attributed resource for Carnatic music enthusiasts worldwide.
 
 ## Start Exploring
 
-- [Search Our Database](/carnatic/songs)
-- (coming soon)Upcoming Events
-- (coming soon)Contribute Content
-- (coming soon)About Carnatic Music
+- [Browse Compositions](/carnatic/compositions)
+- [Explore Ragas](/carnatic/ragas)
+- [Explore Talas](/carnatic/talas)
+- [Browse Artists](/artists)
+- [Upcoming Events](/events)
+- [Contribute Content](/contribute)
 
 Immerse yourself in the world of Carnatic music with Rasika.life - where every note tells a story, every rhythm beats with tradition, and every piece of information is respectfully sourced.`,
     category: ContentCategory.GENERAL,
@@ -241,13 +239,14 @@ Immerse yourself in the world of Carnatic music with Rasika.life - where every n
     meta: {
       title: 'Welcome to Rasika.life - Your Carnatic Music Companion',
       description:
-        'Discover the rich world of Carnatic music with comprehensive lyrics, raga information, tala details, and more.',
+        'Discover the rich world of Carnatic music with comprehensive compositions, raga information, tala details, artist profiles, and upcoming events.',
       keywords: [
         'carnatic music',
         'ragas',
         'talas',
-        'lyrics',
         'compositions',
+        'artists',
+        'events',
         'indian classical music',
       ],
     },
@@ -489,9 +488,9 @@ Welcome, Carnatic music enthusiast! We're thrilled that you're interested in con
 ## Ways to Contribute
 
 1. **Add New Content**
-   - Song lyrics in original languages
+   - Composition lyrics in original languages
    - Raga and tala information
-   - Composer biographies
+   - Artist and composer profiles
    - Upcoming event details
 
 2. **Update Existing Content**
@@ -499,20 +498,21 @@ Welcome, Carnatic music enthusiast! We're thrilled that you're interested in con
    - Add missing information to incomplete entries
    - Provide additional context or explanations
 
-3. **Translate Content**
-   - Help make our content accessible in multiple languages
+3. **Submit Events**
+   - Share concert and festival information
+   - Upload event posters via our share feature (on mobile) or the event creation form
 
 4. **Technical Contributions**
    - If you're a developer, help improve our website's functionality
    - Assist with database management and optimization
 
 5. **Community Engagement**
-   - Participate in discussions on our forums
    - Help answer questions from other users
+   - Review and verify submitted edits
 
 ## How to Get Started
 
-1. **Create an Account**: Sign up for a Rasika.life account [here](#)(coming soon).
+1. **Create an Account**: [Sign in](/auth/login) with your Google account to get started.
 
 2. **Familiarize Yourself with Our Guidelines**: Read our [content guidelines](/community) to understand our standards for contributions.
 
@@ -520,7 +520,7 @@ Welcome, Carnatic music enthusiast! We're thrilled that you're interested in con
 
 4. **Start Small**: Begin with minor edits or additions to build your confidence and understanding of our system.
 
-5. **Use the Contribution Forms**: For each type of contribution, we have specific forms. Find them in your user dashboard.
+5. **Use the Edit System**: Navigate to any composition, raga, tala, or artist page and use the edit button to propose changes. All edits are reviewed before being published.
 
 6. **Provide Sources**: Always include reliable sources for your contributions to maintain the credibility of our database.
 
@@ -532,10 +532,6 @@ Welcome, Carnatic music enthusiast! We're thrilled that you're interested in con
 - **Respect Copyright**: Only contribute content that you have the right to share.
 - **Be Objective**: Present information neutrally, especially for controversial topics.
 - **Collaborate**: Work with other contributors to improve content collectively.
-
-## Recognition for Your Contributions
-
-We value every contribution. Active contributors may be recognized on our [Hall of Fame](#)(coming soon) page and might be eligible for special privileges on the site.
 
 ## Need Help?
 
@@ -576,42 +572,48 @@ Thank you for helping make Rasika.life the ultimate resource for Carnatic music 
 ## General Questions
 
 1. **Q: What is Rasika.life?**
-   A: Rasika.life is a comprehensive online resource for Carnatic music, offering information on lyrics, ragas, talas, composers, and more.
+   A: Rasika.life is a comprehensive online resource for Carnatic music, offering information on compositions, ragas, talas, artists, events, and more.
 
 2. **Q: Is Rasika.life free to use?**
-   A: Yes, basic access to Rasika.life is free. We may offer premium features in the future.
+   A: Yes, access to Rasika.life is free. We rely on community contributions and [donations](/donate) to keep the platform running.
 
 3. **Q: How often is the content updated?**
-   A: We strive to update our content regularly with the help of our community. The last update date is shown on each page.
+   A: Content is updated continuously by our community of editors and moderators. Events are added regularly by contributors.
 
 ## Account and Contributions
 
 4. **Q: Do I need an account to use Rasika.life?**
-   A: While basic browsing is available without an account, you'll need one to contribute content or access certain features.
+   A: Basic browsing is available without an account. You'll need to [sign in](/auth/login) with Google to contribute content, submit events, or propose edits.
 
 5. **Q: How can I contribute to Rasika.life?**
-   A: Registered users can contribute by adding or editing information on songs, ragas, talas, or composers. Visit our "How to Contribute" page for more details.
+   A: Once signed in, you can propose edits to any composition, raga, tala, or artist page. You can also submit events via the [events page](/events). Visit our [How to Contribute](/contribute) page for more details.
+
+6. **Q: How does the edit review process work?**
+   A: All contributions are submitted as proposals and reviewed by our moderator team before being published. You can track the status of your contributions in "My Edits" when signed in.
 
 ## Content and Features
 
-6. **Q: What types of information can I find on Rasika.life?**
-   A: You can find lyrics, raga and tala details, composer biographies, concert information, and more.
+7. **Q: What types of information can I find on Rasika.life?**
+   A: You can find composition lyrics and details, raga and tala information, artist profiles, upcoming concerts and festivals, venue details, and organiser information.
 
-7. **Q: Are the lyrics available in multiple languages?**
-   A: Yes, we aim to provide lyrics in their original language and, where available, translations.
+8. **Q: Are compositions available in multiple scripts?**
+   A: Yes, we support IAST, Devanagari, Tamil, Telugu, and Kannada scripts. Use the script selector in the top navigation to switch between them.
 
-8. **Q: Can I listen to music on Rasika.life?**
-   A: While we don't host music directly, we provide links to authorized sources where available.
+9. **Q: Can I listen to music on Rasika.life?**
+   A: We don't host audio directly, but compositions may include links to authorized recordings where available.
+
+10. **Q: How do I submit an event?**
+    A: Visit the [events page](/events) and use the "Add Event" option. On mobile, you can also share an event poster image directly to Rasika.life using your phone's share sheet.
 
 ## Technical Support
 
-9. **Q: The site isn't working properly. What should I do?**
-   A: Try clearing your browser cache and cookies. If the problem persists, please contact our support team.
+11. **Q: The site isn't working properly. What should I do?**
+    A: Try clearing your browser cache and cookies. If the problem persists, please contact our support team.
 
-10. **Q: How can I report incorrect information?**
-    A: Use the 'Report an Error' button available on each content page, or contact us directly.
+12. **Q: How can I report incorrect information?**
+    A: Use the edit button on any page to propose a correction, or [contact us](/contact) directly.
 
-For any questions not answered here, please visit our Contact page or email us at [email here](mailto:blrmys.c+rasika@gmail.com?subject=General%20Inquiry%20Rasika.life).`,
+For any questions not answered here, please visit our [Contact page](/contact) or email us at [email here](mailto:blrmys.c+rasika@gmail.com?subject=General%20Inquiry%20Rasika.life).`,
     category: ContentCategory.HELP,
     status: ContentStatus.PUBLISHED,
     visibility: ContentVisibility.PUBLIC,
@@ -983,11 +985,11 @@ We're always looking to improve Rasika.life. If you have ideas for new features 
 
 ## Content Corrections
 
-If you've found an error in our content (e.g., incorrect lyrics, raga classification, etc.), please use the 'Report an Error' button on the relevant page or email us at: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Content%20Correction%20Rasika.life)
+If you've found an error in our content (e.g., incorrect composition details, raga classification, etc.), use the edit button on the relevant page to propose a correction, or email us at: [email here](mailto:blrmys.c+rasika@gmail.com?subject=Content%20Correction%20Rasika.life)
 
-## Volunteer
+## Contribute
 
-Rasika.life is a community-driven project. If you're interested in volunteering your time and expertise, please visit our [How to Contribute](/contribute) page.
+Rasika.life is a community-driven project. If you're interested in contributing content, reviewing edits, or volunteering your expertise, please visit our [How to Contribute](/contribute) page.
 
 ## Donate
 

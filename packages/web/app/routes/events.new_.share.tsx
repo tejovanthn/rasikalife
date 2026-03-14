@@ -10,6 +10,12 @@ async function computeHash(buffer: ArrayBuffer): Promise<string> {
     .join('');
 }
 
+function safeContentType(type: string | null | undefined): string {
+  if (!type) return 'image/jpeg';
+  if (type === 'image/jpg') return 'image/jpeg';
+  return type;
+}
+
 export const loader: LoaderFunction = async () => {
   return redirect('/events/new');
 };
@@ -18,10 +24,20 @@ export const action: ActionFunction = async ({ request }) => {
   await requireUser(request);
   const serverClient = await createServerClient(request);
 
-  const formData = await request.formData();
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    // Malformed multipart body (can happen with some Android share sources)
+    return redirect('/events/new');
+  }
+
   const fileEntries = formData.getAll('files');
 
-  const validFiles = fileEntries.filter((f): f is File => f instanceof File && f.size > 0);
+  // Accept both File and Blob (some Lambda/Node environments return Blob)
+  const validFiles = fileEntries.filter(
+    (f): f is File => (f instanceof File || f instanceof Blob) && f.size > 0
+  ) as File[];
 
   if (!validFiles.length) {
     return redirect('/events/new');
@@ -32,45 +48,55 @@ export const action: ActionFunction = async ({ request }) => {
   let lastPosterUrl = '';
 
   for (const file of validFiles) {
-    const buffer = await file.arrayBuffer();
-    const hash = await computeHash(buffer);
-
-    // Skip duplicates, collecting their IDs
     try {
-      const hashResult = await serverClient.event.checkPosterHash.query({ hash });
-      if (hashResult.duplicate) {
-        if (hashResult.festivalId) lastFestivalId = hashResult.festivalId;
-        allEventIds.push(...hashResult.eventIds);
-        lastPosterUrl = hashResult.posterUrl || lastPosterUrl;
+      const buffer = await file.arrayBuffer();
+      const hash = await computeHash(buffer);
+      const contentType = safeContentType(file.type);
+
+      // Skip duplicates, collecting their IDs
+      try {
+        const hashResult = await serverClient.event.checkPosterHash.query({ hash });
+        if (hashResult.duplicate) {
+          if (hashResult.festivalId) lastFestivalId = hashResult.festivalId;
+          allEventIds.push(...hashResult.eventIds);
+          lastPosterUrl = hashResult.posterUrl || lastPosterUrl;
+          continue;
+        }
+      } catch {
+        // ignore hash check failures, proceed with upload
+      }
+
+      // Get presigned upload URL — filename is ignored, KSUID used as key
+      const uploadResult = await serverClient.event.getUploadUrl.mutate({
+        fileName: '',
+        contentType,
+      });
+      lastPosterUrl = uploadResult.posterUrl;
+
+      // Upload to S3 from the server using the presigned URL
+      const uploadResponse = await fetch(uploadResult.uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': contentType },
+        body: buffer,
+      });
+
+      if (!uploadResponse.ok) {
+        console.error(`[share] S3 upload failed: ${uploadResponse.status}`);
         continue;
       }
-    } catch {
-      // ignore hash check failures, proceed with upload
+
+      // Extract event details with Gemini
+      const result = await serverClient.event.extractFromPoster.mutate({
+        posterUploadId: uploadResult.uploadId,
+        posterUrl: uploadResult.posterUrl,
+        posterHash: hash,
+      });
+
+      if (result.festivalId) lastFestivalId = result.festivalId;
+      allEventIds.push(...result.eventIds);
+    } catch (err) {
+      console.error('[share] Failed to process file:', err);
     }
-
-    // Get presigned upload URL
-    const uploadResult = await serverClient.event.getUploadUrl.mutate({
-      fileName: file.name || 'shared-file',
-      contentType: file.type || 'image/jpeg',
-    });
-    lastPosterUrl = uploadResult.posterUrl;
-
-    // Upload to S3 from the server using the presigned URL
-    await fetch(uploadResult.uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': file.type || 'image/jpeg' },
-      body: buffer,
-    });
-
-    // Extract event details with Gemini
-    const result = await serverClient.event.extractFromPoster.mutate({
-      posterUploadId: uploadResult.uploadId,
-      posterUrl: uploadResult.posterUrl,
-      posterHash: hash,
-    });
-
-    if (result.festivalId) lastFestivalId = result.festivalId;
-    allEventIds.push(...result.eventIds);
   }
 
   if (!allEventIds.length && !lastFestivalId) {
