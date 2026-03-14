@@ -160,10 +160,11 @@ export async function cascadeEventMetadataToArtists(
             sk: `ARTIST#${item.artistId}`,
           },
           UpdateExpression:
-            'SET eventTitle = :eventTitle, eventStartDateTime = :eventStartDateTime',
+            'SET eventTitle = :eventTitle, eventStartDateTime = :eventStartDateTime, gsi1sk = :gsi1sk',
           ExpressionAttributeValues: {
             ':eventTitle': newTitle,
             ':eventStartDateTime': newStartDateTime,
+            ':gsi1sk': newStartDateTime,
           },
         })
       )
@@ -272,11 +273,12 @@ export async function cascadeArtistMerge(
           TableName: TABLE_NAME,
           Key: { pk: `COMPOSITION#${item.id}`, sk: '#METADATA' },
           UpdateExpression:
-            'SET composerId = :composerId, composer.id = :composerId, composer.#name = :name, updatedAt = :updatedAt',
+            'SET composerId = :composerId, composer.id = :composerId, composer.#name = :name, gsi2pk = :gsi2pk, updatedAt = :updatedAt',
           ExpressionAttributeNames: { '#name': 'name' },
           ExpressionAttributeValues: {
             ':composerId': canonicalId,
             ':name': canonicalName,
+            ':gsi2pk': `ARTIST#${canonicalId}`,
             ':updatedAt': now,
           },
         })
@@ -305,10 +307,11 @@ export async function cascadeVenueMerge(
           TableName: TABLE_NAME,
           Key: { pk: `EVENT#${item.id}`, sk: '#METADATA' },
           UpdateExpression:
-            'SET venueId = :venueId, venueName = :venueName, updatedAt = :updatedAt',
+            'SET venueId = :venueId, venueName = :venueName, gsi4pk = :gsi4pk, updatedAt = :updatedAt',
           ExpressionAttributeValues: {
             ':venueId': canonicalId,
             ':venueName': canonicalName,
+            ':gsi4pk': `VENUE#${canonicalId}`,
             ':updatedAt': now,
           },
         })
@@ -337,10 +340,11 @@ export async function cascadeOrganiserMerge(
           TableName: TABLE_NAME,
           Key: { pk: `EVENT#${item.id}`, sk: '#METADATA' },
           UpdateExpression:
-            'SET organiserId = :organiserId, organiserName = :organiserName, updatedAt = :updatedAt',
+            'SET organiserId = :organiserId, organiserName = :organiserName, gsi5pk = :gsi5pk, updatedAt = :updatedAt',
           ExpressionAttributeValues: {
             ':organiserId': canonicalId,
             ':organiserName': canonicalName,
+            ':gsi5pk': `ORGANISER#${canonicalId}`,
             ':updatedAt': now,
           },
         })
