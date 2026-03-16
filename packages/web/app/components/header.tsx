@@ -1,5 +1,5 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { ChevronDown, LogOut, Menu, User, Users, X } from 'lucide-react';
+import { ChevronDown, LogOut, Menu, Sparkles, User, Users, X } from 'lucide-react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Form, Link, NavLink } from 'react-router';
 import { useAuth } from '~/components/auth-context';
@@ -166,6 +166,12 @@ export const Header = () => {
                         <Link to="/moderator/draft-events" className="flex items-center gap-2">
                           <User className="h-4 w-4" />
                           Draft Posters
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/enrich" className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          Daily Enrichment
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -353,6 +359,14 @@ export const Header = () => {
                             >
                               <User className="h-4 w-4" />
                               Draft Posters
+                            </Link>
+                            <Link
+                              to="/moderator/enrich"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <Sparkles className="h-4 w-4" />
+                              Daily Enrichment
                             </Link>
                           </>
                         )}
