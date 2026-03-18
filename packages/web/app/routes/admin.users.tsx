@@ -1,4 +1,3 @@
-import { Auth } from '@rasika/core';
 import type { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -38,12 +37,12 @@ export async function action({ request }: { request: Request }) {
   const serverClient = await createServerClient(request);
   const formData = await request.formData();
   const userId = formData.get('userId') as string;
-  const role = formData.get('role') as (typeof Auth.ROLE)[keyof typeof Auth.ROLE];
+  const role = formData.get('role') as 'editor' | 'moderator' | 'admin';
   await serverClient.user.updateRole.mutate({ userId, role });
   return data({ success: true });
 }
 
-const ROLE_VALUES = Object.values(Auth.ROLE);
+const ROLE_VALUES = ['editor', 'moderator', 'admin'] as const;
 
 const roleBadgeVariant: Record<string, 'default' | 'secondary' | 'destructive'> = {
   admin: 'destructive',

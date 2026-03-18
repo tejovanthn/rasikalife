@@ -178,7 +178,10 @@ export const Header = () => {
                   )}
                   {user.role === 'admin' && (
                     <DropdownMenuItem asChild>
-                      <Link to="/moderator/users" className="flex items-center gap-2">
+                      <Link
+                        to="/admin/users"
+                        className="flex items-center gap-2"
+                      >
                         <Users className="h-4 w-4" />
                         Manage Users
                       </Link>
@@ -372,7 +375,7 @@ export const Header = () => {
                         )}
                         {user.role === 'admin' && (
                           <Link
-                            to="/moderator/users"
+                            to="/admin/users"
                             className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
                             onClick={() => setIsSidebarOpen(false)}
                           >
