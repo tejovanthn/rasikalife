@@ -205,6 +205,7 @@ export const eventRouter = createTRPCRouter({
         posterUploadId: z.string(),
         posterUrl: z.string().url(),
         posterHash: z.string().optional(),
+        existingFestivalId: z.string().optional(),
       })
     )
     .mutation(({ ctx, input }) => {
@@ -212,7 +213,8 @@ export const eventRouter = createTRPCRouter({
         input.posterUploadId,
         input.posterUrl,
         ctx.user.id,
-        input.posterHash
+        input.posterHash,
+        input.existingFestivalId
       );
     }),
 

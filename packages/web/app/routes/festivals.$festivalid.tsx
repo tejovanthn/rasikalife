@@ -279,7 +279,6 @@ export default function FestivalDetail() {
             : undefined
         }
         isModerator={isModerator}
-        mergeUrl={`/moderator/merge?entityType=festival&entityId=${festival.id}`}
         requestDeletionUrl={`/moderator/request-deletion?entityType=festival&entityId=${festival.id}`}
       />
 
@@ -346,7 +345,19 @@ export default function FestivalDetail() {
 
       {/* Schedule */}
       <section className="mt-10">
-        <h2 className="section-heading mb-6">Schedule</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="section-heading">Schedule</h2>
+          {user && (
+            <Button asChild size="sm">
+              <Link
+                to={`/events/new?festivalId=${festival.id}&festivalName=${encodeURIComponent(festival.name)}`}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                Add Events
+              </Link>
+            </Button>
+          )}
+        </div>
 
         {events.length === 0 ? (
           <EmptyState message="No events scheduled yet." />

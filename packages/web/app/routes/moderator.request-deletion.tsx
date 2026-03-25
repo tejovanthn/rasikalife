@@ -67,6 +67,11 @@ export const loader: LoaderFunction = async ({ request }) => {
         if (entity) entityName = entity.title;
         break;
       }
+      case 'festival': {
+        const entity = await serverClient.festival.get.query({ id: entityId });
+        if (entity) entityName = entity.name;
+        break;
+      }
     }
   } catch {
     // Entity may not exist
@@ -83,7 +88,8 @@ export const loader: LoaderFunction = async ({ request }) => {
         | 'tala'
         | 'event'
         | 'venue'
-        | 'organiser',
+        | 'organiser'
+        | 'festival',
       entityId,
       status: 'submitted',
     });
@@ -112,7 +118,8 @@ export const action: ActionFunction = async ({ request }) => {
       | 'tala'
       | 'event'
       | 'venue'
-      | 'organiser',
+      | 'organiser'
+      | 'festival',
     entityId,
     userNote: userNote?.trim() ? userNote.trim() : undefined,
   });

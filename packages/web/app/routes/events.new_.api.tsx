@@ -41,6 +41,7 @@ export const action: ActionFunction = async ({ request }) => {
         posterUploadId: body.posterUploadId,
         posterUrl: body.posterUrl,
         posterHash: body.posterHash,
+        existingFestivalId: body.existingFestivalId,
       });
       return data({
         extraction: result.extraction,

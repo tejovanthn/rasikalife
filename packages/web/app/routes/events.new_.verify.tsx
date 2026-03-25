@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight, Check, Loader2, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
-import { data, useLoaderData, useNavigate } from 'react-router';
+import { Link, data, useLoaderData, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
 import { PosterImage } from '~/components/PosterImage';
@@ -21,6 +21,7 @@ import {
 import { Textarea } from '~/components/ui/textarea';
 import { Auth } from '@rasika/core';
 import { requireUser } from '~/lib/auth.server';
+import { generateFestivalUrl } from '~/lib/url-slug';
 
 interface ExtractedArtist {
   title?: string;
@@ -104,6 +105,8 @@ interface LoaderData {
   posterUrl: string;
   suggestions: SuggestionsMap;
   isModerator: boolean;
+  isExistingFestival: boolean;
+  festivalUrl?: string;
 }
 
 export async function loader({
@@ -118,11 +121,14 @@ export async function loader({
   const festivalId = url.searchParams.get('festivalId');
   const eventIds = url.searchParams.getAll('eventId');
   const posterUrl = url.searchParams.get('posterUrl') || '';
+  const existingFestivalParam = url.searchParams.get('existingFestival') === '1';
 
   const serverClient = await createServerClient(request);
 
   // Load draft festival if present
   let festival: DraftFestival | null = null;
+  let isExistingFestival = false;
+  let festivalUrl: string | undefined;
   if (festivalId) {
     const f = await serverClient.festival.getDraft.query({ id: festivalId });
     if (f) {
@@ -136,6 +142,11 @@ export async function loader({
         tags: f.tags || [],
         sponsors: f.sponsors as DraftFestival['sponsors'],
       };
+      // Treat as existing (non-editable) if explicitly flagged or if already approved
+      if (existingFestivalParam || f.status === 'approved') {
+        isExistingFestival = true;
+        festivalUrl = generateFestivalUrl(f.name || '', f.id);
+      }
     }
   }
 
@@ -228,7 +239,7 @@ export async function loader({
     }
   }
 
-  return data({ festival, events, posterUrl, suggestions, isModerator });
+  return data({ festival, events, posterUrl, suggestions, isModerator, isExistingFestival, festivalUrl });
 }
 
 export const meta: MetaFunction = () => {
@@ -1007,7 +1018,7 @@ function ReviewStep({
 // --- Main Wizard ---
 export default function VerifyEvents() {
   const loaderData = useLoaderData<LoaderData>();
-  const { isModerator } = loaderData;
+  const { isModerator, isExistingFestival, festivalUrl } = loaderData;
   const navigate = useNavigate();
 
   // Stable key scoped to this specific set of drafts
@@ -1050,11 +1061,11 @@ export default function VerifyEvents() {
     }
   }, [festival, events, currentStep, storageKey, hasRestored]);
 
-  const hasFestival = festival !== null;
-  const totalSteps = (hasFestival ? 1 : 0) + events.length + 1; // +1 for review
+  const editingFestival = festival !== null && !isExistingFestival;
+  const totalSteps = (editingFestival ? 1 : 0) + events.length + 1; // +1 for review
   const isReviewStep = currentStep === totalSteps - 1;
-  const isFestivalStep = hasFestival && currentStep === 0;
-  const eventIndex = hasFestival ? currentStep - 1 : currentStep;
+  const isFestivalStep = editingFestival && currentStep === 0;
+  const eventIndex = editingFestival ? currentStep - 1 : currentStep;
 
   const getStepLabel = () => {
     if (isFestivalStep) return 'Festival Details';
@@ -1081,7 +1092,7 @@ export default function VerifyEvents() {
         body: JSON.stringify({
           intent: 'submit',
           festivalId: festival?.id,
-          festivalData: festival
+          festivalData: festival && !isExistingFestival
             ? {
                 name: festival.name,
                 description: festival.description,
@@ -1123,7 +1134,7 @@ export default function VerifyEvents() {
         // ignore
       }
       toast.success(isModerator ? 'Events published!' : 'Events submitted for review!');
-      navigate('/events');
+      navigate(isExistingFestival && festivalUrl ? festivalUrl : '/events');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit events.';
       toast.error(message);
@@ -1134,6 +1145,14 @@ export default function VerifyEvents() {
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-3xl">
+      {isExistingFestival && festival && festivalUrl && (
+        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-4 py-2">
+          <span>Adding events to</span>
+          <Link to={festivalUrl} className="font-medium text-foreground hover:underline">
+            {festival.name}
+          </Link>
+        </div>
+      )}
       <header className="mb-6">
         <p className="text-sm text-muted-foreground mb-1">
           Step {currentStep + 1} of {totalSteps}

@@ -423,15 +423,16 @@ export async function extractAndCreateDrafts(
   posterUploadId: string,
   posterUrl: string,
   userId: string,
-  posterHash?: string
+  posterHash?: string,
+  existingFestivalId?: string
 ): Promise<{ extraction: ExtractionResult; festivalId?: string; eventIds: string[] }> {
   const extraction = await extractFromPoster(posterUrl);
 
   const eventIds: string[] = [];
-  let festivalId: string | undefined;
+  let festivalId: string | undefined = existingFestivalId;
 
-  // Create festival if detected
-  if (extraction.isFestival && extraction.festival) {
+  // Create festival if detected (skip if linking to an existing festival)
+  if (!existingFestivalId && extraction.isFestival && extraction.festival) {
     const festival = await createFestival(
       {
         name: extraction.festival.name,

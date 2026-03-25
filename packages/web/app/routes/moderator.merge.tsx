@@ -121,7 +121,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const suggestion = await getMergeSuggestion(serverClient, entityType, entityId, targetId);
 
-  if (!suggestion.entityA || !suggestion.entityB) {
+  if (!suggestion || !suggestion.entityA || !suggestion.entityB) {
     throw new Response('One or both entities not found', { status: 404 });
   }
 

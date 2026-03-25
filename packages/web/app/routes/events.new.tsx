@@ -1,15 +1,19 @@
 import { AlertTriangle, FileText, ImageIcon, Loader2, RefreshCw, Upload, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MetaFunction } from 'react-router';
-import { data, useLoaderData, useNavigate } from 'react-router';
+import { Link, data, useLoaderData, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useAuth } from '~/components/auth-context';
 import { Button } from '~/components/ui/button';
 import { requireUser } from '~/lib/auth.server';
+import { generateFestivalUrl } from '~/lib/url-slug';
 
 export async function loader({ request }: { request: Request }) {
   const user = await requireUser(request);
-  return data({ user });
+  const url = new URL(request.url);
+  const festivalId = url.searchParams.get('festivalId');
+  const festivalName = url.searchParams.get('festivalName');
+  return data({ user, festivalId, festivalName });
 }
 
 export const meta: MetaFunction = () => {
@@ -49,7 +53,7 @@ async function computeFileHash(file: File): Promise<string> {
 }
 
 export default function NewEvent() {
-  useLoaderData<typeof loader>();
+  const { festivalId, festivalName } = useLoaderData<typeof loader>();
   const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,11 +137,13 @@ export default function NewEvent() {
 
   const navigateToVerify = (info: DuplicateInfo) => {
     const params = new URLSearchParams();
-    if (info.festivalId) params.set('festivalId', info.festivalId);
+    const resolvedFestivalId = info.festivalId || festivalId || undefined;
+    if (resolvedFestivalId) params.set('festivalId', resolvedFestivalId);
     for (const id of info.eventIds) {
       params.append('eventId', id);
     }
     params.set('posterUrl', info.posterUrl);
+    if (festivalId) params.set('existingFestival', '1');
     navigate(`/events/new/verify?${params.toString()}`);
   };
 
@@ -240,6 +246,7 @@ export default function NewEvent() {
               posterUploadId,
               posterUrl,
               posterHash: hash,
+              existingFestivalId: festivalId || undefined,
             }),
           });
 
@@ -250,8 +257,8 @@ export default function NewEvent() {
             throw new Error(err?.error || 'Failed to extract event details');
           }
 
-          const { festivalId, eventIds } = await extractResponse.json();
-          if (festivalId) lastFestivalId = festivalId;
+          const { festivalId: extractedFestivalId, eventIds } = await extractResponse.json();
+          if (extractedFestivalId) lastFestivalId = extractedFestivalId;
           allEventIds.push(...eventIds);
         } catch (err) {
           if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
@@ -278,9 +285,11 @@ export default function NewEvent() {
       }
 
       const params = new URLSearchParams();
-      if (lastFestivalId) params.set('festivalId', lastFestivalId);
+      const resolvedFestivalId = lastFestivalId || festivalId || undefined;
+      if (resolvedFestivalId) params.set('festivalId', resolvedFestivalId);
       for (const id of allEventIds) params.append('eventId', id);
       if (lastPosterUrl) params.set('posterUrl', lastPosterUrl);
+      if (festivalId) params.set('existingFestival', '1');
       navigate(`/events/new/verify?${params.toString()}`);
     } catch (err) {
       if (messageTimerRef.current) clearTimeout(messageTimerRef.current);
@@ -305,9 +314,21 @@ export default function NewEvent() {
     <main className="container mx-auto px-4 py-8 max-w-2xl">
       <header className="mb-8">
         <h1 className="page-title">Add Event</h1>
-        <p className="text-lg text-muted-foreground">
-          Upload an event poster and we'll extract the details automatically.
-        </p>
+        {festivalId && festivalName ? (
+          <p className="text-lg text-muted-foreground">
+            Adding events to{' '}
+            <Link
+              to={generateFestivalUrl(festivalName, festivalId)}
+              className="text-primary font-medium hover:underline"
+            >
+              {festivalName}
+            </Link>
+          </p>
+        ) : (
+          <p className="text-lg text-muted-foreground">
+            Upload an event poster and we'll extract the details automatically.
+          </p>
+        )}
       </header>
 
       <button
