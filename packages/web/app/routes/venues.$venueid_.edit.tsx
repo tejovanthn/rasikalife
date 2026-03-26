@@ -1,4 +1,5 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
+import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core';
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Pencil, Plus, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
@@ -550,17 +551,26 @@ export default function EditVenue() {
                   )}
                   {socialLinks.map((link, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <Input
+                      <Select
                         name="socialLinkPlatform"
-                        placeholder="Platform (e.g. YouTube)"
                         value={link.platform}
-                        onChange={(e) =>
+                        onValueChange={(val) =>
                           setSocialLinks((prev) =>
-                            prev.map((l, j) => (j === i ? { ...l, platform: e.target.value } : l))
+                            prev.map((l, j) => (j === i ? { ...l, platform: val } : l))
                           )
                         }
-                        className="flex-1"
-                      />
+                      >
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select platform..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SocialPlatform.options.map((p) => (
+                            <SelectItem key={p} value={p}>
+                              {SOCIAL_PLATFORM_LABELS[p]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         name="socialLinkUrl"
                         placeholder="https://..."

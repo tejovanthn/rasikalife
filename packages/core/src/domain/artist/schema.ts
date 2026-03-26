@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { SocialLinkSchema } from '../social-link';
+
 export const CreateArtistSchema = z.object({
   name: z.string().min(1).max(200),
   title: z.string().max(50).optional(),
@@ -16,14 +18,7 @@ export const CreateArtistSchema = z.object({
   birthYear: z.number().int().min(1800).max(2100).optional(),
   birthPlace: z.string().max(200).optional(),
   website: z.string().url().optional(),
-  socialLinks: z
-    .array(
-      z.object({
-        platform: z.string().min(1).max(50),
-        url: z.string().url(),
-      })
-    )
-    .optional(),
+  socialLinks: z.array(SocialLinkSchema).optional(),
   activeYears: z.string().max(50).optional(),
 });
 

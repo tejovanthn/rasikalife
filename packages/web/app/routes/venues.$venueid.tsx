@@ -1,3 +1,4 @@
+import { SOCIAL_PLATFORM_LABELS } from '@rasika/core';
 import {
   Building2,
   Calendar,
@@ -319,7 +320,7 @@ export default function VenueDetailPage() {
                 className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                {link.platform}
+                {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ?? link.platform}
               </a>
             ))}
           </div>

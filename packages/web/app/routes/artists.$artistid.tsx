@@ -1,7 +1,8 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import { fromItrans } from '@rasika/core/utils';
-import { Calendar } from 'lucide-react';
+import { SOCIAL_PLATFORM_LABELS } from '@rasika/core';
+import { Calendar, ExternalLink } from 'lucide-react';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -230,15 +231,78 @@ export default function ArtistDetails() {
       />
       <section className="mb-8 p-6 bg-muted rounded-lg">
         <h2 className="text-xl font-semibold mb-4">About</h2>
+        {artist.biography && (
+          <p className="text-sm mb-4 whitespace-pre-line">{artist.biography}</p>
+        )}
         <div className="space-y-2 text-sm">
           <p>
-            <strong>Name:</strong> {artist.name}
+            <strong>Name:</strong>{' '}
+            {artist.title ? `${artist.title} ${artist.name}` : artist.name}
           </p>
+          {artist.birthYear && (
+            <p>
+              <strong>Born:</strong>{' '}
+              {artist.birthYear}
+              {artist.birthPlace ? `, ${artist.birthPlace}` : ''}
+            </p>
+          )}
+          {artist.activeYears && (
+            <p>
+              <strong>Active:</strong> {artist.activeYears}
+            </p>
+          )}
+          {artist.specialisations && (artist.specialisations as string[]).length > 0 && (
+            <p>
+              <strong>Specialisations:</strong>{' '}
+              {(artist.specialisations as string[]).join(', ')}
+            </p>
+          )}
+          {artist.gurus && (artist.gurus as Array<{ id?: string; name: string }>).length > 0 && (
+            <p>
+              <strong>Gurus:</strong>{' '}
+              {(artist.gurus as Array<{ id?: string; name: string }>)
+                .map((g) => g.name)
+                .join(', ')}
+            </p>
+          )}
+          {artist.website && (
+            <p>
+              <strong>Website:</strong>{' '}
+              <a
+                href={artist.website as string}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                {artist.website as string}
+              </a>
+            </p>
+          )}
           <p>
             <strong>Added:</strong> {formattedDate}
           </p>
         </div>
       </section>
+
+      {artist.socialLinks && (artist.socialLinks as Array<{ platform: string; url: string }>).length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-3">Social Links</h2>
+          <div className="flex flex-wrap gap-3">
+            {(artist.socialLinks as Array<{ platform: string; url: string }>).map((link) => (
+              <a
+                key={link.platform}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ?? link.platform}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
       {compositions.length > 0 && (
         <EntityCompositions
           compositions={compositions}

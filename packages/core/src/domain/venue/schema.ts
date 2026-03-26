@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { SocialLinkSchema } from '../social-link';
+
 export const CreateVenueSchema = z.object({
   name: z.string().min(1).max(200),
   address: z
@@ -57,14 +59,7 @@ export const CreateVenueSchema = z.object({
     .optional(),
   nearestTransit: z.string().max(200).optional(),
   foundedYear: z.number().int().min(1800).max(2100).optional(),
-  socialLinks: z
-    .array(
-      z.object({
-        platform: z.string().min(1).max(50),
-        url: z.string().url(),
-      })
-    )
-    .optional(),
+  socialLinks: z.array(SocialLinkSchema).optional(),
 });
 
 export const UpdateVenueSchema = CreateVenueSchema.partial();

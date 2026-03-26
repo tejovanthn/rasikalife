@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { SocialLinkSchema } from '../social-link';
+
 export const CreateOrganiserSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(5000).optional(),
@@ -17,14 +19,7 @@ export const CreateOrganiserSchema = z.object({
   website: z.string().url().optional(),
   phone: z.string().max(30).optional(),
   email: z.string().email().optional(),
-  socialLinks: z
-    .array(
-      z.object({
-        platform: z.string().min(1).max(50),
-        url: z.string().url(),
-      })
-    )
-    .optional(),
+  socialLinks: z.array(SocialLinkSchema).optional(),
   foundedYear: z.number().int().min(1800).max(2100).optional(),
   logoUrl: z.string().url().optional(),
   logoUploadId: z.string().optional(),

@@ -19,6 +19,9 @@ export * as Organiser from './domain/organiser';
 export * as SocialPost from './domain/social-post';
 export * as Image from './domain/image/s3';
 
+// Social link types (browser-safe exports)
+export { SocialPlatform, SOCIAL_PLATFORM_LABELS, type SocialLink } from './domain/social-link';
+
 // Edit types (browser-safe exports)
 export {
   EditStatus,
