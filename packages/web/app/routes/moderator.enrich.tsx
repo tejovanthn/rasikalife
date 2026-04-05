@@ -1,5 +1,5 @@
-import { computeCompletionScore } from '@rasika/core';
-import type { CompletionEntityType } from '@rasika/core';
+import { computeCompletionScore } from '@rasika/core/shared/completion';
+import type { CompletionEntityType } from '@rasika/core/shared/completion';
 import { Eye, Pencil, RefreshCw } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
 import { Link, data, useLoaderData } from 'react-router';

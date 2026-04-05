@@ -91,6 +91,11 @@
       "import": "./src/domain/*/index.ts",
       "default": "./src/domain/*/index.ts"
     },
+    "./shared/completion": {
+      "types": "./src/shared/completion.ts",
+      "import": "./src/shared/completion.ts",
+      "default": "./src/shared/completion.ts"
+    },
     "./shared/*": {
       "types": "./src/shared/*/index.ts",
       "import": "./src/shared/*/index.ts",
