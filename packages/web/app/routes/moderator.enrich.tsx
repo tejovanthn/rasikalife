@@ -1,3 +1,5 @@
+import { computeCompletionScore } from '@rasika/core';
+import type { CompletionEntityType } from '@rasika/core';
 import { Eye, Pencil, RefreshCw } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
 import { Link, data, useLoaderData } from 'react-router';
@@ -40,6 +42,8 @@ interface PickedEntity {
   viewUrl: string;
   editUrl: string;
   total: number;
+  completionScore: number;
+  poolSize: number;
 }
 
 function getDayOfYear(date: Date): number {
@@ -47,9 +51,18 @@ function getDayOfYear(date: Date): number {
   return Math.floor((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function pickItem<T>(items: T[], dateOffset: number, seed: number): T | null {
-  if (items.length === 0) return null;
-  return items[(dateOffset + seed) % items.length];
+function pickFromPool<T>(
+  items: T[],
+  scoreFn: (item: T) => number,
+  dateOffset: number,
+  seed: number
+): { item: T | null; poolSize: number } {
+  if (items.length === 0) return { item: null, poolSize: 0 };
+
+  const sorted = [...items].sort((a, b) => scoreFn(a) - scoreFn(b));
+  const poolSize = Math.max(1, Math.ceil(sorted.length / 2));
+  const pool = sorted.slice(0, poolSize);
+  return { item: pool[(dateOffset + seed) % pool.length], poolSize };
 }
 
 export async function loader({ request }: { request: Request }) {
@@ -79,9 +92,17 @@ export async function loader({ request }: { request: Request }) {
     serverClient.festival.list.query({ limit: 100 }),
   ]);
 
+  const score = (item: Record<string, unknown>, type: CompletionEntityType) =>
+    computeCompletionScore(item, type);
+
   const entities: PickedEntity[] = [];
 
-  const artistItem = pickItem(artists.items, dateOffset, seeds.artist);
+  const { item: artistItem, poolSize: artistPoolSize } = pickFromPool(
+    artists.items,
+    item => score(item as Record<string, unknown>, 'artist'),
+    dateOffset,
+    seeds.artist
+  );
   if (artistItem) {
     const subtitle =
       artistItem.specialisations?.join(', ') ||
@@ -95,10 +116,17 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateArtistUrl(artistItem.name, artistItem.id),
       editUrl: `${generateArtistUrl(artistItem.name, artistItem.id)}/edit`,
       total: artists.items.length,
+      completionScore: score(artistItem as Record<string, unknown>, 'artist'),
+      poolSize: artistPoolSize,
     });
   }
 
-  const ragaItem = pickItem(ragas.items, dateOffset, seeds.raga);
+  const { item: ragaItem, poolSize: ragaPoolSize } = pickFromPool(
+    ragas.items,
+    item => score(item as Record<string, unknown>, 'raga'),
+    dateOffset,
+    seeds.raga
+  );
   if (ragaItem) {
     const parts = [
       ragaItem.tradition,
@@ -113,10 +141,17 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateRagaUrl(ragaItem.name, ragaItem.id),
       editUrl: `${generateRagaUrl(ragaItem.name, ragaItem.id)}/edit`,
       total: ragas.items.length,
+      completionScore: score(ragaItem as Record<string, unknown>, 'raga'),
+      poolSize: ragaPoolSize,
     });
   }
 
-  const talaItem = pickItem(talas.items, dateOffset, seeds.tala);
+  const { item: talaItem, poolSize: talaPoolSize } = pickFromPool(
+    talas.items,
+    item => score(item as Record<string, unknown>, 'tala'),
+    dateOffset,
+    seeds.tala
+  );
   if (talaItem) {
     entities.push({
       key: 'tala',
@@ -126,10 +161,17 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateTalaUrl(talaItem.name, talaItem.id),
       editUrl: `${generateTalaUrl(talaItem.name, talaItem.id)}/edit`,
       total: talas.items.length,
+      completionScore: score(talaItem as Record<string, unknown>, 'tala'),
+      poolSize: talaPoolSize,
     });
   }
 
-  const compositionItem = pickItem(compositions.items, dateOffset, seeds.composition);
+  const { item: compositionItem, poolSize: compositionPoolSize } = pickFromPool(
+    compositions.items,
+    item => score(item as Record<string, unknown>, 'composition'),
+    dateOffset,
+    seeds.composition
+  );
   if (compositionItem) {
     const parts = [compositionItem.composer?.name, compositionItem.language].filter(Boolean);
     entities.push({
@@ -141,10 +183,17 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateCompositionUrl(compositionItem.title, compositionItem.id),
       editUrl: `${generateCompositionUrl(compositionItem.title, compositionItem.id)}/edit`,
       total: compositions.items.length,
+      completionScore: score(compositionItem as Record<string, unknown>, 'composition'),
+      poolSize: compositionPoolSize,
     });
   }
 
-  const venueItem = pickItem(venues.items, dateOffset, seeds.venue);
+  const { item: venueItem, poolSize: venuePoolSize } = pickFromPool(
+    venues.items,
+    item => score(item as Record<string, unknown>, 'venue'),
+    dateOffset,
+    seeds.venue
+  );
   if (venueItem) {
     entities.push({
       key: 'venue',
@@ -155,10 +204,17 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateVenueUrl(venueItem.name, venueItem.id),
       editUrl: `${generateVenueUrl(venueItem.name, venueItem.id)}/edit`,
       total: venues.items.length,
+      completionScore: score(venueItem as Record<string, unknown>, 'venue'),
+      poolSize: venuePoolSize,
     });
   }
 
-  const organiserItem = pickItem(organisers.items, dateOffset, seeds.organiser);
+  const { item: organiserItem, poolSize: organiserPoolSize } = pickFromPool(
+    organisers.items,
+    item => score(item as Record<string, unknown>, 'organiser'),
+    dateOffset,
+    seeds.organiser
+  );
   if (organiserItem) {
     entities.push({
       key: 'organiser',
@@ -168,10 +224,17 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateOrganiserUrl(organiserItem.name, organiserItem.id),
       editUrl: `${generateOrganiserUrl(organiserItem.name, organiserItem.id)}/edit`,
       total: organisers.items.length,
+      completionScore: score(organiserItem as Record<string, unknown>, 'organiser'),
+      poolSize: organiserPoolSize,
     });
   }
 
-  const festivalItem = pickItem(festivals.items, dateOffset, seeds.festival);
+  const { item: festivalItem, poolSize: festivalPoolSize } = pickFromPool(
+    festivals.items,
+    item => score(item as Record<string, unknown>, 'festival'),
+    dateOffset,
+    seeds.festival
+  );
   if (festivalItem) {
     entities.push({
       key: 'festival',
@@ -181,6 +244,8 @@ export async function loader({ request }: { request: Request }) {
       viewUrl: generateFestivalUrl(festivalItem.name, festivalItem.id),
       editUrl: `${generateFestivalUrl(festivalItem.name, festivalItem.id)}/edit`,
       total: festivals.items.length,
+      completionScore: score(festivalItem as Record<string, unknown>, 'festival'),
+      poolSize: festivalPoolSize,
     });
   }
 
@@ -199,6 +264,26 @@ function buildRefreshUrl(seeds: Record<EntityKey, number>, key: EntityKey): stri
   return `/moderator/enrich${qs ? `?${qs}` : ''}`;
 }
 
+function CompletionBadge({ score }: { score: number }) {
+  const colorClass =
+    score < 40
+      ? 'text-red-600 dark:text-red-400'
+      : score < 70
+        ? 'text-amber-600 dark:text-amber-400'
+        : 'text-green-600 dark:text-green-400';
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className={`h-full rounded-full ${score < 40 ? 'bg-red-500' : score < 70 ? 'bg-amber-500' : 'bg-green-500'}`}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+      <span className={`text-xs font-medium tabular-nums ${colorClass}`}>{score}%</span>
+    </div>
+  );
+}
+
 export default function ModeratorEnrich() {
   const { entities, seeds } = useLoaderData<typeof loader>();
 
@@ -207,8 +292,8 @@ export default function ModeratorEnrich() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">Daily Enrichment</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          One entity of each type selected for today. Refresh any card to swap it for a different
-          one.
+          Showing entities that need the most work. Refresh any card to swap it for another
+          low-scoring entity.
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -218,7 +303,9 @@ export default function ModeratorEnrich() {
               <Badge variant="secondary" className="text-xs">
                 {entity.label}
               </Badge>
-              <span className="text-xs text-muted-foreground">{entity.total} total</span>
+              <span className="text-xs text-muted-foreground">
+                {entity.poolSize} of {entity.total} need work
+              </span>
             </div>
             <div className="flex-1 min-h-[3rem]">
               <p className="font-semibold text-base leading-snug">{entity.name}</p>
@@ -226,6 +313,7 @@ export default function ModeratorEnrich() {
                 <p className="text-sm text-muted-foreground mt-1">{entity.subtitle}</p>
               ) : null}
             </div>
+            <CompletionBadge score={entity.completionScore} />
             <div className="flex items-center gap-2">
               <Button asChild size="sm" className="flex-1">
                 <Link to={entity.editUrl} prefetch="intent">

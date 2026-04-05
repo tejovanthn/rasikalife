@@ -64,5 +64,9 @@ export * from './types';
 // Transliteration utilities
 export * as Transliteration from './utils/transliteration';
 
+// Completion score utility (browser-safe)
+export { computeCompletionScore } from './shared/completion';
+export type { CompletionEntityType } from './shared/completion';
+
 // Error exports
 export * from './constants';
