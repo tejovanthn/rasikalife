@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(/opt/homebrew/bin/gh issue:*)"
+      "Bash(/opt/homebrew/bin/gh issue:*)",
+      "Bash(pnpm -w run lint)"
     ]
   }
 }

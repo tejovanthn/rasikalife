@@ -1,11 +1,12 @@
 import { auth } from './auth';
 import { database } from './database';
 import { eventPostersBucket, eventPostersCdn, geminiApiKey } from './event-posters';
+import { instagramScraperFunction } from './instagram';
 import { searchBucket, searchReindexFunction } from './search';
 
 const trpc = new sst.aws.Function('RasikaTRPC', {
   url: true,
-  link: [database, searchReindexFunction, searchBucket, auth, eventPostersBucket],
+  link: [database, searchReindexFunction, searchBucket, auth, eventPostersBucket, instagramScraperFunction],
   handler: './packages/trpc/src/index.handler',
   timeout: '5 minutes',
   environment: {
@@ -17,6 +18,7 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     GEMINI_API_KEY: geminiApiKey.value,
     EVENT_POSTERS_CDN_URL: eventPostersCdn.url,
     SEARCH_REINDEX_FUNCTION_NAME: searchReindexFunction.name,
+    INSTAGRAM_SCRAPER_FUNCTION_NAME: instagramScraperFunction.name,
   },
 });
 

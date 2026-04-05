@@ -86,6 +86,22 @@ export async function markFailed(
     .go();
 }
 
+export async function listPostsByStatus(
+  status: 'pending' | 'processed' | 'skipped' | 'failed',
+  params?: { limit?: number; nextToken?: string }
+): Promise<{ items: SocialPost[]; nextToken?: string; hasMore: boolean }> {
+  const limit = params?.limit ?? 50;
+  const result = await SocialPostEntity.query
+    .byStatus({ processingStatus: status })
+    .go({ limit, cursor: params?.nextToken, order: 'desc' });
+
+  return {
+    items: (result.data ?? []) as SocialPost[],
+    nextToken: result.cursor ?? undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
 export async function listPendingPosts(params?: {
   limit?: number;
   nextToken?: string;

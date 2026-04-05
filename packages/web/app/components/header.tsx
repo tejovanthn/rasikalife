@@ -1,5 +1,5 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { ChevronDown, LogOut, Menu, Sparkles, User, Users, X } from 'lucide-react';
+import { Activity, ChevronDown, LogOut, Menu, Sparkles, User, Users, X } from 'lucide-react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Form, Link, NavLink } from 'react-router';
 import { useAuth } from '~/components/auth-context';
@@ -174,18 +174,29 @@ export const Header = () => {
                           Daily Enrichment
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/crawl-status" className="flex items-center gap-2">
+                          <Activity className="h-4 w-4" />
+                          Crawl Status
+                        </Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   {user.role === 'admin' && (
-                    <DropdownMenuItem asChild>
-                      <Link
-                        to="/admin/users"
-                        className="flex items-center gap-2"
-                      >
-                        <Users className="h-4 w-4" />
-                        Manage Users
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/users" className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Manage Users
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/crawl-status" className="flex items-center gap-2">
+                          <Activity className="h-4 w-4" />
+                          Crawl Status
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -371,17 +382,35 @@ export const Header = () => {
                               <Sparkles className="h-4 w-4" />
                               Daily Enrichment
                             </Link>
+                            <Link
+                              to="/moderator/crawl-status"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <Activity className="h-4 w-4" />
+                              Crawl Status
+                            </Link>
                           </>
                         )}
                         {user.role === 'admin' && (
-                          <Link
-                            to="/admin/users"
-                            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
-                            onClick={() => setIsSidebarOpen(false)}
-                          >
-                            <Users className="h-4 w-4" />
-                            Manage Users
-                          </Link>
+                          <>
+                            <Link
+                              to="/admin/users"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <Users className="h-4 w-4" />
+                              Manage Users
+                            </Link>
+                            <Link
+                              to="/moderator/crawl-status"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <Activity className="h-4 w-4" />
+                              Crawl Status
+                            </Link>
+                          </>
                         )}
                         <Form method="post" action="/auth/logout">
                           <Button
