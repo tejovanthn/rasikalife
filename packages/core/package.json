@@ -16,6 +16,11 @@
       "import": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
     },
+    "./domain/social-link": {
+      "types": "./src/domain/social-link.ts",
+      "import": "./src/domain/social-link.ts",
+      "default": "./src/domain/social-link.ts"
+    },
     "./domain/edit/types": {
       "types": "./src/domain/edit/types.ts",
       "import": "./src/domain/edit/types.ts",

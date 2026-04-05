@@ -99,6 +99,24 @@ The core package uses a domain-driven design with:
 - Use import type for type-only imports
 - Domain exports structured for selective importing
 
+### Importing from `@rasika/core` in web routes
+
+**Never import from the bare `@rasika/core` entry in web route files.** The main entry re-exports everything including ElectroDB and AWS SDK, which use Node.js-only APIs (e.g. `util.promisify`). React Router v7 bundles the top-level imports of every route module for the client, so this crashes the browser.
+
+Always use a subpath export instead:
+
+| What you need | Import from |
+|---|---|
+| `SOCIAL_PLATFORM_LABELS`, `SocialPlatform`, `SocialLink` | `@rasika/core/domain/social-link` |
+| `ROLE`, `PERMISSION` (auth roles) | `@rasika/core/auth` |
+| Edit types/status | `@rasika/core/domain/edit/client` |
+| Artist/Raga/Tala/etc. types & schemas | `@rasika/core/domain/[name]/client` |
+| Pure utilities (completion score, etc.) | `@rasika/core/shared/completion` (or relevant subpath) |
+
+All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.
+
+The only exception is `*.server.ts` files — React Router's convention excludes them from the client bundle, so they may safely import from `@rasika/core`.
+
 ## Development Workflow
 
 1. Always run tests after changes: `pnpm test` in relevant package

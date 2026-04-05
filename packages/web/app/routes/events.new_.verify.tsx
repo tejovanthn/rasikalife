@@ -1,3 +1,4 @@
+import * as Auth from '@rasika/core/auth';
 import { ArrowLeft, ArrowRight, Check, Loader2, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
@@ -19,7 +20,6 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
-import { Auth } from '@rasika/core';
 import { requireUser } from '~/lib/auth.server';
 import { generateFestivalUrl } from '~/lib/url-slug';
 

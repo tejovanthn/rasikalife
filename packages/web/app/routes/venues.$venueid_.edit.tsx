@@ -1,5 +1,5 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
-import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core';
+import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Pencil, Plus, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';

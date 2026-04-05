@@ -1,4 +1,4 @@
-import { SOCIAL_PLATFORM_LABELS } from '@rasika/core';
+import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import {
   Calendar,
   ExternalLink,

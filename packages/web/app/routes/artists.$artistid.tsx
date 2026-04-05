@@ -1,7 +1,7 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
+import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import { fromItrans } from '@rasika/core/utils';
-import { SOCIAL_PLATFORM_LABELS } from '@rasika/core';
 import { Calendar, ExternalLink } from 'lucide-react';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
