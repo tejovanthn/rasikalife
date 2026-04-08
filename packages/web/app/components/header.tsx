@@ -48,6 +48,19 @@ const SCRIPT_OPTIONS: { value: DisplayScript; label: string }[] = [
   { value: 'kannada', label: 'ಕನ್ನಡ' },
 ];
 
+const NAV_LINKS = [
+  { href: '/carnatic/compositions', label: 'Compositions' },
+  { href: '/artists', label: 'Artists' },
+  { href: '/carnatic/ragas', label: 'Ragas' },
+];
+
+const EVENT_LINKS = [
+  { href: '/events', label: 'Events' },
+  { href: '/festivals', label: 'Festivals' },
+  { href: '/venues', label: 'Venues' },
+  { href: '/organisers', label: 'Organisers' },
+];
+
 export const Header = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const mobileNavRef = useRef<HTMLElement>(null);
@@ -65,19 +78,6 @@ export const Header = () => {
     }
   }, [isSidebarOpen]);
 
-  const navLinks = [
-    { href: '/carnatic/compositions', label: 'Compositions' },
-    { href: '/artists', label: 'Artists' },
-    { href: '/carnatic/ragas', label: 'Ragas' },
-  ];
-
-  const eventLinks = [
-    { href: '/events', label: 'Events' },
-    { href: '/festivals', label: 'Festivals' },
-    { href: '/venues', label: 'Venues' },
-    { href: '/organisers', label: 'Organisers' },
-  ];
-
   return (
     <nav className="shadow-lg sticky top-0 z-50 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -94,7 +94,7 @@ export const Header = () => {
             </div>
             <div className="hidden md:block">
               <nav className="ml-10 flex items-baseline space-x-1" aria-label="Main navigation">
-                {navLinks.map(link => (
+                {NAV_LINKS.map(link => (
                   <NavLink
                     key={link.label}
                     to={link.href}
@@ -115,7 +115,7 @@ export const Header = () => {
                     <ChevronDown className="h-3.5 w-3.5" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    {eventLinks.map(link => (
+                    {EVENT_LINKS.map(link => (
                       <DropdownMenuItem key={link.href} asChild>
                         <Link to={link.href}>{link.label}</Link>
                       </DropdownMenuItem>
@@ -258,7 +258,7 @@ export const Header = () => {
                   className="flex flex-col space-y-4 mt-4 overflow-y-auto flex-1"
                   aria-label="Main navigation"
                 >
-                  {navLinks.map(link => (
+                  {NAV_LINKS.map(link => (
                     <NavLink
                       key={link.label}
                       to={link.href}
@@ -278,7 +278,7 @@ export const Header = () => {
                     <p className="px-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Events
                     </p>
-                    {eventLinks.map(link => (
+                    {EVENT_LINKS.map(link => (
                       <NavLink
                         key={link.href}
                         to={link.href}

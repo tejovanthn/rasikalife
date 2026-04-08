@@ -1,6 +1,6 @@
 import { useDebounce } from '@uidotdev/usehooks';
 import { Clock, Search as SearchIcon, X } from 'lucide-react';
-import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from 'react-router';
 import { useHydrated } from '~/lib/progressive-enhancement';
 import {
@@ -138,7 +138,7 @@ const FILTER_TABS: FilterType[] = [
   'festival',
 ];
 
-function ResultItem({
+const ResultItem = memo(function ResultItem({
   result,
   globalIndex,
   selectedIndex,
@@ -180,7 +180,7 @@ function ResultItem({
       </div>
     </Link>
   );
-}
+});
 
 export function GlobalSearch() {
   const [state, dispatch] = useReducer(searchReducer, initialState);
@@ -365,10 +365,10 @@ export function GlobalSearch() {
     query,
   ]);
 
-  const handleResultClick = () => {
+  const handleResultClick = useCallback(() => {
     addRecentSearch(query);
     dispatch({ type: 'CLOSE' });
-  };
+  }, [addRecentSearch, query]);
 
   // Focus input when modal opens
   useEffect(() => {
@@ -378,8 +378,9 @@ export function GlobalSearch() {
   }, [isOpen]);
 
   // Calculate which sections to show based on filter
-  const visibleSections = RESULT_SECTIONS.filter(
-    section => filter === 'all' || filter === section.filterType
+  const visibleSections = useMemo(
+    () => RESULT_SECTIONS.filter(section => filter === 'all' || filter === section.filterType),
+    [filter]
   );
 
   return (
@@ -469,18 +470,8 @@ export function GlobalSearch() {
                     {filter === 'all'
                       ? // Ranked list view for "All" - sorted by relevance score
                         (() => {
-                          const allResults = [
-                            ...results.compositions,
-                            ...results.artists,
-                            ...results.ragas,
-                            ...results.talas,
-                            ...results.venues,
-                            ...results.organisers,
-                            ...results.events,
-                          ].sort((a, b) => (a.score ?? 1) - (b.score ?? 1));
-
+                          const allResults = getVisibleResults();
                           if (allResults.length === 0) return null;
-
                           return (
                             <div>
                               {allResults.map((result, index) => (
