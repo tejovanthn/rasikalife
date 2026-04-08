@@ -239,7 +239,15 @@ export async function loader({
     }
   }
 
-  return data({ festival, events, posterUrl, suggestions, isModerator, isExistingFestival, festivalUrl });
+  return data({
+    festival,
+    events,
+    posterUrl,
+    suggestions,
+    isModerator,
+    isExistingFestival,
+    festivalUrl,
+  });
 }
 
 export const meta: MetaFunction = () => {
@@ -358,7 +366,10 @@ function PhonesInput({
 
   const commit = (updated: string[]) => {
     setPhones(updated);
-    const joined = updated.map(p => p.trim()).filter(Boolean).join('\n');
+    const joined = updated
+      .map(p => p.trim())
+      .filter(Boolean)
+      .join('\n');
     onChange(joined || undefined);
   };
 
@@ -1092,16 +1103,17 @@ export default function VerifyEvents() {
         body: JSON.stringify({
           intent: 'submit',
           festivalId: festival?.id,
-          festivalData: festival && !isExistingFestival
-            ? {
-                name: festival.name,
-                description: festival.description,
-                startDate: festival.startDate,
-                endDate: festival.endDate,
-                tags: festival.tags,
-                sponsors: festival.sponsors,
-              }
-            : undefined,
+          festivalData:
+            festival && !isExistingFestival
+              ? {
+                  name: festival.name,
+                  description: festival.description,
+                  startDate: festival.startDate,
+                  endDate: festival.endDate,
+                  tags: festival.tags,
+                  sponsors: festival.sponsors,
+                }
+              : undefined,
           events: events.map(e => ({
             id: e.id,
             title: e.title,

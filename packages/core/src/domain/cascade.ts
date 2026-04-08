@@ -131,7 +131,8 @@ export async function cascadeOrganiserNameUpdate(
             pk: `AWARD#${item.id}`,
             sk: '#METADATA',
           },
-          UpdateExpression: 'SET issuingOrganisationName = :issuingOrganisationName, updatedAt = :updatedAt',
+          UpdateExpression:
+            'SET issuingOrganisationName = :issuingOrganisationName, updatedAt = :updatedAt',
           ExpressionAttributeValues: { ':issuingOrganisationName': newName, ':updatedAt': now },
         })
       )

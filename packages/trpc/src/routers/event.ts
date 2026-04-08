@@ -13,7 +13,7 @@ export const eventRouter = createTRPCRouter({
     if (!event || event.status !== 'approved') {
       const h = ctx.event.headers;
       console.warn(
-        `event.get not found [id=${input.id}] status=${event?.status ?? 'missing'} ua="${h['user-agent'] ?? '-'}" referer="${h['referer'] ?? '-'}"`
+        `event.get not found [id=${input.id}] status=${event?.status ?? 'missing'} ua="${h['user-agent'] ?? '-'}" referer="${h.referer ?? '-'}"`
       );
       throw new TRPCError({
         code: 'NOT_FOUND',
@@ -310,7 +310,8 @@ export const eventRouter = createTRPCRouter({
         return created.id;
       };
 
-      const isModerator = ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
+      const isModerator =
+        ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
 
       // Update each draft event with verified data and submit for review
       const results = [];

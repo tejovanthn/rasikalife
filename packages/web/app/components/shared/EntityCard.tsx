@@ -1,11 +1,11 @@
 import { Link } from 'react-router';
-import { formatDate } from '~/lib/utils';
 import {
   generateArtistUrl,
   generateCompositionUrl,
   generateRagaUrl,
   generateTalaUrl,
 } from '~/lib/url-slug';
+import { formatDate } from '~/lib/utils';
 
 export interface EntityCardField {
   label: string;

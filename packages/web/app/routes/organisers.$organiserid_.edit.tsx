@@ -124,7 +124,7 @@ export async function action({
   const socialLinkUrls = formData.getAll('socialLinkUrl') as string[];
   const socialLinks = socialLinkPlatforms
     .map((platform, i) => ({ platform: platform.trim(), url: (socialLinkUrls[i] || '').trim() }))
-    .filter((sl) => sl.platform && sl.url);
+    .filter(sl => sl.platform && sl.url);
   const userNote = formData.get('userNote') as string;
 
   const proposedValues: Record<string, unknown> = {};
@@ -287,10 +287,8 @@ export default function EditOrganiser() {
     state: proposedAddress.state ?? currentAddress.state ?? '',
     postalCode: proposedAddress.postalCode ?? currentAddress.postalCode ?? '',
     country: proposedAddress.country ?? currentAddress.country ?? '',
-    phone:
-      (proposed.phone as string | undefined) ?? (organiser.phone as string | undefined) ?? '',
-    email:
-      (proposed.email as string | undefined) ?? (organiser.email as string | undefined) ?? '',
+    phone: (proposed.phone as string | undefined) ?? (organiser.phone as string | undefined) ?? '',
+    email: (proposed.email as string | undefined) ?? (organiser.email as string | undefined) ?? '',
     website:
       (proposed.website as string | undefined) ?? (organiser.website as string | undefined) ?? '',
     venueName:
@@ -418,7 +416,7 @@ export default function EditOrganiser() {
                 <fieldset className="space-y-3">
                   <legend className="text-sm font-medium">Tags</legend>
                   <div className="grid grid-cols-2 gap-2">
-                    {ORGANISER_TAGS.map((tag) => (
+                    {ORGANISER_TAGS.map(tag => (
                       <label key={tag} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -540,9 +538,7 @@ export default function EditOrganiser() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        setSocialLinks((prev) => [...prev, { platform: '', url: '' }])
-                      }
+                      onClick={() => setSocialLinks(prev => [...prev, { platform: '', url: '' }])}
                     >
                       <Plus className="h-4 w-4" />
                       Add
@@ -556,8 +552,8 @@ export default function EditOrganiser() {
                       <Select
                         name="socialLinkPlatform"
                         value={link.platform}
-                        onValueChange={(val) =>
-                          setSocialLinks((prev) =>
+                        onValueChange={val =>
+                          setSocialLinks(prev =>
                             prev.map((l, j) => (j === i ? { ...l, platform: val } : l))
                           )
                         }
@@ -566,7 +562,7 @@ export default function EditOrganiser() {
                           <SelectValue placeholder="Select platform..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {SocialPlatform.options.map((p) => (
+                          {SocialPlatform.options.map(p => (
                             <SelectItem key={p} value={p}>
                               {SOCIAL_PLATFORM_LABELS[p]}
                             </SelectItem>
@@ -578,8 +574,8 @@ export default function EditOrganiser() {
                         placeholder="https://..."
                         type="url"
                         value={link.url}
-                        onChange={(e) =>
-                          setSocialLinks((prev) =>
+                        onChange={e =>
+                          setSocialLinks(prev =>
                             prev.map((l, j) => (j === i ? { ...l, url: e.target.value } : l))
                           )
                         }
@@ -589,9 +585,7 @@ export default function EditOrganiser() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() =>
-                          setSocialLinks((prev) => prev.filter((_, j) => j !== i))
-                        }
+                        onClick={() => setSocialLinks(prev => prev.filter((_, j) => j !== i))}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -656,7 +650,7 @@ export default function EditOrganiser() {
                     Cancel
                   </a>
                 ) : (
-                  <Button type="button" variant="ghost" onClick={() => setStep((s) => s - 1)}>
+                  <Button type="button" variant="ghost" onClick={() => setStep(s => s - 1)}>
                     <ChevronLeft className="h-4 w-4" />
                     Back
                   </Button>
@@ -665,7 +659,7 @@ export default function EditOrganiser() {
 
               <div className="flex items-center gap-3">
                 {step < TOTAL_STEPS - 1 ? (
-                  <Button type="button" variant="default" onClick={() => setStep((s) => s + 1)}>
+                  <Button type="button" variant="default" onClick={() => setStep(s => s + 1)}>
                     Next
                     <ChevronRight className="h-4 w-4" />
                   </Button>

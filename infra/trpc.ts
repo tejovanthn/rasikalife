@@ -6,7 +6,14 @@ import { searchBucket, searchReindexFunction } from './search';
 
 const trpc = new sst.aws.Function('RasikaTRPC', {
   url: true,
-  link: [database, searchReindexFunction, searchBucket, auth, eventPostersBucket, instagramScraperFunction],
+  link: [
+    database,
+    searchReindexFunction,
+    searchBucket,
+    auth,
+    eventPostersBucket,
+    instagramScraperFunction,
+  ],
   handler: './packages/trpc/src/index.handler',
   timeout: '5 minutes',
   environment: {

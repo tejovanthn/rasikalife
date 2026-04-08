@@ -64,7 +64,10 @@ function RoleCell({ user }: { user: UserRow }) {
         className="text-sm border rounded px-2 py-1 bg-background"
         onChange={e => {
           // track local state via form default value
-          e.currentTarget.form?.setAttribute('data-dirty', String(e.currentTarget.value !== user.role));
+          e.currentTarget.form?.setAttribute(
+            'data-dirty',
+            String(e.currentTarget.value !== user.role)
+          );
         }}
       >
         {ROLE_VALUES.map(r => (
@@ -73,12 +76,7 @@ function RoleCell({ user }: { user: UserRow }) {
           </option>
         ))}
       </select>
-      <Button
-        type="submit"
-        size="sm"
-        variant="outline"
-        disabled={fetcher.state !== 'idle'}
-      >
+      <Button type="submit" size="sm" variant="outline" disabled={fetcher.state !== 'idle'}>
         Save
       </Button>
     </fetcher.Form>

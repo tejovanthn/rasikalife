@@ -253,7 +253,7 @@ export default function NewOrganiser() {
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium">Tags</legend>
               <div className="grid grid-cols-2 gap-2">
-                {ORGANISER_TAGS.map((tag) => (
+                {ORGANISER_TAGS.map(tag => (
                   <label key={tag} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -279,12 +279,7 @@ export default function NewOrganiser() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="venueId">Venue ID (optional)</Label>
-                <Input
-                  id="venueId"
-                  name="venueId"
-                  type="text"
-                  placeholder="Link to venue record"
-                />
+                <Input id="venueId" name="venueId" type="text" placeholder="Link to venue record" />
               </div>
             </div>
 

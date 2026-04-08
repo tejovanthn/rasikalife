@@ -10,7 +10,11 @@
 
 type DynamoItem = Record<string, unknown>;
 
-async function* scanAll(table: string, filterExpression: string, expressionAttributeValues: DynamoItem) {
+async function* scanAll(
+  table: string,
+  filterExpression: string,
+  expressionAttributeValues: DynamoItem
+) {
   const { ScanCommand } = await import('@aws-sdk/lib-dynamodb');
   const { dynamoClient } = await import('@rasika/core/db');
 
@@ -31,11 +35,7 @@ async function* scanAll(table: string, filterExpression: string, expressionAttri
   } while (lastEvaluatedKey);
 }
 
-async function applyUpdate(
-  table: string,
-  key: DynamoItem,
-  updates: Record<string, string>
-) {
+async function applyUpdate(table: string, key: DynamoItem, updates: Record<string, string>) {
   const { UpdateCommand } = await import('@aws-sdk/lib-dynamodb');
   const { dynamoClient } = await import('@rasika/core/db');
 

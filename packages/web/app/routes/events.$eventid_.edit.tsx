@@ -288,18 +288,22 @@ export default function EditEvent() {
   const [tagInput, setTagInput] = useState('');
   const [currentEntryType, setCurrentEntryType] = useState(defaultValues.entryType);
   const initialTicketing =
-    ((proposed.ticketing as {
-      url?: string;
-      contactPhone?: string;
-      contactEmail?: string;
-      partnerName?: string;
-    } | undefined) ??
-      (event.ticketing as {
-        url?: string;
-        contactPhone?: string;
-        contactEmail?: string;
-        partnerName?: string;
-      } | undefined)) ??
+    (proposed.ticketing as
+      | {
+          url?: string;
+          contactPhone?: string;
+          contactEmail?: string;
+          partnerName?: string;
+        }
+      | undefined) ??
+    (event.ticketing as
+      | {
+          url?: string;
+          contactPhone?: string;
+          contactEmail?: string;
+          partnerName?: string;
+        }
+      | undefined) ??
     {};
 
   const [ticketingPhones, setTicketingPhones] = useState<string[]>(() => {

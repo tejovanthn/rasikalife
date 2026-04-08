@@ -51,6 +51,18 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        language: {
+          DEFAULT: 'hsl(var(--language))',
+          foreground: 'hsl(var(--language-foreground))',
+        },
+        raga: {
+          DEFAULT: 'hsl(var(--raga))',
+          foreground: 'hsl(var(--raga-foreground))',
+        },
+        tala: {
+          DEFAULT: 'hsl(var(--tala))',
+          foreground: 'hsl(var(--tala-foreground))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

@@ -287,7 +287,7 @@ export default function NewVenue() {
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium">Amenities</legend>
               <div className="grid grid-cols-2 gap-2">
-                {VENUE_AMENITIES.map((amenity) => (
+                {VENUE_AMENITIES.map(amenity => (
                   <label key={amenity} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"

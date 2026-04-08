@@ -61,7 +61,6 @@ export const loader: LoaderFunction = async ({ request }) => {
       searchQuery: null,
     });
   } catch (error) {
-    console.error('Failed to load artists:', error);
     if (error instanceof ApplicationError) {
       throw new Response(error.message, { status: 500 });
     }

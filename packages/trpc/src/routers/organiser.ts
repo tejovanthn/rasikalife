@@ -39,7 +39,9 @@ export const organiserRouter = createTRPCRouter({
 
   getImageUploadUrl: editorProcedure
     .input(z.object({ fileName: z.string().min(1), contentType: z.string().min(1) }))
-    .mutation(({ input }) => Image.getImageUploadUrl('organiser', input.fileName, input.contentType)),
+    .mutation(({ input }) =>
+      Image.getImageUploadUrl('organiser', input.fileName, input.contentType)
+    ),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))

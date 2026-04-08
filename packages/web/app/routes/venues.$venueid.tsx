@@ -1,14 +1,5 @@
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
-import {
-  Building2,
-  Calendar,
-  ExternalLink,
-  Mail,
-  MapPin,
-  Phone,
-  Train,
-  Users,
-} from 'lucide-react';
+import { Building2, Calendar, ExternalLink, Mail, MapPin, Phone, Train, Users } from 'lucide-react';
 import { data, redirect, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -158,7 +149,9 @@ export default function VenueDetailPage() {
 
   const addressStr = formatAddress(venue.address);
   const shareUrl = `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`;
-  const venueTypeLabel = venue.venueType ? (VENUE_TYPE_LABELS[venue.venueType] ?? venue.venueType) : null;
+  const venueTypeLabel = venue.venueType
+    ? (VENUE_TYPE_LABELS[venue.venueType] ?? venue.venueType)
+    : null;
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -172,11 +165,7 @@ export default function VenueDetailPage() {
       {/* Hero photo */}
       {venue.photoUrl && (
         <div className="mb-6 rounded-xl overflow-hidden bg-muted">
-          <img
-            src={venue.photoUrl}
-            alt={venue.name}
-            className="w-full max-h-64 object-cover"
-          />
+          <img src={venue.photoUrl} alt={venue.name} className="w-full max-h-64 object-cover" />
         </div>
       )}
 
@@ -218,7 +207,10 @@ export default function VenueDetailPage() {
         {venue.phone && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="h-4 w-4 text-primary shrink-0" />
-            <a href={`tel:${venue.phone}`} className="text-sm hover:text-foreground transition-colors">
+            <a
+              href={`tel:${venue.phone}`}
+              className="text-sm hover:text-foreground transition-colors"
+            >
               {venue.phone}
             </a>
           </div>
@@ -227,7 +219,10 @@ export default function VenueDetailPage() {
         {venue.email && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Mail className="h-4 w-4 text-primary shrink-0" />
-            <a href={`mailto:${venue.email}`} className="text-sm hover:text-foreground transition-colors">
+            <a
+              href={`mailto:${venue.email}`}
+              className="text-sm hover:text-foreground transition-colors"
+            >
               {venue.email}
             </a>
           </div>
@@ -239,7 +234,7 @@ export default function VenueDetailPage() {
               href={venue.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary text-sm"
+              className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"
             >
               <ExternalLink className="h-4 w-4" />
               Website
@@ -250,7 +245,7 @@ export default function VenueDetailPage() {
               href={venue.mapLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary text-sm"
+              className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"
             >
               <ExternalLink className="h-4 w-4" />
               View on Map
@@ -297,7 +292,7 @@ export default function VenueDetailPage() {
             Amenities
           </h2>
           <div className="flex flex-wrap gap-2">
-            {venue.amenities.map((amenity) => (
+            {venue.amenities.map(amenity => (
               <Badge key={amenity} variant="secondary">
                 {amenity.replace(/-/g, ' ')}
               </Badge>
@@ -311,16 +306,17 @@ export default function VenueDetailPage() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Social Links</h2>
           <div className="flex flex-wrap gap-3">
-            {venue.socialLinks.map((link) => (
+            {venue.socialLinks.map(link => (
               <a
                 key={link.platform}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+                className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm hover:underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ?? link.platform}
+                {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ??
+                  link.platform}
               </a>
             ))}
           </div>
@@ -328,7 +324,7 @@ export default function VenueDetailPage() {
       )}
 
       <section className="mt-6">
-        <h2 className="section-heading mb-6">Events at this venue</h2>
+        <h2 className="text-2xl font-bold mb-6">Events at this venue</h2>
 
         {events.length === 0 ? (
           <EmptyState message="No upcoming events at this venue." />

@@ -1,11 +1,5 @@
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
-import {
-  Calendar,
-  ExternalLink,
-  Mail,
-  MapPin,
-  Phone,
-} from 'lucide-react';
+import { Calendar, ExternalLink, Mail, MapPin, Phone } from 'lucide-react';
 import { data, redirect, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link } from 'react-router';
@@ -181,7 +175,9 @@ export default function OrganiserDetailPage() {
             shareUrl={shareUrl}
             shareTitle={`${organiser.name} - Rasika.life`}
             shareDescription={`Events organised by ${organiser.name}`}
-            editUrl={user ? `${generateOrganiserUrl(organiser.name, organiser.id)}/edit` : undefined}
+            editUrl={
+              user ? `${generateOrganiserUrl(organiser.name, organiser.id)}/edit` : undefined
+            }
             isModerator={isModerator}
             mergeUrl={`/moderator/merge?entityType=organiser&entityId=${organiser.id}`}
             requestDeletionUrl={`/moderator/request-deletion?entityType=organiser&entityId=${organiser.id}`}
@@ -208,7 +204,10 @@ export default function OrganiserDetailPage() {
         {organiser.phone && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Phone className="h-4 w-4 text-primary shrink-0" />
-            <a href={`tel:${organiser.phone}`} className="text-sm hover:text-foreground transition-colors">
+            <a
+              href={`tel:${organiser.phone}`}
+              className="text-sm hover:text-foreground transition-colors"
+            >
               {organiser.phone}
             </a>
           </div>
@@ -217,7 +216,10 @@ export default function OrganiserDetailPage() {
         {organiser.email && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Mail className="h-4 w-4 text-primary shrink-0" />
-            <a href={`mailto:${organiser.email}`} className="text-sm hover:text-foreground transition-colors">
+            <a
+              href={`mailto:${organiser.email}`}
+              className="text-sm hover:text-foreground transition-colors"
+            >
               {organiser.email}
             </a>
           </div>
@@ -229,7 +231,7 @@ export default function OrganiserDetailPage() {
               href={organiser.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-primary text-sm"
+              className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"
             >
               <ExternalLink className="h-4 w-4" />
               Website
@@ -277,7 +279,7 @@ export default function OrganiserDetailPage() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Focus Areas</h2>
           <div className="flex flex-wrap gap-2">
-            {organiser.tags.map((tag) => (
+            {organiser.tags.map(tag => (
               <Badge key={tag} variant="secondary">
                 {tag.replace(/-/g, ' ')}
               </Badge>
@@ -291,16 +293,17 @@ export default function OrganiserDetailPage() {
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-3">Social Links</h2>
           <div className="flex flex-wrap gap-3">
-            {organiser.socialLinks.map((link) => (
+            {organiser.socialLinks.map(link => (
               <a
                 key={link.platform}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+                className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm hover:underline"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ?? link.platform}
+                {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ??
+                  link.platform}
               </a>
             ))}
           </div>

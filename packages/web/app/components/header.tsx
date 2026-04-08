@@ -1,5 +1,18 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
-import { Activity, ChevronDown, LogOut, Menu, Sparkles, User, Users, X } from 'lucide-react';
+import {
+  Activity,
+  Calendar,
+  ChevronDown,
+  ClipboardList,
+  FileImage,
+  ListChecks,
+  LogOut,
+  Menu,
+  Sparkles,
+  User,
+  Users,
+  X,
+} from 'lucide-react';
 import { useContext, useEffect, useRef, useState } from 'react';
 import { Form, Link, NavLink } from 'react-router';
 import { useAuth } from '~/components/auth-context';
@@ -86,7 +99,7 @@ export const Header = () => {
                     key={link.label}
                     to={link.href}
                     className={({ isActive }) =>
-                      `px-3 py-2 rounded-md text-sm font-medium ${
+                      `px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
                         isActive
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:text-foreground'
@@ -97,7 +110,7 @@ export const Header = () => {
                   </NavLink>
                 ))}
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 outline-none">
+                  <DropdownMenuTrigger className="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 text-muted-foreground hover:text-foreground flex items-center gap-1 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                     Events
                     <ChevronDown className="h-3.5 w-3.5" />
                   </DropdownMenuTrigger>
@@ -144,7 +157,7 @@ export const Header = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/my-edits" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
+                      <ClipboardList className="h-4 w-4" />
                       My Edits
                     </Link>
                   </DropdownMenuItem>
@@ -152,19 +165,19 @@ export const Header = () => {
                     <>
                       <DropdownMenuItem asChild>
                         <Link to="/moderator/edits" className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
+                          <ListChecks className="h-4 w-4" />
                           Edit Queue
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/moderator/events" className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
+                          <Calendar className="h-4 w-4" />
                           Event Queue
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/moderator/draft-events" className="flex items-center gap-2">
-                          <User className="h-4 w-4" />
+                          <FileImage className="h-4 w-4" />
                           Draft Posters
                         </Link>
                       </DropdownMenuItem>
@@ -251,7 +264,7 @@ export const Header = () => {
                       to={link.href}
                       onClick={() => setIsSidebarOpen(false)}
                       className={({ isActive }) =>
-                        `block px-3 py-2 rounded-md text-base font-medium ${
+                        `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 ${
                           isActive
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:text-foreground'
@@ -271,7 +284,7 @@ export const Header = () => {
                         to={link.href}
                         onClick={() => setIsSidebarOpen(false)}
                         className={({ isActive }) =>
-                          `block px-3 py-2 rounded-md text-base font-medium ${
+                          `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 ${
                             isActive
                               ? 'bg-primary text-primary-foreground'
                               : 'text-muted-foreground hover:text-foreground'
@@ -345,7 +358,7 @@ export const Header = () => {
                           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
                           onClick={() => setIsSidebarOpen(false)}
                         >
-                          <User className="h-4 w-4" />
+                          <ClipboardList className="h-4 w-4" />
                           My Edits
                         </Link>
                         {(user.role === 'moderator' || user.role === 'admin') && (
@@ -355,7 +368,7 @@ export const Header = () => {
                               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
                               onClick={() => setIsSidebarOpen(false)}
                             >
-                              <User className="h-4 w-4" />
+                              <ListChecks className="h-4 w-4" />
                               Edit Queue
                             </Link>
                             <Link
@@ -363,7 +376,7 @@ export const Header = () => {
                               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
                               onClick={() => setIsSidebarOpen(false)}
                             >
-                              <User className="h-4 w-4" />
+                              <Calendar className="h-4 w-4" />
                               Event Queue
                             </Link>
                             <Link
@@ -371,7 +384,7 @@ export const Header = () => {
                               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
                               onClick={() => setIsSidebarOpen(false)}
                             >
-                              <User className="h-4 w-4" />
+                              <FileImage className="h-4 w-4" />
                               Draft Posters
                             </Link>
                             <Link

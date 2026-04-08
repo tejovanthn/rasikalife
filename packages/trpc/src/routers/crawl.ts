@@ -1,6 +1,6 @@
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { Artist, Organiser, SocialPost, Venue } from '@rasika/core';
 import { TRPCError } from '@trpc/server';
-import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { z } from 'zod';
 import { createTRPCRouter, moderatorProcedure } from '../trpc';
 
@@ -27,10 +27,7 @@ export const crawlRouter = createTRPCRouter({
         status,
         { count: results[i].items.length, hasMore: results[i].hasMore },
       ])
-    ) as Record<
-      (typeof PROCESSING_STATUSES)[number],
-      { count: number; hasMore: boolean }
-    >;
+    ) as Record<(typeof PROCESSING_STATUSES)[number], { count: number; hasMore: boolean }>;
   }),
 
   listPosts: moderatorProcedure
@@ -56,13 +53,11 @@ export const crawlRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const entity = await (
-        input.entityType === 'artist'
-          ? Artist.getArtist(input.entityId)
-          : input.entityType === 'organiser'
-            ? Organiser.getOrganiser(input.entityId)
-            : Venue.getVenue(input.entityId)
-      );
+      const entity = await (input.entityType === 'artist'
+        ? Artist.getArtist(input.entityId)
+        : input.entityType === 'organiser'
+          ? Organiser.getOrganiser(input.entityId)
+          : Venue.getVenue(input.entityId));
 
       if (!entity) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Entity not found' });

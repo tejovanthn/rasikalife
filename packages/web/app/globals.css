@@ -24,6 +24,13 @@
     --input: 17 30% 18%;
     --ring: 17 84.7% 53.7%;
     --radius: 0.5rem;
+    /* Domain semantic colors */
+    --language: 220 60% 92%;
+    --language-foreground: 220 60% 30%;
+    --raga: 270 60% 92%;
+    --raga-foreground: 270 60% 30%;
+    --tala: 30 80% 92%;
+    --tala-foreground: 30 80% 30%;
   }
 
   .dark,
@@ -48,6 +55,13 @@
     --input: 17 30% 18%;
     --ring: 17 84.7% 53.7%;
     --radius: 0.5rem;
+    /* Domain semantic colors */
+    --language: 220 40% 20%;
+    --language-foreground: 220 60% 80%;
+    --raga: 270 40% 20%;
+    --raga-foreground: 270 60% 80%;
+    --tala: 30 50% 20%;
+    --tala-foreground: 30 80% 75%;
   }
 }
 
@@ -58,6 +72,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
   }
   a {
     @apply text-primary;
@@ -69,7 +84,7 @@
     @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mt-6;
   }
   h2 {
-    @apply scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0 mt-6;
+    @apply scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0 mt-6;
   }
   h3 {
     @apply scroll-m-20 text-2xl font-semibold tracking-tight mt-6;
@@ -84,7 +99,29 @@ a.no-ext-arrow::after {
   content: none;
 }
 
+@keyframes page-progress {
+  0% {
+    transform: scaleX(0);
+  }
+  20% {
+    transform: scaleX(0.4);
+  }
+  60% {
+    transform: scaleX(0.7);
+  }
+  90% {
+    transform: scaleX(0.86);
+  }
+  100% {
+    transform: scaleX(0.92);
+  }
+}
+
 @layer utilities {
+  .animate-page-progress {
+    animation: page-progress 8s cubic-bezier(0.1, 0.4, 0.2, 1) forwards;
+  }
+
   /* Page titles - used for main headings on index pages */
   .page-title {
     @apply scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl mb-4;
@@ -102,27 +139,27 @@ a.no-ext-arrow::after {
 
   /* Error messages - used for error states */
   .error-heading {
-    @apply text-2xl font-bold text-red-600;
+    @apply text-2xl font-bold text-destructive;
   }
 
   /* Card link styles - used for navigation links in cards */
   .card-link {
-    @apply text-blue-600 hover:text-blue-800 font-medium text-sm;
+    @apply text-primary hover:text-primary/80 font-medium text-sm;
   }
 
   /* Category card styles - used for category navigation cards */
   .category-card {
-    @apply p-4 bg-blue-50 rounded-lg text-center hover:bg-blue-100 transition-colors;
+    @apply p-4 bg-accent rounded-lg text-center hover:bg-accent/80 transition-colors;
   }
 
   /* Category card title - used for titles within category cards */
   .category-card-title {
-    @apply font-semibold text-blue-900;
+    @apply font-semibold text-accent-foreground;
   }
 
   /* Category card subtitle - used for subtitles within category cards */
   .category-card-subtitle {
-    @apply text-xs text-blue-700 mt-1;
+    @apply text-xs text-accent-foreground/70 mt-1;
   }
 
   /* Hero description - used for description text in hero sections */

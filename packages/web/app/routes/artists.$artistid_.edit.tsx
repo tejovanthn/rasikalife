@@ -99,15 +99,18 @@ export async function action({
   const website = ((formData.get('website') as string) || '').trim();
   const specialisationsRaw = ((formData.get('specialisations') as string) || '').trim();
   const specialisations = specialisationsRaw
-    ? specialisationsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+    ? specialisationsRaw
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
     : [];
   const guruNames = formData.getAll('guruName') as string[];
-  const gurus = guruNames.map((n) => ({ name: n.trim() })).filter((g) => g.name);
+  const gurus = guruNames.map(n => ({ name: n.trim() })).filter(g => g.name);
   const socialLinkPlatforms = formData.getAll('socialLinkPlatform') as string[];
   const socialLinkUrls = formData.getAll('socialLinkUrl') as string[];
   const socialLinks = socialLinkPlatforms
     .map((platform, i) => ({ platform: platform.trim(), url: (socialLinkUrls[i] || '').trim() }))
-    .filter((sl) => sl.platform && sl.url);
+    .filter(sl => sl.platform && sl.url);
   const userNote = formData.get('userNote') as string;
 
   const proposedValues: Record<string, unknown> = {};
@@ -117,7 +120,8 @@ export async function action({
   if (biography !== (artist.biography || '')) proposedValues.biography = biography || undefined;
   if (birthYear !== artist.birthYear) proposedValues.birthYear = birthYear;
   if (birthPlace !== (artist.birthPlace || '')) proposedValues.birthPlace = birthPlace || undefined;
-  if (activeYears !== (artist.activeYears || '')) proposedValues.activeYears = activeYears || undefined;
+  if (activeYears !== (artist.activeYears || ''))
+    proposedValues.activeYears = activeYears || undefined;
   if (website !== (artist.website || '')) proposedValues.website = website || undefined;
 
   const sortedNewSpecs = [...specialisations].sort();
@@ -128,7 +132,7 @@ export async function action({
 
   const sortedNewGurus = [...gurus].sort((a, b) => a.name.localeCompare(b.name));
   const sortedCurrentGurus = [...((artist.gurus as Array<{ id?: string; name: string }>) || [])]
-    .map((g) => ({ name: g.name }))
+    .map(g => ({ name: g.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
   if (JSON.stringify(sortedNewGurus) !== JSON.stringify(sortedCurrentGurus)) {
     proposedValues.gurus = gurus;
@@ -196,22 +200,19 @@ export default function EditArtist() {
   );
   const [gurus, setGurus] = useState<Guru[]>(
     (proposed.gurus as Guru[] | undefined) ??
-      ((artist.gurus as Array<{ id?: string; name: string }> | undefined)?.map((g) => ({
+      (artist.gurus as Array<{ id?: string; name: string }> | undefined)?.map(g => ({
         name: g.name,
-      })) ?? [])
+      })) ??
+      []
   );
 
   const defaultValues = {
     name: (proposed.name as string | undefined) ?? artist.name,
     title: (proposed.title as string | undefined) ?? (artist.title as string | undefined) ?? '',
     biography:
-      (proposed.biography as string | undefined) ??
-      (artist.biography as string | undefined) ??
-      '',
+      (proposed.biography as string | undefined) ?? (artist.biography as string | undefined) ?? '',
     birthYear:
-      (proposed.birthYear as number | undefined) ??
-      (artist.birthYear as number | undefined) ??
-      '',
+      (proposed.birthYear as number | undefined) ?? (artist.birthYear as number | undefined) ?? '',
     birthPlace:
       (proposed.birthPlace as string | undefined) ??
       (artist.birthPlace as string | undefined) ??
@@ -222,12 +223,11 @@ export default function EditArtist() {
       '',
     website:
       (proposed.website as string | undefined) ?? (artist.website as string | undefined) ?? '',
-    specialisations:
-      (
-        (proposed.specialisations as string[] | undefined) ??
-        (artist.specialisations as string[] | undefined) ??
-        []
-      ).join(', '),
+    specialisations: (
+      (proposed.specialisations as string[] | undefined) ??
+      (artist.specialisations as string[] | undefined) ??
+      []
+    ).join(', '),
     userNote: activeEdit?.userNote || '',
   };
 
@@ -356,7 +356,7 @@ export default function EditArtist() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setGurus((prev) => [...prev, { name: '' }])}
+                  onClick={() => setGurus(prev => [...prev, { name: '' }])}
                 >
                   <Plus className="h-4 w-4" />
                   Add
@@ -371,10 +371,8 @@ export default function EditArtist() {
                     name="guruName"
                     placeholder="Guru name"
                     value={guru.name}
-                    onChange={(e) =>
-                      setGurus((prev) =>
-                        prev.map((g, j) => (j === i ? { name: e.target.value } : g))
-                      )
+                    onChange={e =>
+                      setGurus(prev => prev.map((g, j) => (j === i ? { name: e.target.value } : g)))
                     }
                     className="flex-1"
                   />
@@ -382,7 +380,7 @@ export default function EditArtist() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => setGurus((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() => setGurus(prev => prev.filter((_, j) => j !== i))}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -397,7 +395,7 @@ export default function EditArtist() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setSocialLinks((prev) => [...prev, { platform: '', url: '' }])}
+                  onClick={() => setSocialLinks(prev => [...prev, { platform: '', url: '' }])}
                 >
                   <Plus className="h-4 w-4" />
                   Add
@@ -411,8 +409,8 @@ export default function EditArtist() {
                   <Select
                     name="socialLinkPlatform"
                     value={link.platform}
-                    onValueChange={(val) =>
-                      setSocialLinks((prev) =>
+                    onValueChange={val =>
+                      setSocialLinks(prev =>
                         prev.map((l, j) => (j === i ? { ...l, platform: val } : l))
                       )
                     }
@@ -421,7 +419,7 @@ export default function EditArtist() {
                       <SelectValue placeholder="Select platform..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {SocialPlatform.options.map((p) => (
+                      {SocialPlatform.options.map(p => (
                         <SelectItem key={p} value={p}>
                           {SOCIAL_PLATFORM_LABELS[p]}
                         </SelectItem>
@@ -433,8 +431,8 @@ export default function EditArtist() {
                     placeholder="https://..."
                     type="url"
                     value={link.url}
-                    onChange={(e) =>
-                      setSocialLinks((prev) =>
+                    onChange={e =>
+                      setSocialLinks(prev =>
                         prev.map((l, j) => (j === i ? { ...l, url: e.target.value } : l))
                       )
                     }
@@ -444,7 +442,7 @@ export default function EditArtist() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => setSocialLinks((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() => setSocialLinks(prev => prev.filter((_, j) => j !== i))}
                   >
                     <X className="h-4 w-4" />
                   </Button>

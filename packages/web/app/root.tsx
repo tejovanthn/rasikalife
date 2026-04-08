@@ -92,6 +92,11 @@ export const links: LinksFunction = () => [
   // Preconnect to critical origins
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
+  // Noto Sans — covers Latin, Devanagari, Tamil, Telugu, and Kannada scripts
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap',
+  },
 ];
 
 function Layout({ children, theme }: { children: React.ReactNode; theme: string }) {

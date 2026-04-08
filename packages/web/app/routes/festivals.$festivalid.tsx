@@ -440,7 +440,7 @@ export default function FestivalDetail() {
       {/* Sponsors */}
       {festival.sponsors && festival.sponsors.length > 0 && (
         <section className="mt-8">
-          <h2 className="section-heading mb-4">Sponsors</h2>
+          <h2 className="text-2xl font-bold mb-4">Sponsors</h2>
           <div className="flex gap-2 flex-wrap">
             {festival.sponsors.map(sponsor => (
               <Badge key={sponsor.name} variant="outline">

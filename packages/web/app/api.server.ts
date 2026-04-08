@@ -23,7 +23,7 @@ export async function createServerClient(request?: Request) {
     const ua = request.headers.get('user-agent');
     const referer = request.headers.get('referer');
     if (ua) headers['user-agent'] = ua;
-    if (referer) headers['referer'] = referer;
+    if (referer) headers.referer = referer;
 
     try {
       const tokens = await getTokens(request);

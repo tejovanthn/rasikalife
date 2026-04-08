@@ -125,7 +125,7 @@ export async function action({
   const socialLinkUrls = formData.getAll('socialLinkUrl') as string[];
   const socialLinks = socialLinkPlatforms
     .map((platform, i) => ({ platform: platform.trim(), url: (socialLinkUrls[i] || '').trim() }))
-    .filter((sl) => sl.platform && sl.url);
+    .filter(sl => sl.platform && sl.url);
   const userNote = formData.get('userNote') as string;
 
   const proposedValues: Record<string, unknown> = {};
@@ -134,7 +134,8 @@ export async function action({
   if (venueType !== (venue.venueType || '')) proposedValues.venueType = venueType || undefined;
   if (foundedYear !== venue.foundedYear) proposedValues.foundedYear = foundedYear;
   if (capacity !== venue.capacity) proposedValues.capacity = capacity;
-  if (description !== (venue.description || '')) proposedValues.description = description || undefined;
+  if (description !== (venue.description || ''))
+    proposedValues.description = description || undefined;
   if (photoUrl && photoUrl !== (venue.photoUrl || '')) {
     proposedValues.photoUrl = photoUrl;
     if (photoUploadId) proposedValues.photoUploadId = photoUploadId;
@@ -263,14 +264,20 @@ export default function EditVenue() {
 
   const defaultValues = {
     name: (proposed.name as string | undefined) ?? venue.name,
-    venueType: (proposed.venueType as string | undefined) ?? (venue.venueType as string | undefined) ?? '',
+    venueType:
+      (proposed.venueType as string | undefined) ?? (venue.venueType as string | undefined) ?? '',
     foundedYear:
-      (proposed.foundedYear as number | undefined) ?? (venue.foundedYear as number | undefined) ?? '',
+      (proposed.foundedYear as number | undefined) ??
+      (venue.foundedYear as number | undefined) ??
+      '',
     capacity:
       (proposed.capacity as number | undefined) ?? (venue.capacity as number | undefined) ?? '',
     description:
-      (proposed.description as string | undefined) ?? (venue.description as string | undefined) ?? '',
-    photoUrl: (proposed.photoUrl as string | undefined) ?? (venue.photoUrl as string | undefined) ?? '',
+      (proposed.description as string | undefined) ??
+      (venue.description as string | undefined) ??
+      '',
+    photoUrl:
+      (proposed.photoUrl as string | undefined) ?? (venue.photoUrl as string | undefined) ?? '',
     street: proposedAddress.street ?? currentAddress.street ?? '',
     city: proposedAddress.city ?? currentAddress.city ?? '',
     state: proposedAddress.state ?? currentAddress.state ?? '',
@@ -284,7 +291,8 @@ export default function EditVenue() {
       '',
     phone: (proposed.phone as string | undefined) ?? (venue.phone as string | undefined) ?? '',
     email: (proposed.email as string | undefined) ?? (venue.email as string | undefined) ?? '',
-    website: (proposed.website as string | undefined) ?? (venue.website as string | undefined) ?? '',
+    website:
+      (proposed.website as string | undefined) ?? (venue.website as string | undefined) ?? '',
     userNote: activeEdit?.userNote || '',
   };
 
@@ -433,12 +441,7 @@ export default function EditVenue() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        name="city"
-                        type="text"
-                        defaultValue={defaultValues.city}
-                      />
+                      <Input id="city" name="city" type="text" defaultValue={defaultValues.city} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="state">State</Label>
@@ -538,9 +541,7 @@ export default function EditVenue() {
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() =>
-                        setSocialLinks((prev) => [...prev, { platform: '', url: '' }])
-                      }
+                      onClick={() => setSocialLinks(prev => [...prev, { platform: '', url: '' }])}
                     >
                       <Plus className="h-4 w-4" />
                       Add
@@ -554,8 +555,8 @@ export default function EditVenue() {
                       <Select
                         name="socialLinkPlatform"
                         value={link.platform}
-                        onValueChange={(val) =>
-                          setSocialLinks((prev) =>
+                        onValueChange={val =>
+                          setSocialLinks(prev =>
                             prev.map((l, j) => (j === i ? { ...l, platform: val } : l))
                           )
                         }
@@ -564,7 +565,7 @@ export default function EditVenue() {
                           <SelectValue placeholder="Select platform..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {SocialPlatform.options.map((p) => (
+                          {SocialPlatform.options.map(p => (
                             <SelectItem key={p} value={p}>
                               {SOCIAL_PLATFORM_LABELS[p]}
                             </SelectItem>
@@ -576,8 +577,8 @@ export default function EditVenue() {
                         placeholder="https://..."
                         type="url"
                         value={link.url}
-                        onChange={(e) =>
-                          setSocialLinks((prev) =>
+                        onChange={e =>
+                          setSocialLinks(prev =>
                             prev.map((l, j) => (j === i ? { ...l, url: e.target.value } : l))
                           )
                         }
@@ -587,9 +588,7 @@ export default function EditVenue() {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() =>
-                          setSocialLinks((prev) => prev.filter((_, j) => j !== i))
-                        }
+                        onClick={() => setSocialLinks(prev => prev.filter((_, j) => j !== i))}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -600,7 +599,7 @@ export default function EditVenue() {
                 <fieldset className="space-y-3">
                   <legend className="text-sm font-medium">Amenities</legend>
                   <div className="grid grid-cols-2 gap-2">
-                    {VENUE_AMENITIES.map((amenity) => (
+                    {VENUE_AMENITIES.map(amenity => (
                       <label key={amenity} className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
@@ -649,11 +648,7 @@ export default function EditVenue() {
                     Cancel
                   </a>
                 ) : (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setStep((s) => s - 1)}
-                  >
+                  <Button type="button" variant="ghost" onClick={() => setStep(s => s - 1)}>
                     <ChevronLeft className="h-4 w-4" />
                     Back
                   </Button>
@@ -662,11 +657,7 @@ export default function EditVenue() {
 
               <div className="flex items-center gap-3">
                 {step < TOTAL_STEPS - 1 ? (
-                  <Button
-                    type="button"
-                    variant="default"
-                    onClick={() => setStep((s) => s + 1)}
-                  >
+                  <Button type="button" variant="default" onClick={() => setStep(s => s + 1)}>
                     Next
                     <ChevronRight className="h-4 w-4" />
                   </Button>

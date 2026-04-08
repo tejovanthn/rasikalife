@@ -2,6 +2,7 @@ import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditStatus } from '@rasika/core/domain/edit/client';
 import { Eye, Merge, MoreHorizontal, Pencil, Share2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 import { Button } from '~/components/ui/button';
 import {
   DropdownMenu,
@@ -49,9 +50,9 @@ export function DetailPageHeader({
     } else {
       try {
         await navigator.clipboard.writeText(shareUrl);
-        alert('Link copied to clipboard!');
-      } catch (error) {
-        console.error('Failed to copy:', error);
+        toast.success('Link copied to clipboard');
+      } catch {
+        toast.error('Could not copy link');
       }
     }
   };
@@ -139,7 +140,7 @@ export function DetailPageHeader({
               <Button
                 size="icon"
                 variant="secondary"
-                className="h-10 w-10 rounded-full shadow-md"
+                className="h-11 w-11 rounded-full shadow-md"
                 aria-label="More actions"
               >
                 <MoreHorizontal className="h-4 w-4" />
@@ -171,7 +172,7 @@ export function DetailPageHeader({
           size="icon"
           variant="secondary"
           onClick={handleShare}
-          className="h-10 w-10 rounded-full shadow-md"
+          className="h-11 w-11 rounded-full shadow-md"
           aria-label="Share"
         >
           <Share2 className="h-4 w-4" />

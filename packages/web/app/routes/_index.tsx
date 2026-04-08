@@ -97,19 +97,19 @@ export default function HomePage() {
         <div className="flex flex-wrap justify-center gap-4">
           <Link
             to="/events"
-            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Events
           </Link>
           <Link
             to="/artists"
-            className="inline-block px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors"
+            className="inline-block px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Artists
           </Link>
           <Link
             to="/carnatic/compositions"
-            className="inline-block px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-accent transition-colors"
+            className="inline-block px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Compositions
           </Link>

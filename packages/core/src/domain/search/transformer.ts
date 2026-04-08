@@ -27,12 +27,7 @@ function createDocument(
 }
 
 export function transformArtistToDocument(artist: Artist): SearchDocument {
-  return createDocument(
-    artist.id,
-    'artist',
-    artist.name,
-    (artist.alternateNames || []).join(' ')
-  );
+  return createDocument(artist.id, 'artist', artist.name, (artist.alternateNames || []).join(' '));
 }
 
 export function transformRagaToDocument(raga: Raga): SearchDocument {

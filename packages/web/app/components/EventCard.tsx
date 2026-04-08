@@ -23,9 +23,9 @@ const entryTypeLabel: Record<string, string> = {
 };
 
 const entryTypeClass: Record<string, string> = {
-  free: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  ticketed: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  'by-invitation': 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+  free: 'bg-language text-language-foreground',
+  ticketed: 'bg-tala text-tala-foreground',
+  'by-invitation': 'bg-raga text-raga-foreground',
 };
 
 function formatEventDate(dateStr: string) {
@@ -39,8 +39,11 @@ function formatEventDate(dateStr: string) {
 
 export function EventCard({ event }: EventCardProps) {
   return (
-    <Link to={generateEventUrl(event.title, event.id)} className="block no-underline">
-      <Card className="h-full hover:border-primary/50 transition-colors">
+    <Link
+      to={generateEventUrl(event.title, event.id)}
+      className="block no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
+    >
+      <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-200">
         {event.posterUrl && (
           <PosterImage
             posterUrl={event.posterUrl}

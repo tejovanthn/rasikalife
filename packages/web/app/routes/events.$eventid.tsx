@@ -360,7 +360,6 @@ export default function EventDetail() {
     venueMapLink ||
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueQueryStr)}`;
 
-
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <Breadcrumb
@@ -550,7 +549,7 @@ export default function EventDetail() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-primary"
+                  className="no-ext-arrow flex items-center gap-2 text-primary"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Book Tickets
@@ -600,7 +599,7 @@ export default function EventDetail() {
                   href={event.contactInfo.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm"
+                  className="no-ext-arrow flex items-center gap-2 text-sm"
                 >
                   <Globe className="h-4 w-4" />
                   {event.contactInfo.website}
