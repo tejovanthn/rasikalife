@@ -27,14 +27,7 @@ export function EntityPagination({
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationLink
-              to={baseUrl}
-              className={
-                currentPage === 1
-                  ? 'px-3 py-2 rounded-md bg-primary text-primary-foreground'
-                  : 'px-3 py-2 rounded-md hover:bg-accent'
-              }
-            >
+            <PaginationLink to={baseUrl} isActive={currentPage === 1}>
               1
             </PaginationLink>
           </PaginationItem>

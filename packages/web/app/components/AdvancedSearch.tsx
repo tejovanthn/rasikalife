@@ -62,7 +62,7 @@ export function AdvancedSearch() {
           <div className="flex-1">
             <div className="relative">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 size={20}
               />
               <input

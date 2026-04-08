@@ -31,6 +31,11 @@
     --raga-foreground: 270 60% 30%;
     --tala: 30 80% 92%;
     --tala-foreground: 30 80% 30%;
+    /* Status semantic colors */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
   }
 
   .dark,
@@ -62,6 +67,11 @@
     --raga-foreground: 270 60% 80%;
     --tala: 30 50% 20%;
     --tala-foreground: 30 80% 75%;
+    /* Status semantic colors */
+    --success: 142 71% 55%;
+    --success-foreground: 0 0% 0%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 0 0% 0%;
   }
 }
 

@@ -1,6 +1,7 @@
 import { Calendar, MapPin } from 'lucide-react';
 import { Link } from 'react-router';
 import { PosterImage } from '~/components/PosterImage';
+import { Badge, type BadgeProps } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { generateEventUrl } from '~/lib/url-slug';
 
@@ -22,10 +23,10 @@ const entryTypeLabel: Record<string, string> = {
   'by-invitation': 'By Invitation',
 };
 
-const entryTypeClass: Record<string, string> = {
-  free: 'bg-language text-language-foreground',
-  ticketed: 'bg-tala text-tala-foreground',
-  'by-invitation': 'bg-raga text-raga-foreground',
+const entryTypeBadgeVariant: Record<string, BadgeProps['variant']> = {
+  free: 'language',
+  ticketed: 'tala',
+  'by-invitation': 'raga',
 };
 
 function formatEventDate(dateStr: string) {
@@ -57,11 +58,12 @@ export function EventCard({ event }: EventCardProps) {
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="font-semibold text-foreground leading-snug">{event.title}</h3>
             {event.entryType && (
-              <span
-                className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${entryTypeClass[event.entryType] ?? 'bg-muted text-muted-foreground'}`}
+              <Badge
+                variant={entryTypeBadgeVariant[event.entryType] ?? 'secondary'}
+                className="shrink-0"
               >
                 {entryTypeLabel[event.entryType] ?? event.entryType}
-              </span>
+              </Badge>
             )}
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">

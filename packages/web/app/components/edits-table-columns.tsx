@@ -40,11 +40,11 @@ function entityPath(entityType: string, entityId: string, editStatus: string): s
 
 function statusIcon(status: string) {
   const colors: Record<string, string> = {
-    draft: 'text-gray-500',
-    submitted: 'text-yellow-500',
-    approved: 'text-green-500',
-    rejected: 'text-red-500',
-    withdrawn: 'text-gray-400',
+    draft: 'text-muted-foreground',
+    submitted: 'text-warning',
+    approved: 'text-success',
+    rejected: 'text-destructive',
+    withdrawn: 'text-muted-foreground',
   };
 
   return (
