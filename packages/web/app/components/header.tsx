@@ -89,6 +89,9 @@ export const Header = () => {
                   className="h-8 w-8"
                   src="/android-chrome-192x192.png"
                   alt="Rasika.life - Indian Classical Music Database"
+                  width={32}
+                  height={32}
+                  decoding="async"
                 />
               </Link>
             </div>

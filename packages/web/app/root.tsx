@@ -93,6 +93,12 @@ export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
   // Noto Sans — covers Latin, Devanagari, Tamil, Telugu, and Kannada scripts
+  // Preload the font CSS so it's fetched in parallel with the preconnect handshake
+  {
+    rel: 'preload',
+    as: 'style',
+    href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap',
+  },
   {
     rel: 'stylesheet',
     href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&display=swap',
@@ -119,9 +125,17 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
         <Links />
       </head>
       <body>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[200] focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:border focus:border-border focus:rounded-md focus:text-sm focus:font-medium"
+        >
+          Skip to main content
+        </a>
         <GlobalLoader />
         <Header />
-        <div className="-mt-4 md:mt-0">{children}</div>
+        <div className="-mt-4 md:mt-0" id="main-content">
+          {children}
+        </div>
         <Footer />
         <ScrollRestoration />
         <Scripts />

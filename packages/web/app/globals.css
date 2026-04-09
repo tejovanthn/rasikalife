@@ -109,6 +109,17 @@ a.no-ext-arrow::after {
   content: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @keyframes page-progress {
   0% {
     transform: scaleX(0);
@@ -159,12 +170,12 @@ a.no-ext-arrow::after {
 
   /* Category card styles - used for category navigation cards */
   .category-card {
-    @apply p-4 bg-accent rounded-lg text-center hover:bg-accent/80 transition-colors;
+    @apply p-4 bg-accent rounded-lg text-center hover:bg-accent/80 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   /* Category card title - used for titles within category cards */
   .category-card-title {
-    @apply font-semibold text-accent-foreground;
+    @apply text-sm font-semibold text-accent-foreground mt-0;
   }
 
   /* Category card subtitle - used for subtitles within category cards */

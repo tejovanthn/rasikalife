@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 const NavLink = ({
@@ -21,11 +21,13 @@ const FooterSection = ({
   links,
   isOpen,
   onToggle,
+  id,
 }: {
   title: string;
   links: Array<{ href: string; label: string }>;
   isOpen: boolean;
   onToggle: () => void;
+  id: string;
 }) => (
   <div className="border-b border-border pb-2 mb-2 md:border-0 md:pb-0 md:mb-0">
     <button
@@ -33,12 +35,20 @@ const FooterSection = ({
       onClick={onToggle}
       className="flex items-center justify-between w-full md:hidden text-left font-semibold mb-2 min-h-[44px] py-2"
       aria-expanded={isOpen}
+      aria-controls={id}
     >
       {title}
-      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      <ChevronDown
+        className={`h-4 w-4 transition-transform duration-300 ease-out ${isOpen ? 'rotate-180' : ''}`}
+      />
     </button>
-    <div className={`md:block ${isOpen ? 'block' : 'hidden'}`}>
-      <h3 className="hidden md:block font-semibold mb-2">{title}</h3>
+    <div
+      id={id}
+      className={`overflow-hidden transition-[max-height] duration-300 ease-out md:overflow-visible md:!max-h-none ${
+        isOpen ? 'max-h-64' : 'max-h-0'
+      }`}
+    >
+      <h3 className="hidden md:block text-sm font-semibold mt-0 mb-2">{title}</h3>
       <div className="space-y-1">
         {links.map(link => (
           <NavLink key={link.label} href={link.href}>
@@ -81,18 +91,21 @@ export const Footer = () => {
         <div className="py-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FooterSection
+              id="footer-about"
               title="About & Legal"
               links={aboutLinks}
               isOpen={aboutOpen}
               onToggle={() => setAboutOpen(!aboutOpen)}
             />
             <FooterSection
+              id="footer-support"
               title="Support"
               links={supportLinks}
               isOpen={supportOpen}
               onToggle={() => setSupportOpen(!supportOpen)}
             />
             <FooterSection
+              id="footer-community"
               title="Community"
               links={communityLinks}
               isOpen={communityOpen}

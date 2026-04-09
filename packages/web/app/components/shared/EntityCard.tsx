@@ -83,6 +83,10 @@ export function EntityCard({
             src={image}
             alt={imageAlt || title}
             className="w-16 h-16 rounded-full object-cover flex-shrink-0"
+            width={64}
+            height={64}
+            loading="lazy"
+            decoding="async"
           />
           <div className="flex-1">
             <CardContent />
@@ -108,6 +112,10 @@ export function EntityCard({
             src={image}
             alt={imageAlt || title}
             className="w-16 h-16 rounded-full object-cover mx-auto mb-2"
+            width={64}
+            height={64}
+            loading="lazy"
+            decoding="async"
           />
         )}
 

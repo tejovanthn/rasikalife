@@ -301,10 +301,13 @@ function PosterUploader() {
 
   return (
     <div className="border rounded-lg p-4 space-y-3 mt-4">
-      <h3 className="text-sm font-semibold">Replace Poster</h3>
+      <h3 className="text-sm font-semibold" id="poster-uploader-label">
+        Replace Poster
+      </h3>
       <input
         type="file"
         accept="image/*"
+        aria-labelledby="poster-uploader-label"
         onChange={e => setFile(e.target.files?.[0] ?? null)}
         className="text-sm w-full"
       />
