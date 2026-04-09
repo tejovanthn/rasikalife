@@ -40,6 +40,23 @@ export const meta: MetaFunction = () => {
       content:
         'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
     },
+    { property: 'og:title', content: 'Upcoming Events - Indian Classical Arts - Rasika.life' },
+    {
+      property: 'og:description',
+      content:
+        'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
+    },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: 'https://rasika.life/events' },
+    { property: 'og:image', content: 'https://rasika.life/og-image.png' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: 'Upcoming Events - Indian Classical Arts - Rasika.life' },
+    {
+      name: 'twitter:description',
+      content:
+        'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
+    },
+    { name: 'twitter:image', content: 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/events' },
   ];
 };

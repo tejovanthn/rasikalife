@@ -200,47 +200,6 @@ export const meta: MetaFunction = ({ data }) => {
         rel: 'canonical',
         href: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
       },
-      // Breadcrumb structured data for SEO
-      {
-        'script:ld+json': {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://rasika.life' },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Carnatic',
-              item: 'https://rasika.life/carnatic',
-            },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: 'Compositions',
-              item: 'https://rasika.life/carnatic/compositions',
-            },
-            {
-              '@type': 'ListItem',
-              position: 4,
-              name: composition.title,
-              item: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
-            },
-          ],
-        },
-      },
-      // MusicComposition structured data
-      {
-        'script:ld+json': {
-          '@context': 'https://schema.org',
-          '@type': 'MusicComposition',
-          name: composition.title,
-          composer: {
-            '@type': 'Person',
-            name: composition.composer.name,
-          },
-          inLanguage: composition.language,
-        },
-      },
     ];
   }
 
@@ -298,39 +257,6 @@ export default function CompositionDetails() {
 
   return (
     <div className="max-w-4xl m-auto">
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://rasika.life' },
-              {
-                '@type': 'ListItem',
-                position: 2,
-                name: 'Carnatic',
-                item: 'https://rasika.life/carnatic',
-              },
-              {
-                '@type': 'ListItem',
-                position: 3,
-                name: 'Compositions',
-                item: 'https://rasika.life/carnatic/compositions',
-              },
-              {
-                '@type': 'ListItem',
-                position: 4,
-                name: composition.title,
-                item: `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`,
-              },
-            ],
-          }),
-        }}
-      />
-
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={composition.title}

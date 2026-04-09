@@ -52,9 +52,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      artists: (results.items || [])
-        .slice(0, 12)
-        .map(a => ({ ...a, name: fromItrans(a.name, script) })),
+      artists: (results.items || []).map(a => ({ ...a, name: fromItrans(a.name, script) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

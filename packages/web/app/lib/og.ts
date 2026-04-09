@@ -55,6 +55,25 @@ export function generateArtistOGImage(artist: {
   return `data:image/svg+xml;base64,${base64Encode(svg)}`;
 }
 
+export function generateRagaOGImage(raga: { name: string }): string {
+  const svg = `
+     <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+       <defs>
+         <style>
+           .title { font-family: Arial, sans-serif; font-size: 48px; fill: white; text-anchor: middle; }
+           .subtitle { font-family: Arial, sans-serif; font-size: 24px; fill: #cccccc; text-anchor: middle; }
+         </style>
+       </defs>
+       <rect width="1200" height="630" fill="#1a1a1a"/>
+       <text x="600" y="300" class="title">${escapeXml(raga.name)}</text>
+       <text x="600" y="360" class="subtitle">Indian Classical Raga</text>
+       <text x="600" y="420" class="subtitle" font-size="18">Rasika.life - Indian Classical Music</text>
+     </svg>
+   `.trim();
+
+  return `data:image/svg+xml;base64,${base64Encode(svg)}`;
+}
+
 /**
  * Escape XML entities for SVG text content
  */

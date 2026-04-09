@@ -11,6 +11,7 @@ import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { generateRagaOGImage } from '~/lib/og';
 import { generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -133,15 +134,17 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:description',
         content: `Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`,
       },
-      { property: 'og:type', content: 'article' },
+      { property: 'og:type', content: 'website' },
       {
         property: 'og:url',
         content: `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`,
       },
+      { property: 'og:image', content: generateRagaOGImage(raga) },
       // Twitter Card tags
-      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: `${raga.name} Raga` },
       { name: 'twitter:description', content: `Indian classical raga ${raga.name}` },
+      { name: 'twitter:image', content: generateRagaOGImage(raga) },
       // Canonical URL
       {
         tagName: 'link',

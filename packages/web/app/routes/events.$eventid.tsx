@@ -240,14 +240,11 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     { property: 'og:description', content: desc },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: canonicalUrl },
-    ...(event.posterUrl ? [{ property: 'og:image', content: event.posterUrl }] : []),
-    {
-      name: 'twitter:card',
-      content: event.posterUrl ? 'summary_large_image' : 'summary',
-    },
+    { property: 'og:image', content: event.posterUrl || 'https://rasika.life/og-image.png' },
+    { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: `${event.title} - ${dateStr}` },
     { name: 'twitter:description', content: desc },
-    ...(event.posterUrl ? [{ name: 'twitter:image', content: event.posterUrl }] : []),
+    { name: 'twitter:image', content: event.posterUrl || 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };

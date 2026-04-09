@@ -47,14 +47,14 @@ export const meta: MetaFunction = () => {
     },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://rasika.life' },
-    { property: 'og:image', content: 'https://rasika.life/og-image.jpg' },
+    { property: 'og:image', content: 'https://rasika.life/og-image.png' },
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: 'Rasika.life - Indian Classical Music & Performances' },
     {
       name: 'twitter:description',
       content: 'Find upcoming Indian classical music concerts, artists, and compositions.',
     },
-    { name: 'twitter:image', content: 'https://rasika.life/og-image.jpg' },
+    { name: 'twitter:image', content: 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: 'https://rasika.life' },
   ];
 };

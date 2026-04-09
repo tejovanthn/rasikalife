@@ -2,7 +2,7 @@ import type { LoaderFunction } from 'react-router';
 
 export const loader: LoaderFunction = async () => {
   const baseUrl = 'https://rasika.life';
-  const lastMod = new Date().toISOString();
+  const lastMod = '2025-01-01T00:00:00.000Z';
 
   // List of all sub-sitemaps
   const sitemaps = [`${baseUrl}/sitemap-static.xml`, `${baseUrl}/sitemap/talas.xml`];

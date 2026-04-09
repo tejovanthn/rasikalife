@@ -55,9 +55,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      ragas: (results.items || [])
-        .slice(0, 12)
-        .map(r => ({ ...r, name: fromItrans(r.name, script) })),
+      ragas: (results.items || []).map(r => ({ ...r, name: fromItrans(r.name, script) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

@@ -61,11 +61,6 @@ export function WebsiteStructuredData() {
         name: 'Rasika.life',
         url: 'https://rasika.life',
         description: 'Explore the world of Indian classical music',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: 'https://rasika.life/search?q={search_term_string}',
-          'query-input': 'required name=search_term_string',
-        },
       }}
     />
   );
