@@ -1,0 +1,1 @@
+- [Project: Rasika.life shape](project_rasika_shape.md) — Indian classical arts platform, SST v3 monorepo, single-table DynamoDB via ElectroDB, tRPC, React Router v7

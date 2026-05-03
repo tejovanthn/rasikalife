@@ -17,6 +17,7 @@ const badgeVariants = cva(
         language: 'border-transparent bg-language text-language-foreground',
         raga: 'border-transparent bg-raga text-raga-foreground',
         tala: 'border-transparent bg-tala text-tala-foreground',
+        success: 'border-transparent bg-success text-success-foreground',
       },
     },
     defaultVariants: {

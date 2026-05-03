@@ -108,13 +108,8 @@ export const eventRouter = createTRPCRouter({
       if (!record) return { duplicate: false } as const;
 
       // Only consider as duplicate if at least one linked event is approved
-      const approvedIds: string[] = [];
-      for (const id of record.eventIds) {
-        const event = await Event.getEvent(id);
-        if (event?.status === 'approved') {
-          approvedIds.push(id);
-        }
-      }
+      const events = await Promise.all(record.eventIds.map(id => Event.getEvent(id)));
+      const approvedIds = record.eventIds.filter((_, i) => events[i]?.status === 'approved');
       if (approvedIds.length === 0) return { duplicate: false } as const;
 
       return {
@@ -135,62 +130,63 @@ export const eventRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       type Suggestion = { id: string; name: string; score: number };
-      const artists: Record<string, Suggestion[]> = {};
-      const venues: Record<string, Suggestion[]> = {};
-      const organisers: Record<string, Suggestion[]> = {};
 
-      // --- Artists: exact + search index fuzzy ---
-      for (const name of input.artistNames) {
-        const key = name.toLowerCase();
+      async function resolveArtist(name: string): Promise<[string, Suggestion[]]> {
+        const [exact, fuzzy] = await Promise.all([
+          Artist.getArtistByName(name),
+          Search.search(name, { filters: ['name'], limit: 3 }),
+        ]);
         const suggestions: Suggestion[] = [];
-        const exact = await Artist.getArtistByName(name);
-        if (exact) {
-          suggestions.push({ id: exact.id, name: exact.name, score: 0 });
-        }
-        const fuzzy = await Search.search(name, { filters: ['name'], limit: 3 });
+        if (exact) suggestions.push({ id: exact.id, name: exact.name, score: 0 });
         for (const r of fuzzy.items.filter(item => item.type === 'artist')) {
           if (!suggestions.some(s => s.id === r.id)) {
             suggestions.push({ id: r.id, name: r.name, score: r.score });
           }
         }
-        if (suggestions.length > 0) artists[key] = suggestions.slice(0, 3);
+        return [name.toLowerCase(), suggestions.slice(0, 3)];
       }
 
-      // --- Venues: exact + search index fuzzy ---
-      for (const name of input.venueNames) {
-        const key = name.toLowerCase();
+      async function resolveVenue(name: string): Promise<[string, Suggestion[]]> {
+        const [exact, fuzzy] = await Promise.all([
+          Venue.getVenueByName(name),
+          Search.search(name, { filters: ['name'], limit: 3 }),
+        ]);
         const suggestions: Suggestion[] = [];
-        const exact = await Venue.getVenueByName(name);
-        if (exact) {
-          suggestions.push({ id: exact.id, name: exact.name, score: 0 });
-        }
-        const fuzzy = await Search.search(name, { filters: ['name'], limit: 3 });
+        if (exact) suggestions.push({ id: exact.id, name: exact.name, score: 0 });
         for (const r of fuzzy.items.filter(item => item.type === 'venue')) {
           if (!suggestions.some(s => s.id === r.id)) {
             suggestions.push({ id: r.id, name: r.name, score: r.score });
           }
         }
-        if (suggestions.length > 0) venues[key] = suggestions.slice(0, 3);
+        return [name.toLowerCase(), suggestions.slice(0, 3)];
       }
 
-      // --- Organisers: exact + search index fuzzy ---
-      for (const name of input.organiserNames) {
-        const key = name.toLowerCase();
+      async function resolveOrganiser(name: string): Promise<[string, Suggestion[]]> {
+        const [exact, fuzzy] = await Promise.all([
+          Organiser.getOrganiserByName(name),
+          Search.search(name, { filters: ['name'], limit: 3 }),
+        ]);
         const suggestions: Suggestion[] = [];
-        const exact = await Organiser.getOrganiserByName(name);
-        if (exact) {
-          suggestions.push({ id: exact.id, name: exact.name, score: 0 });
-        }
-        const fuzzy = await Search.search(name, { filters: ['name'], limit: 3 });
+        if (exact) suggestions.push({ id: exact.id, name: exact.name, score: 0 });
         for (const r of fuzzy.items.filter(item => item.type === 'organiser')) {
           if (!suggestions.some(s => s.id === r.id)) {
             suggestions.push({ id: r.id, name: r.name, score: r.score });
           }
         }
-        if (suggestions.length > 0) organisers[key] = suggestions.slice(0, 3);
+        return [name.toLowerCase(), suggestions.slice(0, 3)];
       }
 
-      return { artists, venues, organisers };
+      const [artistEntries, venueEntries, organiserEntries] = await Promise.all([
+        Promise.all(input.artistNames.map(resolveArtist)),
+        Promise.all(input.venueNames.map(resolveVenue)),
+        Promise.all(input.organiserNames.map(resolveOrganiser)),
+      ]);
+
+      return {
+        artists: Object.fromEntries(artistEntries.filter(([, s]) => s.length > 0)),
+        venues: Object.fromEntries(venueEntries.filter(([, s]) => s.length > 0)),
+        organisers: Object.fromEntries(organiserEntries.filter(([, s]) => s.length > 0)),
+      };
     }),
 
   // === MUTATIONS ===

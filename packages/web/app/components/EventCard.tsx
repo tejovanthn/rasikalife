@@ -24,7 +24,7 @@ const entryTypeLabel: Record<string, string> = {
 };
 
 const entryTypeBadgeVariant: Record<string, BadgeProps['variant']> = {
-  free: 'language',
+  free: 'success',
   ticketed: 'tala',
   'by-invitation': 'raga',
 };
@@ -49,7 +49,7 @@ export function EventCard({ event }: EventCardProps) {
           <PosterImage
             posterUrl={event.posterUrl}
             alt={event.title}
-            className="w-full h-36 object-cover rounded-t-lg"
+            className="w-full h-28 md:h-36 object-cover rounded-t-lg"
             width={400}
             height={144}
           />
@@ -68,12 +68,12 @@ export function EventCard({ event }: EventCardProps) {
           </div>
           <div className="space-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 shrink-0" />
-              {formatEventDate(event.startDateTime)}
+              <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <time dateTime={event.startDateTime}>{formatEventDate(event.startDateTime)}</time>
             </span>
             {event.venueName && (
               <span className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 {event.venueName}
               </span>
             )}

@@ -249,7 +249,7 @@ export const Header = () => {
                   )}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[300px] flex flex-col">
+              <SheetContent side="left" className="w-[min(240px,85vw)] sm:w-[300px] flex flex-col">
                 <SheetHeader>
                   <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                   <SheetDescription className="sr-only">

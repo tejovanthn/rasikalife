@@ -28,6 +28,13 @@ interface SearchResults {
 
 type FilterType = SearchEntityType | 'all';
 
+interface RecentEntity {
+  id: string;
+  type: SearchEntityType;
+  name: string;
+  url: string;
+}
+
 type SearchState = {
   isOpen: boolean;
   query: string;
@@ -147,7 +154,7 @@ const ResultItem = memo(function ResultItem({
   result: SearchResultItem;
   globalIndex: number;
   selectedIndex: number;
-  onResultClick: () => void;
+  onResultClick: (result: SearchResultItem) => void;
 }) {
   const url = getEntityUrl(result);
 
@@ -155,7 +162,7 @@ const ResultItem = memo(function ResultItem({
     <Link
       id={`result-${result.id}`}
       to={url}
-      onClick={onResultClick}
+      onClick={() => onResultClick(result)}
       className={`block px-4 py-3 border-b border-border last:border-b-0 transition-colors ${
         selectedIndex === globalIndex ? 'bg-accent/50 border-accent' : 'hover:bg-accent/20'
       }`}
@@ -186,7 +193,7 @@ export function GlobalSearch() {
   const [state, dispatch] = useReducer(searchReducer, initialState);
   const { isOpen, query, results, isLoading, selectedIndex, filter } = state;
 
-  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [recentEntities, setRecentEntities] = useState<RecentEntity[]>([]);
 
   const isHydrated = useHydrated();
   const navigate = useNavigate();
@@ -201,20 +208,22 @@ export function GlobalSearch() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('rasika:recent-searches');
-      if (stored) setRecentSearches(JSON.parse(stored));
+      const stored = localStorage.getItem('rasika:recent-entities');
+      if (stored) setRecentEntities(JSON.parse(stored));
     } catch {
       // ignore
     }
   }, []);
 
-  const addRecentSearch = useCallback((q: string) => {
-    if (q.length < 3) return;
-    setRecentSearches(prev => {
-      const filtered = prev.filter(s => s !== q);
-      const updated = [q, ...filtered].slice(0, 5);
+  const addRecentEntity = useCallback((result: SearchResultItem) => {
+    setRecentEntities(prev => {
+      const filtered = prev.filter(e => e.id !== result.id);
+      const updated = [
+        { id: result.id, type: result.type, name: result.name, url: getEntityUrl(result) },
+        ...filtered,
+      ].slice(0, 5);
       try {
-        localStorage.setItem('rasika:recent-searches', JSON.stringify(updated));
+        localStorage.setItem('rasika:recent-entities', JSON.stringify(updated));
       } catch {
         // ignore
       }
@@ -222,11 +231,11 @@ export function GlobalSearch() {
     });
   }, []);
 
-  const removeRecentSearch = useCallback((q: string) => {
-    setRecentSearches(prev => {
-      const updated = prev.filter(s => s !== q);
+  const removeRecentEntity = useCallback((id: string) => {
+    setRecentEntities(prev => {
+      const updated = prev.filter(e => e.id !== id);
       try {
-        localStorage.setItem('rasika:recent-searches', JSON.stringify(updated));
+        localStorage.setItem('rasika:recent-entities', JSON.stringify(updated));
       } catch {
         // ignore
       }
@@ -340,7 +349,7 @@ export function GlobalSearch() {
             break;
           case 'Enter':
             if (selectedIndex >= 0 && visibleResults[selectedIndex]) {
-              addRecentSearch(query);
+              addRecentEntity(visibleResults[selectedIndex]);
               dispatch({ type: 'CLOSE' });
               navigate(getEntityUrl(visibleResults[selectedIndex]));
             }
@@ -361,14 +370,20 @@ export function GlobalSearch() {
     getVisibleResults,
     scrollSelectedIntoView,
     navigate,
-    addRecentSearch,
-    query,
+    addRecentEntity,
   ]);
 
-  const handleResultClick = useCallback(() => {
-    addRecentSearch(query);
+  const handleResultClick = useCallback(
+    (result: SearchResultItem) => {
+      addRecentEntity(result);
+      dispatch({ type: 'CLOSE' });
+    },
+    [addRecentEntity]
+  );
+
+  const handleClose = useCallback(() => {
     dispatch({ type: 'CLOSE' });
-  }, [addRecentSearch, query]);
+  }, []);
 
   // Focus input when modal opens
   useEffect(() => {
@@ -432,6 +447,7 @@ export function GlobalSearch() {
                 <button
                   type="button"
                   onClick={() => dispatch({ type: 'CLOSE' })}
+                  aria-label="Close search"
                   className="p-2 text-muted-foreground hover:text-foreground"
                 >
                   <X size={20} />
@@ -455,6 +471,7 @@ export function GlobalSearch() {
                           type="button"
                           role="tab"
                           aria-selected={filter === type}
+                          aria-controls="search-results"
                           onClick={() => handleFilterChange(type)}
                           className={`px-4 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap ${
                             filter === type
@@ -502,7 +519,7 @@ export function GlobalSearch() {
                                   <span>{section.label}</span>
                                   <Link
                                     to={`${section.path}?q=${encodeURIComponent(query)}`}
-                                    onClick={handleResultClick}
+                                    onClick={handleClose}
                                     className="text-primary hover:underline"
                                   >
                                     View all →
@@ -532,25 +549,33 @@ export function GlobalSearch() {
 
                 {query.length < 3 && !isLoading && !results && (
                   <div className="px-4 py-8" aria-live="polite">
-                    {recentSearches.length > 0 && (
+                    {recentEntities.length > 0 && (
                       <div className="mb-6">
-                        <div className="text-sm text-muted-foreground mb-2">Recent searches</div>
+                        <div className="text-sm text-muted-foreground mb-2">Recently visited</div>
                         <div className="flex flex-col gap-1">
-                          {recentSearches.map(s => (
-                            <div key={s} className="flex items-center justify-between group">
-                              <button
-                                type="button"
-                                onClick={() => dispatch({ type: 'SET_QUERY', query: s })}
-                                className="flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors py-1 flex-1 text-left"
+                          {recentEntities.map(entity => (
+                            <div
+                              key={entity.id}
+                              className="flex items-center justify-between group"
+                            >
+                              <Link
+                                to={entity.url}
+                                onClick={handleClose}
+                                className="flex items-center gap-2 text-sm text-foreground hover:text-primary transition-colors py-1 flex-1"
                               >
                                 <Clock size={14} className="text-muted-foreground shrink-0" />
-                                {s}
-                              </button>
+                                <div>
+                                  <div className="font-medium">{entity.name}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {entity.type.charAt(0).toUpperCase() + entity.type.slice(1)}
+                                  </div>
+                                </div>
+                              </Link>
                               <button
                                 type="button"
-                                onClick={() => removeRecentSearch(s)}
-                                className="p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                aria-label={`Remove "${s}" from recent searches`}
+                                onClick={() => removeRecentEntity(entity.id)}
+                                className="p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                aria-label={`Remove "${entity.name}" from recently visited`}
                               >
                                 <X size={14} />
                               </button>
@@ -563,35 +588,35 @@ export function GlobalSearch() {
                     <div className="grid grid-cols-2 gap-2">
                       <Link
                         to="/carnatic/compositions"
-                        onClick={handleResultClick}
+                        onClick={handleClose}
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
                         Compositions
                       </Link>
                       <Link
                         to="/artists"
-                        onClick={handleResultClick}
+                        onClick={handleClose}
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
                         Artists
                       </Link>
                       <Link
                         to="/carnatic/ragas"
-                        onClick={handleResultClick}
+                        onClick={handleClose}
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
                         Ragas
                       </Link>
                       <Link
                         to="/carnatic/talas"
-                        onClick={handleResultClick}
+                        onClick={handleClose}
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
                         Talas
                       </Link>
                       <Link
                         to="/events"
-                        onClick={handleResultClick}
+                        onClick={handleClose}
                         className="px-4 py-3 text-sm bg-muted rounded-md hover:bg-accent transition-colors"
                       >
                         Events

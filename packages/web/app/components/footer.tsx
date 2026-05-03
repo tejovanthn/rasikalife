@@ -44,8 +44,8 @@ const FooterSection = ({
     </button>
     <div
       id={id}
-      className={`overflow-hidden transition-[max-height] duration-300 ease-out md:overflow-visible md:!max-h-none ${
-        isOpen ? 'max-h-64' : 'max-h-0'
+      className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-out md:overflow-visible md:!max-h-none md:!opacity-100 ${
+        isOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
       }`}
     >
       <h3 className="hidden md:block text-sm font-semibold mt-0 mb-2">{title}</h3>

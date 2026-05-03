@@ -88,32 +88,54 @@ export default function HomePage() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Hero */}
-      <section className="text-center py-12 mb-12">
-        <h1 className="hero-title">Indian Classical Music, Live Near You</h1>
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Discover upcoming concerts and performances. Explore the world of Carnatic and Hindustani
-          music — artists, compositions, ragas, and more.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            to="/events"
-            className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            Events
-          </Link>
-          <Link
-            to="/artists"
-            className="inline-block px-6 py-3 border border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            Artists
-          </Link>
-          <Link
-            to="/carnatic/compositions"
-            className="inline-block px-6 py-3 border border-border text-muted-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          >
-            Compositions
-          </Link>
+      <section className="py-12 mb-12 md:flex md:items-end md:justify-between md:gap-12">
+        <div className="md:max-w-xl">
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary mb-4">
+            Carnatic &nbsp;·&nbsp; Hindustani
+          </p>
+          <h1 className="hero-title text-left mt-0">
+            Indian Classical Music, <span className="text-primary">Live Near You</span>
+          </h1>
+          <p className="text-lg text-muted-foreground mb-8 max-w-lg">
+            Discover upcoming concerts and performances. Explore compositions, ragas, artists, and
+            the living tradition of Indian classical music.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/events"
+              className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Upcoming Events
+            </Link>
+            <Link
+              to="/artists"
+              className="inline-block px-6 py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Artists
+            </Link>
+            <Link
+              to="/carnatic/compositions"
+              className="inline-block px-6 py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              Compositions
+            </Link>
+          </div>
         </div>
+        <aside
+          className="hidden md:flex flex-col items-end gap-3 text-right shrink-0"
+          aria-label="Music tradition highlights"
+        >
+          {[
+            { label: 'Ragas', sub: 'melodic frameworks' },
+            { label: 'Talas', sub: 'rhythmic cycles' },
+            { label: 'Kritis', sub: 'devotional compositions' },
+          ].map(item => (
+            <div key={item.label} className="border-r-2 border-primary pr-4">
+              <div className="text-sm font-semibold text-foreground">{item.label}</div>
+              <div className="text-xs text-muted-foreground">{item.sub}</div>
+            </div>
+          ))}
+        </aside>
       </section>
 
       {/* Upcoming Events */}

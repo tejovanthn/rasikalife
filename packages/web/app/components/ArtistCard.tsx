@@ -20,10 +20,10 @@ export function ArtistCard({ artist }: ArtistCardProps) {
   return (
     <Link
       to={generateArtistUrl(artist.name, artist.id)}
-      className="group block cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+      className="group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
       aria-label={`View artist: ${artist.name}`}
     >
-      <Card className="h-full">
+      <Card className="h-full transition-shadow duration-150 group-hover:shadow-md group-hover:border-primary/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg group-hover:underline">
             {artist.title ? `${artist.title} ` : ''}
