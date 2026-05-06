@@ -41,3 +41,19 @@ export async function getUploadUrl(
 
   return { uploadId, uploadUrl, posterUrl };
 }
+
+export async function uploadPosterFromUrl(
+  imageUrl: string,
+  contentType = 'image/jpeg'
+): Promise<{ uploadId: string; posterUrl: string }> {
+  const res = await fetch(imageUrl);
+  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+  const uploadId = generateId();
+  const key = `posters/${uploadId}${extFromContentType(contentType)}`;
+  await s3Client.send(
+    new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key, ContentType: contentType, Body: buffer })
+  );
+  const baseUrl = CDN_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
+  return { uploadId, posterUrl: `${baseUrl}/${key}` };
+}

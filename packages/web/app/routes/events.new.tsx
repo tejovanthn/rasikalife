@@ -44,6 +44,10 @@ interface FileEntry {
 const VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_SIZE = 20 * 1024 * 1024; // 20MB
 
+function isInstagramPostUrl(url: string): boolean {
+  return /instagram\.com\/(?:p|reel)\/[A-Za-z0-9_-]+/.test(url);
+}
+
 async function computeFileHash(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -63,6 +67,9 @@ export default function NewEvent() {
   const [error, setError] = useState<string | null>(null);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(null);
   const [extractingMessage, setExtractingMessage] = useState('Identifying poster type...');
+  const [urlInput, setUrlInput] = useState('');
+  const [urlStep, setUrlStep] = useState<'idle' | 'extracting' | 'error'>('idle');
+  const [urlError, setUrlError] = useState<string | null>(null);
   const messageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isModerator = user?.role === 'moderator' || user?.role === 'admin';
@@ -301,6 +308,35 @@ export default function NewEvent() {
     }
   };
 
+  const handleExtractFromUrl = async () => {
+    if (!isInstagramPostUrl(urlInput)) return;
+    setUrlStep('extracting');
+    setUrlError(null);
+    try {
+      const response = await fetch('/events/new/api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          intent: 'extractFromInstagram',
+          instagramUrl: urlInput,
+          existingFestivalId: festivalId || undefined,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || 'Failed to extract from Instagram URL');
+      }
+      navigateToVerify({
+        posterUrl: '',
+        festivalId: result.festivalId,
+        eventIds: result.eventIds,
+      });
+    } catch (err) {
+      setUrlStep('error');
+      setUrlError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    }
+  };
+
   const handleRetry = () => {
     setStep('idle');
     setError(null);
@@ -505,6 +541,57 @@ export default function NewEvent() {
             </>
           )}
         </Button>
+      </div>
+      <div className="mt-8">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">or paste Instagram URL</span>
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-2">
+          <input
+            type="url"
+            placeholder="https://www.instagram.com/p/..."
+            value={urlInput}
+            onChange={e => {
+              setUrlInput(e.target.value);
+              setUrlError(null);
+              if (urlStep === 'error') setUrlStep('idle');
+            }}
+            disabled={urlStep === 'extracting' || isProcessing}
+            className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          <Button
+            onClick={handleExtractFromUrl}
+            disabled={!isInstagramPostUrl(urlInput) || urlStep === 'extracting' || isProcessing}
+          >
+            {urlStep === 'extracting' ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Fetching...
+              </>
+            ) : (
+              'Extract'
+            )}
+          </Button>
+        </div>
+
+        {urlError && (
+          <div className="mt-2 flex items-center gap-1.5 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+            <span>{urlError}</span>
+          </div>
+        )}
+
+        {urlStep === 'extracting' && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Fetching image from Instagram and extracting event details...
+          </p>
+        )}
       </div>
     </main>
   );

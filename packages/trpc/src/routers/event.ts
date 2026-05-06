@@ -214,6 +214,56 @@ export const eventRouter = createTRPCRouter({
       );
     }),
 
+  extractFromInstagramUrl: editorProcedure
+    .input(
+      z.object({
+        instagramUrl: z.string().url(),
+        existingFestivalId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const match = input.instagramUrl.match(/instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)/);
+      if (!match) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid Instagram post URL' });
+      }
+      const shortcode = match[1];
+
+      // Instagram serves OG meta tags to the facebookexternalhit crawler UA —
+      // the same mechanism powering link previews in Slack, Telegram, iMessage, etc.
+      const pageRes = await fetch(input.instagramUrl, {
+        headers: {
+          'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+          Accept: 'text/html,application/xhtml+xml',
+        },
+      });
+      if (!pageRes.ok) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Could not fetch Instagram post. Is it a public post?',
+        });
+      }
+      const html = await pageRes.text();
+      const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
+      if (!ogImageMatch) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Could not find an image in this Instagram post.',
+        });
+      }
+      const imageUrl = ogImageMatch[1];
+
+      const { uploadId, posterUrl } = await Event.uploadPosterFromUrl(imageUrl);
+
+      return Event.extractAndCreateDrafts(
+        uploadId,
+        posterUrl,
+        ctx.user.id,
+        undefined,
+        input.existingFestivalId,
+        { platform: 'instagram', postId: shortcode, postUrl: input.instagramUrl }
+      );
+    }),
+
   submitVerified: editorProcedure
     .input(
       z.object({

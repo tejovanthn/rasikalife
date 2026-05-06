@@ -60,6 +60,29 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
+  if (body.intent === 'extractFromInstagram') {
+    try {
+      const result = await serverClient.event.extractFromInstagramUrl.mutate({
+        instagramUrl: body.instagramUrl,
+        existingFestivalId: body.existingFestivalId,
+      });
+      return data({
+        extraction: result.extraction,
+        festivalId: result.festivalId,
+        eventIds: result.eventIds,
+      });
+    } catch (error) {
+      console.error('[API] Failed to extract from Instagram URL:', error);
+      const message =
+        error instanceof Error && error.message.toLowerCase().includes('public')
+          ? 'Could not fetch this Instagram post. Make sure it is a public post.'
+          : error instanceof Error && error.message.toLowerCase().includes('image')
+            ? 'Could not find an image in this Instagram post.'
+            : 'Failed to extract from Instagram URL. Please try uploading the image directly.';
+      return data({ error: message }, { status: 500 });
+    }
+  }
+
   if (body.intent === 'submit') {
     try {
       const results = await serverClient.event.submitVerified.mutate({
