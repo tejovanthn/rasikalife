@@ -9,6 +9,7 @@ import { eventRouter } from './event';
 import { festivalRouter } from './festival';
 import { organiserRouter } from './organiser';
 import { ragaRouter } from './raga';
+import { rsvpRouter } from './rsvp';
 import { searchRouter } from './search';
 import { talaRouter } from './tala';
 import { userRouter } from './user';
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   festival: festivalRouter,
   organiser: organiserRouter,
   raga: ragaRouter,
+  rsvp: rsvpRouter,
   search: searchRouter,
   tala: talaRouter,
   user: userRouter,

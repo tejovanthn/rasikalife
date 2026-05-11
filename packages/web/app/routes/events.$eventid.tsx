@@ -1,5 +1,6 @@
 import {
   Calendar,
+  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -9,13 +10,15 @@ import {
   Phone,
   Ticket,
   Upload,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Link, data, redirect, useLoaderData } from 'react-router';
+import { Link, data, redirect, useFetcher, useLoaderData } from 'react-router';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { EventCard } from '~/components/EventCard';
 import { PosterImage } from '~/components/PosterImage';
 import { BreadcrumbStructuredData, EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -39,6 +42,16 @@ interface FestivalEventItem {
   endDateTime?: string;
   venueName?: string;
   artists?: Array<{ name: string; role?: string }>;
+}
+
+interface RelatedEventItem {
+  id: string;
+  title: string;
+  startDateTime: string;
+  venueName?: string;
+  artists?: Array<{ title?: string; name: string; role?: string }>;
+  entryType?: string;
+  posterUrl?: string;
 }
 
 interface EventDetail {
@@ -102,7 +115,6 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
-    // Fetch festival poster as fallback if the event has no poster
     let festivalPosterUrl: string | undefined;
     let festivalEvents: FestivalEventItem[] = [];
     let prevEvent: FestivalEventItem | null = null;
@@ -151,6 +163,23 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
+    const [venueEventsResult, organiserEventsResult, rsvpInfo] = await Promise.all([
+      event.venueId
+        ? serverClient.event.byVenue.query({ venueId: event.venueId, limit: 6 })
+        : Promise.resolve({ items: [] }),
+      event.organiserId
+        ? serverClient.event.byOrganiser.query({ organiserId: event.organiserId, limit: 6 })
+        : Promise.resolve({ items: [] }),
+      serverClient.rsvp.getForEvent.query({ eventId: id }),
+    ]);
+
+    const relatedVenueEvents = (venueEventsResult.items as RelatedEventItem[])
+      .filter(e => e.id !== id)
+      .slice(0, 5);
+    const relatedOrganiserEvents = (organiserEventsResult.items as RelatedEventItem[])
+      .filter(e => e.id !== id)
+      .slice(0, 5);
+
     return data({
       event,
       user,
@@ -161,6 +190,10 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       nextEvent,
       venueMapLink,
       venueAddress,
+      relatedVenueEvents,
+      relatedOrganiserEvents,
+      rsvpCount: rsvpInfo.count,
+      userIsGoing: rsvpInfo.isGoing,
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -190,12 +223,21 @@ export const action: ActionFunction = async ({ request, params }) => {
   const { id } = parsed;
 
   const user = await getUser(request);
+  const formData = await request.formData();
+  const intent = formData.get('intent') as string;
+
+  if (intent === 'toggleRsvp') {
+    if (!user) {
+      return data({ error: 'Sign in to RSVP' }, { status: 401 });
+    }
+    const serverClient = await createServerClient(request);
+    const result = await serverClient.rsvp.toggle.mutate({ eventId: id });
+    return data({ rsvp: result });
+  }
+
   if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {
     return data({ error: 'Unauthorized' }, { status: 403 });
   }
-
-  const formData = await request.formData();
-  const intent = formData.get('intent') as string;
 
   if (intent === 'updatePoster') {
     const posterUrl = formData.get('posterUrl') as string;
@@ -248,6 +290,74 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
+
+function toCalendarDate(iso: string): string {
+  return iso.replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function buildGoogleCalendarUrl(
+  event: EventDetail,
+  venueAddress: string | undefined,
+  shareUrl: string
+): string {
+  const start = toCalendarDate(event.startDateTime);
+  const end = event.endDateTime
+    ? toCalendarDate(event.endDateTime)
+    : toCalendarDate(
+        new Date(new Date(event.startDateTime).getTime() + 2 * 60 * 60 * 1000).toISOString()
+      );
+
+  const location = [event.venueName, venueAddress].filter(Boolean).join(', ');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${start}/${end}`,
+    details: (event.description ?? '') + (shareUrl ? `\n\n${shareUrl}` : ''),
+    location,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function downloadICS(event: EventDetail, venueAddress: string | undefined, shareUrl: string): void {
+  const start = toCalendarDate(event.startDateTime);
+  const end = event.endDateTime
+    ? toCalendarDate(event.endDateTime)
+    : toCalendarDate(
+        new Date(new Date(event.startDateTime).getTime() + 2 * 60 * 60 * 1000).toISOString()
+      );
+
+  const location = [event.venueName, venueAddress].filter(Boolean).join(', ');
+  const description = [event.description ?? '', shareUrl].filter(Boolean).join('\n\n');
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Rasika.life//EN',
+    'BEGIN:VEVENT',
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${event.title}`,
+    ...(description ? [`DESCRIPTION:${description.replace(/\n/g, '\\n')}`] : []),
+    ...(location ? [`LOCATION:${location}`] : []),
+    `URL:${shareUrl}`,
+    `UID:${event.id}@rasika.life`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${event.title
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 function PosterUploader() {
   const [file, setFile] = useState<File | null>(null);
@@ -326,6 +436,58 @@ function PosterUploader() {
   );
 }
 
+function RsvpButton({
+  eventId,
+  isLoggedIn,
+  initialCount,
+  initialIsGoing,
+}: {
+  eventId: string;
+  isLoggedIn: boolean;
+  initialCount: number;
+  initialIsGoing: boolean;
+}) {
+  const fetcher = useFetcher<{ rsvp?: { isGoing: boolean; count: number } }>();
+
+  const optimisticIsGoing =
+    fetcher.formData?.get('intent') === 'toggleRsvp' ? !initialIsGoing : initialIsGoing;
+  const optimisticCount =
+    fetcher.formData?.get('intent') === 'toggleRsvp'
+      ? initialCount + (initialIsGoing ? -1 : 1)
+      : (fetcher.data?.rsvp?.count ?? initialCount);
+
+  const displayCount = fetcher.data?.rsvp?.count ?? optimisticCount;
+  const displayIsGoing = fetcher.data?.rsvp?.isGoing ?? optimisticIsGoing;
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Users className="h-4 w-4" />
+        {displayCount} {displayCount === 1 ? 'person' : 'people'} going
+      </span>
+      {isLoggedIn ? (
+        <fetcher.Form method="post">
+          <input type="hidden" name="intent" value="toggleRsvp" />
+          <Button
+            type="submit"
+            size="sm"
+            variant={displayIsGoing ? 'default' : 'outline'}
+            disabled={fetcher.state !== 'idle'}
+          >
+            {displayIsGoing ? "I'm going ✓" : "I'm going"}
+          </Button>
+        </fetcher.Form>
+      ) : (
+        <Link to="/login">
+          <Button size="sm" variant="outline">
+            Sign in to RSVP
+          </Button>
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export default function EventDetail() {
   const {
     event,
@@ -337,6 +499,10 @@ export default function EventDetail() {
     nextEvent,
     venueMapLink,
     venueAddress,
+    relatedVenueEvents,
+    relatedOrganiserEvents,
+    rsvpCount,
+    userIsGoing,
   } = useLoaderData<{
     event: EventDetail;
     user: { id: string } | null;
@@ -347,6 +513,10 @@ export default function EventDetail() {
     nextEvent: FestivalEventItem | null;
     venueMapLink?: string;
     venueAddress?: string;
+    relatedVenueEvents: RelatedEventItem[];
+    relatedOrganiserEvents: RelatedEventItem[];
+    rsvpCount: number;
+    userIsGoing: boolean;
   }>();
 
   const startDate = new Date(event.startDateTime);
@@ -359,6 +529,8 @@ export default function EventDetail() {
   const mapsUrl =
     venueMapLink ||
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueQueryStr)}`;
+
+  const googleCalendarUrl = buildGoogleCalendarUrl(event, venueAddress, shareUrl);
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -432,7 +604,15 @@ export default function EventDetail() {
 
         {/* Details */}
         <div className="space-y-4">
-          {event.description && <p className="text-muted-foreground">{event.description}</p>}
+          {/* Description */}
+          {event.description && (
+            <section>
+              <h2 className="text-base font-semibold mb-2">About</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {event.description}
+              </p>
+            </section>
+          )}
 
           {/* Artists */}
           {event.artists && event.artists.length > 0 && (
@@ -483,6 +663,35 @@ export default function EventDetail() {
             </div>
           </div>
 
+          {/* Add to Calendar */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <CalendarPlus className="h-4 w-4 text-muted-foreground shrink-0" />
+            <a
+              href={googleCalendarUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-ext-arrow text-sm text-primary hover:underline"
+            >
+              Add to Google Calendar
+            </a>
+            <span className="text-muted-foreground text-sm">·</span>
+            <button
+              type="button"
+              onClick={() => downloadICS(event, venueAddress, shareUrl)}
+              className="text-sm text-primary hover:underline"
+            >
+              Download .ics
+            </button>
+          </div>
+
+          {/* RSVP */}
+          <RsvpButton
+            eventId={event.id}
+            isLoggedIn={!!user}
+            initialCount={rsvpCount}
+            initialIsGoing={userIsGoing}
+          />
+
           {/* Venue */}
           {event.venueName && (
             <div className="space-y-1">
@@ -525,9 +734,14 @@ export default function EventDetail() {
           {event.tags && event.tags.length > 0 && (
             <div className="flex gap-1 flex-wrap">
               {event.tags.map(tag => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
+                <Link key={tag} to={`/events/tags/${encodeURIComponent(tag)}`}>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-accent transition-colors"
+                  >
+                    {tag}
+                  </Badge>
+                </Link>
               ))}
             </div>
           )}
@@ -688,6 +902,46 @@ export default function EventDetail() {
                 </Link>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* More events at venue */}
+      {relatedVenueEvents.length > 0 && event.venueId && event.venueName && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold">More events at {event.venueName}</h2>
+            <Link
+              to={generateVenueUrl(event.venueName, event.venueId)}
+              className="text-sm text-primary"
+            >
+              View venue
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedVenueEvents.map(e => (
+              <EventCard key={e.id} event={e} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* More events by organiser */}
+      {relatedOrganiserEvents.length > 0 && event.organiserId && event.organiserName && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold">More events by {event.organiserName}</h2>
+            <Link
+              to={generateOrganiserUrl(event.organiserName, event.organiserId)}
+              className="text-sm text-primary"
+            >
+              View organiser
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedOrganiserEvents.map(e => (
+              <EventCard key={e.id} event={e} />
+            ))}
           </div>
         </section>
       )}

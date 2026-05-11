@@ -48,7 +48,7 @@ The core package uses a domain-driven design with:
 
 - **Single-Table Design**: All entities stored in one DynamoDB table using composite keys
 - **ElectroDB**: Entity modeling library wrapping DynamoDB (each domain has an `entity.ts`)
-- **Domain Structure**: artist, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, edit, search, change-history, and more
+- **Domain Structure**: artist, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, and more
 - **Access Patterns**: Optimized for DynamoDB with GSI queries via ElectroDB
 - **KSUID IDs**: Time-sortable unique identifiers with domain prefixes
 - **Modular Exports**: Package supports selective imports via subpath exports (`@rasika/core/domain/artist`, `@rasika/core/utils`, etc.)
@@ -56,11 +56,12 @@ The core package uses a domain-driven design with:
 
 ### Key Technical Patterns
 
-1. **Entity Keys**: Format `[ENTITY_TYPE]#[ID]` for primary keys
-2. **Versioning**: Content uses `VERSION#v[n]#[timestamp]` pattern for wiki-style updates
-3. **ACL Pattern**: Artist management uses granular permission system
-4. **Error Handling**: Standardized error codes following `[DOMAIN]_[ERROR_TYPE]` pattern
-5. **Validation**: Zod schemas for all domain entities with consistent error messages
+1. **Entity Keys**: Format `[ENTITY_TYPE]#[ID]` for primary keys, `#METADATA` for sort keys on single-record entities
+2. **Relationship Keys**: Junction/relationship entities use composite PKs — e.g. `rsvp` uses `pk=RSVP#${eventId}`, `sk=USER#${userId}` so all RSVPs for an event can be queried by PK alone
+3. **Versioning**: Content uses `VERSION#v[n]#[timestamp]` pattern for wiki-style updates
+4. **ACL Pattern**: Artist management uses granular permission system
+5. **Error Handling**: Standardized error codes following `[DOMAIN]_[ERROR_TYPE]` pattern
+6. **Validation**: Zod schemas for all domain entities with consistent error messages
 
 ### Database Design
 
@@ -91,6 +92,7 @@ The core package uses a domain-driven design with:
 - Domain modules: `packages/core/src/domain/[entity]/`
 - Each domain has: `entity.ts` (ElectroDB model), `schema.ts` (Zod), `client.ts` (operations), `index.ts` (exports)
 - Some domains also have `types.ts` and a `client.ts` for browser-safe exports
+- Relationship-only domains (e.g. `rsvp`) may skip `schema.ts`/`client.ts` if there are no browser-safe exports needed
 - Tests: `*.test.ts` alongside implementation files
 - Barrel exports via `index.ts` files
 
@@ -134,6 +136,8 @@ When adding new domains to core package:
 4. Export from main package `index.ts` if needed
 5. Add tRPC router in `packages/trpc/src/routers/[name].ts`
 6. Register router in `packages/trpc/src/routers/index.ts`
+
+For auth-gated mutations, use `protectedProcedure` (defined in `packages/trpc/src/trpc.ts`) — it throws `UNAUTHORIZED` if no session is present and narrows `ctx.user` to non-null inside the handler.
 
 ## Key Dependencies
 

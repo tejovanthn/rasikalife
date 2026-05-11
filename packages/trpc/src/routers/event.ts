@@ -104,6 +104,15 @@ export const eventRouter = createTRPCRouter({
     )
     .query(({ input }) => Event.listEventsByArtForm(input.artForm, input)),
 
+  byTag: publicProcedure
+    .input(
+      z.object({
+        tag: z.string().min(1),
+        limit: z.number().min(1).max(200).optional(),
+      })
+    )
+    .query(({ input }) => Event.listEventsByTag(input.tag, input)),
+
   checkPosterHash: editorProcedure
     .input(z.object({ hash: z.string().min(1) }))
     .query(async ({ input }) => {

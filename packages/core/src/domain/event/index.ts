@@ -392,6 +392,22 @@ export async function listEventsByArtForm(
   };
 }
 
+export async function listEventsByTag(
+  tag: string,
+  params?: { limit?: number }
+): Promise<{ items: Event[] }> {
+  const limit = params?.limit || 100;
+  const result = await EventEntity.query
+    .byStatus({ status: 'approved' })
+    .gt({ startDateTime: new Date().toISOString() })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({ limit });
+
+  return {
+    items: (result.data || []).filter(e => e.tags?.includes(tag)) as Event[],
+  };
+}
+
 export async function listEventsByArtist(
   artistId: string,
   params?: { limit?: number; nextToken?: string }
