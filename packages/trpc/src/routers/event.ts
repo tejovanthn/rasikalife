@@ -1,9 +1,12 @@
+import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
 import { Artist, Auth, Event, Festival, Organiser, Search, Venue } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
+
+const lambdaClient = new LambdaClient({});
 
 export const eventRouter = createTRPCRouter({
   // === QUERIES ===
@@ -228,40 +231,39 @@ export const eventRouter = createTRPCRouter({
       }
       const shortcode = match[1];
 
-      // Instagram serves OG meta tags to the facebookexternalhit crawler UA —
-      // the same mechanism powering link previews in Slack, Telegram, iMessage, etc.
-      const pageRes = await fetch(input.instagramUrl, {
-        headers: {
-          'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
-          Accept: 'text/html,application/xhtml+xml',
-        },
-      });
-      if (!pageRes.ok) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Could not fetch Instagram post. Is it a public post?',
-        });
+      // Invoke the dedicated Puppeteer Lambda — keeps Chromium out of the tRPC bundle.
+      const fetcherName = process.env.INSTAGRAM_IMAGE_FETCHER_FUNCTION_NAME;
+      if (!fetcherName) throw new Error('INSTAGRAM_IMAGE_FETCHER_FUNCTION_NAME is not set');
+      const fetcherResult = await lambdaClient.send(
+        new InvokeCommand({
+          FunctionName: fetcherName,
+          Payload: Buffer.from(JSON.stringify({ postUrl: input.instagramUrl })),
+        })
+      );
+      type FetchResult =
+        | { ok: true; imageBase64: string; contentType: string; altText?: string }
+        | { ok: false; error: string };
+      const fetched = JSON.parse(
+        Buffer.from(fetcherResult.Payload ?? []).toString()
+      ) as FetchResult;
+      if (!fetched.ok) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: fetched.error });
       }
-      const html = await pageRes.text();
-      const ogImageMatch = html.match(/<meta property="og:image" content="([^"]+)"/);
-      if (!ogImageMatch) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Could not find an image in this Instagram post.',
-        });
-      }
-      const imageUrl = ogImageMatch[1];
+      const { uploadId, posterUrl } = await Event.uploadPosterFromBuffer(
+        Buffer.from(fetched.imageBase64, 'base64'),
+        fetched.contentType
+      );
 
-      const { uploadId, posterUrl } = await Event.uploadPosterFromUrl(imageUrl);
-
-      return Event.extractAndCreateDrafts(
+      const result = await Event.extractAndCreateDrafts(
         uploadId,
         posterUrl,
         ctx.user.id,
         undefined,
         input.existingFestivalId,
-        { platform: 'instagram', postId: shortcode, postUrl: input.instagramUrl }
+        { platform: 'instagram', postId: shortcode, postUrl: input.instagramUrl },
+        fetched.altText
       );
+      return { ...result, posterUrl };
     }),
 
   submitVerified: editorProcedure

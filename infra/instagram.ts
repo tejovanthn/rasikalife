@@ -49,6 +49,18 @@ export const instagramSyncFunction = new sst.aws.Function('InstagramSyncOrchestr
   },
 });
 
+// Lambda that uses Puppeteer + stealth to fetch the image URL from a public Instagram post.
+// Invoked synchronously by the tRPC Lambda; kept separate so Chromium doesn't bloat the API bundle.
+export const instagramImageFetcherFunction = new sst.aws.Function('InstagramImageFetcher', {
+  handler: 'packages/scraper/src/instagram-image-fetcher.handler',
+  nodejs: {
+    install: ['@sparticuz/chromium', 'puppeteer-core', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
+  },
+  memory: '2 GB',
+  timeout: '3 minutes',
+  environment: {},
+});
+
 // Daily cron
 new sst.aws.Cron('InstagramSyncCron', {
   schedule: 'rate(24 hours)',

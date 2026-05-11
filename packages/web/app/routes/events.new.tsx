@@ -327,7 +327,7 @@ export default function NewEvent() {
         throw new Error(result.error || 'Failed to extract from Instagram URL');
       }
       navigateToVerify({
-        posterUrl: '',
+        posterUrl: result.posterUrl ?? '',
         festivalId: result.festivalId,
         eventIds: result.eventIds,
       });

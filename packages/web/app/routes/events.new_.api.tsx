@@ -70,15 +70,12 @@ export const action: ActionFunction = async ({ request }) => {
         extraction: result.extraction,
         festivalId: result.festivalId,
         eventIds: result.eventIds,
+        posterUrl: result.posterUrl,
       });
     } catch (error) {
       console.error('[API] Failed to extract from Instagram URL:', error);
       const message =
-        error instanceof Error && error.message.toLowerCase().includes('public')
-          ? 'Could not fetch this Instagram post. Make sure it is a public post.'
-          : error instanceof Error && error.message.toLowerCase().includes('image')
-            ? 'Could not find an image in this Instagram post.'
-            : 'Failed to extract from Instagram URL. Please try uploading the image directly.';
+        error instanceof Error ? error.message : 'Failed to extract from Instagram URL.';
       return data({ error: message }, { status: 500 });
     }
   }

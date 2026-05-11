@@ -26,6 +26,10 @@ declare module "sst" {
       "type": "sst.aws.Queue"
       "url": string
     }
+    "InstagramImageFetcher": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
     "InstagramPostQueue": {
       "type": "sst.aws.Queue"
       "url": string

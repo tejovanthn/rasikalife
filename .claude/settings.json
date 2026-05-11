@@ -1,5 +1,9 @@
 {
   "permissions": {
-    "allow": ["Bash(/opt/homebrew/bin/gh issue:*)", "Bash(pnpm -w run lint)"]
+    "allow": [
+      "Bash(/opt/homebrew/bin/gh issue:*)",
+      "Bash(pnpm -w run lint)",
+      "WebFetch(domain:developers.facebook.com)"
+    ]
   }
 }

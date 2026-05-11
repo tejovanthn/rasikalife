@@ -2,58 +2,45 @@ import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { generateId } from '../../utils';
 
-const s3Client = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
+const s3 = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
+const BUCKET = process.env.EVENT_POSTERS_BUCKET || '';
+const CDN = process.env.EVENT_POSTERS_CDN_URL || '';
 
-const BUCKET_NAME = process.env.EVENT_POSTERS_BUCKET || '';
-const CDN_URL = process.env.EVENT_POSTERS_CDN_URL || '';
-const PRESIGNED_URL_EXPIRY = 300; // 5 minutes
+const EXTENSIONS: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'application/pdf': '.pdf',
+};
 
-function extFromContentType(contentType: string): string {
-  const map: Record<string, string> = {
-    'image/jpeg': '.jpg',
-    'image/jpg': '.jpg',
-    'image/png': '.png',
-    'image/webp': '.webp',
-    'application/pdf': '.pdf',
-  };
-  return map[contentType] ?? '.jpg';
+function buildPosterKey(contentType: string): { uploadId: string; key: string; posterUrl: string } {
+  const uploadId = generateId();
+  const key = `posters/${uploadId}${EXTENSIONS[contentType] ?? '.jpg'}`;
+  const posterUrl = `${CDN || `https://${BUCKET}.s3.amazonaws.com`}/${key}`;
+  return { uploadId, key, posterUrl };
 }
 
 export async function getUploadUrl(
   _fileName: string,
   contentType: string
 ): Promise<{ uploadId: string; uploadUrl: string; posterUrl: string }> {
-  const uploadId = generateId();
-  const key = `posters/${uploadId}${extFromContentType(contentType)}`;
-
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    ContentType: contentType,
-  });
-
-  const uploadUrl = await getSignedUrl(s3Client, command, {
-    expiresIn: PRESIGNED_URL_EXPIRY,
-  });
-
-  const baseUrl = CDN_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
-  const posterUrl = `${baseUrl}/${key}`;
-
+  const { uploadId, key, posterUrl } = buildPosterKey(contentType);
+  const uploadUrl = await getSignedUrl(
+    s3,
+    new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType }),
+    { expiresIn: 300 }
+  );
   return { uploadId, uploadUrl, posterUrl };
 }
 
-export async function uploadPosterFromUrl(
-  imageUrl: string,
+export async function uploadPosterFromBuffer(
+  buffer: Buffer,
   contentType = 'image/jpeg'
 ): Promise<{ uploadId: string; posterUrl: string }> {
-  const res = await fetch(imageUrl);
-  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  const uploadId = generateId();
-  const key = `posters/${uploadId}${extFromContentType(contentType)}`;
-  await s3Client.send(
-    new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key, ContentType: contentType, Body: buffer })
+  const { uploadId, key, posterUrl } = buildPosterKey(contentType);
+  await s3.send(
+    new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType, Body: buffer })
   );
-  const baseUrl = CDN_URL || `https://${BUCKET_NAME}.s3.amazonaws.com`;
-  return { uploadId, posterUrl: `${baseUrl}/${key}` };
+  return { uploadId, posterUrl };
 }

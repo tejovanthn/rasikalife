@@ -425,9 +425,10 @@ export async function extractAndCreateDrafts(
   userId: string,
   posterHash?: string,
   existingFestivalId?: string,
-  sourceAttribution?: { platform: string; postId?: string; postUrl?: string }
+  sourceAttribution?: { platform: string; postId?: string; postUrl?: string },
+  hint?: string
 ): Promise<{ extraction: ExtractionResult; festivalId?: string; eventIds: string[] }> {
-  const extraction = await extractFromPoster(posterUrl);
+  const extraction = await extractFromPoster(posterUrl, hint);
 
   const eventIds: string[] = [];
   let festivalId: string | undefined = existingFestivalId;
@@ -568,7 +569,7 @@ export async function getEventMergeScore(id: string): Promise<number> {
 export { extractFromPoster, extractFromSocialPost } from './gemini';
 export type { SocialPostInput } from './gemini';
 export { getPosterByHash } from './poster-hash';
-export { getUploadUrl, uploadPosterFromUrl } from './s3';
+export { getUploadUrl, uploadPosterFromBuffer } from './s3';
 export type { Event } from './entity';
 export type { ExtractionResult } from './extraction';
 export { CreateEventSchema, UpdateEventSchema } from './schema';
