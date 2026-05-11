@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "dev": "sst dev",
     "format": "biome format --write .",
     "lint": "biome lint --write .",

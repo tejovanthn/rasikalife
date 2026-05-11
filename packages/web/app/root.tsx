@@ -59,6 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
 import { Footer } from './components/footer';
 import { GlobalLoader } from './components/global-loader';
 import { Header } from './components/header';
+import { SwUpdateNotifier } from './components/pwa/sw-update-notifier';
 import { Toaster } from './components/ui/sonner';
 import { logAnalyticsEvent } from './firebase';
 import styles from './globals.css?url';
@@ -176,6 +177,7 @@ export default function AppWithProviders() {
           <Layout theme={theme}>
             <Outlet />
             <Toaster />
+            <SwUpdateNotifier />
           </Layout>
         </ScriptContext.Provider>
       </ThemeContext.Provider>

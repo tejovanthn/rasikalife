@@ -1,0 +1,19 @@
+#!/bin/sh
+# Bump the SW cache version whenever web PWA files change.
+
+SW_FILE="packages/web/public/sw.js"
+
+changed=$(git diff --cached --name-only | grep -E \
+  "^packages/web/public/|^packages/web/app/components/pwa/|^packages/web/app/entry\.client\.tsx")
+
+if [ -z "$changed" ]; then
+  exit 0
+fi
+
+current=$(grep "CACHE_NAME = 'rasika-v" "$SW_FILE" | sed "s/.*rasika-v\([0-9]*\)'.*/\1/")
+next=$((current + 1))
+
+sed -i '' "s/rasika-v${current}/rasika-v${next}/" "$SW_FILE"
+git add "$SW_FILE"
+
+echo "SW cache bumped: rasika-v${current} → rasika-v${next}"

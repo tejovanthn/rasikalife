@@ -15,7 +15,11 @@ const MAC_CHROME_PATHS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium',
 ];
-const LINUX_CHROME_PATHS = ['/usr/bin/google-chrome', '/usr/bin/chromium-browser', '/usr/bin/chromium'];
+const LINUX_CHROME_PATHS = [
+  '/usr/bin/google-chrome',
+  '/usr/bin/chromium-browser',
+  '/usr/bin/chromium',
+];
 
 function findSystemChrome(): string {
   if (process.env.LOCAL_CHROMIUM_PATH) return process.env.LOCAL_CHROMIUM_PATH;
@@ -41,7 +45,10 @@ async function fetchImageData(postUrl: string): Promise<FetchResult> {
 
     // Visit homepage first so Instagram sets session cookies — arriving with zero
     // cookies triggers a bot-detection redirect on the post URL.
-    await page.goto('https://www.instagram.com/', { waitUntil: 'domcontentloaded', timeout: 15_000 });
+    await page.goto('https://www.instagram.com/', {
+      waitUntil: 'domcontentloaded',
+      timeout: 15_000,
+    });
     await new Promise(r => setTimeout(r, 1_500));
 
     await page.goto(postUrl, { waitUntil: 'networkidle2', timeout: 30_000 });
@@ -50,7 +57,9 @@ async function fetchImageData(postUrl: string): Promise<FetchResult> {
     const closeBtn = await page.$('[aria-label="Close"]');
     if (closeBtn) await closeBtn.click().catch(() => {});
 
-    await page.evaluate(() => { window.scrollBy(0, 300); });
+    await page.evaluate(() => {
+      window.scrollBy(0, 300);
+    });
     await new Promise(r => setTimeout(r, 2_000));
 
     const { imgSrc, altText } = await page.evaluate(() => {
@@ -59,8 +68,9 @@ async function fetchImageData(postUrl: string): Promise<FetchResult> {
       const img =
         document.querySelector<HTMLImageElement>('article img[alt*="Photo shared by"]') ??
         document.querySelector<HTMLImageElement>('article img[alt*="Image shared"]') ??
-        Array.from(document.querySelectorAll<HTMLImageElement>('img'))
-          .find(i => i.complete && i.naturalWidth > 400 && !i.alt.includes('profile picture')) ??
+        Array.from(document.querySelectorAll<HTMLImageElement>('img')).find(
+          i => i.complete && i.naturalWidth > 400 && !i.alt.includes('profile picture')
+        ) ??
         null;
       if (!img) return { imgSrc: null as string | null, altText: null as string | null };
       return { imgSrc: img.currentSrc || img.src || null, altText: img.alt || null };

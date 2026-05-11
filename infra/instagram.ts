@@ -54,7 +54,12 @@ export const instagramSyncFunction = new sst.aws.Function('InstagramSyncOrchestr
 export const instagramImageFetcherFunction = new sst.aws.Function('InstagramImageFetcher', {
   handler: 'packages/scraper/src/instagram-image-fetcher.handler',
   nodejs: {
-    install: ['@sparticuz/chromium', 'puppeteer-core', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
+    install: [
+      '@sparticuz/chromium',
+      'puppeteer-core',
+      'puppeteer-extra',
+      'puppeteer-extra-plugin-stealth',
+    ],
   },
   memory: '2 GB',
   timeout: '3 minutes',

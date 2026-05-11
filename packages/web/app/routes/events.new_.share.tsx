@@ -1,7 +1,47 @@
+import { useEffect } from 'react';
 import type { ActionFunction, LoaderFunction } from 'react-router';
-import { redirect } from 'react-router';
+import { data, redirect, useLoaderData, useNavigate } from 'react-router';
 import { createServerClient } from '~/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { getUser, requireUser } from '~/lib/auth.server';
+
+// ---------- Client-side IndexedDB helpers ----------
+
+function openShareDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('rasika-share', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('files', { autoIncrement: true });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function readSharedFiles(): Promise<File[]> {
+  try {
+    const db = await openShareDB();
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction('files', 'readonly').objectStore('files').getAll();
+      req.onsuccess = () => resolve((req.result as File[]) ?? []);
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function clearSharedFiles(): Promise<void> {
+  try {
+    const db = await openShareDB();
+    await new Promise<void>((resolve, reject) => {
+      const req = db.transaction('files', 'readwrite').objectStore('files').clear();
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch {
+    // best-effort cleanup
+  }
+}
+
+// ---------- Server-side helpers ----------
 
 async function computeHash(buffer: ArrayBuffer): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -10,112 +50,138 @@ async function computeHash(buffer: ArrayBuffer): Promise<string> {
     .join('');
 }
 
-function safeContentType(type: string | null | undefined): string {
-  if (!type) return 'image/jpeg';
-  if (type === 'image/jpg') return 'image/jpeg';
-  return type;
+type ServerClient = Awaited<ReturnType<typeof createServerClient>>;
+
+type FileResult = {
+  eventIds: string[];
+  festivalId?: string;
+  posterUrl?: string;
+};
+
+async function processSharedFile(file: File, client: ServerClient): Promise<FileResult> {
+  const buffer = await file.arrayBuffer();
+  const hash = await computeHash(buffer);
+  const contentType = file.type === 'image/jpg' ? 'image/jpeg' : file.type || 'image/jpeg';
+
+  const existing = await client.event.checkPosterHash.query({ hash }).catch(() => null);
+  if (existing?.duplicate) {
+    return {
+      eventIds: existing.eventIds,
+      festivalId: existing.festivalId,
+      posterUrl: existing.posterUrl,
+    };
+  }
+
+  const upload = await client.event.getUploadUrl.mutate({ fileName: file.name, contentType });
+  const res = await fetch(upload.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': contentType },
+    body: buffer,
+  });
+  if (!res.ok) throw new Error(`S3 upload failed: ${res.status}`);
+
+  const extracted = await client.event.extractFromPoster.mutate({
+    posterUploadId: upload.uploadId,
+    posterUrl: upload.posterUrl,
+    posterHash: hash,
+  });
+  return {
+    eventIds: extracted.eventIds,
+    festivalId: extracted.festivalId,
+    posterUrl: upload.posterUrl,
+  };
 }
 
-export const loader: LoaderFunction = async () => {
+// ---------- Loader ----------
+
+type LoaderData = { mode: 'sw' };
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  if (url.searchParams.has('sw')) {
+    const user = await getUser(request);
+    if (!user) {
+      return redirect(`/auth/login?redirectTo=${encodeURIComponent('/events/new/share?sw=1')}`);
+    }
+    return data({ mode: 'sw' as const } satisfies LoaderData);
+  }
   return redirect('/events/new');
 };
 
+// ---------- Action ----------
+
 export const action: ActionFunction = async ({ request }) => {
   await requireUser(request);
-  const serverClient = await createServerClient(request);
+  const client = await createServerClient(request);
 
-  let formData: FormData;
-  try {
-    formData = await request.formData();
-  } catch {
-    // Malformed multipart body (can happen with some Android share sources)
-    return redirect('/events/new');
-  }
+  const formData = await request.formData().catch(() => null);
+  const files = (formData?.getAll('files') ?? []).filter(
+    (f): f is File => f instanceof File && f.size > 0
+  );
+  if (!files.length) return redirect('/events/new');
 
-  const fileEntries = formData.getAll('files');
+  const results = await Promise.all(
+    files.map(file =>
+      processSharedFile(file, client).catch(err => {
+        console.error('[share] file failed:', err);
+        return null;
+      })
+    )
+  );
 
-  // Accept both File and Blob (some Lambda/Node environments return Blob)
-  const validFiles = fileEntries.filter(
-    (f): f is File => (f instanceof File || f instanceof Blob) && f.size > 0
-  ) as File[];
+  const successful = results.filter((r): r is FileResult => r !== null);
+  const eventIds = successful.flatMap(r => r.eventIds);
+  const festivalId = successful
+    .slice()
+    .reverse()
+    .find(r => r.festivalId)?.festivalId;
+  const posterUrl = successful
+    .slice()
+    .reverse()
+    .find(r => r.posterUrl)?.posterUrl;
 
-  if (!validFiles.length) {
-    return redirect('/events/new');
-  }
-
-  const allEventIds: string[] = [];
-  let lastFestivalId: string | undefined;
-  let lastPosterUrl = '';
-
-  for (const file of validFiles) {
-    try {
-      const buffer = await file.arrayBuffer();
-      const hash = await computeHash(buffer);
-      const contentType = safeContentType(file.type);
-
-      // Skip duplicates, collecting their IDs
-      try {
-        const hashResult = await serverClient.event.checkPosterHash.query({ hash });
-        if (hashResult.duplicate) {
-          if (hashResult.festivalId) lastFestivalId = hashResult.festivalId;
-          allEventIds.push(...hashResult.eventIds);
-          lastPosterUrl = hashResult.posterUrl || lastPosterUrl;
-          continue;
-        }
-      } catch {
-        // ignore hash check failures, proceed with upload
-      }
-
-      // Get presigned upload URL — filename is ignored, KSUID used as key
-      const uploadResult = await serverClient.event.getUploadUrl.mutate({
-        fileName: '',
-        contentType,
-      });
-      lastPosterUrl = uploadResult.posterUrl;
-
-      // Upload to S3 from the server using the presigned URL
-      const uploadResponse = await fetch(uploadResult.uploadUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': contentType },
-        body: buffer,
-      });
-
-      if (!uploadResponse.ok) {
-        console.error(`[share] S3 upload failed: ${uploadResponse.status}`);
-        continue;
-      }
-
-      // Extract event details with Gemini
-      const result = await serverClient.event.extractFromPoster.mutate({
-        posterUploadId: uploadResult.uploadId,
-        posterUrl: uploadResult.posterUrl,
-        posterHash: hash,
-      });
-
-      if (result.festivalId) lastFestivalId = result.festivalId;
-      allEventIds.push(...result.eventIds);
-    } catch (err) {
-      console.error('[share] Failed to process file:', err);
-    }
-  }
-
-  if (!allEventIds.length && !lastFestivalId) {
-    return redirect('/events/new');
-  }
+  if (!eventIds.length && !festivalId) return redirect('/events/new');
 
   const params = new URLSearchParams();
-  if (lastFestivalId) params.set('festivalId', lastFestivalId);
-  for (const id of allEventIds) params.append('eventId', id);
-  if (lastPosterUrl) params.set('posterUrl', lastPosterUrl);
-
-  return redirect(`/events/new/verify?${params.toString()}`);
+  if (festivalId) params.set('festivalId', festivalId);
+  for (const id of eventIds) params.append('eventId', id);
+  if (posterUrl) params.set('posterUrl', posterUrl);
+  return redirect(`/events/new/verify?${params}`);
 };
 
-// Shown briefly while the share action processes (SSR loading state)
+// ---------- Component ----------
+
 export default function ShareTarget() {
+  const loaderData = useLoaderData() as LoaderData;
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loaderData?.mode !== 'sw') return;
+    let cancelled = false;
+
+    (async () => {
+      const files = await readSharedFiles();
+      if (cancelled) return;
+      if (!files.length) return navigate('/events/new');
+
+      const body = new FormData();
+      for (const file of files) body.append('files', file);
+
+      // ?client=1 tells the SW to pass this POST straight to the server
+      const res = await fetch('/events/new/share?client=1', { method: 'POST', body });
+      await clearSharedFiles();
+      window.location.href = res.url || '/events/new';
+    })().catch(() => navigate('/events/new'));
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loaderData, navigate]);
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="flex flex-col items-center gap-4 py-16 text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         <p className="text-lg font-medium">Processing shared files...</p>
         <p className="text-sm text-muted-foreground">
           Extracting event details from your poster. This may take a few seconds.

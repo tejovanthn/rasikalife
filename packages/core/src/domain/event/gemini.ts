@@ -153,14 +153,21 @@ async function fetchImageAsBase64(url: string): Promise<ImageData> {
   return { data, mimeType: contentType };
 }
 
-async function callGemini(ai: GoogleGenAI, prompt: string, imageData: ImageData, hint?: string): Promise<string> {
+async function callGemini(
+  ai: GoogleGenAI,
+  prompt: string,
+  imageData: ImageData,
+  hint?: string
+): Promise<string> {
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: [
       {
         role: 'user',
         parts: [
-          ...(hint ? [{ text: `ADDITIONAL CONTEXT (Instagram auto-generated caption):\n${hint}\n\n` }] : []),
+          ...(hint
+            ? [{ text: `ADDITIONAL CONTEXT (Instagram auto-generated caption):\n${hint}\n\n` }]
+            : []),
           { text: prompt },
           { inlineData: { data: imageData.data, mimeType: imageData.mimeType } },
         ],
@@ -292,7 +299,10 @@ export async function extractFromSocialPost(input: SocialPostInput): Promise<Ext
 
 // --- Public API ---
 
-export async function extractFromPoster(posterUrl: string, hint?: string): Promise<ExtractionResult> {
+export async function extractFromPoster(
+  posterUrl: string,
+  hint?: string
+): Promise<ExtractionResult> {
   const ai = getGeminiClient();
   const imageData = await fetchImageAsBase64(posterUrl);
 
