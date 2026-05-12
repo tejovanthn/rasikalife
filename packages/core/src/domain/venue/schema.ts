@@ -1,18 +1,11 @@
 import { z } from 'zod';
 
 import { SocialLinkSchema } from '../social-link';
+import { AddressSchema, YearSchema } from '../shared/schemas';
 
 export const CreateVenueSchema = z.object({
   name: z.string().min(1).max(200),
-  address: z
-    .object({
-      street: z.string().optional(),
-      city: z.string().optional(),
-      state: z.string().optional(),
-      postalCode: z.string().optional(),
-      country: z.string().optional(),
-    })
-    .optional(),
+  address: AddressSchema.optional(),
   mapLink: z.string().url().optional(),
   description: z.string().max(5000).optional(),
   venueType: z
@@ -58,7 +51,7 @@ export const CreateVenueSchema = z.object({
     )
     .optional(),
   nearestTransit: z.string().max(200).optional(),
-  foundedYear: z.number().int().min(1800).max(2100).optional(),
+  foundedYear: YearSchema.optional(),
   socialLinks: z.array(SocialLinkSchema).optional(),
 });
 

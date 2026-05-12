@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { TraditionSchema } from '../shared/schemas';
+
 const CarnaticAngaStructureSchema = z.object({
   jati: z.enum(['tisra', 'chatusra', 'khanda', 'misra', 'sankeerna']),
   angas: z.array(z.object({ type: z.enum(['laghu', 'drutam', 'anudrutam']) })),
@@ -18,7 +20,7 @@ const HindustaniAngaStructureSchema = z.object({
 export const CreateTalaSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(5000).optional(),
-  tradition: z.enum(['carnatic', 'hindustani', 'both']).optional(),
+  tradition: TraditionSchema.optional(),
   aksharas: z.number().int().min(1).optional(),
   angaStructure: z.union([CarnaticAngaStructureSchema, HindustaniAngaStructureSchema]).optional(),
 });

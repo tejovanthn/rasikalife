@@ -392,6 +392,10 @@ export async function listEventsByArtForm(
   };
 }
 
+// NOTE: tag filtering is done in-memory after fetching up to `limit` approved future events.
+// If there are more approved future events than `limit`, results will be silently incomplete.
+// The correct fix is a tag-keyed GSI (e.g. PK=TAG#${tag}, SK=startDateTime), which requires
+// an infrastructure change.
 export async function listEventsByTag(
   tag: string,
   params?: { limit?: number }
@@ -467,46 +471,46 @@ export async function extractAndCreateDrafts(
     festivalId = festival.id;
   }
 
-  // Create draft events
-  for (let i = 0; i < extraction.events.length; i++) {
-    const eventData = extraction.events[i];
-    const id = generateId();
-    const artForm = deriveArtForm(eventData.tags);
-
-    await EventEntity.create({
-      id,
-      festivalId,
-      festivalName: extraction.festival?.name,
-      posterUrl,
-      posterUploadId,
-      title: eventData.title,
-      description: eventData.description ?? undefined,
-      startDateTime: eventData.startDateTime,
-      endDateTime: eventData.endDateTime ?? undefined,
-      venueName: eventData.venue?.name,
-      organiserName: eventData.organiser?.name || extraction.festival?.organiser?.name,
-      artists: eventData.artists.map(a => ({
-        name: a.name,
-        title: a.title ?? undefined,
-        role: a.role ?? undefined,
-      })),
-      artForm,
-      tags: eventData.tags,
-      entryType: eventData.entryType ?? undefined,
-      ticketing: eventData.ticketing ?? undefined,
-      contactInfo: eventData.contactInfo ?? undefined,
-      sponsors: eventData.sponsors ?? undefined,
-      status: 'draft',
-      extractionConfidence: extraction.confidence,
-      extractionRawResponse: JSON.stringify(extraction),
-      extractionTimestamp: new Date().toISOString(),
-      createdBy: userId,
-      sourcePlatform: sourceAttribution?.platform,
-      sourcePostId: sourceAttribution?.postId,
-      sourcePostUrl: sourceAttribution?.postUrl,
-    }).go();
-    eventIds.push(id);
-  }
+  // Create draft events in parallel — they are independent of each other
+  const ids = extraction.events.map(() => generateId());
+  await Promise.all(
+    extraction.events.map((eventData, i) => {
+      const artForm = deriveArtForm(eventData.tags);
+      return EventEntity.create({
+        id: ids[i],
+        festivalId,
+        festivalName: extraction.festival?.name,
+        posterUrl,
+        posterUploadId,
+        title: eventData.title,
+        description: eventData.description ?? undefined,
+        startDateTime: eventData.startDateTime,
+        endDateTime: eventData.endDateTime ?? undefined,
+        venueName: eventData.venue?.name,
+        organiserName: eventData.organiser?.name || extraction.festival?.organiser?.name,
+        artists: eventData.artists.map(a => ({
+          name: a.name,
+          title: a.title ?? undefined,
+          role: a.role ?? undefined,
+        })),
+        artForm,
+        tags: eventData.tags,
+        entryType: eventData.entryType ?? undefined,
+        ticketing: eventData.ticketing ?? undefined,
+        contactInfo: eventData.contactInfo ?? undefined,
+        sponsors: eventData.sponsors ?? undefined,
+        status: 'draft',
+        extractionConfidence: extraction.confidence,
+        extractionRawResponse: JSON.stringify(extraction),
+        extractionTimestamp: new Date().toISOString(),
+        createdBy: userId,
+        sourcePlatform: sourceAttribution?.platform,
+        sourcePostId: sourceAttribution?.postId,
+        sourcePostUrl: sourceAttribution?.postUrl,
+      }).go();
+    })
+  );
+  eventIds.push(...ids);
 
   if (posterHash) {
     await savePosterHash({
@@ -567,11 +571,10 @@ export async function mergeEvent(loserId: string, canonicalId: string): Promise<
 }
 
 export async function getEventMergeScore(id: string): Promise<number> {
-  const artistResult = await EventArtistEntity.query
-    .primary({ eventId: id })
-    .go({ attributes: ['artistId'] as never[] });
-
-  const result = await EventEntity.get({ id }).go();
+  const [artistResult, result] = await Promise.all([
+    EventArtistEntity.query.primary({ eventId: id }).go({ attributes: ['artistId'] as never[] }),
+    EventEntity.get({ id }).go(),
+  ]);
   let score = (artistResult.data || []).length;
   if (result.data) {
     if (result.data.description) score += 1;

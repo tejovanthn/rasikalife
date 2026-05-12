@@ -59,6 +59,18 @@ vi.mock('./entity', () => ({
   },
 }));
 
+vi.mock('../raga/entity', () => ({
+  RagaEntity: {
+    get: vi.fn(),
+  },
+}));
+
+vi.mock('../tala/entity', () => ({
+  TalaEntity: {
+    get: vi.fn(),
+  },
+}));
+
 describe('Composition', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,9 +109,17 @@ describe('Composition', () => {
       const { createCompositionRaga } = await import('../composition_raga');
       const { createCompositionTala } = await import('../composition_tala');
       const { CompositionEntity } = await import('./entity');
+      const { RagaEntity } = await import('../raga/entity');
+      const { TalaEntity } = await import('../tala/entity');
 
       vi.mocked(getRaga).mockResolvedValue(mockRaga);
       vi.mocked(getTala).mockResolvedValue(mockTala);
+      vi.mocked(RagaEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [mockRaga] }),
+      } as any);
+      vi.mocked(TalaEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [mockTala] }),
+      } as any);
       vi.mocked(createCompositionRaga).mockResolvedValue({} as any);
       vi.mocked(createCompositionTala).mockResolvedValue({} as any);
 
@@ -672,6 +692,15 @@ describe('Composition', () => {
         '../composition_tala'
       );
       const { CompositionEntity } = await import('./entity');
+      const { RagaEntity } = await import('../raga/entity');
+      const { TalaEntity } = await import('../tala/entity');
+
+      vi.mocked(RagaEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [] }),
+      } as any);
+      vi.mocked(TalaEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [] }),
+      } as any);
 
       vi.mocked(getCompositionRagas).mockResolvedValue({
         items: existingRagas,

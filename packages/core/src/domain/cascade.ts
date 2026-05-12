@@ -280,19 +280,23 @@ export async function cascadeArtistMerge(
       }>) || [];
     eaCursor = eventArtistResult.cursor;
 
+    // Batch-check which canonical records already exist (one BatchGet vs N individual GETs)
+    const existingResult = eventArtistItems.length
+      ? await EventArtistEntity.get(
+          eventArtistItems.map(item => ({ eventId: item.eventId, artistId: canonicalId }))
+        ).go()
+      : { data: [] as Array<{ eventId: string }> };
+    const existingSet = new Set((existingResult.data ?? []).map(r => r.eventId));
+
     await Promise.all(
       eventArtistItems.map(async item => {
-        const existing = await EventArtistEntity.get({
-          eventId: item.eventId,
-          artistId: canonicalId,
-        }).go();
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
             Key: { pk: `EVENT#${item.eventId}`, sk: `ARTIST#${loserId}` },
           })
         );
-        if (!existing.data) {
+        if (!existingSet.has(item.eventId)) {
           await EventArtistEntity.upsert({
             eventId: item.eventId,
             artistId: canonicalId,
@@ -432,6 +436,14 @@ export async function cascadeRagaMerge(
 
     const compositions = await batchGetCompositions(items.map(item => item.compositionId));
 
+    // Batch-check which canonical raga junctions already exist
+    const existingRagaResult = items.length
+      ? await CompositionRagaEntity.get(
+          items.map(item => ({ compositionId: item.compositionId, ragaId: canonicalId }))
+        ).go()
+      : { data: [] as Array<{ compositionId: string }> };
+    const existingRagaSet = new Set((existingRagaResult.data ?? []).map(r => r.compositionId));
+
     await Promise.all(
       items.map(async item => {
         const { compositionId } = item;
@@ -443,11 +455,7 @@ export async function cascadeRagaMerge(
             Key: { pk: `COMPOSITION#${compositionId}`, sk: `RAGA#${loserId}` },
           })
         );
-        const existing = await CompositionRagaEntity.get({
-          compositionId,
-          ragaId: canonicalId,
-        }).go();
-        if (!existing.data) {
+        if (!existingRagaSet.has(compositionId)) {
           await CompositionRagaEntity.create({ compositionId, ragaId: canonicalId }).go();
         }
 
@@ -497,6 +505,14 @@ export async function cascadeTalaMerge(
 
     const compositions = await batchGetCompositions(items.map(item => item.compositionId));
 
+    // Batch-check which canonical tala junctions already exist
+    const existingTalaResult = items.length
+      ? await CompositionTalaEntity.get(
+          items.map(item => ({ compositionId: item.compositionId, talaId: canonicalId }))
+        ).go()
+      : { data: [] as Array<{ compositionId: string }> };
+    const existingTalaSet = new Set((existingTalaResult.data ?? []).map(t => t.compositionId));
+
     await Promise.all(
       items.map(async item => {
         const { compositionId } = item;
@@ -508,11 +524,7 @@ export async function cascadeTalaMerge(
             Key: { pk: `COMPOSITION#${compositionId}`, sk: `TALA#${loserId}` },
           })
         );
-        const existing = await CompositionTalaEntity.get({
-          compositionId,
-          talaId: canonicalId,
-        }).go();
-        if (!existing.data) {
+        if (!existingTalaSet.has(compositionId)) {
           await CompositionTalaEntity.create({ compositionId, talaId: canonicalId }).go();
         }
 

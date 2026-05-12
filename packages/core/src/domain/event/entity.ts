@@ -92,6 +92,9 @@ export const EventEntity = new Entity(
       deletedAt: { type: 'string', required: false },
       mergedIntoId: { type: 'string', required: false },
 
+      // Denormalized RSVP counter — atomically maintained via toggleRsvp
+      rsvpCount: { type: 'number', required: false },
+
       // Ownership & timestamps
       createdBy: { type: 'string', required: true },
       createdAt: {

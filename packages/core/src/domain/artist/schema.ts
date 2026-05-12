@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { SocialLinkSchema } from '../social-link';
+import { YearSchema } from '../shared/schemas';
 
 export const CreateArtistSchema = z.object({
   name: z.string().min(1).max(200),
@@ -15,7 +16,7 @@ export const CreateArtistSchema = z.object({
     .default([]),
   biography: z.string().max(10000).optional(),
   specialisations: z.array(z.string().min(1).max(100)).optional(),
-  birthYear: z.number().int().min(1800).max(2100).optional(),
+  birthYear: YearSchema.optional(),
   birthPlace: z.string().max(200).optional(),
   website: z.string().url().optional(),
   socialLinks: z.array(SocialLinkSchema).optional(),

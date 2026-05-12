@@ -370,19 +370,28 @@ export const eventRouter = createTRPCRouter({
       const isModerator =
         ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
 
-      // Update each draft event with verified data and submit for review
+      // Update each draft event with verified data and submit for review.
+      // Outer loop is sequential to keep venueCache/organiserCache/artistCache consistent.
       const results = [];
       for (const eventInput of input.events) {
         const { id, ...eventData } = eventInput;
-        const venue = await resolveVenue(eventData.venueName, eventData.venueId);
-        const organiser = await resolveOrganiser(eventData.organiserName, eventData.organiserId);
 
-        // Resolve artist IDs
-        const resolvedArtists = [];
-        for (const artist of eventData.artists || []) {
-          const artistId = await resolveArtist(artist);
-          resolvedArtists.push({ ...artist, id: artistId });
-        }
+        // Venue and organiser are independent — resolve in parallel
+        const [venue, organiser] = await Promise.all([
+          resolveVenue(eventData.venueName ?? undefined, eventData.venueId ?? undefined),
+          resolveOrganiser(eventData.organiserName ?? undefined, eventData.organiserId ?? undefined),
+        ]);
+
+        // Resolve artist IDs in parallel with deduplication guard to prevent cache races
+        const seen = new Map<string, Promise<string | undefined>>();
+        const resolvedArtists = await Promise.all(
+          (eventData.artists || []).map(artist => {
+            const normalised = { ...artist, id: artist.id ?? undefined, title: artist.title ?? undefined };
+            const key = normalised.id ?? artist.name.toLowerCase();
+            if (!seen.has(key)) seen.set(key, resolveArtist(normalised));
+            return seen.get(key)!.then(artistId => ({ ...artist, id: artistId }));
+          })
+        );
 
         await Event.submitEvent(
           id,

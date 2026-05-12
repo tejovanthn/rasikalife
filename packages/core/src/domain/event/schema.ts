@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { SponsorSchema } from '../shared/schemas';
+
 export const CreateEventSchema = z.object({
   festivalId: z.string().nullish(),
   posterUrl: z.string().url().nullish(),
@@ -43,7 +45,7 @@ export const CreateEventSchema = z.object({
       socialHandles: z.array(z.string()).nullish(),
     })
     .nullish(),
-  sponsors: z.array(z.object({ name: z.string(), type: z.string().nullish() })).nullish(),
+  sponsors: z.array(SponsorSchema).nullish(),
   sourcePlatform: z.enum(['instagram']).optional(),
   sourcePostId: z.string().optional(),
   sourcePostUrl: z.string().optional(),

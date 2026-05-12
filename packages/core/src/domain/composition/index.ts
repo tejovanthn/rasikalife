@@ -14,8 +14,8 @@ import {
   getCompositionsByTala as getTalaJunctionRecords,
 } from '../composition_tala';
 import { notFoundError } from '../helpers';
-import { getRaga } from '../raga';
-import { getTala } from '../tala';
+import { RagaEntity } from '../raga/entity';
+import { TalaEntity } from '../tala/entity';
 import { CompositionEntity } from './entity';
 import type { Composition } from './entity';
 import type { CreateCompositionSchema, UpdateCompositionSchema } from './schema';
@@ -64,7 +64,7 @@ async function createJunctionRecords<T>(
   }
 }
 
-// Convert ID arrays to name maps for denormalization
+// Convert ID arrays to name maps for denormalization — uses BatchGet (one RTT per entity type)
 async function createNameMaps(
   ragaIds: string[],
   talaIds: string[]
@@ -72,18 +72,14 @@ async function createNameMaps(
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
 }> {
-  const [ragas, talas] = await Promise.all([
-    Promise.all(ragaIds.map(id => getRaga(id))),
-    Promise.all(talaIds.map(id => getTala(id))),
+  const [ragaResult, talaResult] = await Promise.all([
+    ragaIds.length ? RagaEntity.get(ragaIds.map(id => ({ id }))).go() : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+    talaIds.length ? TalaEntity.get(talaIds.map(id => ({ id }))).go() : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
   ]);
 
   return {
-    ragas: ragas
-      .filter((r): r is NonNullable<typeof r> => r !== null)
-      .map(r => ({ id: r.id, name: r.name })),
-    talas: talas
-      .filter((t): t is NonNullable<typeof t> => t !== null)
-      .map(t => ({ id: t.id, name: t.name })),
+    ragas: (ragaResult.data ?? []).map(r => ({ id: r.id, name: r.name })),
+    talas: (talaResult.data ?? []).map(t => ({ id: t.id, name: t.name })),
   };
 }
 
@@ -329,73 +325,57 @@ export async function getCompositionsByLanguage(
   };
 }
 
+async function updateRagaRelations(
+  compositionId: string,
+  ragaIds: string[],
+  out: Record<string, unknown>
+): Promise<void> {
+  const existing = await getCompositionRagas(compositionId);
+  await Promise.all(existing.items.map(r => deleteCompositionRaga(compositionId, r.ragaId)));
+  if (ragaIds.length > 0) {
+    await Promise.all(ragaIds.map(ragaId => createCompositionRaga({ compositionId, ragaId })));
+  }
+  const result = ragaIds.length
+    ? (await RagaEntity.get(ragaIds.map(id => ({ id }))).go()).data ?? []
+    : [];
+  out.ragas = result.map(r => ({ id: r.id, name: r.name }));
+}
+
+async function updateTalaRelations(
+  compositionId: string,
+  talaIds: string[],
+  out: Record<string, unknown>
+): Promise<void> {
+  const existing = await getCompositionTalas(compositionId);
+  await Promise.all(existing.items.map(t => deleteCompositionTala(compositionId, t.talaId)));
+  if (talaIds.length > 0) {
+    await Promise.all(talaIds.map(talaId => createCompositionTala({ compositionId, talaId })));
+  }
+  const result = talaIds.length
+    ? (await TalaEntity.get(talaIds.map(id => ({ id }))).go()).data ?? []
+    : [];
+  out.talas = result.map(t => ({ id: t.id, name: t.name }));
+}
+
 export async function updateComposition(
   id: string,
   input: UpdateCompositionInput
 ): Promise<Composition> {
   const { ragaIds, talaIds, ...compositionData } = input;
 
-  // Filter out undefined values
-  const definedData = Object.fromEntries(
+  const definedData: Record<string, unknown> = Object.fromEntries(
     Object.entries(compositionData).filter(([_, value]) => value !== undefined)
   );
 
-  // Update composerId if composer is being updated
   if (input.composer) {
     definedData.composerId = input.composer.id;
   }
 
-  // Handle raga relationships and denormalized data
-  if (ragaIds !== undefined) {
-    // Delete existing raga relationships
-    const existingRagas = await getCompositionRagas(id);
-    await Promise.all(existingRagas.items.map(raga => deleteCompositionRaga(id, raga.ragaId)));
+  await Promise.all([
+    ragaIds !== undefined ? updateRagaRelations(id, ragaIds, definedData) : Promise.resolve(),
+    talaIds !== undefined ? updateTalaRelations(id, talaIds, definedData) : Promise.resolve(),
+  ]);
 
-    // Create new raga relationships
-    if (ragaIds.length > 0) {
-      await Promise.all(
-        ragaIds.map(ragaId =>
-          createCompositionRaga({
-            compositionId: id,
-            ragaId,
-          })
-        )
-      );
-    }
-
-    // Update denormalized raga data in composition entity
-    const ragaEntities = await Promise.all(ragaIds.map(ragaId => getRaga(ragaId)));
-    definedData.ragas = ragaEntities
-      .filter((r): r is NonNullable<typeof r> => r !== null)
-      .map(r => ({ id: r.id, name: r.name }));
-  }
-
-  // Handle tala relationships and denormalized data
-  if (talaIds !== undefined) {
-    // Delete existing tala relationships
-    const existingTalas = await getCompositionTalas(id);
-    await Promise.all(existingTalas.items.map(tala => deleteCompositionTala(id, tala.talaId)));
-
-    // Create new tala relationships
-    if (talaIds.length > 0) {
-      await Promise.all(
-        talaIds.map(talaId =>
-          createCompositionTala({
-            compositionId: id,
-            talaId,
-          })
-        )
-      );
-    }
-
-    // Update denormalized tala data in composition entity
-    const talaEntities = await Promise.all(talaIds.map(talaId => getTala(talaId)));
-    definedData.talas = talaEntities
-      .filter((t): t is NonNullable<typeof t> => t !== null)
-      .map(t => ({ id: t.id, name: t.name }));
-  }
-
-  // Update composition with all changes including denormalized data
   const result = await CompositionEntity.update({ id }).set(definedData).go();
 
   if (!result.data) {
