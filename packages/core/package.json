@@ -91,6 +91,11 @@
       "import": "./src/domain/organiser/client.ts",
       "default": "./src/domain/organiser/client.ts"
     },
+    "./domain/concert-log/client": {
+      "types": "./src/domain/concert-log/client.ts",
+      "import": "./src/domain/concert-log/client.ts",
+      "default": "./src/domain/concert-log/client.ts"
+    },
     "./domain/*": {
       "types": "./src/domain/*/index.ts",
       "import": "./src/domain/*/index.ts",

@@ -50,6 +50,17 @@ export const eventRouter = createTRPCRouter({
     )
     .query(({ input }) => Event.listUpcomingEvents(input)),
 
+  listPast: publicProcedure
+    .input(
+      z
+        .object({
+          limit: z.number().min(1).max(100).optional(),
+          nextToken: z.string().optional(),
+        })
+        .optional()
+    )
+    .query(({ input }) => Event.listPastEvents(input)),
+
   byFestival: publicProcedure
     .input(
       z.object({

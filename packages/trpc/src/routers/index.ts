@@ -2,6 +2,7 @@ import { createTRPCRouter } from '../trpc';
 import { artistRouter } from './artist';
 import { awardRouter } from './award';
 import { compositionRouter } from './composition';
+import { concertLogRouter } from './concert-log';
 import { contentRouter } from './content';
 import { crawlRouter } from './crawl';
 import { editRouter } from './edit';
@@ -19,6 +20,7 @@ export const appRouter = createTRPCRouter({
   artist: artistRouter,
   award: awardRouter,
   composition: compositionRouter,
+  concertLog: concertLogRouter,
   content: contentRouter,
   crawl: crawlRouter,
   edit: editRouter,

@@ -95,6 +95,9 @@ export const EventEntity = new Entity(
       // Denormalized RSVP counter — atomically maintained via toggleRsvp
       rsvpCount: { type: 'number', required: false },
 
+      // Denormalized attended counter — atomically maintained via upsertConcertLog / deleteConcertLog
+      attendedCount: { type: 'number', required: false },
+
       // Ownership & timestamps
       createdBy: { type: 'string', required: true },
       createdAt: {

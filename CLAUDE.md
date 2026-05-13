@@ -33,10 +33,9 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 ### Monorepo Structure
 - **packages/core**: Domain logic, database operations, utilities (TypeScript)
 - **packages/trpc**: tRPC API server with domain routers
-- **packages/functions**: AWS Lambda functions
+- **packages/auth**: OpenID Connect issuer for authentication (package name: `@rasika/functions`)
 - **packages/scripts**: Utility scripts for data operations
 - **packages/web**: React Router v7 frontend application
-- **packages/auth**: OpenID Connect issuer for authentication
 - **packages/search**: Lambda handler for periodic search index refresh
 - **packages/image-processor**: S3-triggered Lambda for image processing (Sharp)
 - **packages/scraper**: Data scraping utilities

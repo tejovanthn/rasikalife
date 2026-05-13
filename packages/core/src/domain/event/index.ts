@@ -326,6 +326,24 @@ export async function listUpcomingEvents(params?: {
   };
 }
 
+export async function listPastEvents(params?: {
+  limit?: number;
+  nextToken?: string;
+}): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
+  const limit = params?.limit || 20;
+  const result = await EventEntity.query
+    .byStatus({ status: 'approved' })
+    .lt({ startDateTime: new Date().toISOString() })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({ order: 'desc', limit, cursor: params?.nextToken });
+
+  return {
+    items: (result.data || []) as Event[],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
 export async function listEventsByFestival(
   festivalId: string,
   params?: { limit?: number; nextToken?: string }

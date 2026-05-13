@@ -7,6 +7,7 @@ import {
   Globe,
   Mail,
   MapPin,
+  NotebookPen,
   Phone,
   Ticket,
   Upload,
@@ -163,7 +164,12 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
-    const [venueEventsResult, organiserEventsResult, rsvpInfo] = await Promise.all([
+    const eventEndTime = event.endDateTime
+      ? new Date(event.endDateTime)
+      : new Date(new Date(event.startDateTime).getTime() + 4 * 60 * 60 * 1000);
+    const isPast = eventEndTime < new Date();
+
+    const [venueEventsResult, organiserEventsResult, rsvpInfo, concertLog] = await Promise.all([
       event.venueId
         ? serverClient.event.byVenue.query({ venueId: event.venueId, limit: 6 })
         : Promise.resolve({ items: [] }),
@@ -171,6 +177,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         ? serverClient.event.byOrganiser.query({ organiserId: event.organiserId, limit: 6 })
         : Promise.resolve({ items: [] }),
       serverClient.rsvp.getForEvent.query({ eventId: id }),
+      isPast && user
+        ? serverClient.concertLog.get.query({ eventId: id })
+        : Promise.resolve(null),
     ]);
 
     const relatedVenueEvents = (venueEventsResult.items as RelatedEventItem[])
@@ -194,6 +203,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       relatedOrganiserEvents,
       rsvpCount: rsvpInfo.count,
       userIsGoing: rsvpInfo.isGoing,
+      isPast,
+      userAttended: !!concertLog,
+      attendedCount: event.attendedCount ?? 0,
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -233,6 +245,22 @@ export const action: ActionFunction = async ({ request, params }) => {
     const serverClient = await createServerClient(request);
     const result = await serverClient.rsvp.toggle.mutate({ eventId: id });
     return data({ rsvp: result });
+  }
+
+  if (intent === 'toggleAttended') {
+    if (!user) {
+      return data({ error: 'Sign in to log attendance' }, { status: 401 });
+    }
+    const serverClient = await createServerClient(request);
+    const existing = await serverClient.concertLog.get.query({ eventId: id });
+    if (existing) {
+      await serverClient.concertLog.delete.mutate({ eventId: id });
+      const attendedCount = await serverClient.concertLog.countForEvent.query({ eventId: id });
+      return data({ attended: { isAttended: false, count: attendedCount } });
+    }
+    await serverClient.concertLog.upsert.mutate({ eventId: id });
+    const attendedCount = await serverClient.concertLog.countForEvent.query({ eventId: id });
+    return data({ attended: { isAttended: true, count: attendedCount } });
   }
 
   if (!user || (user.role !== 'moderator' && user.role !== 'admin')) {
@@ -460,9 +488,9 @@ function RsvpButton({
   const displayIsGoing = fetcher.data?.rsvp?.isGoing ?? optimisticIsGoing;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 flex-wrap">
       <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Users className="h-4 w-4" />
+        <Users aria-hidden="true" className="h-4 w-4" />
         {displayCount} {displayCount === 1 ? 'person' : 'people'} going
       </span>
       {isLoggedIn ? (
@@ -472,16 +500,73 @@ function RsvpButton({
             type="submit"
             size="sm"
             variant={displayIsGoing ? 'default' : 'outline'}
+            aria-pressed={displayIsGoing}
             disabled={fetcher.state !== 'idle'}
           >
             {displayIsGoing ? "I'm going ✓" : "I'm going"}
           </Button>
         </fetcher.Form>
       ) : (
-        <Link to="/login">
-          <Button size="sm" variant="outline">
-            Sign in to RSVP
+        <Button asChild size="sm" variant="outline">
+          <Link to="/login">Sign in to RSVP</Link>
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function AttendedButton({
+  eventId,
+  isLoggedIn,
+  initialCount,
+  initialIsAttended,
+}: {
+  eventId: string;
+  isLoggedIn: boolean;
+  initialCount: number;
+  initialIsAttended: boolean;
+}) {
+  const fetcher = useFetcher<{ attended?: { isAttended: boolean; count: number } }>();
+
+  const optimisticIsAttended =
+    fetcher.formData?.get('intent') === 'toggleAttended'
+      ? !initialIsAttended
+      : initialIsAttended;
+  const optimisticCount =
+    fetcher.formData?.get('intent') === 'toggleAttended'
+      ? initialCount + (initialIsAttended ? -1 : 1)
+      : (fetcher.data?.attended?.count ?? initialCount);
+
+  const displayCount = fetcher.data?.attended?.count ?? optimisticCount;
+  const displayIsAttended = fetcher.data?.attended?.isAttended ?? optimisticIsAttended;
+
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <NotebookPen aria-hidden="true" className="h-4 w-4" />
+        {displayCount} {displayCount === 1 ? 'rasika' : 'rasikas'} attended
+      </span>
+      {isLoggedIn ? (
+        <fetcher.Form method="post">
+          <input type="hidden" name="intent" value="toggleAttended" />
+          <Button
+            type="submit"
+            size="sm"
+            variant={displayIsAttended ? 'default' : 'outline'}
+            aria-pressed={displayIsAttended}
+            disabled={fetcher.state !== 'idle'}
+          >
+            {displayIsAttended ? 'I was here ✓' : 'I was here'}
           </Button>
+        </fetcher.Form>
+      ) : (
+        <Button asChild size="sm" variant="outline">
+          <Link to="/login">Sign in to log</Link>
+        </Button>
+      )}
+      {displayIsAttended && (
+        <Link to={`/my-concerts/${eventId}`} className="text-xs text-primary hover:underline">
+          Add notes
         </Link>
       )}
     </div>
@@ -503,6 +588,9 @@ export default function EventDetail() {
     relatedOrganiserEvents,
     rsvpCount,
     userIsGoing,
+    isPast,
+    userAttended,
+    attendedCount,
   } = useLoaderData<{
     event: EventDetail;
     user: { id: string } | null;
@@ -517,6 +605,9 @@ export default function EventDetail() {
     relatedOrganiserEvents: RelatedEventItem[];
     rsvpCount: number;
     userIsGoing: boolean;
+    isPast: boolean;
+    userAttended: boolean;
+    attendedCount: number;
   }>();
 
   const startDate = new Date(event.startDateTime);
@@ -684,13 +775,22 @@ export default function EventDetail() {
             </button>
           </div>
 
-          {/* RSVP */}
-          <RsvpButton
-            eventId={event.id}
-            isLoggedIn={!!user}
-            initialCount={rsvpCount}
-            initialIsGoing={userIsGoing}
-          />
+          {/* RSVP / Attendance */}
+          {isPast ? (
+            <AttendedButton
+              eventId={event.id}
+              isLoggedIn={!!user}
+              initialCount={attendedCount}
+              initialIsAttended={userAttended}
+            />
+          ) : (
+            <RsvpButton
+              eventId={event.id}
+              isLoggedIn={!!user}
+              initialCount={rsvpCount}
+              initialIsGoing={userIsGoing}
+            />
+          )}
 
           {/* Venue */}
           {event.venueName && (

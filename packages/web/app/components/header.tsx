@@ -8,6 +8,7 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  NotebookPen,
   Sparkles,
   User,
   Users,
@@ -55,7 +56,8 @@ const NAV_LINKS = [
 ];
 
 const EVENT_LINKS = [
-  { href: '/events', label: 'Events' },
+  { href: '/events', label: 'Upcoming' },
+  { href: '/past-events', label: 'Past Events' },
   { href: '/festivals', label: 'Festivals' },
   { href: '/venues', label: 'Venues' },
   { href: '/organisers', label: 'Organisers' },
@@ -162,6 +164,12 @@ export const Header = () => {
                     <Link to="/my-edits" className="flex items-center gap-2">
                       <ClipboardList className="h-4 w-4" />
                       My Edits
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-concerts" className="flex items-center gap-2">
+                      <NotebookPen className="h-4 w-4" />
+                      My Concerts
                     </Link>
                   </DropdownMenuItem>
                   {(user.role === 'moderator' || user.role === 'admin') && (
@@ -363,6 +371,14 @@ export const Header = () => {
                         >
                           <ClipboardList className="h-4 w-4" />
                           My Edits
+                        </Link>
+                        <Link
+                          to="/my-concerts"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <NotebookPen className="h-4 w-4" />
+                          My Concerts
                         </Link>
                         {(user.role === 'moderator' || user.role === 'admin') && (
                           <>
