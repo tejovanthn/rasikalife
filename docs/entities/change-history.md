@@ -27,11 +27,14 @@ Audit log of field-level changes to entities. Supports `composition`, `raga`, `t
 ## Functions
 
 ```typescript
-import { createChangeHistory, getChangeHistory, getUserChanges, getEntityStateAtTimestamp, computeDiff } from '@rasika/core';
+import { ChangeHistory } from '@rasika/core'; // namespace: ChangeHistory.createChangeHistory(), etc.
+// or individually:
+import { createChangeHistory, getChangeHistory, getChangeHistoryById, getUserChanges, getEntityStateAtTimestamp, computeDiff } from '@rasika/core/domain/change-history';
 ```
 
 - `createChangeHistory(input)` → ChangeHistory
 - `getChangeHistory(entityType, entityId, params?)` → `{items: ChangeHistory[], nextToken?, hasMore}` (desc order)
+- `getChangeHistoryById(id)` → ChangeHistory | null
 - `getUserChanges(userId, params?)` → `{items: ChangeHistory[], nextToken?, hasMore}` (desc order)
 - `getEntityStateAtTimestamp(entityType, entityId, targetTimestamp)` → `{change, stateBefore} | null`
 - `computeDiff(before, after)` → `{field, oldValue?, newValue?}[]`

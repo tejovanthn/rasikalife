@@ -49,7 +49,7 @@ This directory contains technical documentation for the Rasika.life music applic
 
 ## Architecture Principles
 
-- **Framework-aligned**: Use SST, Remix, and tRPC patterns as intended
+- **Framework-aligned**: Use SST, React Router v7, and tRPC patterns as intended
 - **Progressive Enhancement**: Core functionality works without authentication
 - **Simple Solutions**: Start minimal, add complexity only when needed
 - **Convention over Configuration**: Follow established patterns from the codebase

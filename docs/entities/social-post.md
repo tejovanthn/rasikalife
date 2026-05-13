@@ -39,7 +39,9 @@ Tracks social media posts scraped by the scraper package, and their processing s
 ## Functions
 
 ```typescript
-import { createSocialPost, getSocialPost, updateSocialPostStatus, markProcessed, markSkipped, markFailed, listPendingPosts, listPostsByEntity, getLatestPostIdForEntity } from '@rasika/core';
+import { SocialPost } from '@rasika/core'; // namespace: SocialPost.createSocialPost(), etc.
+// or individually:
+import { createSocialPost, getSocialPost, updateSocialPostStatus, markProcessed, markSkipped, markFailed, listPendingPosts, listPostsByStatus, listPostsByEntity, getLatestPostIdForEntity } from '@rasika/core/domain/social-post';
 ```
 
 ### CRUD
@@ -54,5 +56,6 @@ import { createSocialPost, getSocialPost, updateSocialPostStatus, markProcessed,
 
 ### Listing
 - `listPendingPosts(params?)` → `{items: SocialPost[], nextToken?, hasMore}`
+- `listPostsByStatus(status, params?)` → `{items: SocialPost[], nextToken?, hasMore}` — generic status query (`pending` | `processed` | `skipped` | `failed`)
 - `listPostsByEntity(entityType, entityId, params?)` → `{items: SocialPost[], nextToken?, hasMore}`
 - `getLatestPostIdForEntity(entityType, entityId)` → `string | null`

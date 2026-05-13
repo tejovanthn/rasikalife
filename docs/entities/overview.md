@@ -28,7 +28,8 @@ This section documents all ElectroDB entities and their related functions in the
 | [ArtistAward](artist-award.md) | artist-award | Links artists to awards |
 | [CompositionRaga](composition-raga.md) | composition-raga | Links compositions to ragas |
 | [CompositionTala](composition-tala.md) | composition-tala | Links compositions to talas |
-| EventArtist | event-artist | Links events to artists |
+| [EventArtist](event-artist.md) | event-artist | Links events to artists (with denormalized display fields) |
+| [Rsvp](rsvp.md) | rsvp | User attendance for an event — pk: `RSVP#${eventId}`, sk: `USER#${userId}` |
 
 ## Common Patterns
 
@@ -52,9 +53,22 @@ All entities follow these ElectroDB patterns:
 
 ## Import
 
+tRPC routers and server-side Lambda code use namespace imports from the barrel:
+
 ```typescript
-import { createArtist, getArtist, listArtists, ... } from '@rasika/core';
+// Namespace import (preferred in server code — matches barrel re-exports)
+import { Artist, Composition, Raga, Event } from '@rasika/core';
+Artist.createArtist(input);
+Event.getEvent(id);
+
+// Subpath import — works everywhere, avoids loading the full barrel
+import { createArtist, getArtist } from '@rasika/core/domain/artist';
+
+// Browser-safe types and schemas only (web routes, client components)
+import type { Artist } from '@rasika/core/domain/artist/client';
 ```
+
+Never import from the bare `@rasika/core` entry in web route files — the main entry includes Node.js-only deps (AWS SDK, ElectroDB) that crash the browser bundle. Use subpath or `/client` imports there instead.
 
 ## Image Upload Domain
 

@@ -38,7 +38,9 @@ ElectroDB Model: `composition` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createComposition, getComposition, updateComposition, deleteComposition, softDeleteComposition, listCompositions, getCompositionsByName, getCompositionsByComposer, getCompositionsByRaga, getCompositionsByTala, getCompositionsByLanguage, mergeComposition, getCompositionMergeScore } from '@rasika/core';
+import { Composition } from '@rasika/core'; // namespace: Composition.createComposition(), etc.
+// or individually:
+import { createComposition, getComposition, updateComposition, deleteComposition, softDeleteComposition, listCompositions, getCompositionsByName, getCompositionsByComposer, getCompositionsByRaga, getCompositionsByTala, getCompositionsByLanguage, mergeComposition, getCompositionMergeScore } from '@rasika/core/domain/composition';
 ```
 
 ### CRUD

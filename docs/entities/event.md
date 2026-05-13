@@ -35,6 +35,7 @@ ElectroDB Model: `event` v1, service: `rasikalife`
 | `extractionConfidence` | number | no | - | AI extraction confidence |
 | `extractionRawResponse` | string | no | - | Raw AI response |
 | `extractionTimestamp` | string | no | - | AI extraction time |
+| `rsvpCount` | number | no | - | Denormalized attendance count (updated atomically by RSVP toggles) |
 | `deletedAt` | string | no | - | Soft delete timestamp |
 | `mergedIntoId` | string | no | - | Merge target ID |
 | `createdBy` | string | yes | - | Creator user ID |
@@ -56,7 +57,9 @@ ElectroDB Model: `event` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createEvent, getEvent, updateEvent, updateApprovedEvent, deleteEvent, softDeleteEvent, submitEvent, approveEvent, rejectEvent, listUpcomingEvents, listApprovedEvents, listApprovedEventsByMonth, listSubmittedEvents, listEventsByFestival, listEventsByVenue, listEventsByOrganiser, listEventsByArtForm, listEventsByArtist, extractAndCreateDrafts, mergeEvent, getEventMergeScore } from '@rasika/core';
+import { Event } from '@rasika/core'; // namespace: Event.createEvent(), Event.getEvent(), etc.
+// or individually:
+import { createEvent, getEvent, updateEvent, updateApprovedEvent, deleteEvent, softDeleteEvent, submitEvent, approveEvent, rejectEvent, forceSubmitEvent, listUpcomingEvents, listApprovedEvents, listApprovedEventsByMonth, listSubmittedEvents, listDraftEvents, listEventsByFestival, listEventsByVenue, listEventsByOrganiser, listEventsByArtForm, listEventsByTag, listEventsByArtist, extractAndCreateDrafts, mergeEvent, getEventMergeScore } from '@rasika/core/domain/event';
 ```
 
 ### CRUD
@@ -69,6 +72,7 @@ import { createEvent, getEvent, updateEvent, updateApprovedEvent, deleteEvent, s
 
 ### Workflow
 - `submitEvent(id, inputData, userId)` → Event
+- `forceSubmitEvent(id)` → Event — bypasses normal validation (moderator use)
 - `approveEvent(id, moderatorId)` → Event
 - `rejectEvent(id, moderatorId, moderatorNote)` → Event
 
@@ -77,10 +81,12 @@ import { createEvent, getEvent, updateEvent, updateApprovedEvent, deleteEvent, s
 - `listApprovedEvents(params?)` → `{items: Event[], nextToken?, hasMore}`
 - `listApprovedEventsByMonth(yearMonth)` → Event[]
 - `listSubmittedEvents(params?)` → `{items: Event[], nextToken?, hasMore}`
+- `listDraftEvents(params?)` → `{items: Event[], nextToken?, hasMore}`
 - `listEventsByFestival(festivalId, params?)` → `{items: Event[], nextToken?, hasMore}`
 - `listEventsByVenue(venueId, params?)` → `{items: Event[], nextToken?, hasMore}`
 - `listEventsByOrganiser(organiserId, params?)` → `{items: Event[], nextToken?, hasMore}`
 - `listEventsByArtForm(artForm, params?)` → `{items: Event[], nextToken?, hasMore}`
+- `listEventsByTag(tag, params?)` → `{items: Event[], nextToken?, hasMore}`
 - `listEventsByArtist(artistId, params?)` → `{items: [], nextToken?, hasMore}`
 
 ### AI Extraction

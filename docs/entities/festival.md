@@ -37,7 +37,9 @@ ElectroDB Model: `festival` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createFestival, getFestival, updateFestival, submitFestival, approveFestival, deleteFestival, listFestivals, listApprovedFestivalsByMonth } from '@rasika/core';
+import { Festival } from '@rasika/core'; // namespace: Festival.createFestival(), etc.
+// or individually:
+import { createFestival, getFestival, updateFestival, submitFestival, approveFestival, deleteFestival, listFestivals, listUpcomingFestivals, listApprovedFestivalsByMonth } from '@rasika/core/domain/festival';
 ```
 
 ### CRUD
@@ -52,4 +54,5 @@ import { createFestival, getFestival, updateFestival, submitFestival, approveFes
 
 ### Listing
 - `listFestivals(params?)` → `{items: Festival[], nextToken?, hasMore}`
+- `listUpcomingFestivals(params?)` → `{items: Festival[], nextToken?, hasMore}`
 - `listApprovedFestivalsByMonth(yearMonth)` → Festival[]

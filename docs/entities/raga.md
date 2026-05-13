@@ -33,7 +33,9 @@ ElectroDB Model: `raga` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createRaga, getRaga, getRagaByName, updateRaga, deleteRaga, softDeleteRaga, listRagas, mergeRaga, getRagaMergeScore } from '@rasika/core';
+import { Raga } from '@rasika/core'; // namespace: Raga.createRaga(), Raga.getRaga(), etc.
+// or individually:
+import { createRaga, getRaga, getRagaByName, getRagasByMelaNumber, updateRaga, deleteRaga, softDeleteRaga, listRagas, mergeRaga, getRagaMergeScore } from '@rasika/core/domain/raga';
 ```
 
 ### CRUD
@@ -46,6 +48,7 @@ import { createRaga, getRaga, getRagaByName, updateRaga, deleteRaga, softDeleteR
 
 ### Listing
 - `listRagas(params?)` → `{items: Raga[], nextToken?, hasMore}`
+- `getRagasByMelaNumber(melaNumber)` → `Raga[]` — all ragas with the given Melakarta number
 
 ### Merging
 - `mergeRaga(loserId, canonicalId)` → void

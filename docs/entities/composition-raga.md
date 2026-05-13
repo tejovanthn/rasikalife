@@ -22,7 +22,9 @@ Links compositions to their associated ragas.
 ## Functions
 
 ```typescript
-import { createCompositionRaga, getCompositionRagas, getCompositionsByRaga, deleteCompositionRaga } from '@rasika/core';
+import { CompositionRaga } from '@rasika/core'; // namespace: CompositionRaga.createCompositionRaga(), etc.
+// or individually:
+import { createCompositionRaga, getCompositionRagas, getCompositionsByRaga, deleteCompositionRaga } from '@rasika/core/domain/composition_raga';
 ```
 
 - `createCompositionRaga(input)` → CompositionRaga

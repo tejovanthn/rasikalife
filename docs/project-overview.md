@@ -22,11 +22,13 @@
 - **Knowledge Compendium**: Wiki-style database of compositions, ragas, talas
 - **Events Tracker**: Comprehensive calendar with detailed metadata
 - **Artist Profiles**: AI-curated and artist-verified biographies
-- **Community Forums**: StackOverflow-inspired Q&A and discussions
-- **WhatsApp Integration**: Bot interface for artist updates
+- **RSVP & Attendance**: Users can mark attendance for events; counts are denormalized on the event
+- **Instagram Event Discovery**: Automated scraper extracts event details from Instagram posts using Gemini AI
+- **Community Forums**: StackOverflow-inspired Q&A and discussions (planned)
+- **WhatsApp Integration**: Bot interface for artist updates (planned)
 - **Performance Tracking**: Link artists, compositions, and events
-- **Karma System**: Community self-regulation through reputation
-- **Direct Artist Support**: Patreon-style patronage platform
+- **Karma System**: Community self-regulation through reputation (planned)
+- **Direct Artist Support**: Patreon-style patronage platform (planned)
 
 ## Business Model
 - Freemium with premium subscriptions ($3-5/month)

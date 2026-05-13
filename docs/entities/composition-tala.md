@@ -22,7 +22,9 @@ Links compositions to their associated talas.
 ## Functions
 
 ```typescript
-import { createCompositionTala, getCompositionTalas, getCompositionsByTala, deleteCompositionTala } from '@rasika/core';
+import { CompositionTala } from '@rasika/core'; // namespace: CompositionTala.createCompositionTala(), etc.
+// or individually:
+import { createCompositionTala, getCompositionTalas, getCompositionsByTala, deleteCompositionTala } from '@rasika/core/domain/composition_tala';
 ```
 
 - `createCompositionTala(input)` → CompositionTala

@@ -32,7 +32,9 @@ ElectroDB Model: `user` v2, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createUser, getUser, getUserByEmail, getUserByGoogleId, updateUser, updateLastSignedInAt, updateUserRole, findOrCreateUser, listAllUsers } from '@rasika/core';
+import { User } from '@rasika/core'; // namespace: User.createUser(), User.getUser(), etc.
+// or individually:
+import { createUser, getUser, getUserByEmail, getUserByGoogleId, updateUser, updateLastSignedIn, updateUserRole, findOrCreateUser, listAllUsers } from '@rasika/core/domain/user';
 ```
 
 ### CRUD

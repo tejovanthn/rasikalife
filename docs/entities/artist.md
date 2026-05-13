@@ -33,7 +33,9 @@ ElectroDB Model: `artist` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createArtist, getArtist, getArtistByName, updateArtist, deleteArtist, softDeleteArtist, listArtists, mergeArtist, getArtistMergeScore } from '@rasika/core';
+import { Artist } from '@rasika/core'; // namespace: Artist.createArtist(), Artist.getArtist(), etc.
+// or individually:
+import { createArtist, getArtist, getArtistByName, updateArtist, deleteArtist, softDeleteArtist, listArtists, mergeArtist, getArtistMergeScore } from '@rasika/core/domain/artist';
 ```
 
 ### CRUD

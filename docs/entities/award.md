@@ -28,7 +28,9 @@ ElectroDB Model: `award` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createAward, getAward, getAwardByName, updateAward, softDeleteAward, listAwards, mergeAward } from '@rasika/core';
+import { Award } from '@rasika/core'; // namespace: Award.createAward(), Award.getAward(), etc.
+// or individually:
+import { createAward, getAward, getAwardByName, updateAward, softDeleteAward, listAwards, listAwardsByOrganiser, mergeAward } from '@rasika/core/domain/award';
 ```
 
 ### CRUD
@@ -40,6 +42,7 @@ import { createAward, getAward, getAwardByName, updateAward, softDeleteAward, li
 
 ### Listing
 - `listAwards()` → `Award[]` (sorted by `rank`, all pages)
+- `listAwardsByOrganiser(organiserId)` → `Award[]`
 
 ### Merging
 - `mergeAward(loserId, canonicalId)` → void

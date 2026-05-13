@@ -30,7 +30,9 @@ ElectroDB Model: `content` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createContent, getContent, getContentByPath, updateContent, deleteContent, listContents, listPublishedContents, getContentsByCategory } from '@rasika/core';
+import { Content } from '@rasika/core'; // namespace: Content.createContent(), etc.
+// or individually:
+import { createContent, getContent, getContentByPath, updateContent, deleteContent, listContents, listPublishedContents, getContentsByCategory } from '@rasika/core/domain/content';
 ```
 
 ### CRUD

@@ -28,7 +28,9 @@ ElectroDB Model: `tala` v1, service: `rasikalife`
 ## Functions
 
 ```typescript
-import { createTala, getTala, getTalaByName, updateTala, deleteTala, softDeleteTala, listTalas, mergeTala, getTalaMergeScore } from '@rasika/core';
+import { Tala } from '@rasika/core'; // namespace: Tala.createTala(), Tala.getTala(), etc.
+// or individually:
+import { createTala, getTala, getTalaByName, updateTala, deleteTala, softDeleteTala, listTalas, mergeTala, getTalaMergeScore } from '@rasika/core/domain/tala';
 ```
 
 ### CRUD

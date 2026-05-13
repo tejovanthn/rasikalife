@@ -28,7 +28,9 @@ Links artists to awards they have received.
 ## Functions
 
 ```typescript
-import { addArtistAward, removeArtistAward, getArtistAwards, getAwardRecipients } from '@rasika/core';
+import { ArtistAward } from '@rasika/core'; // namespace: ArtistAward.addArtistAward(), etc.
+// or individually:
+import { addArtistAward, removeArtistAward, getArtistAwards, getAwardRecipients } from '@rasika/core/domain/artist-award';
 ```
 
 - `addArtistAward(input)` → ArtistAward
