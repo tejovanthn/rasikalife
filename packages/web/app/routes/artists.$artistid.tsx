@@ -86,6 +86,7 @@ export async function loader({
       artistEvents: eventsResult.items,
       activeEdit,
       formattedDate: formatDate(artist.createdAt),
+      isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
@@ -221,7 +222,7 @@ export default function ArtistDetails() {
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
-        editUrl={`${generateArtistUrl(rawName, artist.id)}/edit`}
+        editUrl={isLoggedIn ? `${generateArtistUrl(rawName, artist.id)}/edit` : undefined}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=artist&entityId=${artist.id}`}

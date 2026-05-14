@@ -1,7 +1,7 @@
 import { Composition } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
-import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
 
 export const compositionRouter = createTRPCRouter({
   get: publicProcedure
@@ -19,13 +19,13 @@ export const compositionRouter = createTRPCRouter({
     )
     .query(({ input }) => Composition.listCompositions(input)),
 
-  create: publicProcedure.input(Composition.CreateCompositionSchema).mutation(async ({ input }) => {
+  create: protectedProcedure.input(Composition.CreateCompositionSchema).mutation(async ({ input }) => {
     const result = await Composition.createComposition(input);
     triggerReindex();
     return result;
   }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({ id: z.string().min(1), data: Composition.UpdateCompositionSchema }))
     .mutation(async ({ input }) => {
       const result = await Composition.updateComposition(input.id, input.data);
@@ -33,7 +33,7 @@ export const compositionRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
+  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
     const result = await Composition.deleteComposition(input.id);
     triggerReindex();
     return result;

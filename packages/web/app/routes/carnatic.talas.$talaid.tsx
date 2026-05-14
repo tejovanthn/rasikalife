@@ -76,6 +76,7 @@ export async function loader({
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       activeEdit,
+      isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
@@ -212,7 +213,7 @@ export default function TalaDetails() {
         shareUrl={shareUrl}
         shareTitle={`${tala.name} Tala - Indian Classical Music`}
         shareDescription={`Learn about the ${tala.name} tala, a fundamental rhythmic cycle in Indian classical music`}
-        editUrl={`${generateTalaUrl(rawName, tala.id)}/edit`}
+        editUrl={isLoggedIn ? `${generateTalaUrl(rawName, tala.id)}/edit` : undefined}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=tala&entityId=${tala.id}`}

@@ -1,7 +1,7 @@
 import { Raga } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
-import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
 
 export const ragaRouter = createTRPCRouter({
   get: publicProcedure
@@ -19,13 +19,13 @@ export const ragaRouter = createTRPCRouter({
     )
     .query(({ input }) => Raga.listRagas(input)),
 
-  create: publicProcedure.input(Raga.CreateRagaSchema).mutation(async ({ input }) => {
+  create: protectedProcedure.input(Raga.CreateRagaSchema).mutation(async ({ input }) => {
     const result = await Raga.createRaga(input);
     triggerReindex();
     return result;
   }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({ id: z.string().min(1), data: Raga.UpdateRagaSchema }))
     .mutation(async ({ input }) => {
       const result = await Raga.updateRaga(input.id, input.data);
@@ -33,7 +33,7 @@ export const ragaRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
+  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
     const result = await Raga.deleteRaga(input.id);
     triggerReindex();
     return result;

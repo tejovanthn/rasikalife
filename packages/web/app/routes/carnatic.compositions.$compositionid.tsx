@@ -132,6 +132,7 @@ export async function loader({
       relatedCompositionsByRaga,
       hasMoreCompositionsByRaga,
       activeEdit,
+      isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
@@ -264,7 +265,7 @@ export default function CompositionDetails() {
         shareUrl={shareUrl}
         shareTitle={`${composition.title} - ${composition.composer.name}`}
         shareDescription={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
-        editUrl={`${generateCompositionUrl(rawTitle, composition.id)}/edit`}
+        editUrl={isLoggedIn ? `${generateCompositionUrl(rawTitle, composition.id)}/edit` : undefined}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=composition&entityId=${composition.id}`}

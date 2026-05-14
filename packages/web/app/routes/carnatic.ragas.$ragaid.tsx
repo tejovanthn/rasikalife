@@ -96,6 +96,7 @@ export async function loader({
         avarohanam: r.avarohanam ? fromItrans(r.avarohanam, script) : r.avarohanam,
       })),
       activeEdit,
+      isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
   } catch (error) {
@@ -234,7 +235,7 @@ export default function RagaDetails() {
         shareUrl={shareUrl}
         shareTitle={`${raga.name} Raga - Indian Classical Music`}
         shareDescription={`Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`}
-        editUrl={`${generateRagaUrl(rawName, raga.id)}/edit`}
+        editUrl={isLoggedIn ? `${generateRagaUrl(rawName, raga.id)}/edit` : undefined}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=raga&entityId=${raga.id}`}

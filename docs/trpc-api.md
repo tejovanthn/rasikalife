@@ -24,9 +24,9 @@ Defined in `packages/trpc/src/trpc.ts`. Every procedure is one of:
 |---|---|---|---|
 | `artist.get` | query | public | Fetch single artist by id |
 | `artist.list` | query | public | Paginated artist list |
-| `artist.create` | mutation | public | Create new artist |
-| `artist.update` | mutation | public | Update artist data |
-| `artist.delete` | mutation | public | Soft-delete artist |
+| `artist.create` | mutation | protected | Create new artist |
+| `artist.update` | mutation | protected | Update artist data |
+| `artist.delete` | mutation | protected | Soft-delete artist |
 | `artist.addAward` | mutation | editor | Link an award to an artist |
 | `artist.removeAward` | mutation | editor | Unlink an award |
 | `artist.listAwards` | query | public | List awards for an artist |
@@ -54,9 +54,9 @@ Defined in `packages/trpc/src/trpc.ts`. Every procedure is one of:
 |---|---|---|---|
 | `composition.get` | query | public | Single composition |
 | `composition.list` | query | public | Paginated list |
-| `composition.create` | mutation | public | New composition |
-| `composition.update` | mutation | public | Update composition |
-| `composition.delete` | mutation | public | Soft-delete |
+| `composition.create` | mutation | protected | New composition |
+| `composition.update` | mutation | protected | Update composition |
+| `composition.delete` | mutation | protected | Soft-delete |
 | `composition.byComposer` | query | public | Compositions by composer id |
 | `composition.byRaga` | query | public | Filter by raga |
 | `composition.byTala` | query | public | Filter by tala |
@@ -203,9 +203,9 @@ Most complex router. Handles the full event lifecycle from AI extraction through
 |---|---|---|---|
 | `raga.get` | query | public | Single raga |
 | `raga.list` | query | public | Paginated list |
-| `raga.create` | mutation | public | New raga |
-| `raga.update` | mutation | public | Update raga |
-| `raga.delete` | mutation | public | Soft-delete |
+| `raga.create` | mutation | protected | New raga |
+| `raga.update` | mutation | protected | Update raga |
+| `raga.delete` | mutation | protected | Soft-delete |
 | `raga.byMela` | query | public | Ragas in a Melakarta number (1–72) |
 | `raga.getByName` | query | public | Exact name lookup |
 | `raga.getMergeSuggestion` | query | moderator | Merge pair suggestion |
@@ -246,9 +246,9 @@ Powered by a Fuse.js index stored in S3, refreshed after mutations and on a sche
 |---|---|---|---|
 | `tala.get` | query | public | Single tala |
 | `tala.list` | query | public | Paginated list |
-| `tala.create` | mutation | public | New tala |
-| `tala.update` | mutation | public | Update tala |
-| `tala.delete` | mutation | public | Soft-delete |
+| `tala.create` | mutation | protected | New tala |
+| `tala.update` | mutation | protected | Update tala |
+| `tala.delete` | mutation | protected | Soft-delete |
 | `tala.getByName` | query | public | Exact name lookup |
 | `tala.getMergeSuggestion` | query | moderator | Merge pair suggestion |
 

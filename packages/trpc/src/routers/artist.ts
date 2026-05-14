@@ -1,7 +1,7 @@
 import { Artist, ArtistAward } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
-import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, editorProcedure, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
 
 export const artistRouter = createTRPCRouter({
   get: publicProcedure
@@ -19,13 +19,13 @@ export const artistRouter = createTRPCRouter({
     )
     .query(({ input }) => Artist.listArtists(input)),
 
-  create: publicProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
+  create: protectedProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
     const result = await Artist.createArtist(input);
     triggerReindex();
     return result;
   }),
 
-  update: publicProcedure
+  update: protectedProcedure
     .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
     .mutation(async ({ input }) => {
       const result = await Artist.updateArtist(input.id, input.data);
@@ -33,7 +33,7 @@ export const artistRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: publicProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
+  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
     const result = await Artist.deleteArtist(input.id);
     triggerReindex();
     return result;
