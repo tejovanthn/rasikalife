@@ -1,35 +1,73 @@
 import { Plus } from 'lucide-react';
-import { Link, data, useLoaderData } from 'react-router';
+import { Link, data, useLoaderData, useNavigate } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
-import { EntityPagination } from '~/components/EntityPagination';
-import { EventCard } from '~/components/EventCard';
+import { EventDayGroup } from '~/components/EventDayGroup';
 import { useAuth } from '~/components/auth-context';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Button } from '~/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/ui/select';
+import { isGenericTitle } from '~/lib/generic-title';
+
+interface EventItem {
+  id: string;
+  title: string;
+  startDateTime: string;
+  endDateTime?: string;
+  venueName?: string;
+  venueCity?: string;
+  organiserName?: string;
+  artists?: Array<{ title?: string; name: string; role?: string }>;
+  tags?: string[];
+  entryType?: string;
+  posterUrl?: string;
+  artForm?: string;
+}
+
+interface DayGroup {
+  date: string;
+  events: Array<EventItem & { isGeneric: boolean }>;
+}
+
+function groupByDate<T extends { startDateTime: string }>(events: T[]) {
+  const map = new Map<string, T[]>();
+  for (const event of events) {
+    const key = event.startDateTime.slice(0, 10);
+    const bucket = map.get(key);
+    if (bucket) bucket.push(event);
+    else map.set(key, [event]);
+  }
+  return [...map]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, events]) => ({ date, events }));
+}
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const nextToken = url.searchParams.get('nextToken');
-  const page = Number(url.searchParams.get('page') || '1');
+  const city = url.searchParams.get('city') ?? '';
 
-  try {
-    const result = await client.event.listUpcoming.query({
-      limit: 20,
-      nextToken: nextToken || undefined,
-    });
-
-    return data({
-      events: result.items,
-      nextToken: result.nextToken,
-      hasMore: result.hasMore,
-      currentPage: page,
-    });
-  } catch (error) {
+  const result = await client.event.listUpcoming.query({ limit: 100 }).catch(error => {
     console.error('Failed to load events:', error);
     throw new Response('Failed to load events', { status: 500 });
-  }
+  });
+
+  const withGeneric = result.items.map(event => ({
+    ...event,
+    isGeneric: isGenericTitle(event.title, event.artists, event.artForm),
+  }));
+
+  const filtered = city ? withGeneric.filter(e => e.venueCity === city) : withGeneric;
+
+  const uniqueCities = [...new Set(result.items.map(e => e.venueCity).filter(Boolean))].sort();
+
+  return data({ groups: groupByDate(filtered), uniqueCities, city });
 };
 
 export const meta: MetaFunction = () => {
@@ -61,31 +99,22 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-interface EventItem {
-  id: string;
-  title: string;
-  startDateTime: string;
-  endDateTime?: string;
-  venueName?: string;
-  organiserName?: string;
-  artists?: Array<{ title?: string; name: string; role?: string }>;
-  tags?: string[];
-  entryType?: string;
-  posterUrl?: string;
-}
-
 export default function EventsIndex() {
-  const { events, nextToken, hasMore, currentPage } = useLoaderData<{
-    events: EventItem[];
-    nextToken: string | null;
-    hasMore: boolean;
-    currentPage: number;
+  const { groups, uniqueCities, city } = useLoaderData<{
+    groups: DayGroup[];
+    uniqueCities: string[];
+    city: string;
   }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+
+  function handleCityChange(value: string) {
+    navigate(value === '__all__' ? '/events' : `/events?city=${encodeURIComponent(value)}`);
+  }
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-6xl">
-      <header className="mb-8 flex items-start justify-between">
+    <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <header className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="page-title">Events</h1>
           <p className="text-xl text-muted-foreground">
@@ -102,26 +131,34 @@ export default function EventsIndex() {
         )}
       </header>
 
-      {events.length === 0 ? (
+      {uniqueCities.length > 1 && (
+        <div className="mb-6">
+          <Select value={city || '__all__'} onValueChange={handleCityChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All cities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">All cities</SelectItem>
+              {uniqueCities.map(c => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {groups.length === 0 ? (
         <EmptyState message="No upcoming events at the moment." />
       ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {events.map(event => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-
-          <div className="mt-8">
-            <EntityPagination
-              currentPage={currentPage}
-              hasMore={hasMore}
-              nextToken={nextToken}
-              baseUrl="/events"
-            />
-          </div>
-        </>
+        <div className="space-y-8">
+          {groups.map(group => (
+            <EventDayGroup key={group.date} date={group.date} events={group.events} />
+          ))}
+        </div>
       )}
+
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },

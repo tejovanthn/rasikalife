@@ -36,10 +36,7 @@ export default function MyConcerts() {
   const { logs } = useLoaderData<{ logs: ConcertLog[]; hasMore: boolean }>();
 
   const grouped = useMemo(() => groupByYear(logs), [logs]);
-  const years = useMemo(
-    () => [...grouped.keys()].sort((a, b) => Number(b) - Number(a)),
-    [grouped]
-  );
+  const years = useMemo(() => [...grouped.keys()].sort((a, b) => Number(b) - Number(a)), [grouped]);
 
   if (logs.length === 0) {
     return (

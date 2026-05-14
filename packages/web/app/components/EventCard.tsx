@@ -1,20 +1,22 @@
-import { Calendar, MapPin } from 'lucide-react';
 import { Link } from 'react-router';
 import { PosterImage } from '~/components/PosterImage';
 import { Badge, type BadgeProps } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { generateEventUrl } from '~/lib/url-slug';
 
+export interface EventCardEvent {
+  id: string;
+  title: string;
+  startDateTime: string;
+  venueName?: string;
+  artists?: Array<{ title?: string; name: string; role?: string }>;
+  posterUrl?: string;
+  entryType?: string;
+}
+
 interface EventCardProps {
-  event: {
-    id: string;
-    title: string;
-    startDateTime: string;
-    venueName?: string;
-    artists?: Array<{ title?: string; name: string; role?: string }>;
-    posterUrl?: string;
-    entryType?: string;
-  };
+  event: EventCardEvent;
+  isGeneric?: boolean;
 }
 
 const entryTypeLabel: Record<string, string> = {
@@ -29,16 +31,24 @@ const entryTypeBadgeVariant: Record<string, BadgeProps['variant']> = {
   'by-invitation': 'raga',
 };
 
-function formatEventDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+function formatTime(dateStr: string) {
+  return new Date(dateStr).toLocaleTimeString('en-IN', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
   });
 }
 
-export function EventCard({ event }: EventCardProps) {
+function artistLine(artists: Array<{ title?: string; name: string }>) {
+  return artists.map(a => `${a.title ? `${a.title} ` : ''}${a.name}`).join(' · ');
+}
+
+export function EventCard({ event, isGeneric = false }: EventCardProps) {
+  const artists = event.artists?.length ? event.artists : null;
+  const heading = isGeneric ? (event.venueName ?? event.title) : event.title;
+  const showVenueInline = !isGeneric && event.venueName;
+  const time = formatTime(event.startDateTime);
+
   return (
     <Link
       to={generateEventUrl(event.title, event.id)}
@@ -54,34 +64,21 @@ export function EventCard({ event }: EventCardProps) {
             height={144}
           />
         )}
-        <CardContent className="py-4">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <h3 className="font-semibold text-foreground leading-snug">{event.title}</h3>
-            {event.entryType && (
-              <Badge
-                variant={entryTypeBadgeVariant[event.entryType] ?? 'secondary'}
-                className="shrink-0"
-              >
+        <CardContent className="py-4 space-y-1.5">
+          <h3 className="font-semibold text-foreground leading-snug">{heading}</h3>
+          <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+            {time}
+            {showVenueInline && (
+              <span className="font-normal text-muted-foreground"> · {event.venueName}</span>
+            )}
+          </p>
+          {artists && <p className="text-sm text-muted-foreground">{artistLine(artists)}</p>}
+          {event.entryType && (
+            <div>
+              <Badge variant={entryTypeBadgeVariant[event.entryType] ?? 'secondary'}>
                 {entryTypeLabel[event.entryType] ?? event.entryType}
               </Badge>
-            )}
-          </div>
-          <div className="space-y-1 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              <time dateTime={event.startDateTime}>{formatEventDate(event.startDateTime)}</time>
-            </span>
-            {event.venueName && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {event.venueName}
-              </span>
-            )}
-          </div>
-          {event.artists && event.artists.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-2">
-              {event.artists.map(a => `${a.title ? `${a.title} ` : ''}${a.name}`).join(', ')}
-            </p>
+            </div>
           )}
         </CardContent>
       </Card>

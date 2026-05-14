@@ -10,7 +10,8 @@ import { requireUser } from '~/lib/auth.server';
 import { generateEventUrl } from '~/lib/url-slug';
 
 export const meta: MetaFunction = ({ data }) => {
-  const title = (data as { log?: { eventTitle?: string } } | undefined)?.log?.eventTitle ?? 'Concert';
+  const title =
+    (data as { log?: { eventTitle?: string } } | undefined)?.log?.eventTitle ?? 'Concert';
   return [
     { title: `${title} - My Concerts - Rasika.life` },
     { name: 'robots', content: 'noindex, nofollow' },

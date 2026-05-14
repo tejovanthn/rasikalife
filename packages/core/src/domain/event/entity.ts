@@ -33,6 +33,7 @@ export const EventEntity = new Entity(
       // Venue (denormalized + linked)
       venueId: { type: 'string', required: false },
       venueName: { type: 'string', required: false },
+      venueCity: { type: 'string', required: false },
 
       // Organiser (denormalized + linked)
       organiserId: { type: 'string', required: false },

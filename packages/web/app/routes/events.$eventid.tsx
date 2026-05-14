@@ -177,9 +177,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         ? serverClient.event.byOrganiser.query({ organiserId: event.organiserId, limit: 6 })
         : Promise.resolve({ items: [] }),
       serverClient.rsvp.getForEvent.query({ eventId: id }),
-      isPast && user
-        ? serverClient.concertLog.get.query({ eventId: id })
-        : Promise.resolve(null),
+      isPast && user ? serverClient.concertLog.get.query({ eventId: id }) : Promise.resolve(null),
     ]);
 
     const relatedVenueEvents = (venueEventsResult.items as RelatedEventItem[])
@@ -529,9 +527,7 @@ function AttendedButton({
   const fetcher = useFetcher<{ attended?: { isAttended: boolean; count: number } }>();
 
   const optimisticIsAttended =
-    fetcher.formData?.get('intent') === 'toggleAttended'
-      ? !initialIsAttended
-      : initialIsAttended;
+    fetcher.formData?.get('intent') === 'toggleAttended' ? !initialIsAttended : initialIsAttended;
   const optimisticCount =
     fetcher.formData?.get('intent') === 'toggleAttended'
       ? initialCount + (initialIsAttended ? -1 : 1)

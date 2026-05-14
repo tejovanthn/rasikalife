@@ -29,10 +29,7 @@ export async function toggleRsvp(
     return { isGoing: false, count };
   }
 
-  await Promise.all([
-    RsvpEntity.create({ eventId, userId }).go(),
-    adjustRsvpCounter(eventId, 1),
-  ]);
+  await Promise.all([RsvpEntity.create({ eventId, userId }).go(), adjustRsvpCounter(eventId, 1)]);
   const count = await getRsvpCount(eventId);
   return { isGoing: true, count };
 }

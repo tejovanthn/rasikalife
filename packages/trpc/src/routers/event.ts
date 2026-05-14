@@ -317,20 +317,26 @@ export const eventRouter = createTRPCRouter({
           const venue = await Venue.getVenue(id);
           if (venue?.mergedIntoId) {
             const canonical = await Venue.getVenue(venue.mergedIntoId);
-            if (canonical) return { venueId: canonical.id, venueName: canonical.name };
+            if (canonical)
+              return {
+                venueId: canonical.id,
+                venueName: canonical.name,
+                venueCity: canonical.city,
+              };
           }
-          return { venueId: id, venueName: name };
+          return { venueId: id, venueName: name, venueCity: venue?.city };
         }
-        if (!name) return { venueId: undefined, venueName: undefined };
-        if (venueCache.has(name)) return { venueId: venueCache.get(name), venueName: name };
+        if (!name) return { venueId: undefined, venueName: undefined, venueCity: undefined };
+        if (venueCache.has(name))
+          return { venueId: venueCache.get(name), venueName: name, venueCity: undefined };
         const existing = await Venue.getVenueByName(name);
         if (existing) {
           venueCache.set(name, existing.id);
-          return { venueId: existing.id, venueName: existing.name };
+          return { venueId: existing.id, venueName: existing.name, venueCity: existing.city };
         }
         const created = await Venue.createVenue({ name });
         venueCache.set(name, created.id);
-        return { venueId: created.id, venueName: name };
+        return { venueId: created.id, venueName: name, venueCity: undefined };
       };
 
       const resolveOrganiser = async (name?: string, id?: string) => {
@@ -390,14 +396,21 @@ export const eventRouter = createTRPCRouter({
         // Venue and organiser are independent — resolve in parallel
         const [venue, organiser] = await Promise.all([
           resolveVenue(eventData.venueName ?? undefined, eventData.venueId ?? undefined),
-          resolveOrganiser(eventData.organiserName ?? undefined, eventData.organiserId ?? undefined),
+          resolveOrganiser(
+            eventData.organiserName ?? undefined,
+            eventData.organiserId ?? undefined
+          ),
         ]);
 
         // Resolve artist IDs in parallel with deduplication guard to prevent cache races
         const seen = new Map<string, Promise<string | undefined>>();
         const resolvedArtists = await Promise.all(
           (eventData.artists || []).map(artist => {
-            const normalised = { ...artist, id: artist.id ?? undefined, title: artist.title ?? undefined };
+            const normalised = {
+              ...artist,
+              id: artist.id ?? undefined,
+              title: artist.title ?? undefined,
+            };
             const key = normalised.id ?? artist.name.toLowerCase();
             if (!seen.has(key)) seen.set(key, resolveArtist(normalised));
             return seen.get(key)!.then(artistId => ({ ...artist, id: artistId }));

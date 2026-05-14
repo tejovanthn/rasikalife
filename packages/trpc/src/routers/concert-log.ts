@@ -9,7 +9,10 @@ export const concertLogRouter = createTRPCRouter({
 
   list: protectedProcedure
     .input(
-      z.object({ limit: z.number().int().min(1).max(100).optional(), nextToken: z.string().optional() })
+      z.object({
+        limit: z.number().int().min(1).max(100).optional(),
+        nextToken: z.string().optional(),
+      })
     )
     .query(({ input, ctx }) => ConcertLog.listUserConcertLogs(ctx.user.id, input)),
 

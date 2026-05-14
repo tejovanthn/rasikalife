@@ -13,6 +13,7 @@ export const CreateEventSchema = z.object({
   timezone: z.string().default('Asia/Kolkata'),
   venueId: z.string().nullish(),
   venueName: z.string().nullish(),
+  venueCity: z.string().optional(),
   organiserId: z.string().nullish(),
   organiserName: z.string().nullish(),
   artists: z

@@ -73,8 +73,12 @@ async function createNameMaps(
   talas: Array<{ id: string; name: string }>;
 }> {
   const [ragaResult, talaResult] = await Promise.all([
-    ragaIds.length ? RagaEntity.get(ragaIds.map(id => ({ id }))).go() : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
-    talaIds.length ? TalaEntity.get(talaIds.map(id => ({ id }))).go() : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+    ragaIds.length
+      ? RagaEntity.get(ragaIds.map(id => ({ id }))).go()
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
+    talaIds.length
+      ? TalaEntity.get(talaIds.map(id => ({ id }))).go()
+      : Promise.resolve({ data: [] as Array<{ id: string; name: string }> }),
   ]);
 
   return {
@@ -336,7 +340,7 @@ async function updateRagaRelations(
     await Promise.all(ragaIds.map(ragaId => createCompositionRaga({ compositionId, ragaId })));
   }
   const result = ragaIds.length
-    ? (await RagaEntity.get(ragaIds.map(id => ({ id }))).go()).data ?? []
+    ? ((await RagaEntity.get(ragaIds.map(id => ({ id }))).go()).data ?? [])
     : [];
   out.ragas = result.map(r => ({ id: r.id, name: r.name }));
 }
@@ -352,7 +356,7 @@ async function updateTalaRelations(
     await Promise.all(talaIds.map(talaId => createCompositionTala({ compositionId, talaId })));
   }
   const result = talaIds.length
-    ? (await TalaEntity.get(talaIds.map(id => ({ id }))).go()).data ?? []
+    ? ((await TalaEntity.get(talaIds.map(id => ({ id }))).go()).data ?? [])
     : [];
   out.talas = result.map(t => ({ id: t.id, name: t.name }));
 }
