@@ -23,6 +23,7 @@
 - **Events Tracker**: Comprehensive calendar with detailed metadata
 - **Artist Profiles**: AI-curated and artist-verified biographies
 - **RSVP & Attendance**: Users can mark attendance for events; counts are denormalized on the event
+- **Concert Book**: Personal log of concerts a user has attended, with optional private notes; atomically tracks `attendedCount` on each event
 - **Instagram Event Discovery**: Automated scraper extracts event details from Instagram posts using Gemini AI
 - **Community Forums**: StackOverflow-inspired Q&A and discussions (planned)
 - **WhatsApp Integration**: Bot interface for artist updates (planned)

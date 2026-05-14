@@ -47,7 +47,7 @@ The core package uses a domain-driven design with:
 
 - **Single-Table Design**: All entities stored in one DynamoDB table using composite keys
 - **ElectroDB**: Entity modeling library wrapping DynamoDB (each domain has an `entity.ts`)
-- **Domain Structure**: artist, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, and more
+- **Domain Structure**: artist, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, concert-log, and more
 - **Access Patterns**: Optimized for DynamoDB with GSI queries via ElectroDB
 - **KSUID IDs**: Time-sortable unique identifiers with domain prefixes
 - **Modular Exports**: Package supports selective imports via subpath exports (`@rasika/core/domain/artist`, `@rasika/core/utils`, etc.)
@@ -100,6 +100,10 @@ The core package uses a domain-driven design with:
 - Use import type for type-only imports
 - Domain exports structured for selective importing
 
+### Web Package Utilities (`packages/web/app/lib/`)
+
+- `generic-title.ts` — `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
+
 ### Importing from `@rasika/core` in web routes
 
 **Never import from the bare `@rasika/core` entry in web route files.** The main entry re-exports everything including ElectroDB and AWS SDK, which use Node.js-only APIs (e.g. `util.promisify`). React Router v7 bundles the top-level imports of every route module for the client, so this crashes the browser.
@@ -112,6 +116,7 @@ Always use a subpath export instead:
 | `ROLE`, `PERMISSION` (auth roles) | `@rasika/core/auth` |
 | Edit types/status | `@rasika/core/domain/edit/client` |
 | Artist/Raga/Tala/etc. types & schemas | `@rasika/core/domain/[name]/client` |
+| Concert log types | `@rasika/core/domain/concert-log/client` |
 | Pure utilities (completion score, etc.) | `@rasika/core/shared/completion` (or relevant subpath) |
 
 All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.

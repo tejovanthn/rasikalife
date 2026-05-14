@@ -30,6 +30,7 @@ This section documents all ElectroDB entities and their related functions in the
 | [CompositionTala](composition-tala.md) | composition-tala | Links compositions to talas |
 | [EventArtist](event-artist.md) | event-artist | Links events to artists (with denormalized display fields) |
 | [Rsvp](rsvp.md) | rsvp | User attendance for an event — pk: `RSVP#${eventId}`, sk: `USER#${userId}` |
+| [ConcertLog](concert-log.md) | concert-log | User's personal concert book — concerts they have attended, with private notes |
 
 ## Common Patterns
 
