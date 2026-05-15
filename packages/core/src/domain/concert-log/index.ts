@@ -1,9 +1,11 @@
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { BatchGetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { EventEntity } from '../event/entity';
+import { RsvpEntity } from '../rsvp/entity';
 import { getEvent } from '../event';
 import { ConcertLogEntity } from './entity';
 import type { ConcertLog } from './entity';
+import type { Event } from '../event/entity';
 
 async function adjustAttendedCounter(eventId: string, delta: 1 | -1): Promise<void> {
   await dynamoClient.send(
@@ -99,6 +101,94 @@ export async function listEventConcertLogs(
 export async function getAttendedCount(eventId: string): Promise<number> {
   const result = await EventEntity.get({ id: eventId }).go();
   return result.data?.attendedCount ?? 0;
+}
+
+export async function listPastRsvpedWithoutLogs(
+  userId: string,
+  limit = 20
+): Promise<Event[]> {
+  // Fetch user's RSVPs
+  const rsvpResult = await RsvpEntity.query
+    .byUser({ userId })
+    .go({ order: 'desc', limit: 100 });
+
+  const rsvps = rsvpResult.data ?? [];
+  if (rsvps.length === 0) return [];
+
+  const eventIds = rsvps.map(r => r.eventId);
+
+  // Batch-get events to check which are in the past
+  const chunks: string[][] = [];
+  for (let i = 0; i < eventIds.length; i += 100) {
+    chunks.push(eventIds.slice(i, i + 100));
+  }
+
+  const eventResults = await Promise.all(
+    chunks.map(chunk =>
+      dynamoClient.send(
+        new BatchGetCommand({
+          RequestItems: {
+            [TABLE_NAME]: {
+              Keys: chunk.map(id => ({ pk: `EVENT#${id}`, sk: '#METADATA' })),
+            },
+          },
+        })
+      )
+    )
+  );
+
+  const now = new Date().toISOString();
+  const pastEventIds = new Set<string>();
+  const eventMap = new Map<string, Event>();
+
+  for (const result of eventResults) {
+    for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Event[]) {
+      if (item.startDateTime < now) {
+        pastEventIds.add(item.id);
+        eventMap.set(item.id, item);
+      }
+    }
+  }
+
+  if (pastEventIds.size === 0) return [];
+
+  // Batch-get ConcertLogs for these events to find which have no log yet
+  const logKeys = [...pastEventIds].map(eventId => ({
+    pk: `USER#${userId}`,
+    sk: `CONCERT_LOG#${eventId}`,
+  }));
+
+  const logChunks: typeof logKeys[] = [];
+  for (let i = 0; i < logKeys.length; i += 100) {
+    logChunks.push(logKeys.slice(i, i + 100));
+  }
+
+  const logResults = await Promise.all(
+    logChunks.map(chunk =>
+      dynamoClient.send(
+        new BatchGetCommand({
+          RequestItems: { [TABLE_NAME]: { Keys: chunk } },
+        })
+      )
+    )
+  );
+
+  const loggedEventIds = new Set<string>();
+  for (const result of logResults) {
+    for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Array<{ sk: string }>) {
+      const eventId = item.sk.replace('CONCERT_LOG#', '');
+      loggedEventIds.add(eventId);
+    }
+  }
+
+  const unloggedEvents = [...pastEventIds]
+    .filter(id => !loggedEventIds.has(id))
+    .map(id => eventMap.get(id))
+    .filter((e): e is Event => !!e)
+    .sort((a, b) => b.startDateTime.localeCompare(a.startDateTime))
+    .slice(0, limit);
+
+  return unloggedEvents;
 }
 
 export type { ConcertLog } from './entity';

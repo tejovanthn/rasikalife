@@ -48,7 +48,10 @@ export async function loader({
 
   try {
     const client = await createServerClient(request);
-    const composition = await client.composition.get.query({ id: slugId });
+    const [composition, performances] = await Promise.all([
+      client.composition.get.query({ id: slugId }),
+      client.composition.listPerformances.query({ compositionId: slugId, limit: 3 }).catch(() => ({ items: [], hasMore: false, nextToken: undefined })),
+    ]);
 
     if (composition?.mergedIntoId) {
       const canonical = await client.composition.get.query({ id: composition.mergedIntoId });
@@ -134,6 +137,8 @@ export async function loader({
       activeEdit,
       isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
+      recentPerformances: performances.items,
+      hasMorePerformances: performances.hasMore,
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -231,6 +236,8 @@ export default function CompositionDetails() {
     hasMoreCompositionsByTala,
     activeEdit,
     isModerator,
+    recentPerformances,
+    hasMorePerformances,
   } = useLoaderData<{
     composition: CompositionWithRelations;
     rawTitle: string;
@@ -242,6 +249,8 @@ export default function CompositionDetails() {
     hasMoreCompositionsByTala: boolean;
     activeEdit: Edit | null;
     isModerator: boolean;
+    recentPerformances: Array<{ eventId: string; eventStartDateTime: string }>;
+    hasMorePerformances: boolean;
   }>();
 
   const shareUrl = `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`;
@@ -407,6 +416,27 @@ export default function CompositionDetails() {
           </Link>
         </div>
       </section>
+
+      {/* Logged performances */}
+      {recentPerformances.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-base font-semibold mb-3">Logged performances</h2>
+          <ul className="space-y-1 text-sm">
+            {recentPerformances.map(perf => (
+              <li key={`${perf.eventId}-${perf.eventStartDateTime}`} className="text-muted-foreground">
+                {new Date(perf.eventStartDateTime).toLocaleDateString('en-IN', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </li>
+            ))}
+          </ul>
+          {hasMorePerformances && (
+            <p className="text-xs text-muted-foreground mt-2">And more…</p>
+          )}
+        </section>
+      )}
 
       {/* Structured Data for SEO */}
       <BreadcrumbStructuredData

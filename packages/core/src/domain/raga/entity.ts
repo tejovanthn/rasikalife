@@ -71,6 +71,11 @@ export const RagaEntity = new Entity(
         type: 'string',
         required: false,
       },
+      performanceCount: {
+        type: 'number',
+        required: false,
+        default: () => 0,
+      },
       createdAt: {
         type: 'string',
         required: true,

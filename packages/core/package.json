@@ -96,6 +96,16 @@
       "import": "./src/domain/concert-log/client.ts",
       "default": "./src/domain/concert-log/client.ts"
     },
+    "./domain/concert-log-item/client": {
+      "types": "./src/domain/concert-log-item/client.ts",
+      "import": "./src/domain/concert-log-item/client.ts",
+      "default": "./src/domain/concert-log-item/client.ts"
+    },
+    "./domain/event-setlist/client": {
+      "types": "./src/domain/event-setlist/client.ts",
+      "import": "./src/domain/event-setlist/client.ts",
+      "default": "./src/domain/event-setlist/client.ts"
+    },
     "./domain/*": {
       "types": "./src/domain/*/index.ts",
       "import": "./src/domain/*/index.ts",

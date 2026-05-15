@@ -1,10 +1,13 @@
 import type { ConcertLog } from '@rasika/core/domain/concert-log/client';
+import type { RouterOutput } from '~/api.server';
 import { BookOpen } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { requireUser } from '~/lib/auth.server';
+
+type PastRsvpEvent = RouterOutput['concertLog']['listPastRsvpedWithoutLogs'][number];
 
 export const meta: MetaFunction = () => [
   { title: 'My Concerts - Rasika.life' },
@@ -14,8 +17,11 @@ export const meta: MetaFunction = () => [
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await requireUser(request, '/my-concerts');
   const serverClient = await createServerClient(request);
-  const result = await serverClient.concertLog.list.query({ limit: 100 });
-  return data({ user, logs: result.items, hasMore: result.hasMore });
+  const [result, pastRsvped] = await Promise.all([
+    serverClient.concertLog.list.query({ limit: 100 }),
+    serverClient.concertLog.listPastRsvpedWithoutLogs.query({ limit: 5 }),
+  ]);
+  return data({ user, logs: result.items, hasMore: result.hasMore, pastRsvped });
 };
 
 function groupByYear(logs: ConcertLog[]): Map<string, ConcertLog[]> {
@@ -33,7 +39,11 @@ function groupByYear(logs: ConcertLog[]): Map<string, ConcertLog[]> {
 }
 
 export default function MyConcerts() {
-  const { logs } = useLoaderData<{ logs: ConcertLog[]; hasMore: boolean }>();
+  const { logs, pastRsvped } = useLoaderData<{
+    logs: ConcertLog[];
+    hasMore: boolean;
+    pastRsvped: PastRsvpEvent[];
+  }>();
 
   const grouped = useMemo(() => groupByYear(logs), [logs]);
   const years = useMemo(() => [...grouped.keys()].sort((a, b) => Number(b) - Number(a)), [grouped]);
@@ -103,6 +113,37 @@ export default function MyConcerts() {
           </section>
         ))}
       </div>
+
+      {pastRsvped && pastRsvped.length > 0 && (
+        <section className="mt-10 pt-6 border-t">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            You RSVP'd, want to add notes? ({pastRsvped.length})
+          </h2>
+          <ul className="space-y-1">
+            {pastRsvped.map(event => (
+              <li key={event.id} className="flex items-center justify-between gap-4 py-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-sm truncate">{event.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(event.startDateTime).toLocaleDateString('en-IN', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                    {event.venueName && ` · ${event.venueName}`}
+                  </p>
+                </div>
+                <Link
+                  to={`/my-concerts/${event.id}/edit`}
+                  className="shrink-0 text-xs text-primary hover:underline font-medium"
+                >
+                  Log this concert
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   );
 }

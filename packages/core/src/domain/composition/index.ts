@@ -1,4 +1,6 @@
 import type { z } from 'zod';
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { generateId } from '../../utils';
 import { getArtist } from '../artist';
 import {
@@ -498,6 +500,17 @@ export async function getCompositionMergeScore(id: string): Promise<number> {
   if (result.data.talas && result.data.talas.length > 0) score += 1;
   if (result.data.sourceAttribution) score += 1;
   return score;
+}
+
+export async function adjustPerformanceCount(compositionId: string, delta: number): Promise<void> {
+  await dynamoClient.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { pk: `COMPOSITION#${compositionId}`, sk: '#METADATA' },
+      UpdateExpression: 'ADD performanceCount :delta',
+      ExpressionAttributeValues: { ':delta': delta },
+    })
+  );
 }
 
 // Types

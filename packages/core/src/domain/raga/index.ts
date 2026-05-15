@@ -1,4 +1,6 @@
 import type { z } from 'zod';
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { generateId } from '../../utils';
 import { cascadeRagaMerge, cascadeRagaNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
@@ -116,6 +118,17 @@ export async function getRagaMergeScore(id: string): Promise<number> {
     .go({ attributes: ['compositionId'] as never[] });
 
   return (result.data || []).length;
+}
+
+export async function adjustPerformanceCount(ragaId: string, delta: number): Promise<void> {
+  await dynamoClient.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { pk: `RAGA#${ragaId}`, sk: '#METADATA' },
+      UpdateExpression: 'ADD performanceCount :delta',
+      ExpressionAttributeValues: { ':delta': delta },
+    })
+  );
 }
 
 export type { Raga } from './entity';

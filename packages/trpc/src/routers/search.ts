@@ -126,4 +126,20 @@ export const searchRouter = createTRPCRouter({
         .optional()
     )
     .query(({ input }) => Search.getDocuments(input?.type, input?.startsWith)),
+
+  searchCompositions: publicProcedure
+    .input(
+      z.object({
+        query: z.string().min(1),
+        limit: z.number().int().min(1).max(20).optional().default(8),
+      })
+    )
+    .query(({ input }) =>
+      Search.search(input.query, { limit: input.limit }).then(result => ({
+        ...result,
+        items: result.items
+          .filter(item => item.type === 'composition')
+          .map(item => ({ id: item.id, name: item.name, score: item.score })),
+      }))
+    ),
 });

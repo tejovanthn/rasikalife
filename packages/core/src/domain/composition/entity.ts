@@ -119,6 +119,11 @@ export const CompositionEntity = new Entity(
         type: 'string',
         required: false,
       },
+      performanceCount: {
+        type: 'number',
+        required: false,
+        default: () => 0,
+      },
     },
     indexes: {
       primary: {

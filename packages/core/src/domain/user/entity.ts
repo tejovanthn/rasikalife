@@ -37,6 +37,34 @@ export const UserEntity = new Entity(
         required: true,
         default: () => ROLE.EDITOR,
       },
+      // Contribution-quality signal: new/established/trusted/curator (orthogonal to role)
+      trustLevel: {
+        type: 'string',
+        enum: ['new', 'established', 'trusted', 'curator'],
+        required: false,
+        default: () => 'new',
+      },
+      // User preferences stored as a single map; defaults applied at read time
+      preferences: {
+        type: 'map',
+        properties: {
+          theme: { type: 'string', required: false },
+          contentLanguage: { type: 'string', required: false },
+          contributeToPublicSetlists: { type: 'boolean', required: false },
+          attendanceVisible: { type: 'boolean', required: false },
+          showProfilePublicly: { type: 'boolean', required: false },
+          displayName: { type: 'string', required: false },
+          bio: { type: 'string', required: false },
+        },
+        required: false,
+      },
+      // URL-safe slug for the public profile (/u/:username).
+      // Explicitly set when the user updates their displayName preference.
+      // Sparse: only present once the user has set a display name.
+      username: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,
@@ -85,6 +113,19 @@ export const UserEntity = new Entity(
         },
         sk: {
           field: 'gsi2sk',
+          composite: ['id'],
+          template: 'USER#${id}',
+        },
+      },
+      byUsername: {
+        index: 'gsi3',
+        pk: {
+          field: 'gsi3pk',
+          composite: ['username'],
+          template: 'USER_USERNAME#${username}',
+        },
+        sk: {
+          field: 'gsi3sk',
           composite: ['id'],
           template: 'USER#${id}',
         },

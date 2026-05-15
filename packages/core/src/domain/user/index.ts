@@ -108,5 +108,92 @@ export async function listAllUsers(): Promise<User[]> {
   return result.data as User[];
 }
 
+export type UserPreferences = {
+  theme?: 'system' | 'light' | 'dark';
+  contentLanguage?:
+    | 'english'
+    | 'tamil'
+    | 'telugu'
+    | 'kannada'
+    | 'hindi'
+    | 'devanagari'
+    | 'sanskrit';
+  contributeToPublicSetlists?: boolean;
+  attendanceVisible?: boolean;
+  showProfilePublicly?: boolean;
+  displayName?: string;
+  bio?: string;
+};
+
+const PREFERENCE_DEFAULTS: Required<UserPreferences> = {
+  theme: 'system',
+  contentLanguage: 'english',
+  contributeToPublicSetlists: true,
+  attendanceVisible: false,
+  showProfilePublicly: true,
+  displayName: '',
+  bio: '',
+};
+
+export function getEffectivePreferences(user: User): Required<UserPreferences> {
+  const prefs = user.preferences as Partial<UserPreferences> | undefined;
+  return {
+    ...PREFERENCE_DEFAULTS,
+    ...prefs,
+    displayName: prefs?.displayName || user.name,
+  } as Required<UserPreferences>;
+}
+
+async function toUniqueUsernameSlug(
+  displayName: string,
+  currentUserId: string
+): Promise<string | undefined> {
+  const base = displayName
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
+  if (!base) return undefined;
+
+  const existing = await getUserByUsername(base);
+  if (!existing || existing.id === currentUserId) return base;
+
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${base}-${i}`;
+    const taken = await getUserByUsername(candidate);
+    if (!taken || taken.id === currentUserId) return candidate;
+  }
+
+  return `${base}-${currentUserId.slice(-6)}`;
+}
+
+export async function updateUserPreferences(
+  id: string,
+  preferences: Partial<UserPreferences>
+): Promise<Required<UserPreferences>> {
+  const user = await getUser(id);
+  if (!user) {
+    throw new ApplicationError(ErrorCode.USER_NOT_FOUND, `User with ID ${id} not found`);
+  }
+
+  const merged = { ...(user.preferences ?? {}), ...preferences };
+
+  const setPayload: Record<string, unknown> = { preferences: merged };
+  if (preferences.displayName !== undefined) {
+    const slug = await toUniqueUsernameSlug(preferences.displayName || user.name, id);
+    if (slug) setPayload.username = slug;
+  }
+
+  const updated = await UserEntity.update({ id })
+    .set(setPayload as Parameters<ReturnType<typeof UserEntity.update>['set']>[0])
+    .go({ response: 'all_new' });
+  return getEffectivePreferences(updated.data as User);
+}
+
+export async function getUserByUsername(username: string): Promise<User | null> {
+  const result = await UserEntity.query.byUsername({ username: username.toLowerCase() }).go();
+  return (result.data?.[0] as User) ?? null;
+}
+
 export type { User } from './entity';
 export { CreateUserSchema, UpdateUserSchema, UpdateUserRoleSchema } from './schema';

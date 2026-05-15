@@ -169,16 +169,20 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       : new Date(new Date(event.startDateTime).getTime() + 4 * 60 * 60 * 1000);
     const isPast = eventEndTime < new Date();
 
-    const [venueEventsResult, organiserEventsResult, rsvpInfo, concertLog] = await Promise.all([
-      event.venueId
-        ? serverClient.event.byVenue.query({ venueId: event.venueId, limit: 6 })
-        : Promise.resolve({ items: [] }),
-      event.organiserId
-        ? serverClient.event.byOrganiser.query({ organiserId: event.organiserId, limit: 6 })
-        : Promise.resolve({ items: [] }),
-      serverClient.rsvp.getForEvent.query({ eventId: id }),
-      isPast && user ? serverClient.concertLog.get.query({ eventId: id }) : Promise.resolve(null),
-    ]);
+    const [venueEventsResult, organiserEventsResult, rsvpInfo, concertLog, setlistData] =
+      await Promise.all([
+        event.venueId
+          ? serverClient.event.byVenue.query({ venueId: event.venueId, limit: 6 })
+          : Promise.resolve({ items: [] }),
+        event.organiserId
+          ? serverClient.event.byOrganiser.query({ organiserId: event.organiserId, limit: 6 })
+          : Promise.resolve({ items: [] }),
+        serverClient.rsvp.getForEvent.query({ eventId: id }),
+        isPast && user ? serverClient.concertLog.get.query({ eventId: id }) : Promise.resolve(null),
+        isPast
+          ? serverClient.eventSetlist.getForEvent.query({ eventId: id })
+          : Promise.resolve({ canonical: [], userOwn: null }),
+      ]);
 
     const relatedVenueEvents = (venueEventsResult.items as RelatedEventItem[])
       .filter(e => e.id !== id)
@@ -204,6 +208,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       isPast,
       userAttended: !!concertLog,
       attendedCount: event.attendedCount ?? 0,
+      setlistCanonical: setlistData.canonical,
+      setlistUserOwn: setlistData.userOwn,
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -587,6 +593,8 @@ export default function EventDetail() {
     isPast,
     userAttended,
     attendedCount,
+    setlistCanonical,
+    setlistUserOwn,
   } = useLoaderData<{
     event: EventDetail;
     user: { id: string } | null;
@@ -604,6 +612,19 @@ export default function EventDetail() {
     isPast: boolean;
     userAttended: boolean;
     attendedCount: number;
+    setlistCanonical: Array<{
+      order: number;
+      compositionId?: string;
+      compositionTitle: string;
+      ragaName?: string;
+      talaName?: string;
+      compositionType?: string;
+      status: string;
+      contributorCount: number;
+      totalLoggersForEvent: number;
+      publicNoteIds: string[];
+    }>;
+    setlistUserOwn: Array<{ order: number; compositionTitle: string }> | null;
   }>();
 
   const startDate = new Date(event.startDateTime);
@@ -999,6 +1020,83 @@ export default function EventDetail() {
               );
             })}
           </div>
+        </section>
+      )}
+
+      {/* Setlist */}
+      {isPast && (
+        <section className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold">Setlist</h2>
+            {user && (
+              <Link
+                to={`/my-concerts/${event.id}/edit`}
+                className="text-sm text-primary hover:underline"
+              >
+                {setlistUserOwn && setlistUserOwn.length > 0 ? 'Edit your setlist' : 'Add your setlist'}
+              </Link>
+            )}
+          </div>
+
+          {setlistCanonical.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No setlist logged yet.{' '}
+              {user && (
+                <Link to={`/my-concerts/${event.id}/edit`} className="text-primary hover:underline">
+                  Log it
+                </Link>
+              )}
+            </p>
+          ) : (
+            <>
+              <ol className="space-y-1.5 mb-3">
+                {setlistCanonical
+                  .filter(row => row.status !== 'lowConfidence')
+                  .map(row => (
+                    <li key={row.order} className="flex items-start gap-3 text-sm">
+                      <span className="text-xs text-muted-foreground w-5 shrink-0 pt-0.5">
+                        {row.order + 1}.
+                      </span>
+                      <div className="min-w-0">
+                        <span className="font-medium">{row.compositionTitle}</span>
+                        {(row.ragaName || row.talaName || row.compositionType) && (
+                          <span className="text-muted-foreground ml-2 text-xs">
+                            {[row.ragaName, row.talaName, row.compositionType]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </span>
+                        )}
+                        {row.publicNoteIds.length > 0 && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            ({row.publicNoteIds.length} note{row.publicNoteIds.length !== 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+              </ol>
+              {setlistCanonical.some(r => r.status === 'lowConfidence') && (
+                <details className="text-sm">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                    Also reported ({setlistCanonical.filter(r => r.status === 'lowConfidence').length})
+                  </summary>
+                  <ol className="space-y-1 mt-1 pl-4">
+                    {setlistCanonical
+                      .filter(r => r.status === 'lowConfidence')
+                      .map(row => (
+                        <li key={row.order} className="text-xs text-muted-foreground">
+                          {row.compositionTitle}
+                        </li>
+                      ))}
+                  </ol>
+                </details>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                Based on logs from {setlistCanonical[0]?.totalLoggersForEvent ?? 0} rasika
+                {setlistCanonical[0]?.totalLoggersForEvent !== 1 ? 's' : ''}
+              </p>
+            </>
+          )}
         </section>
       )}
 

@@ -1,4 +1,4 @@
-import { Artist, ArtistAward } from '@rasika/core';
+import { Artist, ArtistAward, ConcertLogItem, EventArtist, EventSetlist } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
@@ -72,4 +72,59 @@ export const artistRouter = createTRPCRouter({
   listAwards: publicProcedure
     .input(z.object({ artistId: z.string().min(1) }))
     .query(({ input }) => ArtistAward.getArtistAwards(input.artistId)),
+
+  getRepertoire: publicProcedure
+    .input(z.object({ artistId: z.string().min(1) }))
+    .query(async ({ input }) => {
+      // Get events where this artist performed
+      const { items: eventArtistLinks } = await EventArtist.getEventsByArtist(input.artistId, { limit: 50 });
+      const eventIds = eventArtistLinks.map(ea => ea.eventId);
+
+      if (eventIds.length === 0) {
+        return { topCompositions: [], topRagas: [] };
+      }
+
+      // Get EventSetlist rows for all those events
+      const setlistArrays = await Promise.all(
+        eventIds.map(eventId => EventSetlist.getEventSetlist(eventId))
+      );
+      const allRows = setlistArrays.flat();
+
+      // Count compositions
+      const compositionCounts = new Map<string, { title: string; count: number }>();
+      for (const row of allRows) {
+        if (row.compositionId) {
+          const entry = compositionCounts.get(row.compositionId);
+          if (entry) {
+            entry.count++;
+          } else {
+            compositionCounts.set(row.compositionId, { title: row.compositionTitle, count: 1 });
+          }
+        }
+      }
+
+      // Count ragas
+      const ragaCounts = new Map<string, { name: string; count: number }>();
+      for (const row of allRows) {
+        if (row.ragaId) {
+          const entry = ragaCounts.get(row.ragaId);
+          if (entry) {
+            entry.count++;
+          } else {
+            ragaCounts.set(row.ragaId, { name: row.ragaName ?? row.ragaId, count: 1 });
+          }
+        }
+      }
+
+      return {
+        topCompositions: [...compositionCounts.entries()]
+          .map(([id, { title, count }]) => ({ id, title, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10),
+        topRagas: [...ragaCounts.entries()]
+          .map(([id, { name, count }]) => ({ id, name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 10),
+      };
+    }),
 });

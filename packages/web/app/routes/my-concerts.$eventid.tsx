@@ -1,5 +1,5 @@
 import type { ConcertLog } from '@rasika/core/domain/concert-log/client';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { ChevronLeft, ListMusic, Trash2 } from 'lucide-react';
 import { redirect, data, useLoaderData, useFetcher } from 'react-router';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Link } from 'react-router';
@@ -88,12 +88,21 @@ export default function ConcertLogEdit() {
         {log.artistNames && log.artistNames.length > 0 && (
           <p className="text-sm text-muted-foreground">{log.artistNames.join(', ')}</p>
         )}
-        <Link
-          to={generateEventUrl(log.eventTitle, log.eventId)}
-          className="text-xs text-primary hover:underline mt-1 inline-block"
-        >
-          View event page
-        </Link>
+        <div className="flex items-center gap-3 mt-1">
+          <Link
+            to={generateEventUrl(log.eventTitle, log.eventId)}
+            className="text-xs text-primary hover:underline"
+          >
+            View event page
+          </Link>
+          <Link
+            to={`/my-concerts/${log.eventId}/edit`}
+            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <ListMusic aria-hidden="true" className="h-3 w-3" />
+            Edit setlist
+          </Link>
+        </div>
       </div>
 
       <fetcher.Form method="post" className="space-y-3">

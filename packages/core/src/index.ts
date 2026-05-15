@@ -19,6 +19,8 @@ export * as Organiser from './domain/organiser';
 export * as SocialPost from './domain/social-post';
 export * as Rsvp from './domain/rsvp';
 export * as ConcertLog from './domain/concert-log';
+export * as ConcertLogItem from './domain/concert-log-item';
+export * as EventSetlist from './domain/event-setlist';
 export * as Image from './domain/image/s3';
 
 // Social link types (browser-safe exports)

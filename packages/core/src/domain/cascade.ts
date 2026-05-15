@@ -1,4 +1,4 @@
-import { BatchGetCommand, DeleteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { BatchGetCommand, DeleteCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../db/client';
 
 export const CASCADE_BATCH_SIZE = 1000;
@@ -617,4 +617,274 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
       })
     );
   } while (loserCursor);
+}
+
+// ─── Setlist cascades ─────────────────────────────────────────────────────────
+
+export async function cascadeEventDeleteToSetlist(eventId: string): Promise<void> {
+  const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
+  const { deleteAllEventSetlistRows } = await import('./event-setlist');
+
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogItemEntity.query
+      .byEvent({ eventId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Array<{ userId: string; orderStr: string }>) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        ConcertLogItemEntity.delete({ userId: item.userId, eventId, orderStr: item.orderStr }).go()
+      )
+    );
+  } while (cursor);
+
+  await deleteAllEventSetlistRows(eventId);
+}
+
+export async function cascadeEventHardDeleteToSetlist(eventId: string): Promise<void> {
+  const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
+  const { getEventSetlist, deleteAllEventSetlistRows } = await import('./event-setlist');
+  const { adjustPerformanceCount: adjustCompositionCount } = await import('./composition');
+  const { adjustPerformanceCount: adjustRagaCount } = await import('./raga');
+
+  // Update counters before deleting
+  const setlistRows = await getEventSetlist(eventId);
+  const compositionIds = [...new Set(setlistRows.map(r => r.compositionId).filter(Boolean) as string[])];
+  const ragaIds = [...new Set(setlistRows.map(r => r.ragaId).filter(Boolean) as string[])];
+
+  await Promise.all([
+    ...compositionIds.map(id => adjustCompositionCount(id, -1)),
+    ...ragaIds.map(id => adjustRagaCount(id, -1)),
+  ]);
+
+  // Hard-delete all ConcertLogItems
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogItemEntity.query
+      .byEvent({ eventId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Array<{ userId: string; orderStr: string }>) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: {
+              pk: `CONCERT_LOG_ITEMS#${item.userId}#${eventId}`,
+              sk: `ITEM#${item.orderStr}`,
+            },
+          })
+        )
+      )
+    );
+  } while (cursor);
+
+  await deleteAllEventSetlistRows(eventId);
+}
+
+export async function cascadeCompositionDeleteToSetlistItems(compositionId: string): Promise<void> {
+  type Item = import('./concert-log-item/entity').ConcertLogItem;
+  const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
+  const { recomputeEventSetlist } = await import('./event-setlist');
+  const affectedEventIds = new Set<string>();
+
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogItemEntity.query
+      .byComposition({ compositionPerfKey: `COMPOSITION_PERFORMANCES#${compositionId}` })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Item[]) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item => {
+        affectedEventIds.add(item.eventId);
+        // Delete the linked item and re-create without compositionId or moderator fields.
+        // ElectroDB watch setters fire on put: compositionPerfKey → undefined (clears gsi2),
+        // pendingModerationKey → '1' (enters the pending moderation queue).
+        const { Key: deleteKey, TableName } = ConcertLogItemEntity.delete({
+          userId: item.userId, eventId: item.eventId, orderStr: item.orderStr,
+        }).params();
+        const { Item: putItem } = ConcertLogItemEntity.put({
+          userId: item.userId,
+          eventId: item.eventId,
+          order: item.order,
+          compositionTitle: item.compositionTitle,
+          ragaId: item.ragaId,
+          ragaName: item.ragaName,
+          talaId: item.talaId,
+          talaName: item.talaName,
+          compositionType: item.compositionType,
+          publicNote: item.publicNote,
+          isHighlight: item.isHighlight ?? false,
+          eventStartDateTime: item.eventStartDateTime,
+        }).params();
+        return dynamoClient.send(
+          new TransactWriteCommand({
+            TransactItems: [
+              { Delete: { TableName, Key: deleteKey } },
+              { Put: { TableName, Item: putItem } },
+            ],
+          })
+        );
+      })
+    );
+  } while (cursor);
+
+  await Promise.all([...affectedEventIds].map(eventId => recomputeEventSetlist(eventId)));
+}
+
+export async function cascadeCompositionMergeToSetlistItems(
+  fromId: string,
+  toId: string
+): Promise<void> {
+  const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
+  const { recomputeEventSetlist } = await import('./event-setlist');
+  const affectedEventIds = new Set<string>();
+
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogItemEntity.query
+      .byComposition({ compositionPerfKey: `COMPOSITION_PERFORMANCES#${fromId}` })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Array<{ userId: string; eventId: string; orderStr: string }>) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item => {
+        affectedEventIds.add(item.eventId);
+        // patch fires compositionPerfKey watcher → gsi2pk updates to COMPOSITION_PERFORMANCES#toId
+        return ConcertLogItemEntity.patch({ userId: item.userId, eventId: item.eventId, orderStr: item.orderStr })
+          .set({ compositionId: toId })
+          .go();
+      })
+    );
+  } while (cursor);
+
+  await Promise.all([...affectedEventIds].map(eventId => recomputeEventSetlist(eventId)));
+}
+
+export async function cascadeRagaMergeToSetlistItems(fromId: string, toId: string, toName: string): Promise<void> {
+  const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
+  const { getEventSetlist, recomputeEventSetlist } = await import('./event-setlist');
+  const { EventSetlistEntity } = await import('./event-setlist/entity');
+  const affectedEventIds = new Set<string>();
+
+  // Update ConcertLogItems — patch fires ragaPerfKey watcher → gsi3pk updates to RAGA_PERFORMANCES#toId
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogItemEntity.query
+      .byRaga({ ragaPerfKey: `RAGA_PERFORMANCES#${fromId}` })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Array<{ userId: string; eventId: string; orderStr: string }>) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item => {
+        affectedEventIds.add(item.eventId);
+        return ConcertLogItemEntity.patch({ userId: item.userId, eventId: item.eventId, orderStr: item.orderStr })
+          .set({ ragaId: toId, ragaName: toName })
+          .go();
+      })
+    );
+  } while (cursor);
+
+  // Update EventSetlist rows in all affected events, all statuses (including verified).
+  // We load per-event rather than scanning byStatus globally — only affects events we know reference fromId.
+  await Promise.all(
+    [...affectedEventIds].map(async eventId => {
+      const rows = await getEventSetlist(eventId);
+      await Promise.all(
+        rows
+          .filter(r => r.ragaId === fromId)
+          .map(row =>
+            EventSetlistEntity.patch({ eventId, orderStr: row.orderStr })
+              .set({ ragaId: toId, ragaName: toName })
+              .go()
+          )
+      );
+    })
+  );
+
+  await Promise.all([...affectedEventIds].map(eventId => recomputeEventSetlist(eventId)));
+}
+
+export async function cascadeUserDeleteToSetlistItems(userId: string): Promise<void> {
+  const { ConcertLogEntity } = await import('./concert-log/entity');
+  const { deleteAllUserSetlistItems } = await import('./concert-log-item');
+  const { recomputeEventSetlist } = await import('./event-setlist');
+
+  // Query all ConcertLogs for this user via the byUserDate GSI (correct DynamoDB query pattern)
+  // This gives us all eventIds the user has logged, which is exactly what we need
+  const affectedEventIds: string[] = [];
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogEntity.query
+      .byUserDate({ userId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const logs = (result.data as Array<{ eventId: string }>) || [];
+    cursor = result.cursor;
+    affectedEventIds.push(...logs.map(l => l.eventId));
+  } while (cursor);
+
+  // For each event, delete all this user's setlist items then recompute
+  await Promise.all(
+    affectedEventIds.map(async eventId => {
+      await deleteAllUserSetlistItems(userId, eventId);
+      await recomputeEventSetlist(eventId);
+    })
+  );
+}
+
+export async function cascadeEventMergeToSetlist(
+  fromEventId: string,
+  toEventId: string
+): Promise<void> {
+  const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
+  type Item = import('./concert-log-item/entity').ConcertLogItem;
+  const { deleteAllEventSetlistRows, recomputeEventSetlist } = await import('./event-setlist');
+
+  let cursor: string | null = null;
+  do {
+    const result = (await ConcertLogItemEntity.query
+      .byEvent({ eventId: fromEventId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Item[]) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item => {
+        // Delete from loser event
+        const { Key: deleteKey, TableName } = ConcertLogItemEntity.delete({
+          userId: item.userId,
+          eventId: fromEventId,
+          orderStr: item.orderStr,
+        }).params();
+
+        // Put full item under canonical event — let ElectroDB recompute all GSI keys
+        const { Item: putItem } = ConcertLogItemEntity.put({
+          ...item,
+          eventId: toEventId,
+        }).params();
+
+        return dynamoClient.send(
+          new TransactWriteCommand({
+            TransactItems: [
+              { Delete: { TableName, Key: deleteKey } },
+              { Put: { TableName, Item: putItem } },
+            ],
+          })
+        );
+      })
+    );
+  } while (cursor);
+
+  await Promise.all([
+    deleteAllEventSetlistRows(fromEventId),
+    recomputeEventSetlist(toEventId),
+  ]);
 }

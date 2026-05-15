@@ -1,4 +1,4 @@
-import { Raga } from '@rasika/core';
+import { ConcertLogItem, Raga } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
@@ -62,6 +62,54 @@ export const ragaRouter = createTRPCRouter({
         entityA: entityA ? { id: entityA.id, name: entityA.name, score: scoreA } : null,
         entityB: entityB ? { id: entityB.id, name: entityB.name, score: scoreB } : null,
         suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
+      };
+    }),
+
+  listPerformances: publicProcedure
+    .input(
+      z.object({
+        ragaId: z.string().min(1),
+        limit: z.number().int().min(1).max(50).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      ConcertLogItem.listPerformancesByRaga(input.ragaId, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
+
+  getRepertoireStats: publicProcedure
+    .input(z.object({ ragaId: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const raga = await Raga.getRaga(input.ragaId);
+      if (!raga) return null;
+
+      const { items } = await ConcertLogItem.listPerformancesByRaga(input.ragaId, { limit: 50 });
+
+      // Count compositions and event contexts
+      const compositionCounts = new Map<string, { title: string; count: number }>();
+      for (const item of items) {
+        if (item.compositionId) {
+          const entry = compositionCounts.get(item.compositionId);
+          if (entry) {
+            entry.count++;
+          } else {
+            compositionCounts.set(item.compositionId, { title: item.compositionTitle, count: 1 });
+          }
+        }
+      }
+
+      const topCompositions = [...compositionCounts.entries()]
+        .map(([id, { title, count }]) => ({ id, title, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      return {
+        raga,
+        performanceCount: raga.performanceCount ?? 0,
+        topCompositions,
       };
     }),
 });

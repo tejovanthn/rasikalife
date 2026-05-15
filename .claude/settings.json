@@ -3,7 +3,10 @@
     "allow": [
       "Bash(/opt/homebrew/bin/gh issue:*)",
       "Bash(pnpm -w run lint)",
-      "WebFetch(domain:developers.facebook.com)"
+      "WebFetch(domain:developers.facebook.com)",
+      "Bash(grep -n \"relatedCompositions\\\\|EntityCompositions\\\\|</main>\" /Users/tejovanthn/codes/rasikalife/packages/web/app/routes/carnatic.compositions.\\\\$compositionid.tsx | tail -10)",
+      "Read(//Users/tejovanthn/codes/rasikalife/packages/web/app/routes/**)",
+      "Bash(grep -n \"</main>\" /Users/tejovanthn/codes/rasikalife/packages/web/app/routes/carnatic.compositions.\\\\$compositionid.tsx)"
     ]
   }
 }

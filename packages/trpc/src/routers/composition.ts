@@ -1,4 +1,4 @@
-import { Composition } from '@rasika/core';
+import { Composition, ConcertLogItem } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
@@ -118,4 +118,19 @@ export const compositionRouter = createTRPCRouter({
         suggestedCanonicalId: scoreA >= scoreB ? input.idA : input.idB,
       };
     }),
+
+  listPerformances: publicProcedure
+    .input(
+      z.object({
+        compositionId: z.string().min(1),
+        limit: z.number().int().min(1).max(50).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      ConcertLogItem.listPerformancesByComposition(input.compositionId, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
 });
