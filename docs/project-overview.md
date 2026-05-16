@@ -24,10 +24,11 @@
 - **Artist Profiles**: AI-curated and artist-verified biographies
 - **RSVP & Attendance**: Users can mark attendance for events; counts are denormalized on the event
 - **Concert Book**: Personal log of concerts a user has attended, with optional private notes; atomically tracks `attendedCount` on each event
+- **Crowd-sourced Concert Setlists**: Rasikas log ordered compositions performed at concerts; contributions are reconciled into a canonical public setlist per event. Feeds performance counts on composition, raga, and artist pages. Free-text items enter a moderation queue for linking. See `ConcertLogItem` and `EventSetlist` entities.
 - **Instagram Event Discovery**: Automated scraper extracts event details from Instagram posts using Gemini AI
 - **Community Forums**: StackOverflow-inspired Q&A and discussions (planned)
 - **WhatsApp Integration**: Bot interface for artist updates (planned)
-- **Performance Tracking**: Link artists, compositions, and events
+- **Performance Tracking**: Link artists, compositions, and events via logged setlists
 - **Karma System**: Community self-regulation through reputation (planned)
 - **Direct Artist Support**: Patreon-style patronage platform (planned)
 

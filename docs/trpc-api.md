@@ -31,6 +31,7 @@ Defined in `packages/trpc/src/trpc.ts`. Every procedure is one of:
 | `artist.removeAward` | mutation | editor | Unlink an award |
 | `artist.listAwards` | query | public | List awards for an artist |
 | `artist.getMergeSuggestion` | query | moderator | Returns both entities + suggested canonical for a merge pair |
+| `artist.getRepertoire` | query | public | Most performed compositions and ragas for an artist, derived from logged EventSetlist rows joined via EventArtist. Returns `{ topCompositions: {id, title, count}[], topRagas: {id, name, count}[] }`. |
 
 ---
 
@@ -63,6 +64,7 @@ Defined in `packages/trpc/src/trpc.ts`. Every procedure is one of:
 | `composition.byName` | query | public | Search by name |
 | `composition.byLanguage` | query | public | Filter by language |
 | `composition.getMergeSuggestion` | query | moderator | Merge pair suggestion |
+| `composition.listPerformances` | query | public | Paginated logged performances of a composition. Input: `{ compositionId, limit?, nextToken }`. Returns `ConcertLogItem[]` via the sparse `byComposition` GSI. |
 
 ---
 
@@ -77,6 +79,9 @@ User's personal concert attendance book. All mutations implicitly scope to `ctx.
 | `concertLog.upsert` | mutation | protected | Add or update a log entry (with optional notes, max 5000 chars). Atomically increments `attendedCount` on the Event on first creation. |
 | `concertLog.delete` | mutation | protected | Remove log entry. Atomically decrements `attendedCount`. |
 | `concertLog.countForEvent` | query | public | `attendedCount` for a given event |
+| `concertLog.upsertWithSetlist` | mutation | protected | Combined upsert of private notes + ordered setlist items (max 50). Replaces all existing items transactionally, then triggers `recomputeEventSetlist` synchronously. Returns `{ log, setlist: EventSetlist[] }`. |
+| `concertLog.getMySetlistForEvent` | query | protected | Calling user's ConcertLogItems for an event, ordered. |
+| `concertLog.listPastRsvpedWithoutLogs` | query | protected | Past events the user RSVP'd to but hasn't logged. Used to power the backfill prompt on `/my-concerts`. |
 
 ---
 
@@ -124,6 +129,34 @@ Community edit proposal workflow. Editors propose changes; moderators approve or
 | `edit.getEntityEdits` | query | protected | All edits for a given entity |
 | `edit.getPendingEdits` | query | moderator | Queue of pending proposals |
 | `edit.getActiveEditForEntity` | query | protected | Check if an in-progress edit already exists for an entity |
+
+---
+
+## eventSetlist
+
+Public canonical setlist per event, derived from all contributors.
+
+| Procedure | Type | Auth | Description |
+|---|---|---|---|
+| `eventSetlist.getForEvent` | query | public | Canonical EventSetlist rows + calling user's own ConcertLogItems when authenticated. Returns `{ canonical: EventSetlist[], userOwn: ConcertLogItem[] \| null }`. Mirrors the `rsvp.getForEvent` pattern — one round trip covers both public render and personal prefill. |
+| `eventSetlist.recomputeForEvent` | mutation | moderator | Force-recompute the canonical setlist for an event. Debug/admin tool. |
+
+---
+
+## setlistModeration
+
+Moderation tools for the setlist pipeline. All procedures require moderator or admin role.
+
+| Procedure | Type | Auth | Description |
+|---|---|---|---|
+| `setlistModeration.listPendingFreeText` | query | moderator | Paginated queue of free-text items awaiting linking (no `compositionId`, no moderator review). Ordered by `createdAt` asc. |
+| `setlistModeration.linkFreeText` | mutation | moderator | Link a free-text item to an existing composition. Fires watch setters, moves item from gsi4 to gsi2, triggers recompute. |
+| `setlistModeration.rejectFreeText` | mutation | moderator | Mark a free-text item unlinkable with a reason enum. Removes from pending queue. |
+| `setlistModeration.listDisputes` | query | moderator | EventSetlist rows with `status: 'disputed'`. |
+| `setlistModeration.resolveDispute` | mutation | moderator | Set canonical value for a disputed field. Sets row to `status: 'verified'`. |
+| `setlistModeration.overrideEventSetlist` | mutation | moderator | Directly edit an EventSetlist row (composition, raga, tala, type). Sets `status: 'verified'`. |
+| `setlistModeration.unlockVerifiedRow` | mutation | admin | Revert a verified row back to `derived`, re-enabling automatic reconciliation. |
+| `setlistModeration.getStats` | query | moderator | Dashboard counts: `{ pendingFreeText: {count, hasMore}, disputes: {count, hasMore} }`. |
 
 ---
 
@@ -209,6 +242,8 @@ Most complex router. Handles the full event lifecycle from AI extraction through
 | `raga.byMela` | query | public | Ragas in a Melakarta number (1–72) |
 | `raga.getByName` | query | public | Exact name lookup |
 | `raga.getMergeSuggestion` | query | moderator | Merge pair suggestion |
+| `raga.listPerformances` | query | public | Paginated logged performances of a raga. Input: `{ ragaId, limit?, nextToken }`. Returns `ConcertLogItem[]` via the sparse `byRaga` GSI. |
+| `raga.getRepertoireStats` | query | public | Performance summary for a raga. Returns `{ raga, performanceCount, topCompositions: {id, title, count}[] }`. Used to drive the "Performed at concerts" section on the raga page. |
 
 ---
 
@@ -235,6 +270,7 @@ Powered by a Fuse.js index stored in S3, refreshed after mutations and on a sche
 | `search.searchVenues` | query | public | Venues only |
 | `search.searchOrganisers` | query | public | Organisers only |
 | `search.searchEvents` | query | public | Events only |
+| `search.searchCompositions` | query | public | Compositions only. Input: `{ query, limit? }`. Returns `{ items: {id, name, score}[] }`. Used by the setlist entry composition typeahead (via the `/api/search/composition` server-side route). |
 | `search.health` | query | public | Search engine health status |
 | `search.documents` | query | public | All indexed documents for a type (used for sitemap generation) |
 
@@ -261,6 +297,10 @@ Powered by a Fuse.js index stored in S3, refreshed after mutations and on a sche
 | `user.me` | query | protected | Current user's profile |
 | `user.list` | query | admin | All users |
 | `user.updateRole` | mutation | admin | Change a user's role |
+| `user.getMyPreferences` | query | protected | Effective preferences with defaults applied (theme, contentLanguage, displayName, bio, visibility toggles). |
+| `user.updatePreferences` | mutation | protected | Partial update of preferences map. When `displayName` changes, auto-generates a unique `username` slug for the public profile URL. |
+| `user.getPublicProfile` | query | public | Public profile by username slug. Returns 404 when `showProfilePublicly` is false. |
+| `user.getMyContributionStats` | query | protected | Counts: events logged, setlist items contributed (linked vs free-text), public notes added, member since. |
 
 ---
 
@@ -293,6 +333,12 @@ Two counters are stored directly on the Event item and updated atomically with D
 | `attendedCount` | `concertLog.upsert` / `concertLog.delete` | +1 on first upsert, -1 on delete |
 
 Both are "fire and forget" increments — the RSVP/log record is the source of truth; the counter is a read-optimized cache on the Event item.
+
+### Performance counters on Composition and Raga
+
+`Composition.performanceCount` and `Raga.performanceCount` are maintained by `recomputeEventSetlist`. After each recompute, the algorithm diffs the previous EventSetlist against the new one and issues atomic `ADD` increments/decrements for each composition/raga that was added or removed.
+
+These counters can drift if a reconciliation write partially fails. A nightly cron job at `packages/scripts/src/recompute-performance-counts.ts` recomputes correct totals from the authoritative GSI counts.
 
 ### Denormalized fields on ConcertLog
 

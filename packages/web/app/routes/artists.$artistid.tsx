@@ -15,7 +15,14 @@ import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistOGImage } from '~/lib/og';
-import { generateArtistUrl, generateEventUrl, generateSlug, parseSlug } from '~/lib/url-slug';
+import {
+  generateArtistUrl,
+  generateCompositionUrl,
+  generateEventUrl,
+  generateRagaUrl,
+  generateSlug,
+  parseSlug,
+} from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -52,25 +59,15 @@ export async function loader({
       }
     }
 
-    const [result, eventsResult] = await Promise.all([
-      client.composition.byComposer.query({
-        composerId: artist.id,
-        limit: 6,
-      }),
-      client.event.byArtist.query({
-        artistId: artist.id,
-        limit: 6,
-      }),
-    ]);
-
     const user = await getUser(request);
-    let activeEdit: Edit | null = null;
-    if (user) {
-      activeEdit = await client.edit.getActiveEditForEntity.query({
-        entityType: 'artist',
-        entityId: artist.id,
-      });
-    }
+    const [result, eventsResult, repertoire, activeEdit] = await Promise.all([
+      client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
+      client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
+      client.artist.getRepertoire.query({ artistId: artist.id }),
+      user
+        ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
+        : Promise.resolve(null),
+    ]);
 
     const script = await scriptSessionResolver.getScript(request);
     const displayArtist = {
@@ -84,6 +81,7 @@ export async function loader({
       compositions: result.items,
       hasMoreCompositions: result.hasMore,
       artistEvents: eventsResult.items,
+      repertoire,
       activeEdit,
       formattedDate: formatDate(artist.createdAt),
       isLoggedIn: !!user,
@@ -167,27 +165,32 @@ export default function ArtistDetails() {
     role?: string;
   }
 
-  const loaderData = useLoaderData<{
-    artist: ArtistType;
-    rawName: string;
-    compositions: CompositionWithRelations[];
-    hasMoreCompositions: boolean;
-    artistEvents: ArtistEvent[];
-    activeEdit: Edit | null;
-    formattedDate: string;
-    isModerator: boolean;
-  }>();
-
   const {
     artist,
     rawName,
     compositions,
     hasMoreCompositions,
     artistEvents,
+    repertoire,
     activeEdit,
     formattedDate,
+    isLoggedIn,
     isModerator,
-  } = loaderData;
+  } = useLoaderData<{
+    artist: ArtistType;
+    rawName: string;
+    compositions: CompositionWithRelations[];
+    hasMoreCompositions: boolean;
+    artistEvents: ArtistEvent[];
+    repertoire: {
+      topCompositions: { id: string; title: string; count: number }[];
+      topRagas: { id: string; name: string; count: number }[];
+    };
+    activeEdit: Edit | null;
+    formattedDate: string;
+    isLoggedIn: boolean;
+    isModerator: boolean;
+  }>();
 
   const isNestedRoute =
     location.pathname.includes('/compositions') || location.pathname.includes('/events');
@@ -307,6 +310,54 @@ export default function ArtistDetails() {
           showViewMore={hasMoreCompositions}
           customHeading={`Compositions by ${artist.name}`}
         />
+      )}
+      {(repertoire.topCompositions.length > 0 || repertoire.topRagas.length > 0) && (
+        <section className="mt-8 pt-8 border-t">
+          <h2 className="text-xl font-semibold mb-4">Repertoire</h2>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {repertoire.topCompositions.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                  Most performed compositions
+                </h3>
+                <ul className="space-y-2">
+                  {repertoire.topCompositions.slice(0, 5).map(comp => (
+                    <li key={comp.id} className="flex items-center justify-between gap-4">
+                      <Link
+                        to={generateCompositionUrl(comp.title, comp.id)}
+                        className="text-sm hover:underline underline-offset-2 truncate"
+                      >
+                        {comp.title}
+                      </Link>
+                      <span className="text-xs text-muted-foreground shrink-0">{comp.count}×</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {repertoire.topRagas.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                  Most performed ragas
+                </h3>
+                <ul className="space-y-2">
+                  {repertoire.topRagas.slice(0, 5).map(raga => (
+                    <li key={raga.id} className="flex items-center justify-between gap-4">
+                      <Link
+                        to={generateRagaUrl(raga.name, raga.id)}
+                        className="text-sm hover:underline underline-offset-2 truncate"
+                      >
+                        {raga.name}
+                      </Link>
+                      <span className="text-xs text-muted-foreground shrink-0">{raga.count}×</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">Derived from logged concerts</p>
+        </section>
       )}
       {artistEvents.length > 0 && (
         <section className="mt-8">

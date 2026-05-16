@@ -21,6 +21,13 @@ This section documents all ElectroDB entities and their related functions in the
 | [ChangeHistory](change-history.md) | change-history | Field-level audit log for entity mutations |
 | [SocialPost](social-post.md) | social-post | Scraped social media posts for event extraction |
 
+## Concert Setlist Entities
+
+| Entity | File | Description |
+|--------|------|-------------|
+| [ConcertLogItem](concert-log-item.md) | concert-log-item | One ordered item in a user's setlist log. Feeds the reconciliation worker. Sparse GSIs for composition/raga/pending-moderation queries. |
+| [EventSetlist](event-setlist.md) | event-setlist | Materialized canonical setlist per event, derived from all contributors. Status: `derived` / `verified` / `disputed` / `lowConfidence`. |
+
 ## Junction Tables
 
 | Entity | File | Description |

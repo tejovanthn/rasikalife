@@ -4,6 +4,8 @@ ElectroDB Model: `concertLog` v1, service: `rasikalife`
 
 A user's personal record of concerts they have attended. Acts as a lightweight "concert book" — upsert-on-attend, delete-on-unattend. Each write atomically increments/decrements `attendedCount` on the parent Event.
 
+Setlist items are stored separately in `ConcertLogItem` (one row per ordered composition). Use `concertLog.upsertWithSetlist` (tRPC) to update notes and items together in one call; it triggers reconciliation into the public `EventSetlist` automatically. See [ConcertLogItem](concert-log-item.md) and [EventSetlist](event-setlist.md).
+
 ## Attributes
 
 | Attribute | Type | Required | Default | Description |
@@ -34,9 +36,10 @@ import { upsertConcertLog, deleteConcertLog, getConcertLog, listUserConcertLogs,
 import type { ConcertLog } from '@rasika/core/domain/concert-log/client';
 ```
 
-- `upsertConcertLog(userId, eventId, params?)` → ConcertLog — creates or updates a log entry; atomically increments `attendedCount` on the Event on first creation
+- `upsertConcertLog(userId, eventId, params?)` → ConcertLog — creates or updates a log entry; atomically increments `attendedCount` on the Event on first creation; fetches and denormalizes event details (title, date, venue, artists) internally
 - `deleteConcertLog(userId, eventId)` → void — removes the log entry; atomically decrements `attendedCount`
 - `getConcertLog(userId, eventId)` → ConcertLog | null
 - `listUserConcertLogs(userId, params?)` → `{items: ConcertLog[], nextToken?, hasMore}` — ordered by `eventStartDateTime` desc (most recent first)
 - `listEventConcertLogs(eventId, params?)` → `{items: ConcertLog[], nextToken?, hasMore}` — all users who attended a given event
 - `getAttendedCount(eventId)` → number — reads `attendedCount` from the Event record
+- `listPastRsvpedWithoutLogs(userId, limit?)` → ConcertLog-like[] — past events the user RSVP'd to but hasn't yet logged (used for the `/my-concerts` backfill prompt)

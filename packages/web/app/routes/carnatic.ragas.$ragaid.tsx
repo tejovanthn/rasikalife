@@ -12,7 +12,7 @@ import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaOGImage } from '~/lib/og';
-import { generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
+import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -36,7 +36,10 @@ export async function loader({
 
   try {
     const client = await createServerClient(request);
-    const raga = await client.raga.get.query({ id: slugId });
+    const [raga, user] = await Promise.all([
+      client.raga.get.query({ id: slugId }),
+      getUser(request),
+    ]);
 
     if (!raga) {
       throw new Response('Raga not found', { status: 410 });
@@ -49,28 +52,18 @@ export async function loader({
       }
     }
 
-    // Fetch compositions in this raga (limit to 6 for preview)
-    const compositions = await client.composition.byRaga.query({
-      ragaId: raga.id,
-      limit: 6,
-    });
+    const [compositions, similarRagas, repertoireStats, activeEdit, script] = await Promise.all([
+      client.composition.byRaga.query({ ragaId: raga.id, limit: 6 }),
+      raga.melaNumber
+        ? client.raga.byMela.query({ melaNumber: raga.melaNumber, excludeId: raga.id })
+        : Promise.resolve([]),
+      client.raga.getRepertoireStats.query({ ragaId: raga.id }),
+      user
+        ? client.edit.getActiveEditForEntity.query({ entityType: 'raga', entityId: raga.id })
+        : Promise.resolve(null),
+      scriptSessionResolver.getScript(request),
+    ]);
 
-    // Fetch similar ragas from the same melakarta
-    const similarRagas = raga.melaNumber
-      ? await client.raga.byMela.query({ melaNumber: raga.melaNumber, excludeId: raga.id })
-      : [];
-
-    // Check if user has an active edit for this raga
-    const user = await getUser(request);
-    let activeEdit: Edit | null = null;
-    if (user) {
-      activeEdit = await client.edit.getActiveEditForEntity.query({
-        entityType: 'raga',
-        entityId: raga.id,
-      });
-    }
-
-    const script = await scriptSessionResolver.getScript(request);
     const displayRaga = {
       ...raga,
       name: fromItrans(raga.name, script),
@@ -95,6 +88,8 @@ export async function loader({
         arohanam: r.arohanam ? fromItrans(r.arohanam, script) : r.arohanam,
         avarohanam: r.avarohanam ? fromItrans(r.avarohanam, script) : r.avarohanam,
       })),
+      performanceCount: repertoireStats.performanceCount,
+      topCompositions: repertoireStats.topCompositions.slice(0, 5),
       activeEdit,
       isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
@@ -195,7 +190,10 @@ export default function RagaDetails() {
     compositions,
     hasMoreCompositions,
     similarRagas,
+    performanceCount,
+    topCompositions,
     activeEdit,
+    isLoggedIn,
     isModerator,
   } = useLoaderData<{
     raga: RagaType;
@@ -203,7 +201,10 @@ export default function RagaDetails() {
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
     similarRagas: RagaType[];
+    performanceCount: number;
+    topCompositions: { id: string; title: string; count: number }[];
     activeEdit: Edit | null;
+    isLoggedIn: boolean;
     isModerator: boolean;
   }>();
 
@@ -331,6 +332,29 @@ export default function RagaDetails() {
           )}
         </div>
       </section>
+      {performanceCount > 0 && (
+        <section className="mt-8 pt-8 border-t">
+          <div className="flex items-baseline gap-2 mb-4">
+            <h2 className="text-xl font-semibold">Performed at concerts</h2>
+            <span className="text-sm text-muted-foreground">
+              {performanceCount} logged performance{performanceCount !== 1 ? 's' : ''}
+            </span>
+          </div>
+          <ul className="space-y-2">
+            {topCompositions.map(comp => (
+              <li key={comp.id} className="flex items-center justify-between gap-4">
+                <Link
+                  to={generateCompositionUrl(comp.title, comp.id)}
+                  className="text-sm hover:underline underline-offset-2 truncate"
+                >
+                  {comp.title}
+                </Link>
+                <span className="text-xs text-muted-foreground shrink-0">{comp.count}×</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <EntityCompositions
         compositions={compositions}
         entityType="raga"
