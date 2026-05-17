@@ -68,5 +68,36 @@ export const handler: S3Handler = async (event: S3Event) => {
     console.log(
       `[image-processor] Converted ${key} → ${webpKey}: ${originalSize} bytes → ${webpBuffer.byteLength} bytes (${Math.round((1 - webpBuffer.byteLength / originalSize) * 100)}% reduction)`
     );
+
+    // Generate 1200x630 landscape OG image (center-crop) for social sharing previews.
+    // Portrait posters are rejected by WhatsApp/iMessage link previews which require ≥1.91:1 ratio.
+    const ogKey = key.replace(/\.(jpe?g|png)$/i, '-og.jpg');
+    let ogBuffer: Buffer;
+    try {
+      ogBuffer = await sharp(inputBuffer)
+        .resize(1200, 630, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    } catch (err) {
+      console.error(`[image-processor] OG crop failed for ${key}:`, err);
+      continue;
+    }
+
+    try {
+      await s3.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: ogKey,
+          Body: ogBuffer,
+          ContentType: 'image/jpeg',
+          CacheControl: 'public, max-age=31536000, immutable',
+        })
+      );
+    } catch (err) {
+      console.error(`[image-processor] Failed to put OG image ${ogKey}:`, err);
+      continue;
+    }
+
+    console.log(`[image-processor] Created OG crop ${key} → ${ogKey}`);
   }
 };
