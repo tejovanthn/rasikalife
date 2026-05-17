@@ -271,13 +271,13 @@ export default function MergeEntities() {
           </div>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <p className="text-sm text-blue-800 dark:text-blue-200">
+        <div className="bg-muted border border-border rounded-lg p-4">
+          <p className="text-sm text-foreground">
             <strong>{loser.name}</strong> will be merged into <strong>{canonical.name}</strong>. All
             references to the loser will be updated to point to the canonical record. The loser will
             return a 301 redirect.
           </p>
-          <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             This requires approval by another moderator before taking effect.
           </p>
         </div>

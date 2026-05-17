@@ -104,7 +104,7 @@ export const Header = () => {
                     key={link.label}
                     to={link.href}
                     className={({ isActive }) =>
-                      `px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${
+                      `px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         isActive
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:text-foreground'
@@ -214,12 +214,6 @@ export const Header = () => {
                           Manage Users
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/moderator/crawl-status" className="flex items-center gap-2">
-                          <Activity className="h-4 w-4" />
-                          Crawl Status
-                        </Link>
-                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuSeparator />
@@ -275,7 +269,7 @@ export const Header = () => {
                       to={link.href}
                       onClick={() => setIsSidebarOpen(false)}
                       className={({ isActive }) =>
-                        `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 ${
+                        `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                           isActive
                             ? 'bg-primary text-primary-foreground'
                             : 'text-muted-foreground hover:text-foreground'
@@ -295,7 +289,7 @@ export const Header = () => {
                         to={link.href}
                         onClick={() => setIsSidebarOpen(false)}
                         className={({ isActive }) =>
-                          `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 ${
+                          `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                             isActive
                               ? 'bg-primary text-primary-foreground'
                               : 'text-muted-foreground hover:text-foreground'
@@ -433,14 +427,6 @@ export const Header = () => {
                             >
                               <Users className="h-4 w-4" />
                               Manage Users
-                            </Link>
-                            <Link
-                              to="/moderator/crawl-status"
-                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
-                              onClick={() => setIsSidebarOpen(false)}
-                            >
-                              <Activity className="h-4 w-4" />
-                              Crawl Status
                             </Link>
                           </>
                         )}

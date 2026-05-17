@@ -453,14 +453,14 @@ export default function NewEvent() {
       </button>
 
       {duplicateInfo && (
-        <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3">
+        <div className="mt-4 p-4 bg-warning/10 border border-warning/30 rounded-lg space-y-3">
           <div className="flex items-start gap-2">
-            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+              <p className="text-sm font-medium text-foreground">
                 This poster has already been processed
               </p>
-              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Events from this poster already exist. You can view them or upload a different
                 poster.
               </p>

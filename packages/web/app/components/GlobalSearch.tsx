@@ -412,7 +412,9 @@ export function GlobalSearch() {
         >
           <SearchIcon size={16} />
           <span className="hidden sm:inline">Search...</span>
-          <span className="hidden sm:inline text-xs text-muted-foreground">⌘K</span>
+          <span className="hidden sm:inline text-xs text-muted-foreground">
+            {/Mac|iPhone|iPad|iPod/.test(navigator.platform) ? '⌘K' : 'Ctrl+K'}
+          </span>
         </button>
       ) : null}
 
@@ -428,6 +430,9 @@ export function GlobalSearch() {
 
             <div
               ref={resultsRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Search"
               className="relative bg-background rounded-lg shadow-xl w-full max-w-2xl border"
             >
               <div className="flex items-center border-b border-border px-4">
@@ -440,7 +445,7 @@ export function GlobalSearch() {
                   placeholder="Search compositions, artists, ragas, events..."
                   aria-label="Search"
                   role="combobox"
-                  aria-expanded={isOpen && results !== null}
+                  aria-expanded={isOpen}
                   aria-controls="search-results"
                   className="flex-1 px-4 py-4 text-lg placeholder:text-muted-foreground outline-none bg-transparent"
                 />
@@ -462,7 +467,7 @@ export function GlobalSearch() {
                 {results && !isLoading && (
                   <>
                     <div
-                      className="flex border-b border-border overflow-x-auto scrollbar-none"
+                      className="relative flex border-b border-border overflow-x-auto scrollbar-none after:pointer-events-none after:absolute after:right-0 after:inset-y-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent"
                       role="tablist"
                     >
                       {FILTER_TABS.map(type => (

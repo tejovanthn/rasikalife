@@ -339,11 +339,11 @@ function SuggestionChips({
           onClick={() => onSelect(s)}
           className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors hover:bg-accent ${
             s.score === 0
-              ? 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950'
+              ? 'border-success/40 bg-success/10'
               : 'border-border bg-muted'
           }`}
         >
-          {s.score === 0 && <Check className="h-3 w-3 text-green-600 dark:text-green-400" />}
+          {s.score === 0 && <Check className="h-3 w-3 text-success" />}
           {s.name}
         </button>
       ))}
@@ -1006,7 +1006,7 @@ function ReviewStep({
       </div>
 
       {uniqueNewArtists.length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <div className="bg-muted border border-border rounded-lg p-4">
           <h4 className="text-sm font-medium mb-2">New artist profiles to create:</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
             {uniqueNewArtists.map(name => (

@@ -1,3 +1,4 @@
+export { EditDisclaimer } from './EditDisclaimer';
 export { EntityCard } from './EntityCard';
 export { EmptyState } from './EmptyState';
 export { SectionHeader } from './SectionHeader';

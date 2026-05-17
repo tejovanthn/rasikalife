@@ -48,8 +48,8 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
           type="button"
           onClick={() => onChange({ ...item, isHighlight: !item.isHighlight })}
           className={cn(
-            'shrink-0 text-muted-foreground hover:text-amber-400 transition-colors',
-            item.isHighlight && 'text-amber-400'
+            'shrink-0 text-muted-foreground hover:text-warning transition-colors',
+            item.isHighlight && 'text-warning'
           )}
           aria-label={item.isHighlight ? 'Remove highlight' : 'Mark as highlight'}
           title="Concert highlight (private)"

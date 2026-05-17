@@ -44,17 +44,22 @@ const FooterSection = ({
     </button>
     <div
       id={id}
-      className={`overflow-hidden transition-[max-height,opacity] duration-200 ease-out md:overflow-visible md:!max-h-none md:!opacity-100 ${
-        isOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
-      }`}
+      className="grid transition-[grid-template-rows] duration-200 ease-out md:grid-rows-[1fr]"
+      style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
     >
-      <h3 className="hidden md:block text-sm font-semibold mt-0 mb-2">{title}</h3>
-      <div className="space-y-1">
-        {links.map(link => (
-          <NavLink key={link.label} href={link.href}>
-            {link.label}
-          </NavLink>
-        ))}
+      <div
+        className={`overflow-hidden transition-opacity duration-200 ease-out md:overflow-visible md:opacity-100 ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <h3 className="hidden md:block text-sm font-semibold mt-0 mb-2">{title}</h3>
+        <div className="space-y-1">
+          {links.map(link => (
+            <NavLink key={link.label} href={link.href}>
+              {link.label}
+            </NavLink>
+          ))}
+        </div>
       </div>
     </div>
   </div>

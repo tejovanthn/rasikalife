@@ -11,6 +11,23 @@ interface ArtistCardProps {
   };
 }
 
+function ArtistAvatar({ name }: { name: string }) {
+  const initials = name
+    .split(' ')
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('');
+
+  return (
+    <div
+      className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
+      aria-hidden="true"
+    >
+      <span className="text-sm font-semibold text-primary">{initials}</span>
+    </div>
+  );
+}
+
 export function ArtistCard({ artist }: ArtistCardProps) {
   const specs = Array.isArray(artist.specialisations)
     ? (artist.specialisations as string[]).filter(Boolean)
@@ -25,11 +42,18 @@ export function ArtistCard({ artist }: ArtistCardProps) {
     >
       <Card className="h-full transition-shadow duration-150 group-hover:shadow-md group-hover:border-primary/40">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg group-hover:underline">
-            {artist.title ? `${artist.title} ` : ''}
-            {artist.name}
-          </CardTitle>
-          {primaryRole && <p className="text-sm text-muted-foreground capitalize">{primaryRole}</p>}
+          <div className="flex items-center gap-3">
+            <ArtistAvatar name={artist.name} />
+            <div className="min-w-0">
+              <CardTitle className="text-lg group-hover:underline leading-snug">
+                {artist.title ? `${artist.title} ` : ''}
+                {artist.name}
+              </CardTitle>
+              {primaryRole && (
+                <p className="text-sm text-muted-foreground capitalize mt-0.5">{primaryRole}</p>
+              )}
+            </div>
+          </div>
         </CardHeader>
       </Card>
     </Link>

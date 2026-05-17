@@ -696,11 +696,9 @@ export default function EditVenue() {
           </Form>
         </div>
 
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 dark:bg-yellow-950 dark:border-yellow-800">
-          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-            About Edit Submissions
-          </h3>
-          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
+        <div className="mt-6 bg-warning/10 border border-warning/30 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-foreground">About Edit Submissions</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             Your edit will be submitted for review by a moderator. Once approved, the changes will
             be visible to everyone.
           </p>

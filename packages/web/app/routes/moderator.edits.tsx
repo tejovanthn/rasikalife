@@ -180,11 +180,11 @@ function entityPath(entityType: string, entityId: string) {
 
 function statusBadge(status: string) {
   const colors: Record<string, string> = {
-    draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
-    submitted: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    withdrawn: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+    draft: 'bg-muted text-muted-foreground',
+    submitted: 'bg-warning/15 text-warning',
+    approved: 'bg-success/15 text-success',
+    rejected: 'bg-destructive/15 text-destructive',
+    withdrawn: 'bg-muted text-muted-foreground',
   };
 
   return (
@@ -209,7 +209,7 @@ function EditActions({ edit }: { edit: EditWithDiff }) {
         value="approve"
         disabled={isSubmitting}
         size="sm"
-        className="bg-green-600 hover:bg-green-700"
+        className="bg-success hover:bg-success/90"
       >
         <Check className="h-4 w-4" />
       </Button>
@@ -284,7 +284,7 @@ export default function ModeratorEdits() {
           const edit = row.original;
           if (edit.operation === 'delete') {
             return (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-destructive/15 text-destructive">
                 Deletion Request
               </span>
             );
@@ -297,11 +297,11 @@ export default function ModeratorEdits() {
                   <div key={change.field} className="bg-muted rounded p-2">
                     <div className="font-medium text-foreground mb-1">{change.field}</div>
                     <div className="flex items-center gap-2">
-                      <span className="text-red-600 dark:text-red-400 line-through">
+                      <span className="text-destructive line-through">
                         {formatValue(change.oldValue)}
                       </span>
                       <span className="text-muted-foreground">→</span>
-                      <span className="text-green-600 dark:text-green-400">
+                      <span className="text-success">
                         {formatValue(change.newValue)}
                       </span>
                     </div>
@@ -338,8 +338,8 @@ export default function ModeratorEdits() {
   if (error) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 dark:bg-red-950 dark:border-red-800">
-          <p className="text-red-800 dark:text-red-200">{error}</p>
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+          <p className="text-foreground">{error}</p>
         </div>
       </div>
     );

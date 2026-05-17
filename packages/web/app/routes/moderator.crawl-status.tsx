@@ -77,12 +77,12 @@ const STATUS_CONFIG: Record<
   pending: {
     label: 'Pending',
     icon: <Clock className="h-5 w-5" />,
-    className: 'text-yellow-600 dark:text-yellow-400',
+    className: 'text-warning',
   },
   processed: {
     label: 'Processed',
     icon: <Check className="h-5 w-5" />,
-    className: 'text-green-600 dark:text-green-400',
+    className: 'text-success',
   },
   skipped: {
     label: 'Skipped',
@@ -92,7 +92,7 @@ const STATUS_CONFIG: Record<
   failed: {
     label: 'Failed',
     icon: <AlertCircle className="h-5 w-5" />,
-    className: 'text-red-600 dark:text-red-400',
+    className: 'text-destructive',
   },
 };
 
@@ -196,7 +196,7 @@ export default function ModeratorCrawlStatus() {
           const msg = row.original.errorMessage;
           return msg ? (
             <span
-              className="text-xs text-red-600 dark:text-red-400 max-w-[240px] truncate block"
+              className="text-xs text-destructive max-w-[240px] truncate block"
               title={msg}
             >
               {msg}
@@ -224,7 +224,7 @@ export default function ModeratorCrawlStatus() {
             {row.original.extractedEventId && (
               <Link
                 to={`/events/${row.original.extractedEventId}`}
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-xs text-primary hover:underline"
               >
                 Event
               </Link>

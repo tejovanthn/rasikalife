@@ -146,11 +146,11 @@ export default function RequestDeletion() {
         </div>
 
         {alreadyPending ? (
-          <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
+          <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
+            <p className="text-sm text-foreground font-medium">
               A deletion request is already pending for this {entityType}.
             </p>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               The existing request must be approved or rejected before submitting a new one.
             </p>
           </div>
@@ -159,8 +159,8 @@ export default function RequestDeletion() {
             <input type="hidden" name="entityType" value={entityType} />
             <input type="hidden" name="entityId" value={entityId} />
 
-            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <p className="text-sm text-red-800 dark:text-red-200">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+              <p className="text-sm text-foreground">
                 This will submit a deletion request for <strong>{entityName}</strong>. When approved
                 by another moderator, the {entityType} will be soft-deleted and return 404 to all
                 users.

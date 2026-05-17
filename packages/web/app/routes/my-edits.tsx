@@ -198,11 +198,11 @@ function statusIcon(status: string) {
     case EditStatus.DRAFT:
       return <Edit2 className="h-4 w-4 text-muted-foreground" />;
     case EditStatus.SUBMITTED:
-      return <Clock className="h-4 w-4 text-yellow-500" />;
+      return <Clock className="h-4 w-4 text-warning" />;
     case EditStatus.APPROVED:
-      return <Check className="h-4 w-4 text-green-500" />;
+      return <Check className="h-4 w-4 text-success" />;
     case EditStatus.REJECTED:
-      return <X className="h-4 w-4 text-red-500" />;
+      return <X className="h-4 w-4 text-destructive" />;
     case EditStatus.WITHDRAWN:
       return <X className="h-4 w-4 text-muted-foreground" />;
     default:
@@ -318,7 +318,7 @@ function EditModal({
             <h3 className="text-sm font-medium mb-2">Proposed Changes</h3>
             <div className="space-y-2">
               {edit.operation === 'delete' ? (
-                <div className="bg-red-50 dark:bg-red-950 rounded p-4 text-sm text-red-800 dark:text-red-200 text-center font-medium">
+                <div className="bg-destructive/10 rounded p-4 text-sm text-foreground text-center font-medium">
                   This is a deletion request
                 </div>
               ) : (edit as EditWithDiff).diff && (edit as EditWithDiff).diff.length > 0 ? (
@@ -326,11 +326,11 @@ function EditModal({
                   <div key={change.field} className="bg-muted rounded p-3">
                     <div className="font-medium text-foreground mb-1.5">{change.field}</div>
                     <div className="flex items-start gap-2 text-sm">
-                      <span className="text-red-600 dark:text-red-400 line-through flex-1 break-words">
+                      <span className="text-destructive line-through flex-1 break-words">
                         {formatValue(change.oldValue)}
                       </span>
                       <span className="text-muted-foreground shrink-0">→</span>
-                      <span className="text-green-600 dark:text-green-400 flex-1 break-words">
+                      <span className="text-success flex-1 break-words">
                         {formatValue(change.newValue)}
                       </span>
                     </div>
@@ -359,7 +359,7 @@ function EditModal({
               <p
                 className={`text-sm rounded p-3 ${
                   edit.status === EditStatus.REJECTED
-                    ? 'bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100'
+                    ? 'bg-destructive/10 text-foreground'
                     : 'bg-muted'
                 }`}
               >
@@ -381,7 +381,7 @@ function EditModal({
                 variant="outline"
                 onClick={handleWithdraw}
                 disabled={isWithdrawing}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
               >
                 {isWithdrawing ? (
                   <>

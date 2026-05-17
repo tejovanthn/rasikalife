@@ -10,6 +10,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { EditDisclaimer } from '~/components/shared';
 import { Label } from '~/components/ui/label';
 import {
   Select,
@@ -503,15 +504,7 @@ export default function EditArtist() {
           </Form>
         </div>
 
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4 dark:bg-yellow-950 dark:border-yellow-800">
-          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-            About Edit Submissions
-          </h3>
-          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-            Your edit will be submitted for review by a moderator. Once approved, the changes will
-            be visible to everyone.
-          </p>
-        </div>
+        <EditDisclaimer />
       </div>
     </div>
   );

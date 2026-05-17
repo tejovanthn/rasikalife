@@ -79,7 +79,7 @@ function EventActions({ event }: { event: SubmittedEvent }) {
         name="intent"
         value="approve"
         size="sm"
-        className="bg-green-600 hover:bg-green-700"
+        className="bg-success hover:bg-success/90"
         disabled={isBusy}
       >
         {isThisEvent && navigation.formData?.get('intent') === 'approve' ? (
@@ -191,8 +191,8 @@ export default function ModeratorEvents() {
   if (error) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 dark:bg-red-950 dark:border-red-800">
-          <p className="text-red-800 dark:text-red-200">{error}</p>
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+          <p className="text-foreground">{error}</p>
         </div>
       </div>
     );

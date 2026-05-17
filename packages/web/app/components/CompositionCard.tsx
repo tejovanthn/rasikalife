@@ -32,7 +32,7 @@ export function CompositionCard({
   return (
     <Link
       to={generateCompositionUrl(composition.title, composition.id)}
-      className="group block cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+      className="group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
       aria-label={`View composition: ${composition.title} by ${composition.composer.name}`}
     >
       <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/40">

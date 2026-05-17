@@ -266,18 +266,13 @@ function buildRefreshUrl(seeds: Record<EntityKey, number>, key: EntityKey): stri
 
 function CompletionBadge({ score }: { score: number }) {
   const colorClass =
-    score < 40
-      ? 'text-red-600 dark:text-red-400'
-      : score < 70
-        ? 'text-amber-600 dark:text-amber-400'
-        : 'text-green-600 dark:text-green-400';
+    score < 40 ? 'text-destructive' : score < 70 ? 'text-warning' : 'text-success';
+  const barClass =
+    score < 40 ? 'bg-destructive' : score < 70 ? 'bg-warning' : 'bg-success';
   return (
     <div className="flex items-center gap-1.5">
       <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full ${score < 40 ? 'bg-red-500' : score < 70 ? 'bg-amber-500' : 'bg-green-500'}`}
-          style={{ width: `${score}%` }}
-        />
+        <div className={`h-full rounded-full ${barClass}`} style={{ width: `${score}%` }} />
       </div>
       <span className={`text-xs font-medium tabular-nums ${colorClass}`}>{score}%</span>
     </div>

@@ -90,11 +90,11 @@ export default function SetlistEventOverride() {
                 <span
                   className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                     row.status === 'verified'
-                      ? 'bg-green-100 text-green-800'
+                      ? 'bg-success/15 text-success'
                       : row.status === 'disputed'
-                        ? 'bg-red-100 text-red-800'
+                        ? 'bg-destructive/15 text-destructive'
                         : row.status === 'lowConfidence'
-                          ? 'bg-yellow-100 text-yellow-800'
+                          ? 'bg-warning/15 text-warning'
                           : 'bg-muted text-muted-foreground'
                   }`}
                 >

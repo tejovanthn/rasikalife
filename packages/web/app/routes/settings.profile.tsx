@@ -88,7 +88,7 @@ export default function SettingsProfile() {
             {isSaving ? 'Saving…' : 'Save profile'}
           </Button>
           {actionData?.success && !isSaving && (
-            <span className="text-sm text-green-600">Saved</span>
+            <span className="text-sm text-success">Saved</span>
           )}
         </div>
       </Form>
