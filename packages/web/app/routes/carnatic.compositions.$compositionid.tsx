@@ -235,6 +235,7 @@ export default function CompositionDetails() {
     relatedCompositionsByTala,
     hasMoreCompositionsByTala,
     activeEdit,
+    isLoggedIn,
     isModerator,
     recentPerformances,
     hasMorePerformances,
@@ -248,6 +249,7 @@ export default function CompositionDetails() {
     relatedCompositionsByTala: CompositionWithRelations[];
     hasMoreCompositionsByTala: boolean;
     activeEdit: Edit | null;
+    isLoggedIn: boolean;
     isModerator: boolean;
     recentPerformances: Array<{ eventId: string; eventStartDateTime: string }>;
     hasMorePerformances: boolean;

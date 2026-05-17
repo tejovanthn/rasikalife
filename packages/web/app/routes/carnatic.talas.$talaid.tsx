@@ -175,13 +175,14 @@ export const meta: MetaFunction = ({ data }) => {
 export default function TalaDetails() {
   const location = useLocation();
 
-  const { tala, rawName, compositions, hasMoreCompositions, activeEdit, isModerator } =
+  const { tala, rawName, compositions, hasMoreCompositions, isLoggedIn, activeEdit, isModerator } =
     useLoaderData<{
       tala: Tala;
       rawName: string;
       compositions: Composition[];
       hasMoreCompositions: boolean;
       activeEdit: Edit | null;
+      isLoggedIn: boolean;
       isModerator: boolean;
     }>();
 
