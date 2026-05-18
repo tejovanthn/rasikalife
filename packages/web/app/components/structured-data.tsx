@@ -232,6 +232,67 @@ export function EventStructuredData({
   );
 }
 
+export function RagaFaqStructuredData({
+  name,
+  arohanam,
+  avarohanam,
+  melaNumber,
+  parentRagaName,
+}: {
+  name: string;
+  arohanam?: string | null;
+  avarohanam?: string | null;
+  melaNumber?: number | null;
+  parentRagaName?: string | null;
+}) {
+  const faqs: Array<{ '@type': string; name: string; acceptedAnswer: { '@type': string; text: string } }> = [];
+
+  if (arohanam)
+    faqs.push({
+      '@type': 'Question',
+      name: `What is the arohanam of ${name} raga?`,
+      acceptedAnswer: { '@type': 'Answer', text: arohanam },
+    });
+
+  if (avarohanam)
+    faqs.push({
+      '@type': 'Question',
+      name: `What is the avarohanam of ${name} raga?`,
+      acceptedAnswer: { '@type': 'Answer', text: avarohanam },
+    });
+
+  if (parentRagaName)
+    faqs.push({
+      '@type': 'Question',
+      name: `Is ${name} a janya raga?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `Yes, ${name} is a janya raga derived from ${parentRagaName}.`,
+      },
+    });
+  else if (melaNumber)
+    faqs.push({
+      '@type': 'Question',
+      name: `Which melakarta is ${name}?`,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: `${name} is melakarta number ${melaNumber} in the Carnatic system.`,
+      },
+    });
+
+  if (faqs.length === 0) return null;
+
+  return (
+    <script
+      type="application/ld+json"
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs }),
+      }}
+    />
+  );
+}
+
 export function FestivalStructuredData({
   festival,
 }: {

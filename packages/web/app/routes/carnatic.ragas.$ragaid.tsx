@@ -7,7 +7,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, RagaFaqStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -80,6 +80,8 @@ export async function loader({
     return data({
       raga: displayRaga,
       rawName: raga.name,
+      rawArohanam: raga.arohanam,
+      rawAvarohanam: raga.avarohanam,
       compositions: compositions.items,
       hasMoreCompositions: compositions.hasMore,
       similarRagas: similarRagas.slice(0, 6).map(r => ({
@@ -109,55 +111,45 @@ export async function loader({
   }
 }
 
-export const meta: MetaFunction = ({ data }) => {
-  const { raga, rawName } = (data as { raga?: RagaType; rawName?: string }) ?? {};
-  const canonicalName = rawName ?? raga?.name ?? '';
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const { raga, rawName } = data ?? {};
+  if (!raga) return [{ title: 'Raga not found | Rasika.life' }];
 
-  if (raga) {
-    return [
-      { title: `${raga.name} Raga - Indian Classical Music - Rasika.life` },
-      {
-        name: 'description',
-        content: `Learn about the ${raga.name} raga in Indian classical music. Discover this traditional melodic mode used in Carnatic and Hindustani traditions.`,
-      },
-      {
-        name: 'keywords',
-        content: `${raga.name} raga, Indian classical raga, Carnatic raga, Hindustani raga, melodic mode, classical music scale`,
-      },
-      // Open Graph tags for social sharing
-      { property: 'og:title', content: `${raga.name} Raga - Indian Classical Music` },
-      {
-        property: 'og:description',
-        content: `Learn about the ${raga.name} raga, a fundamental melodic mode in Indian classical music`,
-      },
-      { property: 'og:type', content: 'website' },
-      {
-        property: 'og:url',
-        content: `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`,
-      },
-      { property: 'og:image', content: ragaOgImageUrl(raga.id) },
-      { property: 'og:image:width', content: '1200' },
-      { property: 'og:image:height', content: '630' },
-      { property: 'og:image:type', content: 'image/jpeg' },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: `${raga.name} Raga` },
-      { name: 'twitter:description', content: `Indian classical raga ${raga.name}` },
-      { name: 'twitter:image', content: ragaOgImageUrl(raga.id) },
-      // Canonical URL
-      {
-        tagName: 'link',
-        rel: 'canonical',
-        href: `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`,
-      },
-    ];
-  }
+  const canonicalName = rawName ?? raga.name;
+  const isJanya = !!raga.parentRaga;
+  const subtitle = isJanya
+    ? 'Janya Raga: Arohana, Avarohana'
+    : raga.melaNumber
+      ? `Melakarta ${raga.melaNumber}: Arohana, Avarohana`
+      : 'Raga: Arohana, Avarohana';
+
+  const title = `${raga.name} ${subtitle} | Carnatic Music – Rasika.life`;
+
+  const descParts = [`${raga.name} raga in Carnatic music.`];
+  if (raga.arohanam) descParts.push(`Arohanam: ${raga.arohanam}.`);
+  if (raga.avarohanam) descParts.push(`Avarohanam: ${raga.avarohanam}.`);
+  if (raga.melaNumber) descParts.push(`Melakarta ${raga.melaNumber}.`);
+  else if (raga.parentRaga) descParts.push(`Janya raga from ${raga.parentRaga.name}.`);
+  const description = descParts.join(' ');
+
+  const canonicalUrl = `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`;
 
   return [
-    { title: 'Raga - Rasika.life' },
-    {
-      name: 'description',
-      content: 'Explore detailed information about Indian classical ragas.',
-    },
+    { title },
+    { name: 'description', content: description },
+    { property: 'og:title', content: `${raga.name} Raga | Rasika.life` },
+    { property: 'og:description', content: `Arohanam, avarohanam and compositions in ${raga.name}.` },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: canonicalUrl },
+    { property: 'og:image', content: ragaOgImageUrl(raga.id) },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { property: 'og:image:type', content: 'image/jpeg' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: `${raga.name} Raga` },
+    { name: 'twitter:description', content: `Arohanam, avarohanam and compositions in ${raga.name}.` },
+    { name: 'twitter:image', content: ragaOgImageUrl(raga.id) },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 
@@ -189,6 +181,8 @@ export default function RagaDetails() {
   const {
     raga,
     rawName,
+    rawArohanam,
+    rawAvarohanam,
     compositions,
     hasMoreCompositions,
     similarRagas,
@@ -200,6 +194,8 @@ export default function RagaDetails() {
   } = useLoaderData<{
     raga: RagaType;
     rawName: string;
+    rawArohanam: string | null | undefined;
+    rawAvarohanam: string | null | undefined;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
     similarRagas: RagaType[];
@@ -420,6 +416,13 @@ export default function RagaDetails() {
             item: `https://rasika.life${generateRagaUrl(rawName, raga.id)}`,
           },
         ]}
+      />
+      <RagaFaqStructuredData
+        name={raga.name}
+        arohanam={rawArohanam}
+        avarohanam={rawAvarohanam}
+        melaNumber={raga.melaNumber}
+        parentRagaName={raga.parentRaga?.name}
       />
     </main>
   );

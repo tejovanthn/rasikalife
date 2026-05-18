@@ -159,64 +159,47 @@ export async function loader({
 
 export const meta: MetaFunction = ({ data }) => {
   const { composition, rawTitle } =
-    (data as {
-      composition?: CompositionWithRelations;
-      rawTitle?: string;
-    }) ?? {};
-  const canonicalTitle = rawTitle ?? composition?.title ?? '';
+    (data as { composition?: CompositionWithRelations; rawTitle?: string }) ?? {};
+  if (!composition) return [{ title: 'Composition not found | Rasika.life' }];
 
-  if (composition) {
-    return [
-      { title: `${composition.title} - Composition by ${composition.composer.name} - Rasika.life` },
-      {
-        name: 'description',
-        content: `Learn about "${composition.title}", a ${composition.language} composition by ${composition.composer.name}. Explore the lyrics and musical structure of this Indian classical work.`,
-      },
-      {
-        name: 'keywords',
-        content: `${composition.title}, ${composition.composer.name}, Indian classical composition, ${composition.language} music, Carnatic composition`,
-      },
-      // Open Graph tags for social sharing
-      { property: 'og:title', content: `${composition.title} - ${composition.composer.name}` },
-      {
-        property: 'og:description',
-        content: `Indian classical ${composition.language} composition by ${composition.composer.name}`,
-      },
-      { property: 'og:type', content: 'music.song' },
-      {
-        property: 'og:url',
-        content: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
-      },
-      { property: 'og:image', content: compositionOgImageUrl(composition.id) },
-      { property: 'og:image:width', content: '1200' },
-      { property: 'og:image:height', content: '630' },
-      { property: 'og:image:type', content: 'image/jpeg' },
-      { property: 'music:musician', content: composition.composer.name },
-      { name: 'twitter:card', content: 'summary_large_image' },
-      { name: 'twitter:title', content: `${composition.title} - ${composition.composer.name}` },
-      { name: 'twitter:image', content: compositionOgImageUrl(composition.id) },
-      {
-        name: 'twitter:description',
-        content: `Indian classical ${composition.language} composition`,
-      },
-      { property: 'article:published_time', content: composition.createdAt },
-      { property: 'article:modified_time', content: composition.updatedAt },
-      { property: 'article:section', content: 'Music Composition' },
-      // Canonical URL
-      {
-        tagName: 'link',
-        rel: 'canonical',
-        href: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
-      },
-    ];
-  }
+  const canonicalTitle = rawTitle ?? composition.title;
+  const primaryRaga = composition.ragas[0]?.name;
+  const primaryTala = composition.talas[0]?.name;
+  const ragaTalaSuffix = [primaryRaga && `${primaryRaga} Raga`, primaryTala && `${primaryTala} Tala`]
+    .filter(Boolean)
+    .join(', ');
+
+  const title = ragaTalaSuffix
+    ? `${composition.title} – ${composition.composer.name} | ${ragaTalaSuffix}`
+    : `${composition.title} – ${composition.composer.name} | Carnatic Composition`;
+
+  const descParts = [`"${composition.title}" by ${composition.composer.name}`];
+  if (primaryRaga) descParts.push(`in ${primaryRaga} raga`);
+  if (primaryTala) descParts.push(`${primaryTala} tala`);
+  const description = `${descParts.join(', ')}. ${composition.language} Carnatic composition with lyrics.`;
+
+  const canonicalUrl = `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`;
 
   return [
-    { title: 'Composition - Rasika.life' },
-    {
-      name: 'description',
-      content: 'Explore detailed information about Indian classical music compositions.',
-    },
+    { title },
+    { name: 'description', content: description },
+    { property: 'og:title', content: `${composition.title} – ${composition.composer.name}` },
+    { property: 'og:description', content: description },
+    { property: 'og:type', content: 'music.song' },
+    { property: 'og:url', content: canonicalUrl },
+    { property: 'og:image', content: compositionOgImageUrl(composition.id) },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { property: 'og:image:type', content: 'image/jpeg' },
+    { property: 'music:musician', content: composition.composer.name },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: `${composition.title} – ${composition.composer.name}` },
+    { name: 'twitter:description', content: description },
+    { name: 'twitter:image', content: compositionOgImageUrl(composition.id) },
+    { property: 'article:published_time', content: composition.createdAt },
+    { property: 'article:modified_time', content: composition.updatedAt },
+    { property: 'article:section', content: 'Music Composition' },
+    { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
 

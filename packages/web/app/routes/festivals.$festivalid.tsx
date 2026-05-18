@@ -139,13 +139,17 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     return [{ title: 'Festival Not Found - Rasika.life' }];
   }
 
-  const desc = festival.description || `${festival.name} - Indian classical arts festival`;
+  const year = new Date(festival.startDate).getFullYear();
+  const title = `${festival.name} ${year} | Rasika.life`;
+  const desc =
+    festival.description ||
+    `${festival.name} ${year} — Indian classical arts festival${festival.organiserName ? ` presented by ${festival.organiserName}` : ''}.`;
   const canonicalUrl = `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`;
 
   return [
-    { title: `${festival.name} - Rasika.life` },
+    { title },
     { name: 'description', content: desc },
-    { property: 'og:title', content: festival.name },
+    { property: 'og:title', content: `${festival.name} ${year}` },
     { property: 'og:description', content: desc },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: canonicalUrl },
@@ -153,7 +157,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     { property: 'og:image:width', content: '1200' },
     { property: 'og:image:height', content: '630' },
     { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: festival.name },
+    { name: 'twitter:title', content: `${festival.name} ${year}` },
     { name: 'twitter:description', content: desc },
     { name: 'twitter:image', content: festival.posterUrl || 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
