@@ -8,3 +8,14 @@ onlyBuiltDependencies:
   - protobufjs
   - sharp
   - vite-plugin-node-externals
+
+supportedArchitectures:
+  os:
+    - current
+    - linux
+  cpu:
+    - current
+    - x64
+  libc:
+    - current
+    - glibc

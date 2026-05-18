@@ -17,7 +17,7 @@ const site = new sst.aws.React('RasikaWeb', {
   server: {
     timeout: '60 seconds',
     nodejs: {
-      install: ['sharp'],
+      install: ['sharp', '@img/sharp-linux-x64'],
     },
   },
 });
