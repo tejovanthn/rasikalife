@@ -11,7 +11,7 @@ import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateRagaOGImage } from '~/lib/og';
+import { ragaOgImageUrl } from '~/lib/og';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -135,12 +135,14 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:url',
         content: `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`,
       },
-      { property: 'og:image', content: generateRagaOGImage(raga) },
-      // Twitter Card tags
+      { property: 'og:image', content: ragaOgImageUrl(raga.id) },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:type', content: 'image/jpeg' },
       { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: `${raga.name} Raga` },
       { name: 'twitter:description', content: `Indian classical raga ${raga.name}` },
-      { name: 'twitter:image', content: generateRagaOGImage(raga) },
+      { name: 'twitter:image', content: ragaOgImageUrl(raga.id) },
       // Canonical URL
       {
         tagName: 'link',

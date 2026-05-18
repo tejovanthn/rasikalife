@@ -14,7 +14,7 @@ import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateArtistOGImage } from '~/lib/og';
+import { artistOgImageUrl } from '~/lib/og';
 import {
   generateArtistUrl,
   generateCompositionUrl,
@@ -127,14 +127,15 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:url',
         content: `https://rasika.life${generateArtistUrl(canonicalName, artist.id)}`,
       },
-      {
-        property: 'og:image',
-        content: generateArtistOGImage(artist),
-      },
+      { property: 'og:image', content: artistOgImageUrl(artist.id) },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:type', content: 'image/jpeg' },
       { property: 'profile:first_name', content: artist.name.split(' ')[0] },
       { property: 'profile:last_name', content: artist.name.split(' ').slice(1).join(' ') },
-      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: `${artist.name} - Artist` },
+      { name: 'twitter:image', content: artistOgImageUrl(artist.id) },
       { name: 'twitter:description', content: `Indian classical music artist ${artist.name}` },
       {
         tagName: 'link',

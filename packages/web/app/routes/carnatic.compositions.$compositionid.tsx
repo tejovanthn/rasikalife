@@ -14,7 +14,7 @@ import {
 } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateCompositionOGImage } from '~/lib/og';
+import { compositionOgImageUrl } from '~/lib/og';
 import {
   generateArtistUrl,
   generateCompositionUrl,
@@ -50,7 +50,9 @@ export async function loader({
     const client = await createServerClient(request);
     const [composition, performances] = await Promise.all([
       client.composition.get.query({ id: slugId }),
-      client.composition.listPerformances.query({ compositionId: slugId, limit: 3 }).catch(() => ({ items: [], hasMore: false, nextToken: undefined })),
+      client.composition.listPerformances
+        .query({ compositionId: slugId, limit: 3 })
+        .catch(() => ({ items: [], hasMore: false, nextToken: undefined })),
     ]);
 
     if (composition?.mergedIntoId) {
@@ -185,14 +187,14 @@ export const meta: MetaFunction = ({ data }) => {
         property: 'og:url',
         content: `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`,
       },
-      {
-        property: 'og:image',
-        content: generateCompositionOGImage(composition),
-      },
+      { property: 'og:image', content: compositionOgImageUrl(composition.id) },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:type', content: 'image/jpeg' },
       { property: 'music:musician', content: composition.composer.name },
-      // Twitter Card tags
-      { name: 'twitter:card', content: 'summary' },
+      { name: 'twitter:card', content: 'summary_large_image' },
       { name: 'twitter:title', content: `${composition.title} - ${composition.composer.name}` },
+      { name: 'twitter:image', content: compositionOgImageUrl(composition.id) },
       {
         name: 'twitter:description',
         content: `Indian classical ${composition.language} composition`,
@@ -276,7 +278,9 @@ export default function CompositionDetails() {
         shareUrl={shareUrl}
         shareTitle={`${composition.title} - ${composition.composer.name}`}
         shareDescription={`Indian classical ${composition.language} composition by ${composition.composer.name}`}
-        editUrl={isLoggedIn ? `${generateCompositionUrl(rawTitle, composition.id)}/edit` : undefined}
+        editUrl={
+          isLoggedIn ? `${generateCompositionUrl(rawTitle, composition.id)}/edit` : undefined
+        }
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=composition&entityId=${composition.id}`}
@@ -425,7 +429,10 @@ export default function CompositionDetails() {
           <h2 className="text-base font-semibold mb-3">Logged performances</h2>
           <ul className="space-y-1 text-sm">
             {recentPerformances.map(perf => (
-              <li key={`${perf.eventId}-${perf.eventStartDateTime}`} className="text-muted-foreground">
+              <li
+                key={`${perf.eventId}-${perf.eventStartDateTime}`}
+                className="text-muted-foreground"
+              >
                 {new Date(perf.eventStartDateTime).toLocaleDateString('en-IN', {
                   year: 'numeric',
                   month: 'short',
@@ -434,9 +441,7 @@ export default function CompositionDetails() {
               </li>
             ))}
           </ul>
-          {hasMorePerformances && (
-            <p className="text-xs text-muted-foreground mt-2">And more…</p>
-          )}
+          {hasMorePerformances && <p className="text-xs text-muted-foreground mt-2">And more…</p>}
         </section>
       )}
 

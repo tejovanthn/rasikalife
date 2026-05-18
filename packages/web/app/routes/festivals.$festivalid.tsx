@@ -149,7 +149,13 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     { property: 'og:description', content: desc },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: canonicalUrl },
-    ...(festival.posterUrl ? [{ property: 'og:image', content: festival.posterUrl }] : []),
+    { property: 'og:image', content: festival.posterUrl || 'https://rasika.life/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: festival.name },
+    { name: 'twitter:description', content: desc },
+    { name: 'twitter:image', content: festival.posterUrl || 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
