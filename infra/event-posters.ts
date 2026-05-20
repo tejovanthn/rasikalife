@@ -37,7 +37,7 @@ const converterFunction = {
   timeout: '5 minutes',
   link: [eventPostersBucket],
   nodejs: {
-    install: ['sharp', '@img/sharp-linux-x64'],
+    install: ['sharp', '@img/sharp-linux-x64', '@img/sharp-libvips-linux-x64'],
   },
 };
 
