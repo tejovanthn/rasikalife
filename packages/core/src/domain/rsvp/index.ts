@@ -3,15 +3,17 @@ import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { EventEntity } from '../event/entity';
 import { RsvpEntity } from './entity';
 
-async function adjustRsvpCounter(eventId: string, delta: 1 | -1): Promise<void> {
-  await dynamoClient.send(
+async function adjustRsvpCounter(eventId: string, delta: 1 | -1): Promise<number> {
+  const result = await dynamoClient.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
       Key: { pk: `EVENT#${eventId}`, sk: '#METADATA' },
       UpdateExpression: 'ADD rsvpCount :delta',
       ExpressionAttributeValues: { ':delta': delta },
+      ReturnValues: 'UPDATED_NEW',
     })
   );
+  return (result.Attributes?.rsvpCount as number) ?? 0;
 }
 
 export async function toggleRsvp(
@@ -21,16 +23,17 @@ export async function toggleRsvp(
   const existing = await RsvpEntity.get({ eventId, userId }).go();
 
   if (existing.data) {
-    await Promise.all([
+    const [, count] = await Promise.all([
       RsvpEntity.delete({ eventId, userId }).go(),
       adjustRsvpCounter(eventId, -1),
     ]);
-    const count = await getRsvpCount(eventId);
     return { isGoing: false, count };
   }
 
-  await Promise.all([RsvpEntity.create({ eventId, userId }).go(), adjustRsvpCounter(eventId, 1)]);
-  const count = await getRsvpCount(eventId);
+  const [, count] = await Promise.all([
+    RsvpEntity.create({ eventId, userId }).go(),
+    adjustRsvpCounter(eventId, 1),
+  ]);
   return { isGoing: true, count };
 }
 

@@ -42,6 +42,11 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "OgImage": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
     "RasikaAuth": {
       "type": "sst.aws.Auth"
       "url": string

@@ -529,8 +529,16 @@ function RsvpButton({
             variant={displayIsGoing ? 'default' : 'outline'}
             aria-pressed={displayIsGoing}
             disabled={fetcher.state !== 'idle'}
+            className={displayIsGoing ? 'group' : ''}
           >
-            {displayIsGoing ? "I'm going ✓" : "I'm going"}
+            {displayIsGoing ? (
+              <>
+                <span className="group-hover:hidden">Going ✓</span>
+                <span className="hidden group-hover:inline">Can't make it</span>
+              </>
+            ) : (
+              "I'm going"
+            )}
           </Button>
         </fetcher.Form>
       ) : (
