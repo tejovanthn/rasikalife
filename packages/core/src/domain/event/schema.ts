@@ -5,6 +5,7 @@ import { SponsorSchema } from '../shared/schemas';
 export const CreateEventSchema = z.object({
   festivalId: z.string().nullish(),
   posterUrl: z.string().url().nullish(),
+  posterOgUrl: z.string().url().nullish(),
   posterUploadId: z.string().nullish(),
   title: z.string().min(1).max(300),
   description: z.string().max(5000).nullish(),

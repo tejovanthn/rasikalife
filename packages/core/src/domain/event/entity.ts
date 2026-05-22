@@ -21,6 +21,7 @@ export const EventEntity = new Entity(
 
       // Poster
       posterUrl: { type: 'string', required: false },
+      posterOgUrl: { type: 'string', required: false },
       posterUploadId: { type: 'string', required: false },
 
       // Core event data

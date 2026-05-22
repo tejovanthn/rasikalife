@@ -14,33 +14,41 @@ const EXTENSIONS: Record<string, string> = {
   'application/pdf': '.pdf',
 };
 
-function buildPosterKey(contentType: string): { uploadId: string; key: string; posterUrl: string } {
+function buildPosterKey(contentType: string): {
+  uploadId: string;
+  key: string;
+  posterUrl: string;
+  posterOgUrl: string;
+} {
   const uploadId = generateId();
   const key = `posters/${uploadId}${EXTENSIONS[contentType] ?? '.jpg'}`;
-  const posterUrl = `${CDN || `https://${BUCKET}.s3.amazonaws.com`}/${key}`;
-  return { uploadId, key, posterUrl };
+  const base = CDN || `https://${BUCKET}.s3.amazonaws.com`;
+  const posterUrl = `${base}/${key}`;
+  // Landscape 1200x630 crop created by the image-processor Lambda after upload
+  const posterOgUrl = `${base}/posters/${uploadId}-og.jpg`;
+  return { uploadId, key, posterUrl, posterOgUrl };
 }
 
 export async function getUploadUrl(
   _fileName: string,
   contentType: string
-): Promise<{ uploadId: string; uploadUrl: string; posterUrl: string }> {
-  const { uploadId, key, posterUrl } = buildPosterKey(contentType);
+): Promise<{ uploadId: string; uploadUrl: string; posterUrl: string; posterOgUrl: string }> {
+  const { uploadId, key, posterUrl, posterOgUrl } = buildPosterKey(contentType);
   const uploadUrl = await getSignedUrl(
     s3,
     new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType }),
     { expiresIn: 300 }
   );
-  return { uploadId, uploadUrl, posterUrl };
+  return { uploadId, uploadUrl, posterUrl, posterOgUrl };
 }
 
 export async function uploadPosterFromBuffer(
   buffer: Buffer,
   contentType = 'image/jpeg'
-): Promise<{ uploadId: string; posterUrl: string }> {
-  const { uploadId, key, posterUrl } = buildPosterKey(contentType);
+): Promise<{ uploadId: string; posterUrl: string; posterOgUrl: string }> {
+  const { uploadId, key, posterUrl, posterOgUrl } = buildPosterKey(contentType);
   await s3.send(
     new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: contentType, Body: buffer })
   );
-  return { uploadId, posterUrl };
+  return { uploadId, posterUrl, posterOgUrl };
 }

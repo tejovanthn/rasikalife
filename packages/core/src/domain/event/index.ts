@@ -464,7 +464,8 @@ export async function extractAndCreateDrafts(
   posterHash?: string,
   existingFestivalId?: string,
   sourceAttribution?: { platform: string; postId?: string; postUrl?: string },
-  hint?: string
+  hint?: string,
+  posterOgUrl?: string
 ): Promise<{ extraction: ExtractionResult; festivalId?: string; eventIds: string[] }> {
   const extraction = await extractFromPoster(posterUrl, hint);
 
@@ -499,6 +500,7 @@ export async function extractAndCreateDrafts(
         festivalId,
         festivalName: extraction.festival?.name,
         posterUrl,
+        posterOgUrl,
         posterUploadId,
         title: eventData.title,
         description: eventData.description ?? undefined,

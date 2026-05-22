@@ -38,6 +38,7 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - **packages/web**: React Router v7 frontend application
 - **packages/search**: Lambda handler for periodic search index refresh
 - **packages/image-processor**: S3-triggered Lambda for image processing (Sharp)
+- **packages/og-image**: Lambda that renders OG share images (Sharp); kept separate from the web Lambda because `sst.aws.React` does not bundle `node_modules/` so native modules like Sharp can't live in the React server function
 - **packages/scraper**: Data scraping utilities
 - **infra/**: SST infrastructure definitions
 

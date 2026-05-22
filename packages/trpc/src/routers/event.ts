@@ -223,6 +223,7 @@ export const eventRouter = createTRPCRouter({
       z.object({
         posterUploadId: z.string(),
         posterUrl: z.string().url(),
+        posterOgUrl: z.string().url().optional(),
         posterHash: z.string().optional(),
         existingFestivalId: z.string().optional(),
       })
@@ -233,7 +234,10 @@ export const eventRouter = createTRPCRouter({
         input.posterUrl,
         ctx.user.id,
         input.posterHash,
-        input.existingFestivalId
+        input.existingFestivalId,
+        undefined,
+        undefined,
+        input.posterOgUrl
       );
     }),
 
@@ -560,12 +564,14 @@ export const eventRouter = createTRPCRouter({
       z.object({
         id: z.string().min(1),
         posterUrl: z.string().url(),
+        posterOgUrl: z.string().url().optional(),
         posterUploadId: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       const result = await Event.updateApprovedEvent(input.id, {
         posterUrl: input.posterUrl,
+        posterOgUrl: input.posterOgUrl,
         posterUploadId: input.posterUploadId,
       });
       triggerReindex();

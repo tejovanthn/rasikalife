@@ -47,6 +47,7 @@ export interface Event {
   festivalId?: string;
   festivalName?: string;
   posterUrl?: string;
+  posterOgUrl?: string;
   posterUploadId?: string;
   title: string;
   description?: string;

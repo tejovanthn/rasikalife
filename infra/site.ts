@@ -1,6 +1,7 @@
 import { auth } from './auth';
 import { getDomain } from './domain';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
+import { ogImageFunction } from './og-image';
 import { bucket } from './storage';
 import { trpc } from './trpc';
 
@@ -13,12 +14,10 @@ const site = new sst.aws.React('RasikaWeb', {
     VITE_STAGE: $app.stage,
     EVENT_POSTERS_BUCKET: eventPostersBucket.name,
     EVENT_POSTERS_CDN_URL: eventPostersCdn.url,
+    OG_IMAGE_URL: ogImageFunction.url,
   },
   server: {
     timeout: '60 seconds',
-    nodejs: {
-      install: ['sharp', '@img/sharp-linux-x64'],
-    },
   },
 });
 
