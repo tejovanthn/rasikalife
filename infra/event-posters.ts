@@ -30,7 +30,10 @@ export const eventPostersCdn = new sst.aws.Cdn('EventPostersCdn', {
 });
 
 // WebP converter: one notify() call with 3 entries for jpg/jpeg/png suffixes
-// (avoids triggering on .webp files written by the converter itself)
+// (avoids triggering on .webp files written by the converter itself).
+// The converter also writes -og.jpg files into the same prefix, which DO match
+// the .jpg filter — the handler skips them itself, since S3 filters can't
+// express a negative suffix match.
 const converterFunction = {
   handler: 'packages/image-processor/src/handler.handler',
   memory: '1024 MB',

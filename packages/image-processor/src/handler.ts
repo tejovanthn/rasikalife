@@ -12,6 +12,14 @@ export const handler: S3Handler = async (event: S3Event) => {
 
     console.log(`[image-processor] Processing: s3://${bucket}/${key}`);
 
+    // The -og.jpg output below lands in the same posters/ prefix that triggers
+    // this function (S3 filters can't exclude a suffix), so skip our own output
+    // or each upload recurses: X.jpg → X-og.jpg → X-og-og.jpg → ...
+    if (/-og\.jpe?g$/i.test(key)) {
+      console.log(`[image-processor] Skipping derived OG image: ${key}`);
+      continue;
+    }
+
     // Get the original object
     let getResult: GetObjectCommandOutput;
     try {
