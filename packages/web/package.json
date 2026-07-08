@@ -8,6 +8,8 @@
     "dev": "sst dev react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test tests/e2e",
     "test:e2e:ui": "playwright test --ui tests/e2e"
   },
@@ -63,7 +65,8 @@
     "vite": "^5.4.21",
     "vite-env-only": "^3.0.3",
     "vite-plugin-node-externals": "^0.0.1",
-    "vite-tsconfig-paths": "^4.3.2"
+    "vite-tsconfig-paths": "^4.3.2",
+    "vitest": "^1.6.1"
   },
   "engines": {
     "node": ">=20.0.0"
