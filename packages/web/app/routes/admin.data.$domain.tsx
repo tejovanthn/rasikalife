@@ -1,11 +1,10 @@
-import type { Venue } from '@rasika/core/domain/venue/client';
-import { Download, Upload } from 'lucide-react';
+import { ADMIN_CSV_DOMAINS, domainToCsv, parseDomainCsv } from '@rasika/core/admin/columns';
+import { ArrowLeft, Download, Upload } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
-import { data, useFetcher, useLoaderData } from 'react-router';
+import { Link, data, useFetcher, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Button } from '~/components/ui/button';
 import { requireAdmin } from '~/lib/auth.server';
-import { parseVenuesCsv, venuesToCsv } from '~/lib/venue-csv';
 
 interface BulkImportResult {
   created: number;
@@ -17,19 +16,29 @@ type ActionData =
   | { error: string; parseErrors?: string[] }
   | { result: BulkImportResult; parseErrors: string[] };
 
-export const meta: MetaFunction = () => {
-  return [{ title: 'Manage Venues' }, { name: 'robots', content: 'noindex, nofollow' }];
+export const meta: MetaFunction<typeof loader> = ({ data: loaderData }) => {
+  const label = loaderData?.label ?? 'Data';
+  return [{ title: `Manage ${label}` }, { name: 'robots', content: 'noindex, nofollow' }];
 };
 
-export async function loader({ request }: { request: Request }) {
+export async function loader({
+  request,
+  params,
+}: { request: Request; params: { domain?: string } }) {
   await requireAdmin(request);
+  const domain = params.domain ?? '';
+  const config = ADMIN_CSV_DOMAINS[domain];
+  if (!config) {
+    throw new Response('Unknown data domain', { status: 404 });
+  }
+
   const serverClient = await createServerClient(request);
-  const venues = await serverClient.venue.exportAll.query();
+  const entities = await serverClient.adminData.export.query({ domain });
 
   const url = new URL(request.url);
   if (url.searchParams.has('export')) {
-    const filename = `venues-${new Date().toISOString().slice(0, 10)}.csv`;
-    return new Response(venuesToCsv(venues as Venue[]), {
+    const filename = `${domain}-${new Date().toISOString().slice(0, 10)}.csv`;
+    return new Response(domainToCsv(domain, entities as Record<string, unknown>[]), {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
@@ -37,19 +46,26 @@ export async function loader({ request }: { request: Request }) {
     });
   }
 
-  return data({ count: venues.length });
+  return data({ domain, label: config.label, count: entities.length });
 }
 
-export async function action({ request }: { request: Request }) {
+export async function action({
+  request,
+  params,
+}: { request: Request; params: { domain?: string } }) {
   await requireAdmin(request);
+  const domain = params.domain ?? '';
+  if (!ADMIN_CSV_DOMAINS[domain]) {
+    return data({ error: 'Unknown data domain.' } satisfies ActionData, { status: 404 });
+  }
+
   const formData = await request.formData();
   const file = formData.get('file');
-
   if (!(file instanceof File) || file.size === 0) {
     return data({ error: 'Choose a CSV file to upload.' } satisfies ActionData, { status: 400 });
   }
 
-  const { rows, errors: parseErrors } = parseVenuesCsv(await file.text());
+  const { rows, errors: parseErrors } = parseDomainCsv(domain, await file.text());
   if (rows.length === 0) {
     return data({
       error: 'No usable rows were found in that CSV.',
@@ -58,12 +74,12 @@ export async function action({ request }: { request: Request }) {
   }
 
   const serverClient = await createServerClient(request);
-  const result = await serverClient.venue.bulkImport.mutate({ rows });
+  const result = await serverClient.adminData.import.mutate({ domain, rows });
   return data({ result, parseErrors } satisfies ActionData);
 }
 
-export default function AdminVenues() {
-  const { count } = useLoaderData<typeof loader>() as { count: number };
+export default function AdminDataDomain() {
+  const { label, count } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<ActionData>();
   const busy = fetcher.state !== 'idle';
   const actionData = fetcher.data;
@@ -75,23 +91,31 @@ export default function AdminVenues() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Manage Venues</h1>
+        <Link
+          to="/admin/data"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          All data
+        </Link>
+        <h1 className="text-2xl font-bold text-foreground mt-2">Manage {label}</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {count} venue{count === 1 ? '' : 's'} in the database.
+          {count} record{count === 1 ? '' : 's'} in the database.
         </p>
       </div>
 
       <section className="rounded-lg border p-5 space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Export</h2>
         <p className="text-sm text-muted-foreground">
-          Download every venue as a CSV. Edit it in a spreadsheet, then upload it below to apply
+          Download every record as a CSV. Edit it in a spreadsheet, then upload it below to apply
           your changes. Keep the <code className="text-xs">id</code> column intact so existing
-          venues are updated instead of duplicated.
+          records are updated instead of duplicated. Linked entities (composer, ragas, venue…) use
+          names — an unknown name is created on import.
         </p>
         <Button asChild>
           <a href="?export=1" download>
             <Download className="h-4 w-4 mr-2" />
-            Download venues CSV
+            Download {label} CSV
           </a>
         </Button>
       </section>
@@ -99,7 +123,7 @@ export default function AdminVenues() {
       <section className="rounded-lg border p-5 space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Bulk upload</h2>
         <p className="text-sm text-muted-foreground">
-          Rows with an existing <code className="text-xs">id</code> update that venue; rows with a
+          Rows with an existing <code className="text-xs">id</code> update that record; rows with a
           blank <code className="text-xs">id</code> create a new one. Each row is validated on its
           own, so a bad row is reported without blocking the rest.
         </p>

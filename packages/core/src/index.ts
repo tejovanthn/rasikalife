@@ -22,6 +22,7 @@ export * as ConcertLog from './domain/concert-log';
 export * as ConcertLogItem from './domain/concert-log-item';
 export * as EventSetlist from './domain/event-setlist';
 export * as Image from './domain/image/s3';
+export * as AdminData from './admin/bulk-data';
 
 // Social link types (browser-safe exports)
 export { SocialPlatform, SOCIAL_PLATFORM_LABELS, type SocialLink } from './domain/social-link';

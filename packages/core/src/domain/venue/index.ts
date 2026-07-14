@@ -4,7 +4,7 @@ import { cascadeVenueMerge, cascadeVenueNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { VenueEntity } from './entity';
 import type { Venue } from './entity';
-import { CreateVenueSchema, UpdateVenueSchema } from './schema';
+import type { CreateVenueSchema, UpdateVenueSchema } from './schema';
 
 export type CreateVenueInput = z.infer<typeof CreateVenueSchema>;
 export type UpdateVenueInput = z.infer<typeof UpdateVenueSchema>;
@@ -117,82 +117,6 @@ export async function listVenuesByCity(
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
-}
-
-export async function listAllVenues(): Promise<Venue[]> {
-  const venues: Venue[] = [];
-  let nextToken: string | undefined;
-
-  do {
-    const page = await listVenues({ limit: 100, nextToken });
-    venues.push(...page.items);
-    nextToken = page.nextToken;
-  } while (nextToken);
-
-  return venues;
-}
-
-export interface BulkUpsertVenuesResult {
-  created: number;
-  updated: number;
-  errors: Array<{ index: number; name?: string; message: string }>;
-}
-
-function formatValidationError(error: z.ZodError): string {
-  return error.issues
-    .map(issue => `${issue.path.join('.') || 'value'}: ${issue.message}`)
-    .join('; ');
-}
-
-/**
- * Upsert a batch of venues, typically from a re-uploaded CSV export. Rows with an
- * existing `id` are updated in place; rows without one are created. Each row is
- * validated independently so a single bad row never aborts the whole batch — its
- * failure is collected in `errors` and the rest continue.
- */
-export async function bulkUpsertVenues(
-  rows: Array<Record<string, unknown>>
-): Promise<BulkUpsertVenuesResult> {
-  const result: BulkUpsertVenuesResult = { created: 0, updated: 0, errors: [] };
-
-  for (let index = 0; index < rows.length; index++) {
-    const { id: rawId, ...fields } = rows[index];
-    const id = typeof rawId === 'string' && rawId.trim() ? rawId.trim() : undefined;
-    const name = typeof fields.name === 'string' ? fields.name : undefined;
-
-    try {
-      if (id) {
-        const existing = await getVenue(id);
-        if (!existing) {
-          result.errors.push({ index, name, message: `Venue with id "${id}" not found` });
-          continue;
-        }
-        const parsed = UpdateVenueSchema.safeParse(fields);
-        if (!parsed.success) {
-          result.errors.push({ index, name, message: formatValidationError(parsed.error) });
-          continue;
-        }
-        await updateVenue(id, parsed.data);
-        result.updated++;
-      } else {
-        const parsed = CreateVenueSchema.safeParse(fields);
-        if (!parsed.success) {
-          result.errors.push({ index, name, message: formatValidationError(parsed.error) });
-          continue;
-        }
-        await createVenue(parsed.data);
-        result.created++;
-      }
-    } catch (error) {
-      result.errors.push({
-        index,
-        name,
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  return result;
 }
 
 export async function mergeVenue(loserId: string, canonicalId: string): Promise<void> {

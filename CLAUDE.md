@@ -104,13 +104,20 @@ The core package uses a domain-driven design with:
 ### Web Package Utilities (`packages/web/app/lib/`)
 
 - `generic-title.ts` — `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
-- `csv.ts` — browser-safe RFC 4180 `toCsv(rows)` / `parseCsv(text)`. Handles quoting, embedded newlines, CRLF/LF, and a leading BOM. Generic (no domain knowledge).
-- `venue-csv.ts` — venue ⇄ CSV mapping used by the admin bulk tool. `venuesToCsv(venues)` flattens each venue to one row (`address_*` columns, pipe-joined `amenities`, `platform:url` `socialLinks`); `parseVenuesCsv(text)` turns an edited export back into `VenueCsvRow[]` (rows keyed by `id` update in place, blank-`id` rows create) plus a list of per-line parse errors.
 
-### Admin: Venue bulk CSV import/export
+### Admin: bulk CSV export/import (all domains)
 
-- Route `packages/web/app/routes/admin.venues.tsx` (`/admin/venues`, gated by `requireAdmin`) exports all venues as CSV (`?export=1` on the loader) and re-imports an edited CSV.
-- Backed by admin-only tRPC procedures `venue.exportAll` and `venue.bulkImport` (`adminProcedure`); the actual upsert lives in core `Venue.bulkUpsertVenues(rows)`, which validates each row independently (via the venue Zod schemas) so one bad row never aborts the batch. `Venue.listAllVenues()` walks the paginated list for export.
+An admin-only tool to export any domain to CSV, edit it in a spreadsheet, and re-upload to update the database. It is registry-driven — one config per domain, not per-domain routes.
+
+- **Core `src/admin/`** (the source of truth):
+  - `csv.ts` — browser-safe RFC 4180 `toCsv` / `parseCsv` (quoting, embedded newlines, CRLF/LF, BOM).
+  - `columns.ts` — browser-safe. `ADMIN_CSV_DOMAINS` maps each domain slug (`artist`, `raga`, `tala`, `composition`, `venue`, `organiser`, `festival`, `award`, `event`) to an ordered column list. `domainToCsv(domain, entities)` and `parseDomainCsv(domain, text)` serialize/parse. Encoding: lists → pipe-joined; `address` → `address_*` columns; `socialLinks` → `platform:url` pairs; linked entities → the linked entity's **name** (a new name is created on import); deeply nested objects (lyrics, ticketing, tala structure, sponsors) → JSON in one cell. Exposed to web via the `@rasika/core/admin/columns` subpath.
+  - `bulk-data.ts` — Node-only registry wiring each domain's entity (export scan), client create/update/get, and Zod schemas. `listAllForDomain(domain)` and `bulkUpsertForDomain(domain, rows, userId)`. A domain `prepare` hook resolves linked names → ids via cached get-or-create before validation. Rows with an `id` update; blank-`id` rows create; each row is validated independently so one bad row never aborts the batch. Exported as the `AdminData` namespace from `@rasika/core`.
+  - `BULK_DOMAIN_KEYS` (bulk-data) and `ADMIN_CSV_DOMAIN_KEYS` (columns) must stay in sync — a test asserts it.
+- **tRPC** `adminData.export` / `adminData.import` (`adminProcedure`, in `routers/admin-data.ts`).
+- **Web** `routes/admin.data._index.tsx` (domain list) and `routes/admin.data.$domain.tsx` (`/admin/data/<domain>`, `requireAdmin`): loader exports CSV via `?export=1`; action parses an uploaded CSV and calls `adminData.import`. Nav link "Manage Data" → `/admin/data`.
+
+To add a domain: add its column list to `ADMIN_CSV_DOMAINS` and a registry entry (with a `prepare` hook if it has linked names) to `bulk-data.ts`.
 
 ### Importing from `@rasika/core` in web routes
 

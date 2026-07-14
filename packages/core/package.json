@@ -16,6 +16,11 @@
       "import": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
     },
+    "./admin/columns": {
+      "types": "./src/admin/columns.ts",
+      "import": "./src/admin/columns.ts",
+      "default": "./src/admin/columns.ts"
+    },
     "./domain/social-link": {
       "types": "./src/domain/social-link.ts",
       "import": "./src/domain/social-link.ts",

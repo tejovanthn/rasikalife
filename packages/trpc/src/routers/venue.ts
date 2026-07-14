@@ -1,13 +1,7 @@
 import { Image, Venue } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
-import {
-  adminProcedure,
-  createTRPCRouter,
-  editorProcedure,
-  moderatorProcedure,
-  publicProcedure,
-} from '../trpc';
+import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const venueRouter = createTRPCRouter({
   get: publicProcedure
@@ -50,18 +44,6 @@ export const venueRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const result = await Venue.updateVenue(input.id, input.data);
       triggerReindex();
-      return result;
-    }),
-
-  exportAll: adminProcedure.query(() => Venue.listAllVenues()),
-
-  bulkImport: adminProcedure
-    .input(z.object({ rows: z.array(z.record(z.string(), z.unknown())) }))
-    .mutation(async ({ input }) => {
-      const result = await Venue.bulkUpsertVenues(input.rows);
-      if (result.created > 0 || result.updated > 0) {
-        triggerReindex();
-      }
       return result;
     }),
 
