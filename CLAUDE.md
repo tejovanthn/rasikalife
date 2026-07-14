@@ -115,7 +115,7 @@ An admin-only tool to export any domain to CSV, edit it in a spreadsheet, and re
   - `bulk-data.ts` — Node-only registry wiring each domain's entity (export scan), client create/update/get, and Zod schemas. `listAllForDomain(domain)` and `bulkUpsertForDomain(domain, rows, userId)`. A domain `prepare` hook resolves linked names → ids via cached get-or-create before validation. Rows with an `id` update; blank-`id` rows create; each row is validated independently so one bad row never aborts the batch. Exported as the `AdminData` namespace from `@rasika/core`.
   - `BULK_DOMAIN_KEYS` (bulk-data) and `ADMIN_CSV_DOMAIN_KEYS` (columns) must stay in sync — a test asserts it.
 - **tRPC** `adminData.export` / `adminData.import` (`adminProcedure`, in `routers/admin-data.ts`).
-- **Web** `routes/admin.data._index.tsx` (domain list) and `routes/admin.data.$domain.tsx` (`/admin/data/<domain>`, `requireAdmin`): loader exports CSV via `?export=1`; action parses an uploaded CSV and calls `adminData.import`. Nav link "Manage Data" → `/admin/data`.
+- **Web** `routes/admin.data._index.tsx` (domain list) and `routes/admin.data.$domain.tsx` (`/admin/data/<domain>`, `requireAdmin`): the page shows the count and an upload form whose action parses the CSV and calls `adminData.import`. The CSV download is a separate **resource route** `routes/admin.data.$domain_.export.tsx` (`/admin/data/<domain>/export`, no component) — a UI route can't return a raw file Response for a document request (the browser saves the rendered HTML instead), so the download link points here. Nav link "Manage Data" → `/admin/data`.
 
 To add a domain: add its column list to `ADMIN_CSV_DOMAINS` and a registry entry (with a `prepare` hook if it has linked names) to `bulk-data.ts`.
 

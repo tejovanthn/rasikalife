@@ -1,4 +1,4 @@
-import { ADMIN_CSV_DOMAINS, domainToCsv, parseDomainCsv } from '@rasika/core/admin/columns';
+import { ADMIN_CSV_DOMAINS, parseDomainCsv } from '@rasika/core/admin/columns';
 import { ArrowLeft, Download, Upload } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
 import { Link, data, useFetcher, useLoaderData } from 'react-router';
@@ -35,17 +35,6 @@ export async function loader({
   const serverClient = await createServerClient(request);
   const entities = await serverClient.adminData.export.query({ domain });
 
-  const url = new URL(request.url);
-  if (url.searchParams.has('export')) {
-    const filename = `${domain}-${new Date().toISOString().slice(0, 10)}.csv`;
-    return new Response(domainToCsv(domain, entities as Record<string, unknown>[]), {
-      headers: {
-        'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-      },
-    });
-  }
-
   return data({ domain, label: config.label, count: entities.length });
 }
 
@@ -79,7 +68,7 @@ export async function action({
 }
 
 export default function AdminDataDomain() {
-  const { label, count } = useLoaderData<typeof loader>();
+  const { domain, label, count } = useLoaderData<typeof loader>();
   const fetcher = useFetcher<ActionData>();
   const busy = fetcher.state !== 'idle';
   const actionData = fetcher.data;
@@ -113,7 +102,7 @@ export default function AdminDataDomain() {
           names — an unknown name is created on import.
         </p>
         <Button asChild>
-          <a href="?export=1" download>
+          <a href={`/admin/data/${domain}/export`} download>
             <Download className="h-4 w-4 mr-2" />
             Download {label} CSV
           </a>
