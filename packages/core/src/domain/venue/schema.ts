@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { SocialLinkSchema } from '../social-link';
 import { AddressSchema, YearSchema } from '../shared/schemas';
+import { SocialLinkSchema } from '../social-link';
 
 export const CreateVenueSchema = z.object({
   name: z.string().min(1).max(200),

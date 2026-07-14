@@ -7,6 +7,7 @@ import {
   FileImage,
   ListChecks,
   LogOut,
+  MapPin,
   Menu,
   NotebookPen,
   Sparkles,
@@ -212,6 +213,12 @@ export const Header = () => {
                         <Link to="/admin/users" className="flex items-center gap-2">
                           <Users className="h-4 w-4" />
                           Manage Users
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/venues" className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4" />
+                          Manage Venues
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -427,6 +434,14 @@ export const Header = () => {
                             >
                               <Users className="h-4 w-4" />
                               Manage Users
+                            </Link>
+                            <Link
+                              to="/admin/venues"
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                              onClick={() => setIsSidebarOpen(false)}
+                            >
+                              <MapPin className="h-4 w-4" />
+                              Manage Venues
                             </Link>
                           </>
                         )}

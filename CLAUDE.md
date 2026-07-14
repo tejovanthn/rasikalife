@@ -104,6 +104,13 @@ The core package uses a domain-driven design with:
 ### Web Package Utilities (`packages/web/app/lib/`)
 
 - `generic-title.ts` — `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
+- `csv.ts` — browser-safe RFC 4180 `toCsv(rows)` / `parseCsv(text)`. Handles quoting, embedded newlines, CRLF/LF, and a leading BOM. Generic (no domain knowledge).
+- `venue-csv.ts` — venue ⇄ CSV mapping used by the admin bulk tool. `venuesToCsv(venues)` flattens each venue to one row (`address_*` columns, pipe-joined `amenities`, `platform:url` `socialLinks`); `parseVenuesCsv(text)` turns an edited export back into `VenueCsvRow[]` (rows keyed by `id` update in place, blank-`id` rows create) plus a list of per-line parse errors.
+
+### Admin: Venue bulk CSV import/export
+
+- Route `packages/web/app/routes/admin.venues.tsx` (`/admin/venues`, gated by `requireAdmin`) exports all venues as CSV (`?export=1` on the loader) and re-imports an edited CSV.
+- Backed by admin-only tRPC procedures `venue.exportAll` and `venue.bulkImport` (`adminProcedure`); the actual upsert lives in core `Venue.bulkUpsertVenues(rows)`, which validates each row independently (via the venue Zod schemas) so one bad row never aborts the batch. `Venue.listAllVenues()` walks the paginated list for export.
 
 ### Importing from `@rasika/core` in web routes
 
