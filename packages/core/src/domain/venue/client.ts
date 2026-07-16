@@ -9,6 +9,10 @@ import type { CreateVenueSchema, UpdateVenueSchema } from './schema';
 // Re-export schemas (Zod is browser-safe)
 export { CreateVenueSchema, UpdateVenueSchema } from './schema';
 
+// Re-export the enum constants so forms can render options without redeclaring them
+export { VENUE_AMENITIES, VENUE_TYPES } from './schema';
+export type { VenueAmenity, VenueType } from './schema';
+
 // Export input types derived from schemas
 export type CreateVenueInput = z.infer<typeof CreateVenueSchema>;
 export type UpdateVenueInput = z.infer<typeof UpdateVenueSchema>;

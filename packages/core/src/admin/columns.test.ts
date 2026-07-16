@@ -9,12 +9,61 @@ describe('domainToCsv', () => {
     const [header, row] = csv.trimEnd().split('\r\n');
     expect(header.startsWith('id,name,address_street')).toBe(true);
     expect(row).toContain('v1');
-    expect(row).toContain('ac|parking');
     expect(row).toContain('1600');
+  });
+
+  it('gives each amenity its own yes/blank column', () => {
+    const csv = domainToCsv('venue', [{ id: 'v1', name: 'Music Academy', amenities: ['ac'] }]);
+    const [header, row] = csv.trimEnd().split('\r\n');
+    const columns = header.split(',');
+    const cells = row.split(',');
+
+    expect(columns).toContain('amenities_ac');
+    expect(columns).toContain('amenities_floor-seating');
+    expect(cells[columns.indexOf('amenities_ac')]).toBe('yes');
+    expect(cells[columns.indexOf('amenities_parking')]).toBe('');
   });
 
   it('throws on an unknown domain', () => {
     expect(() => domainToCsv('nope', [])).toThrow('Unknown CSV domain');
+  });
+});
+
+describe('parseDomainCsv — amenity flag columns', () => {
+  const parseAmenities = (header: string, row: string) =>
+    parseDomainCsv('venue', `id,name,${header}\r\nv1,Music Academy,${row}`);
+
+  it('collects the ticked columns into the amenities list', () => {
+    const { rows, errors } = parseAmenities('amenities_ac,amenities_parking', 'yes,YES');
+    expect(errors).toEqual([]);
+    expect(rows[0].amenities).toEqual(['ac', 'parking']);
+  });
+
+  it('accepts the spreadsheet dialects for a ticked box', () => {
+    const { rows } = parseAmenities('amenities_ac,amenities_parking,amenities_library', 'x,TRUE,1');
+    expect(rows[0].amenities).toEqual(['ac', 'parking', 'library']);
+  });
+
+  it('leaves amenities untouched when every column is blank', () => {
+    const { rows, errors } = parseAmenities('amenities_ac,amenities_parking', ',');
+    expect(errors).toEqual([]);
+    expect(rows[0]).not.toHaveProperty('amenities');
+  });
+
+  it('clears the list when a column explicitly says no', () => {
+    const { rows, errors } = parseAmenities('amenities_ac,amenities_parking', 'no,');
+    expect(errors).toEqual([]);
+    expect(rows[0].amenities).toEqual([]);
+  });
+
+  it('keeps ticked columns regardless of where a no lands', () => {
+    const { rows } = parseAmenities('amenities_ac,amenities_parking', 'no,yes');
+    expect(rows[0].amenities).toEqual(['parking']);
+  });
+
+  it('reports a cell it cannot read as yes or no', () => {
+    const { errors } = parseAmenities('amenities_ac', 'maybe');
+    expect(errors).toEqual(['Line 2: amenities_ac: expected yes or no, got "maybe"']);
   });
 });
 
@@ -30,14 +79,7 @@ describe('parseDomainCsv — venue round-trip', () => {
     };
     const { rows, errors } = parseDomainCsv('venue', domainToCsv('venue', [venue]));
     expect(errors).toEqual([]);
-    expect(rows[0]).toEqual({
-      id: 'v1',
-      name: 'Music Academy',
-      address: { street: 'TTK Road', city: 'Chennai', state: 'Tamil Nadu' },
-      capacity: 1600,
-      amenities: ['ac', 'parking', 'green-room'],
-      socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/x' }],
-    });
+    expect(rows[0]).toEqual(venue);
   });
 });
 

@@ -1,5 +1,6 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
 import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
+import { VENUE_AMENITIES } from '@rasika/core/domain/venue/client';
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Pencil, Plus, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
@@ -218,25 +219,6 @@ export async function action({
 
   return data({ error: 'Invalid action' }, { status: 400 });
 }
-
-const VENUE_AMENITIES = [
-  'ac',
-  'parking',
-  'floor-seating',
-  'chair-seating',
-  'green-room',
-  'canteen',
-  'wheelchair-accessible',
-  'hearing-loop',
-  'elevator',
-  'restrooms',
-  'metro-nearby',
-  'bus-stop-nearby',
-  'sound-system',
-  'live-streaming',
-  'library',
-  'other',
-] as const;
 
 const STEP_LABELS = ['About', 'Location', 'Contact & Facilities', 'Review'];
 const TOTAL_STEPS = 4;

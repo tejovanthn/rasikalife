@@ -1,3 +1,4 @@
+import { VENUE_AMENITIES } from '@rasika/core/domain/venue/client';
 import { Loader2, Plus } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
@@ -121,25 +122,6 @@ export async function action({ request }: { request: Request }) {
     return data({ error: 'Failed to create venue. Please try again.' }, { status: 500 });
   }
 }
-
-const VENUE_AMENITIES = [
-  'ac',
-  'parking',
-  'floor-seating',
-  'chair-seating',
-  'green-room',
-  'canteen',
-  'wheelchair-accessible',
-  'hearing-loop',
-  'elevator',
-  'restrooms',
-  'metro-nearby',
-  'bus-stop-nearby',
-  'sound-system',
-  'live-streaming',
-  'library',
-  'other',
-] as const;
 
 export default function NewVenue() {
   const { user } = useLoaderData<typeof loader>();

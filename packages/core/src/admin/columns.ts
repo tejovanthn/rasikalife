@@ -10,11 +10,13 @@
  *
  * Encoding conventions:
  *   - list fields      -> pipe-joined, e.g. `ac|parking`
+ *   - closed-set lists -> one yes/no column per allowed value (see `flags`)
  *   - address          -> `address_street`, `address_city`, ... columns
  *   - socialLinks      -> pipe-joined `platform:url` pairs (split on the first colon)
  *   - linked entities  -> the linked entity's name (a blank/new name is created on import)
  *   - nested objects   -> JSON in a single cell (lyrics, ticketing, tala structure, sponsors)
  */
+import { VENUE_AMENITIES } from '../domain/venue/schema';
 import { parseCsv, toCsv } from './csv';
 
 type Entity = Record<string, unknown>;
@@ -71,6 +73,43 @@ function list(field: string): Column {
       return undefined;
     },
   };
+}
+
+const TRUTHY_CELLS = new Set(['yes', 'y', 'true', '1', 'x']);
+const FALSY_CELLS = new Set(['no', 'n', 'false', '0']);
+
+/**
+ * Explodes a closed-set list field into one column per allowed value, mirroring the
+ * checkbox grid on the web form: `amenities_ac`, `amenities_parking`, ... Each cell is
+ * `yes` when the value is present and blank when it isn't, so the headers themselves
+ * document the legal values and a spreadsheet editor never has to spell a slug.
+ *
+ * Import semantics follow the rest of the registry, where a blank cell means "leave
+ * alone": the field is only written when at least one of its columns is non-blank. An
+ * explicit falsy cell (`no`) therefore both clears the field and opts the row in to
+ * being managed, which is the only way to empty an existing list from CSV.
+ */
+function flags(field: string, values: readonly string[]): Column[] {
+  return values.map(value => ({
+    header: `${field}_${value}`,
+    get: entity =>
+      Array.isArray(entity[field]) && (entity[field] as string[]).includes(value) ? 'yes' : '',
+    set: (row, raw) => {
+      if (raw === '') return undefined;
+      const cell = raw.toLowerCase();
+      if (TRUTHY_CELLS.has(cell)) {
+        const current = (row[field] as string[] | undefined) ?? [];
+        current.push(value);
+        row[field] = current;
+        return undefined;
+      }
+      if (FALSY_CELLS.has(cell)) {
+        row[field] ??= [];
+        return undefined;
+      }
+      return `${field}_${value}: expected yes or no, got "${raw}"`;
+    },
+  }));
 }
 
 function socialLinks(field: string): Column {
@@ -249,7 +288,7 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       str('phone'),
       str('email'),
       str('photoUrl'),
-      list('amenities'),
+      flags('amenities', VENUE_AMENITIES),
       str('nearestTransit'),
       num('foundedYear'),
       socialLinks('socialLinks')
