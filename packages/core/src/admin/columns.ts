@@ -16,6 +16,7 @@
  *   - linked entities  -> the linked entity's name (a blank/new name is created on import)
  *   - nested objects   -> JSON in a single cell (lyrics, ticketing, tala structure, sponsors)
  */
+import { ORGANISER_TAGS } from '../domain/organiser/schema';
 import { VENUE_AMENITIES } from '../domain/venue/schema';
 import { parseCsv, toCsv } from './csv';
 
@@ -309,7 +310,7 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       socialLinks('socialLinks'),
       num('foundedYear'),
       str('logoUrl'),
-      list('tags'),
+      flags('tags', ORGANISER_TAGS),
       refFlat('venue', 'venueName')
     ),
   },

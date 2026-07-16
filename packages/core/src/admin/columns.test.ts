@@ -67,6 +67,32 @@ describe('parseDomainCsv — amenity flag columns', () => {
   });
 });
 
+describe('parseDomainCsv — organiser tag flag columns', () => {
+  it('round-trips the closed-set tags through per-tag columns', () => {
+    const organiser = {
+      id: 'o1',
+      name: 'Bengaluru Gayana Samaaja',
+      organisationType: 'sabha',
+      tags: ['carnatic', 'festival-organiser', 'year-round'],
+    };
+    const csv = domainToCsv('organiser', [organiser]);
+    expect(csv.split('\r\n')[0]).toContain('tags_carnatic');
+    expect(csv.split('\r\n')[0]).toContain('tags_lecture-demo');
+
+    const { rows, errors } = parseDomainCsv('organiser', csv);
+    expect(errors).toEqual([]);
+    expect(rows[0]).toEqual(organiser);
+  });
+
+  it('leaves tags untouched when every column is blank', () => {
+    const { rows } = parseDomainCsv(
+      'organiser',
+      domainToCsv('organiser', [{ id: 'o1', name: 'X' }])
+    );
+    expect(rows[0]).not.toHaveProperty('tags');
+  });
+});
+
 describe('parseDomainCsv — venue round-trip', () => {
   it('flattens address, lists, and social links back into a row', () => {
     const venue = {

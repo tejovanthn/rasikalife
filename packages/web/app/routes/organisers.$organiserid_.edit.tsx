@@ -1,4 +1,5 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
+import { ORGANISER_TAGS } from '@rasika/core/domain/organiser/client';
 import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
 import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Pencil, Plus, Save, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -220,26 +221,6 @@ export async function action({
 
   return data({ error: 'Invalid action' }, { status: 400 });
 }
-
-const ORGANISER_TAGS = [
-  'carnatic',
-  'hindustani',
-  'bharatanatyam',
-  'dance',
-  'instrumental',
-  'jugalbandi',
-  'lecture-demo',
-  'music-school',
-  'music-competition',
-  'award-conferring',
-  'publication',
-  'free-entry',
-  'ticketed',
-  'festival-organiser',
-  'year-round',
-  'charitable',
-  'other',
-] as const;
 
 const STEP_LABELS = ['About', 'Location & Contact', 'Review'];
 const TOTAL_STEPS = 3;

@@ -9,6 +9,10 @@ import type { CreateOrganiserSchema, UpdateOrganiserSchema } from './schema';
 // Re-export schemas (Zod is browser-safe)
 export { CreateOrganiserSchema, UpdateOrganiserSchema } from './schema';
 
+// Re-export the enum constants so forms can render options without redeclaring them
+export { ORGANISATION_TYPES, ORGANISER_TAGS } from './schema';
+export type { OrganisationType, OrganiserTag } from './schema';
+
 // Export input types derived from schemas
 export type CreateOrganiserInput = z.infer<typeof CreateOrganiserSchema>;
 export type UpdateOrganiserInput = z.infer<typeof UpdateOrganiserSchema>;

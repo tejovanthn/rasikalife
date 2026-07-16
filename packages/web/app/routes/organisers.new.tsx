@@ -1,3 +1,4 @@
+import { ORGANISER_TAGS } from '@rasika/core/domain/organiser/client';
 import { Loader2, Plus } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
@@ -111,26 +112,6 @@ export async function action({ request }: { request: Request }) {
     return data({ error: 'Failed to create organiser. Please try again.' }, { status: 500 });
   }
 }
-
-const ORGANISER_TAGS = [
-  'carnatic',
-  'hindustani',
-  'bharatanatyam',
-  'dance',
-  'instrumental',
-  'jugalbandi',
-  'lecture-demo',
-  'music-school',
-  'music-competition',
-  'award-conferring',
-  'publication',
-  'free-entry',
-  'ticketed',
-  'festival-organiser',
-  'year-round',
-  'charitable',
-  'other',
-] as const;
 
 export default function NewOrganiser() {
   const { user } = useLoaderData<typeof loader>();
