@@ -2,7 +2,7 @@
 
 ## Original Requirements
 
-Use fusejs to create a lambda based service for search. Periodically scan (every 6 hours, using SST.dev's cron) and store a json of artist names, raga names, tala names, composition names, and composition lyrics. Feed this to the fusejs lambda to create a makeshift "opensearch" service. The search needs to be unified with equal weightage for all components, and should also have filters enabled - eg: the api should be able to request for a search term in only lyrics or raga+composition names etc. This will be integrated with the frontend via the trpc server.
+Use fusejs to create a lambda based service for search. Periodically scan (every 6 hours, using SST.dev's cron) and store a json of artist names, raga names, tala names, composition names, and composition lyrics. Feed this to the fusejs lambda to create a makeshift "opensearch" service. The search needs to be unified with equal weightage for all components, and should also have filters enabled - for example, the api should be able to request for a search term in only lyrics or raga+composition names etc. This will be integrated with the frontend via the trpc server.
 
 ## Clarifications (from Q&A)
 

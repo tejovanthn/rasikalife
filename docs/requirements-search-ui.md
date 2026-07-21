@@ -30,7 +30,7 @@
 ### Click Behavior
 - **Pattern**: Navigate to details
 - Clicking a result card navigates to the entity's detail page
-- e.g., clicking an artist card goes to `/carnatic/artists/:artistid`
+- For example, clicking an artist card goes to `/carnatic/artists/:artistid`
 
 ### Empty State
 - **Pattern**: Browse options

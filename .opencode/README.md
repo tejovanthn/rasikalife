@@ -10,7 +10,7 @@ Six specialized agents for different aspects of development:
 
 **Core Architecture Agents:**
 
-1. **dhh-code-reviewer** - An elite code reviewer channeling DHH's exacting standards
+1. **dhh-code-reviewer** - An elite code reviewer applying DHH's exacting standards
    - Reviews specs and code against framework best practices
    - Provides direct, constructive feedback
    - Ensures code is elegant, simple, and framework-idiomatic
@@ -22,7 +22,7 @@ Six specialized agents for different aspects of development:
 
 3. **docs-fetcher** - Retrieves and summarizes external documentation
    - Fetches docs from URLs, GitHub, npm packages
-   - Creates concise, actionable summaries
+   - Creates concise, practical summaries
    - Organizes documentation for easy reference
 
 **Specialized Agents:**
@@ -63,7 +63,7 @@ Ten comprehensive skill documents that agents can reference:
    - Resource bindings and type safety
    - Infrastructure as code patterns
    - Integration with Remix
-   - Common gotchas and solutions
+   - Common pitfalls and solutions
 
 2. **remix-patterns** - Remix framework conventions
    - Loaders and actions

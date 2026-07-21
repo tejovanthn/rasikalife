@@ -1,6 +1,6 @@
 # tRPC API Reference
 
-All tRPC procedures live in `packages/trpc/src/routers/`. The root router (`index.ts`) mounts each sub-router under a namespace key (e.g. `event.*`, `concertLog.*`).
+All tRPC procedures live in `packages/trpc/src/routers/`. The root router (`index.ts`) mounts each sub-router under a namespace key (for example, `event.*`, `concertLog.*`).
 
 ## Access Control
 

@@ -1,7 +1,7 @@
 # Rasika.life - Project Overview for AI Coding Assistants
 
 ## Project Summary
-**Rasika.life** is a web-based community platform for discovering, documenting, and discussing Indian classical art and music. It addresses fragmentation in the classical arts ecosystem by providing a comprehensive resource for both connoisseurs and newcomers.
+**Rasika.life** is a web-based community platform for discovering, documenting, and discussing Indian classical art and music. It addresses fragmentation in the classical arts world by providing a comprehensive resource for both connoisseurs and newcomers.
 
 ## Core Mission
 - Create a structured digital space for artists, events, and enthusiasts

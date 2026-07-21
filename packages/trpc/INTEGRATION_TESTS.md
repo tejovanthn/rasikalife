@@ -17,7 +17,7 @@ The tRPC package contains integration tests that run against real DynamoDB infra
 
 **Bot Context (`botTestRouter`)**
 - Simulates search engine/crawler requests
-- Used to test bot-specific behavior (e.g., view tracking exemptions)
+- Used to test bot-specific behavior (for example, view tracking exemptions)
 - `isBot: true` for testing analytics exclusions
 
 ### Test Data Isolation
@@ -62,7 +62,7 @@ GSI5SK: 'SCORE#0000000123#artist_id'  // Padded score enables sorting
 
 **Problem**: DynamoDB doesn't support full-text search, but we need searchable artist names with optimal performance.
 
-**Solution**: Optimized scan-based approach with enhanced filtering and intelligent scanning.
+**Solution**: Optimized scan-based approach with enhanced filtering and a larger scan multiplier.
 
 ```typescript
 // Optimized search implementation
@@ -75,7 +75,7 @@ const result = await scan({
 ```
 
 **Recent Optimizations**:
-- **Intelligent Scanning**: Optimized 3x scan multiplier for better hit rates while maintaining efficiency
+- **Larger Scan Multiplier**: Optimized 3x scan multiplier for better hit rates while maintaining efficiency
 - **Case-Insensitive Search**: Uses `searchName` field for more reliable matching
 - **Enhanced Result Scoring**: Improved relevance scoring to rank search results
 - **Robust Pagination**: Enhanced nextToken support with better error handling
@@ -144,7 +144,7 @@ await docClient.send(new UpdateCommand({
 
 ### Query Performance (Recently Optimized)
 - **Popularity**: O(1) GSI query, highly efficient
-- **Text Search**: O(n) scan operation, optimized with intelligent multipliers for better efficiency
+- **Text Search**: O(n) scan operation, tuned with a larger multiplier for better efficiency
 - **View Increment**: O(1) atomic operation
 - **Batch Operations**: Enhanced with exponential backoff retry for 95%+ success rate
 - **Connection Management**: Optimized with proper timeouts and retry configuration
@@ -200,7 +200,7 @@ export const getPopularArtists = withCache(
 
 #### Cache Invalidation
 
-Smart invalidation using pattern matching:
+Targeted invalidation using pattern matching:
 - **Artist Updates**: Invalidates specific artist + all popular artist queries
 - **View Count Changes**: Invalidates specific artist + popular rankings
 - **Pattern Matching**: `invalidateCachePattern('popular_artists:')` clears all popular artist cache variants

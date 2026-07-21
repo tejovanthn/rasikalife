@@ -18,7 +18,7 @@ domain/artist/
 └── index.test.ts     # Tests
 ```
 
-Some domains include additional files for specific concerns (e.g. `gemini.ts`, `extraction.ts`, `s3.ts` for the event domain).
+Some domains include additional files for specific concerns (for example, `gemini.ts`, `extraction.ts`, `s3.ts` for the event domain).
 
 ## TypeScript Conventions
 
