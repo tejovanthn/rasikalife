@@ -6,16 +6,16 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 0b — foundations hardening.
+**Next step:** phase 1 — artist attributes, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` through all four touchpoints, `artist.getImageUploadUrl`, guru schema widen, and the admin CSV column updates (4.6.1).
 
 ### Phase status
 
 | Phase | What | Status |
 |---|---|---|
 | 0a | Artist write auth: tighten `create`/`update` to editor, `delete` to moderator + soft delete | done |
-| 0b | Shared dedup helper; `mergeArtist` gaps (`ArtistAward`, `gurus[]`); artist-rename name-copy cascade | next |
+| 0b | Shared dedup helper; `mergeArtist` gaps (`ArtistAward`, `gurus[]`); artist-rename name-copy cascade | done |
 | 0c | Drop `fromItrans` from artist read paths | done |
-| 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | not started |
+| 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | next |
 | 2 | `ArtistMembership` junction | not started |
 | 3 | `ArtistPhoto` gallery entity | not started |
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | not started |
@@ -25,12 +25,18 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 8 | Claims + verification queue | not started |
 | 9 | Polish | not started |
 
-### Why 0b blocks the rest
+### What phase 0 landed
 
-Phases 2 onward each add an entity that references artists. Three referencing mechanisms are broken or missing today, so they get fixed before anything new leans on them:
+- **0a** — `artist.create`/`update` now require editor, `delete` requires moderator and soft-deletes. Previously any logged-in user could hard-delete an artist.
+- **0c** — artist and composer names no longer pass through `fromItrans`. Raga names, tala names, composition titles and lyrics still do; the split is per field.
+- **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
 
-- No shared dedup helper. The only artist find-or-create is `resolveArtist` in `packages/trpc/src/routers/event.ts`, which does an exact `getArtistByName` then blind-creates on a miss.
-- `cascadeArtistMerge` (`packages/core/src/domain/cascade.ts`) rewrites `EventArtist` and `Composition` composer rows only. `ArtistAward` rows and `gurus[]` entries on other artists already dangle on every merge.
-- `updateArtist` cascades a rename to `composer.name` alone. `EventArtist.artistName` and `ArtistAward.artistName` never refresh.
+Every wizard picker added later must route through `findOrCreateArtist` rather than calling `createArtist` — that is the guard against multiplying duplicate artists. See 11.2 in the plan.
 
-See 11.3 in the plan for the full list of what `mergeArtist` must rewrite, and which entries are gaps versus already done.
+### Known baselines (so regressions are visible)
+
+Measured at phase 0 completion. These are pre-existing and not caused by this work:
+
+- `packages/core`: 3 failing tests (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails"), 7 typecheck errors.
+- `packages/web`: 35 typecheck errors, tests all pass.
+- One pre-existing Biome formatting complaint in `cascade.ts` (`cascadeEventMergeToSetlist`) and one non-null assertion in `event.ts:413`.
