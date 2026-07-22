@@ -2,6 +2,7 @@ import {
   Artist,
   ArtistAward,
   ArtistMembership,
+  ArtistPhoto,
   Auth,
   ConcertLogItem,
   EventArtist,
@@ -193,6 +194,54 @@ export const artistRouter = createTRPCRouter({
   listGroups: publicProcedure
     .input(z.object({ memberId: z.string().min(1) }))
     .query(({ input }) => ArtistMembership.getMemberGroups(input.memberId)),
+
+  addPhoto: editorProcedure
+    .input(ArtistPhoto.AddArtistPhotoSchema.omit({ createdBy: true }))
+    .mutation(async ({ ctx, input }) => {
+      const artist = await Artist.getArtist(input.artistId);
+      if (!artist) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
+      }
+      const result = await ArtistPhoto.addArtistPhoto({ ...input, createdBy: ctx.user.id });
+      triggerReindex();
+      return result;
+    }),
+
+  updatePhoto: editorProcedure
+    .input(
+      z.object({
+        artistId: z.string().min(1),
+        id: z.string().min(1),
+        patch: ArtistPhoto.UpdateArtistPhotoSchema,
+      })
+    )
+    .mutation(async ({ input }) => {
+      const result = await ArtistPhoto.updateArtistPhoto(input.artistId, input.id, input.patch);
+      triggerReindex();
+      return result;
+    }),
+
+  deletePhoto: editorProcedure
+    .input(z.object({ artistId: z.string().min(1), id: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await ArtistPhoto.deleteArtistPhoto(input.artistId, input.id);
+      triggerReindex();
+    }),
+
+  listPhotos: publicProcedure
+    .input(
+      z.object({
+        artistId: z.string().min(1),
+        limit: z.number().min(1).max(100).optional(),
+        nextToken: z.string().optional(),
+      })
+    )
+    .query(({ input }) =>
+      ArtistPhoto.listArtistPhotos(input.artistId, {
+        limit: input.limit,
+        nextToken: input.nextToken,
+      })
+    ),
 
   getRepertoire: publicProcedure
     .input(z.object({ artistId: z.string().min(1) }))

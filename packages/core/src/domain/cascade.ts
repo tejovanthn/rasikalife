@@ -269,6 +269,7 @@ export async function cascadeArtistMerge(
   const { ArtistAwardEntity } = await import('./artist-award/entity');
   const { ArtistEntity } = await import('./artist/entity');
   const { ArtistMembershipEntity } = await import('./artist-membership/entity');
+  const { ArtistPhotoEntity } = await import('./artist-photo/entity');
   const now = new Date().toISOString();
 
   // Migrate EventArtist records from loser to canonical
@@ -376,6 +377,55 @@ export async function cascadeArtistMerge(
       })
     );
   } while (awardCursor);
+
+  // Migrate ArtistPhoto records from loser to canonical. The primary key partitions on
+  // artistId, so this is a delete-then-write like the junction migrations above. No
+  // existence check is needed: the photo id is unchanged and unique to the photo, so the
+  // canonical partition can never already hold a row at PHOTO#${item.id}. Writing through
+  // the entity (rather than a raw PutCommand) recomputes orderStr — and so the byArtist
+  // GSI sort key — from order via its `watch` setter.
+  let photoCursor: string | null = null;
+  do {
+    const photoResult = (await ArtistPhotoEntity.query
+      .primary({ artistId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: photoCursor })) as Page;
+    const photoItems =
+      (photoResult.data as Array<{
+        id: string;
+        imageUrl: string;
+        uploadId: string;
+        caption?: string;
+        credit?: string;
+        order: number;
+        featured: boolean;
+        createdBy: string;
+        createdAt: string;
+      }>) || [];
+    photoCursor = photoResult.cursor;
+
+    await Promise.all(
+      photoItems.map(async item => {
+        await dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `ARTIST#${loserId}`, sk: `PHOTO#${item.id}` },
+          })
+        );
+        await ArtistPhotoEntity.create({
+          id: item.id,
+          artistId: canonicalId,
+          imageUrl: item.imageUrl,
+          uploadId: item.uploadId,
+          caption: item.caption,
+          credit: item.credit,
+          order: item.order,
+          featured: item.featured,
+          createdBy: item.createdBy,
+          createdAt: item.createdAt,
+        }).go();
+      })
+    );
+  } while (photoCursor);
 
   // Migrate ArtistMembership records where the loser is the group
   let amGroupCursor: string | null = null;
