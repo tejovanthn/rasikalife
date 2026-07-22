@@ -45,13 +45,15 @@ vi.mock('./artist-membership/entity', () => ({
     query: { primary: vi.fn(), byMember: vi.fn() },
     get: vi.fn(),
     upsert: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
 vi.mock('./artist-photo/entity', () => ({
   ArtistPhotoEntity: {
     query: { primary: vi.fn() },
-    create: vi.fn(),
+    upsert: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -141,7 +143,9 @@ describe('cascade', () => {
       .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
     ArtistMembershipEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistPhotoEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
-    ArtistPhotoEntity.create = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistPhotoEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistPhotoEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistMembershipEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -612,7 +616,7 @@ describe('cascade', () => {
       await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
 
       expect(ArtistPhotoEntity.query.primary).toHaveBeenCalledWith({ artistId: 'loser' });
-      expect(ArtistPhotoEntity.create).toHaveBeenCalledWith({
+      expect(ArtistPhotoEntity.upsert).toHaveBeenCalledWith({
         id: 'photo1',
         artistId: 'canonical',
         imageUrl: 'https://example.com/photo1.jpg',
@@ -625,10 +629,10 @@ describe('cascade', () => {
         createdAt: '2025-01-01T00:00:00.000Z',
       });
 
-      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
-      expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'ARTIST#loser', sk: 'PHOTO#photo1' } })
-      );
+      // Assert on the entity call, not a raw command shape. ElectroDB lowercases key
+      // values, so a hand-built key would match nothing while DeleteItem still reported
+      // success — a raw-command assertion cannot tell the two apart.
+      expect(ArtistPhotoEntity.delete).toHaveBeenCalledWith({ artistId: 'loser', id: 'photo1' });
     });
   });
 
@@ -643,13 +647,14 @@ describe('cascade', () => {
 
       await cascade.cascadeArtistDeleteToMemberships('artist1');
 
-      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
-      expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'GROUP#artist1', sk: 'MEMBER#member1' } })
-      );
-      expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'GROUP#group1', sk: 'MEMBER#artist1' } })
-      );
+      expect(ArtistMembershipEntity.delete).toHaveBeenCalledWith({
+        groupId: 'artist1',
+        memberId: 'member1',
+      });
+      expect(ArtistMembershipEntity.delete).toHaveBeenCalledWith({
+        groupId: 'group1',
+        memberId: 'artist1',
+      });
     });
 
     it('deletes nothing when the artist has no memberships', async () => {
@@ -658,7 +663,7 @@ describe('cascade', () => {
 
       await cascade.cascadeArtistDeleteToMemberships('artist1');
 
-      expect(dynamoClient.send).not.toHaveBeenCalled();
+      expect(ArtistMembershipEntity.delete).not.toHaveBeenCalled();
     });
   });
 

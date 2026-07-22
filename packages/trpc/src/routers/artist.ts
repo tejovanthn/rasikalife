@@ -202,9 +202,10 @@ export const artistRouter = createTRPCRouter({
       if (!artist) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
       }
-      const result = await ArtistPhoto.addArtistPhoto({ ...input, createdBy: ctx.user.id });
-      triggerReindex();
-      return result;
+      // No triggerReindex: the search document is built from artist.name and
+      // alternateNames only, so a photo change cannot alter it — and firing it would
+      // hold the 5-minute reindex throttle, delaying a real rename that lands behind it.
+      return ArtistPhoto.addArtistPhoto({ ...input, createdBy: ctx.user.id });
     }),
 
   updatePhoto: editorProcedure
@@ -216,16 +217,13 @@ export const artistRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      const result = await ArtistPhoto.updateArtistPhoto(input.artistId, input.id, input.patch);
-      triggerReindex();
-      return result;
+      return ArtistPhoto.updateArtistPhoto(input.artistId, input.id, input.patch);
     }),
 
   deletePhoto: editorProcedure
     .input(z.object({ artistId: z.string().min(1), id: z.string().min(1) }))
     .mutation(async ({ input }) => {
       await ArtistPhoto.deleteArtistPhoto(input.artistId, input.id);
-      triggerReindex();
     }),
 
   listPhotos: publicProcedure

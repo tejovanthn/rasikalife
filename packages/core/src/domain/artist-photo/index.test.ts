@@ -15,6 +15,7 @@ vi.mock('../../utils', () => ({
 
 import {
   AddArtistPhotoSchema,
+  MAX_PHOTO_ORDER,
   UpdateArtistPhotoSchema,
   addArtistPhoto,
   deleteArtistPhoto,
@@ -234,5 +235,20 @@ describe('artist-photo', () => {
     it('accepts an empty patch', () => {
       expect(() => UpdateArtistPhotoSchema.parse({})).not.toThrow();
     });
+  });
+});
+
+describe('order bound', () => {
+  // The sort key zero-pads order to 4 digits and compares as a string, so 10000
+  // sorts before 0 and the photo silently jumps to the front of the gallery.
+  it('rejects an order above the padding width', () => {
+    expect(AddArtistPhotoSchema.safeParse({ ...validInput, order: 10000 }).success).toBe(false);
+    expect(UpdateArtistPhotoSchema.safeParse({ order: 10000 }).success).toBe(false);
+  });
+
+  it('accepts the boundary value', () => {
+    expect(AddArtistPhotoSchema.safeParse({ ...validInput, order: MAX_PHOTO_ORDER }).success).toBe(
+      true
+    );
   });
 });

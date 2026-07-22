@@ -381,9 +381,14 @@ export async function cascadeArtistMerge(
   // Migrate ArtistPhoto records from loser to canonical. The primary key partitions on
   // artistId, so this is a delete-then-write like the junction migrations above. No
   // existence check is needed: the photo id is unchanged and unique to the photo, so the
-  // canonical partition can never already hold a row at PHOTO#${item.id}. Writing through
-  // the entity (rather than a raw PutCommand) recomputes orderStr — and so the byArtist
-  // GSI sort key — from order via its `watch` setter.
+  // canonical partition can never already hold a row for it.
+  //
+  // Both sides go through the entity rather than raw commands. The write must, so the
+  // `watch` setter recomputes orderStr and with it the byArtist GSI key. The delete must
+  // because ElectroDB lowercases key values — a hand-built `ARTIST#${id}` key matches
+  // nothing, and DeleteItem reports success either way, so photos would be copied and
+  // never removed. upsert rather than create so a merge that dies mid-batch can be re-run
+  // without tripping create's attribute_not_exists condition.
   let photoCursor: string | null = null;
   do {
     const photoResult = (await ArtistPhotoEntity.query
@@ -405,13 +410,8 @@ export async function cascadeArtistMerge(
 
     await Promise.all(
       photoItems.map(async item => {
-        await dynamoClient.send(
-          new DeleteCommand({
-            TableName: TABLE_NAME,
-            Key: { pk: `ARTIST#${loserId}`, sk: `PHOTO#${item.id}` },
-          })
-        );
-        await ArtistPhotoEntity.create({
+        await ArtistPhotoEntity.delete({ artistId: loserId, id: item.id }).go();
+        await ArtistPhotoEntity.upsert({
           id: item.id,
           artistId: canonicalId,
           imageUrl: item.imageUrl,
@@ -667,12 +667,7 @@ export async function cascadeArtistDeleteToMemberships(artistId: string): Promis
 
     await Promise.all(
       groupItems.map(item =>
-        dynamoClient.send(
-          new DeleteCommand({
-            TableName: TABLE_NAME,
-            Key: { pk: `GROUP#${artistId}`, sk: `MEMBER#${item.memberId}` },
-          })
-        )
+        ArtistMembershipEntity.delete({ groupId: artistId, memberId: item.memberId }).go()
       )
     );
   } while (groupCursor);
@@ -688,12 +683,7 @@ export async function cascadeArtistDeleteToMemberships(artistId: string): Promis
 
     await Promise.all(
       memberItems.map(item =>
-        dynamoClient.send(
-          new DeleteCommand({
-            TableName: TABLE_NAME,
-            Key: { pk: `GROUP#${item.groupId}`, sk: `MEMBER#${artistId}` },
-          })
-        )
+        ArtistMembershipEntity.delete({ groupId: item.groupId, memberId: artistId }).go()
       )
     );
   } while (memberCursor);

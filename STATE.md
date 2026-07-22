@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 3 — the `ArtistPhoto` gallery entity with its `byArtist` GSI, add/update/delete/list functions, a tRPC router, and `mergeArtist` reassigning photo rows from loser to canonical.
+**Next step:** fix the uppercase-key bug in `cascade.ts` (see URGENT below) before phase 4. It predates this work and is corrupting data today.
 
 ### Phase status
 
@@ -17,8 +17,8 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 0c | Drop `fromItrans` from artist read paths | done |
 | 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | done |
 | 2 | `ArtistMembership` junction | done |
-| 3 | `ArtistPhoto` gallery entity | next |
-| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | not started |
+| 3 | `ArtistPhoto` gallery entity | done |
+| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | blocked on the key-casing fix |
 | 5 | Create/edit wizard (moderator-only, direct write) | not started |
 | 6 | Presentation redesign + JSON-LD + gallery subroute | not started |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
@@ -31,6 +31,27 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 - **0c** — artist and composer names no longer pass through `fromItrans`. Raga names, tala names, composition titles and lyrics still do; the split is per field.
 - **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
 - **1** — new Artist fields (`instrument`, `city`, `practiceStartYear`, `debutYear`, `photoUrl`, `photoUploadId`, `isGroup`, plus entity-only `claimStatus`/`verifiedAt`), widened `gurus`, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` end to end, and the admin CSV columns.
+
+### URGENT: hand-built DynamoDB keys in `cascade.ts` are the wrong case
+
+Found during the phase 3 review, and much larger than phase 3. **ElectroDB lowercases key values.** Verified against the real entities:
+
+```
+ArtistEntity.create({id:'a1'}).params().Item.pk   →  "artist#a1"   (not ARTIST#a1)
+                                        .Item.sk  →  "#metadata"   (not #METADATA)
+CompositionEntity.create(...).Item.pk             →  "composition#c1"
+```
+
+`cascade.ts` hand-builds **28** keys in raw commands using uppercase — `pk: \`COMPOSITION#${id}\`, sk: '#METADATA'` and similar. Every one of them addresses a row that does not exist. Split by command:
+
+- **11 `DeleteCommand`** — silently delete nothing. DynamoDB reports success for a delete against a missing key, so these have always looked fine.
+- **15 `UpdateCommand`** — worse. `UpdateItem` *creates* the item when the key is absent, so every one of these has been writing a fresh garbage row with an uppercase key instead of updating the real record. `cascadeComposerNameUpdate` has been doing this on every artist rename.
+
+This is very likely the root cause of the "existing merge-related data issues" the plan refers to in 11.3. Merges have been copying rows without removing the originals, and renames have been spraying orphan items into the table.
+
+Phase 3's three new instances are fixed (they now go through `Entity.delete(...)`). **The remaining 25 pre-existing sites are untouched** — the fix is mechanical but the blast radius is the whole cascade layer, the existing tests assert the broken uppercase keys, and it wants its own task with a scan for orphan rows already written to production. Do this before phase 4.
+
+Note the tests could never have caught it: `cascade.test.ts` mocks the entities and asserts on raw command shapes, so it compares the broken key against itself. Assert on `Entity.delete({...})` calls instead.
 
 ### Deferred from the phase 2 self-review
 

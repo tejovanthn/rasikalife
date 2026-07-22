@@ -58,4 +58,4 @@ export async function listArtistPhotos(
 }
 
 export type { ArtistPhoto } from './entity';
-export { AddArtistPhotoSchema, UpdateArtistPhotoSchema } from './schema';
+export { AddArtistPhotoSchema, MAX_PHOTO_ORDER, UpdateArtistPhotoSchema } from './schema';

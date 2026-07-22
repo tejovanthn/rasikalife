@@ -2,3 +2,4 @@
 - [SST React server can't hold native modules](feedback_sst_react_native_modules.md) — node_modules stripped from React server bundle; install prop is server.install not server.nodejs.install; factor sharp/etc into dedicated Function
 - [How reviews are commissioned here](feedback_review_gate.md) — phase gates with written plans; verify claims by running them; argue with his pre-formed opinions rather than confirming
 - [Auto-checkpoint commits](project_auto_checkpoint_commits.md) — a timer commits the working tree as "checkpoint:" mid-session; pin reviews to a base commit, don't trust git status
+- [ElectroDB key casing bug](electrodb-key-casing-bug.md) — ElectroDB writes lowercase pk/sk; every hand-built UPPERCASE Key in cascade.ts silently matches nothing
