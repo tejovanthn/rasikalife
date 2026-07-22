@@ -1,6 +1,10 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeArtistMerge, cascadeArtistNameUpdate } from '../cascade';
+import {
+  cascadeArtistDeleteToMemberships,
+  cascadeArtistMerge,
+  cascadeArtistNameUpdate,
+} from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
@@ -62,6 +66,13 @@ export async function updateArtist(id: string, input: UpdateArtistInput): Promis
 
 export async function softDeleteArtist(id: string): Promise<void> {
   await ArtistEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+  // Membership edges are dropped, not hidden. A deleted artist should stop
+  // appearing in its groups' member lists, and a deleted group should stop
+  // claiming members — neither read path filters on the artist's deletedAt,
+  // because doing so would cost a lookup per row and defeat the single-query
+  // design the junction exists for. Note this makes the delete one-way for
+  // memberships even though the artist row itself is only soft-deleted.
+  await cascadeArtistDeleteToMemberships(id);
 }
 
 export async function listArtists(params?: { limit?: number; nextToken?: string }): Promise<{
