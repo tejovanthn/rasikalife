@@ -40,6 +40,14 @@ vi.mock('./artist/entity', () => ({
   ArtistEntity: { query: { list: vi.fn() } },
 }));
 
+vi.mock('./artist-membership/entity', () => ({
+  ArtistMembershipEntity: {
+    query: { primary: vi.fn(), byMember: vi.fn() },
+    get: vi.fn(),
+    upsert: vi.fn(),
+  },
+}));
+
 vi.mock('./concert-log-item/entity', () => ({
   ConcertLogItemEntity: {
     query: { byEvent: vi.fn(), byComposition: vi.fn(), byRaga: vi.fn() },
@@ -77,6 +85,7 @@ vi.mock('./concert-log/entity', () => ({
 
 import { dynamoClient } from '../db/client';
 import { ArtistAwardEntity } from './artist-award/entity';
+import { ArtistMembershipEntity } from './artist-membership/entity';
 import { ArtistEntity } from './artist/entity';
 import { AwardEntity } from './award/entity';
 import * as cascade from './cascade';
@@ -117,6 +126,12 @@ describe('cascade', () => {
       .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
     ArtistAwardEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistEntity.query.list = pagedQuery([{ data: [], cursor: null }]);
+    ArtistMembershipEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    ArtistMembershipEntity.query.byMember = pagedQuery([{ data: [], cursor: null }]);
+    ArtistMembershipEntity.get = vi
+      .fn()
+      .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
+    ArtistMembershipEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -451,6 +466,115 @@ describe('cascade', () => {
         { id: 'other', name: 'Unrelated' },
       ]);
       expect(updates.some((u: any) => u.Key.pk === 'ARTIST#student2')).toBe(false);
+    });
+
+    it('moves loser-as-group ArtistMembership rows to the canonical, preserving role and rank', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistMembershipEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              groupId: 'loser',
+              memberId: 'member1',
+              memberName: 'Member One',
+              role: 'vocalist',
+              rank: 1,
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistMembershipEntity.get).toHaveBeenCalledWith([
+        { groupId: 'canonical', memberId: 'member1' },
+      ]);
+      expect(ArtistMembershipEntity.upsert).toHaveBeenCalledWith({
+        groupId: 'canonical',
+        groupName: 'Canonical Name',
+        memberId: 'member1',
+        memberName: 'Member One',
+        role: 'vocalist',
+        rank: 1,
+      });
+
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'GROUP#loser', sk: 'MEMBER#member1' } })
+      );
+    });
+
+    it('moves loser-as-member ArtistMembership rows to the canonical, updating memberName', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistMembershipEntity.query.byMember = pagedQuery([
+        { data: [{ groupId: 'group1', groupName: 'Group One', memberId: 'loser' }], cursor: null },
+      ]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistMembershipEntity.get).toHaveBeenCalledWith([
+        { groupId: 'group1', memberId: 'canonical' },
+      ]);
+      expect(ArtistMembershipEntity.upsert).toHaveBeenCalledWith({
+        groupId: 'group1',
+        groupName: 'Group One',
+        memberId: 'canonical',
+        memberName: 'Canonical Name',
+        role: undefined,
+        rank: undefined,
+      });
+
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'GROUP#group1', sk: 'MEMBER#loser' } })
+      );
+    });
+
+    it('does not create a duplicate ArtistMembership row when the canonical is already linked', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistMembershipEntity.query.primary = pagedQuery([
+        {
+          data: [{ groupId: 'loser', memberId: 'member1', memberName: 'Member One' }],
+          cursor: null,
+        },
+      ]);
+      ArtistMembershipEntity.get = vi
+        .fn()
+        .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [{ memberId: 'member1' }] }) });
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistMembershipEntity.upsert).not.toHaveBeenCalled();
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'GROUP#loser', sk: 'MEMBER#member1' } })
+      );
+    });
+
+    it('drops rather than writes a row that would make the canonical its own member', async () => {
+      // Merging a duplicate of Ganesh into Ganesh Kumaresh: the loser's membership in
+      // the "Ganesh Kumaresh" group would rewrite to groupId === memberId === canonical.
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistMembershipEntity.query.byMember = pagedQuery([
+        {
+          data: [{ groupId: 'canonical', groupName: 'Ganesh Kumaresh', memberId: 'loser' }],
+          cursor: null,
+        },
+      ]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistMembershipEntity.upsert).not.toHaveBeenCalled();
+      expect(ArtistMembershipEntity.get).not.toHaveBeenCalled();
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'GROUP#canonical', sk: 'MEMBER#loser' } })
+      );
     });
   });
 

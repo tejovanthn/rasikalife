@@ -1,6 +1,7 @@
 import {
   Artist,
   ArtistAward,
+  ArtistMembership,
   Auth,
   ConcertLogItem,
   EventArtist,
@@ -11,6 +12,24 @@ import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
+
+// Every membership must resolve to a real Artist row on each side, so the
+// caller gives either an existing memberId or a name to resolve via
+// findOrCreateArtist — never both, never neither. Two strict object variants
+// (rather than a refined single object) push that "exactly one" rule into
+// the schema: supplying both fields fails every branch of the union on the
+// unrecognized key, and supplying neither fails every branch on the missing
+// required key.
+const addMemberBaseShape = {
+  groupId: z.string().min(1),
+  role: z.string().max(200).optional(),
+  rank: z.number().int().min(1).optional(),
+};
+
+const AddMemberInputSchema = z.union([
+  z.object({ ...addMemberBaseShape, memberId: z.string().min(1) }).strict(),
+  z.object({ ...addMemberBaseShape, memberName: z.string().min(1).max(200) }).strict(),
+]);
 
 export const artistRouter = createTRPCRouter({
   get: publicProcedure
@@ -99,6 +118,61 @@ export const artistRouter = createTRPCRouter({
   listAwards: publicProcedure
     .input(z.object({ artistId: z.string().min(1) }))
     .query(({ input }) => ArtistAward.getArtistAwards(input.artistId)),
+
+  addMember: editorProcedure.input(AddMemberInputSchema).mutation(async ({ input }) => {
+    const group = await Artist.getArtist(input.groupId);
+    if (!group) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Group artist not found' });
+    }
+
+    let memberId: string;
+    let memberName: string;
+    if ('memberId' in input) {
+      const member = await Artist.getArtist(input.memberId);
+      if (!member) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Member artist not found' });
+      }
+      memberId = member.id;
+      memberName = member.name;
+    } else {
+      const { artist } = await Artist.findOrCreateArtist(input.memberName);
+      memberId = artist.id;
+      memberName = artist.name;
+    }
+
+    if (input.groupId === memberId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'An artist cannot be its own member',
+      });
+    }
+
+    const result = await ArtistMembership.addArtistMembership({
+      groupId: input.groupId,
+      groupName: group.name,
+      memberId,
+      memberName,
+      role: input.role,
+      rank: input.rank,
+    });
+    triggerReindex();
+    return result;
+  }),
+
+  removeMember: editorProcedure
+    .input(z.object({ groupId: z.string().min(1), memberId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await ArtistMembership.removeArtistMembership(input.groupId, input.memberId);
+      triggerReindex();
+    }),
+
+  listMembers: publicProcedure
+    .input(z.object({ groupId: z.string().min(1) }))
+    .query(({ input }) => ArtistMembership.getGroupMembers(input.groupId)),
+
+  listGroups: publicProcedure
+    .input(z.object({ memberId: z.string().min(1) }))
+    .query(({ input }) => ArtistMembership.getMemberGroups(input.memberId)),
 
   getRepertoire: publicProcedure
     .input(z.object({ artistId: z.string().min(1) }))

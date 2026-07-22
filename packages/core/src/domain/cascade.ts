@@ -268,6 +268,7 @@ export async function cascadeArtistMerge(
   const { CompositionEntity } = await import('./composition/entity');
   const { ArtistAwardEntity } = await import('./artist-award/entity');
   const { ArtistEntity } = await import('./artist/entity');
+  const { ArtistMembershipEntity } = await import('./artist-membership/entity');
   const now = new Date().toISOString();
 
   // Migrate EventArtist records from loser to canonical
@@ -375,6 +376,104 @@ export async function cascadeArtistMerge(
       })
     );
   } while (awardCursor);
+
+  // Migrate ArtistMembership records where the loser is the group
+  let amGroupCursor: string | null = null;
+  do {
+    const groupResult = (await ArtistMembershipEntity.query
+      .primary({ groupId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: amGroupCursor })) as Page;
+    const groupItems =
+      (groupResult.data as Array<{
+        groupId: string;
+        memberId: string;
+        memberName: string;
+        role?: string;
+        rank?: number;
+      }>) || [];
+    amGroupCursor = groupResult.cursor;
+
+    // Rewriting groupId to canonicalId would make the canonical its own member when
+    // it is itself the member on this row — drop that row instead of writing it.
+    const rewritableGroupItems = groupItems.filter(item => item.memberId !== canonicalId);
+
+    const existingGroupResult = rewritableGroupItems.length
+      ? await ArtistMembershipEntity.get(
+          rewritableGroupItems.map(item => ({ groupId: canonicalId, memberId: item.memberId }))
+        ).go()
+      : { data: [] as Array<{ memberId: string }> };
+    const existingGroupSet = new Set((existingGroupResult.data ?? []).map(r => r.memberId));
+
+    await Promise.all(
+      groupItems.map(async item => {
+        await dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `GROUP#${loserId}`, sk: `MEMBER#${item.memberId}` },
+          })
+        );
+        if (item.memberId !== canonicalId && !existingGroupSet.has(item.memberId)) {
+          await ArtistMembershipEntity.upsert({
+            groupId: canonicalId,
+            groupName: canonicalName,
+            memberId: item.memberId,
+            memberName: item.memberName,
+            role: item.role,
+            rank: item.rank,
+          }).go();
+        }
+      })
+    );
+  } while (amGroupCursor);
+
+  // Migrate ArtistMembership records where the loser is the member
+  let amMemberCursor: string | null = null;
+  do {
+    const memberResult = (await ArtistMembershipEntity.query
+      .byMember({ memberId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: amMemberCursor })) as Page;
+    const memberItems =
+      (memberResult.data as Array<{
+        groupId: string;
+        groupName: string;
+        memberId: string;
+        role?: string;
+        rank?: number;
+      }>) || [];
+    amMemberCursor = memberResult.cursor;
+
+    // Rewriting memberId to canonicalId would make the canonical its own member when
+    // it is itself the group on this row — drop that row instead of writing it.
+    const rewritableMemberItems = memberItems.filter(item => item.groupId !== canonicalId);
+
+    const existingMemberResult = rewritableMemberItems.length
+      ? await ArtistMembershipEntity.get(
+          rewritableMemberItems.map(item => ({ groupId: item.groupId, memberId: canonicalId }))
+        ).go()
+      : { data: [] as Array<{ groupId: string }> };
+    const existingMemberSet = new Set((existingMemberResult.data ?? []).map(r => r.groupId));
+
+    await Promise.all(
+      memberItems.map(async item => {
+        await dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `GROUP#${item.groupId}`, sk: `MEMBER#${loserId}` },
+          })
+        );
+        if (item.groupId !== canonicalId && !existingMemberSet.has(item.groupId)) {
+          await ArtistMembershipEntity.upsert({
+            groupId: item.groupId,
+            groupName: item.groupName,
+            memberId: canonicalId,
+            memberName: canonicalName,
+            role: item.role,
+            rank: item.rank,
+          }).go();
+        }
+      })
+    );
+  } while (amMemberCursor);
 
   // Update Composition.composerId and composer.name
   let compCursor: string | null = null;
