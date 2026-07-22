@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 2 — the `ArtistMembership` junction (entity, client functions, tRPC router), member find-or-create routed through the phase 0b dedup helper, and `mergeArtist` fixups for membership rows in both directions.
+**Next step:** phase 3 — the `ArtistPhoto` gallery entity with its `byArtist` GSI, add/update/delete/list functions, a tRPC router, and `mergeArtist` reassigning photo rows from loser to canonical.
 
 ### Phase status
 
@@ -16,8 +16,8 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 0b | Shared dedup helper; `mergeArtist` gaps (`ArtistAward`, `gurus[]`); artist-rename name-copy cascade | done |
 | 0c | Drop `fromItrans` from artist read paths | done |
 | 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | done |
-| 2 | `ArtistMembership` junction | next |
-| 3 | `ArtistPhoto` gallery entity | not started |
+| 2 | `ArtistMembership` junction | done |
+| 3 | `ArtistPhoto` gallery entity | next |
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | not started |
 | 5 | Create/edit wizard (moderator-only, direct write) | not started |
 | 6 | Presentation redesign + JSON-LD + gallery subroute | not started |
@@ -32,6 +32,17 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 - **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
 - **1** — new Artist fields (`instrument`, `city`, `practiceStartYear`, `debutYear`, `photoUrl`, `photoUploadId`, `isGroup`, plus entity-only `claimStatus`/`verifiedAt`), widened `gurus`, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` end to end, and the admin CSV columns.
 
+### Deferred from the phase 2 self-review
+
+The DHH reviewer failed twice (a stalled stream, then the monthly spend limit), so phase 2 was reviewed by hand against the same questions. Verified sound: the self-membership guards in both merge sweeps are symmetric; the `addMember` `z.union` genuinely rejects both-fields and neither-field payloads, confirmed by parsing rather than reading; `pages: 'all'` on the two membership queries is fine at group sizes.
+
+Fixed on review: `addMember` rejected a non-group target, and a duplicate member now returns `CONFLICT` instead of surfacing an ElectroDB write failure as a 500.
+
+Still open:
+
+- **`softDeleteArtist` leaves membership rows behind.** Merge is handled, plain delete is not, so a group page can link to a deleted member. Filtering at read time would defeat the single-query design the junction exists for, so the fix probably belongs in a cascade on delete. Low frequency, real.
+- **Phase 2 never got a machine review.** Worth re-running the reviewer over `5ee3234f0..HEAD` when budget allows, since the parts I checked were the parts I already suspected.
+
 ### Deferred from the phase 1 code review
 
 - `'venue' | 'organiser' | 'artist'` is written in four places (`image/s3.ts`, `ImageUpload.tsx`, and twice in `api.upload.image.tsx`). A fifth entity means finding all four. Wants a browser-safe `ImageEntityType` in its own subpath — it cannot come from `s3.ts`, which pulls in the AWS SDK.
@@ -42,7 +53,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 
 ### Carried into later phases
 
-- `isGroup` is settable through `artist.update`, which is `editorProcedure`. Section 11.1 of the plan wants it moderator-gated. Inert today — nothing reads it — but the hazard arrives with `ArtistMembership` in phase 2, where flipping it to `false` on a group with member edges orphans them. Decide then whether to gate the procedure or pull it out of the Zod schema the way `claimStatus` is, which is the same reasoning applied consistently.
+- ~~`isGroup` gating~~ — settled in phase 2: `artist.update` rejects an `isGroup` change from a non-moderator. The admin CSV import bypasses that check by calling `Artist.updateArtist` directly, which is fine since `adminData.import` is `adminProcedure`.
 - `claimStatus` and `verifiedAt` exist on the entity but nothing writes them until phase 8.
 - `EventArtist.isFeatured`/`featureRank` exist but have no setter yet; the performances modal in phase 5 owns that.
 

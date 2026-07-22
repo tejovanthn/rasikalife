@@ -124,6 +124,15 @@ export const artistRouter = createTRPCRouter({
     if (!group) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Group artist not found' });
     }
+    // Without this, a member could be attached to an individual, and the
+    // profile's Members block — which only renders for isGroup records — would
+    // hide an edge that still exists and still gets rewritten on every merge.
+    if (!group.isGroup) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'Members can only be added to an artist marked as a group',
+      });
+    }
 
     let memberId: string;
     let memberName: string;
@@ -144,6 +153,17 @@ export const artistRouter = createTRPCRouter({
       throw new TRPCError({
         code: 'BAD_REQUEST',
         message: 'An artist cannot be its own member',
+      });
+    }
+
+    // addArtistMembership uses create(), which fails the conditional write on a
+    // duplicate key. Check first so re-adding an existing member reports itself
+    // rather than surfacing an ElectroDB write failure as a 500.
+    const existing = await ArtistMembership.getGroupMembers(input.groupId);
+    if (existing.some(m => m.memberId === memberId)) {
+      throw new TRPCError({
+        code: 'CONFLICT',
+        message: `${memberName} is already a member of ${group.name}`,
       });
     }
 
