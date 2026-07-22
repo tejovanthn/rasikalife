@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 1 — artist attributes, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` through all four touchpoints, `artist.getImageUploadUrl`, guru schema widen, and the admin CSV column updates (4.6.1).
+**Next step:** phase 2 — the `ArtistMembership` junction (entity, client functions, tRPC router), member find-or-create routed through the phase 0b dedup helper, and `mergeArtist` fixups for membership rows in both directions.
 
 ### Phase status
 
@@ -15,8 +15,8 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 0a | Artist write auth: tighten `create`/`update` to editor, `delete` to moderator + soft delete | done |
 | 0b | Shared dedup helper; `mergeArtist` gaps (`ArtistAward`, `gurus[]`); artist-rename name-copy cascade | done |
 | 0c | Drop `fromItrans` from artist read paths | done |
-| 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | next |
-| 2 | `ArtistMembership` junction | not started |
+| 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | done |
+| 2 | `ArtistMembership` junction | next |
 | 3 | `ArtistPhoto` gallery entity | not started |
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | not started |
 | 5 | Create/edit wizard (moderator-only, direct write) | not started |
@@ -30,6 +30,13 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 - **0a** — `artist.create`/`update` now require editor, `delete` requires moderator and soft-deletes. Previously any logged-in user could hard-delete an artist.
 - **0c** — artist and composer names no longer pass through `fromItrans`. Raga names, tala names, composition titles and lyrics still do; the split is per field.
 - **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
+- **1** — new Artist fields (`instrument`, `city`, `practiceStartYear`, `debutYear`, `photoUrl`, `photoUploadId`, `isGroup`, plus entity-only `claimStatus`/`verifiedAt`), widened `gurus`, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` end to end, and the admin CSV columns.
+
+### Carried into later phases
+
+- `isGroup` is settable through `artist.update`, which is `editorProcedure`. Section 11.1 of the plan wants it moderator-gated. That gating lands with the wizard in phase 5.
+- `claimStatus` and `verifiedAt` exist on the entity but nothing writes them until phase 8.
+- `EventArtist.isFeatured`/`featureRank` exist but have no setter yet; the performances modal in phase 5 owns that.
 
 Every wizard picker added later must route through `findOrCreateArtist` rather than calling `createArtist` — that is the guard against multiplying duplicate artists. See 11.2 in the plan. When resolving a batch, fetch `listAllArtistsForMatching()` once and pass it as `candidates`; otherwise each new name sweeps the artist list again.
 
