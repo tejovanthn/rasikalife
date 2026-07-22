@@ -1,7 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
-import { fromItrans } from '@rasika/core/utils';
 import { Calendar, ExternalLink } from 'lucide-react';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
@@ -24,7 +23,6 @@ import {
   parseSlug,
 } from '~/lib/url-slug';
 import { formatDate } from '~/lib/utils';
-import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
   params,
@@ -69,15 +67,8 @@ export async function loader({
         : Promise.resolve(null),
     ]);
 
-    const script = await scriptSessionResolver.getScript(request);
-    const displayArtist = {
-      ...artist,
-      name: fromItrans(artist.name, script),
-    };
-
     return data({
-      artist: displayArtist,
-      rawName: artist.name,
+      artist,
       compositions: result.items,
       hasMoreCompositions: result.hasMore,
       artistEvents: eventsResult.items,
@@ -103,8 +94,8 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const { artist, rawName } = (data as { artist?: ArtistType; rawName?: string }) ?? {};
-  const canonicalName = rawName ?? artist?.name ?? '';
+  const { artist } = (data as { artist?: ArtistType }) ?? {};
+  const canonicalName = artist?.name ?? '';
 
   if (artist) {
     return [
@@ -168,7 +159,6 @@ export default function ArtistDetails() {
 
   const {
     artist,
-    rawName,
     compositions,
     hasMoreCompositions,
     artistEvents,
@@ -179,7 +169,6 @@ export default function ArtistDetails() {
     isModerator,
   } = useLoaderData<{
     artist: ArtistType;
-    rawName: string;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
     artistEvents: ArtistEvent[];
@@ -196,7 +185,7 @@ export default function ArtistDetails() {
   const isNestedRoute =
     location.pathname.includes('/compositions') || location.pathname.includes('/events');
 
-  const shareUrl = `https://rasika.life${generateArtistUrl(rawName, artist.id)}`;
+  const shareUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`;
 
   const specializations = [
     ...new Set(artistEvents.map(e => e.role).filter((r): r is string => !!r)),
@@ -213,7 +202,7 @@ export default function ArtistDetails() {
     { label: 'Artists', path: '/artists' },
     {
       label: artist.name,
-      path: generateArtistUrl(rawName, artist.id),
+      path: generateArtistUrl(artist.name, artist.id),
     },
   ];
 
@@ -226,7 +215,7 @@ export default function ArtistDetails() {
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
-        editUrl={isLoggedIn ? `${generateArtistUrl(rawName, artist.id)}/edit` : undefined}
+        editUrl={isLoggedIn ? `${generateArtistUrl(artist.name, artist.id)}/edit` : undefined}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=artist&entityId=${artist.id}`}
@@ -395,7 +384,7 @@ export default function ArtistDetails() {
             ))}
           </div>
           <Link
-            to={`${generateArtistUrl(rawName, artist.id)}/events`}
+            to={`${generateArtistUrl(artist.name, artist.id)}/events`}
             className="inline-block mt-3 text-sm text-primary"
           >
             View all events &rarr;
@@ -439,14 +428,14 @@ export default function ArtistDetails() {
           { name: 'Artists', item: 'https://rasika.life/artists' },
           {
             name: artist.name,
-            item: `https://rasika.life${generateArtistUrl(rawName, artist.id)}`,
+            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
           },
         ]}
       />
       <PersonStructuredData
         person={{
           name: artist.name,
-          url: `https://rasika.life${generateArtistUrl(rawName, artist.id)}`,
+          url: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
         }}
       />
     </main>

@@ -119,7 +119,6 @@ export async function loader({
     const displayComposition = {
       ...composition,
       title: fromItrans(composition.title, script),
-      composer: { ...composition.composer, name: fromItrans(composition.composer.name, script) },
       ragas: composition.ragas.map(r => ({ ...r, name: fromItrans(r.name, script) })),
       talas: composition.talas.map(t => ({ ...t, name: fromItrans(t.name, script) })),
       lyricsV1: composition.lyricsV1.map(l => ({

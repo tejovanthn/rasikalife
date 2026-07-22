@@ -1,5 +1,4 @@
 import type { ArtistType } from '@rasika/core/types/entities';
-import { fromItrans } from '@rasika/core/utils';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -9,14 +8,12 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError } from '~/lib/errors';
-import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const query = url.searchParams.get('q');
   const itemsPerPage = 36;
-  const script = await scriptSessionResolver.getScript(request);
 
   try {
     if (query) {
@@ -31,7 +28,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'artist')
           .map(item => ({
             id: item.id,
-            name: fromItrans(item.name, script),
+            name: item.name,
             artistType: 'vocalist' as const,
             traditions: [],
             isVerified: false,
@@ -52,7 +49,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      artists: (results.items || []).map(a => ({ ...a, name: fromItrans(a.name, script) })),
+      artists: results.items || [],
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

@@ -31,7 +31,6 @@ export const loader: LoaderFunction = async ({ request }) => {
         compositions: searchResults.compositions.map(c => ({
           ...c,
           title: fromItrans(c.title, script),
-          composer: { ...c.composer, name: fromItrans(c.composer.name, script) },
         })),
         nextToken: null,
         hasMore: searchResults.compositions.length >= itemsPerPage,
@@ -49,7 +48,6 @@ export const loader: LoaderFunction = async ({ request }) => {
       compositions: (results.items || []).map(c => ({
         ...c,
         title: fromItrans(c.title, script),
-        composer: { ...c.composer, name: fromItrans(c.composer.name, script) },
       })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
