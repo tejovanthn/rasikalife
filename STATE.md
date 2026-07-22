@@ -61,7 +61,7 @@ Fixed on review: `addMember` rejected a non-group target, and a duplicate member
 
 Still open:
 
-- **`softDeleteArtist` leaves membership rows behind.** Merge is handled, plain delete is not, so a group page can link to a deleted member. Filtering at read time would defeat the single-query design the junction exists for, so the fix probably belongs in a cascade on delete. Low frequency, real.
+- ~~`softDeleteArtist` leaves membership rows behind~~ — closed in phase 3 via `cascadeArtistDeleteToMemberships`. But the phase 3 review made a fair objection that is still open: `softDeleteArtist` is now the only `softDelete*` in the repo that destroys anything, and it is also the `deleteEntity` handler in `edit/registry.ts`, so approving a delete proposal hard-drops membership edges too. The cleaner shape is a `deletedAt` on `ArtistMembership` filtered inside `getGroupMembers`, which already sorts in memory and so pays nothing extra.
 - **Phase 2 never got a machine review.** Worth re-running the reviewer over `5ee3234f0..HEAD` when budget allows, since the parts I checked were the parts I already suspected.
 
 ### Deferred from the phase 1 code review
