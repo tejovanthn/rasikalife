@@ -650,6 +650,55 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
   } while (awardCursor);
 }
 
+// Removes an artist's membership rows in both directions. Destructive and one-way: there
+// is no undelete path in this codebase today, so these edges are not recoverable if a
+// delete is reversed by hand.
+export async function cascadeArtistDeleteToMemberships(artistId: string): Promise<void> {
+  const { ArtistMembershipEntity } = await import('./artist-membership/entity');
+
+  // Rows where the artist is the group
+  let groupCursor: string | null = null;
+  do {
+    const groupResult = (await ArtistMembershipEntity.query
+      .primary({ groupId: artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: groupCursor })) as Page;
+    const groupItems = (groupResult.data as Array<{ memberId: string }>) || [];
+    groupCursor = groupResult.cursor;
+
+    await Promise.all(
+      groupItems.map(item =>
+        dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `GROUP#${artistId}`, sk: `MEMBER#${item.memberId}` },
+          })
+        )
+      )
+    );
+  } while (groupCursor);
+
+  // Rows where the artist is a member
+  let memberCursor: string | null = null;
+  do {
+    const memberResult = (await ArtistMembershipEntity.query
+      .byMember({ memberId: artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: memberCursor })) as Page;
+    const memberItems = (memberResult.data as Array<{ groupId: string }>) || [];
+    memberCursor = memberResult.cursor;
+
+    await Promise.all(
+      memberItems.map(item =>
+        dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `GROUP#${item.groupId}`, sk: `MEMBER#${artistId}` },
+          })
+        )
+      )
+    );
+  } while (memberCursor);
+}
+
 export async function cascadeVenueMerge(
   loserId: string,
   canonicalId: string,

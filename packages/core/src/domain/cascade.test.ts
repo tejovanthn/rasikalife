@@ -48,6 +48,13 @@ vi.mock('./artist-membership/entity', () => ({
   },
 }));
 
+vi.mock('./artist-photo/entity', () => ({
+  ArtistPhotoEntity: {
+    query: { primary: vi.fn() },
+    create: vi.fn(),
+  },
+}));
+
 vi.mock('./concert-log-item/entity', () => ({
   ConcertLogItemEntity: {
     query: { byEvent: vi.fn(), byComposition: vi.fn(), byRaga: vi.fn() },
@@ -86,6 +93,7 @@ vi.mock('./concert-log/entity', () => ({
 import { dynamoClient } from '../db/client';
 import { ArtistAwardEntity } from './artist-award/entity';
 import { ArtistMembershipEntity } from './artist-membership/entity';
+import { ArtistPhotoEntity } from './artist-photo/entity';
 import { ArtistEntity } from './artist/entity';
 import { AwardEntity } from './award/entity';
 import * as cascade from './cascade';
@@ -132,6 +140,8 @@ describe('cascade', () => {
       .fn()
       .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
     ArtistMembershipEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistPhotoEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    ArtistPhotoEntity.create = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -575,6 +585,80 @@ describe('cascade', () => {
       expect(deletes).toContainEqual(
         expect.objectContaining({ Key: { pk: 'GROUP#canonical', sk: 'MEMBER#loser' } })
       );
+    });
+
+    it('moves photos to the canonical artist, preserving order, featured, caption and credit', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistPhotoEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              id: 'photo1',
+              imageUrl: 'https://example.com/photo1.jpg',
+              uploadId: 'upload1',
+              caption: 'On stage',
+              credit: 'Jane Doe',
+              order: 2,
+              featured: true,
+              createdBy: 'user1',
+              createdAt: '2025-01-01T00:00:00.000Z',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistPhotoEntity.query.primary).toHaveBeenCalledWith({ artistId: 'loser' });
+      expect(ArtistPhotoEntity.create).toHaveBeenCalledWith({
+        id: 'photo1',
+        artistId: 'canonical',
+        imageUrl: 'https://example.com/photo1.jpg',
+        uploadId: 'upload1',
+        caption: 'On stage',
+        credit: 'Jane Doe',
+        order: 2,
+        featured: true,
+        createdBy: 'user1',
+        createdAt: '2025-01-01T00:00:00.000Z',
+      });
+
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'ARTIST#loser', sk: 'PHOTO#photo1' } })
+      );
+    });
+  });
+
+  describe('cascadeArtistDeleteToMemberships', () => {
+    it('removes membership rows in both directions', async () => {
+      ArtistMembershipEntity.query.primary = pagedQuery([
+        { data: [{ memberId: 'member1' }], cursor: null },
+      ]);
+      ArtistMembershipEntity.query.byMember = pagedQuery([
+        { data: [{ groupId: 'group1' }], cursor: null },
+      ]);
+
+      await cascade.cascadeArtistDeleteToMemberships('artist1');
+
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'GROUP#artist1', sk: 'MEMBER#member1' } })
+      );
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'GROUP#group1', sk: 'MEMBER#artist1' } })
+      );
+    });
+
+    it('deletes nothing when the artist has no memberships', async () => {
+      ArtistMembershipEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+      ArtistMembershipEntity.query.byMember = pagedQuery([{ data: [], cursor: null }]);
+
+      await cascade.cascadeArtistDeleteToMemberships('artist1');
+
+      expect(dynamoClient.send).not.toHaveBeenCalled();
     });
   });
 
