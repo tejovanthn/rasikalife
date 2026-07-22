@@ -374,18 +374,11 @@ export const eventRouter = createTRPCRouter({
         const key = artist.name.toLowerCase();
         const cached = artistCache.get(key);
         if (cached) return cached;
-        const existing = await Artist.getArtistByName(artist.name);
-        if (existing) {
-          artistCache.set(key, existing.id);
-          return existing.id;
-        }
-        const created = await Artist.createArtist({
-          name: artist.name,
+        const { artist: resolved } = await Artist.findOrCreateArtist(artist.name, {
           title: artist.title,
-          gurus: [],
         });
-        artistCache.set(key, created.id);
-        return created.id;
+        artistCache.set(key, resolved.id);
+        return resolved.id;
       };
 
       const isModerator =

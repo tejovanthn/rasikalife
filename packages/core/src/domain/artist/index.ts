@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeArtistMerge, cascadeComposerNameUpdate } from '../cascade';
+import { cascadeArtistMerge, cascadeArtistNameUpdate, cascadeComposerNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
@@ -54,7 +54,10 @@ export async function updateArtist(id: string, input: UpdateArtistInput): Promis
   }
 
   if (input.name) {
-    await cascadeComposerNameUpdate(id, input.name);
+    await Promise.all([
+      cascadeComposerNameUpdate(id, input.name),
+      cascadeArtistNameUpdate(id, input.name),
+    ]);
   }
 
   return result.data as Artist;
@@ -133,3 +136,10 @@ export async function getArtistMergeScore(id: string): Promise<number> {
 
 export type { Artist } from './entity';
 export { CreateArtistSchema, UpdateArtistSchema } from './schema';
+export {
+  artistNameSimilarity,
+  findArtistMatch,
+  findOrCreateArtist,
+  initialsMatch,
+  normalizeArtistName,
+} from './dedup';

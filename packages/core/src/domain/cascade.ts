@@ -261,6 +261,8 @@ export async function cascadeArtistMerge(
 ): Promise<void> {
   const { EventArtistEntity } = await import('./event-artist/entity');
   const { CompositionEntity } = await import('./composition/entity');
+  const { ArtistAwardEntity } = await import('./artist-award/entity');
+  const { ArtistEntity } = await import('./artist/entity');
   const now = new Date().toISOString();
 
   // Migrate EventArtist records from loser to canonical
@@ -311,6 +313,55 @@ export async function cascadeArtistMerge(
     );
   } while (eaCursor);
 
+  // Migrate ArtistAward records from loser to canonical
+  let awardCursor: string | null = null;
+  do {
+    const artistAwardResult = (await ArtistAwardEntity.query
+      .primary({ artistId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: awardCursor })) as Page;
+    const artistAwardItems =
+      (artistAwardResult.data as Array<{
+        awardId: string;
+        awardName: string;
+        rank?: number;
+        year?: number;
+        category?: string;
+        notes?: string;
+      }>) || [];
+    awardCursor = artistAwardResult.cursor;
+
+    // Batch-check which canonical records already exist (one BatchGet vs N individual GETs)
+    const existingAwardResult = artistAwardItems.length
+      ? await ArtistAwardEntity.get(
+          artistAwardItems.map(item => ({ artistId: canonicalId, awardId: item.awardId }))
+        ).go()
+      : { data: [] as Array<{ awardId: string }> };
+    const existingAwardSet = new Set((existingAwardResult.data ?? []).map(r => r.awardId));
+
+    await Promise.all(
+      artistAwardItems.map(async item => {
+        await dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `ARTIST#${loserId}`, sk: `AWARD#${item.awardId}` },
+          })
+        );
+        if (!existingAwardSet.has(item.awardId)) {
+          await ArtistAwardEntity.upsert({
+            artistId: canonicalId,
+            artistName: canonicalName,
+            awardId: item.awardId,
+            awardName: item.awardName,
+            rank: item.rank,
+            year: item.year,
+            category: item.category,
+            notes: item.notes,
+          }).go();
+        }
+      })
+    );
+  } while (awardCursor);
+
   // Update Composition.composerId and composer.name
   let compCursor: string | null = null;
   do {
@@ -340,6 +391,89 @@ export async function cascadeArtistMerge(
       )
     );
   } while (compCursor);
+
+  // Rewrite gurus[] entries that point at the loser on other artists. There is no GSI on
+  // gurus[], so a full-table scan filtered in memory is the only way to find them.
+  let scanCursor: string | null = null;
+  do {
+    const scanResult = (await ArtistEntity.scan.go({
+      cursor: scanCursor,
+      limit: CASCADE_BATCH_SIZE,
+    })) as Page;
+    const artists =
+      (scanResult.data as Array<{ id: string; gurus?: Array<{ id?: string; name: string }> }>) ||
+      [];
+    scanCursor = scanResult.cursor;
+
+    const artistsWithLoserGuru = artists.filter(artist =>
+      (artist.gurus ?? []).some(guru => guru.id === loserId)
+    );
+
+    await Promise.all(
+      artistsWithLoserGuru.map(artist => {
+        const updatedGurus = (artist.gurus ?? []).map(guru =>
+          guru.id === loserId ? { id: canonicalId, name: canonicalName } : guru
+        );
+        return dynamoClient.send(
+          new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `ARTIST#${artist.id}`, sk: '#METADATA' },
+            UpdateExpression: 'SET gurus = :gurus, updatedAt = :updatedAt',
+            ExpressionAttributeValues: { ':gurus': updatedGurus, ':updatedAt': now },
+          })
+        );
+      })
+    );
+  } while (scanCursor);
+}
+
+export async function cascadeArtistNameUpdate(artistId: string, newName: string): Promise<void> {
+  const { EventArtistEntity } = await import('./event-artist/entity');
+  const { ArtistAwardEntity } = await import('./artist-award/entity');
+
+  let eaCursor: string | null = null;
+  do {
+    const result = (await EventArtistEntity.query
+      .byArtist({ artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: eaCursor })) as Page;
+    const items = (result.data as Array<{ eventId: string }>) || [];
+    eaCursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        dynamoClient.send(
+          new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `EVENT#${item.eventId}`, sk: `ARTIST#${artistId}` },
+            UpdateExpression: 'SET artistName = :artistName',
+            ExpressionAttributeValues: { ':artistName': newName },
+          })
+        )
+      )
+    );
+  } while (eaCursor);
+
+  let awardCursor: string | null = null;
+  do {
+    const result = (await ArtistAwardEntity.query
+      .primary({ artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: awardCursor })) as Page;
+    const items = (result.data as Array<{ awardId: string }>) || [];
+    awardCursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        dynamoClient.send(
+          new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { pk: `ARTIST#${artistId}`, sk: `AWARD#${item.awardId}` },
+            UpdateExpression: 'SET artistName = :artistName',
+            ExpressionAttributeValues: { ':artistName': newName },
+          })
+        )
+      )
+    );
+  } while (awardCursor);
 }
 
 export async function cascadeVenueMerge(

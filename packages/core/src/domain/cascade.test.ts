@@ -28,6 +28,18 @@ vi.mock('./event-artist/entity', () => ({
   },
 }));
 
+vi.mock('./artist-award/entity', () => ({
+  ArtistAwardEntity: {
+    query: { primary: vi.fn() },
+    get: vi.fn(),
+    upsert: vi.fn(),
+  },
+}));
+
+vi.mock('./artist/entity', () => ({
+  ArtistEntity: { scan: { go: vi.fn() } },
+}));
+
 vi.mock('./concert-log-item/entity', () => ({
   ConcertLogItemEntity: {
     query: { byEvent: vi.fn(), byComposition: vi.fn(), byRaga: vi.fn() },
@@ -64,6 +76,8 @@ vi.mock('./concert-log/entity', () => ({
 }));
 
 import { dynamoClient } from '../db/client';
+import { ArtistAwardEntity } from './artist-award/entity';
+import { ArtistEntity } from './artist/entity';
 import { AwardEntity } from './award/entity';
 import * as cascade from './cascade';
 import { adjustPerformanceCount as adjustCompositionCount } from './composition';
@@ -96,6 +110,13 @@ describe('cascade', () => {
   beforeEach(() => {
     vi.mocked(dynamoClient.send).mockReset();
     vi.mocked(dynamoClient.send).mockResolvedValue({});
+    // Default to "nothing found" for the artist-merge sweeps every test doesn't care about.
+    ArtistAwardEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    ArtistAwardEntity.get = vi
+      .fn()
+      .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
+    ArtistAwardEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistEntity.scan.go = vi.fn().mockResolvedValue({ data: [], cursor: null });
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -326,6 +347,105 @@ describe('cascade', () => {
 
       expect(EventArtistEntity.upsert).not.toHaveBeenCalled();
       expect(commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand')).toHaveLength(1);
+    });
+
+    it('migrates ArtistAward rows to the canonical artist, skipping one it already holds', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAwardEntity.query.primary = pagedQuery([
+        {
+          data: [
+            { awardId: 'award1', awardName: 'Award One', year: 2020 },
+            { awardId: 'award2', awardName: 'Award Two', year: 2021 },
+          ],
+          cursor: null,
+        },
+      ]);
+      ArtistAwardEntity.get = vi
+        .fn()
+        .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [{ awardId: 'award2' }] }) });
+      ArtistAwardEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistAwardEntity.get).toHaveBeenCalledWith([
+        { artistId: 'canonical', awardId: 'award1' },
+        { artistId: 'canonical', awardId: 'award2' },
+      ]);
+      expect(ArtistAwardEntity.upsert).toHaveBeenCalledTimes(1);
+      expect(ArtistAwardEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          artistId: 'canonical',
+          artistName: 'Canonical Name',
+          awardId: 'award1',
+          awardName: 'Award One',
+        })
+      );
+
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'ARTIST#loser', sk: 'AWARD#award1' } })
+      );
+      expect(deletes).toContainEqual(
+        expect.objectContaining({ Key: { pk: 'ARTIST#loser', sk: 'AWARD#award2' } })
+      );
+    });
+
+    it('rewrites gurus[] entries pointing at the loser on other artists', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistEntity.scan.go = vi.fn().mockResolvedValue({
+        data: [
+          {
+            id: 'student1',
+            gurus: [
+              { id: 'loser', name: 'Old Name' },
+              { id: 'other', name: 'Unrelated' },
+            ],
+          },
+          { id: 'student2', gurus: [{ id: 'other', name: 'Unrelated' }] },
+        ],
+        cursor: null,
+      });
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
+      const guruUpdate = updates.find((u: any) => u.Key.pk === 'ARTIST#student1');
+      expect(guruUpdate.Key).toEqual({ pk: 'ARTIST#student1', sk: '#METADATA' });
+      expect(guruUpdate.ExpressionAttributeValues[':gurus']).toEqual([
+        { id: 'canonical', name: 'Canonical Name' },
+        { id: 'other', name: 'Unrelated' },
+      ]);
+      expect(updates.some((u: any) => u.Key.pk === 'ARTIST#student2')).toBe(false);
+    });
+  });
+
+  describe('cascadeArtistNameUpdate', () => {
+    it('updates artistName on every EventArtist and ArtistAward row for the artist', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([
+        { data: [{ eventId: 'event1' }, { eventId: 'event2' }], cursor: null },
+      ]);
+      ArtistAwardEntity.query.primary = pagedQuery([
+        { data: [{ awardId: 'award1' }], cursor: null },
+      ]);
+
+      await cascade.cascadeArtistNameUpdate('artist1', 'New Name');
+
+      expect(EventArtistEntity.query.byArtist).toHaveBeenCalledWith({ artistId: 'artist1' });
+      expect(ArtistAwardEntity.query.primary).toHaveBeenCalledWith({ artistId: 'artist1' });
+
+      const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
+      expect(updates).toHaveLength(3);
+
+      const eventArtistUpdates = updates.filter((u: any) => u.Key.pk.startsWith('EVENT#'));
+      expect(eventArtistUpdates).toHaveLength(2);
+      expect(eventArtistUpdates[0].Key).toEqual({ pk: 'EVENT#event1', sk: 'ARTIST#artist1' });
+      expect(eventArtistUpdates[0].ExpressionAttributeValues[':artistName']).toBe('New Name');
+
+      const awardUpdate = updates.find((u: any) => u.Key.pk === 'ARTIST#artist1');
+      expect(awardUpdate.Key).toEqual({ pk: 'ARTIST#artist1', sk: 'AWARD#award1' });
+      expect(awardUpdate.ExpressionAttributeValues[':artistName']).toBe('New Name');
     });
   });
 
