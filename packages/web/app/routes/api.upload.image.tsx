@@ -27,21 +27,22 @@ export const action: ActionFunction = async ({ request }) => {
       return data({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    if (entityType !== 'venue' && entityType !== 'organiser' && entityType !== 'artist') {
-      return data({ error: 'Invalid entity type' }, { status: 400 });
-    }
-
     const serverClient = await createServerClient(request);
 
+    // The accepted entity types are this object's keys, so adding a fourth is
+    // one edit rather than two lists kept in step.
     const uploaders = {
       venue: serverClient.venue.getImageUploadUrl,
       organiser: serverClient.organiser.getImageUploadUrl,
       artist: serverClient.artist.getImageUploadUrl,
-    } as const;
+    };
 
-    const result = await uploaders[entityType].mutate({ fileName, contentType });
+    const uploader = uploaders[entityType as keyof typeof uploaders];
+    if (!uploader) {
+      return data({ error: 'Invalid entity type' }, { status: 400 });
+    }
 
-    return data(result);
+    return data(await uploader.mutate({ fileName, contentType }));
   } catch (error) {
     console.error('Failed to get image upload URL:', error);
     return data({ error: 'Failed to get upload URL' }, { status: 500 });

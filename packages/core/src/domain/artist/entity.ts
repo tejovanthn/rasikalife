@@ -1,6 +1,7 @@
 import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
+import { ARTIST_CLAIM_STATUSES } from './schema';
 
 export const ArtistEntity = new Entity(
   {
@@ -112,7 +113,7 @@ export const ArtistEntity = new Entity(
       // without a second query. Set by the claim flow, never by a form —
       // which is why neither this nor verifiedAt appears in the Zod schemas.
       claimStatus: {
-        type: ['unclaimed', 'pending', 'verified', 'rejected'] as const,
+        type: ARTIST_CLAIM_STATUSES,
         required: false,
       },
       verifiedAt: {

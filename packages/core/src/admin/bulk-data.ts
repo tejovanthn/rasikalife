@@ -120,12 +120,6 @@ async function idsFor(names: unknown, resolve: (name: string) => Promise<Ref>): 
   return refs.map(ref => ref.id);
 }
 
-const prepareArtist: PrepareFn = async row => {
-  const { guruNames, ...rest } = row;
-  if (Array.isArray(guruNames)) rest.gurus = guruNames.map(name => ({ name: String(name) }));
-  return rest;
-};
-
 const prepareRaga: PrepareFn = async (row, ctx) => {
   const { parentRagaName, ...rest } = row;
   if (typeof parentRagaName === 'string') rest.parentRaga = await ctx.resolve.raga(parentRagaName);
@@ -213,7 +207,8 @@ const REGISTRY: Record<string, DomainConfig> = {
     update: (id, input) =>
       Artist.updateArtist(id, input as Parameters<typeof Artist.updateArtist>[1]),
     scanAll: () => scanEntity(opts => ArtistEntity.scan.go(opts)),
-    prepare: prepareArtist,
+    // No prepare hook: gurus are a JSON cell now, so the parsed row already
+    // carries the full objects. There are no linked names left to resolve.
   },
   raga: {
     createSchema: CreateRagaSchema,

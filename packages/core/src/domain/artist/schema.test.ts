@@ -63,7 +63,7 @@ describe('CreateArtistSchema', () => {
       name: 'X',
       claimStatus: 'verified',
       verifiedAt: '2026-07-22T00:00:00.000Z',
-    } as never);
+    });
     expect(result).not.toHaveProperty('claimStatus');
     expect(result).not.toHaveProperty('verifiedAt');
   });

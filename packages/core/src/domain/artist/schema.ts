@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { YearSchema } from '../shared/schemas';
 import { SocialLinkSchema } from '../social-link';
 
+export const ARTIST_CLAIM_STATUSES = ['unclaimed', 'pending', 'verified', 'rejected'] as const;
+export type ArtistClaimStatus = (typeof ARTIST_CLAIM_STATUSES)[number];
+
 export const GuruSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1).max(200),

@@ -8,9 +8,9 @@ import { Form, data, redirect, useActionData, useLoaderData, useNavigation } fro
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { EditDisclaimer } from '~/components/shared';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
-import { EditDisclaimer } from '~/components/shared';
 import { Label } from '~/components/ui/label';
 import {
   Select,
@@ -105,8 +105,23 @@ export async function action({
         .map(s => s.trim())
         .filter(Boolean)
     : [];
-  const guruNames = formData.getAll('guruName') as string[];
-  const gurus = guruNames.map(n => ({ name: n.trim() })).filter(g => g.name);
+  type StoredGuru = {
+    id?: string;
+    name: string;
+    fromYear?: number;
+    toYear?: number;
+    discipline?: string;
+  };
+  const storedGurus = (artist.gurus as StoredGuru[]) || [];
+  const storedGuruByName = new Map(storedGurus.map(g => [g.name, g]));
+  // This form edits guru names only. Carry the rest of each stored row forward,
+  // or saving any unrelated change would strip the id, years and discipline that
+  // the moderator wizard adds.
+  const gurus = formData
+    .getAll('guruName')
+    .map(n => (n as string).trim())
+    .filter(Boolean)
+    .map(name => ({ ...storedGuruByName.get(name), name }));
   const socialLinkPlatforms = formData.getAll('socialLinkPlatform') as string[];
   const socialLinkUrls = formData.getAll('socialLinkUrl') as string[];
   const socialLinks = socialLinkPlatforms
@@ -131,11 +146,11 @@ export async function action({
     proposedValues.specialisations = specialisations;
   }
 
-  const sortedNewGurus = [...gurus].sort((a, b) => a.name.localeCompare(b.name));
-  const sortedCurrentGurus = [...((artist.gurus as Array<{ id?: string; name: string }>) || [])]
-    .map(g => ({ name: g.name }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  if (JSON.stringify(sortedNewGurus) !== JSON.stringify(sortedCurrentGurus)) {
+  // Compare names only: they are the sole thing this form can change, and the
+  // carried-forward fields would otherwise always look like a diff.
+  const sortedNewGuruNames = gurus.map(g => g.name).sort();
+  const sortedCurrentGuruNames = storedGurus.map(g => g.name).sort();
+  if (JSON.stringify(sortedNewGuruNames) !== JSON.stringify(sortedCurrentGuruNames)) {
     proposedValues.gurus = gurus;
   }
 

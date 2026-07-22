@@ -620,6 +620,38 @@ describe('cascade', () => {
   });
 
   describe('cascadeEventMerge', () => {
+    it('preserves isFeatured and featureRank when migrating an artist to the canonical event', () => {
+      EventArtistEntity.query.primary = vi
+        .fn()
+        .mockReturnValueOnce({ go: vi.fn().mockResolvedValue({ data: [], cursor: null }) })
+        .mockReturnValueOnce({
+          go: vi.fn().mockResolvedValue({
+            data: [
+              {
+                eventId: 'loserEvent',
+                artistId: 'new',
+                artistName: 'New Artist',
+                isFeatured: true,
+                featureRank: 3,
+              },
+            ],
+            cursor: null,
+          }),
+        });
+      EventEntity.get = vi.fn().mockReturnValue({
+        go: vi.fn().mockResolvedValue({
+          data: { title: 'Canonical', startDateTime: '2026-01-01T00:00:00.000Z' },
+        }),
+      });
+      EventArtistEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+
+      return cascade.cascadeEventMerge('loserEvent', 'canonicalEvent').then(() => {
+        expect(EventArtistEntity.upsert).toHaveBeenCalledWith(
+          expect.objectContaining({ isFeatured: true, featureRank: 3 })
+        );
+      });
+    });
+
     it('migrates artists from the loser event to the canonical event, skipping duplicates', async () => {
       EventArtistEntity.query.primary = vi
         .fn()

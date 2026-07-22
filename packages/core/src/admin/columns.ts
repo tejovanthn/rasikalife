@@ -245,10 +245,11 @@ export interface DomainCsvConfig {
 export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
   artist: {
     label: 'Artists',
-    // photoUrl/photoUploadId (image upload flow), claimStatus/verifiedAt (artist-claim
-    // flow), and collaborators/collaboratorsComputedAt (derived from concert logs) are
-    // all system-written. None of them get a column: a spreadsheet import must not be
-    // able to hand an artist a photo, a verified badge, or a collaborator list by hand.
+    // claimStatus/verifiedAt get no column: they are written only by the artist-claim
+    // flow, and a spreadsheet import must not be able to hand out a verified badge.
+    // photoUrl/photoUploadId are omitted for a weaker reason — they are ordinary
+    // editable fields, but a URL pasted into a spreadsheet has no matching upload, so
+    // the column would invite broken images. Venue and organiser do expose theirs.
     columns: flat(
       str('id'),
       str('name'),

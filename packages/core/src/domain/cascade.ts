@@ -314,8 +314,11 @@ export async function cascadeArtistMerge(
             artistName: canonicalName,
             artistTitle: item.artistTitle,
             role: item.role,
-            // Featured status is curated by a moderator, so it has to survive
-            // a merge rather than being silently reset.
+            // Featured status is curated by a moderator, so carry it across
+            // rather than silently resetting it. Note this branch only runs
+            // when the canonical has no row for the event; when both sides
+            // performed, the canonical's row wins and a featured flag on the
+            // loser is dropped — same as role and artistTitle already behave.
             isFeatured: item.isFeatured,
             featureRank: item.featureRank,
           }).go();
@@ -769,8 +772,11 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
             artistName: item.artistName,
             artistTitle: item.artistTitle,
             role: item.role,
-            // Featured status is curated by a moderator, so it has to survive
-            // a merge rather than being silently reset.
+            // Featured status is curated by a moderator, so carry it across
+            // rather than silently resetting it. Note this branch only runs
+            // when the canonical has no row for the event; when both sides
+            // performed, the canonical's row wins and a featured flag on the
+            // loser is dropped — same as role and artistTitle already behave.
             isFeatured: item.isFeatured,
             featureRank: item.featureRank,
           }).go();
