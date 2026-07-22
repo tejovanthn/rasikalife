@@ -1,7 +1,7 @@
 import { Artist, ArtistAward, ConcertLogItem, EventArtist, EventSetlist } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
-import { createTRPCRouter, editorProcedure, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const artistRouter = createTRPCRouter({
   get: publicProcedure
@@ -19,13 +19,13 @@ export const artistRouter = createTRPCRouter({
     )
     .query(({ input }) => Artist.listArtists(input)),
 
-  create: protectedProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
+  create: editorProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
     const result = await Artist.createArtist(input);
     triggerReindex();
     return result;
   }),
 
-  update: protectedProcedure
+  update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
     .mutation(async ({ input }) => {
       const result = await Artist.updateArtist(input.id, input.data);
@@ -33,11 +33,13 @@ export const artistRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
-    const result = await Artist.deleteArtist(input.id);
-    triggerReindex();
-    return result;
-  }),
+  delete: moderatorProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const result = await Artist.softDeleteArtist(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))
@@ -77,7 +79,9 @@ export const artistRouter = createTRPCRouter({
     .input(z.object({ artistId: z.string().min(1) }))
     .query(async ({ input }) => {
       // Get events where this artist performed
-      const { items: eventArtistLinks } = await EventArtist.getEventsByArtist(input.artistId, { limit: 50 });
+      const { items: eventArtistLinks } = await EventArtist.getEventsByArtist(input.artistId, {
+        limit: 50,
+      });
       const eventIds = eventArtistLinks.map(ea => ea.eventId);
 
       if (eventIds.length === 0) {
