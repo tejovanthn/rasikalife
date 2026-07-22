@@ -14,15 +14,27 @@ import type { Artist } from './entity';
 
 const DEFAULT_THRESHOLD = 0.85;
 
-// Multiplier applied when two names have no initials relationship AND their
-// surnames (last token) differ. Without this, a one-character surname
-// difference on an otherwise identical name (e.g. "Krishna" vs "Krishnan")
-// scores ~0.92 on plain edit distance alone — above the default threshold —
-// even though these are routinely different people. A wrong fuzzy match
-// silently fuses two artists; a missed one only leaves a duplicate that
-// `mergeArtist` can fix later. We would rather create a duplicate than merge
-// two careers, so a surname mismatch is penalized on top of edit distance.
-const DIFFERING_SURNAME_PENALTY = 0.9;
+// Edit distance alone is the wrong metric for names: it charges one character
+// for differences that are categorical rather than incremental. Two guards cap
+// the score below DEFAULT_THRESHOLD so neither case can ever auto-match, while
+// leaving the number usable for ranking if a caller deliberately lowers the
+// bar to surface suggestions to a human.
+//
+// A wrong match silently fuses two artists; a missed one only leaves a
+// duplicate that `mergeArtist` can fix. We would rather create a duplicate
+// than merge two careers, so both guards err toward rejecting.
+
+// Positional single-letter initials that differ, e.g. "N Ravikiran" vs
+// "S Ravikiran" (0.91 on raw edit distance) or "T N Seshagopalan" vs
+// "T V Seshagopalan" (0.94). In Carnatic naming the initials carry place and
+// patronym, so a differing initial is strong evidence of a different person.
+const DIFFERING_INITIAL_CAP = 0.5;
+
+// Differing surnames, e.g. "Krishna" vs "Krishnan". A cap rather than a
+// multiplier because a longer shared prefix would otherwise dilute the
+// penalty: "Thodur Madabusi Krishna" vs "Thodur Madabusi Krishnan" scores
+// 0.96 raw, and scaling that still clears the threshold.
+const DIFFERING_SURNAME_CAP = 0.8;
 
 const HONORIFICS = new Set([
   'sri',
@@ -107,6 +119,17 @@ export function initialsMatch(a: string, b: string): boolean {
   return true;
 }
 
+// True when the two token lists disagree at a position where both sides are a
+// single-letter initial. Only compares the positions the two lists share, so
+// "T M Krishna" vs "Krishna" is not caught here — that pair is handled by the
+// surname and edit-distance checks instead.
+function hasDifferingInitial(ta: string[], tb: string[]): boolean {
+  for (let i = 0; i < Math.min(ta.length, tb.length); i++) {
+    if (ta[i].length === 1 && tb[i].length === 1 && ta[i] !== tb[i]) return true;
+  }
+  return false;
+}
+
 // Levenshtein-based similarity, 1 = identical, 0 = completely different.
 // Not reused from event-setlist/reconcile.ts because that module doesn't
 // export its version; this is a small local equivalent.
@@ -134,9 +157,9 @@ function levenshteinSimilarity(a: string, b: string): number {
  * normalized equality is 1. An initials-form match (in either direction) is
  * boosted to at least 0.9, since the raw Levenshtein score of e.g. "T M
  * Krishna" vs "Thodur Madabusi Krishna" is otherwise low despite being the
- * same person. When there is no initials relationship, a surname mismatch
- * is penalized (see `DIFFERING_SURNAME_PENALTY`) so near-identical strings
- * that are actually different people don't score above threshold.
+ * same person. Otherwise the score is capped when the names disagree on an
+ * initial or on the surname — see `DIFFERING_INITIAL_CAP` and
+ * `DIFFERING_SURNAME_CAP` for why edit distance alone gets these wrong.
  */
 export function artistNameSimilarity(a: string, b: string): number {
   const na = normalizeArtistName(a);
@@ -147,11 +170,14 @@ export function artistNameSimilarity(a: string, b: string): number {
 
   if (initialsMatch(a, b)) return Math.max(levenshteinSimilarity(na, nb), 0.9);
 
+  const ta = na.split(' ');
+  const tb = nb.split(' ');
   const base = levenshteinSimilarity(na, nb);
-  const surnameA = na.split(' ').at(-1) ?? '';
-  const surnameB = nb.split(' ').at(-1) ?? '';
 
-  return surnameA === surnameB ? base : base * DIFFERING_SURNAME_PENALTY;
+  if (hasDifferingInitial(ta, tb)) return Math.min(base, DIFFERING_INITIAL_CAP);
+  if (ta[ta.length - 1] !== tb[tb.length - 1]) return Math.min(base, DIFFERING_SURNAME_CAP);
+
+  return base;
 }
 
 /**

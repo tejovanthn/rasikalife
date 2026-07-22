@@ -138,13 +138,22 @@ describe('artistNameSimilarity', () => {
     expect(score).toBeLessThan(0.5);
   });
 
-  it('does not return exact-match similarity for the "Krishnan" near-miss', () => {
-    // initialsMatch correctly rejects this pair (surname differs), so the
-    // score falls back to plain edit-distance similarity — see the report on
-    // why a single trailing-letter difference still scores fairly high here.
-    const score = artistNameSimilarity('T M Krishna', 'T M Krishnan');
-    expect(score).toBeLessThan(1);
+  it('caps the "Krishnan" near-miss below the default threshold', () => {
+    // Raw edit distance scores this 0.92 because the names differ by one
+    // character. The differing surname caps it instead, so it can never
+    // auto-match.
+    expect(artistNameSimilarity('T M Krishna', 'T M Krishnan')).toBeLessThan(0.85);
     expect(initialsMatch('T M Krishna', 'T M Krishnan')).toBe(false);
+  });
+
+  it('caps a differing initial well below a differing surname', () => {
+    // "N Ravikiran" vs "S Ravikiran" scores 0.91 on raw edit distance despite
+    // being different people. The initial disagreement is categorical, so it
+    // is penalized harder than a surname difference.
+    const differingInitial = artistNameSimilarity('N Ravikiran', 'S Ravikiran');
+    const differingSurname = artistNameSimilarity('T M Krishna', 'T M Krishnan');
+    expect(differingInitial).toBeLessThan(differingSurname);
+    expect(differingInitial).toBeLessThan(0.85);
   });
 
   it('returns 0 when either input is empty or whitespace-only', () => {
@@ -307,4 +316,51 @@ describe('findOrCreateArtist', () => {
     expect(strict.created).toBe(true);
     expect(createArtist).toHaveBeenCalledTimes(1);
   });
+});
+
+// Real Carnatic name pairs that edit distance alone scores dangerously high.
+// A false positive here silently fuses two artists, so every pair below must
+// stay under the default threshold. Pairs marked "same person" are accepted
+// false negatives: they leave a duplicate, which mergeArtist can fix.
+describe('near-miss pairs never auto-match', () => {
+  const differentPeople: [string, string][] = [
+    ['T M Krishna', 'T M Krishnan'],
+    ['Thodur Madabusi Krishna', 'Thodur Madabusi Krishnan'],
+    ['N Ravikiran', 'S Ravikiran'],
+    ['T N Seshagopalan', 'T V Seshagopalan'],
+    ['Ranjani Gopalakrishnan', 'Gayatri Gopalakrishnan'],
+    ['A Kanyakumari', 'A Kanyakumar'],
+    ['Aruna Sairam', 'Aruna Sairaman'],
+    ['R Vedavalli', 'R Vedavalli Ammal'],
+    ['Neyveli Santhanagopalan', 'Neyveli Santhanagopal'],
+    ['Krishna', 'Krishnan'],
+    ['Umayalpuram K Sivaraman', 'Umayalpuram K Sivakumar'],
+    // Same person in reality; rejecting costs a duplicate, which is the
+    // cheaper error. Listed here so the trade-off stays visible.
+    ['Sudha Raghunathan', 'Sudha Ragunathan'],
+    ['Sanjay Subrahmanyan', 'Sanjay Subrahmanyam'],
+  ];
+
+  for (const [a, b] of differentPeople) {
+    it(`rejects "${a}" vs "${b}"`, () => {
+      const candidates = [makeArtist({ id: 'a1', name: b })];
+      expect(findArtistMatch(a, candidates)).toBeNull();
+    });
+  }
+});
+
+describe('genuine variants still match', () => {
+  const samePerson: [string, string][] = [
+    ['Sri T M Krishna', 'T M Krishna'],
+    ['Dr Smt Aruna Sairam', 'Aruna Sairam'],
+    ['T.M. Krishna', 'T M Krishna'],
+    ['T M Krishna', 'Thodur Madabusi Krishna'],
+  ];
+
+  for (const [a, b] of samePerson) {
+    it(`matches "${a}" vs "${b}"`, () => {
+      const candidates = [makeArtist({ id: 'a1', name: b })];
+      expect(findArtistMatch(a, candidates)?.id).toBe('a1');
+    });
+  }
 });
