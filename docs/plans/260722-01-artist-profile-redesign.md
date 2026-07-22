@@ -168,6 +168,37 @@ Edge cases:
 - **Un-approval / soft delete / merge** should decrement or rebuild. Simplest correct approach: on event soft-delete or merge, mark affected artists dirty and rebuild their collaborator list from their `getEventsByArtist` set rather than trying to reverse-increment. Spec a `rebuildArtistCollaborators(artistId)` function usable both for repair and as the async path.
 - **Artist merge** (`mergeArtist`) must fold the loser's collaborator edges into the canonical artist and rewrite any list that referenced the loser.
 
+#### 4.5.1 Backfill sweep (`rebuild-collaborators` script)
+
+Because the trigger is `approveEvent`, every event approved before phase 4 contributes nothing and the feature would launch empty. A one-time sweep populates the history; the same command is the repair tool afterwards.
+
+**Do not loop `rebuildArtistCollaborators(artistId)` over every artist.** That is one `getEventsByArtist` query per artist, then a co-artist lookup per event of theirs, so shared events get read once per participant. One pass over the junction gets the same answer:
+
+1. Scan `EventArtistEntity` for `eventId`, `artistId`, `artistName`, `role`, `eventStartDateTime`.
+2. Drop rows whose event is soft-deleted (see the caveat below).
+3. Group rows by `eventId`. Each group is one event's cast.
+4. For each group, emit every ordered pair `(ai, aj)` into an in-memory map keyed by `ai`: increment `sharedEventCount`, keep the max `eventStartDateTime` as `lastSharedAt`, collect `aj`'s `role` through `canonicalRole` into `topRoles`.
+5. Compute `strength` per 4.4, sort, and write `collaborators` + `collaboratorsComputedAt` once per artist.
+
+`recompute-performance-counts.ts` is the working model for steps 1 and 5 — paginated `.scan.go()` with a cursor, aggregate in a `Map`, then write in parallel batches of 25.
+
+**Caveat that makes a naive scan wrong.** `softDeleteEvent` (`packages/core/src/domain/event/index.ts`) sets `deletedAt` on the Event alone and leaves the `EventArtist` rows in place. So the junction contains rows for deleted events and the sweep must exclude them — scan `EventEntity` for ids carrying `deletedAt` and filter step 2 against that set. Unapproved events need no filter: `createEventArtistJunctions` only runs on approval, so every junction row already belongs to an approved event.
+
+Follows the `dedupRagas` convention rather than the standalone-`main()` one, so it gets a dry run:
+
+```
+packages/scripts/src/rebuildCollaborators.ts   → export async function rebuildCollaborators({ dryRun?, artistId? })
+packages/scripts/src/cli.ts                    → program.command('rebuild-collaborators')
+                                                   .option('-n, --dry-run', ...)
+                                                   .option('--artist <id>', 'Rebuild a single artist')
+```
+
+Run as `pnpm cli rebuild-collaborators` (or `prod-cli` for production, both already wrapped in `sst shell`). Dry run reports how many artists would change and the top few edges per artist without writing.
+
+The two modes take different paths. With no arguments it runs the scan above, which is the right shape when rebuilding everything. With `--artist` it calls `rebuildArtistCollaborators(artistId)` directly — for one record the per-artist query is cheaper than scanning the whole junction, and it is the repair path after a bad merge.
+
+Re-running must be safe: the sweep computes from scratch and overwrites, so it never double-counts.
+
 ### 4.6 Guru field reshape (in place)
 
 `gurus` keeps its name; only its element shape widens from `{id, name}` to `{id, name, fromYear?, toYear?, discipline?}`. The three new keys are optional, so the new shape is a **superset** of the old: every existing `{id, name}` row is already valid under the widened schema. This makes the migration cheap.
@@ -342,7 +373,7 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 1. **Data model** — add Artist attributes (`isGroup`, `claimStatus`, `verifiedAt`, `photoUrl`/`photoUploadId`, `instrument`, `city`, `practiceStartYear`, `debutYear`), `EventArtist` `isFeatured`/`featureRank`, `Image` `'artist'` support through all four touchpoints (4.1), `artist.getImageUploadUrl`. **Guru reshape (4.6):** widen the `gurus` element schema in place (superset, no data backfill), update readers to render years/discipline when present.
 2. **Group membership** — `ArtistMembership` junction (entity + router), add/remove membership, `getGroupMembers`/`getMemberGroups`, member find-or-create routed through fuzzy dedup, `mergeArtist` fixups for membership rows and collaborator edges.
 3. **Gallery entity** — `ArtistPhoto` entity + router (`add`/`update`/`delete`/`listArtistPhotos`), `byArtist` GSI, `mergeArtist` photo reassignment.
-4. **Collaborator engine** — `rebuildArtistCollaborators`, hook into `approveEvent` (inline + cap), fold into `mergeArtist` and event soft-delete.
+4. **Collaborator engine** — `rebuildArtistCollaborators`, hook into `approveEvent` (inline + cap), fold into `mergeArtist` and event soft-delete. Ends with the `rebuild-collaborators` backfill sweep (4.5.1), without which the feature ships empty.
 5. **Create/edit wizard** — flat `/artists/new` (moderator, direct write) + stepped `/artists/:id/edit` (always drafts), timeline modals (guru, membership, awards, performances, gallery), a live artist-search endpoint for the pickers (11.1), artist prefill threaded into the event creation routes, `isFeatured` toggle. Depends on phases 0b and 1-3.
 6. **Presentation** — new profile layout with teasers, all sections incl. group-aware Members/Groups block, gallery teaser grid, empty-state handling, group-aware JSON-LD (build out `PersonStructuredData`, add `MusicGroup`). **Index subroutes:** `/artists/:id/gallery` is new; `/artists/:id/events` and `/artists/:id/compositions` already exist and get restyled.
 7. **Photo enrichment** — hero photo in wizard Identity step; gallery photos via gallery modal.
@@ -358,7 +389,8 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 - **Artist write auth is currently open** (phase 0a). `artist.create`/`update`/`delete` accept any logged-in user, and `delete` is a hard delete. Fixed first, separately.
 - **Guru field reshaped in place (4.6).** `gurus` keeps its name; the element widens to `{id, name, fromYear?, toYear?, discipline?}`. Because the new keys are optional, the shape is a superset and existing data stays valid with no backfill; only the schema and writers/readers update. No parallel field, no deprecation.
 - **Missing events are created through the existing event pipeline**, not inside the wizard. The performances modal only links (`EventArtist`) or hands off to `/events` creation with the artist pre-tagged. This removes the earlier separate-approval-unit complexity entirely.
-- Async collaborator recompute for large events is deferred behind the inline cap.
+- Async collaborator recompute for large events is deferred behind the inline cap. The `rebuild-collaborators` sweep (4.5.1) covers the gap in the meantime: events over the cap are skipped inline and picked up on the next run.
+- **Collaborators launch empty without the backfill sweep** (4.5.1), since the trigger only fires on new approvals. The sweep is part of phase 4, not a follow-up.
 - **Claims queue resolved:** dedicated `ArtistClaim` entity with a `byStatus` GSI feeding a claims-only moderator surface, kept separate from Edit/Event moderation so responsibilities don't intermix. Any `moderator` can action claims for now; the separation leaves room for a distinct `claim-moderator` permission later.
 
 ## 11. Implementation notes (for Claude Code)
