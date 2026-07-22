@@ -63,6 +63,16 @@ program
   });
 
 program
+  .command('repair-uppercase-keys')
+  .description('Repair rows damaged by the uppercase-key bug and delete the phantoms')
+  .option('--apply', 'Write the repairs (default is a dry run)')
+  .action(async (opts: { apply?: boolean }) => {
+    setup();
+    const { repairUppercaseKeys } = await import('./repairUppercaseKeys.js');
+    await repairUppercaseKeys({ apply: opts.apply });
+  });
+
+program
   .command('dedup-ragas')
   .description('Delete duplicate ragas (same name + same data), keeping the oldest')
   .option('-n, --dry-run', 'Preview deletions without writing to the database')

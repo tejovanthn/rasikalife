@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** fix the uppercase-key bug in `cascade.ts` (see URGENT below) before phase 4. It predates this work and is corrupting data today.
+**Next step:** phase 4 — the collaborator engine, plus the `rebuild-collaborators` backfill sweep (4.5.1 in the plan) without which the feature ships empty.
 
 ### Phase status
 
@@ -18,7 +18,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | done |
 | 2 | `ArtistMembership` junction | done |
 | 3 | `ArtistPhoto` gallery entity | done |
-| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | blocked on the key-casing fix |
+| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | next |
 | 5 | Create/edit wizard (moderator-only, direct write) | not started |
 | 6 | Presentation redesign + JSON-LD + gallery subroute | not started |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
@@ -32,26 +32,15 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 - **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
 - **1** — new Artist fields (`instrument`, `city`, `practiceStartYear`, `debutYear`, `photoUrl`, `photoUploadId`, `isGroup`, plus entity-only `claimStatus`/`verifiedAt`), widened `gurus`, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` end to end, and the admin CSV columns.
 
-### URGENT: hand-built DynamoDB keys in `cascade.ts` are the wrong case
+### Resolved: the uppercase-key bug (fixed in code and repaired in prod)
 
-Found during the phase 3 review, and much larger than phase 3. **ElectroDB lowercases key values.** Verified against the real entities:
+ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. Around thirty raw commands hand-wrote `EVENT#abc` / `#METADATA`, addressing rows that do not exist. Both failure modes were silent — `DeleteItem` succeeds having deleted nothing, `UpdateItem` *creates* the row instead of updating the real one. Three GSI key writes were wrong the same way, which is quieter still: the row updates but drops out of that index, so after a merge compositions vanished from `byComposer` and events from their venue and organiser listings.
 
-```
-ArtistEntity.create({id:'a1'}).params().Item.pk   →  "artist#a1"   (not ARTIST#a1)
-                                        .Item.sk  →  "#metadata"   (not #METADATA)
-CompositionEntity.create(...).Item.pk             →  "composition#c1"
-```
+**Code:** `packages/core/src/db/keys.ts` now holds `keyOfEntity`/`keysOfEntity`, which ask the entity via `conversions.fromComposite.toKeys`. Raw commands remain only where ElectroDB cannot express the operation (atomic counters, nested attribute updates) but no longer build their own keys. Entity mocks in tests take real `conversions`, so key assertions exercise the real derivation rather than agreeing with the test's own literals.
 
-`cascade.ts` hand-builds **28** keys in raw commands using uppercase — `pk: \`COMPOSITION#${id}\`, sk: '#METADATA'` and similar. Every one of them addresses a row that does not exist. Split by command:
+**Production, repaired 2026-07-22:** 30,198 items scanned, 15 phantom rows found. Nine attributes repaired from source rather than by replaying stale phantom values — eight `venueName`s (seven events were displaying a street address instead of "Sri Siddi Ganapathi Temple") and one `rsvpCount` recounted from the actual RSVP rows. All 15 phantoms deleted; a re-scan reports zero. `pnpm cli repair-uppercase-keys` re-runs the scan, dry by default.
 
-- **11 `DeleteCommand`** — silently delete nothing. DynamoDB reports success for a delete against a missing key, so these have always looked fine.
-- **15 `UpdateCommand`** — worse. `UpdateItem` *creates* the item when the key is absent, so every one of these has been writing a fresh garbage row with an uppercase key instead of updating the real record. `cascadeComposerNameUpdate` has been doing this on every artist rename.
-
-This is very likely the root cause of the "existing merge-related data issues" the plan refers to in 11.3. Merges have been copying rows without removing the originals, and renames have been spraying orphan items into the table.
-
-Phase 3's three new instances are fixed (they now go through `Entity.delete(...)`). **The remaining 25 pre-existing sites are untouched** — the fix is mechanical but the blast radius is the whole cascade layer, the existing tests assert the broken uppercase keys, and it wants its own task with a scan for orphan rows already written to production. Do this before phase 4.
-
-Note the tests could never have caught it: `cascade.test.ts` mocks the entities and asserts on raw command shapes, so it compares the broken key against itself. Assert on `Entity.delete({...})` calls instead.
+Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
 
 ### Deferred from the phase 2 self-review
 
