@@ -326,7 +326,9 @@ These five entity types are exactly why the wizard is moderator-only and writes 
 
 Section order set by SEO priority: crawlable text and internal links first, interactive/low-content blocks last.
 
-1. **Hero** — photo (or initial-based placeholder), `name`, instrument + city line, verified badge if applicable, honorific/title, social links, website. Primary and OG images derive from `photoUrl` when present.
+1. **Hero** — photo (or initial-based placeholder), `name`, instrument + city line, verified badge if applicable, honorific/title, social links, website.
+
+   **OG images touch a package the rest of this PRD doesn't.** Share images render in `packages/og-image/src/handler.ts`, which already handles `type = 'artist'` and pulls `artist.name` over tRPC. Two notes. First, it uses the raw name and always has, so it has been rendering *correctly* while the page's `og:title` rendered the mangled one — more confirmation that raw is right, and after 0c the two finally agree. Second, "OG image derives from `photoUrl` when present" means compositing the artist photo into that Sharp-rendered card, which is real work in a separate Lambda, not a change to the web route. Treat it as its own item in phase 7, and keep the generated card as the fallback for artists with no photo.
 2. **About** — bio prose (the main crawlable text block), specialisations, active years, birth year/place. This is the highest-value indexable content; it goes high.
 3. **Awards** — teaser: top-N `ArtistAward` rows by `rank`. Usually few, so no separate index page; all show inline when the count is small. Links to award pages.
 4. **Gurus / lineage** — from the reshaped `gurus` list, each guru linked, shown chronologically with years and discipline where known. Bidirectional where possible ("students" derived is a future item).
@@ -401,7 +403,7 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 4. **Collaborator engine** — `rebuildArtistCollaborators`, hook into `approveEvent` (inline + cap), fold into `mergeArtist` and event soft-delete. Ends with the `rebuild-collaborators` backfill sweep (4.5.1), without which the feature ships empty.
 5. **Create/edit wizard** — flat `/artists/new` (moderator, direct write) + stepped `/artists/:id/edit` for moderators, editors keeping today's form and its draft (5.1). Timeline modals (guru, membership, awards, performances, gallery), a live artist-search endpoint for the pickers (11.1), artist prefill threaded into the event creation routes, `isFeatured` toggle. Depends on phases 0b and 1-3.
 6. **Presentation** — new profile layout with teasers, all sections incl. group-aware Members/Groups block, gallery teaser grid, empty-state handling, group-aware JSON-LD (build out `PersonStructuredData`, add `MusicGroup`). **Index subroutes:** `/artists/:id/gallery` is new; `/artists/:id/events` and `/artists/:id/compositions` already exist and get restyled.
-7. **Photo enrichment** — hero photo in wizard Identity step; gallery photos via gallery modal.
+7. **Photo enrichment** — hero photo in wizard Identity step; gallery photos via gallery modal; artist photo composited into the OG card in `packages/og-image` (6), with the generated card as fallback.
 8. **Claim & verification** — `ArtistClaim` entity + router, claim UI (per-record, independent for group vs member), dedicated claims-only moderator queue via `getPendingClaims`, `mergeArtist` claim fixup.
 9. **Polish** — instrument/city enrichment, restyle events block, ship.
 
