@@ -262,20 +262,35 @@ describe('findOrCreateArtist', () => {
 
     const result = await findOrCreateArtist('Brand New Artist');
 
-    expect(createArtist).toHaveBeenCalledWith({ name: 'Brand New Artist', gurus: [] });
+    expect(createArtist).toHaveBeenCalledWith({
+      name: 'Brand New Artist',
+      title: undefined,
+      gurus: [],
+    });
     expect(result).toEqual({ artist: created, created: true });
   });
 
-  it('does not create anything in dryRun mode and returns a placeholder', async () => {
+  it('passes title through when creating', async () => {
     vi.mocked(getArtistByName).mockResolvedValue(null);
     vi.mocked(listArtists).mockResolvedValue({ items: [], nextToken: undefined, hasMore: false });
 
-    const result = await findOrCreateArtist('Brand New Artist', { dryRun: true });
+    await findOrCreateArtist('Brand New Artist', { title: 'Vidwan' });
+
+    expect(createArtist).toHaveBeenCalledWith({
+      name: 'Brand New Artist',
+      title: 'Vidwan',
+      gurus: [],
+    });
+  });
+
+  it('does not overwrite the title of a matched record', async () => {
+    const existing = { id: 'artist-1', name: 'T M Krishna' } as Artist;
+    vi.mocked(getArtistByName).mockResolvedValue(existing);
+
+    const result = await findOrCreateArtist('T M Krishna', { title: 'Vidwan' });
 
     expect(createArtist).not.toHaveBeenCalled();
-    expect(result.created).toBe(true);
-    expect(result.artist.name).toBe('Brand New Artist');
-    expect(result.artist.id).toBe('');
+    expect(result).toEqual({ artist: existing, created: false, matchedOn: 'T M Krishna' });
   });
 
   it('applies a custom threshold to the fuzzy match step', async () => {

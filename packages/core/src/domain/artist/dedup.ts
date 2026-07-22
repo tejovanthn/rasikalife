@@ -206,34 +206,23 @@ async function collectAllArtistsForMatching(): Promise<Artist[]> {
  * (cheap), then fall back to fuzzy matching against all existing artists,
  * and only create a new record when nothing matches.
  *
- * With `dryRun: true`, no artist is created on a miss — the returned
- * `artist` is a placeholder (empty `id`) so callers doing a dry-run report
- * can still read `created`/`matchedOn` without touching the database.
+ * `title` is used only when creating; a matched record keeps its own.
  */
 export async function findOrCreateArtist(
   name: string,
-  opts?: { threshold?: number; dryRun?: boolean }
+  opts?: { threshold?: number; title?: string }
 ): Promise<{ artist: Artist; created: boolean; matchedOn?: string }> {
-  const threshold = opts?.threshold ?? DEFAULT_THRESHOLD;
-  const dryRun = opts?.dryRun ?? false;
-
   const exact = await getArtistByName(name);
   if (exact) {
     return { artist: exact, created: false, matchedOn: exact.name };
   }
 
   const candidates = await collectAllArtistsForMatching();
-  const match = findArtistMatch(name, candidates, threshold);
+  const match = findArtistMatch(name, candidates, opts?.threshold ?? DEFAULT_THRESHOLD);
   if (match) {
     return { artist: match, created: false, matchedOn: match.name };
   }
 
-  if (dryRun) {
-    const now = new Date().toISOString();
-    const placeholder = { id: '', name, createdAt: now, updatedAt: now } as Artist;
-    return { artist: placeholder, created: true };
-  }
-
-  const created = await createArtist({ name, gurus: [] });
+  const created = await createArtist({ name, title: opts?.title, gurus: [] });
   return { artist: created, created: true };
 }
