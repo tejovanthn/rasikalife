@@ -6,6 +6,8 @@ Reference page: https://rasika.life/artists/yagnika-iyengar-3DffDH8XBOZhLi9zbauB
 
 This revision checked every "already exists" claim in the first draft against the code. Five were wrong and are corrected in place: the shared dedup helper, the artist-rename name-copy cascade, `ArtistAward` handling in `mergeArtist`, the moderator direct-write split, and the shape of the venue/organiser wizard convention. The transliteration section is rewritten — the bug is a render-time call, not a pipeline defect — and `displayName` is dropped as a result. A phase 0 now precedes the numbered phases.
 
+Two things the first draft missed entirely: the `Edit` row is single-entity, so the wizard cannot draft its junction writes (5.1), and the admin bulk-CSV column list needs updating alongside the schema or it silently drops the new fields and wipes the reshaped guru data (4.6.1).
+
 ## 1. Problem
 
 Artist profiles are the weakest high-intent page on the site. The reference page renders a name, a role string, a two-field About block, an events list, and generic explore links. Nothing conveys who the artist is, who they perform with, or why they matter. Three concrete failures:
@@ -38,8 +40,8 @@ Add to the `artist` entity:
 |-----------|------|-------|
 | `photoUrl` | string | CDN URL of artist photo |
 | `photoUploadId` | string | S3 presigned-upload session ID |
-| `instrument` | string | Primary instrument / discipline (vocal, violin, mridangam, bharatanatyam, etc.) |
-| `city` | string | Current base city, denormalized for a future `byCity` GSI |
+| `instrument` | string | Primary instrument / discipline (vocal, violin, mridangam, bharatanatyam, etc.). Free text — see 11.1. |
+| `city` | string | Current base city, denormalized for a future `byCity` GSI. Free text — see 11.1. |
 | `practiceStartYear` | number | Year the artist began formal practice / training |
 | `debutYear` | number | Year of first public/arangetram performance (optional, distinct from practice start) |
 | `gurus` | list\<map\> | **Reshaped in place** from `{id, name}[]` to `{id, name, fromYear?, toYear?, discipline?}[]`. Same field name, richer element. See 4.6 for migration. |
@@ -211,6 +213,19 @@ The reason this is labelled breaking is the *element contract* changes for any c
 
 `fromYear`/`toYear` are optional so an unenriched entry stays valid and the wizard can add years later. Display sorts by `fromYear` when present, falling back to insertion order.
 
+**The reshape breaks the admin CSV round-trip unless the encoding changes with it.** `ADMIN_CSV_DOMAINS.artist` in `packages/core/src/admin/columns.ts` encodes gurus as `refList('gurus', 'gurus', 'guruNames')`, which is names only. Leave it alone and an export, spreadsheet edit and re-import writes the names back and silently wipes every `fromYear`, `toYear` and `discipline` on the record. Switch gurus to a **JSON cell**, the treatment `columns.ts` already gives lyrics, ticketing and tala structure. It round-trips losslessly. Editing it in a spreadsheet is unpleasant, which is fine — the wizard is the real editor for this field.
+
+#### 4.6.1 Admin CSV columns
+
+The PRD adds nine attributes to `artist`, and `ADMIN_CSV_DOMAINS.artist` is a hand-maintained ordered column list, so it needs updating in the same change or the export silently omits them.
+
+- **Add columns:** `instrument`, `city`, `practiceStartYear`, `debutYear`, `isGroup`.
+- **Change encoding:** `gurus` from `refList` to a JSON cell, per above.
+- **Leave out:** `photoUrl` and `photoUploadId` (written by the upload flow), `collaborators` and `collaboratorsComputedAt` (system-derived, 4.4), `claimStatus` and `verifiedAt` (system-derived from `ArtistClaim`, 4.3). None should be settable from a spreadsheet.
+- The new entities — `ArtistMembership`, `ArtistClaim`, `ArtistPhoto` — get **no** CSV domain. They are junctions and moderation state, not bulk-editable content.
+
+Remember `BULK_DOMAIN_KEYS` and `ADMIN_CSV_DOMAIN_KEYS` must stay in sync; a test already asserts it.
+
 ### 4.7 Gallery: `ArtistPhoto` entity
 
 Photos beyond the single hero `photoUrl` live in their own entity, not an inline list on Artist. This avoids the 400KB item ceiling a `photos[]` list would eventually hit, and gives each photo its own caption, credit, order, and moderation.
@@ -249,24 +264,31 @@ Add `isFeatured` (boolean, default false) and optional `featureRank` (number) to
 
 Purpose: give moderators a single rich surface to build out profiles proactively (reaching out to artists, filling in as much as possible), covering identity, career timeline, relationships, awards, and notable performances. Structure follows the existing venue/organiser convention plus **modal editors** for each repeatable timeline so the main flow stays short.
 
-That convention is split, and the artist routes copy it as it stands: `venues.new.tsx` and `organisers.new.tsx` are flat single-page forms, while `venues.$venueid_.edit.tsx` and `organisers.$organiserid_.edit.tsx` are stepped wizards (`STEP_LABELS` + step state). So `/artists/new` is a flat form and `/artists/:id/edit` is the stepped wizard described in 5.3.
+That convention is split, and the artist routes copy it as it stands: `venues.new.tsx` and `organisers.new.tsx` are flat single-page forms, while `venues.$venueid_.edit.tsx` and `organisers.$organiserid_.edit.tsx` are stepped wizards (`STEP_LABELS` + step state). So `/artists/new` is a flat form, and `/artists/:id/edit` is the stepped wizard of 5.3 for moderators — see 5.1 for why editors get something different.
 
 ### 5.1 Moderation interaction
 
-**Everything goes through the Edit draft queue.** No role branch, matching what the site does today.
+**The wizard is moderator-only and writes directly. Editors keep the existing simple form and its draft.**
 
-- `/artists/:id/edit` always produces an Edit draft (`createDraft` → `submitEdit`), for moderators and editors alike. A moderator approves their own draft from `moderator.edits`. One path, one audit trail, one extra click.
-- `/artists/new` is moderator-only and writes directly through `createArtist`, exactly as `venues.new.tsx` does. Creation has no prior record to draft against.
-- Artist is already registered in the Edit handler registry (`packages/core/src/domain/edit/registry.ts`), so the draft path needs no new wiring.
+The reason is structural, not a preference. An `Edit` row carries one `entityType`, one `entityId`, and a `proposedValues` blob validated against that entity's `updateSchema` — it is single-entity by construction (`packages/core/src/domain/edit/types.ts`). The wizard writes across five entity types: `Artist`, `ArtistMembership`, `ArtistAward`, `EventArtist` and `ArtistPhoto`. Four of those cannot ride the draft queue without rebuilding the Edit system, which every domain on the site depends on.
 
-An earlier draft of this PRD described moderators writing through on `/edit` and editors drafting. That split exists nowhere on the site — `submitEdit` never auto-approves for any role — and it is **not** being built.
+So `/artists/:artistid/edit` branches on role:
+
+- **Moderator** sees the stepped wizard of 5.3 and writes straight through. Per-entity writes, no transaction — see 11.4.
+- **Editor** sees today's simple artist edit form, unchanged, still producing an Edit draft through `createDraft` → `submitEdit`. Artist is already registered in the Edit handler registry (`packages/core/src/domain/edit/registry.ts`), so nothing changes for them.
+- The junction writes already have a precedent for skipping the queue: `artist.addAward` and `artist.removeAward` are `editorProcedure` direct writes today and always have been.
+
+The cost is that editors don't get the rich enrichment surface. That is acceptable because the wizard exists for proactive profile building — reaching out to artists and filling in what they send back — which is moderator work.
+
+An earlier draft of this PRD described moderators writing through on `/edit` and editors drafting the *same* wizard. That split exists nowhere on the site (`submitEdit` never auto-approves for any role) and would not have worked anyway, for the single-entity reason above.
 
 ### 5.2 Routes
 
 | Route | Access | Purpose |
 |-------|--------|---------|
 | `/artists/new` | moderator | Create artist (flat form, direct write) |
-| `/artists/:artistid/edit` | editor+ | Stepped edit wizard; always produces an Edit draft |
+| `/artists/:artistid/edit` | moderator | Stepped enrichment wizard, direct write |
+| `/artists/:artistid/edit` | editor | Existing simple form, produces an Edit draft |
 
 ### 5.3 Wizard steps (core, sequential)
 
@@ -297,6 +319,8 @@ Each modal edits one list, returns to the wizard step, and shows an inline chron
 ### 5.5 Data touchpoints summary
 
 The wizard writes across: `Artist` (core fields, reshaped `gurus`, hero photo), `ArtistMembership` (members), `ArtistAward` (awards), `EventArtist` (performance links plus the per-artist `isFeatured`/`featureRank`), `ArtistPhoto` (gallery). Event *creation* is delegated to the existing event pipeline, not performed by the wizard. `ArtistClaim` and `collaborators` are system-managed, not wizard-edited.
+
+These five entity types are exactly why the wizard is moderator-only and writes directly (5.1): an `Edit` draft can carry one of them, not five.
 
 ## 6. Page structure
 
@@ -356,6 +380,7 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 - **Pending:** claimant sees "claim pending"; public sees no change.
 - **Verified:** public verified badge (rendered off denormalized `claimStatus`/`verifiedAt`, no extra query); hero optionally shows "Profile managed by the artist."
 - **Dedicated moderator queue:** a claims-only surface fed by `getPendingClaims`, separate from the Edit/Event moderation queues so responsibilities don't intermix. Approve/reject with note; reject recomputes `claimStatus` back to `unclaimed` when no verified claim remains. Structured to allow a distinct `claim-moderator` permission later without touching content moderation.
+- **Proof is out-of-band and rests on moderator judgement.** There is no automated check to build. The claim captures a note and a contact email; the moderator establishes identity however fits the case — a DM from the artist's known handle, a reply from an official address, a phone call — and records the reasoning in `moderatorNote` before approving. That field is the audit trail, so treat it as required on approve, not just on reject.
 
 ## 9. Rollout phases
 
@@ -370,11 +395,11 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 
 **Phase 0c — name display fix (4.1).** Drop `fromItrans` from the artist read paths. One change, fixes every artist on the site, no schema change and no backfill. Everything after this assumes names render correctly.
 
-1. **Data model** — add Artist attributes (`isGroup`, `claimStatus`, `verifiedAt`, `photoUrl`/`photoUploadId`, `instrument`, `city`, `practiceStartYear`, `debutYear`), `EventArtist` `isFeatured`/`featureRank`, `Image` `'artist'` support through all four touchpoints (4.1), `artist.getImageUploadUrl`. **Guru reshape (4.6):** widen the `gurus` element schema in place (superset, no data backfill), update readers to render years/discipline when present.
+1. **Data model** — add Artist attributes (`isGroup`, `claimStatus`, `verifiedAt`, `photoUrl`/`photoUploadId`, `instrument`, `city`, `practiceStartYear`, `debutYear`), `EventArtist` `isFeatured`/`featureRank`, `Image` `'artist'` support through all four touchpoints (4.1), `artist.getImageUploadUrl`. **Guru reshape (4.6):** widen the `gurus` element schema in place (superset, no data backfill), update readers to render years/discipline when present. **Admin CSV (4.6.1):** new columns and the guru JSON-cell encoding land here too, or the export silently drops the new fields.
 2. **Group membership** — `ArtistMembership` junction (entity + router), add/remove membership, `getGroupMembers`/`getMemberGroups`, member find-or-create routed through fuzzy dedup, `mergeArtist` fixups for membership rows and collaborator edges.
 3. **Gallery entity** — `ArtistPhoto` entity + router (`add`/`update`/`delete`/`listArtistPhotos`), `byArtist` GSI, `mergeArtist` photo reassignment.
 4. **Collaborator engine** — `rebuildArtistCollaborators`, hook into `approveEvent` (inline + cap), fold into `mergeArtist` and event soft-delete. Ends with the `rebuild-collaborators` backfill sweep (4.5.1), without which the feature ships empty.
-5. **Create/edit wizard** — flat `/artists/new` (moderator, direct write) + stepped `/artists/:id/edit` (always drafts), timeline modals (guru, membership, awards, performances, gallery), a live artist-search endpoint for the pickers (11.1), artist prefill threaded into the event creation routes, `isFeatured` toggle. Depends on phases 0b and 1-3.
+5. **Create/edit wizard** — flat `/artists/new` (moderator, direct write) + stepped `/artists/:id/edit` for moderators, editors keeping today's form and its draft (5.1). Timeline modals (guru, membership, awards, performances, gallery), a live artist-search endpoint for the pickers (11.1), artist prefill threaded into the event creation routes, `isFeatured` toggle. Depends on phases 0b and 1-3.
 6. **Presentation** — new profile layout with teasers, all sections incl. group-aware Members/Groups block, gallery teaser grid, empty-state handling, group-aware JSON-LD (build out `PersonStructuredData`, add `MusicGroup`). **Index subroutes:** `/artists/:id/gallery` is new; `/artists/:id/events` and `/artists/:id/compositions` already exist and get restyled.
 7. **Photo enrichment** — hero photo in wizard Identity step; gallery photos via gallery modal.
 8. **Claim & verification** — `ArtistClaim` entity + router, claim UI (per-record, independent for group vs member), dedicated claims-only moderator queue via `getPendingClaims`, `mergeArtist` claim fixup.
@@ -407,6 +432,8 @@ This means a **new endpoint**. The existing picker (`~/components/SearchSelect.t
 
 **`isGroup` is a moderator-only flip, not immutable.** Duo records like Ganesh Kumaresh and Saralaya Sisters already exist as ordinary artist rows scraped from posters, so an immutable flag would mean no existing record could ever become a group — a rule that blocks the main use case. A moderator can toggle `isGroup` at any time. Flipping a group back to an individual while `ArtistMembership` rows exist strands them; that is rare, repairable by hand, and cheaper than the alternative. Gate the field on `moderatorProcedure`, not on record state.
 
+**`instrument` and `city` are free text, normalised later.** Neither gets an enum now. When drift starts to bite — vocal/Vocal/vocals, Chennai/chennai/Madras — add a `canonicalInstrument` mapping helper beside `canonicalRole` and key any grouping or faceting off the canonical value while still displaying the raw string. Same treatment `EventArtist.role` already gets, for the same reason: the raw values arrive from posters and scrapes, so a closed set would reject real data rather than clean it. This also keeps both fields as ordinary `str()` columns in the admin CSV, with no `flags()` machinery.
+
 **Collaborator inline cap is a named constant.** `COLLABORATOR_INLINE_CAP = 12` (a single exported config constant, not a literal). `approveEvent` recomputes collaborators inline when `event.artists.length <= COLLABORATOR_INLINE_CAP`, otherwise enqueues (async path deferred; for now, skip + log so a large event doesn't block approval). The future async worker keys off the same constant.
 
 ### 11.2 Standing conventions (enforce throughout)
@@ -438,7 +465,9 @@ The last four arrive with their entities. The two gaps predate this PRD and alre
 - First-class Ensemble entity (groups are `isGroup` Artist records)
 - Async collaborator recompute worker (inline + cap only for now)
 - `claim-moderator` distinct permission (any moderator actions claims for now)
-- Wizard publish atomicity (per-entity writes; not a single transaction) — flagged as a genuine open design question if all-or-nothing publish is later wanted
+- Multi-entity Edit drafts. The `Edit` row stays single-entity; the wizard sidesteps it by being moderator-only and writing directly (5.1). Revisit only if editors need the wizard.
+- Wizard publish atomicity. Writes go per entity with no transaction, so a failure part-way leaves a partial profile. Acceptable while the wizard is moderator-only and the operator can see what landed and retry. Still the honest open question if all-or-nothing publish is ever wanted.
+- An enum for `instrument` or `city` (free text plus a later `canonicalInstrument` helper, 11.1)
 
 ### 11.5 Suggested build order
 
