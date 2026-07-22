@@ -1,11 +1,13 @@
 import {
   Artist,
   ArtistAward,
+  Auth,
   ConcertLogItem,
   EventArtist,
   EventSetlist,
   Image,
 } from '@rasika/core';
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
@@ -34,7 +36,19 @@ export const artistRouter = createTRPCRouter({
 
   update: editorProcedure
     .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      // isGroup is moderator-only. Flipping a group back to an individual
+      // strands its ArtistMembership rows, which is accepted as rare and
+      // repairable by hand — but not something an editor should be able to do
+      // in passing while editing a biography.
+      const isModerator =
+        ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
+      if (input.data.isGroup !== undefined && !isModerator) {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Only a moderator can change whether an artist is a group',
+        });
+      }
       const result = await Artist.updateArtist(input.id, input.data);
       triggerReindex();
       return result;
