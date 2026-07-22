@@ -1,6 +1,7 @@
-import type { z } from 'zod';
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import type { z } from 'zod';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
+import { keyOfEntity } from '../../db/keys';
 import { generateId } from '../../utils';
 import { cascadeRagaMerge, cascadeRagaNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
@@ -124,7 +125,9 @@ export async function adjustPerformanceCount(ragaId: string, delta: number): Pro
   await dynamoClient.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
-      Key: { pk: `RAGA#${ragaId}`, sk: '#METADATA' },
+      // ElectroDB lowercases composite key values, so the key must be derived from
+      // the entity rather than hand-built in uppercase, or this writes a phantom row.
+      Key: keyOfEntity(RagaEntity, { id: ragaId }),
       UpdateExpression: 'ADD performanceCount :delta',
       ExpressionAttributeValues: { ':delta': delta },
     })

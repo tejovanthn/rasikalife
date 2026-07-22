@@ -1,6 +1,7 @@
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { ApplicationError, ErrorCode } from '../../constants';
 import { dynamoClient } from '../../db/client';
+import { keyOfEntity } from '../../db/keys';
 import { generateId } from '../../utils';
 import { EditEntity } from './entity';
 import { getHandler } from './registry';
@@ -353,10 +354,9 @@ export async function updateDraft(
 
   const command = new UpdateCommand({
     TableName: tableName,
-    Key: {
-      pk: `EDIT#${editId}`,
-      sk: '#METADATA',
-    },
+    // ElectroDB lowercases composite key values, so the key must be derived from
+    // the entity rather than hand-built in uppercase, or this writes a phantom row.
+    Key: keyOfEntity(EditEntity, { id: editId }),
     UpdateExpression: `SET ${updateExpressions.join(', ')}`,
     ExpressionAttributeNames: expressionAttributeNames,
     ExpressionAttributeValues: expressionAttributeValues,

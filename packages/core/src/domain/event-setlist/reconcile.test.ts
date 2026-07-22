@@ -21,9 +21,9 @@ vi.mock('../raga', () => ({
   adjustPerformanceCount: vi.fn(),
 }));
 
-import { recomputeEventSetlist } from './reconcile';
-import { listEventSetlistItems } from '../concert-log-item';
 import { deleteAllEventSetlistRows, getEventSetlist, writeEventSetlistRows } from '.';
+import { listEventSetlistItems } from '../concert-log-item';
+import { recomputeEventSetlist } from './reconcile';
 
 function makeItem(overrides: Partial<ConcertLogItem>): ConcertLogItem {
   return {
@@ -72,7 +72,14 @@ describe('recomputeEventSetlist', () => {
   it('single logger produces setlist with confidence 1.0', async () => {
     const items = [
       makeItem({ order: 0, orderStr: '0000' }),
-      makeItem({ order: 1, orderStr: '0001', compositionId: 'comp2', compositionTitle: 'Sri Subramanyaya', ragaId: 'raga2', ragaName: 'Kambhoji' }),
+      makeItem({
+        order: 1,
+        orderStr: '0001',
+        compositionId: 'comp2',
+        compositionTitle: 'Sri Subramanyaya',
+        ragaId: 'raga2',
+        ragaName: 'Kambhoji',
+      }),
     ];
     vi.mocked(listEventSetlistItems).mockResolvedValue(items);
 
@@ -104,7 +111,13 @@ describe('recomputeEventSetlist', () => {
   it('two loggers where one missed an item gives missed item confidence 0.5', async () => {
     const items = [
       makeItem({ userId: 'user1', order: 0, compositionId: 'comp1' }),
-      makeItem({ userId: 'user1', order: 1, compositionId: 'comp2', compositionTitle: 'Pakkala Nilabadi', ragaId: 'raga2' }),
+      makeItem({
+        userId: 'user1',
+        order: 1,
+        compositionId: 'comp2',
+        compositionTitle: 'Pakkala Nilabadi',
+        ragaId: 'raga2',
+      }),
       makeItem({ userId: 'user2', order: 0, compositionId: 'comp1' }),
       // user2 did not log comp2
     ];
@@ -128,7 +141,12 @@ describe('recomputeEventSetlist', () => {
       makeItem({ userId: 'user1', order: 0, compositionId: 'comp1' }),
       makeItem({ userId: 'user2', order: 0, compositionId: 'comp1' }),
       makeItem({ userId: 'user3', order: 0, compositionId: 'comp1' }),
-      makeItem({ userId: 'user1', order: 1, compositionId: 'comp2', compositionTitle: 'Rare Piece' }),
+      makeItem({
+        userId: 'user1',
+        order: 1,
+        compositionId: 'comp2',
+        compositionTitle: 'Rare Piece',
+      }),
     ];
     vi.mocked(listEventSetlistItems).mockResolvedValue(items);
 
@@ -142,9 +160,27 @@ describe('recomputeEventSetlist', () => {
 
   it('three loggers with raga disagreement on one item marks it disputed', async () => {
     const items = [
-      makeItem({ userId: 'user1', order: 0, compositionId: 'comp1', ragaId: 'raga1', ragaName: 'Hamsadhwani' }),
-      makeItem({ userId: 'user2', order: 0, compositionId: 'comp1', ragaId: 'raga1', ragaName: 'Hamsadhwani' }),
-      makeItem({ userId: 'user3', order: 0, compositionId: 'comp1', ragaId: 'raga2', ragaName: 'Hamsanandi' }),
+      makeItem({
+        userId: 'user1',
+        order: 0,
+        compositionId: 'comp1',
+        ragaId: 'raga1',
+        ragaName: 'Hamsadhwani',
+      }),
+      makeItem({
+        userId: 'user2',
+        order: 0,
+        compositionId: 'comp1',
+        ragaId: 'raga1',
+        ragaName: 'Hamsadhwani',
+      }),
+      makeItem({
+        userId: 'user3',
+        order: 0,
+        compositionId: 'comp1',
+        ragaId: 'raga2',
+        ragaName: 'Hamsanandi',
+      }),
     ];
     vi.mocked(listEventSetlistItems).mockResolvedValue(items);
 
@@ -161,14 +197,56 @@ describe('recomputeEventSetlist', () => {
 
   it('position disagreement resolves to median order', async () => {
     const items = [
-      makeItem({ userId: 'user1', order: 4, orderStr: '0004', compositionId: 'comp2', compositionTitle: 'Early' }),
-      makeItem({ userId: 'user2', order: 6, orderStr: '0006', compositionId: 'comp2', compositionTitle: 'Early' }),
-      makeItem({ userId: 'user3', order: 6, orderStr: '0006', compositionId: 'comp2', compositionTitle: 'Early' }),
-      makeItem({ userId: 'user4', order: 6, orderStr: '0006', compositionId: 'comp2', compositionTitle: 'Early' }),
-      makeItem({ userId: 'user5', order: 8, orderStr: '0008', compositionId: 'comp2', compositionTitle: 'Early' }),
+      makeItem({
+        userId: 'user1',
+        order: 4,
+        orderStr: '0004',
+        compositionId: 'comp2',
+        compositionTitle: 'Early',
+      }),
+      makeItem({
+        userId: 'user2',
+        order: 6,
+        orderStr: '0006',
+        compositionId: 'comp2',
+        compositionTitle: 'Early',
+      }),
+      makeItem({
+        userId: 'user3',
+        order: 6,
+        orderStr: '0006',
+        compositionId: 'comp2',
+        compositionTitle: 'Early',
+      }),
+      makeItem({
+        userId: 'user4',
+        order: 6,
+        orderStr: '0006',
+        compositionId: 'comp2',
+        compositionTitle: 'Early',
+      }),
+      makeItem({
+        userId: 'user5',
+        order: 8,
+        orderStr: '0008',
+        compositionId: 'comp2',
+        compositionTitle: 'Early',
+      }),
       // Comp1 is first
-      makeItem({ userId: 'user1', order: 0, orderStr: '0000', compositionId: 'comp1', compositionTitle: 'Opening' }),
-      makeItem({ userId: 'user2', order: 0, orderStr: '0000', compositionId: 'comp1', compositionTitle: 'Opening' }),
+      makeItem({
+        userId: 'user1',
+        order: 0,
+        orderStr: '0000',
+        compositionId: 'comp1',
+        compositionTitle: 'Opening',
+      }),
+      makeItem({
+        userId: 'user2',
+        order: 0,
+        orderStr: '0000',
+        compositionId: 'comp1',
+        compositionTitle: 'Opening',
+      }),
     ];
     vi.mocked(listEventSetlistItems).mockResolvedValue(items);
 
@@ -182,9 +260,7 @@ describe('recomputeEventSetlist', () => {
   });
 
   it('free-text item from one logger does not appear in EventSetlist', async () => {
-    const items = [
-      makeItem({ compositionId: undefined, compositionTitle: 'Unknown Piece' }),
-    ];
+    const items = [makeItem({ compositionId: undefined, compositionTitle: 'Unknown Piece' })];
     // Remove compositionId to simulate free-text
     (items[0] as unknown as Record<string, unknown>).compositionId = undefined;
     vi.mocked(listEventSetlistItems).mockResolvedValue(items);
@@ -200,8 +276,18 @@ describe('recomputeEventSetlist', () => {
 
   it('two loggers with similar free-text titles are grouped together', async () => {
     const items = [
-      makeItem({ userId: 'user1', compositionId: undefined, compositionTitle: 'Vatapi Ganapatim', ragaId: undefined }),
-      makeItem({ userId: 'user2', compositionId: undefined, compositionTitle: 'Vatapi Ganapathim', ragaId: undefined }),
+      makeItem({
+        userId: 'user1',
+        compositionId: undefined,
+        compositionTitle: 'Vatapi Ganapatim',
+        ragaId: undefined,
+      }),
+      makeItem({
+        userId: 'user2',
+        compositionId: undefined,
+        compositionTitle: 'Vatapi Ganapathim',
+        ragaId: undefined,
+      }),
     ];
     (items[0] as unknown as Record<string, unknown>).compositionId = undefined;
     (items[1] as unknown as Record<string, unknown>).compositionId = undefined;
@@ -216,8 +302,18 @@ describe('recomputeEventSetlist', () => {
 
   it('two loggers with very different titles produce separate rows', async () => {
     const items = [
-      makeItem({ userId: 'user1', compositionId: undefined, compositionTitle: 'Vatapi Ganapatim', ragaId: undefined }),
-      makeItem({ userId: 'user2', compositionId: undefined, compositionTitle: 'Pakkala Nilabadi', ragaId: undefined }),
+      makeItem({
+        userId: 'user1',
+        compositionId: undefined,
+        compositionTitle: 'Vatapi Ganapatim',
+        ragaId: undefined,
+      }),
+      makeItem({
+        userId: 'user2',
+        compositionId: undefined,
+        compositionTitle: 'Pakkala Nilabadi',
+        ragaId: undefined,
+      }),
     ];
     (items[0] as unknown as Record<string, unknown>).compositionId = undefined;
     (items[1] as unknown as Record<string, unknown>).compositionId = undefined;
@@ -253,9 +349,7 @@ describe('recomputeEventSetlist', () => {
 
     vi.mocked(getEventSetlist).mockResolvedValue([verifiedRow]);
 
-    const items = [
-      makeItem({ compositionId: 'comp1', ragaId: 'raga2', ragaName: 'Kambhoji' }),
-    ];
+    const items = [makeItem({ compositionId: 'comp1', ragaId: 'raga2', ragaName: 'Kambhoji' })];
     vi.mocked(listEventSetlistItems).mockResolvedValue(items);
 
     const result = await recomputeEventSetlist('event1');

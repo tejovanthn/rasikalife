@@ -1,23 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createRaga, deleteRaga, getRaga, getRagaByName, updateRaga } from './index';
+import {
+  adjustPerformanceCount,
+  createRaga,
+  deleteRaga,
+  getRaga,
+  getRagaByName,
+  updateRaga,
+} from './index';
 import type { CreateRagaInput, UpdateRagaInput } from './index';
 
 vi.mock('../../utils', () => ({
   generateId: vi.fn(() => 'test-raga-id'),
 }));
 
-vi.mock('./entity', () => ({
-  RagaEntity: {
-    create: vi.fn(),
-    get: vi.fn(),
-    scan: vi.fn(),
-    query: {
-      byName: vi.fn(),
+vi.mock('./entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./entity')>();
+  return {
+    RagaEntity: {
+      // Real conversions so keyOfEntity derives the true (lowercased) key.
+      conversions: actual.RagaEntity.conversions,
+      create: vi.fn(),
+      get: vi.fn(),
+      scan: vi.fn(),
+      query: {
+        byName: vi.fn(),
+      },
+      update: vi.fn(),
+      delete: vi.fn(),
     },
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+  };
+});
 
 describe('Raga', () => {
   beforeEach(() => {
@@ -174,6 +186,27 @@ describe('Raga', () => {
       await expect(deleteRaga('raga-123')).resolves.not.toThrow();
 
       expect(RagaEntity.delete).toHaveBeenCalledWith({ id: 'raga-123' });
+    });
+  });
+
+  describe('adjustPerformanceCount', () => {
+    it('derives the counter key from RagaEntity instead of hand-building it in uppercase', async () => {
+      // Regression test: the counter used to write Key: { pk: 'RAGA#raga-123', sk: '#METADATA' }
+      // directly. ElectroDB lowercases composite key values, so that uppercase key
+      // pointed at a row the real raga never occupies, leaving performanceCount at
+      // zero on the actual raga record. `dynamoClient` is the real module here (not
+      // mocked) so we spy on `send` rather than replacing the client wholesale.
+      const { RagaEntity } = await import('./entity');
+      const { dynamoClient } = await import('../../db/client');
+
+      const sendSpy = vi.spyOn(dynamoClient, 'send').mockResolvedValueOnce({} as never);
+
+      await adjustPerformanceCount('raga-123', 1);
+
+      const command = sendSpy.mock.calls[0][0] as unknown as { Key: unknown };
+      expect(command.Key).toEqual({ pk: 'raga#raga-123', sk: '#metadata' });
+
+      sendSpy.mockRestore();
     });
   });
 });

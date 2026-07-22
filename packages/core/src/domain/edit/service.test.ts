@@ -8,19 +8,24 @@ vi.mock('../../db/client', () => ({
   dynamoClient: { send: vi.fn() },
 }));
 
-vi.mock('./entity', () => ({
-  EditEntity: {
-    create: vi.fn(),
-    get: vi.fn(),
-    update: vi.fn(),
-    query: {
-      byPendingType: vi.fn(),
-      byStatus: vi.fn(),
-      byUser: vi.fn(),
-      byEntity: vi.fn(),
+vi.mock('./entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./entity')>();
+  return {
+    EditEntity: {
+      // Real conversions so keyOfEntity derives the true (lowercased) key.
+      conversions: actual.EditEntity.conversions,
+      create: vi.fn(),
+      get: vi.fn(),
+      update: vi.fn(),
+      query: {
+        byPendingType: vi.fn(),
+        byStatus: vi.fn(),
+        byUser: vi.fn(),
+        byEntity: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock('./registry', () => ({
   getHandler: vi.fn(),
@@ -466,7 +471,7 @@ describe('edit/service', () => {
         Key: { pk: string; sk: string };
         UpdateExpression: string;
       };
-      expect(command.Key).toEqual({ pk: 'EDIT#edit-1', sk: '#METADATA' });
+      expect(command.Key).toEqual({ pk: 'edit#edit-1', sk: '#metadata' });
       expect(command.UpdateExpression).toContain('SET');
       expect(result?.userNote).toBe('updated note');
     });

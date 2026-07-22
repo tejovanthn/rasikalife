@@ -112,8 +112,7 @@ export const ConcertLogItemEntity = new Entity(
         type: 'string',
         required: false,
         watch: ['ragaId'],
-        set: (_val, attrs) =>
-          attrs.ragaId ? `RAGA_PERFORMANCES#${attrs.ragaId}` : undefined,
+        set: (_val, attrs) => (attrs.ragaId ? `RAGA_PERFORMANCES#${attrs.ragaId}` : undefined),
       },
       // Computed: '1' when compositionId is absent AND no moderator review yet
       // Used as GSI4 partition key — undefined value means item is excluded from GSI4

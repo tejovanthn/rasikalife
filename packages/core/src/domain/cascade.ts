@@ -5,6 +5,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../db/client';
+import { keyOfEntity as keyOf, keysOfEntity as keysOf } from '../db/keys';
 
 export const CASCADE_BATCH_SIZE = 1000;
 
@@ -13,6 +14,8 @@ type Page = { data: unknown[]; cursor: string | null };
 async function batchGetCompositions(ids: string[]): Promise<Map<string, Record<string, unknown>>> {
   const map = new Map<string, Record<string, unknown>>();
   if (ids.length === 0) return map;
+
+  const { CompositionEntity } = await import('./composition/entity');
 
   const chunks: string[][] = [];
   for (let i = 0; i < ids.length; i += 100) {
@@ -25,7 +28,7 @@ async function batchGetCompositions(ids: string[]): Promise<Map<string, Record<s
         new BatchGetCommand({
           RequestItems: {
             [TABLE_NAME]: {
-              Keys: chunk.map(id => ({ pk: `COMPOSITION#${id}`, sk: '#METADATA' })),
+              Keys: chunk.map(id => keyOf(CompositionEntity, { id })),
             },
           },
         })
@@ -35,7 +38,7 @@ async function batchGetCompositions(ids: string[]): Promise<Map<string, Record<s
 
   for (const result of results) {
     for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Array<Record<string, unknown>>) {
-      map.set((item.pk as string).replace('COMPOSITION#', ''), item);
+      map.set((item.pk as string).replace('composition#', ''), item);
     }
   }
   return map;
@@ -58,7 +61,7 @@ export async function cascadeComposerNameUpdate(artistId: string, newName: strin
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${item.id}`, sk: '#METADATA' },
+            Key: keyOf(CompositionEntity, { id: item.id }),
             UpdateExpression: 'SET composer.#name = :name, updatedAt = :updatedAt',
             ExpressionAttributeNames: { '#name': 'name' },
             ExpressionAttributeValues: { ':name': newName, ':updatedAt': now },
@@ -71,6 +74,7 @@ export async function cascadeComposerNameUpdate(artistId: string, newName: strin
 
 export async function cascadeRagaNameUpdate(ragaId: string, newName: string): Promise<void> {
   const { CompositionRagaEntity } = await import('./composition_raga/entity');
+  const { CompositionEntity } = await import('./composition/entity');
   const now = new Date().toISOString();
 
   let cursor: string | null = null;
@@ -98,7 +102,7 @@ export async function cascadeRagaNameUpdate(ragaId: string, newName: string): Pr
         return dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${item.compositionId}`, sk: '#METADATA' },
+            Key: keyOf(CompositionEntity, { id: item.compositionId }),
             UpdateExpression: 'SET ragas = :ragas, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':ragas': updatedRagas, ':updatedAt': now },
           })
@@ -125,7 +129,7 @@ export async function cascadeVenueNameUpdate(venueId: string, newName: string): 
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.id}`, sk: '#METADATA' },
+            Key: keyOf(EventEntity, { id: item.id }),
             UpdateExpression: 'SET venueName = :venueName, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':venueName': newName, ':updatedAt': now },
           })
@@ -155,7 +159,7 @@ export async function cascadeOrganiserNameUpdate(
       dynamoClient.send(
         new UpdateCommand({
           TableName: TABLE_NAME,
-          Key: { pk: `AWARD#${item.id}`, sk: '#METADATA' },
+          Key: keyOf(AwardEntity, { id: item.id }),
           UpdateExpression:
             'SET issuingOrganisationName = :issuingOrganisationName, updatedAt = :updatedAt',
           ExpressionAttributeValues: { ':issuingOrganisationName': newName, ':updatedAt': now },
@@ -177,7 +181,7 @@ export async function cascadeOrganiserNameUpdate(
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.id}`, sk: '#METADATA' },
+            Key: keyOf(EventEntity, { id: item.id }),
             UpdateExpression: 'SET organiserName = :organiserName, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':organiserName': newName, ':updatedAt': now },
           })
@@ -205,7 +209,7 @@ export async function cascadeEventMetadataToArtists(
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.eventId}`, sk: `ARTIST#${item.artistId}` },
+            Key: keyOf(EventArtistEntity, { eventId: item.eventId, artistId: item.artistId }),
             UpdateExpression:
               'SET eventTitle = :eventTitle, eventStartDateTime = :eventStartDateTime, gsi1sk = :gsi1sk',
             ExpressionAttributeValues: {
@@ -221,6 +225,7 @@ export async function cascadeEventMetadataToArtists(
 }
 
 export async function cascadeTalaNameUpdate(talaId: string, newName: string): Promise<void> {
+  const { CompositionEntity } = await import('./composition/entity');
   const { CompositionTalaEntity } = await import('./composition_tala/entity');
   const now = new Date().toISOString();
 
@@ -249,7 +254,7 @@ export async function cascadeTalaNameUpdate(talaId: string, newName: string): Pr
         return dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${item.compositionId}`, sk: '#METADATA' },
+            Key: keyOf(CompositionEntity, { id: item.compositionId }),
             UpdateExpression: 'SET talas = :talas, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':talas': updatedTalas, ':updatedAt': now },
           })
@@ -304,7 +309,7 @@ export async function cascadeArtistMerge(
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.eventId}`, sk: `ARTIST#${loserId}` },
+            Key: keyOf(EventArtistEntity, { eventId: item.eventId, artistId: loserId }),
           })
         );
         if (!existingSet.has(item.eventId)) {
@@ -359,7 +364,7 @@ export async function cascadeArtistMerge(
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `ARTIST#${loserId}`, sk: `AWARD#${item.awardId}` },
+            Key: keyOf(ArtistAwardEntity, { artistId: loserId, awardId: item.awardId }),
           })
         );
         if (!existingAwardSet.has(item.awardId)) {
@@ -459,7 +464,7 @@ export async function cascadeArtistMerge(
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `GROUP#${loserId}`, sk: `MEMBER#${item.memberId}` },
+            Key: keyOf(ArtistMembershipEntity, { groupId: loserId, memberId: item.memberId }),
           })
         );
         if (item.memberId !== canonicalId && !existingGroupSet.has(item.memberId)) {
@@ -508,7 +513,7 @@ export async function cascadeArtistMerge(
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `GROUP#${item.groupId}`, sk: `MEMBER#${loserId}` },
+            Key: keyOf(ArtistMembershipEntity, { groupId: item.groupId, memberId: loserId }),
           })
         );
         if (item.groupId !== canonicalId && !existingMemberSet.has(item.groupId)) {
@@ -539,14 +544,14 @@ export async function cascadeArtistMerge(
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${item.id}`, sk: '#METADATA' },
+            Key: keyOf(CompositionEntity, { id: item.id }),
             UpdateExpression:
               'SET composerId = :composerId, composer.id = :composerId, composer.#name = :name, gsi2pk = :gsi2pk, updatedAt = :updatedAt',
             ExpressionAttributeNames: { '#name': 'name' },
             ExpressionAttributeValues: {
               ':composerId': canonicalId,
               ':name': canonicalName,
-              ':gsi2pk': `ARTIST#${canonicalId}`,
+              ':gsi2pk': keysOf(CompositionEntity, { id: item.id, composerId: canonicalId }).gsi2pk,
               ':updatedAt': now,
             },
           })
@@ -582,7 +587,7 @@ export async function cascadeArtistMerge(
         return dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `ARTIST#${artist.id}`, sk: '#METADATA' },
+            Key: keyOf(ArtistEntity, { id: artist.id }),
             UpdateExpression: 'SET gurus = :gurus, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':gurus': updatedGurus, ':updatedAt': now },
           })
@@ -618,7 +623,7 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.eventId}`, sk: `ARTIST#${artistId}` },
+            Key: keyOf(EventArtistEntity, { eventId: item.eventId, artistId }),
             UpdateExpression: 'SET artistName = :artistName',
             ExpressionAttributeValues: { ':artistName': newName },
           })
@@ -640,7 +645,7 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `ARTIST#${artistId}`, sk: `AWARD#${item.awardId}` },
+            Key: keyOf(ArtistAwardEntity, { artistId, awardId: item.awardId }),
             UpdateExpression: 'SET artistName = :artistName',
             ExpressionAttributeValues: { ':artistName': newName },
           })
@@ -710,13 +715,13 @@ export async function cascadeVenueMerge(
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.id}`, sk: '#METADATA' },
+            Key: keyOf(EventEntity, { id: item.id }),
             UpdateExpression:
               'SET venueId = :venueId, venueName = :venueName, gsi4pk = :gsi4pk, updatedAt = :updatedAt',
             ExpressionAttributeValues: {
               ':venueId': canonicalId,
               ':venueName': canonicalName,
-              ':gsi4pk': `VENUE#${canonicalId}`,
+              ':gsi4pk': keysOf(EventEntity, { id: item.id, venueId: canonicalId }).gsi4pk,
               ':updatedAt': now,
             },
           })
@@ -747,13 +752,13 @@ export async function cascadeOrganiserMerge(
         dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${item.id}`, sk: '#METADATA' },
+            Key: keyOf(EventEntity, { id: item.id }),
             UpdateExpression:
               'SET organiserId = :organiserId, organiserName = :organiserName, gsi5pk = :gsi5pk, updatedAt = :updatedAt',
             ExpressionAttributeValues: {
               ':organiserId': canonicalId,
               ':organiserName': canonicalName,
-              ':gsi5pk': `ORGANISER#${canonicalId}`,
+              ':gsi5pk': keysOf(EventEntity, { id: item.id, organiserId: canonicalId }).gsi5pk,
               ':updatedAt': now,
             },
           })
@@ -768,6 +773,7 @@ export async function cascadeRagaMerge(
   canonicalId: string,
   canonicalName: string
 ): Promise<void> {
+  const { CompositionEntity } = await import('./composition/entity');
   const { CompositionRagaEntity } = await import('./composition_raga/entity');
   const now = new Date().toISOString();
 
@@ -799,7 +805,7 @@ export async function cascadeRagaMerge(
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${compositionId}`, sk: `RAGA#${loserId}` },
+            Key: keyOf(CompositionRagaEntity, { compositionId, ragaId: loserId }),
           })
         );
         if (!existingRagaSet.has(compositionId)) {
@@ -822,7 +828,7 @@ export async function cascadeRagaMerge(
         await dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${compositionId}`, sk: '#METADATA' },
+            Key: keyOf(CompositionEntity, { id: compositionId }),
             UpdateExpression: 'SET ragas = :ragas, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':ragas': updatedRagas, ':updatedAt': now },
           })
@@ -837,6 +843,7 @@ export async function cascadeTalaMerge(
   canonicalId: string,
   canonicalName: string
 ): Promise<void> {
+  const { CompositionEntity } = await import('./composition/entity');
   const { CompositionTalaEntity } = await import('./composition_tala/entity');
   const now = new Date().toISOString();
 
@@ -868,7 +875,7 @@ export async function cascadeTalaMerge(
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${compositionId}`, sk: `TALA#${loserId}` },
+            Key: keyOf(CompositionTalaEntity, { compositionId, talaId: loserId }),
           })
         );
         if (!existingTalaSet.has(compositionId)) {
@@ -891,7 +898,7 @@ export async function cascadeTalaMerge(
         await dynamoClient.send(
           new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `COMPOSITION#${compositionId}`, sk: '#METADATA' },
+            Key: keyOf(CompositionEntity, { id: compositionId }),
             UpdateExpression: 'SET talas = :talas, updatedAt = :updatedAt',
             ExpressionAttributeValues: { ':talas': updatedTalas, ':updatedAt': now },
           })
@@ -948,7 +955,7 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
         await dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { pk: `EVENT#${loserId}`, sk: `ARTIST#${item.artistId}` },
+            Key: keyOf(EventArtistEntity, { eventId: loserId, artistId: item.artistId }),
           })
         );
         if (!canonicalArtistIds.has(item.artistId)) {
@@ -1031,10 +1038,11 @@ export async function cascadeEventHardDeleteToSetlist(eventId: string): Promise<
         dynamoClient.send(
           new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: {
-              pk: `CONCERT_LOG_ITEMS#${item.userId}#${eventId}`,
-              sk: `ITEM#${item.orderStr}`,
-            },
+            Key: keyOf(ConcertLogItemEntity, {
+              userId: item.userId,
+              eventId,
+              orderStr: item.orderStr,
+            }),
           })
         )
       )

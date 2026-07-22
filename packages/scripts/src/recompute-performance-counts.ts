@@ -1,11 +1,12 @@
+import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 /**
  * Recomputes performanceCount on Composition and Raga entities from authoritative
  * EventSetlist GSI data. Run nightly to correct counter drift.
  *
  * Usage: sst shell tsx src/recompute-performance-counts.ts
  */
-import { EventSetlist, Composition, Raga } from '@rasika/core';
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { Composition, EventSetlist, Raga } from '@rasika/core';
+import { keyOfEntity } from '@rasika/core/db/keys';
 
 // Minimal imports to avoid circular deps
 const { dynamoClient } = await import('@rasika/core/db');
@@ -14,9 +15,7 @@ const TABLE_NAME = process.env.DYNAMODB_TABLE ?? 'RasikaLifeTable';
 async function fetchAllEventSetlistRows(): Promise<
   Array<{ compositionId?: string; ragaId?: string }>
 > {
-  const { EventSetlistEntity } = await import(
-    '../../core/src/domain/event-setlist/entity.js'
-  );
+  const { EventSetlistEntity } = await import('../../core/src/domain/event-setlist/entity.js');
 
   const rows: Array<{ compositionId?: string; ragaId?: string }> = [];
   let cursor: string | null = null;
@@ -39,6 +38,9 @@ async function main() {
   const rows = await fetchAllEventSetlistRows();
   console.log(`Found ${rows.length} EventSetlist rows.`);
 
+  const { CompositionEntity } = await import('../../core/src/domain/composition/entity.js');
+  const { RagaEntity } = await import('../../core/src/domain/raga/entity.js');
+
   const compositionCounts = new Map<string, number>();
   const ragaCounts = new Map<string, number>();
 
@@ -59,7 +61,9 @@ async function main() {
     dynamoClient.send(
       new UpdateCommand({
         TableName: TABLE_NAME,
-        Key: { pk: `COMPOSITION#${id}`, sk: '#METADATA' },
+        // ElectroDB lowercases composite key values, so the key must be derived from
+        // the entity rather than hand-built in uppercase, or this writes a phantom row.
+        Key: keyOfEntity(CompositionEntity, { id }),
         UpdateExpression: 'SET performanceCount = :count',
         ExpressionAttributeValues: { ':count': count },
       })
@@ -70,7 +74,7 @@ async function main() {
     dynamoClient.send(
       new UpdateCommand({
         TableName: TABLE_NAME,
-        Key: { pk: `RAGA#${id}`, sk: '#METADATA' },
+        Key: keyOfEntity(RagaEntity, { id }),
         UpdateExpression: 'SET performanceCount = :count',
         ExpressionAttributeValues: { ':count': count },
       })

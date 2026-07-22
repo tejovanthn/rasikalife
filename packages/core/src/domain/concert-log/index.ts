@@ -1,17 +1,20 @@
 import { BatchGetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
-import { EventEntity } from '../event/entity';
-import { RsvpEntity } from '../rsvp/entity';
+import { keyOfEntity } from '../../db/keys';
 import { getEvent } from '../event';
+import { EventEntity } from '../event/entity';
+import type { Event } from '../event/entity';
+import { RsvpEntity } from '../rsvp/entity';
 import { ConcertLogEntity } from './entity';
 import type { ConcertLog } from './entity';
-import type { Event } from '../event/entity';
 
 async function adjustAttendedCounter(eventId: string, delta: 1 | -1): Promise<void> {
   await dynamoClient.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
-      Key: { pk: `EVENT#${eventId}`, sk: '#METADATA' },
+      // ElectroDB lowercases composite key values, so the key must be derived from
+      // the entity rather than hand-built in uppercase, or this writes a phantom row.
+      Key: keyOfEntity(EventEntity, { id: eventId }),
       UpdateExpression: 'ADD attendedCount :delta',
       ExpressionAttributeValues: { ':delta': delta },
     })
@@ -103,14 +106,9 @@ export async function getAttendedCount(eventId: string): Promise<number> {
   return result.data?.attendedCount ?? 0;
 }
 
-export async function listPastRsvpedWithoutLogs(
-  userId: string,
-  limit = 20
-): Promise<Event[]> {
+export async function listPastRsvpedWithoutLogs(userId: string, limit = 20): Promise<Event[]> {
   // Fetch user's RSVPs
-  const rsvpResult = await RsvpEntity.query
-    .byUser({ userId })
-    .go({ order: 'desc', limit: 100 });
+  const rsvpResult = await RsvpEntity.query.byUser({ userId }).go({ order: 'desc', limit: 100 });
 
   const rsvps = rsvpResult.data ?? [];
   if (rsvps.length === 0) return [];
@@ -129,7 +127,7 @@ export async function listPastRsvpedWithoutLogs(
         new BatchGetCommand({
           RequestItems: {
             [TABLE_NAME]: {
-              Keys: chunk.map(id => ({ pk: `EVENT#${id}`, sk: '#METADATA' })),
+              Keys: chunk.map(id => keyOfEntity(EventEntity, { id })),
             },
           },
         })
@@ -153,12 +151,11 @@ export async function listPastRsvpedWithoutLogs(
   if (pastEventIds.size === 0) return [];
 
   // Batch-get ConcertLogs for these events to find which have no log yet
-  const logKeys = [...pastEventIds].map(eventId => ({
-    pk: `USER#${userId}`,
-    sk: `CONCERT_LOG#${eventId}`,
-  }));
+  const logKeys = [...pastEventIds].map(eventId =>
+    keyOfEntity(ConcertLogEntity, { userId, eventId })
+  );
 
-  const logChunks: typeof logKeys[] = [];
+  const logChunks: (typeof logKeys)[] = [];
   for (let i = 0; i < logKeys.length; i += 100) {
     logChunks.push(logKeys.slice(i, i + 100));
   }
@@ -176,7 +173,8 @@ export async function listPastRsvpedWithoutLogs(
   const loggedEventIds = new Set<string>();
   for (const result of logResults) {
     for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Array<{ sk: string }>) {
-      const eventId = item.sk.replace('CONCERT_LOG#', '');
+      // ElectroDB writes the sort key lowercase, so the stripped prefix must match.
+      const eventId = item.sk.replace('concert_log#', '');
       loggedEventIds.add(eventId);
     }
   }

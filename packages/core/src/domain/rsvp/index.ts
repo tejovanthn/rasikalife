@@ -1,5 +1,6 @@
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
+import { keyOfEntity } from '../../db/keys';
 import { EventEntity } from '../event/entity';
 import { RsvpEntity } from './entity';
 
@@ -7,7 +8,9 @@ async function adjustRsvpCounter(eventId: string, delta: 1 | -1): Promise<number
   const result = await dynamoClient.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
-      Key: { pk: `EVENT#${eventId}`, sk: '#METADATA' },
+      // ElectroDB lowercases composite key values, so the key must be derived from
+      // the entity rather than hand-built in uppercase, or this writes a phantom row.
+      Key: keyOfEntity(EventEntity, { id: eventId }),
       UpdateExpression: 'ADD rsvpCount :delta',
       ExpressionAttributeValues: { ':delta': delta },
       ReturnValues: 'UPDATED_NEW',

@@ -1,70 +1,164 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('./composition/entity', () => ({
-  CompositionEntity: { query: { byComposer: vi.fn() } },
-}));
+vi.mock('./composition/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./composition/entity')>();
+  return {
+    CompositionEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.CompositionEntity.conversions,
+      query: { byComposer: vi.fn() },
+    },
+  };
+});
 
-vi.mock('./composition_raga/entity', () => ({
-  CompositionRagaEntity: { query: { byRaga: vi.fn() }, get: vi.fn(), create: vi.fn() },
-}));
+vi.mock('./composition_raga/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./composition_raga/entity')>();
+  return {
+    CompositionRagaEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.CompositionRagaEntity.conversions,
+      query: { byRaga: vi.fn() },
+      get: vi.fn(),
+      create: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./composition_tala/entity', () => ({
-  CompositionTalaEntity: { query: { byTala: vi.fn() }, get: vi.fn(), create: vi.fn() },
-}));
+vi.mock('./composition_tala/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./composition_tala/entity')>();
+  return {
+    CompositionTalaEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.CompositionTalaEntity.conversions,
+      query: { byTala: vi.fn() },
+      get: vi.fn(),
+      create: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./event/entity', () => ({
-  EventEntity: { query: { byVenue: vi.fn(), byOrganiser: vi.fn() }, get: vi.fn() },
-}));
+vi.mock('./event/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./event/entity')>();
+  return {
+    EventEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.EventEntity.conversions,
+      query: { byVenue: vi.fn(), byOrganiser: vi.fn() },
+      get: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./award/entity', () => ({
-  AwardEntity: { query: { list: vi.fn() } },
-}));
+vi.mock('./award/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./award/entity')>();
+  return {
+    AwardEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.AwardEntity.conversions,
+      query: { list: vi.fn() },
+    },
+  };
+});
 
-vi.mock('./event-artist/entity', () => ({
-  EventArtistEntity: {
-    query: { primary: vi.fn(), byArtist: vi.fn() },
-    get: vi.fn(),
-    upsert: vi.fn(),
-  },
-}));
+vi.mock('./event-artist/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./event-artist/entity')>();
+  return {
+    EventArtistEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.EventArtistEntity.conversions,
+      query: { primary: vi.fn(), byArtist: vi.fn() },
+      get: vi.fn(),
+      upsert: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./artist-award/entity', () => ({
-  ArtistAwardEntity: {
-    query: { primary: vi.fn() },
-    get: vi.fn(),
-    upsert: vi.fn(),
-  },
-}));
+vi.mock('./artist-award/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./artist-award/entity')>();
+  return {
+    ArtistAwardEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.ArtistAwardEntity.conversions,
+      query: { primary: vi.fn() },
+      get: vi.fn(),
+      upsert: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./artist/entity', () => ({
-  ArtistEntity: { query: { list: vi.fn() } },
-}));
+vi.mock('./artist/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./artist/entity')>();
+  return {
+    ArtistEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.ArtistEntity.conversions,
+      query: { list: vi.fn() },
+    },
+  };
+});
 
-vi.mock('./artist-membership/entity', () => ({
-  ArtistMembershipEntity: {
-    query: { primary: vi.fn(), byMember: vi.fn() },
-    get: vi.fn(),
-    upsert: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+vi.mock('./artist-membership/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./artist-membership/entity')>();
+  return {
+    ArtistMembershipEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.ArtistMembershipEntity.conversions,
+      query: { primary: vi.fn(), byMember: vi.fn() },
+      get: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./artist-photo/entity', () => ({
-  ArtistPhotoEntity: {
-    query: { primary: vi.fn() },
-    upsert: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+vi.mock('./artist-photo/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./artist-photo/entity')>();
+  return {
+    ArtistPhotoEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.ArtistPhotoEntity.conversions,
+      query: { primary: vi.fn() },
+      upsert: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
+});
 
-vi.mock('./concert-log-item/entity', () => ({
-  ConcertLogItemEntity: {
-    query: { byEvent: vi.fn(), byComposition: vi.fn(), byRaga: vi.fn() },
-    delete: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-  },
-}));
+vi.mock('./concert-log-item/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./concert-log-item/entity')>();
+  return {
+    ConcertLogItemEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.ConcertLogItemEntity.conversions,
+      query: { byEvent: vi.fn(), byComposition: vi.fn(), byRaga: vi.fn() },
+      delete: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+    },
+  };
+});
 
 vi.mock('./event-setlist', () => ({
   deleteAllEventSetlistRows: vi.fn(),
@@ -162,9 +256,9 @@ describe('cascade', () => {
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(2);
-      expect(updates[0].Key).toEqual({ pk: 'COMPOSITION#comp1', sk: '#METADATA' });
+      expect(updates[0].Key).toEqual({ pk: 'composition#comp1', sk: '#metadata' });
       expect(updates[0].ExpressionAttributeValues[':name']).toBe('New Name');
-      expect(updates[1].Key).toEqual({ pk: 'COMPOSITION#comp2', sk: '#METADATA' });
+      expect(updates[1].Key).toEqual({ pk: 'composition#comp2', sk: '#metadata' });
     });
 
     it('does nothing when the composer has no compositions', async () => {
@@ -187,7 +281,7 @@ describe('cascade', () => {
             Responses: {
               RasikaLifeTable: [
                 {
-                  pk: 'COMPOSITION#comp1',
+                  pk: 'composition#comp1',
                   ragas: [
                     { id: 'raga1', name: 'Old Name' },
                     { id: 'raga2', name: 'Untouched' },
@@ -204,7 +298,7 @@ describe('cascade', () => {
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(1);
-      expect(updates[0].Key).toEqual({ pk: 'COMPOSITION#comp1', sk: '#METADATA' });
+      expect(updates[0].Key).toEqual({ pk: 'composition#comp1', sk: '#metadata' });
       expect(updates[0].ExpressionAttributeValues[':ragas']).toEqual([
         { id: 'raga1', name: 'New Name' },
         { id: 'raga2', name: 'Untouched' },
@@ -225,7 +319,7 @@ describe('cascade', () => {
       ]);
       vi.mocked(dynamoClient.send).mockImplementation(async (command: any) => {
         if (command.constructor.name === 'BatchGetCommand') {
-          return { Responses: { RasikaLifeTable: [{ pk: 'COMPOSITION#comp1' }] } };
+          return { Responses: { RasikaLifeTable: [{ pk: 'composition#comp1' }] } };
         }
         return {};
       });
@@ -244,7 +338,7 @@ describe('cascade', () => {
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(1);
-      expect(updates[0].Key).toEqual({ pk: 'EVENT#event1', sk: '#METADATA' });
+      expect(updates[0].Key).toEqual({ pk: 'event#event1', sk: '#metadata' });
       expect(updates[0].ExpressionAttributeValues[':venueName']).toBe('New Venue');
     });
   });
@@ -261,9 +355,9 @@ describe('cascade', () => {
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(2);
-      expect(updates[0].Key).toEqual({ pk: 'AWARD#award1', sk: '#METADATA' });
+      expect(updates[0].Key).toEqual({ pk: 'award#award1', sk: '#metadata' });
       expect(updates[0].ExpressionAttributeValues[':issuingOrganisationName']).toBe('New Org');
-      expect(updates[1].Key).toEqual({ pk: 'EVENT#event1', sk: '#METADATA' });
+      expect(updates[1].Key).toEqual({ pk: 'event#event1', sk: '#metadata' });
       expect(updates[1].ExpressionAttributeValues[':organiserName']).toBe('New Org');
     });
   });
@@ -283,7 +377,7 @@ describe('cascade', () => {
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(1);
-      expect(updates[0].Key).toEqual({ pk: 'EVENT#event1', sk: 'ARTIST#artist1' });
+      expect(updates[0].Key).toEqual({ pk: 'event#event1', sk: 'artist#artist1' });
       expect(updates[0].ExpressionAttributeValues[':eventTitle']).toBe('New Title');
       expect(updates[0].ExpressionAttributeValues[':gsi1sk']).toBe('2026-02-01T00:00:00.000Z');
     });
@@ -298,7 +392,7 @@ describe('cascade', () => {
         if (command.constructor.name === 'BatchGetCommand') {
           return {
             Responses: {
-              RasikaLifeTable: [{ pk: 'COMPOSITION#comp1', talas: [{ id: 'tala1', name: 'Old' }] }],
+              RasikaLifeTable: [{ pk: 'composition#comp1', talas: [{ id: 'tala1', name: 'Old' }] }],
             },
           };
         }
@@ -381,10 +475,10 @@ describe('cascade', () => {
       );
 
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
-      expect(deletes[0].Key).toEqual({ pk: 'EVENT#event1', sk: 'ARTIST#loser' });
+      expect(deletes[0].Key).toEqual({ pk: 'event#event1', sk: 'artist#loser' });
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
-      expect(updates[0].Key).toEqual({ pk: 'COMPOSITION#comp1', sk: '#METADATA' });
+      expect(updates[0].Key).toEqual({ pk: 'composition#comp1', sk: '#metadata' });
       expect(updates[0].ExpressionAttributeValues[':composerId']).toBe('canonical');
     });
 
@@ -444,10 +538,10 @@ describe('cascade', () => {
 
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
       expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'ARTIST#loser', sk: 'AWARD#award1' } })
+        expect.objectContaining({ Key: { pk: 'artist#loser', sk: 'award#award1' } })
       );
       expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'ARTIST#loser', sk: 'AWARD#award2' } })
+        expect.objectContaining({ Key: { pk: 'artist#loser', sk: 'award#award2' } })
       );
     });
 
@@ -473,13 +567,13 @@ describe('cascade', () => {
       await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
-      const guruUpdate = updates.find((u: any) => u.Key.pk === 'ARTIST#student1');
-      expect(guruUpdate.Key).toEqual({ pk: 'ARTIST#student1', sk: '#METADATA' });
+      const guruUpdate = updates.find((u: any) => u.Key.pk === 'artist#student1');
+      expect(guruUpdate.Key).toEqual({ pk: 'artist#student1', sk: '#metadata' });
       expect(guruUpdate.ExpressionAttributeValues[':gurus']).toEqual([
         { id: 'canonical', name: 'Canonical Name' },
         { id: 'other', name: 'Unrelated' },
       ]);
-      expect(updates.some((u: any) => u.Key.pk === 'ARTIST#student2')).toBe(false);
+      expect(updates.some((u: any) => u.Key.pk === 'artist#student2')).toBe(false);
     });
 
     it('moves loser-as-group ArtistMembership rows to the canonical, preserving role and rank', async () => {
@@ -516,7 +610,7 @@ describe('cascade', () => {
 
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
       expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'GROUP#loser', sk: 'MEMBER#member1' } })
+        expect.objectContaining({ Key: { pk: 'group#loser', sk: 'member#member1' } })
       );
     });
 
@@ -543,7 +637,7 @@ describe('cascade', () => {
 
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
       expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'GROUP#group1', sk: 'MEMBER#loser' } })
+        expect.objectContaining({ Key: { pk: 'group#group1', sk: 'member#loser' } })
       );
     });
 
@@ -565,7 +659,7 @@ describe('cascade', () => {
       expect(ArtistMembershipEntity.upsert).not.toHaveBeenCalled();
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
       expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'GROUP#loser', sk: 'MEMBER#member1' } })
+        expect.objectContaining({ Key: { pk: 'group#loser', sk: 'member#member1' } })
       );
     });
 
@@ -587,7 +681,7 @@ describe('cascade', () => {
       expect(ArtistMembershipEntity.get).not.toHaveBeenCalled();
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
       expect(deletes).toContainEqual(
-        expect.objectContaining({ Key: { pk: 'GROUP#canonical', sk: 'MEMBER#loser' } })
+        expect.objectContaining({ Key: { pk: 'group#canonical', sk: 'member#loser' } })
       );
     });
 
@@ -687,13 +781,13 @@ describe('cascade', () => {
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(3);
 
-      const eventArtistUpdates = updates.filter((u: any) => u.Key.pk.startsWith('EVENT#'));
+      const eventArtistUpdates = updates.filter((u: any) => u.Key.pk.startsWith('event#'));
       expect(eventArtistUpdates).toHaveLength(2);
-      expect(eventArtistUpdates[0].Key).toEqual({ pk: 'EVENT#event1', sk: 'ARTIST#artist1' });
+      expect(eventArtistUpdates[0].Key).toEqual({ pk: 'event#event1', sk: 'artist#artist1' });
       expect(eventArtistUpdates[0].ExpressionAttributeValues[':artistName']).toBe('New Name');
 
-      const awardUpdate = updates.find((u: any) => u.Key.pk === 'ARTIST#artist1');
-      expect(awardUpdate.Key).toEqual({ pk: 'ARTIST#artist1', sk: 'AWARD#award1' });
+      const awardUpdate = updates.find((u: any) => u.Key.pk === 'artist#artist1');
+      expect(awardUpdate.Key).toEqual({ pk: 'artist#artist1', sk: 'award#award1' });
       expect(awardUpdate.ExpressionAttributeValues[':artistName']).toBe('New Name');
     });
   });
@@ -708,7 +802,7 @@ describe('cascade', () => {
       expect(updates[0].ExpressionAttributeValues).toMatchObject({
         ':venueId': 'canonicalVenue',
         ':venueName': 'Canonical',
-        ':gsi4pk': 'VENUE#canonicalVenue',
+        ':gsi4pk': 'venue#canonicalvenue',
       });
     });
   });
@@ -723,7 +817,7 @@ describe('cascade', () => {
       expect(updates[0].ExpressionAttributeValues).toMatchObject({
         ':organiserId': 'canonicalOrg',
         ':organiserName': 'Canonical',
-        ':gsi5pk': 'ORGANISER#canonicalOrg',
+        ':gsi5pk': 'organiser#canonicalorg',
       });
     });
   });
@@ -742,7 +836,7 @@ describe('cascade', () => {
           return {
             Responses: {
               RasikaLifeTable: [
-                { pk: 'COMPOSITION#comp1', ragas: [{ id: 'loserRaga', name: 'Old' }] },
+                { pk: 'composition#comp1', ragas: [{ id: 'loserRaga', name: 'Old' }] },
               ],
             },
           };
@@ -757,7 +851,7 @@ describe('cascade', () => {
         ragaId: 'canonicalRaga',
       });
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
-      expect(deletes[0].Key).toEqual({ pk: 'COMPOSITION#comp1', sk: 'RAGA#loserRaga' });
+      expect(deletes[0].Key).toEqual({ pk: 'composition#comp1', sk: 'raga#loserraga' });
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates[0].ExpressionAttributeValues[':ragas']).toEqual([
         { id: 'canonicalRaga', name: 'Canonical Raga' },
@@ -778,7 +872,7 @@ describe('cascade', () => {
             Responses: {
               RasikaLifeTable: [
                 {
-                  pk: 'COMPOSITION#comp1',
+                  pk: 'composition#comp1',
                   ragas: [
                     { id: 'loserRaga', name: 'Old' },
                     { id: 'canonicalRaga', name: 'Stale' },
@@ -815,7 +909,7 @@ describe('cascade', () => {
           return {
             Responses: {
               RasikaLifeTable: [
-                { pk: 'COMPOSITION#comp1', talas: [{ id: 'loserTala', name: 'Old' }] },
+                { pk: 'composition#comp1', talas: [{ id: 'loserTala', name: 'Old' }] },
               ],
             },
           };
@@ -938,7 +1032,7 @@ describe('cascade', () => {
       expect(adjustRagaCount).toHaveBeenCalledWith('raga2', -1);
 
       const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
-      expect(deletes[0].Key).toEqual({ pk: 'CONCERT_LOG_ITEMS#user1#event1', sk: 'ITEM#0000' });
+      expect(deletes[0].Key).toEqual({ pk: 'concert_log_items#user1#event1', sk: 'item#0000' });
       expect(deleteAllEventSetlistRows).toHaveBeenCalledWith('event1');
     });
   });

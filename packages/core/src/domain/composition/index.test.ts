@@ -44,20 +44,26 @@ vi.mock('../composition_tala', () => ({
   getCompositionsByTala: vi.fn(),
 }));
 
-vi.mock('./entity', () => ({
-  CompositionEntity: {
-    create: vi.fn(),
-    get: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-    query: {
-      byComposer: vi.fn(),
-      byLanguage: vi.fn(),
-      byName: vi.fn(),
-      list: vi.fn(),
+vi.mock('./entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./entity')>();
+  return {
+    CompositionEntity: {
+      // Real conversions so keyOfEntity derives the true (lowercased) key. Mocking it
+      // would let the test agree with a hand-built uppercase key and miss the bug.
+      conversions: actual.CompositionEntity.conversions,
+      create: vi.fn(),
+      get: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+      query: {
+        byComposer: vi.fn(),
+        byLanguage: vi.fn(),
+        byName: vi.fn(),
+        list: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 vi.mock('../raga/entity', () => ({
   RagaEntity: {

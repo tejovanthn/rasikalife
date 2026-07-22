@@ -30,7 +30,8 @@ export async function checkEvent(id: string) {
       const result = await dynamoClient.send(
         new GetCommand({
           TableName: table,
-          Key: { pk: `${type}#${id}`, sk: '#METADATA' },
+          // ElectroDB lowercases key values; a hand-built uppercase key matches nothing.
+          Key: { pk: `${type}#${id}`.toLowerCase(), sk: '#metadata' },
         })
       );
       return { type, item: result.Item };

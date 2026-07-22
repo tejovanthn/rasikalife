@@ -1,6 +1,7 @@
-import type { z } from 'zod';
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import type { z } from 'zod';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
+import { keyOfEntity } from '../../db/keys';
 import { generateId } from '../../utils';
 import { getArtist } from '../artist';
 import {
@@ -506,7 +507,9 @@ export async function adjustPerformanceCount(compositionId: string, delta: numbe
   await dynamoClient.send(
     new UpdateCommand({
       TableName: TABLE_NAME,
-      Key: { pk: `COMPOSITION#${compositionId}`, sk: '#METADATA' },
+      // ElectroDB lowercases composite key values, so the key must be derived from
+      // the entity rather than hand-built in uppercase, or this writes a phantom row.
+      Key: keyOfEntity(CompositionEntity, { id: compositionId }),
       UpdateExpression: 'ADD performanceCount :delta',
       ExpressionAttributeValues: { ':delta': delta },
     })

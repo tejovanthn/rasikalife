@@ -5,17 +5,27 @@ vi.mock('../../db/client', () => ({
   dynamoClient: { send: vi.fn() },
 }));
 
-vi.mock('./entity', () => ({
-  ConcertLogEntity: {
-    get: vi.fn(),
-    patch: vi.fn(),
-    create: vi.fn(),
-    delete: vi.fn(),
-    query: { byUserDate: vi.fn(), byEvent: vi.fn() },
-  },
-}));
+vi.mock('./entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./entity')>();
+  return {
+    // Real conversions so keyOfEntity derives the true (lowercased) key.
+    ConcertLogEntity: {
+      conversions: actual.ConcertLogEntity.conversions,
+      get: vi.fn(),
+      patch: vi.fn(),
+      create: vi.fn(),
+      delete: vi.fn(),
+      query: { byUserDate: vi.fn(), byEvent: vi.fn() },
+    },
+  };
+});
 
-vi.mock('../event/entity', () => ({ EventEntity: { get: vi.fn() } }));
+vi.mock('../event/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('../event/entity')>();
+  return {
+    EventEntity: { conversions: actual.EventEntity.conversions, get: vi.fn() },
+  };
+});
 vi.mock('../rsvp/entity', () => ({ RsvpEntity: { query: { byUser: vi.fn() } } }));
 vi.mock('../event', () => ({ getEvent: vi.fn() }));
 
@@ -222,14 +232,14 @@ describe('concert-log', () => {
           RequestItems: Record<string, { Keys: Array<Record<string, string>> }>;
         };
         const keys = cmd.RequestItems[TABLE_NAME].Keys;
-        if (keys[0]?.sk === '#METADATA') {
+        if (keys[0]?.sk === '#metadata') {
           const items = keys
-            .map(k => eventsById[k.pk.replace('EVENT#', '')])
+            .map(k => eventsById[k.pk.replace('event#', '')])
             .filter((e): e is { id: string; startDateTime: string } => !!e);
           return { Responses: { [TABLE_NAME]: items } };
         }
         const items = keys
-          .filter(k => loggedEventIds.has(k.sk.replace('CONCERT_LOG#', '')))
+          .filter(k => loggedEventIds.has(k.sk.replace('concert_log#', '')))
           .map(k => ({ sk: k.sk }));
         return { Responses: { [TABLE_NAME]: items } };
       });

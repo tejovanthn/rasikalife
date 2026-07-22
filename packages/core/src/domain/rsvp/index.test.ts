@@ -5,30 +5,51 @@ vi.mock('../../db/client', () => ({
   dynamoClient: { send: vi.fn() },
 }));
 
-vi.mock('./entity', () => ({
-  RsvpEntity: {
-    get: vi.fn(),
-    create: vi.fn(),
-    delete: vi.fn(),
-  },
-}));
+vi.mock('./entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./entity')>();
+  return {
+    RsvpEntity: {
+      // Real conversions so keyOfEntity derives the true (lowercased) key.
+      conversions: actual.RsvpEntity.conversions,
+      get: vi.fn(),
+      create: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
+});
 
-vi.mock('../event/entity', () => ({
-  EventEntity: { get: vi.fn() },
-}));
+vi.mock('../event/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('../event/entity')>();
+  return {
+    EventEntity: {
+      // Real conversions so keyOfEntity derives the true (lowercased) key.
+      conversions: actual.EventEntity.conversions,
+      get: vi.fn(),
+    },
+  };
+});
 
 import { getEventRsvpInfo, getRsvpCount, getUserRsvp, toggleRsvp } from '.';
 import { dynamoClient } from '../../db/client';
 import { EventEntity } from '../event/entity';
 import { RsvpEntity } from './entity';
 
-function goResolves(data: unknown) {
-  return { go: vi.fn().mockResolvedValue({ data }) };
+function goResolves(
+  data: unknown,
+  key: { pk: string; sk: string } = { pk: 'event#e1', sk: '#metadata' }
+) {
+  return {
+    go: vi.fn().mockResolvedValue({ data }),
+    params: vi.fn().mockReturnValue({ Key: key }),
+  };
 }
 
 describe('rsvp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default so adjustRsvpCounter's EventEntity.get(...).params().Key call has
+    // something to return in tests that don't care about the event record itself.
+    vi.mocked(EventEntity.get).mockReturnValue(goResolves(undefined) as never);
   });
 
   describe('toggleRsvp', () => {
@@ -115,6 +136,28 @@ describe('rsvp', () => {
       await expect(toggleRsvp('e1', 'u1')).rejects.toThrow('ConditionalCheckFailed');
       expect(createResolved).toBe(true);
       expect(RsvpEntity.create).toHaveBeenCalled();
+    });
+
+    it('derives the counter key from EventEntity instead of hand-building it in uppercase', async () => {
+      // Regression test: the counter used to write Key: { pk: 'EVENT#e1', sk: '#METADATA' }
+      // directly. ElectroDB lowercases composite key values, so that uppercase key
+      // pointed at a row the real event never occupies, and every RSVP silently
+      // incremented a phantom item while the event's own rsvpCount stayed at zero.
+      vi.mocked(RsvpEntity.get).mockReturnValue(goResolves(undefined) as never);
+      vi.mocked(RsvpEntity.create).mockReturnValue(
+        goResolves({ eventId: 'e1', userId: 'u1' }) as never
+      );
+      vi.mocked(EventEntity.get).mockReturnValue(
+        goResolves(undefined, { pk: 'event#e1', sk: '#metadata' }) as never
+      );
+      vi.mocked(dynamoClient.send).mockResolvedValue({ Attributes: { rsvpCount: 1 } } as never);
+
+      await toggleRsvp('e1', 'u1');
+
+      const command = vi.mocked(dynamoClient.send).mock.calls[0][0] as unknown as {
+        Key: unknown;
+      };
+      expect(command.Key).toEqual({ pk: 'event#e1', sk: '#metadata' });
     });
   });
 

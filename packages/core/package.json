@@ -155,6 +155,11 @@
       "types": "./src/auth/roles.ts",
       "import": "./src/auth/roles.ts",
       "default": "./src/auth/roles.ts"
+    },
+    "./db/keys": {
+      "types": "./src/db/keys.ts",
+      "import": "./src/db/keys.ts",
+      "default": "./src/db/keys.ts"
     }
   },
   "scripts": {
