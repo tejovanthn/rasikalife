@@ -286,6 +286,37 @@ describe('cascade', () => {
   });
 
   describe('cascadeArtistMerge', () => {
+    it('preserves isFeatured and featureRank when migrating an EventArtist row', async () => {
+      // Featured status is curated by a moderator; a merge must not reset it.
+      EventArtistEntity.query.byArtist = pagedQuery([
+        {
+          data: [
+            {
+              eventId: 'event1',
+              artistId: 'loser',
+              eventTitle: 'Title',
+              eventStartDateTime: '2026-01-01T00:00:00.000Z',
+              role: 'performer',
+              isFeatured: true,
+              featureRank: 2,
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+      EventArtistEntity.get = vi
+        .fn()
+        .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
+      EventArtistEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(EventArtistEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ isFeatured: true, featureRank: 2 })
+      );
+    });
+
     it('migrates EventArtist rows and re-attributes compositions to the canonical artist', async () => {
       EventArtistEntity.query.byArtist = pagedQuery([
         {

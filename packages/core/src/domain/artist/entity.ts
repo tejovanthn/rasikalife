@@ -22,6 +22,9 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // The three optional keys widen this in place: every existing {id, name}
+      // row is already valid under the new shape, so there is no backfill and
+      // no window where stored data is invalid.
       gurus: {
         type: 'list',
         items: {
@@ -29,6 +32,9 @@ export const ArtistEntity = new Entity(
           properties: {
             id: { type: 'string', required: false },
             name: { type: 'string', required: true },
+            fromYear: { type: 'number', required: false },
+            toYear: { type: 'number', required: false },
+            discipline: { type: 'string', required: false },
           },
         },
         required: false,
@@ -67,6 +73,49 @@ export const ArtistEntity = new Entity(
         required: false,
       },
       activeYears: {
+        type: 'string',
+        required: false,
+      },
+      instrument: {
+        type: 'string',
+        required: false,
+      },
+      city: {
+        type: 'string',
+        required: false,
+      },
+      practiceStartYear: {
+        type: 'number',
+        required: false,
+      },
+      debutYear: {
+        type: 'number',
+        required: false,
+      },
+      photoUrl: {
+        type: 'string',
+        required: false,
+      },
+      photoUploadId: {
+        type: 'string',
+        required: false,
+      },
+      // A performing group or duo (Saralaya Sisters, Ganesh Kumaresh) rather
+      // than an individual. Membership edges live in the ArtistMembership
+      // junction, not here.
+      isGroup: {
+        type: 'boolean',
+        required: false,
+      },
+      // Denormalized badge state. The authoritative claim rows live in the
+      // ArtistClaim entity; this copy exists so the profile renders the badge
+      // without a second query. Set by the claim flow, never by a form —
+      // which is why neither this nor verifiedAt appears in the Zod schemas.
+      claimStatus: {
+        type: ['unclaimed', 'pending', 'verified', 'rejected'] as const,
+        required: false,
+      },
+      verifiedAt: {
         type: 'string',
         required: false,
       },

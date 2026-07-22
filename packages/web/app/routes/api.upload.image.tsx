@@ -27,18 +27,19 @@ export const action: ActionFunction = async ({ request }) => {
       return data({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    if (entityType !== 'venue' && entityType !== 'organiser') {
+    if (entityType !== 'venue' && entityType !== 'organiser' && entityType !== 'artist') {
       return data({ error: 'Invalid entity type' }, { status: 400 });
     }
 
     const serverClient = await createServerClient(request);
 
-    let result: { uploadId: string; uploadUrl: string; imageUrl: string };
-    if (entityType === 'venue') {
-      result = await serverClient.venue.getImageUploadUrl.mutate({ fileName, contentType });
-    } else {
-      result = await serverClient.organiser.getImageUploadUrl.mutate({ fileName, contentType });
-    }
+    const uploaders = {
+      venue: serverClient.venue.getImageUploadUrl,
+      organiser: serverClient.organiser.getImageUploadUrl,
+      artist: serverClient.artist.getImageUploadUrl,
+    } as const;
+
+    const result = await uploaders[entityType].mutate({ fileName, contentType });
 
     return data(result);
   } catch (error) {

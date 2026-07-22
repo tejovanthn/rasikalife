@@ -1,4 +1,11 @@
-import { Artist, ArtistAward, ConcertLogItem, EventArtist, EventSetlist } from '@rasika/core';
+import {
+  Artist,
+  ArtistAward,
+  ConcertLogItem,
+  EventArtist,
+  EventSetlist,
+  Image,
+} from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
@@ -40,6 +47,10 @@ export const artistRouter = createTRPCRouter({
       triggerReindex();
       return result;
     }),
+
+  getImageUploadUrl: editorProcedure
+    .input(z.object({ fileName: z.string().min(1), contentType: z.string().min(1) }))
+    .mutation(({ input }) => Image.getImageUploadUrl('artist', input.fileName, input.contentType)),
 
   getMergeSuggestion: moderatorProcedure
     .input(z.object({ idA: z.string().min(1), idB: z.string().min(1) }))

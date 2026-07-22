@@ -9,7 +9,7 @@ const CDN_URL = process.env.EVENT_POSTERS_CDN_URL || '';
 const PRESIGNED_URL_EXPIRY = 300; // 5 minutes
 
 export async function getImageUploadUrl(
-  entityType: 'venue' | 'organiser',
+  entityType: 'venue' | 'organiser' | 'artist',
   fileName: string,
   contentType: string
 ): Promise<{ uploadId: string; uploadUrl: string; imageUrl: string }> {

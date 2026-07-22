@@ -26,6 +26,14 @@ export const EventArtistEntity = new Entity(
       artistTitle: { type: 'string', required: false },
       role: { type: 'string', required: false },
 
+      // Featuring is per-artist, not per-event: a concert can be a career
+      // highlight for the vocalist and unremarkable for an accompanist, so the
+      // flag belongs to this artist's participation rather than to the Event.
+      // Drives the notable-past teaser on the artist profile, ordered by
+      // featureRank then date.
+      isFeatured: { type: 'boolean', required: false },
+      featureRank: { type: 'number', required: false },
+
       createdAt: {
         type: 'string',
         required: true,

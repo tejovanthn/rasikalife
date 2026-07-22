@@ -284,6 +284,8 @@ export async function cascadeArtistMerge(
         eventStartDateTime: string;
         artistTitle?: string;
         role?: string;
+        isFeatured?: boolean;
+        featureRank?: number;
       }>) || [];
     eaCursor = eventArtistResult.cursor;
 
@@ -312,6 +314,10 @@ export async function cascadeArtistMerge(
             artistName: canonicalName,
             artistTitle: item.artistTitle,
             role: item.role,
+            // Featured status is curated by a moderator, so it has to survive
+            // a merge rather than being silently reset.
+            isFeatured: item.isFeatured,
+            featureRank: item.featureRank,
           }).go();
         }
       })
@@ -741,6 +747,8 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
         artistName: string;
         artistTitle?: string;
         role?: string;
+        isFeatured?: boolean;
+        featureRank?: number;
       }>) || [];
     loserCursor = loserResult.cursor;
 
@@ -761,6 +769,10 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
             artistName: item.artistName,
             artistTitle: item.artistTitle,
             role: item.role,
+            // Featured status is curated by a moderator, so it has to survive
+            // a merge rather than being silently reset.
+            isFeatured: item.isFeatured,
+            featureRank: item.featureRank,
           }).go();
           canonicalArtistIds.add(item.artistId);
         }

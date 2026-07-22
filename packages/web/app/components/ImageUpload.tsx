@@ -5,7 +5,7 @@ interface ImageUploadProps {
   urlFieldName: string;
   uploadIdFieldName: string;
   currentUrl?: string;
-  entityType: 'venue' | 'organiser';
+  entityType: 'venue' | 'organiser' | 'artist';
   label?: string;
 }
 

@@ -109,6 +109,47 @@ describe('parseDomainCsv — venue round-trip', () => {
   });
 });
 
+describe('parseDomainCsv — artist gurus round-trip', () => {
+  it('carries fromYear, toYear, and discipline through the JSON cell', () => {
+    const artist = {
+      id: 'a1',
+      name: 'Student Name',
+      gurus: [{ id: 'a2', name: 'Guru Name', fromYear: 1990, toYear: 1998, discipline: 'vocal' }],
+    };
+    const csv = domainToCsv('artist', [artist]);
+    expect(csv).toContain('Guru Name');
+
+    const { rows, errors } = parseDomainCsv('artist', csv);
+    expect(errors).toEqual([]);
+    expect(rows[0].gurus).toEqual(artist.gurus);
+  });
+
+  it('leaves gurus untouched when the cell is blank', () => {
+    const { rows } = parseDomainCsv('artist', domainToCsv('artist', [{ id: 'a1', name: 'X' }]));
+    expect(rows[0]).not.toHaveProperty('gurus');
+  });
+});
+
+describe('parseDomainCsv — artist isGroup flag', () => {
+  it('round-trips a true value as yes', () => {
+    const csv = domainToCsv('artist', [{ id: 'a1', name: 'Duo', isGroup: true }]);
+    const { rows, errors } = parseDomainCsv('artist', csv);
+    expect(errors).toEqual([]);
+    expect(rows[0].isGroup).toBe(true);
+  });
+
+  it('leaves isGroup untouched when the cell is blank', () => {
+    const { rows } = parseDomainCsv('artist', domainToCsv('artist', [{ id: 'a1', name: 'X' }]));
+    expect(rows[0]).not.toHaveProperty('isGroup');
+  });
+
+  it('writes false on an explicit no', () => {
+    const { rows, errors } = parseDomainCsv('artist', 'id,name,isGroup\r\na1,X,no\r\n');
+    expect(errors).toEqual([]);
+    expect(rows[0].isGroup).toBe(false);
+  });
+});
+
 describe('parseDomainCsv — linked entities render as names', () => {
   it('turns composition links into resolvable name fields', () => {
     const composition = {

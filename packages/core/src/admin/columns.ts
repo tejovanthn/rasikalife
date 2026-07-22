@@ -11,10 +11,13 @@
  * Encoding conventions:
  *   - list fields      -> pipe-joined, e.g. `ac|parking`
  *   - closed-set lists -> one yes/no column per allowed value (see `flags`)
+ *   - booleans         -> one yes/blank column (see `bool`)
  *   - address          -> `address_street`, `address_city`, ... columns
  *   - socialLinks      -> pipe-joined `platform:url` pairs (split on the first colon)
  *   - linked entities  -> the linked entity's name (a blank/new name is created on import)
- *   - nested objects   -> JSON in a single cell (lyrics, ticketing, tala structure, sponsors)
+ *   - nested objects   -> JSON in a single cell (gurus, lyrics, ticketing, tala structure,
+ *                         sponsors) — the escape hatch for shapes too nested for a flat
+ *                         column to represent losslessly
  */
 import { ORGANISER_TAGS } from '../domain/organiser/schema';
 import { VENUE_AMENITIES } from '../domain/venue/schema';
@@ -111,6 +114,31 @@ function flags(field: string, values: readonly string[]): Column[] {
       return `${field}_${value}: expected yes or no, got "${raw}"`;
     },
   }));
+}
+
+/**
+ * A single boolean field, using the same yes/blank convention as `flags`: `yes` for true,
+ * blank to leave the field alone. An explicit falsy cell (`no`) writes `false`, which is
+ * the only way to clear the flag from CSV.
+ */
+function bool(field: string): Column {
+  return {
+    header: field,
+    get: entity => (entity[field] === true ? 'yes' : ''),
+    set: (row, raw) => {
+      if (raw === '') return undefined;
+      const cell = raw.toLowerCase();
+      if (TRUTHY_CELLS.has(cell)) {
+        row[field] = true;
+        return undefined;
+      }
+      if (FALSY_CELLS.has(cell)) {
+        row[field] = false;
+        return undefined;
+      }
+      return `${field}: expected yes or no, got "${raw}"`;
+    },
+  };
 }
 
 function socialLinks(field: string): Column {
@@ -217,15 +245,29 @@ export interface DomainCsvConfig {
 export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
   artist: {
     label: 'Artists',
+    // photoUrl/photoUploadId (image upload flow), claimStatus/verifiedAt (artist-claim
+    // flow), and collaborators/collaboratorsComputedAt (derived from concert logs) are
+    // all system-written. None of them get a column: a spreadsheet import must not be
+    // able to hand an artist a photo, a verified badge, or a collaborator list by hand.
     columns: flat(
       str('id'),
       str('name'),
       str('title'),
-      refList('gurus', 'gurus', 'guruNames'),
+      str('instrument'),
+      str('city'),
+      bool('isGroup'),
+      // A single JSON cell, not refList/pipe-joined names: gurus now carries
+      // fromYear/toYear/discipline alongside id/name, and the pipe-joined name-only
+      // encoding this replaced silently dropped those three fields on every
+      // export/import round-trip. JSON is unpleasant to hand-edit in a spreadsheet,
+      // but this field's real editor is the moderator wizard, not CSV.
+      json('gurus'),
       str('biography'),
       list('specialisations'),
       num('birthYear'),
       str('birthPlace'),
+      num('practiceStartYear'),
+      num('debutYear'),
       str('website'),
       socialLinks('socialLinks'),
       str('activeYears')
