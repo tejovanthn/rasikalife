@@ -365,18 +365,29 @@ export const eventRouter = createTRPCRouter({
         return { organiserId: created.id, organiserName: name };
       };
 
+      // Fetched once for the whole batch. Dedup matching needs every artist as
+      // candidates, and resolveArtist runs inside a sequential loop over events,
+      // so leaving the fetch inside would sweep the artist list once per new
+      // name rather than once per import.
+      let artistCandidates: Artist.Artist[] | undefined;
+
       const resolveArtist = async (artist: { id?: string; name: string; title?: string }) => {
         if (artist.id) {
           const a = await Artist.getArtist(artist.id);
           if (a?.mergedIntoId) return a.mergedIntoId;
           return artist.id;
         }
-        const key = artist.name.toLowerCase();
+        // Key on the normalized form so "Sri T M Krishna" and "T M Krishna"
+        // share a cache entry instead of each resolving separately.
+        const key = Artist.normalizeArtistName(artist.name);
         const cached = artistCache.get(key);
         if (cached) return cached;
-        const { artist: resolved } = await Artist.findOrCreateArtist(artist.name, {
+        artistCandidates ??= await Artist.listAllArtistsForMatching();
+        const { artist: resolved, created } = await Artist.findOrCreateArtist(artist.name, {
           title: artist.title,
+          candidates: artistCandidates,
         });
+        if (created) artistCandidates.push(resolved);
         artistCache.set(key, resolved.id);
         return resolved.id;
       };
@@ -408,7 +419,7 @@ export const eventRouter = createTRPCRouter({
               id: artist.id ?? undefined,
               title: artist.title ?? undefined,
             };
-            const key = normalised.id ?? artist.name.toLowerCase();
+            const key = normalised.id ?? Artist.normalizeArtistName(artist.name);
             if (!seen.has(key)) seen.set(key, resolveArtist(normalised));
             return seen.get(key)!.then(artistId => ({ ...artist, id: artistId }));
           })

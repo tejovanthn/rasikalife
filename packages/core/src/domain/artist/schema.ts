@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { SocialLinkSchema } from '../social-link';
 import { YearSchema } from '../shared/schemas';
+import { SocialLinkSchema } from '../social-link';
 
 export const CreateArtistSchema = z.object({
   name: z.string().min(1).max(200),

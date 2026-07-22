@@ -37,7 +37,7 @@ vi.mock('./artist-award/entity', () => ({
 }));
 
 vi.mock('./artist/entity', () => ({
-  ArtistEntity: { scan: { go: vi.fn() } },
+  ArtistEntity: { query: { list: vi.fn() } },
 }));
 
 vi.mock('./concert-log-item/entity', () => ({
@@ -116,7 +116,7 @@ describe('cascade', () => {
       .fn()
       .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
     ArtistAwardEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
-    ArtistEntity.scan.go = vi.fn().mockResolvedValue({ data: [], cursor: null });
+    ArtistEntity.query.list = pagedQuery([{ data: [], cursor: null }]);
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -394,19 +394,21 @@ describe('cascade', () => {
     it('rewrites gurus[] entries pointing at the loser on other artists', async () => {
       EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
       CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
-      ArtistEntity.scan.go = vi.fn().mockResolvedValue({
-        data: [
-          {
-            id: 'student1',
-            gurus: [
-              { id: 'loser', name: 'Old Name' },
-              { id: 'other', name: 'Unrelated' },
-            ],
-          },
-          { id: 'student2', gurus: [{ id: 'other', name: 'Unrelated' }] },
-        ],
-        cursor: null,
-      });
+      ArtistEntity.query.list = pagedQuery([
+        {
+          data: [
+            {
+              id: 'student1',
+              gurus: [
+                { id: 'loser', name: 'Old Name' },
+                { id: 'other', name: 'Unrelated' },
+              ],
+            },
+            { id: 'student2', gurus: [{ id: 'other', name: 'Unrelated' }] },
+          ],
+          cursor: null,
+        },
+      ]);
 
       await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
 
@@ -429,11 +431,14 @@ describe('cascade', () => {
       ArtistAwardEntity.query.primary = pagedQuery([
         { data: [{ awardId: 'award1' }], cursor: null },
       ]);
+      // Renaming an artist also renames them as a composer — see cascadeArtistNameUpdate.
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
 
       await cascade.cascadeArtistNameUpdate('artist1', 'New Name');
 
       expect(EventArtistEntity.query.byArtist).toHaveBeenCalledWith({ artistId: 'artist1' });
       expect(ArtistAwardEntity.query.primary).toHaveBeenCalledWith({ artistId: 'artist1' });
+      expect(CompositionEntity.query.byComposer).toHaveBeenCalledWith({ composerId: 'artist1' });
 
       const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
       expect(updates).toHaveLength(3);

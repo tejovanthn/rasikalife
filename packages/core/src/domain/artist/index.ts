@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeArtistMerge, cascadeArtistNameUpdate, cascadeComposerNameUpdate } from '../cascade';
+import { cascadeArtistMerge, cascadeArtistNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
@@ -54,17 +54,10 @@ export async function updateArtist(id: string, input: UpdateArtistInput): Promis
   }
 
   if (input.name) {
-    await Promise.all([
-      cascadeComposerNameUpdate(id, input.name),
-      cascadeArtistNameUpdate(id, input.name),
-    ]);
+    await cascadeArtistNameUpdate(id, input.name);
   }
 
   return result.data as Artist;
-}
-
-export async function deleteArtist(id: string): Promise<void> {
-  await ArtistEntity.delete({ id }).go();
 }
 
 export async function softDeleteArtist(id: string): Promise<void> {
@@ -141,5 +134,6 @@ export {
   findArtistMatch,
   findOrCreateArtist,
   initialsMatch,
+  listAllArtistsForMatching,
   normalizeArtistName,
 } from './dedup';

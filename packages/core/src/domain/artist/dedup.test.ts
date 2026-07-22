@@ -228,7 +228,7 @@ describe('findOrCreateArtist', () => {
 
     const result = await findOrCreateArtist('T M Krishna');
 
-    expect(result).toEqual({ artist: existing, created: false, matchedOn: 'T M Krishna' });
+    expect(result).toEqual({ artist: existing, created: false });
     expect(listArtists).not.toHaveBeenCalled();
     expect(createArtist).not.toHaveBeenCalled();
   });
@@ -246,7 +246,7 @@ describe('findOrCreateArtist', () => {
 
     expect(result.created).toBe(false);
     expect(result.artist.id).toBe('a2');
-    expect(result.matchedOn).toBe('Thodur Madabusi Krishna');
+    expect(result.artist.name).toBe('Thodur Madabusi Krishna');
     expect(createArtist).not.toHaveBeenCalled();
   });
 
@@ -299,7 +299,7 @@ describe('findOrCreateArtist', () => {
     const result = await findOrCreateArtist('T M Krishna', { title: 'Vidwan' });
 
     expect(createArtist).not.toHaveBeenCalled();
-    expect(result).toEqual({ artist: existing, created: false, matchedOn: 'T M Krishna' });
+    expect(result).toEqual({ artist: existing, created: false });
   });
 
   it('applies a custom threshold to the fuzzy match step', async () => {
@@ -335,6 +335,13 @@ describe('near-miss pairs never auto-match', () => {
     ['Neyveli Santhanagopalan', 'Neyveli Santhanagopal'],
     ['Krishna', 'Krishnan'],
     ['Umayalpuram K Sivaraman', 'Umayalpuram K Sivakumar'],
+    // Differ only in a given-name token, with a long shared surname. Scored
+    // across the whole string these reach 0.90-0.96, because the surname
+    // drowns out the difference.
+    ['Sriram Parthasarathy', 'Sriran Parthasarathy'],
+    ['Sanjeev Balasubramaniam', 'Sanjeeb Balasubramaniam'],
+    ['Malladi Sreeram Prasad', 'Malladi Sriram Prasad'],
+    ['Vijay Siva', 'Vijai Siva'],
     // Same person in reality; rejecting costs a duplicate, which is the
     // cheaper error. Listed here so the trade-off stays visible.
     ['Sudha Raghunathan', 'Sudha Ragunathan'],
@@ -355,6 +362,7 @@ describe('genuine variants still match', () => {
     ['Dr Smt Aruna Sairam', 'Aruna Sairam'],
     ['T.M. Krishna', 'T M Krishna'],
     ['T M Krishna', 'Thodur Madabusi Krishna'],
+    ['TM Krishna', 'T M Krishna'],
   ];
 
   for (const [a, b] of samePerson) {

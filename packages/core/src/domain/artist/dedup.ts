@@ -119,15 +119,14 @@ export function initialsMatch(a: string, b: string): boolean {
   return true;
 }
 
-// True when the two token lists disagree at a position where both sides are a
-// single-letter initial. Only compares the positions the two lists share, so
-// "T M Krishna" vs "Krishna" is not caught here — that pair is handled by the
-// surname and edit-distance checks instead.
-function hasDifferingInitial(ta: string[], tb: string[]): boolean {
-  for (let i = 0; i < Math.min(ta.length, tb.length); i++) {
-    if (ta[i].length === 1 && tb[i].length === 1 && ta[i] !== tb[i]) return true;
-  }
-  return false;
+// True when one side writes a run of initials without spaces and the other
+// spaces them out: "TM Krishna" vs "T M Krishna". This is the only reason two
+// names may legitimately differ in token count, so it is checked explicitly
+// rather than left to edit distance.
+function compressedInitialsMatch(givenA: string[], givenB: string[]): boolean {
+  const [compressed, spaced] = givenA.length < givenB.length ? [givenA, givenB] : [givenB, givenA];
+  if (compressed.length !== 1) return false;
+  return compressed[0] === spaced.map(token => token[0]).join('');
 }
 
 // Levenshtein-based similarity, 1 = identical, 0 = completely different.
@@ -155,29 +154,50 @@ function levenshteinSimilarity(a: string, b: string): number {
 /**
  * 0..1 similarity of two artist names on their normalized forms. Exact
  * normalized equality is 1. An initials-form match (in either direction) is
- * boosted to at least 0.9, since the raw Levenshtein score of e.g. "T M
- * Krishna" vs "Thodur Madabusi Krishna" is otherwise low despite being the
- * same person. Otherwise the score is capped when the names disagree on an
- * initial or on the surname — see `DIFFERING_INITIAL_CAP` and
- * `DIFFERING_SURNAME_CAP` for why edit distance alone gets these wrong.
+ * boosted to at least 0.9, since scoring the whole string would rate "T M
+ * Krishna" against "Thodur Madabusi Krishna" low despite being one person.
+ *
+ * Scoring is token-wise, never whole-string. Whole-string edit distance
+ * dilutes a disagreement by the length of the agreement, so the same
+ * one-character difference decides differently depending on how long the rest
+ * of the name happens to be — "Sriram Parthasarathy" against "Sriran
+ * Parthasarathy" scores 0.95 that way, because the shared surname drowns the
+ * given name out. Comparing token against token keeps each difference scored
+ * on its own length.
  */
 export function artistNameSimilarity(a: string, b: string): number {
-  const na = normalizeArtistName(a);
-  const nb = normalizeArtistName(b);
+  const ta = tokensOf(a);
+  const tb = tokensOf(b);
 
-  if (na === '' || nb === '') return 0;
-  if (na === nb) return 1;
+  if (ta.length === 0 || tb.length === 0) return 0;
+  if (ta.join(' ') === tb.join(' ')) return 1;
 
-  if (initialsMatch(a, b)) return Math.max(levenshteinSimilarity(na, nb), 0.9);
+  const givenA = ta.slice(0, -1);
+  const givenB = tb.slice(0, -1);
+  const surnameSimilarity = levenshteinSimilarity(ta[ta.length - 1], tb[tb.length - 1]);
 
-  const ta = na.split(' ');
-  const tb = nb.split(' ');
-  const base = levenshteinSimilarity(na, nb);
+  // The family name decides identity, so it must match outright. A spelling
+  // variant here ("Raghunathan"/"Ragunathan") is indistinguishable from a
+  // different person ("Kanyakumari"/"Kanyakumar") — same edit distance, same
+  // token length — so both are rejected rather than guessed at.
+  if (ta[ta.length - 1] !== tb[tb.length - 1]) {
+    return Math.min(surnameSimilarity, DIFFERING_SURNAME_CAP);
+  }
 
-  if (hasDifferingInitial(ta, tb)) return Math.min(base, DIFFERING_INITIAL_CAP);
-  if (ta[ta.length - 1] !== tb[tb.length - 1]) return Math.min(base, DIFFERING_SURNAME_CAP);
+  if (givenA.length !== givenB.length) {
+    return compressedInitialsMatch(givenA, givenB)
+      ? 0.9
+      : Math.min(levenshteinSimilarity(givenA.join(' '), givenB.join(' ')), DIFFERING_SURNAME_CAP);
+  }
 
-  return base;
+  for (let i = 0; i < givenA.length; i++) {
+    if (tokenMatches(givenA[i], givenB[i])) continue;
+    return givenA[i].length === 1 && givenB[i].length === 1
+      ? DIFFERING_INITIAL_CAP
+      : Math.min(levenshteinSimilarity(givenA[i], givenB[i]), DIFFERING_SURNAME_CAP);
+  }
+
+  return Math.max(levenshteinSimilarity(givenA.join(' '), givenB.join(' ')), 0.9);
 }
 
 /**
@@ -208,20 +228,32 @@ export function findArtistMatch(
   return bestScore >= threshold ? best : null;
 }
 
-// SCALING LIMIT: this pages through the *entire* artist table on every
-// find-or-create miss. That's fine while the table is small, but it will not
-// scale forever. The eventual fix is a prefix query on the `byName` GSI keyed
-// on the normalized first token (e.g. the surname) so we only pull a small,
-// plausible slice of candidates instead of the whole table. Not built now —
-// keeping this simple until it's actually a problem.
-async function collectAllArtistsForMatching(): Promise<Artist[]> {
+/**
+ * Every artist, for matching against.
+ *
+ * SCALING LIMIT, and it bites sooner than the page count suggests. The only
+ * caller is the event-verify bulk import, which resolves artists inside a
+ * sequential loop over events — so this runs once per *distinct new name in
+ * the batch*, not once per import. Twenty events with five new names each is
+ * up to a hundred full sweeps in one Lambda invocation.
+ *
+ * The cheap fix needs no new infrastructure: `findArtistMatch` is pure and
+ * takes its candidates, so a caller processing a batch should call this once
+ * and pass the list down. `findOrCreateArtist` is the convenience path for
+ * one-off resolution.
+ *
+ * The real fix needs a new indexed attribute. It cannot be a prefix query on
+ * `byName`, which is keyed on the raw stored name — matching works on the
+ * normalized form, so nothing normalized can be looked up there.
+ */
+export async function listAllArtistsForMatching(): Promise<Artist[]> {
   const artists: Artist[] = [];
   let nextToken: string | undefined;
 
   do {
     const page = await listArtists({ limit: 200, nextToken });
     artists.push(...page.items);
-    nextToken = page.hasMore ? page.nextToken : undefined;
+    nextToken = page.nextToken;
   } while (nextToken);
 
   return artists;
@@ -236,17 +268,21 @@ async function collectAllArtistsForMatching(): Promise<Artist[]> {
  */
 export async function findOrCreateArtist(
   name: string,
-  opts?: { threshold?: number; title?: string }
-): Promise<{ artist: Artist; created: boolean; matchedOn?: string }> {
-  const exact = await getArtistByName(name);
-  if (exact) {
-    return { artist: exact, created: false, matchedOn: exact.name };
+  opts?: { threshold?: number; title?: string; candidates?: Artist[] }
+): Promise<{ artist: Artist; created: boolean }> {
+  if (normalizeArtistName(name) === '') {
+    throw new Error('Cannot resolve an artist from an empty name');
   }
 
-  const candidates = await collectAllArtistsForMatching();
+  const exact = await getArtistByName(name);
+  if (exact) {
+    return { artist: exact, created: false };
+  }
+
+  const candidates = opts?.candidates ?? (await listAllArtistsForMatching());
   const match = findArtistMatch(name, candidates, opts?.threshold ?? DEFAULT_THRESHOLD);
   if (match) {
-    return { artist: match, created: false, matchedOn: match.name };
+    return { artist: match, created: false };
   }
 
   const created = await createArtist({ name, title: opts?.title, gurus: [] });

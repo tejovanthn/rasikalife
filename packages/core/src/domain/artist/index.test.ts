@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createArtist, deleteArtist, getArtist, listArtists, updateArtist } from '.';
+import { createArtist, getArtist, listArtists, updateArtist } from '.';
 import type { CreateArtistInput } from '.';
 
 vi.mock('../../utils', () => ({
@@ -137,19 +137,6 @@ describe('Artist', () => {
       await expect(updateArtist('test-id-123', updateInput)).rejects.toThrow(
         'Artist with ID test-id-123 not found'
       );
-    });
-  });
-
-  describe('deleteArtist', () => {
-    it('should delete artist successfully', async () => {
-      const { ArtistEntity } = await import('./entity');
-      vi.mocked(ArtistEntity.delete).mockReturnValue({
-        go: vi.fn().mockResolvedValue({}),
-      } as any);
-
-      await expect(deleteArtist('test-id-123')).resolves.not.toThrow();
-
-      expect(ArtistEntity.delete).toHaveBeenCalledWith({ id: 'test-id-123' });
     });
   });
 

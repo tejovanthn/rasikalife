@@ -1,4 +1,9 @@
-import { BatchGetCommand, DeleteCommand, TransactWriteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import {
+  BatchGetCommand,
+  DeleteCommand,
+  TransactWriteCommand,
+  UpdateCommand,
+} from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../db/client';
 
 export const CASCADE_BATCH_SIZE = 1000;
@@ -393,10 +398,12 @@ export async function cascadeArtistMerge(
   } while (compCursor);
 
   // Rewrite gurus[] entries that point at the loser on other artists. There is no GSI on
-  // gurus[], so a full-table scan filtered in memory is the only way to find them.
+  // gurus[], so every artist has to be examined — but sweep the `list` index rather than
+  // scanning, which on a single-table design would read every event, composition and edit
+  // row too. Merges are rare and moderator-triggered, so sweeping the artist list is fine.
   let scanCursor: string | null = null;
   do {
-    const scanResult = (await ArtistEntity.scan.go({
+    const scanResult = (await ArtistEntity.query.list({}).go({
       cursor: scanCursor,
       limit: CASCADE_BATCH_SIZE,
     })) as Page;
@@ -430,6 +437,15 @@ export async function cascadeArtistMerge(
 export async function cascadeArtistNameUpdate(artistId: string, newName: string): Promise<void> {
   const { EventArtistEntity } = await import('./event-artist/entity');
   const { ArtistAwardEntity } = await import('./artist-award/entity');
+
+  // One rename, one cascade. Composition composer names are a copy of the same
+  // artist name, so they belong here rather than at the call site.
+  await cascadeComposerNameUpdate(artistId, newName);
+
+  // NOTE: gurus[].name on other artists is deliberately NOT refreshed here.
+  // There is no index on gurus[], so reaching it means sweeping every artist
+  // (see cascadeArtistMerge), which is defensible for a rare moderator-run
+  // merge but not for an ordinary rename. Guru display names can go stale.
 
   let eaCursor: string | null = null;
   do {
@@ -785,7 +801,9 @@ export async function cascadeEventHardDeleteToSetlist(eventId: string): Promise<
 
   // Update counters before deleting
   const setlistRows = await getEventSetlist(eventId);
-  const compositionIds = [...new Set(setlistRows.map(r => r.compositionId).filter(Boolean) as string[])];
+  const compositionIds = [
+    ...new Set(setlistRows.map(r => r.compositionId).filter(Boolean) as string[]),
+  ];
   const ragaIds = [...new Set(setlistRows.map(r => r.ragaId).filter(Boolean) as string[])];
 
   await Promise.all([
@@ -841,7 +859,9 @@ export async function cascadeCompositionDeleteToSetlistItems(compositionId: stri
         // ElectroDB watch setters fire on put: compositionPerfKey → undefined (clears gsi2),
         // pendingModerationKey → '1' (enters the pending moderation queue).
         const { Key: deleteKey, TableName } = ConcertLogItemEntity.delete({
-          userId: item.userId, eventId: item.eventId, orderStr: item.orderStr,
+          userId: item.userId,
+          eventId: item.eventId,
+          orderStr: item.orderStr,
         }).params();
         const { Item: putItem } = ConcertLogItemEntity.put({
           userId: item.userId,
@@ -885,14 +905,19 @@ export async function cascadeCompositionMergeToSetlistItems(
     const result = (await ConcertLogItemEntity.query
       .byComposition({ compositionPerfKey: `COMPOSITION_PERFORMANCES#${fromId}` })
       .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
-    const items = (result.data as Array<{ userId: string; eventId: string; orderStr: string }>) || [];
+    const items =
+      (result.data as Array<{ userId: string; eventId: string; orderStr: string }>) || [];
     cursor = result.cursor;
 
     await Promise.all(
       items.map(item => {
         affectedEventIds.add(item.eventId);
         // patch fires compositionPerfKey watcher → gsi2pk updates to COMPOSITION_PERFORMANCES#toId
-        return ConcertLogItemEntity.patch({ userId: item.userId, eventId: item.eventId, orderStr: item.orderStr })
+        return ConcertLogItemEntity.patch({
+          userId: item.userId,
+          eventId: item.eventId,
+          orderStr: item.orderStr,
+        })
           .set({ compositionId: toId })
           .go();
       })
@@ -902,7 +927,11 @@ export async function cascadeCompositionMergeToSetlistItems(
   await Promise.all([...affectedEventIds].map(eventId => recomputeEventSetlist(eventId)));
 }
 
-export async function cascadeRagaMergeToSetlistItems(fromId: string, toId: string, toName: string): Promise<void> {
+export async function cascadeRagaMergeToSetlistItems(
+  fromId: string,
+  toId: string,
+  toName: string
+): Promise<void> {
   const { ConcertLogItemEntity } = await import('./concert-log-item/entity');
   const { getEventSetlist, recomputeEventSetlist } = await import('./event-setlist');
   const { EventSetlistEntity } = await import('./event-setlist/entity');
@@ -914,13 +943,18 @@ export async function cascadeRagaMergeToSetlistItems(fromId: string, toId: strin
     const result = (await ConcertLogItemEntity.query
       .byRaga({ ragaPerfKey: `RAGA_PERFORMANCES#${fromId}` })
       .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
-    const items = (result.data as Array<{ userId: string; eventId: string; orderStr: string }>) || [];
+    const items =
+      (result.data as Array<{ userId: string; eventId: string; orderStr: string }>) || [];
     cursor = result.cursor;
 
     await Promise.all(
       items.map(item => {
         affectedEventIds.add(item.eventId);
-        return ConcertLogItemEntity.patch({ userId: item.userId, eventId: item.eventId, orderStr: item.orderStr })
+        return ConcertLogItemEntity.patch({
+          userId: item.userId,
+          eventId: item.eventId,
+          orderStr: item.orderStr,
+        })
           .set({ ragaId: toId, ragaName: toName })
           .go();
       })
@@ -1017,8 +1051,5 @@ export async function cascadeEventMergeToSetlist(
     );
   } while (cursor);
 
-  await Promise.all([
-    deleteAllEventSetlistRows(fromEventId),
-    recomputeEventSetlist(toEventId),
-  ]);
+  await Promise.all([deleteAllEventSetlistRows(fromEventId), recomputeEventSetlist(toEventId)]);
 }

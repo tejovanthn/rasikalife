@@ -145,5 +145,8 @@ export const ArtistEntity = new Entity(
 
 export type Artist = EntityItem<typeof ArtistEntity>;
 
-// Alias documenting that name is stored in ITRANS
-export type ItransText = string;
+// Artist names are NOT stored in ITRANS. They are romanised Latin, and
+// decoding them as ITRANS corrupts them — see the name-display fix in
+// docs/plans/260722-01-artist-profile-redesign.md (4.1). The raga, tala and
+// composition entities keep their own ItransText alias because the terms
+// those hold genuinely are ITRANS.
