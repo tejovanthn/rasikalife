@@ -32,9 +32,17 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 - **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
 - **1** — new Artist fields (`instrument`, `city`, `practiceStartYear`, `debutYear`, `photoUrl`, `photoUploadId`, `isGroup`, plus entity-only `claimStatus`/`verifiedAt`), widened `gurus`, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` end to end, and the admin CSV columns.
 
+### Deferred from the phase 1 code review
+
+- `'venue' | 'organiser' | 'artist'` is written in four places (`image/s3.ts`, `ImageUpload.tsx`, and twice in `api.upload.image.tsx`). A fifth entity means finding all four. Wants a browser-safe `ImageEntityType` in its own subpath — it cannot come from `s3.ts`, which pulls in the AWS SDK.
+- `bool()` and `flags()` in `columns.ts` now carry the same truthy/falsy ladder; one `parseFlagCell` would collapse them.
+- `json()` has no explicit-clear escape hatch, so `gurus` can never be emptied from CSV — unlike `flags()`, which advertises exactly that. The two conventions now sit in the same column list.
+- `bool()` exports `''` for both `false` and unset, so an export can't distinguish "not a group" from "nobody has said".
+- `createEventArtistJunctions` (`event/index.ts`) is the third `EventArtistEntity.upsert` and was deliberately not given the `isFeatured` carry-forward, because `updateApprovedEvent` only passes artists not already linked. Nothing records that reasoning, and a refactor that stops filtering would wipe the flag with no test to catch it.
+
 ### Carried into later phases
 
-- `isGroup` is settable through `artist.update`, which is `editorProcedure`. Section 11.1 of the plan wants it moderator-gated. That gating lands with the wizard in phase 5.
+- `isGroup` is settable through `artist.update`, which is `editorProcedure`. Section 11.1 of the plan wants it moderator-gated. Inert today — nothing reads it — but the hazard arrives with `ArtistMembership` in phase 2, where flipping it to `false` on a group with member edges orphans them. Decide then whether to gate the procedure or pull it out of the Zod schema the way `claimStatus` is, which is the same reasoning applied consistently.
 - `claimStatus` and `verifiedAt` exist on the entity but nothing writes them until phase 8.
 - `EventArtist.isFeatured`/`featureRank` exist but have no setter yet; the performances modal in phase 5 owns that.
 
