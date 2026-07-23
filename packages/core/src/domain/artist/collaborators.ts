@@ -2,50 +2,9 @@ import { canonicalRole } from '../../shared/roles';
 import { getEventArtists, getEventsByArtist } from '../event-artist';
 import type { EventArtist } from '../event-artist';
 import { EventEntity } from '../event/entity';
+import { COLLABORATOR_INLINE_CAP, collaboratorStrength } from './client';
+import type { Collaborator } from './client';
 import { ArtistEntity } from './entity';
-
-/**
- * How many entries the artist-profile collaborator widget shows inline.
- * `approveEvent` reads this too (see the report), so the display cap and
- * this module agree on one number instead of two copies drifting apart.
- * The stored list itself is never truncated to this — see the comment at
- * the bottom of `rebuildArtistCollaborators`.
- */
-export const COLLABORATOR_INLINE_CAP = 12;
-
-// Average month length in ms (365.2425 days / 12), used only to turn a
-// timestamp gap into a "months since" figure for the recency boost below.
-const MS_PER_MONTH = (1000 * 60 * 60 * 24 * 365.2425) / 12;
-
-export interface CollaboratorSummary {
-  artistId: string;
-  name: string;
-  sharedEventCount: number;
-  lastSharedAt: string;
-  topRoles?: string[];
-  strength: number;
-}
-
-/**
- * `strength = sharedEventCount * (1 + 1 / (1 + monthsSinceLastShared))`, so a
- * pair with many recent shared events outranks the same count from years
- * ago. `monthsSinceLastShared` is clamped to >= 0 — a `lastSharedAt` in the
- * future cannot boost past the same-month case — and, when `lastSharedAt`
- * can't be parsed, treated as unbounded, which collapses the boost to 1 (no
- * recency information beats none).
- */
-export function collaboratorStrength(
-  sharedEventCount: number,
-  lastSharedAt: string,
-  now: Date = new Date()
-): number {
-  const lastSharedMs = new Date(lastSharedAt).getTime();
-  const monthsSinceLastShared = Number.isNaN(lastSharedMs)
-    ? Number.POSITIVE_INFINITY
-    : Math.max(0, (now.getTime() - lastSharedMs) / MS_PER_MONTH);
-  const recencyBoost = 1 + 1 / (1 + monthsSinceLastShared);
-  return sharedEventCount * recencyBoost;
-}
 
 async function fetchAllEventsForArtist(artistId: string): Promise<EventArtist[]> {
   const events: EventArtist[] = [];
@@ -138,7 +97,7 @@ export async function rebuildArtistCollaborators(artistId: string): Promise<void
   }
 
   const now = new Date();
-  const collaborators: CollaboratorSummary[] = Array.from(byCoArtist.entries())
+  const collaborators: Collaborator[] = Array.from(byCoArtist.entries())
     .map(([coArtistId, acc]) => ({
       artistId: coArtistId,
       name: acc.name,
@@ -157,3 +116,6 @@ export async function rebuildArtistCollaborators(artistId: string): Promise<void
     .set({ collaborators, collaboratorsComputedAt: now.toISOString() })
     .go();
 }
+
+export { COLLABORATOR_INLINE_CAP, collaboratorStrength } from './client';
+export type { Collaborator } from './client';

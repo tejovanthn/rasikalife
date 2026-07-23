@@ -19,6 +19,7 @@ import { collaboratorStrength } from '@rasika/core/domain/artist/client';
 import type { Collaborator } from '@rasika/core/domain/artist/client';
 import { canonicalRole } from '@rasika/core/shared/roles';
 
+const SCAN_PAGE_SIZE = 1000;
 const TABLE_NAME = process.env.DYNAMODB_TABLE ?? 'RasikaLifeTable';
 
 interface JunctionRow {
@@ -39,7 +40,7 @@ async function fetchAllJunctionRows(): Promise<JunctionRow[]> {
     const result = await EventArtistEntity.scan.go({
       attributes: ['eventId', 'artistId', 'artistName', 'role', 'eventStartDateTime'] as never[],
       cursor,
-      limit: 1000,
+      limit: SCAN_PAGE_SIZE,
     });
     rows.push(...(result.data as JunctionRow[]));
     cursor = result.cursor;
@@ -60,7 +61,7 @@ async function fetchDeletedEventIds(): Promise<Set<string>> {
     const result = await EventEntity.scan.go({
       attributes: ['id', 'deletedAt'] as never[],
       cursor,
-      limit: 1000,
+      limit: SCAN_PAGE_SIZE,
     });
     for (const row of result.data as Array<{ id: string; deletedAt?: string }>) {
       if (row.deletedAt) {
@@ -162,6 +163,25 @@ function toCollaborators(edges: Map<string, EdgeAccumulator>): Collaborator[] {
     .sort((a, b) => b.strength - a.strength);
 }
 
+/** Artists currently holding a non-empty collaborator list. */
+async function fetchArtistIdsWithCollaborators(): Promise<string[]> {
+  const { ArtistEntity } = await import('../../core/src/domain/artist/entity.js');
+  const ids: string[] = [];
+  let cursor: string | null = null;
+
+  do {
+    const result = await ArtistEntity.query
+      .list({})
+      .go({ cursor, limit: SCAN_PAGE_SIZE, attributes: ['id', 'collaborators'] as never[] });
+    for (const artist of result.data as Array<{ id: string; collaborators?: unknown[] }>) {
+      if (artist.collaborators?.length) ids.push(artist.id);
+    }
+    cursor = result.cursor;
+  } while (cursor);
+
+  return ids;
+}
+
 async function writeCollaborators(
   entries: Array<{ artistId: string; collaborators: Collaborator[] }>
 ): Promise<void> {
@@ -230,7 +250,17 @@ async function rebuildAll(dryRun: boolean): Promise<void> {
     collaborators: toCollaborators(edges),
   }));
 
-  console.log(`\n${entries.length} artists have at least one collaborator edge.`);
+  // Artists who *had* a list but no longer have any edges — every shared event
+  // soft-deleted, or their only co-performer merged away. They are absent from
+  // the map above, so without this they keep a stale list forever. Clearing
+  // them is what makes a re-run genuinely converge on the truth.
+  const stale = (await fetchArtistIdsWithCollaborators()).filter(id => !edgesByArtist.has(id));
+  for (const artistId of stale) {
+    entries.push({ artistId, collaborators: [] });
+  }
+
+  console.log(`\n${edgesByArtist.size} artists have at least one collaborator edge.`);
+  console.log(`${stale.length} artists have a stale list to clear.`);
 
   if (dryRun) {
     logSample(entries);

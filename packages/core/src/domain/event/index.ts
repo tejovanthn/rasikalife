@@ -15,6 +15,7 @@ import type { CreateEventSchema, UpdateEventSchema } from './schema';
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;
 export type UpdateEventInput = z.infer<typeof UpdateEventSchema>;
 
+import { COLLABORATOR_INLINE_CAP } from '../artist/client';
 import { ART_FORMS } from './client';
 
 export { ART_FORM_LABELS, ART_FORMS } from './client';
@@ -123,6 +124,41 @@ export async function submitEvent(
   return result.data as Event;
 }
 
+/**
+ * Refresh each performer's collaborator list after a cast change.
+ *
+ * Rebuilding beats incrementing here: the same call then serves approval,
+ * un-approval and repair, and a re-approval cannot double-count.
+ *
+ * Skipped above `COLLABORATOR_INLINE_CAP` performers because the work is
+ * quadratic in cast size — a 40-artist festival is 1,560 pairs, which has no
+ * business running inside a moderator's approval request. Those events are
+ * picked up by `pnpm cli rebuild-collaborators`, which reads the junction
+ * regardless of cast size. Approval must not fail over this, so a rebuild
+ * error is logged rather than thrown: a stale collaborator list is a smaller
+ * problem than an event that cannot be approved.
+ */
+async function recomputeCollaboratorsForCast(
+  artists: Array<{ id?: string | null }>
+): Promise<void> {
+  const artistIds = artists.map(a => a.id).filter((id): id is string => !!id);
+  if (artistIds.length > COLLABORATOR_INLINE_CAP) {
+    console.warn(
+      `Skipping inline collaborator recompute for ${artistIds.length} artists ` +
+        `(cap ${COLLABORATOR_INLINE_CAP}); run: pnpm cli rebuild-collaborators`
+    );
+    return;
+  }
+
+  const { rebuildArtistCollaborators } = await import('../artist/collaborators');
+  const results = await Promise.allSettled(artistIds.map(rebuildArtistCollaborators));
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('Failed to rebuild artist collaborators:', result.reason);
+    }
+  }
+}
+
 export async function approveEvent(id: string, moderatorId: string): Promise<Event> {
   const existing = await getEvent(id);
   if (!existing) {
@@ -149,6 +185,7 @@ export async function approveEvent(id: string, moderatorId: string): Promise<Eve
   // Create EventArtist junction records now that event is approved
   if (approved.artists?.length) {
     await createEventArtistJunctions(id, approved.title, approved.startDateTime, approved.artists);
+    await recomputeCollaboratorsForCast(approved.artists);
   }
 
   // Auto-approve festival if linked
@@ -305,7 +342,13 @@ export async function deleteEvent(id: string): Promise<void> {
 }
 
 export async function softDeleteEvent(id: string): Promise<void> {
+  const existing = await getEvent(id);
   await EventEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
+  // The cast loses a shared event. rebuildArtistCollaborators reads deletedAt, so
+  // this has to run after the update or it recounts the event being deleted.
+  if (existing?.artists?.length) {
+    await recomputeCollaboratorsForCast(existing.artists);
+  }
 }
 
 export async function listUpcomingEvents(params?: {

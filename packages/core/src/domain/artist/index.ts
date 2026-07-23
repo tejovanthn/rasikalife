@@ -115,6 +115,36 @@ export async function mergeArtist(loserId: string, canonicalId: string): Promise
       .set({ alternateNames: [...existing, loserName] })
       .go();
   }
+
+  await rebuildCollaboratorsAfterMerge(loserId, canonicalId);
+}
+
+/**
+ * Repair collaborator lists once a merge has moved the loser's events.
+ *
+ * Anyone still naming the loser as a collaborator is, by definition, someone who
+ * shared an event with it — and those events now belong to the canonical artist.
+ * So rebuilding the canonical and then everyone it collaborates with reaches
+ * every stale reference without scanning the table.
+ *
+ * The loser's own list is left as-is: the record is soft-deleted and every read
+ * path redirects through `mergedIntoId`, so nothing renders it.
+ */
+async function rebuildCollaboratorsAfterMerge(loserId: string, canonicalId: string): Promise<void> {
+  const { rebuildArtistCollaborators } = await import('./collaborators');
+  await rebuildArtistCollaborators(canonicalId);
+
+  const canonical = await getArtist(canonicalId);
+  const affected = (canonical?.collaborators ?? [])
+    .map(c => c.artistId)
+    .filter(id => id !== loserId && id !== canonicalId);
+
+  const results = await Promise.allSettled(affected.map(rebuildArtistCollaborators));
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error('Failed to rebuild collaborators after merge:', result.reason);
+    }
+  }
 }
 
 export async function getArtistMergeScore(id: string): Promise<number> {

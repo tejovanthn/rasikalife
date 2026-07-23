@@ -19,6 +19,38 @@ export type { ArtistClaimStatus, Guru } from './schema';
 export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;
 export type UpdateArtistInput = z.infer<typeof UpdateArtistSchema>;
 
+/**
+ * How many collaborators the profile shows, and the cast size above which
+ * `approveEvent` skips the inline recompute. One constant so the display cap
+ * and the fan-out cap cannot drift apart.
+ */
+export const COLLABORATOR_INLINE_CAP = 12;
+
+// Average month length in ms (365.2425 days / 12), used only to turn a
+// timestamp gap into a "months since" figure for the recency boost below.
+const MS_PER_MONTH = (1000 * 60 * 60 * 24 * 365.2425) / 12;
+
+/**
+ * `strength = sharedEventCount * (1 + 1 / (1 + monthsSinceLastShared))`, so a
+ * pair with many recent shared events outranks the same count from years
+ * ago. `monthsSinceLastShared` is clamped to >= 0 — a `lastSharedAt` in the
+ * future cannot boost past the same-month case — and, when `lastSharedAt`
+ * can't be parsed, treated as unbounded, which collapses the boost to 1 (no
+ * recency information beats none).
+ */
+export function collaboratorStrength(
+  sharedEventCount: number,
+  lastSharedAt: string,
+  now: Date = new Date()
+): number {
+  const lastSharedMs = new Date(lastSharedAt).getTime();
+  const monthsSinceLastShared = Number.isNaN(lastSharedMs)
+    ? Number.POSITIVE_INFINITY
+    : Math.max(0, (now.getTime() - lastSharedMs) / MS_PER_MONTH);
+  const recencyBoost = 1 + 1 / (1 + monthsSinceLastShared);
+  return sharedEventCount * recencyBoost;
+}
+
 /** One entry in an artist's derived collaborator list. */
 export interface Collaborator {
   artistId: string;
