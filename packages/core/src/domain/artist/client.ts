@@ -19,14 +19,25 @@ export type { ArtistClaimStatus, Guru } from './schema';
 export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;
 export type UpdateArtistInput = z.infer<typeof UpdateArtistSchema>;
 
+/** One entry in an artist's derived collaborator list. */
+export interface Collaborator {
+  artistId: string;
+  name: string;
+  sharedEventCount: number;
+  lastSharedAt: string;
+  topRoles?: string[];
+  strength: number;
+}
+
 /**
  * Browser-safe Artist shape. Derived from the schema rather than hand-listed,
  * so it cannot drift out of sync with what the API actually accepts — the
  * previous hand-written version had already lost `biography`, `birthYear`,
  * `socialLinks` and several more.
  *
- * The two fields spelled out below are exactly the two the schema leaves out
- * on purpose: only the artist-claim flow writes them.
+ * The fields spelled out below are exactly the ones the schema leaves out on
+ * purpose, because nothing user-facing writes them: the claim flow sets the
+ * badge state, and the collaborator list is derived from shared events.
  */
 export type Artist = z.infer<typeof CreateArtistSchema> & {
   id: string;
@@ -34,4 +45,6 @@ export type Artist = z.infer<typeof CreateArtistSchema> & {
   updatedAt: string;
   claimStatus?: ArtistClaimStatus;
   verifiedAt?: string;
+  collaborators?: Collaborator[];
+  collaboratorsComputedAt?: string;
 };

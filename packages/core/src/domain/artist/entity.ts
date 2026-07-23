@@ -120,6 +120,28 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // Derived from shared events, never edited by hand. Denormalized onto the artist so
+      // the profile renders the collaborator grid without a fan-out query, the same
+      // write-at-mutation-time trade the rsvpCount counters make.
+      collaborators: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            artistId: { type: 'string', required: true },
+            name: { type: 'string', required: true },
+            sharedEventCount: { type: 'number', required: true },
+            lastSharedAt: { type: 'string', required: true },
+            topRoles: { type: 'list', items: { type: 'string' }, required: false },
+            strength: { type: 'number', required: true },
+          },
+        },
+        required: false,
+      },
+      collaboratorsComputedAt: {
+        type: 'string',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,
