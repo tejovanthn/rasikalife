@@ -19,7 +19,8 @@ vi.mock('./entity', () => ({
 
 import { getEventArtists, getEventsByArtist } from '../event-artist';
 import { EventEntity } from '../event/entity';
-import { collaboratorStrength, rebuildArtistCollaborators } from './collaborators';
+import { collaboratorStrength } from './client';
+import { collaboratorsFrom, rebuildArtistCollaborators } from './collaborators';
 import { ArtistEntity } from './entity';
 
 function page(items: unknown[], nextToken?: string) {
@@ -397,5 +398,45 @@ describe('rebuildArtistCollaborators', () => {
     const [{ collaborators }] = updateSetMock.mock.calls[0];
     const ids = collaborators.map((c: { artistId: string }) => c.artistId).sort();
     expect(ids).toEqual(['artist-2', 'artist-3']);
+  });
+});
+
+describe('collaboratorsFrom', () => {
+  const row = (artistId: string, name: string, when: string, role?: string) => ({
+    artistId,
+    artistName: name,
+    eventStartDateTime: when,
+    role,
+  });
+
+  it('excludes the artist themselves', () => {
+    const result = collaboratorsFrom('a1', [
+      row('a1', 'Self', '2026-01-01T00:00:00.000Z'),
+      row('a2', 'Other', '2026-01-01T00:00:00.000Z'),
+    ]);
+    expect(result.map(c => c.artistId)).toEqual(['a2']);
+  });
+
+  it('counts shared events and keeps the latest date', () => {
+    const result = collaboratorsFrom('a1', [
+      row('a2', 'Other', '2025-01-01T00:00:00.000Z'),
+      row('a2', 'Other', '2026-06-01T00:00:00.000Z'),
+    ]);
+    expect(result[0].sharedEventCount).toBe(2);
+    expect(result[0].lastSharedAt).toBe('2026-06-01T00:00:00.000Z');
+  });
+
+  it('orders topRoles by frequency, not first-seen', () => {
+    const result = collaboratorsFrom('a1', [
+      row('a2', 'Other', '2026-01-01T00:00:00.000Z', 'tambura'),
+      row('a2', 'Other', '2026-02-01T00:00:00.000Z', 'Vocal'),
+      row('a2', 'Other', '2026-03-01T00:00:00.000Z', 'vocals'),
+    ]);
+    // Seen on tambura first but mostly on vocal — it should read as a vocalist.
+    expect(result[0].topRoles?.[0]).toBe('vocal');
+  });
+
+  it('returns an empty list for a solo performer', () => {
+    expect(collaboratorsFrom('a1', [row('a1', 'Self', '2026-01-01T00:00:00.000Z')])).toEqual([]);
   });
 });

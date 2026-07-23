@@ -15,9 +15,8 @@ import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
  * Usage: `pnpm cli rebuild-collaborators [--dry-run] [--artist <id>]`
  */
 import { keyOfEntity } from '@rasika/core/db/keys';
-import { collaboratorStrength } from '@rasika/core/domain/artist/client';
+import { collaboratorsFrom } from '@rasika/core/domain/artist';
 import type { Collaborator } from '@rasika/core/domain/artist/client';
-import { canonicalRole } from '@rasika/core/shared/roles';
 
 const SCAN_PAGE_SIZE = 1000;
 const TABLE_NAME = process.env.DYNAMODB_TABLE ?? 'RasikaLifeTable';
@@ -84,16 +83,6 @@ function groupByEvent(rows: JunctionRow[]): Map<string, JunctionRow[]> {
   return byEvent;
 }
 
-interface EdgeAccumulator {
-  artistId: string;
-  name: string;
-  sharedEventCount: number;
-  lastSharedAt: string;
-  roleCounts: Map<string, number>;
-}
-
-const TOP_ROLES_LIMIT = 3;
-
 /**
  * Groups junction rows by event and emits every ordered pair (ai, aj) within each
  * cast into a per-artist edge map: ai's map gains/updates an edge to aj with an
@@ -105,62 +94,26 @@ const TOP_ROLES_LIMIT = 3;
  * approved, so every row reaching this function already belongs to an approved
  * event — there is no "unapproved junction row" to guard against.
  */
-function buildCollaboratorEdges(
-  liveRows: JunctionRow[]
-): Map<string, Map<string, EdgeAccumulator>> {
+function buildCollaboratorLists(liveRows: JunctionRow[]): Map<string, Collaborator[]> {
   const byEvent = groupByEvent(liveRows);
-  const edgesByArtist = new Map<string, Map<string, EdgeAccumulator>>();
+  const rowsByArtist = new Map<string, JunctionRow[]>();
 
+  // Each artist sees the full cast of every event they played; collaboratorsFrom
+  // drops the artist themselves and does the pairing.
   for (const cast of byEvent.values()) {
-    for (const ai of cast) {
-      const edges = edgesByArtist.get(ai.artistId) ?? new Map<string, EdgeAccumulator>();
-      edgesByArtist.set(ai.artistId, edges);
-
-      for (const aj of cast) {
-        if (aj.artistId === ai.artistId) continue;
-
-        const edge = edges.get(aj.artistId) ?? {
-          artistId: aj.artistId,
-          name: aj.artistName,
-          sharedEventCount: 0,
-          lastSharedAt: aj.eventStartDateTime,
-          roleCounts: new Map<string, number>(),
-        };
-        edge.sharedEventCount += 1;
-        edge.name = aj.artistName;
-        if (aj.eventStartDateTime > edge.lastSharedAt) {
-          edge.lastSharedAt = aj.eventStartDateTime;
-        }
-        if (aj.role) {
-          const role = canonicalRole(aj.role);
-          edge.roleCounts.set(role, (edge.roleCounts.get(role) ?? 0) + 1);
-        }
-        edges.set(aj.artistId, edge);
-      }
+    for (const member of cast) {
+      const rows = rowsByArtist.get(member.artistId) ?? [];
+      rows.push(...cast);
+      rowsByArtist.set(member.artistId, rows);
     }
   }
 
-  return edgesByArtist;
-}
-
-function toCollaborators(edges: Map<string, EdgeAccumulator>): Collaborator[] {
-  return [...edges.values()]
-    .map(edge => {
-      const topRoles = [...edge.roleCounts.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, TOP_ROLES_LIMIT)
-        .map(([role]) => role);
-
-      return {
-        artistId: edge.artistId,
-        name: edge.name,
-        sharedEventCount: edge.sharedEventCount,
-        lastSharedAt: edge.lastSharedAt,
-        topRoles: topRoles.length > 0 ? topRoles : undefined,
-        strength: collaboratorStrength(edge.sharedEventCount, edge.lastSharedAt),
-      };
-    })
-    .sort((a, b) => b.strength - a.strength);
+  const now = new Date();
+  const result = new Map<string, Collaborator[]>();
+  for (const [artistId, rows] of rowsByArtist) {
+    result.set(artistId, collaboratorsFrom(artistId, rows, now));
+  }
+  return result;
 }
 
 /** Artists currently holding a non-empty collaborator list. */
@@ -190,26 +143,31 @@ async function writeCollaborators(
 
   const computedAt = new Date().toISOString();
 
-  const updates = entries.map(({ artistId, collaborators }) =>
-    dynamoClient.send(
-      new UpdateCommand({
-        TableName: TABLE_NAME,
-        // ElectroDB lowercases composite key values, so the key must be derived
-        // from the entity rather than hand-built in uppercase, or this writes a
-        // phantom row instead of updating the real artist.
-        Key: keyOfEntity(ArtistEntity, { id: artistId }),
-        UpdateExpression:
-          'SET collaborators = :collaborators, collaboratorsComputedAt = :computedAt',
-        ExpressionAttributeValues: {
-          ':collaborators': collaborators,
-          ':computedAt': computedAt,
-        },
-      })
-    )
+  // Thunks, not promises. `entries.map(() => send(...))` would fire every write
+  // the moment map ran — the chunked await below would throttle nothing, and a
+  // rejection in a not-yet-awaited chunk is an unhandled rejection.
+  const updates = entries.map(
+    ({ artistId, collaborators }) =>
+      () =>
+        dynamoClient.send(
+          new UpdateCommand({
+            TableName: TABLE_NAME,
+            // ElectroDB lowercases composite key values, so the key must be derived
+            // from the entity rather than hand-built in uppercase, or this writes a
+            // phantom row instead of updating the real artist.
+            Key: keyOfEntity(ArtistEntity, { id: artistId }),
+            UpdateExpression:
+              'SET collaborators = :collaborators, collaboratorsComputedAt = :computedAt',
+            ExpressionAttributeValues: {
+              ':collaborators': collaborators,
+              ':computedAt': computedAt,
+            },
+          })
+        )
   );
 
   for (let i = 0; i < updates.length; i += 25) {
-    await Promise.all(updates.slice(i, i + 25));
+    await Promise.all(updates.slice(i, i + 25).map(run => run()));
     process.stdout.write(`\r${Math.min(i + 25, updates.length)}/${updates.length} updated…`);
   }
   console.log('\nDone.');
@@ -244,22 +202,23 @@ async function rebuildAll(dryRun: boolean): Promise<void> {
   const liveRows = rows.filter(row => !deletedEventIds.has(row.eventId));
   console.log(`Excluded ${rows.length - liveRows.length} rows belonging to soft-deleted events.`);
 
-  const edgesByArtist = buildCollaboratorEdges(liveRows);
-  const entries = [...edgesByArtist.entries()].map(([artistId, edges]) => ({
+  const listsByArtist = buildCollaboratorLists(liveRows);
+  const entries = [...listsByArtist.entries()].map(([artistId, collaborators]) => ({
     artistId,
-    collaborators: toCollaborators(edges),
+    collaborators,
   }));
 
   // Artists who *had* a list but no longer have any edges — every shared event
   // soft-deleted, or their only co-performer merged away. They are absent from
   // the map above, so without this they keep a stale list forever. Clearing
   // them is what makes a re-run genuinely converge on the truth.
-  const stale = (await fetchArtistIdsWithCollaborators()).filter(id => !edgesByArtist.has(id));
+  const stale = (await fetchArtistIdsWithCollaborators()).filter(id => !listsByArtist.has(id));
   for (const artistId of stale) {
     entries.push({ artistId, collaborators: [] });
   }
 
-  console.log(`\n${edgesByArtist.size} artists have at least one collaborator edge.`);
+  const withEdges = entries.filter(e => e.collaborators.length > 0).length;
+  console.log(`\n${withEdges} artists have at least one collaborator edge.`);
   console.log(`${stale.length} artists have a stale list to clear.`);
 
   if (dryRun) {

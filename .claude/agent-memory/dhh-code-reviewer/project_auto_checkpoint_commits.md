@@ -1,6 +1,6 @@
 ---
 name: project-auto-checkpoint-commits
-description: Something outside the agent auto-commits the working tree as "checkpoint:" commits mid-session, so an uncommitted diff can vanish into history while you review it
+description: The working tree moves under you mid-review — both auto "checkpoint:" commits and Tejovanth hand-editing the files you are reviewing
 metadata:
   type: project
 ---
@@ -13,5 +13,7 @@ This repo has an automatic checkpointing mechanism that commits the working tree
 - When asked to "review the working tree, it's uncommitted", pin the review to a **base commit** (`git diff <base>`) at the start rather than relying on `git status` staying meaningful. Re-run `git diff <base> --stat` at the end to confirm the reviewed content is unchanged.
 - A clean `git status` mid-task is not evidence the agent committed. Check `git log` before apologising for a commit you did not make, and say so explicitly when a "do not commit" instruction was in force.
 - Scratch test files written into `packages/*/src/` can be swept into a checkpoint. Delete them promptly, or keep them in the session scratchpad and copy in only for the duration of one test run.
+- He also **hand-edits the files under review while the review is running**. During the phase 4 collaborators review (2026-07-23) the backfill's count arithmetic — one of the seven things he had asked to be scrutinised — was rewritten between the `git diff` and the `Read`, three minutes apart. Re-read any file whose exact lines you are about to cite, and when a finding has already been fixed under you, say so rather than reporting it.
+- Note the scratchpad cannot resolve workspace deps: a probe importing `@rasika/core` only works from inside a package that depends on it. Write it to `packages/<pkg>/src/`, run it, and `rm` it in the same command.
 
 Related: [[feedback-review-gate]].

@@ -131,7 +131,9 @@ export async function mergeArtist(loserId: string, canonicalId: string): Promise
  * path redirects through `mergedIntoId`, so nothing renders it.
  */
 async function rebuildCollaboratorsAfterMerge(loserId: string, canonicalId: string): Promise<void> {
-  const { rebuildArtistCollaborators } = await import('./collaborators');
+  const { rebuildArtistCollaborators, COLLABORATOR_MERGE_FANOUT_CAP } = await import(
+    './collaborators'
+  );
   await rebuildArtistCollaborators(canonicalId);
 
   const canonical = await getArtist(canonicalId);
@@ -139,12 +141,23 @@ async function rebuildCollaboratorsAfterMerge(loserId: string, canonicalId: stri
     .map(c => c.artistId)
     .filter(id => id !== loserId && id !== canonicalId);
 
-  const results = await Promise.allSettled(affected.map(rebuildArtistCollaborators));
-  for (const result of results) {
-    if (result.status === 'rejected') {
-      console.error('Failed to rebuild collaborators after merge:', result.reason);
-    }
+  // Each rebuild walks that artist's whole event history, so a merge of two
+  // busy performers can fan out to hundreds. Merges run inside a moderator
+  // request, so cap it and leave the rest to the backfill rather than risk
+  // throttling the table — a failure here is swallowed and would be invisible.
+  if (affected.length > COLLABORATOR_MERGE_FANOUT_CAP) {
+    console.warn(
+      `Merge touched ${affected.length} collaborators (cap ${COLLABORATOR_MERGE_FANOUT_CAP}); their lists may name the merged-away artist until: pnpm cli rebuild-collaborators`
+    );
+    return;
   }
+
+  const results = await Promise.allSettled(affected.map(rebuildArtistCollaborators));
+  results.forEach((result, i) => {
+    if (result.status === 'rejected') {
+      console.error(`Failed to rebuild collaborators for artist ${affected[i]}:`, result.reason);
+    }
+  });
 }
 
 export async function getArtistMergeScore(id: string): Promise<number> {
@@ -178,3 +191,5 @@ export {
   listAllArtistsForMatching,
   normalizeArtistName,
 } from './dedup';
+
+export { rebuildArtistCollaborators } from './collaborators';

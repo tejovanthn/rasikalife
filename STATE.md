@@ -42,6 +42,16 @@ ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. A
 
 Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
 
+### Deferred from the phase 4 code review
+
+Raised, judged real, not yet done:
+
+- **`strength` is stored but decays with wall-clock time.** It is a pure function of `sharedEventCount` and `lastSharedAt`, both stored, so the persisted value and the persisted sort order are stale the moment they are written — and the profile re-sorts in the browser anyway, making it both stored and recomputed. Kept for now only because a naive consumer doing `.slice(0, 12)` without sorting gets roughly-right results from a stored order. Dropping it would shrink the item too, which the 400KB note cares about. Decide deliberately rather than by inertia.
+- **The inline cap guards the wrong dimension.** `COLLABORATOR_INLINE_CAP` counts cast size, but the cost is the sum of the cast's *lifetime event counts* — each rebuild walks that artist's whole history, sequentially. Twelve busy accompanists with 300 events each is ~3,600 queries and passes the cap; a 40-artist festival of newcomers is cheap and gets rejected. The guard belongs on event history.
+- **Nothing schedules `rebuild-collaborators`.** There is no infra entry, so a skipped festival or a swallowed failure stays stale until someone runs the CLI by hand. `collaboratorsComputedAt` is stored precisely so a sweep could find stale artists by timestamp — but something has to run it.
+- **Hard `deleteEvent` leaves junction rows and never recomputes.** Filtered correctly by accident (a missing row is absent from the batch-get result), but no rebuild is triggered.
+- `rebuildArtistCollaborators` returns `void`, so `rebuildCollaboratorsAfterMerge` re-reads the artist it just computed. Returning `Collaborator[]` removes the round-trip.
+
 ### Deferred from the phase 2 self-review
 
 The DHH reviewer failed twice (a stalled stream, then the monthly spend limit), so phase 2 was reviewed by hand against the same questions. Verified sound: the self-membership guards in both merge sweeps are symmetric; the `addMember` `z.union` genuinely rejects both-fields and neither-field payloads, confirmed by parsing rather than reading; `pages: 'all'` on the two membership queries is fine at group sizes.

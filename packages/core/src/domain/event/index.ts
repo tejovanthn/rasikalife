@@ -141,7 +141,10 @@ export async function submitEvent(
 async function recomputeCollaboratorsForCast(
   artists: Array<{ id?: string | null }>
 ): Promise<void> {
-  const artistIds = artists.map(a => a.id).filter((id): id is string => !!id);
+  // Deduplicate the way createEventArtistJunctions does — the same artist can
+  // appear twice with different roles, and counting them twice would both trip
+  // the cap early and race two rebuilds on one row.
+  const artistIds = [...new Set(artists.map(a => a.id).filter((id): id is string => !!id))];
   if (artistIds.length > COLLABORATOR_INLINE_CAP) {
     console.warn(
       `Skipping inline collaborator recompute for ${artistIds.length} artists ` +
@@ -152,11 +155,11 @@ async function recomputeCollaboratorsForCast(
 
   const { rebuildArtistCollaborators } = await import('../artist/collaborators');
   const results = await Promise.allSettled(artistIds.map(rebuildArtistCollaborators));
-  for (const result of results) {
+  results.forEach((result, i) => {
     if (result.status === 'rejected') {
-      console.error('Failed to rebuild artist collaborators:', result.reason);
+      console.error(`Failed to rebuild collaborators for artist ${artistIds[i]}:`, result.reason);
     }
-  }
+  });
 }
 
 export async function approveEvent(id: string, moderatorId: string): Promise<Event> {
@@ -332,6 +335,14 @@ export async function updateApprovedEvent(id: string, input: UpdateEventInput): 
     if (toAdd.length > 0) {
       await createEventArtistJunctions(id, newTitle, newStartDateTime, toAdd);
     }
+
+    // Both sides need recomputing, and the removed artists especially: nothing
+    // else will ever revisit them, so without this the rest of the cast names a
+    // performer who is no longer on the bill, permanently.
+    await recomputeCollaboratorsForCast([
+      ...toRemove.map(a => ({ id: a.artistId })),
+      ...(input.artists || []),
+    ]);
   }
 
   return (await getEvent(id)) as Event;

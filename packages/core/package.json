@@ -126,6 +126,11 @@
       "import": "./src/shared/completion.ts",
       "default": "./src/shared/completion.ts"
     },
+    "./shared/roles": {
+      "types": "./src/shared/roles.ts",
+      "import": "./src/shared/roles.ts",
+      "default": "./src/shared/roles.ts"
+    },
     "./shared/*": {
       "types": "./src/shared/*/index.ts",
       "import": "./src/shared/*/index.ts",
