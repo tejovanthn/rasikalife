@@ -187,6 +187,30 @@ export const artistRouter = createTRPCRouter({
       triggerReindex();
     }),
 
+  setFeaturedPerformance: editorProcedure
+    .input(
+      z.object({
+        eventId: z.string().min(1),
+        artistId: z.string().min(1),
+        featured: z.boolean(),
+        featureRank: z.number().int().min(1).optional(),
+      })
+    )
+    .mutation(({ input }) =>
+      EventArtist.setEventArtistFeatured(
+        input.eventId,
+        input.artistId,
+        input.featured,
+        input.featureRank
+      )
+    ),
+
+  listFeaturedPerformances: publicProcedure
+    .input(z.object({ artistId: z.string().min(1), limit: z.number().min(1).max(50).optional() }))
+    .query(({ input }) =>
+      EventArtist.getFeaturedEventsByArtist(input.artistId, { limit: input.limit })
+    ),
+
   listMembers: publicProcedure
     .input(z.object({ groupId: z.string().min(1) }))
     .query(({ input }) => ArtistMembership.getGroupMembers(input.groupId)),

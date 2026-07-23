@@ -1,10 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createEventArtist, deleteEventArtist, getEventArtists, getEventsByArtist } from '.';
+import {
+  createEventArtist,
+  deleteEventArtist,
+  getEventArtists,
+  getEventsByArtist,
+  setEventArtistFeatured,
+} from '.';
 
 vi.mock('./entity', () => ({
   EventArtistEntity: {
     create: vi.fn(),
     delete: vi.fn(),
+    patch: vi.fn(),
     query: {
       primary: vi.fn(),
       byArtist: vi.fn(),
@@ -136,5 +143,36 @@ describe('EventArtist', () => {
         artistId: 'artist-1',
       });
     });
+  });
+});
+
+describe('setEventArtistFeatured', () => {
+  async function patchSpy() {
+    const { EventArtistEntity } = await import('./entity');
+    const set = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: {} }) });
+    vi.mocked(EventArtistEntity.patch).mockReturnValue({ set } as never);
+    return { set, EventArtistEntity };
+  }
+
+  it('sets the flag and rank on the artist-event junction row', async () => {
+    const { set, EventArtistEntity } = await patchSpy();
+
+    await setEventArtistFeatured('event-1', 'artist-1', true, 2);
+
+    expect(EventArtistEntity.patch).toHaveBeenCalledWith({
+      eventId: 'event-1',
+      artistId: 'artist-1',
+    });
+    expect(set).toHaveBeenCalledWith({ isFeatured: true, featureRank: 2 });
+  });
+
+  it('clears the rank when unfeaturing', async () => {
+    const { set } = await patchSpy();
+
+    await setEventArtistFeatured('event-1', 'artist-1', false, 2);
+
+    // A rank left behind on an unfeatured row would silently reorder the
+    // teaser if the row were ever featured again.
+    expect(set).toHaveBeenCalledWith({ isFeatured: false, featureRank: undefined });
   });
 });
