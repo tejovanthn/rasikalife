@@ -83,6 +83,17 @@ program
   });
 
 program
+  .command('rebuild-collaborators')
+  .description('Rebuild artist collaborator lists from the approved event history')
+  .option('-n, --dry-run', 'Preview changes without writing to the database')
+  .option('--artist <id>', 'Rebuild collaborators for a single artist only')
+  .action(async (opts: { dryRun?: boolean; artist?: string }) => {
+    setup();
+    const { rebuildCollaborators } = await import('./rebuildCollaborators.js');
+    await rebuildCollaborators({ dryRun: opts.dryRun, artistId: opts.artist });
+  });
+
+program
   .command('sync:instagram')
   .description(
     'Scrape Instagram profiles linked to artists, venues, and organisers for event posts'
