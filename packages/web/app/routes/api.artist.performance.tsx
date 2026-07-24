@@ -19,18 +19,57 @@ export const action: ActionFunction = async ({ request }) => {
   await requireModerator(request);
 
   const formData = await request.formData();
-  const eventId = ((formData.get('eventId') as string) || '').trim();
+  const intent = formData.get('intent') as string;
   const artistId = ((formData.get('artistId') as string) || '').trim();
 
-  if (!eventId || !artistId) {
-    return data({ error: 'Missing event or artist' }, { status: 400 });
+  if (!artistId) {
+    return data({ error: 'Missing artist' }, { status: 400 });
+  }
+
+  const serverClient = await createServerClient(request);
+
+  // Record a known performance directly, tagging this artist. Unlike the poster
+  // flow, this is a single event the moderator already knows about; the server
+  // creates it, approves it, and features the artist's participation.
+  if (intent === 'create') {
+    const artistName = ((formData.get('artistName') as string) || '').trim();
+    const title = ((formData.get('title') as string) || '').trim();
+    const date = ((formData.get('date') as string) || '').trim();
+    if (!artistName || !title || !date) {
+      return data({ error: 'Title and date are required' }, { status: 400 });
+    }
+    // A date-only input becomes midnight in IST — good enough for a past
+    // performance, where the day is what matters.
+    const startDateTime = new Date(`${date}T00:00:00+05:30`).toISOString();
+    const venueName = ((formData.get('venueName') as string) || '').trim() || undefined;
+    const role = ((formData.get('role') as string) || '').trim() || undefined;
+
+    try {
+      const performance = await serverClient.event.createPerformance.mutate({
+        title,
+        startDateTime,
+        venueName,
+        artistId,
+        artistName,
+        role,
+        featured: true,
+      });
+      return data({ success: true, created: performance });
+    } catch (error) {
+      console.error('Failed to create performance:', error);
+      const message = error instanceof Error ? error.message : 'Failed to create performance';
+      return data({ error: message }, { status: 400 });
+    }
+  }
+
+  const eventId = ((formData.get('eventId') as string) || '').trim();
+  if (!eventId) {
+    return data({ error: 'Missing event' }, { status: 400 });
   }
 
   const featured = formData.get('featured') === 'true';
   const rankRaw = ((formData.get('featureRank') as string) || '').trim();
   const featureRank = rankRaw ? Number.parseInt(rankRaw, 10) || undefined : undefined;
-
-  const serverClient = await createServerClient(request);
 
   try {
     const row = await serverClient.artist.setFeaturedPerformance.mutate({

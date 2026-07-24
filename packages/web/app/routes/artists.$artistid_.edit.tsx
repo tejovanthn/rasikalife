@@ -1091,7 +1091,11 @@ function ModeratorArtistWizard() {
 
                 <div className="space-y-3 border-t pt-6">
                   <Label>Notable performances</Label>
-                  <PerformancesEditor artistId={artist.id} initialPerformances={performances} />
+                  <PerformancesEditor
+                    artistId={artist.id}
+                    artistName={artist.name}
+                    initialPerformances={performances}
+                  />
                 </div>
 
                 <div className="space-y-3 border-t pt-6">
@@ -1537,16 +1541,24 @@ type Performance = {
 };
 
 type PerformanceResult = { success: true; performance: Performance } | { error: string };
+type CreatePerformanceResult = { success: true; created: Performance } | { error: string };
 
 // Toggles the per-artist featured flag on events the artist already performed
-// at. It never creates or links events — a missing event is handled by the
-// separate event-creation flow. Writes land immediately.
+// at, and — via the create form below — records a known performance the poster
+// pipeline never captured, tagging this artist. Both write immediately.
 function PerformancesEditor({
   artistId,
+  artistName,
   initialPerformances,
-}: { artistId: string; initialPerformances: Performance[] }) {
+}: { artistId: string; artistName: string; initialPerformances: Performance[] }) {
   const [performances, setPerformances] = useState<Performance[]>(initialPerformances);
+  const [title, setTitle] = useState('');
+  const [date, setDate] = useState('');
+  const [venueName, setVenueName] = useState('');
+  const [role, setRole] = useState('');
   const featureFetcher = useFetcher<PerformanceResult>();
+  const createFetcher = useFetcher<CreatePerformanceResult>();
+  const createIsIdle = createFetcher.state === 'idle';
 
   useEffect(() => {
     if (!featureFetcher.data) return;
@@ -1564,44 +1576,95 @@ function PerformancesEditor({
     );
   }, [featureFetcher.data]);
 
-  if (performances.length === 0) {
-    return <p className="text-xs text-muted-foreground">This artist has no events yet.</p>;
-  }
+  useEffect(() => {
+    if (!createFetcher.data) return;
+    if ('error' in createFetcher.data) {
+      toast.error(createFetcher.data.error);
+      return;
+    }
+    const { created } = createFetcher.data;
+    setPerformances(prev => [created, ...prev]);
+    setTitle('');
+    setDate('');
+    setVenueName('');
+    setRole('');
+    toast.success(`${created.eventTitle} added`);
+  }, [createFetcher.data]);
 
   return (
-    <div className="space-y-2">
-      {performances.map(performance => (
-        <div
-          key={performance.eventId}
-          className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
-        >
-          <div className="min-w-0">
-            <div className="truncate">{performance.eventTitle}</div>
-            <div className="text-xs text-muted-foreground">
-              {performance.eventStartDateTime.slice(0, 10)}
-              {performance.role ? ` — ${performance.role}` : ''}
-            </div>
-          </div>
-          <Button
-            type="button"
-            variant={performance.isFeatured ? 'default' : 'outline'}
-            size="sm"
-            disabled={featureFetcher.state !== 'idle'}
-            onClick={() =>
-              featureFetcher.submit(
-                {
-                  eventId: performance.eventId,
-                  artistId,
-                  featured: performance.isFeatured ? 'false' : 'true',
-                },
-                { method: 'post', action: '/api/artist/performance' }
-              )
-            }
+    <div className="space-y-3">
+      {performances.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No events yet — add one below.</p>
+      ) : (
+        performances.map(performance => (
+          <div
+            key={performance.eventId}
+            className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
           >
-            {performance.isFeatured ? 'Featured' : 'Feature'}
-          </Button>
+            <div className="min-w-0">
+              <div className="truncate">{performance.eventTitle}</div>
+              <div className="text-xs text-muted-foreground">
+                {performance.eventStartDateTime.slice(0, 10)}
+                {performance.role ? ` — ${performance.role}` : ''}
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant={performance.isFeatured ? 'default' : 'outline'}
+              size="sm"
+              disabled={featureFetcher.state !== 'idle'}
+              onClick={() =>
+                featureFetcher.submit(
+                  {
+                    eventId: performance.eventId,
+                    artistId,
+                    featured: performance.isFeatured ? 'false' : 'true',
+                  },
+                  { method: 'post', action: '/api/artist/performance' }
+                )
+              }
+            >
+              {performance.isFeatured ? 'Featured' : 'Feature'}
+            </Button>
+          </div>
+        ))
+      )}
+
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <p className="text-xs text-muted-foreground">
+          Add a performance the listings pipeline never captured. It is created as an approved event
+          and featured on this profile.
+        </p>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Input placeholder="Event title" value={title} onChange={e => setTitle(e.target.value)} />
+          <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <Input
+            placeholder="Venue (optional)"
+            value={venueName}
+            onChange={e => setVenueName(e.target.value)}
+          />
+          <Input
+            placeholder="Role (optional)"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+          />
         </div>
-      ))}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!createIsIdle || !title.trim() || !date}
+          onClick={() =>
+            createFetcher.submit(
+              { intent: 'create', artistId, artistName, title, date, venueName, role },
+              { method: 'post', action: '/api/artist/performance' }
+            )
+          }
+        >
+          <Plus className="h-4 w-4" />
+          Add performance
+        </Button>
+      </div>
     </div>
   );
 }

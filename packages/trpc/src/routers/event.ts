@@ -1,5 +1,5 @@
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
-import { Artist, Auth, Event, Festival, Organiser, Search, Venue } from '@rasika/core';
+import { Artist, Auth, Event, EventArtist, Festival, Organiser, Search, Venue } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -455,6 +455,53 @@ export const eventRouter = createTRPCRouter({
       const result = await Event.approveEvent(input.eventId, ctx.user.id);
       triggerReindex();
       return result;
+    }),
+
+  // The artist wizard's "add a performance" path. A moderator records a known
+  // performance directly rather than through the poster/extraction flow: create
+  // the event as submitted, then approve it — approval is what builds the
+  // EventArtist junction and recomputes collaborators, so this reuses that path
+  // rather than hand-rolling the side effects. The artist is tagged and, if
+  // asked, its participation is featured.
+  createPerformance: moderatorProcedure
+    .input(
+      z.object({
+        title: z.string().min(1).max(300),
+        startDateTime: z.string().datetime({ offset: true }),
+        timezone: z.string().optional(),
+        venueName: z.string().max(300).optional(),
+        artistId: z.string().min(1),
+        artistName: z.string().min(1).max(200),
+        role: z.string().max(200).optional(),
+        featured: z.boolean().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const draft = await Event.createEvent(
+        {
+          title: input.title,
+          startDateTime: input.startDateTime,
+          timezone: input.timezone ?? 'Asia/Kolkata',
+          venueName: input.venueName,
+          artists: [{ id: input.artistId, name: input.artistName, role: input.role }],
+          tags: [],
+          entryType: 'free',
+        },
+        ctx.user.id,
+        { status: 'submitted' }
+      );
+      await Event.approveEvent(draft.id, ctx.user.id);
+      if (input.featured) {
+        await EventArtist.setEventArtistFeatured(draft.id, input.artistId, true);
+      }
+      triggerReindex();
+      return {
+        eventId: draft.id,
+        eventTitle: input.title,
+        eventStartDateTime: input.startDateTime,
+        role: input.role,
+        isFeatured: input.featured ?? false,
+      };
     }),
 
   rejectEvent: moderatorProcedure
