@@ -1,13 +1,19 @@
 import type { LoaderFunction } from 'react-router';
 import { data } from 'react-router';
-import { client } from '~/api.server';
+import { createServerClient } from '~/api.server';
+import { requireModerator } from '~/lib/auth.server';
 
 // Live DB search backing the moderator find-or-create artist picker
 // (SearchSelect). Unlike api.search.artist.tsx, which reads the Fuse index in
 // S3, this hits the table directly so a just-created artist is findable
-// straight away rather than waiting out the index's 5-minute reindex
-// throttle.
+// straight away rather than waiting out the index's 5-minute reindex throttle.
+//
+// Moderator-gated: it pages the whole artist table into memory per request, so
+// leaving it anonymous is a free full-scan for anyone. The picker is moderator-
+// only anyway.
 export const loader: LoaderFunction = async ({ request }) => {
+  await requireModerator(request);
+
   const url = new URL(request.url);
   const query = url.searchParams.get('q')?.trim();
 
@@ -16,7 +22,8 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 
   try {
-    const result = await client.artist.searchLive.query({ query });
+    const serverClient = await createServerClient(request);
+    const result = await serverClient.artist.searchLive.query({ query });
 
     // No Cache-Control: unlike the Fuse-backed routes, freshness is the whole
     // point of this endpoint, so nothing here should be cacheable.

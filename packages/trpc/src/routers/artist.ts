@@ -52,7 +52,8 @@ export const artistRouter = createTRPCRouter({
   // Unlike search.searchArtists (Fuse index in S3), this hits the table
   // directly, so an artist created a moment ago in one modal is findable in
   // the next one — the Fuse index only refreshes on a 5-minute throttle.
-  searchLive: publicProcedure
+  // Moderator-only: it pages the whole artist table into memory per call.
+  searchLive: moderatorProcedure
     .input(z.object({ query: z.string(), limit: z.number().int().min(1).max(50).optional() }))
     .query(async ({ input }) => {
       const query = input.query.trim();
@@ -153,13 +154,15 @@ export const artistRouter = createTRPCRouter({
       };
     }),
 
-  addAward: editorProcedure.input(ArtistAward.AddArtistAwardSchema).mutation(async ({ input }) => {
-    const result = await ArtistAward.addArtistAward(input);
-    triggerReindex();
-    return result;
-  }),
+  addAward: moderatorProcedure
+    .input(ArtistAward.AddArtistAwardSchema)
+    .mutation(async ({ input }) => {
+      const result = await ArtistAward.addArtistAward(input);
+      triggerReindex();
+      return result;
+    }),
 
-  removeAward: editorProcedure
+  removeAward: moderatorProcedure
     .input(z.object({ artistId: z.string().min(1), awardId: z.string().min(1) }))
     .mutation(async ({ input }) => {
       const result = await ArtistAward.removeArtistAward(input.artistId, input.awardId);
@@ -171,7 +174,7 @@ export const artistRouter = createTRPCRouter({
     .input(z.object({ artistId: z.string().min(1) }))
     .query(({ input }) => ArtistAward.getArtistAwards(input.artistId)),
 
-  addMember: editorProcedure.input(AddMemberInputSchema).mutation(async ({ input }) => {
+  addMember: moderatorProcedure.input(AddMemberInputSchema).mutation(async ({ input }) => {
     const group = await Artist.getArtist(input.groupId);
     if (!group) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Group artist not found' });
@@ -231,14 +234,14 @@ export const artistRouter = createTRPCRouter({
     return result;
   }),
 
-  removeMember: editorProcedure
+  removeMember: moderatorProcedure
     .input(z.object({ groupId: z.string().min(1), memberId: z.string().min(1) }))
     .mutation(async ({ input }) => {
       await ArtistMembership.removeArtistMembership(input.groupId, input.memberId);
       triggerReindex();
     }),
 
-  setFeaturedPerformance: editorProcedure
+  setFeaturedPerformance: moderatorProcedure
     .input(
       z.object({
         eventId: z.string().min(1),
@@ -270,7 +273,7 @@ export const artistRouter = createTRPCRouter({
     .input(z.object({ memberId: z.string().min(1) }))
     .query(({ input }) => ArtistMembership.getMemberGroups(input.memberId)),
 
-  addPhoto: editorProcedure
+  addPhoto: moderatorProcedure
     .input(ArtistPhoto.AddArtistPhotoSchema.omit({ createdBy: true }))
     .mutation(async ({ ctx, input }) => {
       const artist = await Artist.getArtist(input.artistId);
@@ -283,7 +286,7 @@ export const artistRouter = createTRPCRouter({
       return ArtistPhoto.addArtistPhoto({ ...input, createdBy: ctx.user.id });
     }),
 
-  updatePhoto: editorProcedure
+  updatePhoto: moderatorProcedure
     .input(
       z.object({
         artistId: z.string().min(1),
@@ -295,7 +298,7 @@ export const artistRouter = createTRPCRouter({
       return ArtistPhoto.updateArtistPhoto(input.artistId, input.id, input.patch);
     }),
 
-  deletePhoto: editorProcedure
+  deletePhoto: moderatorProcedure
     .input(z.object({ artistId: z.string().min(1), id: z.string().min(1) }))
     .mutation(async ({ input }) => {
       await ArtistPhoto.deleteArtistPhoto(input.artistId, input.id);

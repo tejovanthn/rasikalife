@@ -1030,7 +1030,8 @@ function ModeratorArtistWizard() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Saved with the rest of this form when you publish.
+                    The guru links save with the rest of this form when you publish. Adding a guru
+                    by a new name creates that artist record straight away, though.
                   </p>
                   {gurus.length === 0 && (
                     <p className="text-xs text-muted-foreground">No gurus added.</p>
@@ -1115,22 +1116,68 @@ function ModeratorArtistWizard() {
 
                 <div className="divide-y divide-border rounded-md border text-sm">
                   <SummaryRow label="Name" value={form.name} />
-                  <SummaryRow label="Title" value={form.title} />
+                  <SummaryRow
+                    label="Title"
+                    value={form.title}
+                    stored={(artist.title as string | undefined) ?? ''}
+                  />
                   <SummaryRow label="Group" value={form.isGroup ? 'Yes' : 'No'} />
-                  <SummaryRow label="Instrument" value={form.instrument} />
-                  <SummaryRow label="City" value={form.city} />
-                  <SummaryRow label="Biography" value={form.biography} />
-                  <SummaryRow label="Specialisations" value={form.specialisations} />
-                  <SummaryRow label="Birth Year" value={form.birthYear} />
-                  <SummaryRow label="Birth Place" value={form.birthPlace} />
-                  <SummaryRow label="Practice Start Year" value={form.practiceStartYear} />
-                  <SummaryRow label="Debut Year" value={form.debutYear} />
-                  <SummaryRow label="Active Years" value={form.activeYears} />
-                  <SummaryRow label="Website" value={form.website} />
+                  <SummaryRow
+                    label="Instrument"
+                    value={form.instrument}
+                    stored={(artist.instrument as string | undefined) ?? ''}
+                  />
+                  <SummaryRow
+                    label="City"
+                    value={form.city}
+                    stored={(artist.city as string | undefined) ?? ''}
+                  />
+                  <SummaryRow
+                    label="Biography"
+                    value={form.biography}
+                    stored={(artist.biography as string | undefined) ?? ''}
+                  />
+                  <SummaryRow
+                    label="Specialisations"
+                    value={form.specialisations}
+                    stored={((artist.specialisations as string[] | undefined) ?? []).join(', ')}
+                  />
+                  <SummaryRow
+                    label="Birth Year"
+                    value={form.birthYear}
+                    stored={(artist.birthYear as number | undefined)?.toString() ?? ''}
+                  />
+                  <SummaryRow
+                    label="Birth Place"
+                    value={form.birthPlace}
+                    stored={(artist.birthPlace as string | undefined) ?? ''}
+                  />
+                  <SummaryRow
+                    label="Practice Start Year"
+                    value={form.practiceStartYear}
+                    stored={(artist.practiceStartYear as number | undefined)?.toString() ?? ''}
+                  />
+                  <SummaryRow
+                    label="Debut Year"
+                    value={form.debutYear}
+                    stored={(artist.debutYear as number | undefined)?.toString() ?? ''}
+                  />
+                  <SummaryRow
+                    label="Active Years"
+                    value={form.activeYears}
+                    stored={(artist.activeYears as string | undefined) ?? ''}
+                  />
+                  <SummaryRow
+                    label="Website"
+                    value={form.website}
+                    stored={(artist.website as string | undefined) ?? ''}
+                  />
                   <SummaryRow label="Gurus" value={gurus.map(guru => guru.name).join(', ')} />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Group membership changes already saved — they are not part of this publish.
+                  Membership, awards, performances and photos are saved as you go — they are not
+                  part of this publish. A blank field above keeps its current value rather than
+                  clearing it.
                 </p>
 
                 {actionData && 'error' in actionData && (
@@ -1188,11 +1235,20 @@ function ModeratorArtistWizard() {
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({ label, value, stored }: { label: string; value: string; stored?: string }) {
+  // A blank preserve-on-blank field (see the action) is NOT cleared on publish —
+  // it keeps its stored value. Showing "—" here would promise a clearing that
+  // never happens, so a blanked field with a stored value renders that value,
+  // tagged unchanged. `stored` is omitted for fields that really do take the
+  // form value as-is (isGroup, gurus), where blank means blank.
+  const cleared = !value && stored;
   return (
     <div className="flex items-start justify-between gap-4 px-3 py-2">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right break-words">{value || '—'}</span>
+      <span className="font-medium text-right break-words">
+        {value || stored || '—'}
+        {cleared && <span className="ml-1 text-xs text-muted-foreground">(unchanged)</span>}
+      </span>
     </div>
   );
 }
@@ -1583,7 +1639,9 @@ function PerformancesEditor({
       return;
     }
     const { created } = createFetcher.data;
-    setPerformances(prev => [created, ...prev]);
+    setPerformances(prev =>
+      prev.some(p => p.eventId === created.eventId) ? prev : [created, ...prev]
+    );
     setTitle('');
     setDate('');
     setVenueName('');

@@ -4,13 +4,17 @@ import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure 
 
 export const awardRouter = createTRPCRouter({
   // The award picker's create-path: resolve a typed name to an award, creating
-  // one only on a miss. Awards are a small curated set with no near-duplicate
-  // problem, so an exact-name lookup is enough — no fuzzy dedup like artists.
+  // one only on a miss. The match is case-insensitive over the curated award
+  // list — awards are few, so a full scan is fine, and it stops "sangeet
+  // kalanidhi" minting a duplicate beside "Sangeet Kalanidhi". No fuzzy dedup
+  // beyond case, unlike the scraped, open-ended artist set.
   resolveOrCreate: moderatorProcedure
     .input(z.object({ name: z.string().min(1) }))
     .mutation(async ({ input }) => {
       const name = input.name.trim();
-      const existing = await Award.getAwardByName(name);
+      const normalized = name.toLowerCase();
+      const all = await Award.listAwards();
+      const existing = all.find(award => award.name.toLowerCase() === normalized);
       if (existing) {
         return { id: existing.id, name: existing.name, created: false };
       }
@@ -23,46 +27,6 @@ export const awardRouter = createTRPCRouter({
   get: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
     .query(({ input }) => Award.getAward(input.id)),
-
-  // Live DB search for the moderator find-or-create picker (SearchSelect),
-  // mirroring Artist.searchLive: the S3 Fuse index refreshes on a 5-minute
-  // throttle, so an award created moments ago wouldn't be findable there yet.
-  //
-  // Award has no fuzzy-matching helper analogous to artist/dedup.ts, and no
-  // secondary index beyond exact name (`byName`) — inventing either is out of
-  // scope here. Awards are also a small, hand-curated list rather than an
-  // open-ended, scraped one like artists, so pulling them all via listAwards
-  // and filtering in memory is the simplest correct approach.
-  searchLive: publicProcedure
-    .input(z.object({ query: z.string(), limit: z.number().int().min(1).max(50).optional() }))
-    .query(async ({ input }) => {
-      const query = input.query.trim();
-      if (!query) return [];
-      const limit = input.limit ?? 10;
-      const normalizedQuery = query.toLowerCase();
-
-      // getAwardByName now filters soft-deleted and merged-away rows, so an
-      // exact-name match here is already a live award — no redirect needed.
-      // (An exact search for a merged-away name returns nothing, which is fine:
-      // it is gone from listAwards too.)
-      const exact = await Award.getAwardByName(query);
-
-      const all = await Award.listAwards();
-      const matches = all
-        .filter(
-          award => award.id !== exact?.id && award.name.toLowerCase().includes(normalizedQuery)
-        )
-        .sort((a, b) => {
-          const aName = a.name.toLowerCase();
-          const bName = b.name.toLowerCase();
-          const aStarts = aName.startsWith(normalizedQuery) ? 0 : 1;
-          const bStarts = bName.startsWith(normalizedQuery) ? 0 : 1;
-          return aStarts - bStarts || a.name.length - b.name.length;
-        });
-
-      const results = exact ? [exact, ...matches] : matches;
-      return results.slice(0, limit).map(award => ({ id: award.id, name: award.name }));
-    }),
 
   create: editorProcedure
     .input(Award.CreateAwardSchema)
