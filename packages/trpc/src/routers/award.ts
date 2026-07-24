@@ -41,16 +41,11 @@ export const awardRouter = createTRPCRouter({
       const limit = input.limit ?? 10;
       const normalizedQuery = query.toLowerCase();
 
-      // getAwardByName, unlike Artist.getArtistByName, doesn't filter
-      // deletedAt/mergedIntoId — replicate that guard here so a soft-deleted or
-      // merged-away award can't surface, consistent with the artist endpoint.
-      const rawExact = await Award.getAwardByName(query);
-      let exact: Award.Award | null = null;
-      if (rawExact?.deletedAt) {
-        exact = rawExact.mergedIntoId ? await Award.getAward(rawExact.mergedIntoId) : null;
-      } else {
-        exact = rawExact;
-      }
+      // getAwardByName now filters soft-deleted and merged-away rows, so an
+      // exact-name match here is already a live award — no redirect needed.
+      // (An exact search for a merged-away name returns nothing, which is fine:
+      // it is gone from listAwards too.)
+      const exact = await Award.getAwardByName(query);
 
       const all = await Award.listAwards();
       const matches = all

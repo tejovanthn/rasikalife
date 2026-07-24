@@ -38,9 +38,16 @@ export const action: ActionFunction = async ({ request }) => {
     if (!artistName || !title || !date) {
       return data({ error: 'Title and date are required' }, { status: 400 });
     }
-    // A date-only input becomes midnight in IST — good enough for a past
-    // performance, where the day is what matters.
-    const startDateTime = new Date(`${date}T00:00:00+05:30`).toISOString();
+    // Anchor a date-only input at MIDDAY IST, not midnight. Midnight IST is
+    // 18:30 the previous UTC day, and the display paths slice the UTC string —
+    // so the performance would show up a day early, and worse, render one day
+    // on the UTC SSR Lambda and another in the IST browser. Noon IST is 06:30
+    // UTC: the same calendar day in both zones, month boundaries included.
+    const parsed = new Date(`${date}T12:00:00+05:30`);
+    if (Number.isNaN(parsed.getTime())) {
+      return data({ error: 'Invalid date' }, { status: 400 });
+    }
+    const startDateTime = parsed.toISOString();
     const venueName = ((formData.get('venueName') as string) || '').trim() || undefined;
     const role = ((formData.get('role') as string) || '').trim() || undefined;
 

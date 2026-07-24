@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  approveEvent,
   createEvent,
   deleteEvent,
   getEvent,
@@ -39,6 +40,12 @@ vi.mock('../event-artist/entity', () => ({
       byArtist: vi.fn(),
     },
   },
+}));
+
+// approveEvent dynamically imports these for its side effects; stub them so the
+// test exercises the approve/junction path without real collaborator I/O.
+vi.mock('../artist/collaborators', () => ({
+  rebuildArtistCollaborators: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('Event', () => {
@@ -344,6 +351,55 @@ describe('Event', () => {
 
       expect(EventArtistEntity.query.byArtist).toHaveBeenCalledWith({ artistId: 'artist-1' });
       expect(result.items).toEqual(mockEventArtists);
+    });
+  });
+
+  describe('approveEvent', () => {
+    // The add-a-performance flow relies on this: create as submitted, then
+    // approve, and approval is what builds the EventArtist junction. If this
+    // ever stops tagging the artist, that whole path silently produces
+    // eventless artists.
+    it('builds the EventArtist junction for a submitted single-artist event', async () => {
+      const { EventEntity } = await import('./entity');
+      const { EventArtistEntity } = await import('../event-artist/entity');
+
+      const submitted = {
+        id: 'event-1',
+        status: 'submitted',
+        title: 'Margazhi Recital',
+        startDateTime: '2026-01-01T06:30:00.000Z',
+        artists: [{ id: 'artist-1', name: 'T M Krishna', role: 'vocal' }],
+      };
+      vi.mocked(EventEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: submitted }),
+      } as any);
+      vi.mocked(EventEntity.update).mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          go: vi.fn().mockResolvedValue({ data: { ...submitted, status: 'approved' } }),
+        }),
+      } as any);
+      vi.mocked(EventArtistEntity.upsert).mockReturnValue({
+        go: vi.fn().mockResolvedValue({}),
+      } as any);
+
+      await approveEvent('event-1', 'moderator-1');
+
+      expect(EventArtistEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventId: 'event-1',
+          artistId: 'artist-1',
+          artistName: 'T M Krishna',
+        })
+      );
+    });
+
+    it('refuses to approve an event that is not submitted', async () => {
+      const { EventEntity } = await import('./entity');
+      vi.mocked(EventEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: { id: 'event-1', status: 'draft' } }),
+      } as any);
+
+      await expect(approveEvent('event-1', 'moderator-1')).rejects.toThrow();
     });
   });
 });

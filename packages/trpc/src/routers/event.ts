@@ -477,12 +477,25 @@ export const eventRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Resolve the venue to a real entity, get-or-create by name, exactly as
+      // the poster flow does at approval — otherwise this event would carry a
+      // free-text venue name that never links to a venue page or dedupes.
+      let venueId: string | undefined;
+      let venueName = input.venueName;
+      if (venueName) {
+        const existing = await Venue.getVenueByName(venueName);
+        const venue = existing ?? (await Venue.createVenue({ name: venueName }));
+        venueId = venue.id;
+        venueName = venue.name;
+      }
+
       const draft = await Event.createEvent(
         {
           title: input.title,
           startDateTime: input.startDateTime,
           timezone: input.timezone ?? 'Asia/Kolkata',
-          venueName: input.venueName,
+          venueId,
+          venueName,
           artists: [{ id: input.artistId, name: input.artistName, role: input.role }],
           tags: [],
           entryType: 'free',
@@ -490,7 +503,15 @@ export const eventRouter = createTRPCRouter({
         ctx.user.id,
         { status: 'submitted' }
       );
-      await Event.approveEvent(draft.id, ctx.user.id);
+      // If approval fails the draft is left submitted, and it would surface in
+      // the moderation queue as if someone had submitted it. Soft-delete it so
+      // a failure leaves no trace, then surface the error.
+      try {
+        await Event.approveEvent(draft.id, ctx.user.id);
+      } catch (error) {
+        await Event.softDeleteEvent(draft.id).catch(() => {});
+        throw error;
+      }
       if (input.featured) {
         await EventArtist.setEventArtistFeatured(draft.id, input.artistId, true);
       }
