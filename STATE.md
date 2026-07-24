@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 5, slice 2 — the Relationships step of the moderator wizard: the guru timeline modal and the group-membership modal, both using `SearchSelect` against `/api/search/artist-live` and routing create through `findOrCreateArtist`/`addMember`.
+**Next step:** phase 5 prefill slice — thread an artist pre-tag into the event-creation routes (5.4d), so the performances section can hand off a missing event to the existing pipeline. Then phase 6 (presentation). **Owed first:** a DHH review of the Recognition slice once agent budget resets.
 
 ### Phase status
 
@@ -32,7 +32,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | wave 1 | Live artist/award search endpoints; `/artists/new` flat form; `EventArtist.isFeatured` setter + procedures | done |
 | shell | `/artists/:id/edit` role branch: moderator wizard (Identity, About, Review) writing Artist directly; editor keeps draft form. Reviewed. | done |
 | relationships | Guru timeline + group-membership section. Reviewed. | done |
-| recognition | Awards modal + notable-performances modal (uses the isFeatured setter) + gallery modal | not started |
+| recognition | Awards + notable-performances + gallery sections. Built directly (agent budget exhausted). **DHH review owed.** | done |
 | prefill | Artist pre-tag threaded into the event-creation routes (5.4d) | not started |
 
 Each modal writes to one sub-collection through procedures already built: gurus → `artist.update`, membership → `artist.addMember`/`removeMember`, awards → `artist.addAward`/`removeAward`, performances → `artist.setFeaturedPerformance`, gallery → `artist.addPhoto`/`updatePhoto`/`deletePhoto`. `SearchSelect` (with `createNew`) is the picker; the live endpoints back it.
@@ -53,6 +53,13 @@ ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. A
 **Production, repaired 2026-07-22:** 30,198 items scanned, 15 phantom rows found. Nine attributes repaired from source rather than by replaying stale phantom values — eight `venueName`s (seven events were displaying a street address instead of "Sri Siddi Ganapathi Temple") and one `rsvpCount` recounted from the actual RSVP rows. All 15 phantoms deleted; a re-scan reports zero. `pnpm cli repair-uppercase-keys` re-runs the scan, dry by default.
 
 Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
+
+### Deferred / owed from the phase 5 recognition slice
+
+- **DHH review not yet run** — the build agent died on the session limit, so I built the slice directly and self-reviewed the load-bearing parts (route auth, the performance toggle round-trip, the backward-compatible ImageUpload change). Run the reviewer over `f7e16f2c9..HEAD` (the award procedure + the slice) when budget resets.
+- **Per-performance featureRank input was dropped** for reliability — featuring gives an unranked highlight, which `getFeaturedEventsByArtist` orders most-recent-first. The setter and schema support a rank; the UI just doesn't expose it yet. Add a rank input when polishing.
+- **Awards use a plain name input, not a picker.** `award.resolveOrCreate` matches by exact name so it is functionally find-or-create, but a `SearchSelect` over `/api/search/award-live` would aid discovery. Minor.
+- **Gallery reorder is a future item** — photos store an `order` and `updatePhoto` accepts it, but the UI has no reorder control yet (add/delete only).
 
 ### Deferred from the phase 5 relationships review
 
