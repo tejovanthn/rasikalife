@@ -7,6 +7,10 @@ interface ImageUploadProps {
   currentUrl?: string;
   entityType: 'venue' | 'organiser' | 'artist';
   label?: string;
+  /** Called after a successful upload. Lets a caller that submits via a
+   *  fetcher (rather than the surrounding form) read the result, since the
+   *  hidden inputs only help a native form submit. */
+  onUploaded?: (result: { imageUrl: string; uploadId: string }) => void;
 }
 
 export function ImageUpload({
@@ -15,6 +19,7 @@ export function ImageUpload({
   currentUrl,
   entityType,
   label = 'Photo',
+  onUploaded,
 }: ImageUploadProps) {
   const [imageUrl, setImageUrl] = useState(currentUrl || '');
   const [uploadId, setUploadId] = useState('');
@@ -67,6 +72,7 @@ export function ImageUpload({
 
       setImageUrl(finalImageUrl);
       setUploadId(newUploadId);
+      onUploaded?.({ imageUrl: finalImageUrl, uploadId: newUploadId });
     } catch (err) {
       setError('Failed to upload image. Please try again.');
       setPreview(currentUrl || '');

@@ -91,7 +91,26 @@ export async function loader({
       ? await serverClient.artist.listMembers.query({ groupId: artist.id })
       : [];
 
-  return data({ artist, user, activeEdit, isModerator, members });
+  // The Recognition step's three sections seed from these. Only the moderator
+  // wizard renders them, so the editor path pays for none of it.
+  const [awards, performances, photos] = isModerator
+    ? await Promise.all([
+        serverClient.artist.listAwards.query({ artistId: artist.id }),
+        serverClient.event.byArtist.query({ artistId: artist.id, limit: 50 }),
+        serverClient.artist.listPhotos.query({ artistId: artist.id }),
+      ])
+    : [[], { items: [] }, { items: [] }];
+
+  return data({
+    artist,
+    user,
+    activeEdit,
+    isModerator,
+    members,
+    awards,
+    performances: performances.items,
+    photos: photos.items,
+  });
 }
 
 export async function action({
@@ -669,8 +688,8 @@ function EditorArtistForm() {
   );
 }
 
-const STEP_LABELS = ['Identity', 'About', 'Relationships', 'Review'];
-const TOTAL_STEPS = 4;
+const STEP_LABELS = ['Identity', 'About', 'Relationships', 'Recognition', 'Review'];
+const TOTAL_STEPS = 5;
 
 type GuruRow = {
   id?: string;
@@ -681,7 +700,7 @@ type GuruRow = {
 };
 
 function ModeratorArtistWizard() {
-  const { artist, members } = useLoaderData<typeof loader>();
+  const { artist, members, awards, performances, photos } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const artistUrl = generateArtistUrl(artist.name, artist.id);
@@ -1048,8 +1067,42 @@ function ModeratorArtistWizard() {
               </div>
             </div>
 
-            {/* Step 3 — Review */}
-            <div className={step === 3 ? '' : 'hidden'}>
+            {/* Step 3 — Recognition */}
+            <div
+              ref={el => {
+                stepRefs.current[3] = el;
+              }}
+              className={step === 3 ? '' : 'hidden'}
+            >
+              <div className="space-y-8">
+                <p className="text-xs text-muted-foreground">
+                  Awards, performances and photos save immediately — like membership, they do not
+                  wait for Publish.
+                </p>
+
+                <div className="space-y-3">
+                  <Label>Awards</Label>
+                  <AwardsEditor
+                    artistId={artist.id}
+                    artistName={artist.name}
+                    initialAwards={awards}
+                  />
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Notable performances</Label>
+                  <PerformancesEditor artistId={artist.id} initialPerformances={performances} />
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Gallery</Label>
+                  <GalleryEditor artistId={artist.id} initialPhotos={photos} />
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4 — Review */}
+            <div className={step === 4 ? '' : 'hidden'}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   This writes straight to the artist's profile — there is no draft or approval step.
@@ -1339,6 +1392,347 @@ function MembershipEditor({
           );
         }}
       />
+    </div>
+  );
+}
+
+type Award = {
+  artistId: string;
+  awardId: string;
+  awardName: string;
+  year?: number;
+  category?: string;
+  notes?: string;
+};
+
+type AddAwardResult = { success: true; award: Award } | { error: string };
+type RemoveAwardResult = { success: true; awardId: string } | { error: string };
+
+// Awards land immediately in the ArtistAward junction. The add is a small
+// staged form (name plus optional year/category/notes) rather than a
+// fire-on-select picker, because the extra fields have to be gathered before
+// the write. The award route resolves the typed name to a real award.
+function AwardsEditor({
+  artistId,
+  artistName,
+  initialAwards,
+}: { artistId: string; artistName: string; initialAwards: Award[] }) {
+  const [awards, setAwards] = useState<Award[]>(initialAwards);
+  const [awardName, setAwardName] = useState('');
+  const [year, setYear] = useState('');
+  const [category, setCategory] = useState('');
+  const [notes, setNotes] = useState('');
+  const addFetcher = useFetcher<AddAwardResult>();
+  const removeFetcher = useFetcher<RemoveAwardResult>();
+  const addIsIdle = addFetcher.state === 'idle';
+
+  useEffect(() => {
+    if (!addFetcher.data) return;
+    if ('error' in addFetcher.data) {
+      toast.error(addFetcher.data.error);
+      return;
+    }
+    const { award } = addFetcher.data;
+    setAwards(prev => (prev.some(a => a.awardId === award.awardId) ? prev : [...prev, award]));
+    setAwardName('');
+    setYear('');
+    setCategory('');
+    setNotes('');
+    toast.success(`${award.awardName} added`);
+  }, [addFetcher.data]);
+
+  useEffect(() => {
+    if (!removeFetcher.data) return;
+    if ('error' in removeFetcher.data) {
+      toast.error(removeFetcher.data.error);
+      return;
+    }
+    const { awardId } = removeFetcher.data;
+    setAwards(prev => prev.filter(a => a.awardId !== awardId));
+    toast.success('Award removed');
+  }, [removeFetcher.data]);
+
+  return (
+    <div className="space-y-3">
+      {awards.length === 0 && <p className="text-xs text-muted-foreground">No awards yet.</p>}
+      {awards.map(award => (
+        <div
+          key={award.awardId}
+          className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+        >
+          <span>
+            {award.awardName}
+            {award.year ? ` (${award.year})` : ''}
+            {award.category ? ` — ${award.category}` : ''}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={removeFetcher.state !== 'idle'}
+            onClick={() =>
+              removeFetcher.submit(
+                { intent: 'remove', artistId, awardId: award.awardId },
+                { method: 'post', action: '/api/artist/award' }
+              )
+            }
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Input
+            placeholder="Award name"
+            value={awardName}
+            onChange={e => setAwardName(e.target.value)}
+          />
+          <Input
+            type="number"
+            min={1900}
+            max={2100}
+            placeholder="Year"
+            value={year}
+            onChange={e => setYear(e.target.value)}
+          />
+          <Input
+            placeholder="Category (optional)"
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+          />
+          <Input
+            placeholder="Notes (optional)"
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!addIsIdle || !awardName.trim()}
+          onClick={() =>
+            addFetcher.submit(
+              { intent: 'add', artistId, artistName, awardName, year, category, notes },
+              { method: 'post', action: '/api/artist/award' }
+            )
+          }
+        >
+          <Plus className="h-4 w-4" />
+          Add award
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+type Performance = {
+  eventId: string;
+  eventTitle: string;
+  eventStartDateTime: string;
+  role?: string;
+  isFeatured?: boolean;
+  featureRank?: number;
+};
+
+type PerformanceResult = { success: true; performance: Performance } | { error: string };
+
+// Toggles the per-artist featured flag on events the artist already performed
+// at. It never creates or links events — a missing event is handled by the
+// separate event-creation flow. Writes land immediately.
+function PerformancesEditor({
+  artistId,
+  initialPerformances,
+}: { artistId: string; initialPerformances: Performance[] }) {
+  const [performances, setPerformances] = useState<Performance[]>(initialPerformances);
+  const featureFetcher = useFetcher<PerformanceResult>();
+
+  useEffect(() => {
+    if (!featureFetcher.data) return;
+    if ('error' in featureFetcher.data) {
+      toast.error(featureFetcher.data.error);
+      return;
+    }
+    const { performance } = featureFetcher.data;
+    setPerformances(prev =>
+      prev.map(p =>
+        p.eventId === performance.eventId
+          ? { ...p, isFeatured: performance.isFeatured, featureRank: performance.featureRank }
+          : p
+      )
+    );
+  }, [featureFetcher.data]);
+
+  if (performances.length === 0) {
+    return <p className="text-xs text-muted-foreground">This artist has no events yet.</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {performances.map(performance => (
+        <div
+          key={performance.eventId}
+          className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+        >
+          <div className="min-w-0">
+            <div className="truncate">{performance.eventTitle}</div>
+            <div className="text-xs text-muted-foreground">
+              {performance.eventStartDateTime.slice(0, 10)}
+              {performance.role ? ` — ${performance.role}` : ''}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant={performance.isFeatured ? 'default' : 'outline'}
+            size="sm"
+            disabled={featureFetcher.state !== 'idle'}
+            onClick={() =>
+              featureFetcher.submit(
+                {
+                  eventId: performance.eventId,
+                  artistId,
+                  featured: performance.isFeatured ? 'false' : 'true',
+                },
+                { method: 'post', action: '/api/artist/performance' }
+              )
+            }
+          >
+            {performance.isFeatured ? 'Featured' : 'Feature'}
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type Photo = {
+  id: string;
+  imageUrl: string;
+  caption?: string;
+  credit?: string;
+  order: number;
+  featured: boolean;
+};
+
+type AddPhotoResult = { success: true; photo: Photo } | { error: string };
+type DeletePhotoResult = { success: true; id: string } | { error: string };
+
+// Gallery photos are their own ArtistPhoto rows, added/deleted immediately.
+// ImageUpload posts the bytes to S3 and hands back a CDN url via onUploaded;
+// this stores that url plus optional caption/credit as a row.
+function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialPhotos: Photo[] }) {
+  const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
+  const [pending, setPending] = useState<{ imageUrl: string; uploadId: string } | null>(null);
+  const [caption, setCaption] = useState('');
+  const [credit, setCredit] = useState('');
+  const addFetcher = useFetcher<AddPhotoResult>();
+  const deleteFetcher = useFetcher<DeletePhotoResult>();
+  const addIsIdle = addFetcher.state === 'idle';
+
+  useEffect(() => {
+    if (!addFetcher.data) return;
+    if ('error' in addFetcher.data) {
+      toast.error(addFetcher.data.error);
+      return;
+    }
+    const { photo } = addFetcher.data;
+    setPhotos(prev => (prev.some(p => p.id === photo.id) ? prev : [...prev, photo]));
+    setPending(null);
+    setCaption('');
+    setCredit('');
+    toast.success('Photo added');
+  }, [addFetcher.data]);
+
+  useEffect(() => {
+    if (!deleteFetcher.data) return;
+    if ('error' in deleteFetcher.data) {
+      toast.error(deleteFetcher.data.error);
+      return;
+    }
+    const { id } = deleteFetcher.data;
+    setPhotos(prev => prev.filter(p => p.id !== id));
+    toast.success('Photo removed');
+  }, [deleteFetcher.data]);
+
+  return (
+    <div className="space-y-3">
+      {photos.length === 0 && <p className="text-xs text-muted-foreground">No photos yet.</p>}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        {photos.map(photo => (
+          <div key={photo.id} className="space-y-1 rounded-md border p-2">
+            <img
+              src={photo.imageUrl}
+              alt={photo.caption ?? ''}
+              className="h-24 w-full rounded object-cover"
+            />
+            {photo.caption && <div className="truncate text-xs">{photo.caption}</div>}
+            {photo.credit && (
+              <div className="truncate text-xs text-muted-foreground">{photo.credit}</div>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={deleteFetcher.state !== 'idle'}
+              onClick={() =>
+                deleteFetcher.submit(
+                  { intent: 'delete', artistId, id: photo.id },
+                  { method: 'post', action: '/api/artist/photo' }
+                )
+              }
+            >
+              <X className="h-4 w-4" />
+              Remove
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <ImageUpload
+          urlFieldName="galleryPhotoUrl"
+          uploadIdFieldName="galleryPhotoUploadId"
+          entityType="artist"
+          label="Add a photo"
+          onUploaded={setPending}
+        />
+        {pending && (
+          <>
+            <Input
+              placeholder="Caption (optional)"
+              value={caption}
+              onChange={e => setCaption(e.target.value)}
+            />
+            <Input
+              placeholder="Credit (optional)"
+              value={credit}
+              onChange={e => setCredit(e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!addIsIdle}
+              onClick={() =>
+                addFetcher.submit(
+                  {
+                    intent: 'add',
+                    artistId,
+                    imageUrl: pending.imageUrl,
+                    uploadId: pending.uploadId,
+                    caption,
+                    credit,
+                  },
+                  { method: 'post', action: '/api/artist/photo' }
+                )
+              }
+            >
+              <Plus className="h-4 w-4" />
+              Add photo
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

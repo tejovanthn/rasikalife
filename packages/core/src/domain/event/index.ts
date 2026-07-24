@@ -496,6 +496,10 @@ export async function listEventsByArtist(
     artistName: string;
     artistTitle?: string;
     role?: string;
+    // The query returns full junction rows, so these carry through — the
+    // moderator wizard's performances section toggles them.
+    isFeatured?: boolean;
+    featureRank?: number;
   }>;
   nextToken?: string;
   hasMore: boolean;
