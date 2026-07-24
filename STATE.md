@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 4 — the collaborator engine, plus the `rebuild-collaborators` backfill sweep (4.5.1 in the plan) without which the feature ships empty.
+**Next step:** phase 5, slice 2 — the Relationships step of the moderator wizard: the guru timeline modal and the group-membership modal, both using `SearchSelect` against `/api/search/artist-live` and routing create through `findOrCreateArtist`/`addMember`.
 
 ### Phase status
 
@@ -18,12 +18,24 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | done |
 | 2 | `ArtistMembership` junction | done |
 | 3 | `ArtistPhoto` gallery entity | done |
-| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | next |
-| 5 | Create/edit wizard (moderator-only, direct write) | not started |
+| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | done |
+| 5 | Create/edit wizard (moderator-only, direct write) | in progress |
 | 6 | Presentation redesign + JSON-LD + gallery subroute | not started |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
 | 8 | Claims + verification queue | not started |
 | 9 | Polish | not started |
+
+### Phase 5 slices (it is large, so it is built in vertical slices)
+
+| Slice | What | Status |
+|---|---|---|
+| wave 1 | Live artist/award search endpoints; `/artists/new` flat form; `EventArtist.isFeatured` setter + procedures | done |
+| shell | `/artists/:id/edit` role branch: moderator gets a stepped wizard (Identity, About, Review) writing Artist directly; editor keeps today's draft form | in progress |
+| relationships | Guru timeline modal + group-membership modal (the Relationships step) | not started |
+| recognition | Awards modal + notable-performances modal (uses the isFeatured setter) + gallery modal | not started |
+| prefill | Artist pre-tag threaded into the event-creation routes (5.4d) | not started |
+
+Each modal writes to one sub-collection through procedures already built: gurus → `artist.update`, membership → `artist.addMember`/`removeMember`, awards → `artist.addAward`/`removeAward`, performances → `artist.setFeaturedPerformance`, gallery → `artist.addPhoto`/`updatePhoto`/`deletePhoto`. `SearchSelect` (with `createNew`) is the picker; the live endpoints back it.
 
 ### What phase 0 landed
 
