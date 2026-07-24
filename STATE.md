@@ -30,7 +30,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | Slice | What | Status |
 |---|---|---|
 | wave 1 | Live artist/award search endpoints; `/artists/new` flat form; `EventArtist.isFeatured` setter + procedures | done |
-| shell | `/artists/:id/edit` role branch: moderator gets a stepped wizard (Identity, About, Review) writing Artist directly; editor keeps today's draft form | in progress |
+| shell | `/artists/:id/edit` role branch: moderator wizard (Identity, About, Review) writing Artist directly; editor keeps draft form. Reviewed. | done |
 | relationships | Guru timeline modal + group-membership modal (the Relationships step) | not started |
 | recognition | Awards modal + notable-performances modal (uses the isFeatured setter) + gallery modal | not started |
 | prefill | Artist pre-tag threaded into the event-creation routes (5.4d) | not started |
@@ -53,6 +53,12 @@ ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. A
 **Production, repaired 2026-07-22:** 30,198 items scanned, 15 phantom rows found. Nine attributes repaired from source rather than by replaying stale phantom values — eight `venueName`s (seven events were displaying a street address instead of "Sri Siddi Ganapathi Temple") and one `rsvpCount` recounted from the actual RSVP rows. All 15 phantoms deleted; a re-scan reports zero. `pnpm cli repair-uppercase-keys` re-runs the scan, dry by default.
 
 Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
+
+### Deferred from the phase 5 shell review
+
+- **The venue and organiser edit wizards share the hidden-step validity bug** the artist wizard just fixed: a `required`/`min`/`max`/`type=url` field on a `display:none` step blocks submission with a non-focusable control and no visible error. `venues.$venueid_.edit.tsx` and `organisers.$organiserid_.edit.tsx` want the same step-advance validity gate. Out of scope for the artist slice; worth a small dedicated pass.
+- **The moderator wizard cannot clear a field** — blank preserves, by deliberate choice, so there is no way to remove a biography or a specialisation once set. Consistent and predictable now, but if moderators need to clear fields, the fix is dirty-tracking (send only changed fields, with an explicit clear affordance) rather than blank-means-clear.
+- `EditorArtistForm` destructures `user` and never uses it — a verbatim carry-over from the original, not introduced here.
 
 ### Deferred from the phase 4 code review
 
