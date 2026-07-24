@@ -35,6 +35,8 @@ export const action: ActionFunction = async ({ request }) => {
     }
     const caption = ((formData.get('caption') as string) || '').trim() || undefined;
     const credit = ((formData.get('credit') as string) || '').trim() || undefined;
+    const orderRaw = ((formData.get('order') as string) || '').trim();
+    const order = orderRaw ? Number.parseInt(orderRaw, 10) || undefined : undefined;
 
     try {
       const photo = await serverClient.artist.addPhoto.mutate({
@@ -43,6 +45,7 @@ export const action: ActionFunction = async ({ request }) => {
         uploadId,
         caption,
         credit,
+        order,
       });
       return data({ success: true, photo });
     } catch (error) {

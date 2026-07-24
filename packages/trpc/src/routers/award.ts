@@ -11,7 +11,7 @@ export const awardRouter = createTRPCRouter({
     .mutation(async ({ input }) => {
       const name = input.name.trim();
       const existing = await Award.getAwardByName(name);
-      if (existing && !existing.deletedAt) {
+      if (existing) {
         return { id: existing.id, name: existing.name, created: false };
       }
       const created = await Award.createAward({ name });

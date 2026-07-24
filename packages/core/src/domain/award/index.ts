@@ -38,7 +38,10 @@ export async function getAward(id: string): Promise<Award | null> {
 
 export async function getAwardByName(name: string): Promise<Award | null> {
   const result = await AwardEntity.query.byName({ name }).go();
-  return result.data?.[0] || null;
+  // Skip soft-deleted rows, like getArtistByName. Returning data[0] blindly let
+  // resolveOrCreate see a tombstone, decide the name was taken by a deleted
+  // award, and mint a duplicate active one beside the real match.
+  return result.data?.find(award => !award.deletedAt) || null;
 }
 
 export async function updateAward(id: string, input: UpdateAwardInput): Promise<Award> {

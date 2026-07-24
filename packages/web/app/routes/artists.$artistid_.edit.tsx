@@ -1722,6 +1722,9 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                     uploadId: pending.uploadId,
                     caption,
                     credit,
+                    // Append after the current last photo so ordering is stable
+                    // on reload rather than every photo sharing order 0.
+                    order: String(photos.length),
                   },
                   { method: 'post', action: '/api/artist/photo' }
                 )
