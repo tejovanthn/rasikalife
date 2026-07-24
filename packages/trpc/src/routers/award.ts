@@ -1,8 +1,23 @@
 import { ArtistAward, Award } from '@rasika/core';
 import { z } from 'zod';
-import { createTRPCRouter, editorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
 export const awardRouter = createTRPCRouter({
+  // The award picker's create-path: resolve a typed name to an award, creating
+  // one only on a miss. Awards are a small curated set with no near-duplicate
+  // problem, so an exact-name lookup is enough — no fuzzy dedup like artists.
+  resolveOrCreate: moderatorProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const name = input.name.trim();
+      const existing = await Award.getAwardByName(name);
+      if (existing && !existing.deletedAt) {
+        return { id: existing.id, name: existing.name, created: false };
+      }
+      const created = await Award.createAward({ name });
+      return { id: created.id, name: created.name, created: true };
+    }),
+
   list: publicProcedure.query(() => Award.listAwards()),
 
   get: publicProcedure
