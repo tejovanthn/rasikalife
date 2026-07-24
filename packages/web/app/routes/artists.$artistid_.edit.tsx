@@ -1,13 +1,25 @@
+import * as Auth from '@rasika/core/auth';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
 import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
-import { ArrowLeft, Loader2, Pencil, Plus, Save, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Pencil,
+  Plus,
+  Save,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
+import { ImageUpload } from '~/components/ImageUpload';
 import { EditDisclaimer } from '~/components/shared';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -60,14 +72,16 @@ export async function loader({
     return redirect(`/my-edits?editId=${activeEdit.id}`);
   }
 
-  return data({ artist, user, activeEdit });
+  const isModerator = user.role === Auth.ROLE.MODERATOR || user.role === Auth.ROLE.ADMIN;
+
+  return data({ artist, user, activeEdit, isModerator });
 }
 
 export async function action({
   request,
   params,
 }: { request: Request; params: { artistid?: string } }) {
-  await requireUser(request);
+  const user = await requireUser(request);
 
   const { artistid } = params;
   if (!artistid) {
@@ -89,6 +103,76 @@ export async function action({
 
   if (!artist) {
     return data({ error: 'Artist not found' }, { status: 404 });
+  }
+
+  // Moderators write the core fields straight through, no draft. Which
+  // branch runs is decided by the caller's real role, never by the hidden
+  // `formPath` field alone — that field only says which UI submitted, so a
+  // crafted request from an editor still falls through to the draft path
+  // below instead of reaching the direct write.
+  if (formData.get('formPath') === 'moderator') {
+    const isModerator = user.role === Auth.ROLE.MODERATOR || user.role === Auth.ROLE.ADMIN;
+    if (!isModerator) {
+      return data({ error: 'Only moderators can publish changes directly.' }, { status: 403 });
+    }
+
+    const name = ((formData.get('name') as string) || '').trim();
+    if (!name) {
+      return data({ error: 'Name is required' }, { status: 400 });
+    }
+    const title = ((formData.get('title') as string) || '').trim() || undefined;
+    const isGroup = formData.get('isGroup') === 'on';
+    const instrument = ((formData.get('instrument') as string) || '').trim() || undefined;
+    const city = ((formData.get('city') as string) || '').trim() || undefined;
+    const photoUrl = ((formData.get('photoUrl') as string) || '').trim() || undefined;
+    const photoUploadId = ((formData.get('photoUploadId') as string) || '').trim() || undefined;
+    const biography = ((formData.get('biography') as string) || '').trim() || undefined;
+    const specialisationsRaw = ((formData.get('specialisations') as string) || '').trim();
+    const specialisations = specialisationsRaw
+      ? specialisationsRaw
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+      : [];
+    const birthYearRaw = ((formData.get('birthYear') as string) || '').trim();
+    const birthYear = birthYearRaw ? Number.parseInt(birthYearRaw, 10) || undefined : undefined;
+    const birthPlace = ((formData.get('birthPlace') as string) || '').trim() || undefined;
+    const practiceStartYearRaw = ((formData.get('practiceStartYear') as string) || '').trim();
+    const practiceStartYear = practiceStartYearRaw
+      ? Number.parseInt(practiceStartYearRaw, 10) || undefined
+      : undefined;
+    const debutYearRaw = ((formData.get('debutYear') as string) || '').trim();
+    const debutYear = debutYearRaw ? Number.parseInt(debutYearRaw, 10) || undefined : undefined;
+    const activeYears = ((formData.get('activeYears') as string) || '').trim() || undefined;
+    const website = ((formData.get('website') as string) || '').trim() || undefined;
+
+    try {
+      await serverClient.artist.update.mutate({
+        id: slugId,
+        data: {
+          name,
+          title,
+          isGroup,
+          instrument,
+          city,
+          photoUrl,
+          photoUploadId,
+          biography,
+          specialisations,
+          birthYear,
+          birthPlace,
+          practiceStartYear,
+          debutYear,
+          activeYears,
+          website,
+        },
+      });
+
+      return data({ success: true, redirectUrl: generateArtistUrl(name, slugId) });
+    } catch (error) {
+      console.error('Failed to update artist:', error);
+      return data({ error: 'Failed to update artist. Please try again.' }, { status: 500 });
+    }
   }
 
   const name = (formData.get('name') as string).trim();
@@ -199,6 +283,16 @@ export async function action({
 }
 
 export default function EditArtist() {
+  const { isModerator } = useLoaderData<typeof loader>();
+
+  if (isModerator) {
+    return <ModeratorArtistWizard />;
+  }
+
+  return <EditorArtistForm />;
+}
+
+function EditorArtistForm() {
   const { artist, user, activeEdit } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -521,6 +615,348 @@ export default function EditArtist() {
 
         <EditDisclaimer />
       </div>
+    </div>
+  );
+}
+
+const STEP_LABELS = ['Identity', 'About', 'Review'];
+const TOTAL_STEPS = 3;
+
+function ModeratorArtistWizard() {
+  const { artist } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+  const artistUrl = generateArtistUrl(artist.name, artist.id);
+
+  const [step, setStep] = useState(0);
+
+  const [form, setForm] = useState({
+    name: artist.name,
+    title: (artist.title as string | undefined) ?? '',
+    isGroup: (artist.isGroup as boolean | undefined) ?? false,
+    instrument: (artist.instrument as string | undefined) ?? '',
+    city: (artist.city as string | undefined) ?? '',
+    biography: (artist.biography as string | undefined) ?? '',
+    specialisations: ((artist.specialisations as string[] | undefined) ?? []).join(', '),
+    birthYear: (artist.birthYear as number | undefined)?.toString() ?? '',
+    birthPlace: (artist.birthPlace as string | undefined) ?? '',
+    practiceStartYear: (artist.practiceStartYear as number | undefined)?.toString() ?? '',
+    debutYear: (artist.debutYear as number | undefined)?.toString() ?? '',
+    activeYears: (artist.activeYears as string | undefined) ?? '',
+    website: (artist.website as string | undefined) ?? '',
+  });
+
+  const isSubmitting = navigation.state === 'submitting';
+
+  useEffect(() => {
+    if (
+      actionData &&
+      'success' in actionData &&
+      actionData.success &&
+      'redirectUrl' in actionData
+    ) {
+      toast.success('Changes published');
+      window.location.href = actionData.redirectUrl;
+    }
+  }, [actionData]);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <Breadcrumb
+        items={[
+          { label: 'Artists', path: '/artists' },
+          { label: artist.name, path: artistUrl },
+          { label: 'Edit', path: '#' },
+        ]}
+      />
+
+      <div className="mt-8">
+        <div className="flex items-center gap-4 mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Edit Artist</h1>
+        </div>
+
+        {/* Progress bar */}
+        <div className="flex gap-1 mb-2">
+          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? 'bg-primary' : 'bg-muted'}`}
+            />
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mb-6">
+          Step {step + 1} of {TOTAL_STEPS}: {STEP_LABELS[step]}
+        </p>
+
+        <div className="bg-card rounded-lg shadow-sm border p-6">
+          <Form method="post" className="space-y-6">
+            <input type="hidden" name="formPath" value="moderator" />
+
+            {/* Step 0 — Identity */}
+            <div className={step === 0 ? '' : 'hidden'}>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name *</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title / Honorific</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    type="text"
+                    placeholder="e.g. Dr., Vidushi, Pandit"
+                    value={form.title}
+                    onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  />
+                </div>
+
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="isGroup"
+                    checked={form.isGroup}
+                    onChange={e => setForm(f => ({ ...f, isGroup: e.target.checked }))}
+                    className="mt-1 h-4 w-4 rounded border-input"
+                  />
+                  <span className="text-sm">
+                    This is a group, not an individual — e.g. Saralaya Sisters
+                  </span>
+                </label>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="instrument">Instrument</Label>
+                    <Input
+                      id="instrument"
+                      name="instrument"
+                      type="text"
+                      placeholder="e.g. Vocal, Violin, Mridangam"
+                      value={form.instrument}
+                      onChange={e => setForm(f => ({ ...f, instrument: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      type="text"
+                      value={form.city}
+                      onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <ImageUpload
+                  urlFieldName="photoUrl"
+                  uploadIdFieldName="photoUploadId"
+                  currentUrl={(artist.photoUrl as string | undefined) ?? ''}
+                  entityType="artist"
+                  label="Artist Photo"
+                />
+              </div>
+            </div>
+
+            {/* Step 1 — About */}
+            <div className={step === 1 ? '' : 'hidden'}>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="biography">Biography</Label>
+                  <Textarea
+                    id="biography"
+                    name="biography"
+                    rows={6}
+                    placeholder="About the artist..."
+                    value={form.biography}
+                    onChange={e => setForm(f => ({ ...f, biography: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="specialisations">Specialisations</Label>
+                  <Input
+                    id="specialisations"
+                    name="specialisations"
+                    type="text"
+                    placeholder="Comma-separated, e.g. Vocal, Veena"
+                    value={form.specialisations}
+                    onChange={e => setForm(f => ({ ...f, specialisations: e.target.value }))}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="birthYear">Birth Year</Label>
+                    <Input
+                      id="birthYear"
+                      name="birthYear"
+                      type="number"
+                      min={1800}
+                      max={2100}
+                      placeholder="e.g. 1950"
+                      value={form.birthYear}
+                      onChange={e => setForm(f => ({ ...f, birthYear: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="birthPlace">Birth Place</Label>
+                    <Input
+                      id="birthPlace"
+                      name="birthPlace"
+                      type="text"
+                      placeholder="e.g. Chennai, Tamil Nadu"
+                      value={form.birthPlace}
+                      onChange={e => setForm(f => ({ ...f, birthPlace: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="practiceStartYear">Practice Start Year</Label>
+                    <Input
+                      id="practiceStartYear"
+                      name="practiceStartYear"
+                      type="number"
+                      min={1800}
+                      max={2100}
+                      value={form.practiceStartYear}
+                      onChange={e => setForm(f => ({ ...f, practiceStartYear: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="debutYear">Debut Year</Label>
+                    <Input
+                      id="debutYear"
+                      name="debutYear"
+                      type="number"
+                      min={1800}
+                      max={2100}
+                      value={form.debutYear}
+                      onChange={e => setForm(f => ({ ...f, debutYear: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="activeYears">Active Years</Label>
+                  <Input
+                    id="activeYears"
+                    name="activeYears"
+                    type="text"
+                    placeholder="e.g. 1970–present"
+                    value={form.activeYears}
+                    onChange={e => setForm(f => ({ ...f, activeYears: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    name="website"
+                    type="url"
+                    placeholder="https://..."
+                    value={form.website}
+                    onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Step 2 — Review */}
+            <div className={step === 2 ? '' : 'hidden'}>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  This writes straight to the artist's profile — there is no draft or approval step.
+                  Review the values below, then publish.
+                </p>
+
+                <div className="divide-y divide-border rounded-md border text-sm">
+                  <SummaryRow label="Name" value={form.name} />
+                  <SummaryRow label="Title" value={form.title} />
+                  <SummaryRow label="Group" value={form.isGroup ? 'Yes' : 'No'} />
+                  <SummaryRow label="Instrument" value={form.instrument} />
+                  <SummaryRow label="City" value={form.city} />
+                  <SummaryRow label="Biography" value={form.biography} />
+                  <SummaryRow label="Specialisations" value={form.specialisations} />
+                  <SummaryRow label="Birth Year" value={form.birthYear} />
+                  <SummaryRow label="Birth Place" value={form.birthPlace} />
+                  <SummaryRow label="Practice Start Year" value={form.practiceStartYear} />
+                  <SummaryRow label="Debut Year" value={form.debutYear} />
+                  <SummaryRow label="Active Years" value={form.activeYears} />
+                  <SummaryRow label="Website" value={form.website} />
+                </div>
+
+                {actionData && 'error' in actionData && (
+                  <p className="text-sm text-destructive">{actionData.error as string}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between pt-4 border-t">
+              <div>
+                {step === 0 ? (
+                  <a
+                    href={artistUrl}
+                    className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground flex items-center gap-2 transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Cancel
+                  </a>
+                ) : (
+                  <Button type="button" variant="ghost" onClick={() => setStep(s => s - 1)}>
+                    <ChevronLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {step < TOTAL_STEPS - 1 ? (
+                  <Button type="button" variant="default" onClick={() => setStep(s => s + 1)}>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button variant="default" type="submit">
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Publishing...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 h-4 w-4" />
+                        Publish changes
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-3 py-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-right break-words">{value || '—'}</span>
     </div>
   );
 }
