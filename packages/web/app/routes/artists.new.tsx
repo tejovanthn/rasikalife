@@ -125,11 +125,7 @@ export default function NewArtist() {
             </div>
 
             <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                name="isGroup"
-                className="mt-1 h-4 w-4 rounded border-input"
-              />
+              <input type="checkbox" name="isGroup" className="mt-1 h-4 w-4 rounded border-input" />
               <span className="text-sm">
                 This is a group, not an individual — e.g. Saralaya Sisters or Ganesh Kumaresh.
               </span>
@@ -239,8 +235,7 @@ export default function NewArtist() {
             />
 
             <p className="text-sm text-muted-foreground">
-              Gurus, social links and collaborators are added later, from the artist's edit
-              screen.
+              Gurus, social links and collaborators are added later, from the artist's edit screen.
             </p>
 
             {actionData && 'error' in actionData && (

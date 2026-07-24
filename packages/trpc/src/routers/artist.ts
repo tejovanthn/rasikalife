@@ -48,6 +48,51 @@ export const artistRouter = createTRPCRouter({
     )
     .query(({ input }) => Artist.listArtists(input)),
 
+  // Live DB search for the moderator find-or-create pickers (SearchSelect).
+  // Unlike search.searchArtists (Fuse index in S3), this hits the table
+  // directly, so an artist created a moment ago in one modal is findable in
+  // the next one — the Fuse index only refreshes on a 5-minute throttle.
+  searchLive: publicProcedure
+    .input(z.object({ query: z.string(), limit: z.number().int().min(1).max(50).optional() }))
+    .query(async ({ input }) => {
+      const query = input.query.trim();
+      if (!query) return [];
+      const limit = input.limit ?? 10;
+
+      // Cheap exact hit on the byName GSI first. getArtistByName already
+      // excludes soft-deleted rows and follows mergedIntoId to the surviving
+      // record, so nothing further to filter here.
+      const exact = await Artist.getArtistByName(query);
+
+      // Broaden with the same fuzzy scorer dedup.ts uses to decide whether two
+      // names refer to the same artist, rather than a second similarity
+      // function — that module is the single source of truth for artist name
+      // matching, with carefully-tuned threshold behaviour we don't want to
+      // fork.
+      //
+      // listAllArtistsForMatching pages the *entire* artist table into memory
+      // (see the scaling-limit note on that function in dedup.ts). Acceptable
+      // for a moderator-only typeahead at today's row counts, not free — it
+      // will need the same indexed-attribute fix dedup.ts describes if the
+      // table grows enough for either call site to feel it.
+      const candidates = await Artist.listAllArtistsForMatching();
+      const ranked = candidates
+        .filter(candidate => candidate.id !== exact?.id)
+        .map(candidate => {
+          const names = [candidate.name, ...(candidate.alternateNames ?? [])];
+          const score = Math.max(...names.map(name => Artist.artistNameSimilarity(query, name)));
+          return { candidate, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .map(({ candidate }) => candidate);
+
+      const results = exact ? [exact, ...ranked] : ranked;
+      return results
+        .slice(0, limit)
+        .map(artist => ({ id: artist.id, name: artist.name, title: artist.title }));
+    }),
+
   create: editorProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
     const result = await Artist.createArtist(input);
     triggerReindex();
