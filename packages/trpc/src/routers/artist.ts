@@ -93,6 +93,18 @@ export const artistRouter = createTRPCRouter({
         .map(artist => ({ id: artist.id, name: artist.name, title: artist.title }));
     }),
 
+  // The picker create-path: resolve a typed name to an artist, creating one only
+  // when nothing matches. Routes through findOrCreateArtist — the shared dedup
+  // helper — so the wizard's guru/member pickers cannot spawn a duplicate the
+  // way a blind create would. Moderator-only, since it can create a record.
+  resolveOrCreate: moderatorProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const { artist, created } = await Artist.findOrCreateArtist(input.name);
+      if (created) triggerReindex();
+      return { id: artist.id, name: artist.name, title: artist.title, created };
+    }),
+
   create: editorProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
     const result = await Artist.createArtist(input);
     triggerReindex();
