@@ -6,7 +6,28 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 6 — the presentation redesign. Everything built in phases 1–5 is invisible until the profile renders it: hero photo, bio, gurus with years, collaborators grid, members/groups block, awards, gallery teaser, featured performances, group-aware JSON-LD, and the empty-state handling. This is what a visitor actually sees. **Owed:** a DHH review of the prefill slice (`a1a96ba49`) when convenient.
+**Next step:** phase 6 — the presentation redesign. Phases 1–5 built the data model and the moderator tooling, but a *visitor* still sees the old profile: name, a role string, a two-field About, an events list, generic explore links. Phase 6 is what makes everything visible. Phase 5 is fully built and reviewed (per-slice + a whole-phase review); nothing is owed.
+
+**Phase 6 kickoff — read the plan first: `docs/plans/260722-01-artist-profile-redesign.md` §6 (page structure), §6.1 (index subroutes), §7 (JSON-LD).**
+
+The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the public profile). Everything phase 6 renders already has data and a procedure behind it — reuse them, do not add new backend:
+
+- **Hero** — `artist.photoUrl` (initial-based placeholder if absent), `artist.name` (rendered as stored, no `fromItrans` — see 0c), instrument + city line, honorific/title, `socialLinks`, `website`. OG image already exists (`packages/og-image`, `artistOgImageUrl`).
+- **About** — `biography`, `specialisations`, `activeYears`, `birthYear`/`birthPlace` (the main crawlable block; place high).
+- **Awards** — `artist.listAwards` (already loaded in the edit route the same way).
+- **Gurus / lineage** — `artist.gurus` now carries `fromYear`/`toYear`/`discipline`; render chronologically, each linked. `displayName ?? name` is NOT a thing — names render as stored.
+- **Compositions** — `composition.byComposer` (already used on the profile).
+- **Events** — `event.byArtist` (already used); featured-past selection via `artist.listFeaturedPerformances`.
+- **Gallery teaser** — `artist.listPhotos` (top `featured`, ordered); hidden entirely when no photos.
+- **Members / Groups** — group record (`isGroup`): `artist.listMembers`; individual: `artist.listGroups`. Both render single-hop off the junction's denormalized names.
+- **Frequent collaborators** — `artist.collaborators` (denormalized on the record; `Collaborator[]` on the browser-safe `@rasika/core/domain/artist/client`). Re-sort in the browser by `strength` — it is stored but decays with wall-clock time (see the phase-4 deferral).
+- **Every section hides cleanly when empty** — no bare headers.
+
+**JSON-LD (§7):** `~/components/structured-data.tsx` has a minimal `PersonStructuredData` (name/url only) and NO `MusicGroup` type. Phase 6 adds `MusicGroup` (with `member[]` for groups), extends `Person` (`image` from photoUrl, `sameAs` from socialLinks+website, `award`, `memberOf` from `listGroups`), switching by `isGroup`.
+
+**Index subroutes (§6.1):** `/artists/:id/events` and `/artists/:id/compositions` already exist — restyle only. `/artists/:id/gallery` is new (`artist.listPhotos`, SSR, canonical, breadcrumb, paginated).
+
+**Heed the whole-phase-5 review's lesson:** phase 6 touches many sections at once. Keep one consistent empty-state rule, one date-formatting rule (pin `timeZone: 'Asia/Kolkata'` — the profile currently formats dates in the runtime TZ, which is UTC on the SSR Lambda; the prefill review found this bites), and one link/name-rendering convention across all sections rather than letting each drift.
 
 ### Phase status
 
@@ -32,8 +53,10 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | wave 1 | Live artist/award search endpoints; `/artists/new` flat form; `EventArtist.isFeatured` setter + procedures | done |
 | shell | `/artists/:id/edit` role branch: moderator wizard (Identity, About, Review) writing Artist directly; editor keeps draft form. Reviewed. | done |
 | relationships | Guru timeline + group-membership section. Reviewed. | done |
-| recognition | Awards + notable-performances + gallery sections. Built directly (agent budget exhausted). **DHH review owed.** | done |
-| prefill | 'Add a performance' path: event.createPerformance creates+approves a single event tagging the artist (built proper, not poster-deeplink) | done |
+| recognition | Awards + notable-performances + gallery sections. Reviewed. | done |
+| prefill | 'Add a performance' path: event.createPerformance creates+approves a single event tagging the artist. Reviewed. | done |
+
+Phase 5 also had a **whole-phase review** after all slices landed — it caught three cross-slice defects (auth policy applied to one mutation not nine; a dead award-search slice; a Review screen that promised a clearing preserve-on-blank never performs) and several consistency items, all fixed. See "From the whole-phase 5 review" below.
 
 Each modal writes to one sub-collection through procedures already built: gurus → `artist.update`, membership → `artist.addMember`/`removeMember`, awards → `artist.addAward`/`removeAward`, performances → `artist.setFeaturedPerformance`, gallery → `artist.addPhoto`/`updatePhoto`/`deletePhoto`. `SearchSelect` (with `createNew`) is the picker; the live endpoints back it.
 
@@ -63,12 +86,13 @@ Still open — one focused follow-up, its own review:
 - **The five `/api/artist/*` resource routes are copy-paste** — method-check, `requireModerator`, the `((formData.get(x) as string) || '').trim()` idiom, and a try/catch/`console.error`/`data({error},{status})` block, repeated ~7 sites including `artists.new.tsx` and the edit action. The repetition has already diverged: `api.artist.resolve` returns 500 while the others return 400, and four pass raw `error.message` to the client (fine for TRPCError text, a mild leak on an unexpected fault). A `withModerator(handler)` + `field(formData, name)` helper would collapse them to their logic and single-source the error contract. This is the review's "third cross-cutting pass"; it is a real refactor and should be reviewed on its own.
 - The review's named pattern: invariants that live *between* slices (one auth policy, one error contract, one empty-field rule, one verified consumer per endpoint) were owned by no slice, so they drifted. Worth remembering for phase 6, which is even more cross-cutting.
 
-### Deferred / owed from the phase 5 recognition slice
+### Deferred from the phase 5 recognition slice
 
-- **DHH review not yet run** — the build agent died on the session limit, so I built the slice directly and self-reviewed the load-bearing parts (route auth, the performance toggle round-trip, the backward-compatible ImageUpload change). Run the reviewer over `f7e16f2c9..HEAD` (the award procedure + the slice) when budget resets.
+(The recognition and prefill DHH reviews have both been run; findings applied. These are the leftover UI-polish items only.)
+
 - **Per-performance featureRank input was dropped** for reliability — featuring gives an unranked highlight, which `getFeaturedEventsByArtist` orders most-recent-first. The setter and schema support a rank; the UI just doesn't expose it yet. Add a rank input when polishing.
-- **Awards use a plain name input, not a picker.** `award.resolveOrCreate` matches by exact name so it is functionally find-or-create, but a `SearchSelect` over `/api/search/award-live` would aid discovery. Minor.
-- **Gallery reorder is a future item** — photos store an `order` and `updatePhoto` accepts it, but the UI has no reorder control yet (add/delete only).
+- **Awards use a plain name input, not a picker.** `award.resolveOrCreate` now matches case-insensitively, so it is safe find-or-create; a typeahead would only aid discovery. (Note: the `award.searchLive` endpoint and `/api/search/award-live` route were deleted in the whole-phase review as dead code — a future picker would re-add them.)
+- **Gallery reorder is a future item** — photos store an `order` and `updatePhoto` accepts it, but the UI has no reorder control yet (add/delete only). New photos append via `order = current count`.
 
 ### Deferred from the phase 5 relationships review
 
@@ -131,8 +155,10 @@ Raised, judged real, not yet done:
 
 ### Known baselines (so regressions are visible)
 
-Measured at phase 0 completion. These are pre-existing and not caused by this work:
+Current at end of phase 5. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: 3 failing tests (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase), 7 typecheck errors.
-- `packages/web`: 35 typecheck errors, tests all pass.
-- One pre-existing Biome formatting complaint in `cascade.ts` (`cascadeEventMergeToSetlist`) and one non-null assertion in `event.ts:413`.
+- `packages/core`: **688 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/web`: **34 web-own typecheck errors** (the raw count is ~41 — the extra 7 are core's leaking through project references); **63 tests pass**.
+- `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
+- Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.
+- Commit messages with inner double-quotes break `git commit -m` shell quoting — commit prose via `git commit -F <file>`.
