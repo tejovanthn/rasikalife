@@ -31,7 +31,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 |---|---|---|
 | wave 1 | Live artist/award search endpoints; `/artists/new` flat form; `EventArtist.isFeatured` setter + procedures | done |
 | shell | `/artists/:id/edit` role branch: moderator wizard (Identity, About, Review) writing Artist directly; editor keeps draft form. Reviewed. | done |
-| relationships | Guru timeline modal + group-membership modal (the Relationships step) | not started |
+| relationships | Guru timeline + group-membership section. Reviewed. | done |
 | recognition | Awards modal + notable-performances modal (uses the isFeatured setter) + gallery modal | not started |
 | prefill | Artist pre-tag threaded into the event-creation routes (5.4d) | not started |
 
@@ -53,6 +53,12 @@ ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. A
 **Production, repaired 2026-07-22:** 30,198 items scanned, 15 phantom rows found. Nine attributes repaired from source rather than by replaying stale phantom values — eight `venueName`s (seven events were displaying a street address instead of "Sri Siddi Ganapathi Temple") and one `rsvpCount` recounted from the actual RSVP rows. All 15 phantoms deleted; a re-scan reports zero. `pnpm cli repair-uppercase-keys` re-runs the scan, dry by default.
 
 Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
+
+### Deferred from the phase 5 relationships review
+
+- **specialisations and gurus clear oppositely.** gurus (a managed row list) publishes `[]` when emptied and clears; specialisations (a free-text field) preserves on blank. Left as-is — the controls are visibly different, so "row list clears, text preserves" is a defensible model — but it is an asymmetry a moderator could trip on.
+- **Unchecking group on an artist with members orphans the edges.** `updateArtist` writes `isGroup: false` but does not cascade the membership rows; they survive hidden but are still rewritten on merge. This is the deliberately-accepted isGroup trade-off (flip is allowed, stranding is rare and repairable); the wizard now warns rather than fixing it.
+- **Browser-only, low priority:** a guru name typed into the picker but neither selected nor "created" leaves the row nameless and is silently dropped on publish; and removing a guru row while its resolve fetcher is in flight can land the resolved id on the re-indexed row (key={i}). Both narrow; confirm/handle in the browser pass.
 
 ### Deferred from the phase 5 shell review
 
