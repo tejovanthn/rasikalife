@@ -830,6 +830,14 @@ function ModeratorArtistWizard() {
                   </span>
                 </label>
 
+                {isGroupPersisted && !form.isGroup && members.length > 0 && (
+                  <p className="text-xs text-amber-600">
+                    Unchecking this leaves {members.length} member{members.length === 1 ? '' : 's'}{' '}
+                    linked but hidden — the group's membership is not removed. Detach members first
+                    if you mean to convert this to an individual.
+                  </p>
+                )}
+
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="instrument">Instrument</Label>
@@ -1251,6 +1259,7 @@ function MembershipEditor({
   const [members, setMembers] = useState<Member[]>(initialMembers);
   const addFetcher = useFetcher<AddMemberResult>();
   const removeFetcher = useFetcher<RemoveMemberResult>();
+  const addIsIdle = addFetcher.state === 'idle';
 
   useEffect(() => {
     if (!addFetcher.data) return;
@@ -1309,18 +1318,26 @@ function MembershipEditor({
         fieldName="memberPicker"
         value={null}
         onChange={entity => {
-          if (!entity) return;
+          if (!entity || !addIsIdle) return;
           addFetcher.submit(
             { intent: 'add', groupId, memberId: entity.id },
             { method: 'post', action: '/api/artist/membership' }
           );
         }}
-        createNew={name =>
+        createNew={name => {
+          // Serialize adds the way removes are serialized. A second add fired
+          // while the first is in flight supersedes it in the fetcher, so the
+          // first can land server-side yet never appear in the list until a
+          // reload — then re-adding it hits a confusing "already a member".
+          if (!addIsIdle) {
+            toast.info('Please wait for the current member to be added.');
+            return;
+          }
           addFetcher.submit(
             { intent: 'add', groupId, memberName: name },
             { method: 'post', action: '/api/artist/membership' }
-          )
-        }
+          );
+        }}
       />
     </div>
   );
