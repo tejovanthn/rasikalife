@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 5 prefill slice — thread an artist pre-tag into the event-creation routes (5.4d), so the performances section can hand off a missing event to the existing pipeline. Then phase 6 (presentation). **Owed first:** a DHH review of the Recognition slice once agent budget resets.
+**Next step:** phase 6 — the presentation redesign. Everything built in phases 1–5 is invisible until the profile renders it: hero photo, bio, gurus with years, collaborators grid, members/groups block, awards, gallery teaser, featured performances, group-aware JSON-LD, and the empty-state handling. This is what a visitor actually sees. **Owed:** a DHH review of the prefill slice (`a1a96ba49`) when convenient.
 
 ### Phase status
 
@@ -19,7 +19,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | 2 | `ArtistMembership` junction | done |
 | 3 | `ArtistPhoto` gallery entity | done |
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | done |
-| 5 | Create/edit wizard (moderator-only, direct write) | in progress |
+| 5 | Create/edit wizard (moderator-only, direct write) | done |
 | 6 | Presentation redesign + JSON-LD + gallery subroute | not started |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
 | 8 | Claims + verification queue | not started |
@@ -33,7 +33,7 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 | shell | `/artists/:id/edit` role branch: moderator wizard (Identity, About, Review) writing Artist directly; editor keeps draft form. Reviewed. | done |
 | relationships | Guru timeline + group-membership section. Reviewed. | done |
 | recognition | Awards + notable-performances + gallery sections. Built directly (agent budget exhausted). **DHH review owed.** | done |
-| prefill | Artist pre-tag threaded into the event-creation routes (5.4d) | not started |
+| prefill | 'Add a performance' path: event.createPerformance creates+approves a single event tagging the artist (built proper, not poster-deeplink) | done |
 
 Each modal writes to one sub-collection through procedures already built: gurus → `artist.update`, membership → `artist.addMember`/`removeMember`, awards → `artist.addAward`/`removeAward`, performances → `artist.setFeaturedPerformance`, gallery → `artist.addPhoto`/`updatePhoto`/`deletePhoto`. `SearchSelect` (with `createNew`) is the picker; the live endpoints back it.
 
