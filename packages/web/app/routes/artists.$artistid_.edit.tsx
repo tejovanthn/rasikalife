@@ -13,7 +13,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { toast } from 'sonner';
@@ -127,13 +127,18 @@ export async function action({
     const photoUrl = ((formData.get('photoUrl') as string) || '').trim() || undefined;
     const photoUploadId = ((formData.get('photoUploadId') as string) || '').trim() || undefined;
     const biography = ((formData.get('biography') as string) || '').trim() || undefined;
+    // Blank preserves rather than clears, matching every scalar below: an
+    // omitted field is dropped from the JSON payload and so left unwritten.
+    // This wizard therefore cannot empty a field — a deliberate, consistent
+    // rule rather than "specialisations clear but biography doesn't", which is
+    // what sending [] here would have produced.
     const specialisationsRaw = ((formData.get('specialisations') as string) || '').trim();
     const specialisations = specialisationsRaw
       ? specialisationsRaw
           .split(',')
           .map(s => s.trim())
           .filter(Boolean)
-      : [];
+      : undefined;
     const birthYearRaw = ((formData.get('birthYear') as string) || '').trim();
     const birthYear = birthYearRaw ? Number.parseInt(birthYearRaw, 10) || undefined : undefined;
     const birthPlace = ((formData.get('birthPlace') as string) || '').trim() || undefined;
@@ -629,6 +634,27 @@ function ModeratorArtistWizard() {
   const artistUrl = generateArtistUrl(artist.name, artist.id);
 
   const [step, setStep] = useState(0);
+  const stepRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // Advancing carries the current step's fields into a hidden container, where
+  // a browser cannot focus an invalid control to report it — so submit would
+  // later fail silently. Validate while the step is still on screen and refuse
+  // to advance past a bad value. Going back never validates.
+  function goToStep(next: number) {
+    if (next > step) {
+      const container = stepRefs.current[step];
+      const controls = container?.querySelectorAll<
+        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+      >('input, select, textarea');
+      for (const control of controls ?? []) {
+        if (!control.checkValidity()) {
+          control.reportValidity();
+          return;
+        }
+      }
+    }
+    setStep(next);
+  }
 
   const [form, setForm] = useState({
     name: artist.name,
@@ -693,7 +719,12 @@ function ModeratorArtistWizard() {
             <input type="hidden" name="formPath" value="moderator" />
 
             {/* Step 0 — Identity */}
-            <div className={step === 0 ? '' : 'hidden'}>
+            <div
+              ref={el => {
+                stepRefs.current[0] = el;
+              }}
+              className={step === 0 ? '' : 'hidden'}
+            >
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
@@ -767,7 +798,12 @@ function ModeratorArtistWizard() {
             </div>
 
             {/* Step 1 — About */}
-            <div className={step === 1 ? '' : 'hidden'}>
+            <div
+              ref={el => {
+                stepRefs.current[1] = el;
+              }}
+              className={step === 1 ? '' : 'hidden'}
+            >
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="biography">Biography</Label>
@@ -915,7 +951,7 @@ function ModeratorArtistWizard() {
                     Cancel
                   </a>
                 ) : (
-                  <Button type="button" variant="ghost" onClick={() => setStep(s => s - 1)}>
+                  <Button type="button" variant="ghost" onClick={() => goToStep(step - 1)}>
                     <ChevronLeft className="h-4 w-4" />
                     Back
                   </Button>
@@ -924,7 +960,7 @@ function ModeratorArtistWizard() {
 
               <div className="flex items-center gap-3">
                 {step < TOTAL_STEPS - 1 ? (
-                  <Button type="button" variant="default" onClick={() => setStep(s => s + 1)}>
+                  <Button type="button" variant="default" onClick={() => goToStep(step + 1)}>
                     Next
                     <ChevronRight className="h-4 w-4" />
                   </Button>

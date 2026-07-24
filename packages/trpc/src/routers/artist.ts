@@ -99,21 +99,15 @@ export const artistRouter = createTRPCRouter({
     return result;
   }),
 
-  update: editorProcedure
+  // moderatorProcedure, not editor: editing an existing artist directly is the
+  // review-gated path, so editors go through the Edit draft flow instead. The
+  // moderator wizard is this procedure's only caller; the edit-approval flow
+  // uses the core updateArtist directly. Gating here makes editor-review-only a
+  // real API boundary rather than a UI convention — and subsumes the old
+  // isGroup-only moderator guard, since the whole mutation is now moderator.
+  update: moderatorProcedure
     .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
-    .mutation(async ({ ctx, input }) => {
-      // isGroup is moderator-only. Flipping a group back to an individual
-      // strands its ArtistMembership rows, which is accepted as rare and
-      // repairable by hand — but not something an editor should be able to do
-      // in passing while editing a biography.
-      const isModerator =
-        ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
-      if (input.data.isGroup !== undefined && !isModerator) {
-        throw new TRPCError({
-          code: 'FORBIDDEN',
-          message: 'Only a moderator can change whether an artist is a group',
-        });
-      }
+    .mutation(async ({ input }) => {
       const result = await Artist.updateArtist(input.id, input.data);
       triggerReindex();
       return result;
