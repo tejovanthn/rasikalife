@@ -54,6 +54,15 @@ ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. A
 
 Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
 
+### From the whole-phase 5 review
+
+Acted on: the auth policy (all nine wizard mutations now moderatorProcedure, not one), the dead award-search slice (deleted; resolveOrCreate now case-insensitive), the Review-screen dishonesty (blanked preserve-on-blank fields show "(unchanged)"), the anonymous full-scan search endpoint (moderator-gated), the PerformancesEditor dedup guard, and the misleading guru copy.
+
+Still open — one focused follow-up, its own review:
+
+- **The five `/api/artist/*` resource routes are copy-paste** — method-check, `requireModerator`, the `((formData.get(x) as string) || '').trim()` idiom, and a try/catch/`console.error`/`data({error},{status})` block, repeated ~7 sites including `artists.new.tsx` and the edit action. The repetition has already diverged: `api.artist.resolve` returns 500 while the others return 400, and four pass raw `error.message` to the client (fine for TRPCError text, a mild leak on an unexpected fault). A `withModerator(handler)` + `field(formData, name)` helper would collapse them to their logic and single-source the error contract. This is the review's "third cross-cutting pass"; it is a real refactor and should be reviewed on its own.
+- The review's named pattern: invariants that live *between* slices (one auth policy, one error contract, one empty-field rule, one verified consumer per endpoint) were owned by no slice, so they drifted. Worth remembering for phase 6, which is even more cross-cutting.
+
 ### Deferred / owed from the phase 5 recognition slice
 
 - **DHH review not yet run** — the build agent died on the session limit, so I built the slice directly and self-reviewed the load-bearing parts (route auth, the performance toggle round-trip, the backward-compatible ImageUpload change). Run the reviewer over `f7e16f2c9..HEAD` (the award procedure + the slice) when budget resets.
