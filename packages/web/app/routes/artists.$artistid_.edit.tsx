@@ -1,4 +1,5 @@
 import * as Auth from '@rasika/core/auth';
+import type { Guru } from '@rasika/core/domain/artist/client';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
 import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
@@ -15,11 +16,20 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
-import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
+import {
+  Form,
+  data,
+  redirect,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { ImageUpload } from '~/components/ImageUpload';
+import { SearchSelect } from '~/components/SearchSelect';
 import { EditDisclaimer } from '~/components/shared';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -74,7 +84,14 @@ export async function loader({
 
   const isModerator = user.role === Auth.ROLE.MODERATOR || user.role === Auth.ROLE.ADMIN;
 
-  return data({ artist, user, activeEdit, isModerator });
+  // Membership is only meaningful once isGroup is actually persisted, and the
+  // editor path never renders it — so skip the extra query everywhere else.
+  const members =
+    isModerator && artist.isGroup
+      ? await serverClient.artist.listMembers.query({ groupId: artist.id })
+      : [];
+
+  return data({ artist, user, activeEdit, isModerator, members });
 }
 
 export async function action({
@@ -151,6 +168,33 @@ export async function action({
     const activeYears = ((formData.get('activeYears') as string) || '').trim() || undefined;
     const website = ((formData.get('website') as string) || '').trim() || undefined;
 
+    // Parallel arrays, one entry per guru row — the same shape socialLinks
+    // below uses. Gurus are part of the Artist record, so the whole list is
+    // always sent (unlike the scalar fields above, which omit rather than
+    // clear): a moderator who removes every row means to publish zero gurus,
+    // not to leave the stored list untouched.
+    const guruIds = formData.getAll('guruId') as string[];
+    const guruNames = formData.getAll('guruName') as string[];
+    const guruFromYears = formData.getAll('guruFromYear') as string[];
+    const guruToYears = formData.getAll('guruToYear') as string[];
+    const guruDisciplines = formData.getAll('guruDiscipline') as string[];
+    const gurus = guruNames
+      .map((rawName, i) => {
+        const guruName = rawName.trim();
+        if (!guruName) return undefined;
+        const fromYearRaw = (guruFromYears[i] || '').trim();
+        const toYearRaw = (guruToYears[i] || '').trim();
+        const discipline = (guruDisciplines[i] || '').trim();
+        return {
+          id: (guruIds[i] || '').trim() || undefined,
+          name: guruName,
+          fromYear: fromYearRaw ? Number.parseInt(fromYearRaw, 10) || undefined : undefined,
+          toYear: toYearRaw ? Number.parseInt(toYearRaw, 10) || undefined : undefined,
+          discipline: discipline || undefined,
+        };
+      })
+      .filter((guru): guru is NonNullable<typeof guru> => guru !== undefined);
+
     try {
       await serverClient.artist.update.mutate({
         id: slugId,
@@ -170,6 +214,7 @@ export async function action({
           debutYear,
           activeYears,
           website,
+          gurus,
         },
       });
 
@@ -624,14 +669,26 @@ function EditorArtistForm() {
   );
 }
 
-const STEP_LABELS = ['Identity', 'About', 'Review'];
-const TOTAL_STEPS = 3;
+const STEP_LABELS = ['Identity', 'About', 'Relationships', 'Review'];
+const TOTAL_STEPS = 4;
+
+type GuruRow = {
+  id?: string;
+  name: string;
+  fromYear: string;
+  toYear: string;
+  discipline: string;
+};
 
 function ModeratorArtistWizard() {
-  const { artist } = useLoaderData<typeof loader>();
+  const { artist, members } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const artistUrl = generateArtistUrl(artist.name, artist.id);
+  // The wizard's own isGroup checkbox is staged, not yet published — a
+  // moderator who just ticked it can't add members until that write lands.
+  // Membership must gate on the persisted value from the loader instead.
+  const isGroupPersisted = (artist.isGroup as boolean | undefined) ?? false;
 
   const [step, setStep] = useState(0);
   const stepRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -671,6 +728,16 @@ function ModeratorArtistWizard() {
     activeYears: (artist.activeYears as string | undefined) ?? '',
     website: (artist.website as string | undefined) ?? '',
   });
+
+  const [gurus, setGurus] = useState<GuruRow[]>(
+    ((artist.gurus as Guru[] | undefined) ?? []).map(guru => ({
+      id: guru.id,
+      name: guru.name,
+      fromYear: guru.fromYear?.toString() ?? '',
+      toYear: guru.toYear?.toString() ?? '',
+      discipline: guru.discipline ?? '',
+    }))
+  );
 
   const isSubmitting = navigation.state === 'submitting';
 
@@ -909,8 +976,72 @@ function ModeratorArtistWizard() {
               </div>
             </div>
 
-            {/* Step 2 — Review */}
-            <div className={step === 2 ? '' : 'hidden'}>
+            {/* Step 2 — Relationships */}
+            <div
+              ref={el => {
+                stepRefs.current[2] = el;
+              }}
+              className={step === 2 ? '' : 'hidden'}
+            >
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label>Gurus</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setGurus(prev => [
+                          ...prev,
+                          { name: '', fromYear: '', toYear: '', discipline: '' },
+                        ])
+                      }
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Saved with the rest of this form when you publish.
+                  </p>
+                  {gurus.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No gurus added.</p>
+                  )}
+                  {gurus.map((guru, i) => (
+                    <GuruRowFields
+                      key={i}
+                      index={i}
+                      guru={guru}
+                      onChange={updated =>
+                        setGurus(prev => prev.map((g, j) => (j === i ? updated : g)))
+                      }
+                      onRemove={() => setGurus(prev => prev.filter((_, j) => j !== i))}
+                    />
+                  ))}
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Group Members</Label>
+                  {isGroupPersisted ? (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Membership changes save immediately — unlike the rest of this form, they do
+                        not wait for Publish.
+                      </p>
+                      <MembershipEditor groupId={artist.id} initialMembers={members} />
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Mark this artist as a group and publish, then reopen to add members.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3 — Review */}
+            <div className={step === 3 ? '' : 'hidden'}>
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   This writes straight to the artist's profile — there is no draft or approval step.
@@ -931,7 +1062,11 @@ function ModeratorArtistWizard() {
                   <SummaryRow label="Debut Year" value={form.debutYear} />
                   <SummaryRow label="Active Years" value={form.activeYears} />
                   <SummaryRow label="Website" value={form.website} />
+                  <SummaryRow label="Gurus" value={gurus.map(guru => guru.name).join(', ')} />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Group membership changes already saved — they are not part of this publish.
+                </p>
 
                 {actionData && 'error' in actionData && (
                   <p className="text-sm text-destructive">{actionData.error as string}</p>
@@ -993,6 +1128,200 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-start justify-between gap-4 px-3 py-2">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium text-right break-words">{value || '—'}</span>
+    </div>
+  );
+}
+
+type ResolveArtistResult = { id: string; name: string; title?: string; created: boolean };
+
+// One guru row: a name (picked from an existing artist, or resolved via
+// find-or-create) plus its own from/to years and discipline. The picker's own
+// resolve request lives here, one fetcher per row, so creating a new artist
+// name on row 2 can never race or overwrite an in-flight create on row 1.
+function GuruRowFields({
+  guru,
+  index,
+  onChange,
+  onRemove,
+}: {
+  guru: GuruRow;
+  index: number;
+  onChange: (guru: GuruRow) => void;
+  onRemove: () => void;
+}) {
+  const resolveFetcher = useFetcher<ResolveArtistResult | { error: string }>();
+
+  // Only react to a new resolve result landing, not to guru/onChange identity
+  // — those change on every keystroke in this row and would refire the effect.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: see above
+  useEffect(() => {
+    if (resolveFetcher.data && 'id' in resolveFetcher.data) {
+      onChange({ ...guru, id: resolveFetcher.data.id, name: resolveFetcher.data.name });
+    }
+  }, [resolveFetcher.data]);
+
+  return (
+    <div className="space-y-3 rounded-md border p-3">
+      <div className="flex items-start gap-2">
+        <div className="flex-1">
+          <SearchSelect
+            label="Guru"
+            placeholder="Search artists..."
+            searchUrl="/api/search/artist-live"
+            inputId={`guru-picker-${index}`}
+            fieldName="guruPicker"
+            value={guru.id ? { id: guru.id, name: guru.name } : null}
+            onChange={entity =>
+              onChange({ ...guru, id: entity?.id, name: entity?.name ?? guru.name })
+            }
+            createNew={name => {
+              onChange({ ...guru, id: undefined, name });
+              resolveFetcher.submit({ name }, { method: 'post', action: '/api/artist/resolve' });
+            }}
+          />
+        </div>
+        <Button type="button" variant="ghost" size="icon" className="mt-6" onClick={onRemove}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+      <input type="hidden" name="guruId" value={guru.id ?? ''} />
+      <input type="hidden" name="guruName" value={guru.name} />
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="space-y-2">
+          <Label htmlFor={`guru-from-${index}`}>From Year</Label>
+          <Input
+            id={`guru-from-${index}`}
+            name="guruFromYear"
+            type="number"
+            min={1800}
+            max={2100}
+            value={guru.fromYear}
+            onChange={e => onChange({ ...guru, fromYear: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`guru-to-${index}`}>To Year</Label>
+          <Input
+            id={`guru-to-${index}`}
+            name="guruToYear"
+            type="number"
+            min={1800}
+            max={2100}
+            value={guru.toYear}
+            onChange={e => onChange({ ...guru, toYear: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`guru-discipline-${index}`}>Discipline</Label>
+          <Input
+            id={`guru-discipline-${index}`}
+            name="guruDiscipline"
+            type="text"
+            placeholder="e.g. Vocal"
+            value={guru.discipline}
+            onChange={e => onChange({ ...guru, discipline: e.target.value })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type Member = {
+  groupId: string;
+  groupName: string;
+  memberId: string;
+  memberName: string;
+  role?: string;
+  rank?: number;
+  createdAt: string;
+};
+
+type AddMemberResult = { success: true; member: Member } | { error: string };
+type RemoveMemberResult = { success: true; memberId: string } | { error: string };
+
+// Membership writes go straight to their own junction entity — no draft, no
+// Publish step — so every add/remove here fires its own fetcher immediately
+// and reconciles local state from the response rather than waiting on the
+// surrounding form's submit.
+function MembershipEditor({
+  groupId,
+  initialMembers,
+}: { groupId: string; initialMembers: Member[] }) {
+  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const addFetcher = useFetcher<AddMemberResult>();
+  const removeFetcher = useFetcher<RemoveMemberResult>();
+
+  useEffect(() => {
+    if (!addFetcher.data) return;
+    if ('error' in addFetcher.data) {
+      toast.error(addFetcher.data.error);
+      return;
+    }
+    const { member } = addFetcher.data;
+    setMembers(prev => (prev.some(m => m.memberId === member.memberId) ? prev : [...prev, member]));
+    toast.success(`${member.memberName} added`);
+  }, [addFetcher.data]);
+
+  useEffect(() => {
+    if (!removeFetcher.data) return;
+    if ('error' in removeFetcher.data) {
+      toast.error(removeFetcher.data.error);
+      return;
+    }
+    const { memberId } = removeFetcher.data;
+    setMembers(prev => prev.filter(m => m.memberId !== memberId));
+    toast.success('Member removed');
+  }, [removeFetcher.data]);
+
+  return (
+    <div className="space-y-3">
+      {members.length === 0 && <p className="text-xs text-muted-foreground">No members yet.</p>}
+      {members.map(member => (
+        <div
+          key={member.memberId}
+          className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+        >
+          <span>
+            {member.memberName}
+            {member.role ? ` — ${member.role}` : ''}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={removeFetcher.state !== 'idle'}
+            onClick={() =>
+              removeFetcher.submit(
+                { intent: 'remove', groupId, memberId: member.memberId },
+                { method: 'post', action: '/api/artist/membership' }
+              )
+            }
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+      <SearchSelect
+        label="Add member"
+        placeholder="Search existing artists..."
+        searchUrl="/api/search/artist-live"
+        fieldName="memberPicker"
+        value={null}
+        onChange={entity => {
+          if (!entity) return;
+          addFetcher.submit(
+            { intent: 'add', groupId, memberId: entity.id },
+            { method: 'post', action: '/api/artist/membership' }
+          );
+        }}
+        createNew={name =>
+          addFetcher.submit(
+            { intent: 'add', groupId, memberName: name },
+            { method: 'post', action: '/api/artist/membership' }
+          )
+        }
+      />
     </div>
   );
 }
