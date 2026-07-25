@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** finish phase 6. The main public profile is redesigned and the gallery subroute is built (see "Phase 6 progress" below). What's left: (1) restyle the existing `/events` and `/compositions` subroutes to the shared conventions — they still use the runtime-TZ `toLocaleDateString` (swap to `formatEventDate`) and the old card styling; (2) the read-efficiency denormalization from §6.2 (`getRepertoire` and `listFeaturedPerformances`), which lands before prod, not before rendering. A full DHH review of phases 1–5 ran first (2026-07-25) and every actionable finding is fixed — see "From the full phases 1–5 review" below.
+**Next step:** phase 6 is functionally complete; before deploy, do these three. (1) **Run the backfills once post-deploy:** `pnpm prod-cli rebuild-repertoire` and `pnpm prod-cli rebuild-featured` populate the new denormalized fields for existing data. (2) **Schedule `rebuild-repertoire`** — it is CLI-only, so repertoire goes stale as new concerts are logged until it re-runs; add a cron (mirror `infra/search.ts`) or run periodically. Featured needs no cron — `setEventArtistFeatured` maintains it inline. Same open scheduling item as `rebuild-collaborators`. (3) **Add anon-only CDN caching** to the profile route (§6.2), the remaining read-cost lever. Also: the redesign is **not visually verified yet** (typecheck/lint/tests pass) — worth rendering before deploy. A full DHH review of phases 1–5 ran first (2026-07-25) and every actionable finding is fixed — see "From the full phases 1–5 review" below.
 
 ### Phase 6 progress (2026-07-25)
 
@@ -14,8 +14,10 @@ Done and committed:
 - **Foundations:** `formatEventDate` in `web/app/lib/utils.ts` pins the zone to `Asia/Kolkata` (fixes the runtime-TZ off-by-one), tested under `TZ=UTC`; `structured-data.tsx` gained `MusicGroupStructuredData` and an extended `PersonStructuredData` (image/sameAs/award/memberOf).
 - **`artists.$artistid.tsx` redesigned** — hero (photo or initial placeholder, honorific, instrument·city, website + socials), About high, Awards, Gurus & lineage (linked, chronological), Compositions teaser, Repertoire, Notable performances (featured), Events, Gallery teaser, Members/Groups (group-aware), Frequent collaborators, Explore. One empty-state rule, one date formatter, names as stored, JSON-LD switches by `isGroup`. Loader parallelizes `getUser`.
 - **New `artists.$artistid.gallery.tsx`** — SSR photo grid via `listPhotos`, paginated, canonical + breadcrumb + empty state; teaser "View all" wired.
+- **`/events` subroute** now uses `formatEventDate` (was the runtime-TZ bug); `/compositions` needed no change (renders no dates, already uses shared cards).
+- **§6.2 read-efficiency denormalization — done.** Repertoire (`topCompositions`/`topRagas`) and featured performances (`featuredPerformances`) are denormalized onto the Artist row; the loader reads them as fields, so it makes **zero** extra queries for either (down from getRepertoire's ~51-query fan-out and getFeaturedEventsByArtist's full-partition scan). `getRepertoire`/`listFeaturedPerformances`/`getFeaturedEventsByArtist` deleted as dead. Repertoire is refreshed by the `rebuild-repertoire` sweep (scheduled, not inline — see the trigger note in the commit); featured is maintained inline by `setEventArtistFeatured` and backfilled by `rebuild-featured`.
 
-Reusing existing procedures only, per the kickoff rule — **not visually verified yet** (typecheck/lint/tests pass). The `getRepertoire`/featured calls are the still-inefficient §6.2 paths, deliberately kept until the denormalization lands.
+Not visually verified yet (typecheck/lint/tests pass).
 
 **Phase 6 kickoff — read the plan first: `docs/plans/260722-01-artist-profile-redesign.md` §6 (page structure), §6.1 (index subroutes), §7 (JSON-LD).**
 
