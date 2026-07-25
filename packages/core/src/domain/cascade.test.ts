@@ -236,6 +236,9 @@ describe('cascade', () => {
       .fn()
       .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
     ArtistMembershipEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistMembershipEntity.patch = vi
+      .fn()
+      .mockReturnValue({ set: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) }) });
     ArtistPhotoEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
     ArtistPhotoEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistPhotoEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
@@ -281,6 +284,7 @@ describe('cascade', () => {
             Responses: {
               RasikaLifeTable: [
                 {
+                  id: 'comp1',
                   pk: 'composition#comp1',
                   ragas: [
                     { id: 'raga1', name: 'Old Name' },
@@ -319,7 +323,7 @@ describe('cascade', () => {
       ]);
       vi.mocked(dynamoClient.send).mockImplementation(async (command: any) => {
         if (command.constructor.name === 'BatchGetCommand') {
-          return { Responses: { RasikaLifeTable: [{ pk: 'composition#comp1' }] } };
+          return { Responses: { RasikaLifeTable: [{ id: 'comp1', pk: 'composition#comp1' }] } };
         }
         return {};
       });
@@ -327,6 +331,36 @@ describe('cascade', () => {
       await cascade.cascadeRagaNameUpdate('raga1', 'New Name');
 
       expect(commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand')).toHaveLength(0);
+    });
+
+    it('keys compositions by their mixed-case id, not the lowercased pk', async () => {
+      // The junction carries the mixed-case id ('Comp1'); ElectroDB stores the pk
+      // lowercased ('composition#comp1'). Keying the batch-get map by the stripped pk
+      // would never match the junction's compositionId, so the rename would silently
+      // skip the composition — the exact bug this guards.
+      CompositionRagaEntity.query.byRaga = pagedQuery([
+        { data: [{ compositionId: 'Comp1' }], cursor: null },
+      ]);
+      vi.mocked(dynamoClient.send).mockImplementation(async (command: any) => {
+        if (command.constructor.name === 'BatchGetCommand') {
+          return {
+            Responses: {
+              RasikaLifeTable: [
+                { id: 'Comp1', pk: 'composition#comp1', ragas: [{ id: 'raga1', name: 'Old' }] },
+              ],
+            },
+          };
+        }
+        return {};
+      });
+
+      await cascade.cascadeRagaNameUpdate('raga1', 'New Name');
+
+      const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
+      expect(updates).toHaveLength(1);
+      expect(updates[0].ExpressionAttributeValues[':ragas']).toEqual([
+        { id: 'raga1', name: 'New Name' },
+      ]);
     });
   });
 
@@ -392,7 +426,9 @@ describe('cascade', () => {
         if (command.constructor.name === 'BatchGetCommand') {
           return {
             Responses: {
-              RasikaLifeTable: [{ pk: 'composition#comp1', talas: [{ id: 'tala1', name: 'Old' }] }],
+              RasikaLifeTable: [
+                { id: 'comp1', pk: 'composition#comp1', talas: [{ id: 'tala1', name: 'Old' }] },
+              ],
             },
           };
         }
@@ -727,6 +763,12 @@ describe('cascade', () => {
       // values, so a hand-built key would match nothing while DeleteItem still reported
       // success — a raw-command assertion cannot tell the two apart.
       expect(ArtistPhotoEntity.delete).toHaveBeenCalledWith({ artistId: 'loser', id: 'photo1' });
+
+      // Write the canonical copy before deleting the loser's, so a crash between the two
+      // leaves a recoverable duplicate rather than stranding the photo in neither partition.
+      const upsertOrder = vi.mocked(ArtistPhotoEntity.upsert).mock.invocationCallOrder[0];
+      const deleteOrder = vi.mocked(ArtistPhotoEntity.delete).mock.invocationCallOrder[0];
+      expect(upsertOrder).toBeLessThan(deleteOrder);
     });
   });
 
@@ -790,6 +832,33 @@ describe('cascade', () => {
       expect(awardUpdate.Key).toEqual({ pk: 'artist#artist1', sk: 'award#award1' });
       expect(awardUpdate.ExpressionAttributeValues[':artistName']).toBe('New Name');
     });
+
+    it('refreshes the denormalized groupName and memberName on membership rows', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAwardEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      // The renamed artist is the group on one row and a member on another.
+      ArtistMembershipEntity.query.primary = pagedQuery([
+        { data: [{ memberId: 'member1' }], cursor: null },
+      ]);
+      ArtistMembershipEntity.query.byMember = pagedQuery([
+        { data: [{ groupId: 'group1' }], cursor: null },
+      ]);
+
+      await cascade.cascadeArtistNameUpdate('artist1', 'New Name');
+
+      expect(ArtistMembershipEntity.patch).toHaveBeenCalledWith({
+        groupId: 'artist1',
+        memberId: 'member1',
+      });
+      expect(ArtistMembershipEntity.patch).toHaveBeenCalledWith({
+        groupId: 'group1',
+        memberId: 'artist1',
+      });
+      const setMock = vi.mocked(ArtistMembershipEntity.patch).mock.results[0].value.set;
+      expect(setMock).toHaveBeenCalledWith({ groupName: 'New Name' });
+      expect(setMock).toHaveBeenCalledWith({ memberName: 'New Name' });
+    });
   });
 
   describe('cascadeVenueMerge', () => {
@@ -836,7 +905,7 @@ describe('cascade', () => {
           return {
             Responses: {
               RasikaLifeTable: [
-                { pk: 'composition#comp1', ragas: [{ id: 'loserRaga', name: 'Old' }] },
+                { id: 'comp1', pk: 'composition#comp1', ragas: [{ id: 'loserRaga', name: 'Old' }] },
               ],
             },
           };
@@ -872,6 +941,7 @@ describe('cascade', () => {
             Responses: {
               RasikaLifeTable: [
                 {
+                  id: 'comp1',
                   pk: 'composition#comp1',
                   ragas: [
                     { id: 'loserRaga', name: 'Old' },
@@ -909,7 +979,7 @@ describe('cascade', () => {
           return {
             Responses: {
               RasikaLifeTable: [
-                { pk: 'composition#comp1', talas: [{ id: 'loserTala', name: 'Old' }] },
+                { id: 'comp1', pk: 'composition#comp1', talas: [{ id: 'loserTala', name: 'Old' }] },
               ],
             },
           };

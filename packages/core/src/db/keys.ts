@@ -19,7 +19,15 @@ type CompositeOf<T extends KeyedEntity> = Parameters<
   T['conversions']['fromComposite']['toKeys']
 >[0];
 
-/** Every key ElectroDB would write for this row, GSI keys included. */
+/**
+ * Every key ElectroDB would write for this row, GSI keys included.
+ *
+ * A key whose composite you did not fully supply comes back `undefined` — pass only
+ * `{id}` for an entity with a `byComposer` GSI and `gsi2pk` is `undefined`. Never feed
+ * such a value into a raw `SET gsiXpk = :v`: DynamoDB reads an undefined attribute value
+ * as a *remove*, which drops the row out of that index. Read a GSI key only after
+ * supplying every composite it is built from.
+ */
 export function keysOfEntity<T extends KeyedEntity>(
   entity: T,
   composite: CompositeOf<T>

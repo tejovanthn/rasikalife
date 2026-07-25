@@ -1,6 +1,7 @@
 import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
+import { MAX_PHOTO_ORDER } from './schema';
 
 export const ArtistPhotoEntity = new Entity(
   {
@@ -41,13 +42,24 @@ export const ArtistPhotoEntity = new Entity(
       },
       // Zero-padded order string used to build the byArtist GSI sort key, so a lexicographic
       // string comparison agrees with numeric order (a plain `${order}` would sort "10" before
-      // "2"). 4 digits supports up to 9999 photos for a single artist — far beyond any real
-      // gallery. Recomputed automatically whenever `order` is part of an update (see `watch`).
+      // "2"). 4 digits supports up to MAX_PHOTO_ORDER photos for a single artist — far beyond
+      // any real gallery. Recomputed automatically whenever `order` is part of an update (see
+      // `watch`). The bound is enforced here, next to the key that depends on it, rather than
+      // only in the tRPC Zod schema: a core-direct caller passing order ≥ 10000 would otherwise
+      // pad to five digits and sort *before* everything, silently jumping to the front.
       orderStr: {
         type: 'string',
         required: false,
         watch: ['order'],
-        set: (_val, attrs) => attrs.order?.toString().padStart(4, '0') ?? '0000',
+        set: (_val, attrs) => {
+          const order = attrs.order ?? 0;
+          if (order < 0 || order > MAX_PHOTO_ORDER) {
+            throw new Error(
+              `ArtistPhoto order ${order} is out of range [0, ${MAX_PHOTO_ORDER}]; it would overflow the zero-padded gallery sort key`
+            );
+          }
+          return order.toString().padStart(4, '0');
+        },
         default: () => '0000',
       },
       featured: {

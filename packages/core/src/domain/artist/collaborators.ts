@@ -73,7 +73,7 @@ interface CoArtistAccumulator {
  * repair path and as the un-approval/soft-delete fixup: there is no prior
  * state to reconcile, only the current truth in the EventArtist junction.
  */
-export async function rebuildArtistCollaborators(artistId: string): Promise<void> {
+export async function rebuildArtistCollaborators(artistId: string): Promise<Collaborator[]> {
   const artistEvents = await fetchAllEventsForArtist(artistId);
   const live = await nonDeletedEventIds(artistEvents.map(event => event.eventId));
   const events = artistEvents.filter(event => live.has(event.eventId));
@@ -89,6 +89,11 @@ export async function rebuildArtistCollaborators(artistId: string): Promise<void
   await ArtistEntity.update({ id: artistId })
     .set({ collaborators, collaboratorsComputedAt: now.toISOString() })
     .go();
+
+  // Return the freshly computed list so callers (the merge fixup) can act on it
+  // directly rather than re-reading through an eventually-consistent get, which
+  // can hand back the pre-write list and under-repair.
+  return collaborators;
 }
 
 /**
@@ -118,11 +123,13 @@ export function collaboratorsFrom(
     const existing = byCoArtist.get(member.artistId);
     if (existing) {
       existing.sharedEventCount += 1;
-      // Keep the most recent name spelling rather than the first: a rename
-      // cascade may not have reached every junction row.
-      existing.name = member.artistName;
+      // Tie the display name to the most recent shared event, so a post-rename
+      // spelling wins over an older one even where the rename cascade hasn't yet
+      // reached every junction row. Junction rows arrive in query order, not date
+      // order, so the update must be gated on the date — not applied every row.
       if (member.eventStartDateTime > existing.lastSharedAt) {
         existing.lastSharedAt = member.eventStartDateTime;
+        existing.name = member.artistName;
       }
       if (role) existing.roles.set(role, (existing.roles.get(role) ?? 0) + 1);
     } else {

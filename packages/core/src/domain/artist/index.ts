@@ -134,10 +134,12 @@ async function rebuildCollaboratorsAfterMerge(loserId: string, canonicalId: stri
   const { rebuildArtistCollaborators, COLLABORATOR_MERGE_FANOUT_CAP } = await import(
     './collaborators'
   );
-  await rebuildArtistCollaborators(canonicalId);
-
-  const canonical = await getArtist(canonicalId);
-  const affected = (canonical?.collaborators ?? [])
+  // Use the list the rebuild just computed. Re-reading through getArtist here would
+  // be eventually consistent and could hand back the pre-merge neighbours, leaving
+  // the loser's former co-artists — the ones still naming the merged-away artist —
+  // untouched.
+  const canonicalCollaborators = await rebuildArtistCollaborators(canonicalId);
+  const affected = canonicalCollaborators
     .map(c => c.artistId)
     .filter(id => id !== loserId && id !== canonicalId);
 

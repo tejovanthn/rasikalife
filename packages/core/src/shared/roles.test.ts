@@ -39,15 +39,23 @@ describe('canonicalRole', () => {
     expect(canonicalRole('Vainika')).toBe('veena');
   });
 
-  it('maps dance and bharatanatyam to one key', () => {
-    expect(canonicalRole('Dance')).toBe('bharatanatyam');
+  it('leaves generic "dance" free rather than forcing it to bharatanatyam', () => {
+    // Collapsing "dance" to bharatanatyam would mislabel Kuchipudi, Kathak, Odissi and
+    // other forms — a wrong assertion on an Indian classical arts platform.
+    expect(canonicalRole('Dance')).toBe('dance');
     expect(canonicalRole('Bharatanatyam')).toBe('bharatanatyam');
+  });
+
+  it('maps tambura and nagaswaram spelling variants to one key each', () => {
+    expect(canonicalRole('Tambura')).toBe('tambura');
+    expect(canonicalRole('Tanpura')).toBe('tambura');
+    expect(canonicalRole('Nagaswaram')).toBe('nagaswaram');
+    expect(canonicalRole('Nadaswaram')).toBe('nagaswaram');
   });
 
   it('leaves single-spelling roles as their own key', () => {
     expect(canonicalRole('Morsing')).toBe('morsing');
-    expect(canonicalRole('Tambura')).toBe('tambura');
-    expect(canonicalRole('Nagaswaram')).toBe('nagaswaram');
+    expect(canonicalRole('Thavil')).toBe('thavil');
   });
 
   it('lowercases and trims surrounding whitespace before matching', () => {

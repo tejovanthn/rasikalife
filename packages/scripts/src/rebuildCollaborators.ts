@@ -1,4 +1,3 @@
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
 /**
  * Backfills / repairs the `collaborators` list denormalized onto each Artist.
  *
@@ -14,12 +13,10 @@ import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
  *
  * Usage: `pnpm cli rebuild-collaborators [--dry-run] [--artist <id>]`
  */
-import { keyOfEntity } from '@rasika/core/db/keys';
 import { collaboratorsFrom } from '@rasika/core/domain/artist';
 import type { Collaborator } from '@rasika/core/domain/artist/client';
 
 const SCAN_PAGE_SIZE = 1000;
-const TABLE_NAME = process.env.DYNAMODB_TABLE ?? 'RasikaLifeTable';
 
 interface JunctionRow {
   eventId: string;
@@ -93,6 +90,11 @@ function groupByEvent(rows: JunctionRow[]): Map<string, JunctionRow[]> {
  * already applied: `createEventArtistJunctions` only runs when an event is
  * approved, so every row reaching this function already belongs to an approved
  * event — there is no "unapproved junction row" to guard against.
+ *
+ * Trade: this copies each event's full cast into every member's row list, so the
+ * peak memory is Σ(castSize²) across the table — a 40-artist festival contributes
+ * ~1,600 rows, all resident at once. That is the price of the single-pass read-count
+ * win above; fine for an occasional sweep, worth revisiting if the dataset grows huge.
  */
 function buildCollaboratorLists(liveRows: JunctionRow[]): Map<string, Collaborator[]> {
   const byEvent = groupByEvent(liveRows);
@@ -139,31 +141,23 @@ async function writeCollaborators(
   entries: Array<{ artistId: string; collaborators: Collaborator[] }>
 ): Promise<void> {
   const { ArtistEntity } = await import('../../core/src/domain/artist/entity.js');
-  const { dynamoClient } = await import('@rasika/core/db');
 
   const computedAt = new Date().toISOString();
 
-  // Thunks, not promises. `entries.map(() => send(...))` would fire every write
-  // the moment map ran — the chunked await below would throttle nothing, and a
-  // rejection in a not-yet-awaited chunk is an unhandled rejection.
+  // Write through the entity, exactly as the live `rebuildArtistCollaborators` does,
+  // rather than a raw UpdateCommand. Two paths for one operation is what let the old
+  // raw write need its own key-lowercasing workaround; the entity path never has that
+  // hazard, and the two can no longer drift on the shape they write.
+  //
+  // Thunks, not promises. `entries.map(() => go(...))` would fire every write the
+  // moment map ran — the chunked await below would throttle nothing, and a rejection
+  // in a not-yet-awaited chunk is an unhandled rejection.
   const updates = entries.map(
     ({ artistId, collaborators }) =>
       () =>
-        dynamoClient.send(
-          new UpdateCommand({
-            TableName: TABLE_NAME,
-            // ElectroDB lowercases composite key values, so the key must be derived
-            // from the entity rather than hand-built in uppercase, or this writes a
-            // phantom row instead of updating the real artist.
-            Key: keyOfEntity(ArtistEntity, { id: artistId }),
-            UpdateExpression:
-              'SET collaborators = :collaborators, collaboratorsComputedAt = :computedAt',
-            ExpressionAttributeValues: {
-              ':collaborators': collaborators,
-              ':computedAt': computedAt,
-            },
-          })
-        )
+        ArtistEntity.update({ id: artistId })
+          .set({ collaborators, collaboratorsComputedAt: computedAt })
+          .go()
   );
 
   for (let i = 0; i < updates.length; i += 25) {

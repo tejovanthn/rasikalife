@@ -172,10 +172,12 @@ export async function listPastRsvpedWithoutLogs(userId: string, limit = 20): Pro
 
   const loggedEventIds = new Set<string>();
   for (const result of logResults) {
-    for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Array<{ sk: string }>) {
-      // ElectroDB writes the sort key lowercase, so the stripped prefix must match.
-      const eventId = item.sk.replace('concert_log#', '');
-      loggedEventIds.add(eventId);
+    for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Array<{ eventId: string }>) {
+      // Read the mixed-case `eventId` attribute, not the sk. ElectroDB lowercases key
+      // values, so a `concert_log#`-stripped sk yields a lowercased id that never matches
+      // the mixed-case `pastEventIds` — every logged event would slip through the dedup
+      // and reappear as "unlogged".
+      loggedEventIds.add(item.eventId);
     }
   }
 

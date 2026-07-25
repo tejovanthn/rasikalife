@@ -111,6 +111,26 @@ describe('artist-photo', () => {
       // order 10 first. Zero-padded, order 2 correctly sorts first.
       expect(String(orderTwo.Item.gsi1sk) < String(orderTen.Item.gsi1sk)).toBe(true);
     });
+
+    it('throws rather than overflow the padded sort key when order exceeds MAX_PHOTO_ORDER', async () => {
+      // The Zod schema bounds order at the tRPC edge, but a core-direct caller bypasses it.
+      // order 10000 pads to five digits and sorts *before* 0000, silently jumping to the
+      // front — so the entity itself must reject it, next to the key that depends on it.
+      const { ArtistPhotoEntity: RealEntity } =
+        await vi.importActual<typeof import('./entity')>('./entity');
+
+      expect(() =>
+        RealEntity.create({
+          id: 'photo-overflow',
+          artistId: 'artist-1',
+          imageUrl: 'https://cdn.rasika.life/photos/artist-1/photo.jpg',
+          uploadId: 'upload-1',
+          order: MAX_PHOTO_ORDER + 1,
+          featured: false,
+          createdBy: 'user-1',
+        }).params()
+      ).toThrow(/out of range/);
+    });
   });
 
   describe('updateArtistPhoto', () => {

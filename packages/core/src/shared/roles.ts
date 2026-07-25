@@ -24,8 +24,14 @@ const ROLE_ALIASES: Record<string, string> = {
   veenai: 'veena',
   vainika: 'veena',
   tambura: 'tambura',
+  tanpura: 'tambura',
   nagaswaram: 'nagaswaram',
-  dance: 'bharatanatyam',
+  nadaswaram: 'nagaswaram',
+  thavil: 'thavil',
+  // `dance` stays free — collapsing it to bharatanatyam would mislabel Kuchipudi,
+  // Kathak, Odissi, Mohiniyattam and Kathakali performers, which on an Indian
+  // classical arts platform is exactly the kind of wrong assertion to avoid. An
+  // unmapped "dance" passes through as "dance".
   bharatanatyam: 'bharatanatyam',
 };
 

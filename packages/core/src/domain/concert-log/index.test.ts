@@ -238,9 +238,14 @@ describe('concert-log', () => {
             .filter((e): e is { id: string; startDateTime: string } => !!e);
           return { Responses: { [TABLE_NAME]: items } };
         }
+        // ElectroDB lowercases the sk, so recover the original-cased eventId from the
+        // logged set and return it as the stored attribute — which is what the source
+        // now reads. Returning only `sk` (lowercased) would mask a mixed-case mismatch.
+        const loggedByLowered = new Map([...loggedEventIds].map(id => [id.toLowerCase(), id]));
         const items = keys
-          .filter(k => loggedEventIds.has(k.sk.replace('concert_log#', '')))
-          .map(k => ({ sk: k.sk }));
+          .map(k => loggedByLowered.get(k.sk.replace('concert_log#', '')))
+          .filter((eventId): eventId is string => !!eventId)
+          .map(eventId => ({ eventId }));
         return { Responses: { [TABLE_NAME]: items } };
       });
     }
@@ -265,12 +270,15 @@ describe('concert-log', () => {
     });
 
     it('excludes past events that already have a concert log', async () => {
+      // Mixed-case id: the log row's sk stores it lowercased, but the dedup compares
+      // against the event's mixed-case id. Reading the sk instead of the eventId
+      // attribute would never match, so every logged event would wrongly reappear.
       vi.mocked(RsvpEntity.query.byUser).mockReturnValue(
-        goResolves([{ eventId: 'past-1' }]) as never
+        goResolves([{ eventId: 'Past-1' }]) as never
       );
       mockBatchGet(
-        { 'past-1': { id: 'past-1', startDateTime: '2020-01-01T00:00:00.000Z' } },
-        new Set(['past-1'])
+        { 'past-1': { id: 'Past-1', startDateTime: '2020-01-01T00:00:00.000Z' } },
+        new Set(['Past-1'])
       );
 
       expect(await listPastRsvpedWithoutLogs('u1')).toEqual([]);

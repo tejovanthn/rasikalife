@@ -38,7 +38,11 @@ async function batchGetCompositions(ids: string[]): Promise<Map<string, Record<s
 
   for (const result of results) {
     for (const item of (result.Responses?.[TABLE_NAME] ?? []) as Array<Record<string, unknown>>) {
-      map.set((item.pk as string).replace('composition#', ''), item);
+      // Key by the mixed-case `id` attribute, never the pk. ElectroDB lowercases
+      // key values, so `pk` reads `composition#<lowercased id>`; every caller looks
+      // this map up with the mixed-case `compositionId` from a junction row, so a
+      // pk-stripped key would never match and the cascade would silently no-op.
+      map.set(item.id as string, item);
     }
   }
   return map;
@@ -384,9 +388,14 @@ export async function cascadeArtistMerge(
   } while (awardCursor);
 
   // Migrate ArtistPhoto records from loser to canonical. The primary key partitions on
-  // artistId, so this is a delete-then-write like the junction migrations above. No
+  // artistId, so this is a write-then-delete like the junction migrations above. No
   // existence check is needed: the photo id is unchanged and unique to the photo, so the
   // canonical partition can never already hold a row for it.
+  //
+  // Write the canonical copy *before* deleting the loser's. A crash between the two then
+  // leaves a harmless duplicate the next run cleans up, rather than losing the photo
+  // outright — the paging query reads the loser partition, so a delete-first crash would
+  // strand the row with nothing left to re-copy it from.
   //
   // Both sides go through the entity rather than raw commands. The write must, so the
   // `watch` setter recomputes orderStr and with it the byArtist GSI key. The delete must
@@ -415,7 +424,6 @@ export async function cascadeArtistMerge(
 
     await Promise.all(
       photoItems.map(async item => {
-        await ArtistPhotoEntity.delete({ artistId: loserId, id: item.id }).go();
         await ArtistPhotoEntity.upsert({
           id: item.id,
           artistId: canonicalId,
@@ -428,6 +436,7 @@ export async function cascadeArtistMerge(
           createdBy: item.createdBy,
           createdAt: item.createdAt,
         }).go();
+        await ArtistPhotoEntity.delete({ artistId: loserId, id: item.id }).go();
       })
     );
   } while (photoCursor);
@@ -600,6 +609,7 @@ export async function cascadeArtistMerge(
 export async function cascadeArtistNameUpdate(artistId: string, newName: string): Promise<void> {
   const { EventArtistEntity } = await import('./event-artist/entity');
   const { ArtistAwardEntity } = await import('./artist-award/entity');
+  const { ArtistMembershipEntity } = await import('./artist-membership/entity');
 
   // One rename, one cascade. Composition composer names are a copy of the same
   // artist name, so they belong here rather than at the call site.
@@ -653,6 +663,45 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
       )
     );
   } while (awardCursor);
+
+  // Refresh the denormalized name copies on membership rows in both directions:
+  // groupName where the renamed artist is the group, memberName where it is a member.
+  // The merge cascade already keeps both fresh; a plain rename must too, or a group's
+  // members list (or a member's "performs as" list) shows the old name indefinitely.
+  // groupName/memberName are not key composites, so a patch never moves a key.
+  let groupCursor: string | null = null;
+  do {
+    const result = (await ArtistMembershipEntity.query
+      .primary({ groupId: artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: groupCursor })) as Page;
+    const items = (result.data as Array<{ memberId: string }>) || [];
+    groupCursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        ArtistMembershipEntity.patch({ groupId: artistId, memberId: item.memberId })
+          .set({ groupName: newName })
+          .go()
+      )
+    );
+  } while (groupCursor);
+
+  let memberCursor: string | null = null;
+  do {
+    const result = (await ArtistMembershipEntity.query
+      .byMember({ memberId: artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: memberCursor })) as Page;
+    const items = (result.data as Array<{ groupId: string }>) || [];
+    memberCursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        ArtistMembershipEntity.patch({ groupId: item.groupId, memberId: artistId })
+          .set({ memberName: newName })
+          .go()
+      )
+    );
+  } while (memberCursor);
 }
 
 // Removes an artist's membership rows in both directions. Destructive and one-way: there

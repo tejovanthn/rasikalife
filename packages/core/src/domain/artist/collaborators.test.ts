@@ -154,33 +154,38 @@ describe('rebuildArtistCollaborators', () => {
       ]);
     });
 
-    await rebuildArtistCollaborators('artist-1');
+    const returned = await rebuildArtistCollaborators('artist-1');
 
     const expectedStrength2 = collaboratorStrength(2, '2026-03-01T10:00:00.000Z');
     const expectedStrength3 = collaboratorStrength(1, '2026-01-01T10:00:00.000Z');
 
+    const expectedCollaborators = [
+      {
+        artistId: 'artist-2',
+        name: 'Artist Two',
+        sharedEventCount: 2,
+        lastSharedAt: '2026-03-01T10:00:00.000Z',
+        topRoles: ['vocal'],
+        strength: expectedStrength2,
+      },
+      {
+        artistId: 'artist-3',
+        name: 'Artist Three',
+        sharedEventCount: 1,
+        lastSharedAt: '2026-01-01T10:00:00.000Z',
+        topRoles: ['violin'],
+        strength: expectedStrength3,
+      },
+    ];
+
     expect(ArtistEntity.update).toHaveBeenCalledWith({ id: 'artist-1' });
     expect(updateSetMock).toHaveBeenCalledWith({
-      collaborators: [
-        {
-          artistId: 'artist-2',
-          name: 'Artist Two',
-          sharedEventCount: 2,
-          lastSharedAt: '2026-03-01T10:00:00.000Z',
-          topRoles: ['vocal'],
-          strength: expectedStrength2,
-        },
-        {
-          artistId: 'artist-3',
-          name: 'Artist Three',
-          sharedEventCount: 1,
-          lastSharedAt: '2026-01-01T10:00:00.000Z',
-          topRoles: ['violin'],
-          strength: expectedStrength3,
-        },
-      ],
+      collaborators: expectedCollaborators,
       collaboratorsComputedAt: '2025-01-15T12:00:00.000Z',
     });
+    // The freshly computed list is returned so the merge fixup can use it directly
+    // rather than re-reading through an eventually-consistent get.
+    expect(returned).toEqual(expectedCollaborators);
   });
 
   it('excludes an event carrying deletedAt from the rebuild', async () => {
@@ -424,6 +429,17 @@ describe('collaboratorsFrom', () => {
     ]);
     expect(result[0].sharedEventCount).toBe(2);
     expect(result[0].lastSharedAt).toBe('2026-06-01T00:00:00.000Z');
+  });
+
+  it('takes the co-artist name from the most recent event, not the last row iterated', () => {
+    // Rows arrive in query order, not date order: the newer event (fresh spelling)
+    // comes first, the older event (stale spelling) last. The name must follow the
+    // newest event, so a rename that has not yet reached every junction row still wins.
+    const result = collaboratorsFrom('a1', [
+      row('a2', 'Ravi Shankar', '2026-06-01T00:00:00.000Z'),
+      row('a2', 'Ravi Shanker', '2025-01-01T00:00:00.000Z'),
+    ]);
+    expect(result[0].name).toBe('Ravi Shankar');
   });
 
   it('orders topRoles by frequency, not first-seen', () => {
