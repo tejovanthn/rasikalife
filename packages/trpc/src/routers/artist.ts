@@ -32,6 +32,20 @@ const AddMemberInputSchema = z.union([
   z.object({ ...addMemberBaseShape, memberName: z.string().min(1).max(200) }).strict(),
 ]);
 
+// A create() against an existing key surfaces DynamoDB's ConditionalCheckFailedException,
+// which ElectroDB wraps and re-throws. Walk the cause chain so we can map a lost race to
+// a friendly CONFLICT rather than leaking a 500.
+function isConditionalCheckFailure(err: unknown): boolean {
+  for (let cause: unknown = err, hops = 0; cause && hops < 5; hops++) {
+    const e = cause as { name?: string; code?: string; cause?: unknown };
+    if (e.name === 'ConditionalCheckFailedException' || e.code === 'ConditionalCheckFailedException') {
+      return true;
+    }
+    cause = e.cause;
+  }
+  return false;
+}
+
 export const artistRouter = createTRPCRouter({
   get: publicProcedure
     .input(z.object({ id: z.string().min(1) }))
@@ -57,7 +71,10 @@ export const artistRouter = createTRPCRouter({
     .input(z.object({ query: z.string(), limit: z.number().int().min(1).max(50).optional() }))
     .query(async ({ input }) => {
       const query = input.query.trim();
-      if (!query) return [];
+      // Below two characters, skip the work entirely. Every call pages the whole
+      // artist table into memory (see below), and a one-character query matches
+      // almost everything while helping no one — the client debounces at 2 too.
+      if (query.length < 2) return [];
       const limit = input.limit ?? 10;
 
       // Cheap exact hit on the byName GSI first. getArtistByName already
@@ -157,6 +174,21 @@ export const artistRouter = createTRPCRouter({
   addAward: moderatorProcedure
     .input(ArtistAward.AddArtistAwardSchema)
     .mutation(async ({ input }) => {
+      const artist = await Artist.getArtist(input.artistId);
+      if (!artist) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
+      }
+      // addArtistAward uses create(), which fails the conditional write on a
+      // duplicate (artistId, awardId). Pre-check so re-adding the same award —
+      // the only way to "edit" one today, since there's no award edit UI —
+      // reports itself rather than surfacing a raw "conditional request failed".
+      const existing = await ArtistAward.getArtistAwards(input.artistId);
+      if (existing.some(a => a.awardId === input.awardId)) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `${input.awardName} is already recorded for this artist`,
+        });
+      }
       const result = await ArtistAward.addArtistAward(input);
       triggerReindex();
       return result;
@@ -179,6 +211,15 @@ export const artistRouter = createTRPCRouter({
     if (!group) {
       throw new TRPCError({ code: 'NOT_FOUND', message: 'Group artist not found' });
     }
+    // getArtist returns a merged-away tombstone (it only nulls a plain soft-delete),
+    // so guard against writing an edge onto a record no profile renders. Point the
+    // caller at the surviving artist instead.
+    if (group.mergedIntoId) {
+      throw new TRPCError({
+        code: 'BAD_REQUEST',
+        message: 'This group has been merged into another record; add members to the surviving artist',
+      });
+    }
     // Without this, a member could be attached to an individual, and the
     // profile's Members block — which only renders for isGroup records — would
     // hide an edge that still exists and still gets rewritten on every merge.
@@ -195,6 +236,12 @@ export const artistRouter = createTRPCRouter({
       const member = await Artist.getArtist(input.memberId);
       if (!member) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Member artist not found' });
+      }
+      if (member.mergedIntoId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This member has been merged into another record; add the surviving artist instead',
+        });
       }
       memberId = member.id;
       memberName = member.name;
@@ -222,16 +269,29 @@ export const artistRouter = createTRPCRouter({
       });
     }
 
-    const result = await ArtistMembership.addArtistMembership({
-      groupId: input.groupId,
-      groupName: group.name,
-      memberId,
-      memberName,
-      role: input.role,
-      rank: input.rank,
-    });
-    triggerReindex();
-    return result;
+    try {
+      const result = await ArtistMembership.addArtistMembership({
+        groupId: input.groupId,
+        groupName: group.name,
+        memberId,
+        memberName,
+        role: input.role,
+        rank: input.rank,
+      });
+      triggerReindex();
+      return result;
+    } catch (err) {
+      // Two concurrent adds of the same member both clear the pre-check above; the
+      // conditional write is the real backstop. Map its failure to the same friendly
+      // CONFLICT rather than letting it surface as a 500.
+      if (isConditionalCheckFailure(err)) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: `${memberName} is already a member of ${group.name}`,
+        });
+      }
+      throw err;
+    }
   }),
 
   removeMember: moderatorProcedure

@@ -512,8 +512,19 @@ export const eventRouter = createTRPCRouter({
         await Event.softDeleteEvent(draft.id).catch(() => {});
         throw error;
       }
+      // Featuring runs after the event is created and approved, so a failure here
+      // must NOT bubble up: the event already exists as a public, approved record,
+      // and reporting the whole call as failed would make a moderator retry and
+      // create a *second* approved event for the same performance. Tolerate it and
+      // report the true outcome — a moderator can toggle the flag from the modal.
+      let isFeatured = false;
       if (input.featured) {
-        await EventArtist.setEventArtistFeatured(draft.id, input.artistId, true);
+        try {
+          await EventArtist.setEventArtistFeatured(draft.id, input.artistId, true);
+          isFeatured = true;
+        } catch (error) {
+          console.error(`createPerformance: featuring event ${draft.id} failed`, error);
+        }
       }
       triggerReindex();
       return {
@@ -521,7 +532,7 @@ export const eventRouter = createTRPCRouter({
         eventTitle: input.title,
         eventStartDateTime: input.startDateTime,
         role: input.role,
-        isFeatured: input.featured ?? false,
+        isFeatured,
       };
     }),
 
