@@ -6,7 +6,16 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 6 — the presentation redesign. Phases 1–5 built the data model and the moderator tooling, but a *visitor* still sees the old profile: name, a role string, a two-field About, an events list, generic explore links. Phase 6 is what makes everything visible. Phase 5 is fully built and reviewed (per-slice + a whole-phase review); nothing is owed. A full DHH review of phases 1–5 ran before phase 6 (2026-07-25) and every actionable finding is fixed — see "From the full phases 1–5 review" below.
+**Next step:** finish phase 6. The main public profile is redesigned and the gallery subroute is built (see "Phase 6 progress" below). What's left: (1) restyle the existing `/events` and `/compositions` subroutes to the shared conventions — they still use the runtime-TZ `toLocaleDateString` (swap to `formatEventDate`) and the old card styling; (2) the read-efficiency denormalization from §6.2 (`getRepertoire` and `listFeaturedPerformances`), which lands before prod, not before rendering. A full DHH review of phases 1–5 ran first (2026-07-25) and every actionable finding is fixed — see "From the full phases 1–5 review" below.
+
+### Phase 6 progress (2026-07-25)
+
+Done and committed:
+- **Foundations:** `formatEventDate` in `web/app/lib/utils.ts` pins the zone to `Asia/Kolkata` (fixes the runtime-TZ off-by-one), tested under `TZ=UTC`; `structured-data.tsx` gained `MusicGroupStructuredData` and an extended `PersonStructuredData` (image/sameAs/award/memberOf).
+- **`artists.$artistid.tsx` redesigned** — hero (photo or initial placeholder, honorific, instrument·city, website + socials), About high, Awards, Gurus & lineage (linked, chronological), Compositions teaser, Repertoire, Notable performances (featured), Events, Gallery teaser, Members/Groups (group-aware), Frequent collaborators, Explore. One empty-state rule, one date formatter, names as stored, JSON-LD switches by `isGroup`. Loader parallelizes `getUser`.
+- **New `artists.$artistid.gallery.tsx`** — SSR photo grid via `listPhotos`, paginated, canonical + breadcrumb + empty state; teaser "View all" wired.
+
+Reusing existing procedures only, per the kickoff rule — **not visually verified yet** (typecheck/lint/tests pass). The `getRepertoire`/featured calls are the still-inefficient §6.2 paths, deliberately kept until the denormalization lands.
 
 **Phase 6 kickoff — read the plan first: `docs/plans/260722-01-artist-profile-redesign.md` §6 (page structure), §6.1 (index subroutes), §7 (JSON-LD).**
 
