@@ -9,6 +9,7 @@ import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl, generateEventUrl, parseSlug } from '~/lib/url-slug';
+import { formatEventDate } from '~/lib/utils';
 
 interface ArtistEvent {
   eventId: string;
@@ -130,12 +131,7 @@ export default function ArtistEvents() {
                         <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {new Date(event.eventStartDateTime).toLocaleDateString('en-IN', {
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
+                            {formatEventDate(event.eventStartDateTime)}
                           </span>
                         </div>
                       </div>
