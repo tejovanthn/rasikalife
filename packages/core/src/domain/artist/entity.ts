@@ -142,6 +142,39 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // Denormalized "most performed" repertoire, derived from the setlists of the
+      // artist's events. Stored so the profile reads one field instead of a per-view
+      // fan-out over every event's setlist. Refreshed by the rebuild-repertoire sweep,
+      // not inline — the read is hot, the aggregate tolerates staleness, and recomputing
+      // it inline on every concert-log submit would amplify that frequent write badly.
+      topCompositions: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            id: { type: 'string', required: true },
+            title: { type: 'string', required: true },
+            count: { type: 'number', required: true },
+          },
+        },
+        required: false,
+      },
+      topRagas: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            id: { type: 'string', required: true },
+            name: { type: 'string', required: true },
+            count: { type: 'number', required: true },
+          },
+        },
+        required: false,
+      },
+      repertoireComputedAt: {
+        type: 'string',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

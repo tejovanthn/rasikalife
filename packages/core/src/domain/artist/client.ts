@@ -61,6 +61,20 @@ export interface Collaborator {
   strength: number;
 }
 
+/** One "most performed" composition on an artist's derived repertoire. */
+export interface RepertoireComposition {
+  id: string;
+  title: string;
+  count: number;
+}
+
+/** One "most performed" raga on an artist's derived repertoire. */
+export interface RepertoireRaga {
+  id: string;
+  name: string;
+  count: number;
+}
+
 /**
  * Browser-safe Artist shape. Derived from the schema rather than hand-listed,
  * so it cannot drift out of sync with what the API actually accepts — the
@@ -79,4 +93,7 @@ export type Artist = z.infer<typeof CreateArtistSchema> & {
   verifiedAt?: string;
   collaborators?: Collaborator[];
   collaboratorsComputedAt?: string;
+  topCompositions?: RepertoireComposition[];
+  topRagas?: RepertoireRaga[];
+  repertoireComputedAt?: string;
 };

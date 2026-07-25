@@ -195,3 +195,5 @@ export {
 } from './dedup';
 
 export { rebuildArtistCollaborators } from './collaborators';
+export { computeRepertoire } from './repertoire';
+export type { Repertoire, RepertoireSetlistRow } from './repertoire';

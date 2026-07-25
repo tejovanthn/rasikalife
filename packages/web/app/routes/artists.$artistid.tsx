@@ -67,7 +67,7 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, events, featured, awards, membership, gallery, repertoire, activeEdit] =
+    const [compositions, events, featured, awards, membership, gallery, activeEdit] =
       await Promise.all([
         client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
         client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
@@ -79,11 +79,17 @@ export async function loader({
           ? client.artist.listMembers.query({ groupId: artist.id })
           : client.artist.listGroups.query({ memberId: artist.id }),
         client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
-        client.artist.getRepertoire.query({ artistId: artist.id }),
         user
           ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
           : Promise.resolve(null),
       ]);
+
+    // Repertoire is read straight off the denormalized fields on the artist record
+    // (refreshed by the rebuild-repertoire sweep) — no per-view setlist fan-out.
+    const repertoire = {
+      topCompositions: artist.topCompositions ?? [],
+      topRagas: artist.topRagas ?? [],
+    };
 
     return data({
       artist,

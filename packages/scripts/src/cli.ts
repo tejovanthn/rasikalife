@@ -94,6 +94,17 @@ program
   });
 
 program
+  .command('rebuild-repertoire')
+  .description("Rebuild each artist's most-performed repertoire from their events' setlists")
+  .option('-n, --dry-run', 'Preview changes without writing to the database')
+  .option('--artist <id>', 'Rebuild repertoire for a single artist only')
+  .action(async (opts: { dryRun?: boolean; artist?: string }) => {
+    setup();
+    const { rebuildRepertoire } = await import('./rebuildRepertoire.js');
+    await rebuildRepertoire({ dryRun: opts.dryRun, artistId: opts.artist });
+  });
+
+program
   .command('sync:instagram')
   .description(
     'Scrape Instagram profiles linked to artists, venues, and organisers for event posts'
