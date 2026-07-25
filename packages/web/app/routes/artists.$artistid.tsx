@@ -2,7 +2,7 @@ import type { Artist, Collaborator, Guru } from '@rasika/core/domain/artist/clie
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { Award, Calendar, ExternalLink, MapPin, Users } from 'lucide-react';
-import { type MetaFunction, data, redirect } from 'react-router';
+import { type HeadersFunction, type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -91,21 +91,34 @@ export async function loader({
     };
     const featured = (artist.featuredPerformances ?? []).slice(0, 4);
 
-    return data({
-      artist,
-      compositions: compositions.items,
-      hasMoreCompositions: compositions.hasMore,
-      artistEvents: events.items,
-      featured,
-      awards,
-      membership,
-      isGroup,
-      galleryPhotos: gallery.items,
-      repertoire,
-      activeEdit,
-      isLoggedIn: !!user,
-      isModerator: user?.role === 'moderator' || user?.role === 'admin',
-    });
+    // Anonymous views are identical and safe to serve from the CDN edge; signed-in views
+    // carry per-viewer chrome (edit / moderator controls, a pending-edit banner), so they
+    // stay private. The only content that varies by auth is navigation controls to routes
+    // that enforce auth themselves — nothing sensitive — so a brief cache mismatch is
+    // cosmetic, not a data leak. Full CDN offload still wants the server cache key to
+    // segment on the rasika_session cookie (see the note in STATE.md / §6.2).
+    const cacheControl = user
+      ? 'private, no-cache'
+      : 'public, max-age=0, s-maxage=120, stale-while-revalidate=600';
+
+    return data(
+      {
+        artist,
+        compositions: compositions.items,
+        hasMoreCompositions: compositions.hasMore,
+        artistEvents: events.items,
+        featured,
+        awards,
+        membership,
+        isGroup,
+        galleryPhotos: gallery.items,
+        repertoire,
+        activeEdit,
+        isLoggedIn: !!user,
+        isModerator: user?.role === 'moderator' || user?.role === 'admin',
+      },
+      { headers: { 'Cache-Control': cacheControl } }
+    );
   } catch (error) {
     if (error instanceof Response) throw error;
     if (error instanceof ApplicationError) {
@@ -120,6 +133,13 @@ export async function loader({
     throw new Response('Failed to load artist', { status: 500 });
   }
 }
+
+// For a document request the loader's Cache-Control isn't applied to the HTML response
+// unless a route forwards it here. Default to private so a loader that somehow set nothing
+// is never shared-cached.
+export const headers: HeadersFunction = ({ loaderHeaders }) => ({
+  'Cache-Control': loaderHeaders.get('Cache-Control') ?? 'private, no-cache',
+});
 
 export const meta: MetaFunction = ({ data }) => {
   const { artist } = (data as { artist?: Artist }) ?? {};
