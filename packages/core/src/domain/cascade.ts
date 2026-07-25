@@ -11,6 +11,26 @@ export const CASCADE_BATCH_SIZE = 1000;
 
 type Page = { data: unknown[]; cursor: string | null };
 
+/**
+ * Build the set of already-existing canonical keys from a merge existence check,
+ * refusing to proceed if DynamoDB returned any key `unprocessed`. An unprocessed key
+ * reads as "does not exist", which would make the merge upsert overwrite a curated
+ * canonical row (its rank/year/category) with the loser's copy. Failing loudly is
+ * safe — the merge is retryable — and one helper spares each of the six existence
+ * checks from re-deriving the same guard.
+ */
+function existingKeySet<T>(
+  result: { data?: T[]; unprocessed?: unknown[] },
+  key: (row: T) => string
+): Set<string> {
+  if (result.unprocessed?.length) {
+    throw new Error(
+      `Merge existence check returned ${result.unprocessed.length} unprocessed keys; refusing to risk overwriting a canonical row`
+    );
+  }
+  return new Set((result.data ?? []).map(key));
+}
+
 async function batchGetCompositions(ids: string[]): Promise<Map<string, Record<string, unknown>>> {
   const map = new Map<string, Record<string, unknown>>();
   if (ids.length === 0) return map;
@@ -306,7 +326,7 @@ export async function cascadeArtistMerge(
           eventArtistItems.map(item => ({ eventId: item.eventId, artistId: canonicalId }))
         ).go()
       : { data: [] as Array<{ eventId: string }> };
-    const existingSet = new Set((existingResult.data ?? []).map(r => r.eventId));
+    const existingSet = existingKeySet(existingResult, r => r.eventId);
 
     await Promise.all(
       eventArtistItems.map(async item => {
@@ -361,7 +381,7 @@ export async function cascadeArtistMerge(
           artistAwardItems.map(item => ({ artistId: canonicalId, awardId: item.awardId }))
         ).go()
       : { data: [] as Array<{ awardId: string }> };
-    const existingAwardSet = new Set((existingAwardResult.data ?? []).map(r => r.awardId));
+    const existingAwardSet = existingKeySet(existingAwardResult, r => r.awardId);
 
     await Promise.all(
       artistAwardItems.map(async item => {
@@ -466,7 +486,7 @@ export async function cascadeArtistMerge(
           rewritableGroupItems.map(item => ({ groupId: canonicalId, memberId: item.memberId }))
         ).go()
       : { data: [] as Array<{ memberId: string }> };
-    const existingGroupSet = new Set((existingGroupResult.data ?? []).map(r => r.memberId));
+    const existingGroupSet = existingKeySet(existingGroupResult, r => r.memberId);
 
     await Promise.all(
       groupItems.map(async item => {
@@ -515,7 +535,7 @@ export async function cascadeArtistMerge(
           rewritableMemberItems.map(item => ({ groupId: item.groupId, memberId: canonicalId }))
         ).go()
       : { data: [] as Array<{ groupId: string }> };
-    const existingMemberSet = new Set((existingMemberResult.data ?? []).map(r => r.groupId));
+    const existingMemberSet = existingKeySet(existingMemberResult, r => r.groupId);
 
     await Promise.all(
       memberItems.map(async item => {
@@ -844,7 +864,7 @@ export async function cascadeRagaMerge(
           items.map(item => ({ compositionId: item.compositionId, ragaId: canonicalId }))
         ).go()
       : { data: [] as Array<{ compositionId: string }> };
-    const existingRagaSet = new Set((existingRagaResult.data ?? []).map(r => r.compositionId));
+    const existingRagaSet = existingKeySet(existingRagaResult, r => r.compositionId);
 
     await Promise.all(
       items.map(async item => {
@@ -914,7 +934,7 @@ export async function cascadeTalaMerge(
           items.map(item => ({ compositionId: item.compositionId, talaId: canonicalId }))
         ).go()
       : { data: [] as Array<{ compositionId: string }> };
-    const existingTalaSet = new Set((existingTalaResult.data ?? []).map(t => t.compositionId));
+    const existingTalaSet = existingKeySet(existingTalaResult, t => t.compositionId);
 
     await Promise.all(
       items.map(async item => {

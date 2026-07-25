@@ -518,6 +518,35 @@ describe('cascade', () => {
       expect(updates[0].ExpressionAttributeValues[':composerId']).toBe('canonical');
     });
 
+    it('aborts the merge when the existence check returns unprocessed keys', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([
+        {
+          data: [
+            {
+              eventId: 'event1',
+              artistId: 'loser',
+              eventTitle: 'Title',
+              eventStartDateTime: '2026-01-01T00:00:00.000Z',
+              role: 'performer',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+      // A throttled batch read returns keys under `unprocessed`; treating those as
+      // "does not exist" would upsert over a curated canonical row, so abort instead.
+      EventArtistEntity.get = vi.fn().mockReturnValue({
+        go: vi.fn().mockResolvedValue({
+          data: [],
+          unprocessed: [{ eventId: 'event1', artistId: 'canonical' }],
+        }),
+      });
+
+      await expect(
+        cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name')
+      ).rejects.toThrow(/unprocessed/);
+    });
+
     it('does not create a duplicate EventArtist row when the canonical artist is already on the event', async () => {
       EventArtistEntity.query.byArtist = pagedQuery([
         {

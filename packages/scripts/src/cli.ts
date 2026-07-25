@@ -120,18 +120,6 @@ program
   });
 
 program
-  .command('fix:gsi-keys')
-  .description(
-    'Fix stale GSI key fields on events, compositions, and event-artists caused by pre-fix cascade merges'
-  )
-  .option('-n, --dry-run', 'Preview fixes without writing to the database')
-  .action(async (opts: { dryRun?: boolean }) => {
-    setup();
-    const { fixGsiKeys } = await import('./fixGsiKeys.js');
-    await fixGsiKeys({ dryRun: opts.dryRun });
-  });
-
-program
   .command('check:id')
   .description('Fetch raw entity data from the table by ID (tries all entity types)')
   .argument('<id>', 'Entity ID')
