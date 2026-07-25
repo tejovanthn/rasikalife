@@ -6,7 +6,7 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 6 — the presentation redesign. Phases 1–5 built the data model and the moderator tooling, but a *visitor* still sees the old profile: name, a role string, a two-field About, an events list, generic explore links. Phase 6 is what makes everything visible. Phase 5 is fully built and reviewed (per-slice + a whole-phase review); nothing is owed.
+**Next step:** phase 6 — the presentation redesign. Phases 1–5 built the data model and the moderator tooling, but a *visitor* still sees the old profile: name, a role string, a two-field About, an events list, generic explore links. Phase 6 is what makes everything visible. Phase 5 is fully built and reviewed (per-slice + a whole-phase review); nothing is owed. A full DHH review of phases 1–5 ran before phase 6 (2026-07-25) and every actionable finding is fixed — see "From the full phases 1–5 review" below.
 
 **Phase 6 kickoff — read the plan first: `docs/plans/260722-01-artist-profile-redesign.md` §6 (page structure), §6.1 (index subroutes), §7 (JSON-LD).**
 
@@ -45,6 +45,22 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
 | 8 | Claims + verification queue | not started |
 | 9 | Polish | not started |
+
+### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
+
+One `dhh-code-reviewer` per phase (phase 2 had never had a machine review). All actionable findings fixed across four commits (core, tRPC, web, cleanup). The two sharpest were verified by hand against the code, then fixed:
+
+- **Two silent data-drift bugs from recovering an id by stripping a lowercased key** — the exact sibling of the key-casing bug the phase-3 sweep couldn't catch, invisible to tests because before and after gave the same wrong answer. (1) `cascade.batchGetCompositions` keyed its map by the lowercased pk, so raga/tala rename and merge never matched the mixed-case `compositionId` and skipped the composition `ragas[]`/`talas[]` refresh. (2) `concert-log.listPastRsvpedWithoutLogs` compared a lowercased sk-stripped id against mixed-case `pastEventIds`, so every logged event reappeared as unlogged. Both now read the id attribute; both guarded with mixed-case tests.
+- **`createPerformance` featuring ran outside the approval try/catch** — a featuring failure reported the whole call as failed, so a retry created a *second* approved public event. Now tolerated; returns the true `isFeatured`.
+- **`cascadeArtistNameUpdate` skipped `ArtistMembership.groupName`/`memberName`** (the merge path handled them); **photo merge** now upserts-before-deletes so a mid-merge crash can't lose a photo; **`rebuildArtistCollaborators` returns the computed list** so the merge fixup no longer under-repairs from an eventually-consistent re-read; **`canonicalRole` dropped `dance → bharatanatyam`** (it mislabelled every other dance form) and gained `tanpura`/`nadaswaram`/`thavil`.
+- Smaller: `addAward` and `addMember` give a friendly CONFLICT + verify the artist exists; `addMember` rejects a merged-away tombstone; the wizard Form swallows a bare Enter (was: publish + jump out mid-flow); the editor draft carries the guru `id` so a rename keeps years/discipline; `api.upload.image` uses `Object.hasOwn`; `searchLive` skips sub-2-char scans; `ArtistPhoto` order cap enforced at the entity; a shared `existingKeySet` guards all six merge existence-checks against unprocessed BatchGet keys.
+- **Deleted dead/broken tooling:** `scripts/fixGsiKeys.ts` (+ `fix:gsi-keys` CLI) scanned uppercase keys against lowercase rows so it repaired nothing while reporting "healthy"; `core/shared/singleTable.ts` was unimported uppercase-key dead code.
+
+**Deliberately not changed (defensible as-is, not fixes):**
+- `listMembers`/`listGroups` stay `publicProcedure` over `pages:'all'` — the public profile must read them and the partitions are tiny (a duo has two members). Bounding the core query would break the merge cascade, which needs all rows.
+- `searchLive` does **not** short-circuit the fuzzy scan on an exact hit — a typeahead should still offer alternatives; the sub-2-char guard is the real cost cut.
+- `ArtistPhoto` has no per-photo moderation status field — "moderation" in §4.7 is the moderator-gated writes (all photo mutations are `moderatorProcedure`), which exist. No status workflow was specced.
+- The pre-existing phase-4 design deferrals below (strength decay, inline-cap dimension, nothing schedules `rebuild-collaborators`, hard-delete leaves junctions) are unchanged — they predate this review and are design calls, not review findings. The one phase-4 deferral this review *did* close: `rebuildArtistCollaborators` no longer returns void.
 
 ### Phase 5 slices (it is large, so it is built in vertical slices)
 
@@ -114,7 +130,7 @@ Raised, judged real, not yet done:
 - **The inline cap guards the wrong dimension.** `COLLABORATOR_INLINE_CAP` counts cast size, but the cost is the sum of the cast's *lifetime event counts* — each rebuild walks that artist's whole history, sequentially. Twelve busy accompanists with 300 events each is ~3,600 queries and passes the cap; a 40-artist festival of newcomers is cheap and gets rejected. The guard belongs on event history.
 - **Nothing schedules `rebuild-collaborators`.** There is no infra entry, so a skipped festival or a swallowed failure stays stale until someone runs the CLI by hand. `collaboratorsComputedAt` is stored precisely so a sweep could find stale artists by timestamp — but something has to run it.
 - **Hard `deleteEvent` leaves junction rows and never recomputes.** Filtered correctly by accident (a missing row is absent from the batch-get result), but no rebuild is triggered.
-- `rebuildArtistCollaborators` returns `void`, so `rebuildCollaboratorsAfterMerge` re-reads the artist it just computed. Returning `Collaborator[]` removes the round-trip.
+- ~~`rebuildArtistCollaborators` returns `void`, so `rebuildCollaboratorsAfterMerge` re-reads the artist it just computed.~~ — closed in the phases 1–5 review: it now returns `Collaborator[]` and the merge fixup uses it directly, which also fixes the eventually-consistent stale-read that could under-repair.
 
 ### Deferred from the phase 2 self-review
 
@@ -157,8 +173,8 @@ Raised, judged real, not yet done:
 
 Current at end of phase 5. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **688 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
-- `packages/web`: **34 web-own typecheck errors** (the raw count is ~41 — the extra 7 are core's leaking through project references); **63 tests pass**.
+- `packages/core`: **694 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Was 688 pass before the phases 1–5 review added 6 regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/web`: **≤34 web-own typecheck errors** (currently 32; the raw count is higher — the extra ~7 are core's leaking through project references); **63 tests pass**.
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
 - Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.
 - Commit messages with inner double-quotes break `git commit -m` shell quoting — commit prose via `git commit -F <file>`.
