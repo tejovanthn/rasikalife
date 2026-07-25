@@ -38,7 +38,10 @@ const AddMemberInputSchema = z.union([
 function isConditionalCheckFailure(err: unknown): boolean {
   for (let cause: unknown = err, hops = 0; cause && hops < 5; hops++) {
     const e = cause as { name?: string; code?: string; cause?: unknown };
-    if (e.name === 'ConditionalCheckFailedException' || e.code === 'ConditionalCheckFailedException') {
+    if (
+      e.name === 'ConditionalCheckFailedException' ||
+      e.code === 'ConditionalCheckFailedException'
+    ) {
       return true;
     }
     cause = e.cause;
@@ -217,7 +220,8 @@ export const artistRouter = createTRPCRouter({
     if (group.mergedIntoId) {
       throw new TRPCError({
         code: 'BAD_REQUEST',
-        message: 'This group has been merged into another record; add members to the surviving artist',
+        message:
+          'This group has been merged into another record; add members to the surviving artist',
       });
     }
     // Without this, a member could be attached to an individual, and the
@@ -240,7 +244,8 @@ export const artistRouter = createTRPCRouter({
       if (member.mergedIntoId) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'This member has been merged into another record; add the surviving artist instead',
+          message:
+            'This member has been merged into another record; add the surviving artist instead',
         });
       }
       memberId = member.id;
