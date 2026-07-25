@@ -1,14 +1,18 @@
-import type { Edit } from '@rasika/core/domain/edit/client';
+import type { Artist, Collaborator, Guru } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
-import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
-import { Calendar, ExternalLink } from 'lucide-react';
+import type { CompositionWithRelations } from '@rasika/core/types/entities';
+import { Award, Calendar, ExternalLink, MapPin, Users } from 'lucide-react';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import { BreadcrumbStructuredData, PersonStructuredData } from '~/components/structured-data';
+import {
+  BreadcrumbStructuredData,
+  MusicGroupStructuredData,
+  PersonStructuredData,
+} from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
@@ -22,7 +26,7 @@ import {
   generateSlug,
   parseSlug,
 } from '~/lib/url-slug';
-import { formatDate } from '~/lib/utils';
+import { formatEventDate } from '~/lib/utils';
 
 export async function loader({
   params,
@@ -44,6 +48,9 @@ export async function loader({
 
   try {
     const client = await createServerClient(request);
+    // The viewer only depends on the request, not the fetched artist, so start it
+    // alongside the artist fetch rather than after it.
+    const userPromise = getUser(request);
     const artist = await client.artist.get.query({ id: slugId });
 
     if (!artist) {
@@ -57,24 +64,39 @@ export async function loader({
       }
     }
 
-    const user = await getUser(request);
-    const [result, eventsResult, repertoire, activeEdit] = await Promise.all([
-      client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
-      client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
-      client.artist.getRepertoire.query({ artistId: artist.id }),
-      user
-        ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
-        : Promise.resolve(null),
-    ]);
+    const user = await userPromise;
+    const isGroup = !!artist.isGroup;
+
+    const [compositions, events, featured, awards, membership, gallery, repertoire, activeEdit] =
+      await Promise.all([
+        client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
+        client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
+        client.artist.listFeaturedPerformances.query({ artistId: artist.id, limit: 4 }),
+        client.artist.listAwards.query({ artistId: artist.id }),
+        // A group lists its members; an individual lists the groups it performs in.
+        // Only one direction is ever rendered, so only one is fetched.
+        isGroup
+          ? client.artist.listMembers.query({ groupId: artist.id })
+          : client.artist.listGroups.query({ memberId: artist.id }),
+        client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
+        client.artist.getRepertoire.query({ artistId: artist.id }),
+        user
+          ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
+          : Promise.resolve(null),
+      ]);
 
     return data({
       artist,
-      compositions: result.items,
-      hasMoreCompositions: result.hasMore,
-      artistEvents: eventsResult.items,
+      compositions: compositions.items,
+      hasMoreCompositions: compositions.hasMore,
+      artistEvents: events.items,
+      featured,
+      awards,
+      membership,
+      isGroup,
+      galleryPhotos: gallery.items,
       repertoire,
       activeEdit,
-      formattedDate: formatDate(artist.createdAt),
       isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
@@ -94,15 +116,16 @@ export async function loader({
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const { artist } = (data as { artist?: ArtistType }) ?? {};
+  const { artist } = (data as { artist?: Artist }) ?? {};
   const canonicalName = artist?.name ?? '';
 
   if (artist) {
+    const noun = artist.isGroup ? 'performing group' : 'artist';
     return [
       { title: `${artist.name} - Artist - Rasika.life` },
       {
         name: 'description',
-        content: `Learn about ${artist.name}, a renowned artist in Indian classical music. Discover their musical journey and contributions to classical traditions.`,
+        content: `Learn about ${artist.name}, a renowned ${noun} in Indian classical music. Discover their musical journey and contributions to classical traditions.`,
       },
       {
         name: 'keywords',
@@ -145,69 +168,129 @@ export const meta: MetaFunction = ({ data }) => {
   ];
 };
 
+function capitalise(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+// Photo, or an initial-based placeholder when the artist has none.
+function HeroAvatar({ photoUrl, name }: { photoUrl?: string; name: string }) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className="h-24 w-24 shrink-0 rounded-full border object-cover"
+      />
+    );
+  }
+  return (
+    <div
+      aria-hidden="true"
+      className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border bg-muted text-3xl font-semibold text-muted-foreground"
+    >
+      {name.trim().charAt(0).toUpperCase() || '?'}
+    </div>
+  );
+}
+
+function EventRow({
+  eventId,
+  eventTitle,
+  eventStartDateTime,
+  role,
+}: { eventId: string; eventTitle: string; eventStartDateTime: string; role?: string }) {
+  return (
+    <Link to={generateEventUrl(eventTitle, eventId)} className="block no-underline">
+      <Card className="transition-colors hover:border-primary/50">
+        <CardContent className="py-3">
+          <p className="font-medium text-foreground">{eventTitle}</p>
+          <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {formatEventDate(eventStartDateTime)}
+            </span>
+            {role && (
+              <Badge variant="outline" className="text-xs">
+                {role}
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 export default function ArtistDetails() {
   const location = useLocation();
 
-  interface ArtistEvent {
-    eventId: string;
-    eventTitle: string;
-    eventStartDateTime: string;
-    artistName: string;
-    artistTitle?: string;
-    role?: string;
-  }
-
   const {
-    artist,
+    artist: artistData,
     compositions,
     hasMoreCompositions,
     artistEvents,
+    featured,
+    awards,
+    membership,
+    isGroup,
+    galleryPhotos,
     repertoire,
     activeEdit,
-    formattedDate,
     isLoggedIn,
     isModerator,
-  } = useLoaderData<{
-    artist: ArtistType;
-    compositions: CompositionWithRelations[];
-    hasMoreCompositions: boolean;
-    artistEvents: ArtistEvent[];
-    repertoire: {
-      topCompositions: { id: string; title: string; count: number }[];
-      topRagas: { id: string; name: string; count: number }[];
-    };
-    activeEdit: Edit | null;
-    formattedDate: string;
-    isLoggedIn: boolean;
-    isModerator: boolean;
-  }>();
+  } = useLoaderData<typeof loader>();
+
+  const artist = artistData as Artist;
 
   const isNestedRoute =
-    location.pathname.includes('/compositions') || location.pathname.includes('/events');
-
-  const shareUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`;
-
-  const specializations = [
-    ...new Set(artistEvents.map(e => e.role).filter((r): r is string => !!r)),
-  ].map(role => `${role.charAt(0).toUpperCase()}${role.slice(1)} Artist`);
-  const subtitle =
-    specializations.length > 0 ? specializations.join(' & ') : 'Indian Classical Music Artist';
+    location.pathname.includes('/compositions') ||
+    location.pathname.includes('/events') ||
+    location.pathname.includes('/gallery');
 
   if (isNestedRoute) {
     return <Outlet />;
   }
 
+  const artistUrl = generateArtistUrl(artist.name, artist.id);
+  const shareUrl = `https://rasika.life${artistUrl}`;
+
+  const instrument = artist.instrument?.trim();
+  const city = artist.city?.trim();
+  const subtitle = instrument
+    ? capitalise(instrument)
+    : isGroup
+      ? 'Performing group'
+      : 'Indian classical music artist';
+
+  const socialLinks = (artist.socialLinks as Array<{ platform: string; url: string }>) ?? [];
+  const specialisations = (artist.specialisations as string[]) ?? [];
+  const gurus = ((artist.gurus as Guru[]) ?? [])
+    .slice()
+    .sort(
+      (a, b) => (a.fromYear ?? Number.POSITIVE_INFINITY) - (b.fromYear ?? Number.POSITIVE_INFINITY)
+    );
+  const collaborators = ((artist.collaborators as Collaborator[]) ?? [])
+    .slice()
+    .sort((a, b) => b.strength - a.strength)
+    .slice(0, 12);
+  const galleryFeatured = galleryPhotos.filter(p => p.featured).slice(0, 6);
+
+  // A featured performance also appears in the general events list; drop the overlap
+  // so the same concert doesn't render twice.
+  const featuredIds = new Set(featured.map(f => f.eventId));
+  const otherEvents = artistEvents.filter(e => !featuredIds.has(e.eventId));
+
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
     { label: 'Artists', path: '/artists' },
-    {
-      label: artist.name,
-      path: generateArtistUrl(artist.name, artist.id),
-    },
+    { label: artist.name, path: artistUrl },
   ];
 
+  const sameAs = [...socialLinks.map(l => l.url), artist.website].filter((u): u is string => !!u);
+  const awardNames = awards.map(a => a.awardName);
+
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
+    <main className="container mx-auto max-w-4xl px-4 py-8">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={artist.name}
@@ -215,7 +298,7 @@ export default function ArtistDetails() {
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
-        editUrl={isLoggedIn ? `${generateArtistUrl(artist.name, artist.id)}/edit` : undefined}
+        editUrl={isLoggedIn ? `${artistUrl}/edit` : undefined}
         activeEdit={activeEdit}
         isModerator={isModerator}
         requestDeletionUrl={`/moderator/request-deletion?entityType=artist&entityId=${artist.id}`}
@@ -223,66 +306,42 @@ export default function ArtistDetails() {
           isModerator ? `/moderator/merge?entityType=artist&entityId=${artist.id}` : undefined
         }
       />
-      <section className="mb-8 p-6 bg-muted rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">About</h2>
-        {artist.biography && <p className="text-sm mb-4 whitespace-pre-line">{artist.biography}</p>}
-        <div className="space-y-2 text-sm">
-          <p>
-            <strong>Name:</strong> {artist.title ? `${artist.title} ${artist.name}` : artist.name}
-          </p>
-          {artist.birthYear && (
-            <p>
-              <strong>Born:</strong> {artist.birthYear}
-              {artist.birthPlace ? `, ${artist.birthPlace}` : ''}
-            </p>
-          )}
-          {artist.activeYears && (
-            <p>
-              <strong>Active:</strong> {artist.activeYears}
-            </p>
-          )}
-          {artist.specialisations && (artist.specialisations as string[]).length > 0 && (
-            <p>
-              <strong>Specialisations:</strong> {(artist.specialisations as string[]).join(', ')}
-            </p>
-          )}
-          {artist.gurus && (artist.gurus as Array<{ id?: string; name: string }>).length > 0 && (
-            <p>
-              <strong>Gurus:</strong>{' '}
-              {(artist.gurus as Array<{ id?: string; name: string }>).map(g => g.name).join(', ')}
-            </p>
-          )}
-          {artist.website && (
-            <p>
-              <strong>Website:</strong>{' '}
-              <a
-                href={artist.website as string}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                {artist.website as string}
-              </a>
-            </p>
-          )}
-          <p>
-            <strong>Added:</strong> {formattedDate}
-          </p>
-        </div>
-      </section>
 
-      {artist.socialLinks &&
-        (artist.socialLinks as Array<{ platform: string; url: string }>).length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-lg font-semibold mb-3">Social Links</h2>
-            <div className="flex flex-wrap gap-3">
-              {(artist.socialLinks as Array<{ platform: string; url: string }>).map(link => (
+      {/* Hero — photo + identity */}
+      <section className="mb-8 flex items-start gap-5">
+        <HeroAvatar photoUrl={artist.photoUrl} name={artist.name} />
+        <div className="min-w-0">
+          {artist.title && <p className="text-sm text-muted-foreground">{artist.title}</p>}
+          <p className="text-lg font-medium">
+            {[instrument ? capitalise(instrument) : null, city].filter(Boolean).join(' · ') ||
+              subtitle}
+          </p>
+          {city && !instrument && (
+            <p className="flex items-center gap-1 text-sm text-muted-foreground">
+              <MapPin className="h-3.5 w-3.5" />
+              {city}
+            </p>
+          )}
+          {(socialLinks.length > 0 || artist.website) && (
+            <div className="mt-3 flex flex-wrap gap-3">
+              {artist.website && (
+                <a
+                  href={artist.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-ext-arrow inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Website
+                </a>
+              )}
+              {socialLinks.map(link => (
                 <a
                   key={link.platform}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm hover:underline"
+                  className="no-ext-arrow inline-flex items-center gap-1 text-sm text-primary hover:underline"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ??
@@ -290,24 +349,111 @@ export default function ArtistDetails() {
                 </a>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </div>
+      </section>
+
+      {/* About — the main crawlable text block, placed high */}
+      {(artist.biography ||
+        artist.birthYear ||
+        artist.activeYears ||
+        specialisations.length > 0) && (
+        <section className="mb-8 rounded-lg bg-muted p-6">
+          <h2 className="mb-4 text-xl font-semibold">About</h2>
+          {artist.biography && (
+            <p className="mb-4 whitespace-pre-line text-sm">{artist.biography}</p>
+          )}
+          <div className="space-y-2 text-sm">
+            {artist.birthYear && (
+              <p>
+                <strong>Born:</strong> {artist.birthYear}
+                {artist.birthPlace ? `, ${artist.birthPlace}` : ''}
+              </p>
+            )}
+            {artist.activeYears && (
+              <p>
+                <strong>Active:</strong> {artist.activeYears}
+              </p>
+            )}
+            {specialisations.length > 0 && (
+              <p>
+                <strong>Specialisations:</strong> {specialisations.join(', ')}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Awards */}
+      {awards.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold">
+            <Award className="h-5 w-5" />
+            Awards & honours
+          </h2>
+          <ul className="space-y-2">
+            {awards.map(award => (
+              <li key={award.awardId} className="text-sm">
+                <span className="font-medium">{award.awardName}</span>
+                {award.year ? <span className="text-muted-foreground"> · {award.year}</span> : null}
+                {award.category ? (
+                  <span className="text-muted-foreground"> · {award.category}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Gurus / lineage */}
+      {gurus.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-xl font-semibold">Gurus & lineage</h2>
+          <ul className="space-y-2 text-sm">
+            {gurus.map((guru, i) => {
+              const years = [guru.fromYear, guru.toYear].filter(Boolean).join('–');
+              return (
+                <li key={guru.id ?? `${guru.name}-${i}`}>
+                  {guru.id ? (
+                    <Link
+                      to={generateArtistUrl(guru.name, guru.id)}
+                      className="font-medium hover:underline"
+                    >
+                      {guru.name}
+                    </Link>
+                  ) : (
+                    <span className="font-medium">{guru.name}</span>
+                  )}
+                  {guru.discipline ? (
+                    <span className="text-muted-foreground"> · {guru.discipline}</span>
+                  ) : null}
+                  {years ? <span className="text-muted-foreground"> ({years})</span> : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {/* Compositions teaser */}
       {compositions.length > 0 && (
         <EntityCompositions
-          compositions={compositions}
+          compositions={compositions as CompositionWithRelations[]}
           entityType="artist"
           entitySlug={`${generateSlug(artist.name)}-${artist.id}`}
           showViewMore={hasMoreCompositions}
           customHeading={`Compositions by ${artist.name}`}
         />
       )}
+
+      {/* Repertoire — most-performed, derived from logged concerts */}
       {(repertoire.topCompositions.length > 0 || repertoire.topRagas.length > 0) && (
-        <section className="mt-8 pt-8 border-t">
-          <h2 className="text-xl font-semibold mb-4">Repertoire</h2>
+        <section className="mt-8 border-t pt-8">
+          <h2 className="mb-4 text-xl font-semibold">Repertoire</h2>
           <div className="grid gap-6 sm:grid-cols-2">
             {repertoire.topCompositions.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                   Most performed compositions
                 </h3>
                 <ul className="space-y-2">
@@ -315,11 +461,11 @@ export default function ArtistDetails() {
                     <li key={comp.id} className="flex items-center justify-between gap-4">
                       <Link
                         to={generateCompositionUrl(comp.title, comp.id)}
-                        className="text-sm hover:underline underline-offset-2 truncate"
+                        className="truncate text-sm underline-offset-2 hover:underline"
                       >
                         {comp.title}
                       </Link>
-                      <span className="text-xs text-muted-foreground shrink-0">{comp.count}×</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{comp.count}×</span>
                     </li>
                   ))}
                 </ul>
@@ -327,7 +473,7 @@ export default function ArtistDetails() {
             )}
             {repertoire.topRagas.length > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide mb-3">
+                <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                   Most performed ragas
                 </h3>
                 <ul className="space-y-2">
@@ -335,85 +481,152 @@ export default function ArtistDetails() {
                     <li key={raga.id} className="flex items-center justify-between gap-4">
                       <Link
                         to={generateRagaUrl(raga.name, raga.id)}
-                        className="text-sm hover:underline underline-offset-2 truncate"
+                        className="truncate text-sm underline-offset-2 hover:underline"
                       >
                         {raga.name}
                       </Link>
-                      <span className="text-xs text-muted-foreground shrink-0">{raga.count}×</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{raga.count}×</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-4">Derived from logged concerts</p>
+          <p className="mt-4 text-xs text-muted-foreground">Derived from logged concerts</p>
         </section>
       )}
-      {artistEvents.length > 0 && (
+
+      {/* Notable performances — featured past */}
+      {featured.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Events</h2>
+          <h2 className="mb-4 text-xl font-semibold">Notable performances</h2>
           <div className="space-y-3">
-            {artistEvents.map(event => (
-              <Link
-                key={event.eventId}
-                to={generateEventUrl(event.eventTitle, event.eventId)}
-                className="block no-underline"
-              >
-                <Card className="hover:border-primary/50 transition-colors">
-                  <CardContent className="py-3">
-                    <p className="font-medium text-foreground">{event.eventTitle}</p>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(event.eventStartDateTime).toLocaleDateString('en-IN', {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
-                      {event.role && (
-                        <Badge variant="outline" className="text-xs">
-                          {event.role}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+            {featured.map(f => (
+              <EventRow
+                key={f.eventId}
+                eventId={f.eventId}
+                eventTitle={f.eventTitle}
+                eventStartDateTime={f.eventStartDateTime}
+                role={f.role}
+              />
             ))}
           </div>
-          <Link
-            to={`${generateArtistUrl(artist.name, artist.id)}/events`}
-            className="inline-block mt-3 text-sm text-primary"
-          >
+        </section>
+      )}
+
+      {/* Events */}
+      {otherEvents.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-4 text-xl font-semibold">Events</h2>
+          <div className="space-y-3">
+            {otherEvents.map(event => (
+              <EventRow
+                key={event.eventId}
+                eventId={event.eventId}
+                eventTitle={event.eventTitle}
+                eventStartDateTime={event.eventStartDateTime}
+                role={event.role}
+              />
+            ))}
+          </div>
+          <Link to={`${artistUrl}/events`} className="mt-3 inline-block text-sm text-primary">
             View all events &rarr;
           </Link>
         </section>
       )}
 
-      <section className="mt-8 pt-8 border-t">
-        <h2 className="text-xl font-semibold mb-4">Explore More</h2>
+      {/* Gallery teaser — featured photos, hidden entirely when none */}
+      {galleryFeatured.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-4 text-xl font-semibold">Gallery</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {galleryFeatured.map(photo => (
+              <figure key={photo.id} className="overflow-hidden rounded-lg border">
+                <img
+                  src={photo.imageUrl}
+                  alt={photo.caption ?? artist.name}
+                  className="aspect-square w-full object-cover"
+                />
+                {photo.caption && (
+                  <figcaption className="px-2 py-1 text-xs text-muted-foreground">
+                    {photo.caption}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Members / Groups — group-aware */}
+      {membership.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold">
+            <Users className="h-5 w-5" />
+            {isGroup ? 'Members' : 'Performs as'}
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {membership.map(m => {
+              const linkedName = isGroup ? m.memberName : m.groupName;
+              const linkedId = isGroup ? m.memberId : m.groupId;
+              return (
+                <Link
+                  key={linkedId}
+                  to={generateArtistUrl(linkedName, linkedId)}
+                  className="rounded-full border px-3 py-1 text-sm transition-colors hover:border-primary/50"
+                >
+                  {linkedName}
+                  {m.role ? <span className="text-muted-foreground"> · {m.role}</span> : null}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Frequent collaborators */}
+      {collaborators.length > 0 && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-xl font-semibold">Frequent collaborators</h2>
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {collaborators.map(c => (
+              <Link
+                key={c.artistId}
+                to={generateArtistUrl(c.name, c.artistId)}
+                className="rounded-lg border p-3 transition-colors hover:border-primary/50"
+              >
+                <p className="truncate font-medium">{c.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {c.topRoles && c.topRoles.length > 0 ? `${c.topRoles.join(', ')} · ` : ''}
+                  {c.sharedEventCount} shared {c.sharedEventCount === 1 ? 'event' : 'events'}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Explore more */}
+      <section className="mt-8 border-t pt-8">
+        <h2 className="mb-4 text-xl font-semibold">Explore More</h2>
         <div className="grid gap-4 md:grid-cols-3">
           <Link
             to="/artists"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
+            className="rounded-lg bg-muted/50 p-4 text-center transition-colors hover:bg-muted"
           >
             <h3 className="font-medium">All Artists</h3>
             <p className="text-sm text-muted-foreground">Browse other musicians</p>
           </Link>
-
           <Link
             to="/carnatic/compositions"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
+            className="rounded-lg bg-muted/50 p-4 text-center transition-colors hover:bg-muted"
           >
             <h3 className="font-medium">Compositions</h3>
             <p className="text-sm text-muted-foreground">Explore musical works</p>
           </Link>
-
           <Link
             to="/carnatic"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
+            className="rounded-lg bg-muted/50 p-4 text-center transition-colors hover:bg-muted"
           >
             <h3 className="font-medium">Carnatic Music</h3>
             <p className="text-sm text-muted-foreground">Discover the tradition</p>
@@ -426,18 +639,38 @@ export default function ArtistDetails() {
           { name: 'Home', item: 'https://rasika.life' },
           { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
           { name: 'Artists', item: 'https://rasika.life/artists' },
-          {
-            name: artist.name,
-            item: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
-          },
+          { name: artist.name, item: shareUrl },
         ]}
       />
-      <PersonStructuredData
-        person={{
-          name: artist.name,
-          url: `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`,
-        }}
-      />
+      {isGroup ? (
+        <MusicGroupStructuredData
+          group={{
+            name: artist.name,
+            url: shareUrl,
+            image: artist.photoUrl,
+            sameAs,
+            awards: awardNames,
+            members: membership.map(m => ({
+              name: m.memberName,
+              url: `https://rasika.life${generateArtistUrl(m.memberName, m.memberId)}`,
+            })),
+          }}
+        />
+      ) : (
+        <PersonStructuredData
+          person={{
+            name: artist.name,
+            url: shareUrl,
+            image: artist.photoUrl,
+            sameAs,
+            awards: awardNames,
+            memberOf: membership.map(m => ({
+              name: m.groupName,
+              url: `https://rasika.life${generateArtistUrl(m.groupName, m.groupId)}`,
+            })),
+          }}
+        />
+      )}
     </main>
   );
 }
