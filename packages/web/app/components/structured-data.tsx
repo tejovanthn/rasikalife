@@ -309,7 +309,11 @@ export function RagaFaqStructuredData({
   melaNumber?: number | null;
   parentRagaName?: string | null;
 }) {
-  const faqs: Array<{ '@type': string; name: string; acceptedAnswer: { '@type': string; text: string } }> = [];
+  const faqs: Array<{
+    '@type': string;
+    name: string;
+    acceptedAnswer: { '@type': string; text: string };
+  }> = [];
 
   if (arohanam)
     faqs.push({
@@ -351,7 +355,11 @@ export function RagaFaqStructuredData({
       type="application/ld+json"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqs }),
+        __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs,
+        }),
       }}
     />
   );
