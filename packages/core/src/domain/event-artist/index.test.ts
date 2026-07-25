@@ -19,6 +19,13 @@ vi.mock('./entity', () => ({
   },
 }));
 
+vi.mock('../artist/entity', () => ({
+  ArtistEntity: {
+    get: vi.fn(),
+    update: vi.fn(),
+  },
+}));
+
 describe('EventArtist', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -147,15 +154,33 @@ describe('EventArtist', () => {
 });
 
 describe('setEventArtistFeatured', () => {
-  async function patchSpy() {
+  const patchedRow = {
+    eventId: 'event-1',
+    artistId: 'artist-1',
+    eventTitle: 'Margazhi Recital',
+    eventStartDateTime: '2026-01-30T17:30:00.000Z',
+    role: 'vocal',
+  };
+
+  async function mocks(existingFeatured: unknown[] = []) {
     const { EventArtistEntity } = await import('./entity');
-    const set = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: {} }) });
-    vi.mocked(EventArtistEntity.patch).mockReturnValue({ set } as never);
-    return { set, EventArtistEntity };
+    const { ArtistEntity } = await import('../artist/entity');
+    const patchSet = vi
+      .fn()
+      .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: patchedRow }) });
+    vi.mocked(EventArtistEntity.patch).mockReturnValue({ set: patchSet } as never);
+    vi.mocked(ArtistEntity.get).mockReturnValue({
+      go: vi
+        .fn()
+        .mockResolvedValue({ data: { id: 'artist-1', featuredPerformances: existingFeatured } }),
+    } as never);
+    const updateSet = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    vi.mocked(ArtistEntity.update).mockReturnValue({ set: updateSet } as never);
+    return { patchSet, updateSet, EventArtistEntity };
   }
 
   it('sets the flag and rank on the artist-event junction row', async () => {
-    const { set, EventArtistEntity } = await patchSpy();
+    const { patchSet, EventArtistEntity } = await mocks();
 
     await setEventArtistFeatured('event-1', 'artist-1', true, 2);
 
@@ -163,16 +188,106 @@ describe('setEventArtistFeatured', () => {
       eventId: 'event-1',
       artistId: 'artist-1',
     });
-    expect(set).toHaveBeenCalledWith({ isFeatured: true, featureRank: 2 });
+    expect(patchSet).toHaveBeenCalledWith({ isFeatured: true, featureRank: 2 });
   });
 
   it('clears the rank when unfeaturing', async () => {
-    const { set } = await patchSpy();
+    const { patchSet } = await mocks();
 
     await setEventArtistFeatured('event-1', 'artist-1', false, 2);
 
     // A rank left behind on an unfeatured row would silently reorder the
     // teaser if the row were ever featured again.
-    expect(set).toHaveBeenCalledWith({ isFeatured: false, featureRank: undefined });
+    expect(patchSet).toHaveBeenCalledWith({ isFeatured: false, featureRank: undefined });
+  });
+
+  it('adds the performance to the artist featured list, sorted by rank', async () => {
+    const { updateSet } = await mocks([
+      {
+        eventId: 'event-0',
+        eventTitle: 'Older',
+        eventStartDateTime: '2025-01-01T00:00:00.000Z',
+        featureRank: 5,
+      },
+    ]);
+
+    await setEventArtistFeatured('event-1', 'artist-1', true, 2);
+
+    // Rank 2 sorts ahead of the existing rank-5 entry.
+    expect(updateSet).toHaveBeenCalledWith({
+      featuredPerformances: [
+        {
+          eventId: 'event-1',
+          eventTitle: 'Margazhi Recital',
+          eventStartDateTime: '2026-01-30T17:30:00.000Z',
+          role: 'vocal',
+          featureRank: 2,
+        },
+        {
+          eventId: 'event-0',
+          eventTitle: 'Older',
+          eventStartDateTime: '2025-01-01T00:00:00.000Z',
+          featureRank: 5,
+        },
+      ],
+    });
+  });
+
+  it('removes the performance from the artist featured list when unfeaturing', async () => {
+    const { updateSet } = await mocks([
+      {
+        eventId: 'event-1',
+        eventTitle: 'Margazhi Recital',
+        eventStartDateTime: '2026-01-30T17:30:00.000Z',
+        role: 'vocal',
+        featureRank: 2,
+      },
+      {
+        eventId: 'event-2',
+        eventTitle: 'Other',
+        eventStartDateTime: '2025-06-01T00:00:00.000Z',
+        featureRank: 3,
+      },
+    ]);
+
+    await setEventArtistFeatured('event-1', 'artist-1', false);
+
+    expect(updateSet).toHaveBeenCalledWith({
+      featuredPerformances: [
+        {
+          eventId: 'event-2',
+          eventTitle: 'Other',
+          eventStartDateTime: '2025-06-01T00:00:00.000Z',
+          featureRank: 3,
+        },
+      ],
+    });
+  });
+
+  it('re-featuring replaces the existing entry rather than duplicating it', async () => {
+    const { updateSet } = await mocks([
+      {
+        eventId: 'event-1',
+        eventTitle: 'Stale title',
+        eventStartDateTime: '2026-01-30T17:30:00.000Z',
+        role: 'vocal',
+        featureRank: 9,
+      },
+    ]);
+
+    await setEventArtistFeatured('event-1', 'artist-1', true, 1);
+
+    // One entry, with the fresh title and rank off the just-patched row.
+    expect(updateSet).toHaveBeenCalledWith({
+      featuredPerformances: [
+        {
+          eventId: 'event-1',
+          eventTitle: 'Margazhi Recital',
+          eventStartDateTime: '2026-01-30T17:30:00.000Z',
+          role: 'vocal',
+          featureRank: 1,
+        },
+      ],
+    });
   });
 });

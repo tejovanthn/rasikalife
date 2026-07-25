@@ -323,12 +323,6 @@ export const artistRouter = createTRPCRouter({
       )
     ),
 
-  listFeaturedPerformances: publicProcedure
-    .input(z.object({ artistId: z.string().min(1), limit: z.number().min(1).max(50).optional() }))
-    .query(({ input }) =>
-      EventArtist.getFeaturedEventsByArtist(input.artistId, { limit: input.limit })
-    ),
-
   listMembers: publicProcedure
     .input(z.object({ groupId: z.string().min(1) }))
     .query(({ input }) => ArtistMembership.getGroupMembers(input.groupId)),

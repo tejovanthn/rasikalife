@@ -175,6 +175,26 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // Denormalized moderator-curated "notable performances" for the profile teaser,
+      // maintained by setEventArtistFeatured. Stored so the teaser reads one field
+      // instead of a filtered full-partition scan of the artist's EventArtist rows.
+      // The list is tiny (a moderator curates a handful), so the display copies of
+      // eventTitle/eventStartDateTime can lag an event rename until it is re-featured —
+      // cosmetic, and there is no reverse index to refresh them cheaply.
+      featuredPerformances: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            eventId: { type: 'string', required: true },
+            eventTitle: { type: 'string', required: true },
+            eventStartDateTime: { type: 'string', required: true },
+            role: { type: 'string', required: false },
+            featureRank: { type: 'number', required: false },
+          },
+        },
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

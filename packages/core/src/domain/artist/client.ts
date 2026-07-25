@@ -75,6 +75,15 @@ export interface RepertoireRaga {
   count: number;
 }
 
+/** One moderator-featured performance, denormalized onto the artist for the teaser. */
+export interface FeaturedPerformance {
+  eventId: string;
+  eventTitle: string;
+  eventStartDateTime: string;
+  role?: string;
+  featureRank?: number;
+}
+
 /**
  * Browser-safe Artist shape. Derived from the schema rather than hand-listed,
  * so it cannot drift out of sync with what the API actually accepts — the
@@ -96,4 +105,5 @@ export type Artist = z.infer<typeof CreateArtistSchema> & {
   topCompositions?: RepertoireComposition[];
   topRagas?: RepertoireRaga[];
   repertoireComputedAt?: string;
+  featuredPerformances?: FeaturedPerformance[];
 };

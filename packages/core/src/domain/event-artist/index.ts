@@ -66,15 +66,30 @@ export async function getEventsByArtist(
 }
 
 /**
- * Mark (or unmark) this artist's participation in this event as a career
- * highlight, which is what the profile's notable-past teaser selects on.
+ * Order a featured-performance list the way the profile teaser shows it: explicit rank
+ * first, then most-recent. Kept sorted at write time so the reader just slices.
+ */
+export function sortFeaturedPerformances<
+  T extends { featureRank?: number; eventStartDateTime: string },
+>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const rankA = a.featureRank ?? Number.MAX_SAFE_INTEGER;
+    const rankB = b.featureRank ?? Number.MAX_SAFE_INTEGER;
+    if (rankA !== rankB) return rankA - rankB;
+    return b.eventStartDateTime.localeCompare(a.eventStartDateTime);
+  });
+}
+
+/**
+ * Mark (or unmark) this artist's participation in this event as a career highlight,
+ * which is what the profile's notable-past teaser selects on.
  *
- * Featuring is per-artist rather than per-event on purpose: a concert can be a
- * milestone for the vocalist and an ordinary night for the accompanist, so the
- * flag belongs to the junction row, not the Event.
+ * Featuring is per-artist rather than per-event on purpose: a concert can be a milestone
+ * for the vocalist and an ordinary night for the accompanist, so the flag belongs to the
+ * junction row, not the Event.
  *
- * Clearing `isFeatured` also clears `featureRank`, so an unfeatured row cannot
- * keep a rank that would silently reorder things if it were featured again.
+ * Clearing `isFeatured` also clears `featureRank`, so an unfeatured row cannot keep a
+ * rank that would silently reorder things if it were featured again.
  */
 export async function setEventArtistFeatured(
   eventId: string,
@@ -86,28 +101,32 @@ export async function setEventArtistFeatured(
     .set({ isFeatured: featured, featureRank: featured ? featureRank : undefined })
     .go({ response: 'all_new' });
 
-  return result.data as EventArtist;
-}
+  const row = result.data as EventArtist;
 
-/** This artist's featured performances, most prominent first. */
-export async function getFeaturedEventsByArtist(
-  artistId: string,
-  params?: { limit?: number }
-): Promise<EventArtist[]> {
-  const result = await EventArtistEntity.query
-    .byArtist({ artistId })
-    .where((attr, op) => op.eq(attr.isFeatured, true))
-    .go({ pages: 'all' });
+  // Keep the artist's denormalized featured list in step, so the profile teaser reads
+  // one field instead of a filtered full-partition scan of the artist's EventArtist rows.
+  // Read-modify-write is fine: featuring is a rare moderator action, and a re-feature
+  // fixes any race. Stored pre-sorted so the reader only slices.
+  const { ArtistEntity } = await import('../artist/entity');
+  const artist = await ArtistEntity.get({ id: artistId }).go();
+  if (artist.data) {
+    const withoutThis = (artist.data.featuredPerformances ?? []).filter(p => p.eventId !== eventId);
+    const next = featured
+      ? sortFeaturedPerformances([
+          ...withoutThis,
+          {
+            eventId,
+            eventTitle: row.eventTitle,
+            eventStartDateTime: row.eventStartDateTime,
+            role: row.role,
+            featureRank,
+          },
+        ])
+      : withoutThis;
+    await ArtistEntity.update({ id: artistId }).set({ featuredPerformances: next }).go();
+  }
 
-  const items = (result.data || []).sort((a, b) => {
-    // Explicit rank wins; unranked features fall back to most recent first.
-    const rankA = a.featureRank ?? Number.MAX_SAFE_INTEGER;
-    const rankB = b.featureRank ?? Number.MAX_SAFE_INTEGER;
-    if (rankA !== rankB) return rankA - rankB;
-    return b.eventStartDateTime.localeCompare(a.eventStartDateTime);
-  });
-
-  return params?.limit ? items.slice(0, params.limit) : items;
+  return row;
 }
 
 export async function deleteEventArtist(eventId: string, artistId: string): Promise<void> {

@@ -67,29 +67,29 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, events, featured, awards, membership, gallery, activeEdit] =
-      await Promise.all([
-        client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
-        client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
-        client.artist.listFeaturedPerformances.query({ artistId: artist.id, limit: 4 }),
-        client.artist.listAwards.query({ artistId: artist.id }),
-        // A group lists its members; an individual lists the groups it performs in.
-        // Only one direction is ever rendered, so only one is fetched.
-        isGroup
-          ? client.artist.listMembers.query({ groupId: artist.id })
-          : client.artist.listGroups.query({ memberId: artist.id }),
-        client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
-        user
-          ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
-          : Promise.resolve(null),
-      ]);
+    const [compositions, events, awards, membership, gallery, activeEdit] = await Promise.all([
+      client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
+      client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
+      client.artist.listAwards.query({ artistId: artist.id }),
+      // A group lists its members; an individual lists the groups it performs in.
+      // Only one direction is ever rendered, so only one is fetched.
+      isGroup
+        ? client.artist.listMembers.query({ groupId: artist.id })
+        : client.artist.listGroups.query({ memberId: artist.id }),
+      client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
+      user
+        ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
+        : Promise.resolve(null),
+    ]);
 
-    // Repertoire is read straight off the denormalized fields on the artist record
-    // (refreshed by the rebuild-repertoire sweep) — no per-view setlist fan-out.
+    // Repertoire and featured performances are read straight off the denormalized fields
+    // on the artist record — no per-view setlist fan-out, no filtered partition scan.
+    // Featured is stored pre-sorted by setEventArtistFeatured, so the teaser just slices.
     const repertoire = {
       topCompositions: artist.topCompositions ?? [],
       topRagas: artist.topRagas ?? [],
     };
+    const featured = (artist.featuredPerformances ?? []).slice(0, 4);
 
     return data({
       artist,

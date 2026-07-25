@@ -105,6 +105,17 @@ program
   });
 
 program
+  .command('rebuild-featured')
+  .description("Backfill each artist's featured-performance list from isFeatured EventArtist rows")
+  .option('-n, --dry-run', 'Preview changes without writing to the database')
+  .option('--artist <id>', 'Rebuild featured performances for a single artist only')
+  .action(async (opts: { dryRun?: boolean; artist?: string }) => {
+    setup();
+    const { rebuildFeatured } = await import('./rebuildFeatured.js');
+    await rebuildFeatured({ dryRun: opts.dryRun, artistId: opts.artist });
+  });
+
+program
   .command('sync:instagram')
   .description(
     'Scrape Instagram profiles linked to artists, venues, and organisers for event posts'
