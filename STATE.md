@@ -29,6 +29,8 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 
 **Heed the whole-phase-5 review's lesson:** phase 6 touches many sections at once. Keep one consistent empty-state rule, one date-formatting rule (pin `timeZone: 'Asia/Kolkata'` — the profile currently formats dates in the runtime TZ, which is UTC on the SSR Lambda; the prefill review found this bites), and one link/name-rendering convention across all sections rather than letting each drift.
 
+**Read-efficiency follow-up (plan §6.2, from the pre-phase-6 DDB review):** the rendering reuses existing procedures, but two read paths are wasteful and must be fixed before the profile ships to production, not before building it — `getRepertoire` is a 51-query per-view fan-out, and `getFeaturedEventsByArtist` filters after a full-partition read. Fix both by denormalizing `topCompositions`/`topRagas` and the short featured list onto the Artist row at write time (the `collaborators` pattern), then swap the loader to single-field reads. Add careful CDN caching (anon-only — the page varies on auth). The S3 search-blob pattern is the wrong granularity for a per-artist page; see §6.2 for why.
+
 ### Phase status
 
 | Phase | What | Status |
@@ -41,7 +43,7 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 3 | `ArtistPhoto` gallery entity | done |
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | done |
 | 5 | Create/edit wizard (moderator-only, direct write) | done |
-| 6 | Presentation redesign + JSON-LD + gallery subroute | not started |
+| 6 | Presentation redesign + JSON-LD + gallery subroute | in progress |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
 | 8 | Claims + verification queue | not started |
 | 9 | Polish | not started |

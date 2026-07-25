@@ -356,6 +356,21 @@ Full listing pages for the high-volume sections, each teased on the profile and 
 
 Awards have no subroute: they're few and shown inline. Each subroute is crawlable, SSR'd, and carries its own canonical + breadcrumb, extending the internal-link surface (SEO priority 1).
 
+### 6.2 Read efficiency and caching (from the pre-phase-6 DDB review, 2026-07-25)
+
+The profile is about to become the most-viewed anonymous page on the site, so its read cost was reviewed before this phase. The loader is mostly lean — events and compositions read denormalized junction rows with a `limit`, in one `Promise.all`. Two paths are not, and both are the same denormalize-at-write-time move already used for `collaborators`:
+
+- **`getRepertoire` is a 1 + N setlist fan-out on every view.** `getEventsByArtist(limit:50)` then a `getEventSetlist` per event, each its own `pages:'all'` partition query — 51 queries to render a 5-item teaser, unconditionally, on the anonymous hot path. There is no index that answers "this artist's repertoire" directly, so the fix is to **denormalize `topCompositions`/`topRagas` onto the Artist row** at setlist-reconcile time (where `recomputeEventSetlist` already runs) and read the one field the loader already fetches. Bonus: today's `limit:50` samples the *earliest* 50 events by the GSI sort key, so the teaser is also unrepresentative — denormalizing fixes both.
+- **`getFeaturedEventsByArtist` reads the whole event partition to return a handful.** `.byArtist(...).where(isFeatured=true).go({pages:'all'})` — ElectroDB `.where` is a post-read FilterExpression, so every EventArtist row for the artist is read, then the featured few kept in memory. Phase 6's notable-past teaser is the first caller. Fix: a **sparse GSI** keyed on a featured-only attribute, or denormalize the short curated featured list onto the Artist alongside the repertoire.
+
+Lower: the logged-in loader awaits `getUser` between the artist fetch and the batched queries though it depends only on the request (parallelizable); the collaborator rebuild's per-event cast fan-out is off the public path and already capped.
+
+**Why not the S3 search-index pattern.** The Fuse index works because search needs the *whole corpus* in memory and amortizes one scan across many reads via a warm-container cache. A profile page reads *one artist*, and the Artist row is already fetched — so denormalizing rides for free, whereas a per-artist S3 object adds a separate GET and a corpus blob would download everything to render one page. The search pattern's *refresh mechanism* (a `Cron` + a throttled fire-and-forget `triggerReindex` on mutation) is reusable if precompute-on-schedule is ever preferred to inline-at-reconcile; the *blob storage* is the wrong granularity here.
+
+**The complementary lever: CDN/HTTP response caching.** The loader returns `data(...)` with no `Cache-Control`. An anonymous read-heavy public page is the textbook case for edge caching, and it softens both findings above by collapsing repeat views. It must be done carefully — the page varies on `isLoggedIn`/`isModerator` (edit and moderator controls), so cache only the anonymous variant (or split the auth-dependent chrome out of the cached document). Not attempted blindly.
+
+**Sequencing.** None of this blocks *building* phase 6 — the rendering reuses the existing procedures as they stand. The two denormalizations (and the cache headers) are the "land before it ships to production" step; they replace the loader's `getRepertoire`/`listFeaturedPerformances` calls with single-field reads once done. Track as a phase-6 data-model follow-up, not a rendering blocker.
+
 ## 7. Structured data (JSON-LD)
 
 Schema type is driven by `isGroup`: emit `MusicGroup` for group records and `Person` (or `MusicGroup` where an individual is a performer identity) for individuals. This maps cleanly to the model:
