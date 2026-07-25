@@ -197,3 +197,5 @@ export {
 export { rebuildArtistCollaborators } from './collaborators';
 export { computeRepertoire } from './repertoire';
 export type { Repertoire, RepertoireSetlistRow } from './repertoire';
+export { rebuildAllRepertoires } from './repertoire-sweep';
+export type { RepertoireSweepResult } from './repertoire-sweep';
