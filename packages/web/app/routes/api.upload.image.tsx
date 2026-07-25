@@ -37,7 +37,12 @@ export const action: ActionFunction = async ({ request }) => {
       artist: serverClient.artist.getImageUploadUrl,
     };
 
-    const uploader = uploaders[entityType as keyof typeof uploaders];
+    // Object.hasOwn, not a truthy check on the lookup: `entityType=constructor`
+    // (or any prototype member) would otherwise resolve to an inherited function,
+    // slip past the guard, then throw on `.mutate` and return a 500 instead of 400.
+    const uploader = Object.hasOwn(uploaders, entityType)
+      ? uploaders[entityType as keyof typeof uploaders]
+      : undefined;
     if (!uploader) {
       return data({ error: 'Invalid entity type' }, { status: 400 });
     }

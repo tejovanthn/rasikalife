@@ -244,7 +244,7 @@ export async function action({
     }
   }
 
-  const name = (formData.get('name') as string).trim();
+  const name = ((formData.get('name') as string) || '').trim();
   const title = ((formData.get('title') as string) || '').trim();
   const biography = ((formData.get('biography') as string) || '').trim();
   const birthYear = formData.get('birthYear') ? Number(formData.get('birthYear')) : undefined;
@@ -266,15 +266,23 @@ export async function action({
     discipline?: string;
   };
   const storedGurus = (artist.gurus as StoredGuru[]) || [];
+  const storedGuruById = new Map(storedGurus.filter(g => g.id).map(g => [g.id as string, g]));
   const storedGuruByName = new Map(storedGurus.map(g => [g.name, g]));
-  // This form edits guru names only. Carry the rest of each stored row forward,
-  // or saving any unrelated change would strip the id, years and discipline that
-  // the moderator wizard adds.
-  const gurus = formData
-    .getAll('guruName')
-    .map(n => (n as string).trim())
-    .filter(Boolean)
-    .map(name => ({ ...storedGuruByName.get(name), name }));
+  // This form edits guru names only. Correlate each row to its stored entry by the
+  // hidden guruId, carrying the id, years and discipline forward — so *renaming* a
+  // guru keeps its link and metadata instead of matching by the now-changed name and
+  // dropping them. Freshly added rows have no id and fall back to a name match.
+  const guruIds = formData.getAll('guruId') as string[];
+  const guruNames = formData.getAll('guruName') as string[];
+  const gurus = guruNames
+    .map((rawName, i) => {
+      const name = (rawName as string).trim();
+      if (!name) return undefined;
+      const id = (guruIds[i] || '').trim();
+      const stored = (id && storedGuruById.get(id)) || storedGuruByName.get(name);
+      return { ...stored, name };
+    })
+    .filter((g): g is NonNullable<typeof g> => g !== undefined);
   const socialLinkPlatforms = formData.getAll('socialLinkPlatform') as string[];
   const socialLinkUrls = formData.getAll('socialLinkUrl') as string[];
   const socialLinks = socialLinkPlatforms
@@ -370,7 +378,7 @@ function EditorArtistForm() {
   const proposed = activeEdit?.proposedValues || {};
 
   type SocialLink = { platform: string; url: string };
-  type Guru = { name: string };
+  type Guru = { id?: string; name: string };
 
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
     (proposed.socialLinks as SocialLink[] | undefined) ??
@@ -380,6 +388,7 @@ function EditorArtistForm() {
   const [gurus, setGurus] = useState<Guru[]>(
     (proposed.gurus as Guru[] | undefined) ??
       (artist.gurus as Array<{ id?: string; name: string }> | undefined)?.map(g => ({
+        id: g.id,
         name: g.name,
       })) ??
       []
@@ -546,12 +555,18 @@ function EditorArtistForm() {
               )}
               {gurus.map((guru, i) => (
                 <div key={i} className="flex items-center gap-2">
+                  {/* Carry the stored id alongside the name so a rename keeps the link
+                      and the years/discipline the wizard added, rather than matching by
+                      the changed name and dropping them. */}
+                  <input type="hidden" name="guruId" value={guru.id ?? ''} />
                   <Input
                     name="guruName"
                     placeholder="Guru name"
                     value={guru.name}
                     onChange={e =>
-                      setGurus(prev => prev.map((g, j) => (j === i ? { name: e.target.value } : g)))
+                      setGurus(prev =>
+                        prev.map((g, j) => (j === i ? { ...g, name: e.target.value } : g))
+                      )
                     }
                     className="flex-1"
                   />
@@ -801,7 +816,22 @@ function ModeratorArtistWizard() {
         </p>
 
         <div className="bg-card rounded-lg shadow-sm border p-6">
-          <Form method="post" className="space-y-6">
+          <Form
+            method="post"
+            className="space-y-6"
+            onKeyDown={e => {
+              // Publish is the form's only submit control, so a bare Enter in any field
+              // would publish and yank the moderator out of the wizard mid-flow, past
+              // the step-advance validity gate. Swallow Enter unless it is in a textarea
+              // (where it means newline) or on the submit button itself.
+              const target = e.target as HTMLElement;
+              const isSubmit =
+                target.tagName === 'BUTTON' && (target as HTMLButtonElement).type === 'submit';
+              if (e.key === 'Enter' && target.tagName !== 'TEXTAREA' && !isSubmit) {
+                e.preventDefault();
+              }
+            }}
+          >
             <input type="hidden" name="formPath" value="moderator" />
 
             {/* Step 0 — Identity */}

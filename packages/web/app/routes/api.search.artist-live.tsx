@@ -34,6 +34,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
   } catch (error) {
     console.error('Live artist search error:', error);
-    return data([]);
+    // Keep the array body the picker expects, but flag the failure with a 503 so a
+    // caller that checks response.ok can tell "search is down" from "no matches" —
+    // the latter otherwise invites creating a duplicate of an artist that exists.
+    return data([], { status: 503 });
   }
 };
