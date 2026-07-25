@@ -75,6 +75,21 @@ export const formatDateLocale = (dateString: string | null | undefined): string 
   return dayjs(dateString).format('LL');
 };
 
+// Full event date, always rendered in India time. The SSR Lambda runs in UTC, so
+// an evening IST concert formatted in the runtime zone lands on the previous day;
+// pinning the zone keeps the displayed day right wherever the code runs. One
+// formatter, used across every date the profile shows, so no section drifts.
+export const formatEventDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  return new Date(dateString).toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
 // Utility for relative time (e.g., "3 days ago")
 export const formatRelativeTime = (dateString: string | null | undefined): string => {
   if (!dateString) return '';

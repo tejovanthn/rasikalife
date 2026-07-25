@@ -6,6 +6,7 @@ import {
   extractIdFromSlug,
   formatDate,
   formatDateLocale,
+  formatEventDate,
   formatNumber,
   formatRelativeTime,
   handleApiError,
@@ -93,6 +94,23 @@ describe('formatDate', () => {
   it('returns an empty string for null/undefined', () => {
     expect(formatDate(null)).toBe('');
     expect(formatDate(undefined)).toBe('');
+  });
+});
+
+describe('formatEventDate', () => {
+  it('renders the India-time day even when the instant is the previous day in UTC', () => {
+    // 2026-01-01T20:30Z is 2026-01-02 02:00 in IST. Formatted in the runtime zone
+    // (UTC on the SSR Lambda) this would read "1 Jan"; pinned to IST it must read the 2nd.
+    const out = formatEventDate('2026-01-01T20:30:00.000Z');
+    expect(out).toContain('Jan');
+    expect(out).toContain('2026');
+    expect(out).toMatch(/\b2\b/);
+    expect(out).not.toMatch(/\b1\b/);
+  });
+
+  it('returns an empty string for null/undefined', () => {
+    expect(formatEventDate(null)).toBe('');
+    expect(formatEventDate(undefined)).toBe('');
   });
 });
 

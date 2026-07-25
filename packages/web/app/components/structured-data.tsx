@@ -1,5 +1,13 @@
 interface StructuredDataProps {
-  type: 'organization' | 'website' | 'breadcrumb' | 'person' | 'music' | 'event' | 'festival';
+  type:
+    | 'organization'
+    | 'website'
+    | 'breadcrumb'
+    | 'person'
+    | 'musicgroup'
+    | 'music'
+    | 'event'
+    | 'festival';
   data: Record<string, unknown>;
 }
 
@@ -15,13 +23,15 @@ export function StructuredData({ type, data }: StructuredDataProps) {
             ? 'BreadcrumbList'
             : type === 'person'
               ? 'Person'
-              : type === 'music'
-                ? 'MusicComposition'
-                : type === 'event'
-                  ? 'MusicEvent'
-                  : type === 'festival'
-                    ? 'Festival'
-                    : 'Thing',
+              : type === 'musicgroup'
+                ? 'MusicGroup'
+                : type === 'music'
+                  ? 'MusicComposition'
+                  : type === 'event'
+                    ? 'MusicEvent'
+                    : type === 'festival'
+                      ? 'Festival'
+                      : 'Thing',
     ...data,
   };
 
@@ -84,7 +94,22 @@ export function BreadcrumbStructuredData({
   );
 }
 
-export function PersonStructuredData({ person }: { person: { name: string; url: string } }) {
+// A single artist. `image`, `sameAs`, `award`, and `memberOf` are all optional —
+// JSON.stringify drops undefined keys, so an unenriched artist simply omits them
+// rather than emitting empty arrays. `memberOf` links to the groups this artist
+// performs in, the inverse of MusicGroup's `member`.
+export function PersonStructuredData({
+  person,
+}: {
+  person: {
+    name: string;
+    url: string;
+    image?: string;
+    sameAs?: string[];
+    awards?: string[];
+    memberOf?: Array<{ name: string; url: string }>;
+  };
+}) {
   return (
     <StructuredData
       type="person"
@@ -92,12 +117,51 @@ export function PersonStructuredData({ person }: { person: { name: string; url: 
         name: person.name,
         description: 'Renowned classical musician in Indian classical music',
         url: person.url,
+        image: person.image,
+        sameAs: person.sameAs?.length ? person.sameAs : undefined,
+        award: person.awards?.length ? person.awards : undefined,
+        memberOf: person.memberOf?.length
+          ? person.memberOf.map(g => ({ '@type': 'MusicGroup', name: g.name, url: g.url }))
+          : undefined,
         knowsAbout: ['Carnatic Music', 'Indian Classical Music'],
         hasOccupation: {
           '@type': 'Occupation',
           name: 'Classical Musician',
           occupationalCategory: 'Arts and Entertainment',
         },
+      }}
+    />
+  );
+}
+
+// A performing group (isGroup). `member` links to each member's Person profile —
+// the band-and-its-members relationship Google understands for a knowledge panel.
+export function MusicGroupStructuredData({
+  group,
+}: {
+  group: {
+    name: string;
+    url: string;
+    image?: string;
+    sameAs?: string[];
+    awards?: string[];
+    members?: Array<{ name: string; url: string }>;
+  };
+}) {
+  return (
+    <StructuredData
+      type="musicgroup"
+      data={{
+        name: group.name,
+        description: 'Indian classical music performing group',
+        url: group.url,
+        genre: 'Carnatic Music',
+        image: group.image,
+        sameAs: group.sameAs?.length ? group.sameAs : undefined,
+        award: group.awards?.length ? group.awards : undefined,
+        member: group.members?.length
+          ? group.members.map(m => ({ '@type': 'Person', name: m.name, url: m.url }))
+          : undefined,
       }}
     />
   );
