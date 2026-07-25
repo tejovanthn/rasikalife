@@ -555,6 +555,9 @@ export default function ArtistDetails() {
               </figure>
             ))}
           </div>
+          <Link to={`${artistUrl}/gallery`} className="mt-3 inline-block text-sm text-primary">
+            View all photos &rarr;
+          </Link>
         </section>
       )}
 
