@@ -54,6 +54,16 @@ describe('computeRepertoire', () => {
     expect(result.topRagas).toHaveLength(10);
   });
 
+  it('breaks count ties deterministically by id, so the order is stable across sweeps', () => {
+    // Two compositions tied at count 1, fed in reverse-id order — the output must still
+    // order them by id (c1 before c2), not by insertion.
+    const result = computeRepertoire([
+      row({ compositionId: 'c2', ragaId: undefined }),
+      row({ compositionId: 'c1', ragaId: undefined }),
+    ]);
+    expect(result.topCompositions.map(c => c.id)).toEqual(['c1', 'c2']);
+  });
+
   it('returns empty lists for no rows', () => {
     expect(computeRepertoire([])).toEqual({ topCompositions: [], topRagas: [] });
   });

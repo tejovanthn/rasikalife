@@ -6,4 +6,4 @@ export * from './trpc';
 export * from './search';
 export * from './auth';
 export * from './instagram';
-export * from './repertoire';
+export * from './artist-denorm';

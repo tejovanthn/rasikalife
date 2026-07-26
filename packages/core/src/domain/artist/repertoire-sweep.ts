@@ -98,6 +98,41 @@ async function writeRepertoire(
   }
 }
 
+/**
+ * Recompute one artist's repertoire — the targeted repair path. Uses the byArtist GSI and
+ * a setlist query per event (cheap for a single artist), excluding soft-deleted events.
+ */
+export async function rebuildArtistRepertoire(
+  artistId: string,
+  opts: { dryRun?: boolean } = {}
+): Promise<Repertoire> {
+  const events = await EventArtistEntity.query.byArtist({ artistId }).go({ pages: 'all' });
+  const eventIds = (events.data as Array<{ eventId: string }>).map(e => e.eventId);
+
+  const eventRows = eventIds.length
+    ? await EventEntity.get(eventIds.map(id => ({ id }))).go()
+    : { data: [] as Array<{ id: string; deletedAt?: string }> };
+  const liveIds = (eventRows.data as Array<{ id: string; deletedAt?: string }>)
+    .filter(e => !e.deletedAt)
+    .map(e => e.id);
+
+  const setlists = await Promise.all(
+    liveIds.map(id => EventSetlistEntity.query.primary({ eventId: id }).go({ pages: 'all' }))
+  );
+  const repertoire = computeRepertoire(setlists.flatMap(s => s.data as RepertoireSetlistRow[]));
+
+  if (!opts.dryRun) {
+    await ArtistEntity.update({ id: artistId })
+      .set({
+        topCompositions: repertoire.topCompositions,
+        topRagas: repertoire.topRagas,
+        repertoireComputedAt: new Date().toISOString(),
+      })
+      .go();
+  }
+  return repertoire;
+}
+
 export interface RepertoireSweepResult {
   /** Artists whose repertoire has at least one composition or raga. */
   withRepertoire: number;

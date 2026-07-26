@@ -70,13 +70,16 @@ export async function getEventsByArtist(
  * first, then most-recent. Kept sorted at write time so the reader just slices.
  */
 export function sortFeaturedPerformances<
-  T extends { featureRank?: number; eventStartDateTime: string },
+  T extends { featureRank?: number; eventStartDateTime: string; eventId: string },
 >(items: T[]): T[] {
   return [...items].sort((a, b) => {
     const rankA = a.featureRank ?? Number.MAX_SAFE_INTEGER;
     const rankB = b.featureRank ?? Number.MAX_SAFE_INTEGER;
     if (rankA !== rankB) return rankA - rankB;
-    return b.eventStartDateTime.localeCompare(a.eventStartDateTime);
+    const byDate = b.eventStartDateTime.localeCompare(a.eventStartDateTime);
+    if (byDate !== 0) return byDate;
+    // Tie-break on eventId so equal rank+date keep a stable order across sweeps.
+    return a.eventId.localeCompare(b.eventId);
   });
 }
 
@@ -105,8 +108,11 @@ export async function setEventArtistFeatured(
 
   // Keep the artist's denormalized featured list in step, so the profile teaser reads
   // one field instead of a filtered full-partition scan of the artist's EventArtist rows.
-  // Read-modify-write is fine: featuring is a rare moderator action, and a re-feature
-  // fixes any race. Stored pre-sorted so the reader only slices.
+  // Read-modify-write is fine: featuring is a rare moderator action, a re-feature fixes any
+  // race, and a crash between the patch above and the update below (junction featured but
+  // list missing it, or vice versa) is reconciled by the daily rebuildAllFeatured sweep —
+  // which also heals the deletes, un-credits, and merges this inline path can't see.
+  // Stored pre-sorted so the reader only slices.
   const { ArtistEntity } = await import('../artist/entity');
   const artist = await ArtistEntity.get({ id: artistId }).go();
   if (artist.data) {

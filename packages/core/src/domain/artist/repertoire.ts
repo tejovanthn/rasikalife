@@ -52,14 +52,16 @@ export function computeRepertoire(rows: RepertoireSetlistRow[]): Repertoire {
     }
   }
 
+  // Tie-break on id so equal-count entries keep a stable order across sweeps — otherwise
+  // which of two tied entries lands at the TOP_N boundary flips run to run.
   return {
     topCompositions: [...compositionCounts.entries()]
       .map(([id, { title, count }]) => ({ id, title, count }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
       .slice(0, TOP_N),
     topRagas: [...ragaCounts.entries()]
       .map(([id, { name, count }]) => ({ id, name, count }))
-      .sort((a, b) => b.count - a.count)
+      .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id))
       .slice(0, TOP_N),
   };
 }

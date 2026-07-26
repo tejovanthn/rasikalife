@@ -106,13 +106,12 @@ program
 
 program
   .command('rebuild-featured')
-  .description("Backfill each artist's featured-performance list from isFeatured EventArtist rows")
+  .description("Rebuild each artist's featured-performance list from live isFeatured rows")
   .option('-n, --dry-run', 'Preview changes without writing to the database')
-  .option('--artist <id>', 'Rebuild featured performances for a single artist only')
-  .action(async (opts: { dryRun?: boolean; artist?: string }) => {
+  .action(async (opts: { dryRun?: boolean }) => {
     setup();
     const { rebuildFeatured } = await import('./rebuildFeatured.js');
-    await rebuildFeatured({ dryRun: opts.dryRun, artistId: opts.artist });
+    await rebuildFeatured({ dryRun: opts.dryRun });
   });
 
 program
