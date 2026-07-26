@@ -6,7 +6,16 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 6 is functionally complete — profile redesign, gallery subroute, §6.2 denormalization (repertoire + featured), the daily `RepertoireRebuildCron`, and anon-only CDN cache headers all landed. Before/after deploy: (1) **Run the backfills once post-deploy** so the profile isn't empty until the first cron fires — `pnpm prod-cli rebuild-repertoire` and `pnpm prod-cli rebuild-featured`. (2) **Verify the caching segments on auth:** the profile loader sends `public, s-maxage=120, stale-while-revalidate=600` to anonymous viewers and `private, no-cache` to signed-in ones (forwarded via the route's `headers` export). Full CDN offload is safe only if the CloudFront **server cache key includes the `rasika_session` cookie** — confirm SST's default does, or add it, else a logged-in viewer can briefly get a cached anon page (cosmetic only: the auth-varying bits are just navigation controls to independently-gated routes, no sensitive data). (3) None of this is **verified against a running deploy** (`sst` can't run here) — render the profile, confirm the cron bundles, and check the cache behaviour on the first deploy. A full DHH review of phases 1–5 ran first (2026-07-25) and every actionable finding is fixed — see "From the full phases 1–5 review" below.
+**Next step:** phase 6 is complete and DHH-reviewed (2026-07-26, two agents: backend + frontend) with every finding fixed — see "From the phase-6 review" below. Profile redesign, gallery subroute, §6.2 denormalization (repertoire + featured), the daily `ArtistDenormRebuildCron` (both sweeps), and anon-only CDN caching all landed. Before/after deploy: (1) **Run the backfills once post-deploy** so the profile isn't empty until the first cron fires — `pnpm prod-cli rebuild-repertoire` and `pnpm prod-cli rebuild-featured`. (2) **Verify the caching segments on auth:** the profile `_index` loader sends `public, s-maxage=120, stale-while-revalidate=600` to anonymous viewers and `private, no-cache` to signed-in ones (subroutes are public and cache unconditionally). Full CDN offload is safe only if the CloudFront **server cache key includes the `rasika_session` cookie** — confirm SST's default does, or add it, else a logged-in viewer can briefly get a cached anon page (cosmetic only: no sensitive data, gated routes enforce auth themselves). (3) None of this is **verified against a running deploy** (`sst` can't run here) — render the profile, confirm the cron bundles, and check the cache behaviour on the first deploy. A full DHH review of phases 1–5 ran earlier (2026-07-25) and is also fixed — see "From the full phases 1–5 review" below.
+
+### From the phase-6 review (2026-07-26)
+
+Two `dhh-code-reviewer` agents (backend + frontend). Both found the risky parts sound — the CDN caching is correct (RR7 header bubbling traced in the installed dist; no auth leak), the repertoire denormalization is clean, JSON-LD/dates/empty-states/links all verified. Two should-fix clusters, both fixed:
+
+- **Featured only ever *grew* correctly.** Every path that should *remove* a featured entry — event soft-delete, un-crediting an artist, merge — left a dangling teaser link, and `rebuild-featured` had no deleted-event filter so it reinstated stale data. Fixed by giving featured the same scheduled, deleted-event-excluding sweep repertoire has: `Artist.rebuildAllFeatured` rebuilds from the live `isFeatured` junction rows, so all three self-heal (un-credit removes the row, merge rewrites it, delete is filtered). The daily cron now runs both sweeps (renamed `ArtistDenormRebuildCron`).
+- **The profile route was a layout *and* the index.** Split into `artists.$artistid._index.tsx` (profile body) + a thin `<Outlet/>` layout — no wasted parent-loader work on subroute SSR, no brittle pathname sniffing.
+
+Nits fixed: stable tie-breaks in the repertoire/featured sorts; CLI sweeps delegate to core (no cross-package reach-ins); loader-typed artist (dropped the casts, added `mergedIntoId`/`deletedAt` to the browser type); `capitalize` dedup; gallery meta group-noun; lazy gallery images; public cache headers on the subroutes. Also null-guarded the events/compositions subroute loaders (pre-existing baseline errors).
 
 ### Phase 6 progress (2026-07-25)
 
@@ -54,7 +63,7 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 3 | `ArtistPhoto` gallery entity | done |
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | done |
 | 5 | Create/edit wizard (moderator-only, direct write) | done |
-| 6 | Presentation redesign + JSON-LD + gallery subroute | in progress |
+| 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
 | 8 | Claims + verification queue | not started |
 | 9 | Polish | not started |
@@ -186,8 +195,8 @@ Raised, judged real, not yet done:
 
 Current at end of phase 5. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **694 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Was 688 pass before the phases 1–5 review added 6 regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
-- `packages/web`: **≤34 web-own typecheck errors** (currently 32; the raw count is higher — the extra ~7 are core's leaking through project references); **63 tests pass**.
+- `packages/core`: **708 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew from 688 → 708 as the phases 1–5 and phase 6 reviews added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/web`: **≤30 web-own typecheck errors** (down from 34 after the phase-6 review null-guarded the artist subroutes; the raw count is higher — the extra ~7 are core's leaking through project references); **65 tests pass**.
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
 - Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.
 - Commit messages with inner double-quotes break `git commit -m` shell quoting — commit prose via `git commit -F <file>`.
