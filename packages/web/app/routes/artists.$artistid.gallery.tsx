@@ -1,5 +1,9 @@
-import { type LoaderFunction, type MetaFunction, data } from 'react-router';
+import { type HeadersFunction, type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData, useParams, useSearchParams } from 'react-router';
+// Unauthenticated client: this subroute renders only public photos and carries no
+// per-viewer chrome, so it is safe to fetch without a session and to cache publicly.
+// If listPhotos ever gains moderator-only unpublished photos, switch to the authed client
+// and make the caching conditional like the profile index.
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -14,16 +18,24 @@ interface GalleryPhoto {
   credit?: string;
 }
 
+// Public content, identical for every viewer — safe to cache at the edge unconditionally.
+export const headers: HeadersFunction = () => ({
+  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=600',
+});
+
 export const meta: MetaFunction = ({ data }) => {
-  const loaderData = data as { artist: { id: string; name: string } } | undefined;
+  const loaderData = data as
+    | { artist: { id: string; name: string; isGroup?: boolean } }
+    | undefined;
   if (!loaderData) return [{ title: 'Gallery - Rasika.life' }];
   const { artist } = loaderData;
   const canonicalUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/gallery`;
+  const noun = artist.isGroup ? 'a performing group' : 'an artist';
   return [
     { title: `Photos of ${artist.name} - Rasika.life` },
     {
       name: 'description',
-      content: `Browse photographs of ${artist.name}, an artist in Indian classical music.`,
+      content: `Browse photographs of ${artist.name}, ${noun} in Indian classical music.`,
     },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
@@ -115,6 +127,7 @@ export default function ArtistGallery() {
                 <img
                   src={photo.imageUrl}
                   alt={photo.caption ?? artist.name}
+                  loading="lazy"
                   className="aspect-square w-full object-cover"
                 />
                 {(photo.caption || photo.credit) && (

@@ -1,6 +1,8 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { type LoaderFunction, type MetaFunction, data } from 'react-router';
+import { type HeadersFunction, type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData, useLocation, useNavigate, useSearchParams } from 'react-router';
+// Unauthenticated client: this subroute renders only public composition data and no
+// per-viewer chrome, so it is safe to fetch without a session and cache publicly.
 import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
@@ -8,6 +10,11 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
+
+// Public content, identical for every viewer — safe to cache at the edge unconditionally.
+export const headers: HeadersFunction = () => ({
+  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=600',
+});
 
 export const meta: MetaFunction = ({ data }) => {
   const loaderData = data as { artist: { id: string; name: string } } | undefined;
@@ -45,6 +52,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
   try {
     const artist = await client.artist.get.query({ id: slugId });
+    if (!artist) {
+      throw new Response('Artist not found', { status: 404 });
+    }
 
     // Get compositions by this artist with pagination
     const result = await client.composition.byComposer.query({
@@ -61,6 +71,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       prevToken: nextToken,
     });
   } catch (error) {
+    if (error instanceof Response) throw error;
     console.error('Failed to load artist compositions:', error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.ARTIST_NOT_FOUND) {

@@ -106,4 +106,6 @@ export type Artist = z.infer<typeof CreateArtistSchema> & {
   topRagas?: RepertoireRaga[];
   repertoireComputedAt?: string;
   featuredPerformances?: FeaturedPerformance[];
+  deletedAt?: string;
+  mergedIntoId?: string;
 };

@@ -1,6 +1,8 @@
 import { Calendar } from 'lucide-react';
-import { type LoaderFunction, type MetaFunction, data } from 'react-router';
+import { type HeadersFunction, type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData, useParams, useSearchParams } from 'react-router';
+// Unauthenticated client: this subroute renders only public event data and no per-viewer
+// chrome, so it is safe to fetch without a session and cache publicly.
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -10,6 +12,11 @@ import { Card, CardContent } from '~/components/ui/card';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl, generateEventUrl, parseSlug } from '~/lib/url-slug';
 import { formatEventDate } from '~/lib/utils';
+
+// Public content, identical for every viewer — safe to cache at the edge unconditionally.
+export const headers: HeadersFunction = () => ({
+  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=600',
+});
 
 interface ArtistEvent {
   eventId: string;
@@ -55,6 +62,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
 
   try {
     const artist = await client.artist.get.query({ id: slugId });
+    if (!artist) {
+      throw new Response('Artist not found', { status: 404 });
+    }
 
     const result = await client.event.byArtist.query({
       artistId: artist.id,
@@ -70,6 +80,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       prevToken: nextToken,
     });
   } catch (error) {
+    if (error instanceof Response) throw error;
     console.error('Failed to load artist events:', error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.ARTIST_NOT_FOUND) {
