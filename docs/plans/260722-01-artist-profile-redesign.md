@@ -139,6 +139,33 @@ Functions:
 
 `mergeArtist` must also rewrite `ArtistClaim` rows: claims on the loser move to the canonical artist (or are dropped if a duplicate claim by the same user already exists there), folded into the same merge sweep as membership and collaborator edges.
 
+#### 4.3.1 Moderator-invited claims (revision, 2026-07-27)
+
+Profiles are being built by hand, and the moderator doing the enrichment is already corresponding with the artist by email. So the moderator records that email on the record during enrichment, and when someone signs in with Google using it, the profile is theirs — no self-serve claim, no queue. This front-runs the flow above rather than replacing it: 4.3 and section 8 still handle artists nobody emailed.
+
+**The email is an `ArtistClaim` row, never an Artist attribute.** `artist.get` is a `publicProcedure` returning the whole Artist row, the profile loader returns it too, and phase 6 put anonymous CDN caching in front of that page — so any attribute added to Artist is public by default and edge-cached. A `contactEmail` column would also need excluding by hand from `ADMIN_CSV_DOMAINS.artist`, which is a hand-maintained list. Claim rows are read only by moderator and claimant procedures, so putting the address there keeps it off every public read path without a scrubbing rule anyone can forget.
+
+At invite time there is no user yet, so the invited row cannot use the `CLAIM#${userId}` sort key. Two sort-key shapes under the one `ARTIST#${artistId}` partition:
+
+```
+CLAIM#${userId}              a real claim (pending | verified | rejected)
+INVITE#${normalizedEmail}    a moderator pre-authorization (invited)
+```
+
+`getArtistClaims(artistId)` still returns both in one query. `status` gains `invited`.
+
+**Matching needs an email index.** Answering "which artists is this login pre-authorized for" must not scan, so invited rows carry `ARTIST_CLAIM_EMAIL#${normalizedEmail}` as a GSI partition key. Normalization is lowercase and trim, nothing more. Do **not** fold Gmail dots or `+` suffixes: it is a Gmail-specific rule that is wrong for Workspace domains, and a wrong fold grants a stranger someone else's profile. The moderator pastes the exact address.
+
+**Only match a verified email.** `packages/auth/src/issuer.ts` reads `userInfo.email` from Google's `oauth2/v2/userinfo` and stores it without checking `verified_email`. That is fine while the email is a contact field; it is not fine once the email is an authorization key. Phase 8 must gate the auto-grant on the verified flag. The standing constraint to write down: this design is sound only while the sole identity provider is Google OIDC and the address comes from the provider response, never from user input. A second provider, or any "change my email" affordance, becomes a path to claiming an artist and must be weighed against this.
+
+**What "access" means is a deliberate reversal of 4.3.** The section above says a claim drives "only the badge and 'managed by' state, not edit rights beyond the normal editor role". Granting access on login changes that, and needs a per-artist check — `canManageArtist(user, artistId)` = moderator, or a verified claim on that artist — because a claimant is an ordinary user holding neither the editor nor the moderator role.
+
+What it should unlock, for phase 8: **the existing editor form on their own record only**, producing an `Edit` draft that a moderator still approves. Nothing changes in the trust model — an artist gains the ability to propose corrections to their own page and nothing else. Handing claimants the moderator wizard instead is the richer option and the obvious later ask, but that wizard writes direct across five entity types including `EventArtist.isFeatured`, which is shared event data, not the artist's own. Decide that separately once the flow has run.
+
+**Audit trail.** An invited email that logs in converts straight to `verified` with no pending step, because the moderator already did the identity check out of band — which is exactly what section 8 says verification rests on. The invited row therefore records the inviting moderator and the timestamp, and that is the audit record section 8 asks `moderatorNote` to carry.
+
+`mergeArtist` needs no new work for this beyond the rule above, but the "drop a duplicate claim by the same user" test gains an email twin.
+
 ### 4.4 Collaborator derivation
 
 Definition: two artists are collaborators if they appear on the same approved event via `EventArtist`. Strength is weighted by shared-event count and recency.
@@ -392,6 +419,8 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 
 ## 8. Verification UX
 
+Two ways in: the self-serve claim below, and the moderator-invited path of 4.3.1 (the primary one while profiles are handcurated, since the moderator is already emailing the artist).
+
 - **Unclaimed profile:** a subtle "Are you this artist? Claim this profile" affordance for logged-in users.
 - **Claim action:** collects name + contact email, calls `createArtistClaim` (status `pending`), flips `artist.claimStatus` to `pending` if currently unclaimed. Independent per record, so claiming a member never claims the group.
 - **Pending:** claimant sees "claim pending"; public sees no change.
@@ -419,7 +448,7 @@ Keep `BreadcrumbList` already present. This gives the profile eligibility for ri
 5. **Create/edit wizard** — flat `/artists/new` (moderator, direct write) + stepped `/artists/:id/edit` for moderators, editors keeping today's form and its draft (5.1). Timeline modals (guru, membership, awards, performances, gallery), a live artist-search endpoint for the pickers (11.1), artist prefill threaded into the event creation routes, `isFeatured` toggle. Depends on phases 0b and 1-3.
 6. **Presentation** — new profile layout with teasers, all sections incl. group-aware Members/Groups block, gallery teaser grid, empty-state handling, group-aware JSON-LD (build out `PersonStructuredData`, add `MusicGroup`). **Index subroutes:** `/artists/:id/gallery` is new; `/artists/:id/events` and `/artists/:id/compositions` already exist and get restyled.
 7. **Photo enrichment** — hero photo in wizard Identity step; gallery photos via gallery modal; artist photo composited into the OG card in `packages/og-image` (6), with the generated card as fallback.
-8. **Claim & verification** — `ArtistClaim` entity + router, claim UI (per-record, independent for group vs member), dedicated claims-only moderator queue via `getPendingClaims`, `mergeArtist` claim fixup.
+8. **Claim & verification** — `ArtistClaim` entity + router, claim UI (per-record, independent for group vs member), dedicated claims-only moderator queue via `getPendingClaims`, `mergeArtist` claim fixup. **Includes moderator-invited claims (4.3.1):** the email field in the wizard, the email GSI, the verified-email gate in `issuer.ts`, and `canManageArtist`. Nothing collects emails before this phase, so enrichment done in the meantime will need a second pass to add them.
 9. **Polish** — instrument/city enrichment, restyle events block, ship.
 
 ## 10. Open items / dependencies
