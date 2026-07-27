@@ -25,12 +25,12 @@ describe('computePhotoReorder', () => {
 
   it('swaps a middle photo down with its successor', () => {
     expect(computePhotoReorder(photos, 'b', 'down')).toEqual([
-      { id: 'b', order: 2 },
       { id: 'c', order: 1 },
+      { id: 'b', order: 2 },
     ]);
   });
 
-  it('only ever returns the two rows that changed, never the whole list', () => {
+  it('touches only the two rows that changed when the gallery is already numbered 0..n', () => {
     const many = Array.from({ length: 20 }, (_, i) => ({ id: `p${i}`, order: i }));
     const result = computePhotoReorder(many, 'p10', 'down');
     expect(result).toHaveLength(2);
@@ -54,11 +54,34 @@ describe('computePhotoReorder', () => {
       { id: 'y', order: 0 },
       { id: 'z', order: 0 },
     ];
-    // Sorted by (order, id): x, y, z — moving y up swaps with x.
+    // Sorted by (order, id): x, y, z. Moving y up must actually move it — swapping the two
+    // `order` values would write 0 over 0 twice and leave the gallery exactly as it was, with
+    // no error and no way for the moderator to ever shift that photo.
     expect(computePhotoReorder(tied, 'y', 'up')).toEqual([
       { id: 'y', order: 0 },
-      { id: 'x', order: 0 },
+      { id: 'x', order: 1 },
+      { id: 'z', order: 2 },
     ]);
+  });
+
+  it('heals duplicate orders it has to renumber past', () => {
+    const duplicated = [
+      { id: 'a', order: 0 },
+      { id: 'b', order: 0 },
+      { id: 'c', order: 5 },
+    ];
+    const result = computePhotoReorder(duplicated, 'c', 'up');
+    const finalOrders = [...duplicated]
+      .map(photo => result.find(change => change.id === photo.id) ?? photo)
+      .map(photo => photo.order)
+      .sort((x, y) => x - y);
+    expect(finalOrders).toEqual([0, 1, 2]);
+  });
+
+  it('moves a photo into the first slot, which requires writing order 0', () => {
+    // The route drops a falsy 0 if it parses order with `parseInt(x) || undefined`, so this
+    // move is the one that silently did nothing. Guarded here and in form-fields.test.ts.
+    expect(computePhotoReorder(photos, 'b', 'up')).toContainEqual({ id: 'b', order: 0 });
   });
 });
 

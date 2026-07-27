@@ -1772,6 +1772,8 @@ type Photo = {
 type AddPhotoResult = { success: true; photo: Photo } | { error: string };
 type UpdatePhotoResult = { success: true; photo: Photo } | { error: string };
 type DeletePhotoResult = { success: true; id: string } | { error: string };
+// Both arms carry the stored list: on a partial failure the client still needs the truth.
+type ReorderResult = { success: true; photos: Photo[] } | { error: string; photos?: Photo[] };
 
 // Gallery photos are their own ArtistPhoto rows, added/edited/reordered/deleted
 // immediately. ImageUpload posts the bytes to S3 and hands back a CDN url via
@@ -1780,8 +1782,8 @@ type DeletePhotoResult = { success: true; id: string } | { error: string };
 // Reorder is move-up/move-down buttons rather than the drag-to-reorder the spec
 // describes (§5.4e): there's no drag-and-drop library in this codebase, and
 // buttons are a fraction of the code, keyboard-accessible for free, and don't
-// need a pointer. A move swaps `order` with the adjacent photo — two writes,
-// never a renumbering of the whole gallery (see computePhotoReorder).
+// need a pointer. A move renumbers by position and writes only the rows that
+// changed, in one request (see computePhotoReorder for why not a swap).
 function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialPhotos: Photo[] }) {
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
   const [pending, setPending] = useState<{ imageUrl: string; uploadId: string } | null>(null);
@@ -1790,12 +1792,13 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState('');
   const [editCredit, setEditCredit] = useState('');
-  const [movingId, setMovingId] = useState<string | null>(null);
   const addFetcher = useFetcher<AddPhotoResult>();
   const updateFetcher = useFetcher<UpdatePhotoResult>();
   const deleteFetcher = useFetcher<DeletePhotoResult>();
+  const reorderFetcher = useFetcher<ReorderResult>();
   const addIsIdle = addFetcher.state === 'idle';
   const updateIsIdle = updateFetcher.state === 'idle';
+  const reorderIsIdle = reorderFetcher.state === 'idle';
 
   useEffect(() => {
     if (!addFetcher.data) return;
@@ -1836,6 +1839,15 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
     toast.success('Photo removed');
   }, [deleteFetcher.data]);
 
+  // Sync to what the server says is stored, never to a rolled-back guess: if only some of the
+  // rows were written, the optimistic order and the table have already diverged, and only the
+  // reply knows which. The list is authoritative on the error arm too.
+  useEffect(() => {
+    if (!reorderFetcher.data) return;
+    if (reorderFetcher.data.photos) setPhotos(reorderFetcher.data.photos);
+    if ('error' in reorderFetcher.data) toast.error(reorderFetcher.data.error);
+  }, [reorderFetcher.data]);
+
   const sortedPhotos = [...photos].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 
   function startEdit(photo: Photo) {
@@ -1844,41 +1856,25 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
     setEditCredit(photo.credit ?? '');
   }
 
-  async function handleMove(id: string, direction: 'up' | 'down') {
+  function handleMove(id: string, direction: 'up' | 'down') {
     const changes = computePhotoReorder(photos, id, direction);
     if (changes.length === 0) return;
 
-    const previous = photos;
-    setMovingId(id);
+    // Optimistic only until the reply lands. The whole move goes as one submission so the
+    // server can answer with the stored list either way — see the reorder effect above, which
+    // syncs to that list rather than rolling back to a guess that a partial write would make
+    // wrong. A raw fetch() was the earlier shape and read a session-expiry redirect to the
+    // login page as a 200, silently reporting success; a fetcher handles that redirect.
     setPhotos(prev =>
       prev.map(photo => {
         const change = changes.find(c => c.id === photo.id);
         return change ? { ...photo, order: change.order } : photo;
       })
     );
-
-    try {
-      // Two parallel direct POSTs rather than the shared fetchers above: submitting
-      // a second update through the same useFetcher instance aborts the first
-      // before it reaches the server, and a swap is always exactly two writes.
-      const responses = await Promise.all(
-        changes.map(change => {
-          const body = new FormData();
-          body.set('intent', 'update');
-          body.set('artistId', artistId);
-          body.set('id', change.id);
-          body.set('order', String(change.order));
-          return fetch('/api/artist/photo', { method: 'POST', body });
-        })
-      );
-      if (responses.some(res => !res.ok)) throw new Error('Reorder failed');
-    } catch (err) {
-      console.error('Failed to reorder photos:', err);
-      setPhotos(previous);
-      toast.error('Failed to reorder photos');
-    } finally {
-      setMovingId(null);
-    }
+    reorderFetcher.submit(
+      { intent: 'reorder', artistId, changes: JSON.stringify(changes) },
+      { method: 'post', action: '/api/artist/photo' }
+    );
   }
 
   return (
@@ -1976,7 +1972,7 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                     variant="ghost"
                     size="icon"
                     aria-label="Move up"
-                    disabled={movingId !== null || index === 0}
+                    disabled={!reorderIsIdle || index === 0}
                     onClick={() => handleMove(photo.id, 'up')}
                   >
                     <ChevronUp className="h-4 w-4" />
@@ -1986,7 +1982,7 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                     variant="ghost"
                     size="icon"
                     aria-label="Move down"
-                    disabled={movingId !== null || index === sortedPhotos.length - 1}
+                    disabled={!reorderIsIdle || index === sortedPhotos.length - 1}
                     onClick={() => handleMove(photo.id, 'down')}
                   >
                     <ChevronDown className="h-4 w-4" />
@@ -1995,7 +1991,9 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                     type="button"
                     variant="ghost"
                     size="sm"
-                    disabled={deleteFetcher.state !== 'idle'}
+                    // Also held while a move is in flight: removing a row mid-reorder would
+                    // race the reply, which overwrites the list wholesale.
+                    disabled={deleteFetcher.state !== 'idle' || !reorderIsIdle}
                     onClick={() =>
                       deleteFetcher.submit(
                         { intent: 'delete', artistId, id: photo.id },

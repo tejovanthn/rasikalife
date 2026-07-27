@@ -8,16 +8,21 @@ export interface OrderedPhoto {
 }
 
 // Matches the tiebreak the ArtistPhoto byArtist GSI uses (order, then id) — see
-// packages/core/src/domain/artist-photo/entity.ts — so "up"/"down" always targets
-// the neighbour the gallery actually renders next to, even if two photos share an
-// `order` value.
+// packages/core/src/domain/artist-photo/entity.ts — so the list we compute against
+// is the list the gallery actually renders.
 const byOrderThenId = (a: OrderedPhoto, b: OrderedPhoto) =>
   a.order - b.order || a.id.localeCompare(b.id);
 
-// A move only ever changes the moved photo and the neighbour it swaps places
-// with — never a renumbering of the whole gallery. Returns the (at most two)
-// {id, order} pairs that changed; a move at either end of the list is a no-op
-// and returns an empty array.
+// Renumbers the moved list by position and returns only the rows whose `order` actually
+// changes. Usually that is two rows; it is more when the gallery holds duplicate `order`
+// values, which is exactly the case a swap could not handle.
+//
+// Swapping the two orders looks cheaper and was the first implementation, but it is a silent
+// no-op whenever the two photos share an `order` — writing each one the value it already had.
+// Duplicates are easy to come by: `addArtistPhoto` defaults `order` to 0, and any half-applied
+// reorder leaves one behind. Renumbering both fixes the move and heals the duplicates on the
+// way past, so a gallery can never get stuck. Galleries are capped at 24 photos, so the
+// worst-case write count is not worth optimising for.
 export function computePhotoReorder(
   photos: OrderedPhoto[],
   id: string,
@@ -30,12 +35,15 @@ export function computePhotoReorder(
   const neighborIndex = direction === 'up' ? index - 1 : index + 1;
   if (neighborIndex < 0 || neighborIndex >= sorted.length) return [];
 
-  const current = sorted[index];
-  const neighbor = sorted[neighborIndex];
-  return [
-    { id: current.id, order: neighbor.order },
-    { id: neighbor.id, order: current.order },
-  ];
+  const moved = [...sorted];
+  [moved[index], moved[neighborIndex]] = [moved[neighborIndex], moved[index]];
+
+  return moved
+    .map((photo, position) => ({ id: photo.id, order: position }))
+    .filter((change, position) => {
+      const before = sorted[position];
+      return change.id !== before.id || change.order !== before.order;
+    });
 }
 
 // Appends after the highest existing `order`, not the photo count: deleting a

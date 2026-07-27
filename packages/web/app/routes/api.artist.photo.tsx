@@ -85,6 +85,46 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
+  // One request for the whole move, not one per row. Reordering can touch more than two rows
+  // (computePhotoReorder renumbers past duplicate `order` values), and firing them as separate
+  // requests meant a partial failure left the moderator's screen and the table disagreeing.
+  // The reply always carries what is actually stored, so the client never has to guess.
+  if (intent === 'reorder') {
+    const raw = ((formData.get('changes') as string) || '').trim();
+    let changes: { id: string; order: number }[];
+    try {
+      changes = JSON.parse(raw);
+    } catch {
+      return data({ error: 'Malformed reorder' }, { status: 400 });
+    }
+    if (!Array.isArray(changes) || changes.length === 0) {
+      return data({ error: 'Nothing to reorder' }, { status: 400 });
+    }
+
+    const results = await Promise.allSettled(
+      changes.map(change =>
+        serverClient.artist.updatePhoto.mutate({
+          artistId,
+          id: change.id,
+          patch: { order: change.order },
+        })
+      )
+    );
+    const failed = results.filter(result => result.status === 'rejected');
+    for (const result of failed) {
+      console.error('Failed to reorder photo:', (result as PromiseRejectedResult).reason);
+    }
+
+    const current = await serverClient.artist.listPhotos.query({ artistId });
+    if (failed.length > 0) {
+      return data(
+        { error: 'Some photos could not be reordered', photos: current.items },
+        { status: 500 }
+      );
+    }
+    return data({ success: true, photos: current.items });
+  }
+
   if (intent === 'delete') {
     const id = ((formData.get('id') as string) || '').trim();
     if (!id) {

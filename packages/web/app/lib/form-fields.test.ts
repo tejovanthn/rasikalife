@@ -55,6 +55,16 @@ describe('readOptionalInt', () => {
     expect(readOptionalInt(formData, 'order')).toBeUndefined();
   });
 
+  it('rejects rather than silently truncating a non-integer', () => {
+    // parseInt reads a prefix: '12.7' would come back as 12 and '1e3' as 1.
+    expect(readOptionalInt(formDataWith({ order: '12.7' }), 'order')).toBeUndefined();
+    expect(readOptionalInt(formDataWith({ order: '12abc' }), 'order')).toBeUndefined();
+  });
+
+  it('accepts a negative integer, leaving range checks to the schema', () => {
+    expect(readOptionalInt(formDataWith({ order: '-3' }), 'order')).toBe(-3);
+  });
+
   it('parses a positive integer', () => {
     const formData = formDataWith({ order: ' 12 ' });
     expect(readOptionalInt(formData, 'order')).toBe(12);

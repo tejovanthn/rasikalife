@@ -20,6 +20,8 @@ export function readOptionalInt(formData: FormData, key: string): number | undef
   if (raw === null) return undefined;
   const trimmed = (raw as string).trim();
   if (!trimmed) return undefined;
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isNaN(parsed) ? undefined : parsed;
+  // Number() rather than parseInt: parseInt reads a prefix, so '12.7' would become 12 and
+  // '1e3' would become 1 — a silent misreading rather than a rejection.
+  const parsed = Number(trimmed);
+  return Number.isInteger(parsed) ? parsed : undefined;
 }

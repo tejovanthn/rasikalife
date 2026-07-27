@@ -148,6 +148,32 @@ describe('artist-photo', () => {
       expect(result).toEqual({ id: 'photo-1', caption: 'Updated' });
     });
 
+    it('removes a cleared field rather than storing an empty string', async () => {
+      const removeSpy = vi.fn().mockReturnValue(goResolves({ id: 'photo-1' }));
+      const setSpy = vi.fn().mockReturnValue({ remove: removeSpy });
+      vi.mocked(ArtistPhotoEntity.patch).mockReturnValue({ set: setSpy } as never);
+
+      await updateArtistPhoto('artist-1', 'photo-1', { caption: '', credit: 'Photographer' });
+
+      // '' means clear. Storing it would leave the row saying the caption exists and is
+      // blank, which disagrees with a UI that renders on `caption &&`.
+      expect(setSpy).toHaveBeenCalledWith({ credit: 'Photographer' });
+      expect(removeSpy).toHaveBeenCalledWith(['caption']);
+    });
+
+    it('does not call remove when nothing was cleared', async () => {
+      const removeSpy = vi.fn().mockReturnValue(goResolves({ id: 'photo-1' }));
+      const setSpy = vi.fn().mockReturnValue({
+        remove: removeSpy,
+        ...goResolves({ id: 'photo-1' }),
+      });
+      vi.mocked(ArtistPhotoEntity.patch).mockReturnValue({ set: setSpy } as never);
+
+      await updateArtistPhoto('artist-1', 'photo-1', { caption: 'Still here' });
+
+      expect(removeSpy).not.toHaveBeenCalled();
+    });
+
     it('includes order in the patch payload so the GSI sort key is recomputed', async () => {
       const setSpy = vi.fn().mockReturnValue(goResolves({ id: 'photo-1', order: 7 }));
       vi.mocked(ArtistPhotoEntity.patch).mockReturnValue({ set: setSpy } as never);

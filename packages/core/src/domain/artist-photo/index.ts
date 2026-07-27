@@ -23,16 +23,28 @@ export async function addArtistPhoto(input: AddArtistPhotoInput): Promise<Artist
   return result.data as ArtistPhoto;
 }
 
+// Optional text fields a caller may want to empty rather than change.
+const CLEARABLE_FIELDS = ['caption', 'credit'] as const;
+
 export async function updateArtistPhoto(
   artistId: string,
   id: string,
   patch: UpdateArtistPhotoInput
 ): Promise<ArtistPhoto> {
+  // An empty string means "clear this field". Writing it as `''` would work — DynamoDB accepts
+  // empty strings — but the row would then say the caption exists and is blank, so anything
+  // testing `caption !== undefined` disagrees with what the page renders. Remove the attribute
+  // instead, which is what "no caption" actually is.
+  const cleared = CLEARABLE_FIELDS.filter(field => patch[field] === '');
+  const changed = { ...patch };
+  for (const field of cleared) delete changed[field];
+
   // `order` is watched by `orderStr` on the entity, so including it here (whenever the
   // caller changes it) recomputes the byArtist GSI sort key automatically.
-  const result = await ArtistPhotoEntity.patch({ artistId, id })
-    .set(patch)
-    .go({ response: 'all_new' });
+  const operation = ArtistPhotoEntity.patch({ artistId, id }).set(changed);
+  const result = await (cleared.length > 0 ? operation.remove([...cleared]) : operation).go({
+    response: 'all_new',
+  });
   return result.data as ArtistPhoto;
 }
 

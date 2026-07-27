@@ -6,7 +6,31 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 6 is complete and DHH-reviewed (2026-07-26, two agents: backend + frontend) with every finding fixed — see "From the phase-6 review" below. Profile redesign, gallery subroute, §6.2 denormalization (repertoire + featured), the daily `ArtistDenormRebuildCron` (both sweeps), and anon-only CDN caching all landed. Before/after deploy: (1) **Run the backfills once post-deploy** so the profile isn't empty until the first cron fires — `pnpm prod-cli rebuild-repertoire` and `pnpm prod-cli rebuild-featured`. (2) **Verify the caching segments on auth:** the profile `_index` loader sends `public, s-maxage=120, stale-while-revalidate=600` to anonymous viewers and `private, no-cache` to signed-in ones (subroutes are public and cache unconditionally). Full CDN offload is safe only if the CloudFront **server cache key includes the `rasika_session` cookie** — confirm SST's default does, or add it, else a logged-in viewer can briefly get a cached anon page (cosmetic only: no sensitive data, gated routes enforce auth themselves). (3) None of this is **verified against a running deploy** (`sst` can't run here) — render the profile, confirm the cron bundles, and check the cache behaviour on the first deploy. A full DHH review of phases 1–5 ran earlier (2026-07-25) and is also fixed — see "From the full phases 1–5 review" below.
+**Next step:** phase 7 is complete and DHH-reviewed (2026-07-27) with every must-fix and should-fix acted on — see "From the phase-7 review" below. **Phase 8 is next**, and its design is settled: read §4.3.1 of the plan (moderator-invited claims) before starting. Nothing collects artist emails yet, so enrichment done before phase 8 needs a second pass to add them.
+
+Phase 7 also adds two things to the pre-deploy list: (1) the OG cache key changed shape, so **every existing `og-images/**` object is orphaned** — harmless, but the prefix can be emptied to reclaim the space. (2) The **degraded-card rule is unverified against a real deploy**: a card that should carry a photo but couldn't fetch one is served and deliberately *not* cached, so watch that a genuinely photo-less artist doesn't cause a render on every request (it shouldn't — no `photoUrl` means not degraded).
+
+### From the phase-7 review (2026-07-27)
+
+One `dhh-code-reviewer` on Opus over the whole phase. It confirmed the risky parts sound — the `featured` round trip end to end (this is what un-deadens the profile Gallery section), the data URI genuinely rendering through librsvg, no SVG injection, and the photo fetch being unable to wedge the Lambda. Three must-fix and six should-fix, all acted on:
+
+- **The reorder could not express a move between photos sharing an `order`.** Swapping two equal values writes each row the value it already had: two 200s, no toast, no movement, and no sequence of clicks recovers. Duplicates are easy to reach — `addArtistPhoto` defaults `order` to 0. `computePhotoReorder` now renumbers by position and returns only rows that changed, which also heals duplicates already in production. The test that asserted the broken output was itself the bug's alibi; it now asserts the move.
+- **A partially-failed reorder diverged the UI from the table.** Two independent POSTs, and the catch rolled *local* state back while the server kept half the write. Now one request carrying the whole move, and the reply always returns the stored list — on the error arm too — so the client syncs to truth instead of a guess.
+- **One transient photo-fetch timeout poisoned the cache for a year.** The text-only fallback was written to a key hashed over the unchanged `photoUrl`, and the HEAD then served it forever without retrying. A degraded card is now served but not persisted.
+- **The truncation ladder let real names under the photo.** It counted characters; SVG text is measured in pixels. "Bombay Jayashri Ramnath" overflowed 6px, synthetic worst cases by up to 371px, and because the photo paints after the text the title was sliced mid-glyph by the photograph. Replaced with one width estimate driving both font size and truncation, plus a `clipPath` as the hard guarantee since Lambda resolves fonts against Amazon Linux and we cannot measure that here. Verified by rendering through Sharp and measuring the rightmost title pixel: worst case now ends at 719 against a panel starting at 760.
+- **The raw `fetch` read a session-expiry redirect as success** — `requireModerator` throws a `redirect`, `fetch` follows it, the login page returns 200 HTML, `res.ok` is true. Dissolved by moving to `useFetcher`.
+- **`CARD_VERSION` now feeds the cache hash.** The hash covered the content but not the template, so a redesign would leave every existing card frozen for a year with no remedy but emptying the S3 prefix by hand. The hash also gained a field separator, so a rename shifting a character across the title/subtitle boundary no longer collides.
+- Smaller: clearing a caption now `remove`s the attribute instead of storing `''` (so "absent" and "present but blank" stop disagreeing); `readOptionalInt` uses `Number` + `isInteger` rather than `parseInt`, which read `'12.7'` as 12; Remove is held during an in-flight move; the dead `content-length` pre-check, the redundant `preserveAspectRatio`, and the "not an error" comment sitting above a `console.error` are gone. `packages/og-image` split into `card.ts` / `request.ts` / `handler.ts`, so a unit test no longer constructs an S3 client and a tRPC client to call `escapeXml`.
+
+**Deliberately deferred, with reasons:**
+- **An atomic reorder via a DynamoDB transaction.** The rows share a partition so it is the natural shape, but nothing in core uses ElectroDB transactions yet. Renumbering made a partial failure self-healing rather than permanent, and the reply now reports truth, so the remaining exposure is a brief wrong order — not corruption. Revisit if it bites.
+- **Carrying the hash in the OG URL.** Every request now pays one tRPC query before it can HEAD, including cache hits, which is real cost on a crawler-heavy path. The page emitting `og:image` already has the artist loaded, so `/og/artist/{id}/{hash}` would let the Lambda HEAD immediately. Bigger than the rest; the comment in `handler.ts` states the cost honestly rather than claiming it is free.
+- **Streaming the photo fetch with a byte counter.** It buffers the whole body before checking size, and `artist.photoUrl` is an unrestricted `z.string().url()`, so it is a mild SSRF surface. Low risk — moderator-only field, 2.5s cap, sharp's own pixel limit — but pinning to the CDN host would close it.
+- **A fetcher per gallery row.** One shared update fetcher means an in-flight toggle disables every Feature and Save button in the grid.
+
+### Phase 6, and what it still owes the first deploy (2026-07-26)
+
+Phase 6 is complete and DHH-reviewed (two agents: backend + frontend) with every finding fixed. Profile redesign, gallery subroute, §6.2 denormalization (repertoire + featured), the daily `ArtistDenormRebuildCron` (both sweeps), and anon-only CDN caching all landed. Before/after deploy: (1) **Run the backfills once post-deploy** so the profile isn't empty until the first cron fires — `pnpm prod-cli rebuild-repertoire` and `pnpm prod-cli rebuild-featured`. (2) **Verify the caching segments on auth:** the profile `_index` loader sends `public, s-maxage=120, stale-while-revalidate=600` to anonymous viewers and `private, no-cache` to signed-in ones (subroutes are public and cache unconditionally). Full CDN offload is safe only if the CloudFront **server cache key includes the `rasika_session` cookie** — confirm SST's default does, or add it, else a logged-in viewer can briefly get a cached anon page (cosmetic only: no sensitive data, gated routes enforce auth themselves). (3) None of this is **verified against a running deploy** (`sst` can't run here) — render the profile, confirm the cron bundles, and check the cache behaviour on the first deploy. A full DHH review of phases 1–5 ran earlier (2026-07-25) and is also fixed — see "From the full phases 1–5 review" below.
 
 ### From the phase-6 review (2026-07-26)
 
@@ -64,8 +88,8 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | done |
 | 5 | Create/edit wizard (moderator-only, direct write) | done |
 | 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
-| 7 | Photo enrichment incl. OG compositing in `packages/og-image` | not started |
-| 8 | Claims + verification queue | not started |
+| 7 | Photo enrichment incl. OG compositing in `packages/og-image` | done (reviewed 2026-07-27) |
+| 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | not started |
 | 9 | Polish | not started |
 
 ### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
@@ -193,10 +217,11 @@ Raised, judged real, not yet done:
 
 ### Known baselines (so regressions are visible)
 
-Current at end of phase 5. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
+Current at end of phase 7. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **708 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew from 688 → 708 as the phases 1–5 and phase 6 reviews added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
-- `packages/web`: **≤30 web-own typecheck errors** (down from 34 after the phase-6 review null-guarded the artist subroutes; the raw count is higher — the extra ~7 are core's leaking through project references); **65 tests pass**.
+- `packages/core`: **710 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 as each review added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/web`: **32 web-own typecheck errors**; **89 tests pass** (65 → 89 across phase 7). The 32 was written as "≤30" through phase 6 and was stale — the phase-7 review measured the identical count at `e49f666db`, so it is a pre-existing figure, not drift. None of the 32 are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
+- `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
 - Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.
 - Commit messages with inner double-quotes break `git commit -m` shell quoting — commit prose via `git commit -F <file>`.
