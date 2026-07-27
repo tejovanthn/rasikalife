@@ -8,6 +8,17 @@ import { Resource } from 'sst';
 
 const s3Client = new S3Client({});
 
+// The fields this flow reads from Google's oauth2/v2/userinfo response. All optional: it is
+// someone else's payload, so the guards at the call site decide what is required, not this type.
+interface GoogleUserInfo {
+  email?: string;
+  verified_email?: boolean;
+  email_verified?: boolean;
+  name?: string;
+  picture?: string;
+  id?: string;
+}
+
 /**
  * Downloads a profile photo from Google and uploads it to S3.
  * Returns the S3 URL on success, or undefined on failure.
@@ -95,12 +106,32 @@ const app = issuer({
           Authorization: `Bearer ${tokenset.access}`,
         },
       });
-      const userInfo = await response.json();
+      if (!response.ok) {
+        throw new Error(`Google userinfo request failed with status ${response.status}`);
+      }
+      // `response.json()` is typed `unknown`, so every field read below was an unchecked cast.
+      // Naming the shape once means the guards that follow are actually type-checked.
+      const userInfo = (await response.json()) as GoogleUserInfo;
 
-      const email = userInfo.email as string;
-      const name = userInfo.name as string;
-      const googlePicture = userInfo.picture as string | undefined;
-      const sub = userInfo.id as string;
+      const { email, name, id: sub, picture: googlePicture } = userInfo;
+
+      // The email is about to become an authorization key, not just a contact field: phase 8
+      // grants an artist profile to whoever signs in with the address a moderator recorded
+      // during enrichment (plan §4.3.1). An address Google has not verified would let anyone
+      // holding an unverified account claim someone else's profile, so refuse the login
+      // outright — that way every stored user has a verified address by construction and the
+      // claim lookup never has to re-check. The v2 userinfo endpoint spells it `verified_email`;
+      // the OIDC endpoint spells it `email_verified`. Accept either, require one.
+      const emailVerified = userInfo.verified_email ?? userInfo.email_verified;
+      if (!email || emailVerified !== true) {
+        throw new Error('Google account has no verified email address');
+      }
+      // Without the subject there is no stable identity to key the user on; without a name
+      // there is nothing to display. Both are always present in practice — this is a guard
+      // against a malformed response, not an expected branch.
+      if (!sub || !name) {
+        throw new Error('Google userinfo response is missing the subject or name');
+      }
 
       const user = await User.findOrCreateUser({
         email,
