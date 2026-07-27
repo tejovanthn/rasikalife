@@ -2,6 +2,7 @@ import type { ActionFunction, LoaderFunction } from 'react-router';
 import { data } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { requireModerator } from '~/lib/auth.server';
+import { readClearableField, readOptionalInt } from '~/lib/form-fields';
 
 // Backs the moderator wizard's gallery. Photos are their own ArtistPhoto rows,
 // so add/update/delete land immediately. The image bytes are uploaded via the
@@ -35,8 +36,7 @@ export const action: ActionFunction = async ({ request }) => {
     }
     const caption = ((formData.get('caption') as string) || '').trim() || undefined;
     const credit = ((formData.get('credit') as string) || '').trim() || undefined;
-    const orderRaw = ((formData.get('order') as string) || '').trim();
-    const order = orderRaw ? Number.parseInt(orderRaw, 10) || undefined : undefined;
+    const order = readOptionalInt(formData, 'order');
 
     try {
       const photo = await serverClient.artist.addPhoto.mutate({
@@ -60,16 +60,22 @@ export const action: ActionFunction = async ({ request }) => {
     if (!id) {
       return data({ error: 'Missing photo' }, { status: 400 });
     }
-    const caption = ((formData.get('caption') as string) || '').trim() || undefined;
-    const credit = ((formData.get('credit') as string) || '').trim() || undefined;
-    const orderRaw = ((formData.get('order') as string) || '').trim();
-    const order = orderRaw ? Number.parseInt(orderRaw, 10) || undefined : undefined;
+    // caption/credit distinguish "not submitted" (undefined, preserve) from "submitted
+    // empty" (clear) — the `((x as string) || '').trim() || undefined` idiom used in the
+    // `add` branch above collapses both to undefined, which means a caption can never be
+    // cleared once set. Callers that don't mean to touch a field (e.g. the featured-only
+    // toggle) simply omit it from the form so it reads as undefined here too.
+    const caption = readClearableField(formData, 'caption');
+    const credit = readClearableField(formData, 'credit');
+    const order = readOptionalInt(formData, 'order');
+    const featuredRaw = formData.get('featured');
+    const featured = featuredRaw === null ? undefined : featuredRaw === 'true';
 
     try {
       const photo = await serverClient.artist.updatePhoto.mutate({
         artistId,
         id,
-        patch: { caption, credit, order },
+        patch: { caption, credit, order, featured },
       });
       return data({ success: true, photo });
     } catch (error) {

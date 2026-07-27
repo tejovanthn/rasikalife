@@ -6,8 +6,10 @@ import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/soci
 import {
   ArrowLeft,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   Loader2,
   Pencil,
   Plus,
@@ -43,6 +45,7 @@ import {
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
 import { requireUser } from '~/lib/auth.server';
+import { computePhotoReorder, nextPhotoOrder } from '~/lib/gallery-order';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
 export const meta: MetaFunction = () => {
@@ -1767,19 +1770,32 @@ type Photo = {
 };
 
 type AddPhotoResult = { success: true; photo: Photo } | { error: string };
+type UpdatePhotoResult = { success: true; photo: Photo } | { error: string };
 type DeletePhotoResult = { success: true; id: string } | { error: string };
 
-// Gallery photos are their own ArtistPhoto rows, added/deleted immediately.
-// ImageUpload posts the bytes to S3 and hands back a CDN url via onUploaded;
-// this stores that url plus optional caption/credit as a row.
+// Gallery photos are their own ArtistPhoto rows, added/edited/reordered/deleted
+// immediately. ImageUpload posts the bytes to S3 and hands back a CDN url via
+// onUploaded; this stores that url plus optional caption/credit as a row.
+//
+// Reorder is move-up/move-down buttons rather than the drag-to-reorder the spec
+// describes (§5.4e): there's no drag-and-drop library in this codebase, and
+// buttons are a fraction of the code, keyboard-accessible for free, and don't
+// need a pointer. A move swaps `order` with the adjacent photo — two writes,
+// never a renumbering of the whole gallery (see computePhotoReorder).
 function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialPhotos: Photo[] }) {
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
   const [pending, setPending] = useState<{ imageUrl: string; uploadId: string } | null>(null);
   const [caption, setCaption] = useState('');
   const [credit, setCredit] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editCaption, setEditCaption] = useState('');
+  const [editCredit, setEditCredit] = useState('');
+  const [movingId, setMovingId] = useState<string | null>(null);
   const addFetcher = useFetcher<AddPhotoResult>();
+  const updateFetcher = useFetcher<UpdatePhotoResult>();
   const deleteFetcher = useFetcher<DeletePhotoResult>();
   const addIsIdle = addFetcher.state === 'idle';
+  const updateIsIdle = updateFetcher.state === 'idle';
 
   useEffect(() => {
     if (!addFetcher.data) return;
@@ -1796,6 +1812,20 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
   }, [addFetcher.data]);
 
   useEffect(() => {
+    if (!updateFetcher.data) return;
+    if ('error' in updateFetcher.data) {
+      toast.error(updateFetcher.data.error);
+      return;
+    }
+    const { photo } = updateFetcher.data;
+    setPhotos(prev => prev.map(p => (p.id === photo.id ? photo : p)));
+    // Only close the edit form for the row that actually just saved — a featured
+    // toggle on another row shares this fetcher and shouldn't discard an in-progress
+    // caption edit elsewhere in the grid.
+    setEditingId(prev => (prev === photo.id ? null : prev));
+  }, [updateFetcher.data]);
+
+  useEffect(() => {
     if (!deleteFetcher.data) return;
     if ('error' in deleteFetcher.data) {
       toast.error(deleteFetcher.data.error);
@@ -1806,36 +1836,179 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
     toast.success('Photo removed');
   }, [deleteFetcher.data]);
 
+  const sortedPhotos = [...photos].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+
+  function startEdit(photo: Photo) {
+    setEditingId(photo.id);
+    setEditCaption(photo.caption ?? '');
+    setEditCredit(photo.credit ?? '');
+  }
+
+  async function handleMove(id: string, direction: 'up' | 'down') {
+    const changes = computePhotoReorder(photos, id, direction);
+    if (changes.length === 0) return;
+
+    const previous = photos;
+    setMovingId(id);
+    setPhotos(prev =>
+      prev.map(photo => {
+        const change = changes.find(c => c.id === photo.id);
+        return change ? { ...photo, order: change.order } : photo;
+      })
+    );
+
+    try {
+      // Two parallel direct POSTs rather than the shared fetchers above: submitting
+      // a second update through the same useFetcher instance aborts the first
+      // before it reaches the server, and a swap is always exactly two writes.
+      const responses = await Promise.all(
+        changes.map(change => {
+          const body = new FormData();
+          body.set('intent', 'update');
+          body.set('artistId', artistId);
+          body.set('id', change.id);
+          body.set('order', String(change.order));
+          return fetch('/api/artist/photo', { method: 'POST', body });
+        })
+      );
+      if (responses.some(res => !res.ok)) throw new Error('Reorder failed');
+    } catch (err) {
+      console.error('Failed to reorder photos:', err);
+      setPhotos(previous);
+      toast.error('Failed to reorder photos');
+    } finally {
+      setMovingId(null);
+    }
+  }
+
   return (
     <div className="space-y-3">
       {photos.length === 0 && <p className="text-xs text-muted-foreground">No photos yet.</p>}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {photos.map(photo => (
+        {sortedPhotos.map((photo, index) => (
           <div key={photo.id} className="space-y-1 rounded-md border p-2">
             <img
               src={photo.imageUrl}
               alt={photo.caption ?? ''}
               className="h-24 w-full rounded object-cover"
             />
-            {photo.caption && <div className="truncate text-xs">{photo.caption}</div>}
-            {photo.credit && (
-              <div className="truncate text-xs text-muted-foreground">{photo.credit}</div>
+            {editingId === photo.id ? (
+              <>
+                <Input
+                  placeholder="Caption (optional)"
+                  value={editCaption}
+                  onChange={e => setEditCaption(e.target.value)}
+                />
+                <Input
+                  placeholder="Credit (optional)"
+                  value={editCredit}
+                  onChange={e => setEditCredit(e.target.value)}
+                />
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!updateIsIdle}
+                    onClick={() =>
+                      updateFetcher.submit(
+                        {
+                          intent: 'update',
+                          artistId,
+                          id: photo.id,
+                          caption: editCaption,
+                          credit: editCredit,
+                        },
+                        { method: 'post', action: '/api/artist/photo' }
+                      )
+                    }
+                  >
+                    <Check className="h-4 w-4" />
+                    Save
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingId(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {photo.caption && <div className="truncate text-xs">{photo.caption}</div>}
+                {photo.credit && (
+                  <div className="truncate text-xs text-muted-foreground">{photo.credit}</div>
+                )}
+                <div className="flex flex-wrap items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Edit caption and credit"
+                    onClick={() => startEdit(photo)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={photo.featured ? 'default' : 'outline'}
+                    size="sm"
+                    disabled={!updateIsIdle}
+                    onClick={() =>
+                      updateFetcher.submit(
+                        {
+                          intent: 'update',
+                          artistId,
+                          id: photo.id,
+                          featured: photo.featured ? 'false' : 'true',
+                        },
+                        { method: 'post', action: '/api/artist/photo' }
+                      )
+                    }
+                  >
+                    {photo.featured ? 'Featured' : 'Feature'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Move up"
+                    disabled={movingId !== null || index === 0}
+                    onClick={() => handleMove(photo.id, 'up')}
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Move down"
+                    disabled={movingId !== null || index === sortedPhotos.length - 1}
+                    onClick={() => handleMove(photo.id, 'down')}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={deleteFetcher.state !== 'idle'}
+                    onClick={() =>
+                      deleteFetcher.submit(
+                        { intent: 'delete', artistId, id: photo.id },
+                        { method: 'post', action: '/api/artist/photo' }
+                      )
+                    }
+                  >
+                    <X className="h-4 w-4" />
+                    Remove
+                  </Button>
+                </div>
+              </>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={deleteFetcher.state !== 'idle'}
-              onClick={() =>
-                deleteFetcher.submit(
-                  { intent: 'delete', artistId, id: photo.id },
-                  { method: 'post', action: '/api/artist/photo' }
-                )
-              }
-            >
-              <X className="h-4 w-4" />
-              Remove
-            </Button>
           </div>
         ))}
       </div>
@@ -1873,9 +2046,10 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                     uploadId: pending.uploadId,
                     caption,
                     credit,
-                    // Append after the current last photo so ordering is stable
-                    // on reload rather than every photo sharing order 0.
-                    order: String(photos.length),
+                    // Append after the highest existing order, not the photo count —
+                    // deleting a photo shrinks the count but not the max, so indexing
+                    // by count risks colliding with a surviving photo's order.
+                    order: String(nextPhotoOrder(photos)),
                   },
                   { method: 'post', action: '/api/artist/photo' }
                 )

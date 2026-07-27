@@ -178,9 +178,15 @@ importers:
       '@types/node':
         specifier: ^20.19.35
         version: 20.19.35
+      '@vitest/coverage-v8':
+        specifier: ^1.6.1
+        version: 1.6.1(vitest@1.6.1(@types/node@20.19.35))
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vitest:
+        specifier: ^1.6.1
+        version: 1.6.1(@types/node@20.19.35)
 
   packages/scraper:
     dependencies:

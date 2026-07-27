@@ -343,6 +343,8 @@ Each modal edits one list, returns to the wizard step, and shows an inline chron
 
 **e. Gallery modal** — add/remove/reorder photos. Each row uploads via `Image.getImageUploadUrl('artist', ...)`, then writes an `ArtistPhoto` row with optional `caption`/`credit`, an `order`, and a `featured` toggle that controls whether it appears in the profile teaser grid. Drag-to-reorder sets `order`.
 
+**Built with move-up/move-down buttons, not drag (phase 7, 2026-07-27).** There is no drag-and-drop library in the codebase and buttons are a fraction of the code, keyboard-accessible for free, and reliable on touch. A move swaps `order` with the adjacent photo — two writes, never a renumbering of the gallery. Revisit only if moving a photo across a long gallery becomes a real complaint.
+
 ### 5.5 Data touchpoints summary
 
 The wizard writes across: `Artist` (core fields, reshaped `gurus`, hero photo), `ArtistMembership` (members), `ArtistAward` (awards), `EventArtist` (performance links plus the per-artist `isFeatured`/`featureRank`), `ArtistPhoto` (gallery). Event *creation* is delegated to the existing event pipeline, not performed by the wizard. `ArtistClaim` and `collaborators` are system-managed, not wizard-edited.
