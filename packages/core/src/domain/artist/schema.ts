@@ -3,7 +3,18 @@ import { z } from 'zod';
 import { YearSchema } from '../shared/schemas';
 import { SocialLinkSchema } from '../social-link';
 
-export const ARTIST_CLAIM_STATUSES = ['unclaimed', 'pending', 'verified', 'rejected'] as const;
+// 'invited' is a moderator pre-authorization (artist-claim/entity.ts, §4.3.1) — it is
+// a valid status for an ArtistClaim row but never a value of artist.claimStatus below:
+// an invite is not itself a claim, so it never flips the public badge. It shares this
+// union rather than a parallel one so the vocabulary can't drift between the two places
+// it's used.
+export const ARTIST_CLAIM_STATUSES = [
+  'unclaimed',
+  'pending',
+  'verified',
+  'rejected',
+  'invited',
+] as const;
 export type ArtistClaimStatus = (typeof ARTIST_CLAIM_STATUSES)[number];
 
 export const GuruSchema = z.object({

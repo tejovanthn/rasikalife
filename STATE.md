@@ -6,7 +6,35 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step:** phase 7 is complete and DHH-reviewed (2026-07-27) with every must-fix and should-fix acted on — see "From the phase-7 review" below. **Phase 8 is next**, and its design is settled: read §4.3.1 of the plan (moderator-invited claims) before starting. Nothing collects artist emails yet, so enrichment done before phase 8 needs a second pass to add them.
+**Next step: decide the `ArtistClaim` index shape (below), then finish phase 8 slice 1 — it needs tests and the `cascadeArtistMerge` fixup, neither of which exists.**
+
+Phase 7 is complete and DHH-reviewed (2026-07-27) with every must-fix and should-fix acted on — see "From the phase-7 review" below.
+
+### Phase 8, slice 1: partial and unreviewed (2026-07-28)
+
+The building agent hit the monthly spend limit part-way, so this slice is **not done and has had no DHH review**. It is committed anyway rather than left dangling, and it is **inert** — `artist-claim` is exported from neither `packages/core/src/index.ts` nor the `exports` map in `package.json`, so nothing can import it and no running code path touches it.
+
+Landed: `packages/core/src/domain/artist-claim/{schema,entity,client,index}.ts`, and `'invited'` added to `ARTIST_CLAIM_STATUSES`.
+
+**Still owed before this slice is done:**
+1. **`index.test.ts` — there are no tests at all.** §11.3 requires a merge test per reference type.
+2. **The `cascadeArtistMerge` claim fixup was never written.** Claims on a merge loser are still stranded, which is precisely the class of silent corruption §11.3 exists to prevent.
+3. The design decision below.
+
+**The decision owed: these GSIs are not sparse, and the code was written assuming they are.** ElectroDB does not omit an index whose composite attribute is missing — it writes the template with an empty suffix. Verified against the real entity with `.params()`, not inferred:
+
+```
+invite row (no userId) → gsi2pk = "artist_claim_user#"
+claim  row (no email)  → gsi3pk = "artist_claim_email#"
+```
+
+So every invite shares one `byUser` partition and every claim shares one `byEmail` partition. `getClaimsByEmail` is the **login-time authorization lookup**, so a blank argument would have returned every pre-authorized artist on the site rather than nothing. Both functions now guard against an empty argument, and the misleading "Sparse:" comments in `entity.ts` are corrected — but the guard is a stopgap, not the fix.
+
+The structural options, cheapest first: (a) keep one entity and accept two hot partitions plus the guards, which works but leaves a footgun for the next caller; (b) set the unused composite to a per-row unique value so the partitions spread, which fixes the hot key but not the semantics; (c) **split into two entities** — invites keyed by email, claims keyed by userId, each carrying only the index it needs — and use an ElectroDB Collection to keep `getArtistClaims` a single query across the shared partition. (c) is the clean one and is what the single-entity design was avoiding before the sparseness assumption turned out to be false. Decide before wiring any of this to a router.
+
+Also unstarted in phase 8: the tRPC router, `canManageArtist`, the claim UI, and the moderator queue. Nothing collects artist emails yet, so enrichment done before phase 8 needs a second pass to add them.
+
+The one phase-8 piece that **is** done and committed: `05c7bb941` makes a verified Google email a precondition of signing in, so the email is safe to use as an authorization key. Note it can refuse a login that previously succeeded; unexercised against a deploy.
 
 Phase 7 also adds two things to the pre-deploy list: (1) the OG cache key changed shape, so **every existing `og-images/**` object is orphaned** — harmless, but the prefix can be emptied to reclaim the space. (2) The **degraded-card rule is unverified against a real deploy**: a card that should carry a photo but couldn't fetch one is served and deliberately *not* cached, so watch that a genuinely photo-less artist doesn't cause a render on every request (it shouldn't — no `photoUrl` means not degraded).
 
@@ -89,7 +117,7 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 5 | Create/edit wizard (moderator-only, direct write) | done |
 | 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | done (reviewed 2026-07-27) |
-| 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | not started |
+| 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | **in progress — slice 1 partial, unreviewed** |
 | 9 | Polish | not started |
 
 ### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
