@@ -209,6 +209,98 @@ export async function rejectClaim(
   return result.data as ArtistClaim;
 }
 
+/**
+ * Whether this user may manage this artist's profile — the check behind the phase-8 access
+ * grant (§4.3.1). True only for a *verified* claim: an invite is a moderator's intent, and a
+ * pending claim is an unproven assertion, so neither confers anything on its own.
+ *
+ * This deliberately says nothing about moderators. Callers combine it with their own role
+ * check, because "is a moderator" is a question about the user alone and this is a question
+ * about a user and one artist; folding them together here would hide the role check from
+ * every reader of the call site.
+ */
+export async function canManageArtist(userId: string, artistId: string): Promise<boolean> {
+  if (!userId.trim() || !artistId.trim()) return false;
+  const result = await ArtistClaimEntity.get({
+    artistId,
+    kind: 'claim',
+    subject: userId,
+  }).go();
+  return result.data?.status === 'verified';
+}
+
+/**
+ * Converts any moderator invites matching this user's email into verified claims — the
+ * moment §4.3.1 is built around, where an artist a moderator emailed during enrichment
+ * signs in and simply has their profile.
+ *
+ * No pending step: the moderator already established identity out of band, which is what §8
+ * says verification rests on, and their `moderatorNote` on the invite carries that reasoning
+ * onto the claim as the audit trail.
+ *
+ * Safe to call on every login. It is keyed on an exact normalized-email match, so a user with
+ * no invite costs exactly one query and writes nothing. Returns the artists granted so a
+ * caller can tell the user what just happened.
+ *
+ * The caller must have established that the email is *verified* by the identity provider
+ * before calling — this function trusts the address it is handed, and that address is the
+ * only thing standing between a stranger and someone else's profile.
+ */
+export async function redeemArtistClaimInvites(params: {
+  userId: string;
+  userName: string;
+  email: string;
+}): Promise<Array<{ artistId: string; artistName: string }>> {
+  const email = normalizeArtistClaimEmail(params.email);
+  if (!email || !params.userId.trim()) return [];
+
+  const invites = await getClaimsByEmail(email);
+  if (invites.length === 0) return [];
+
+  const now = new Date().toISOString();
+  const granted: Array<{ artistId: string; artistName: string }> = [];
+
+  for (const invite of invites) {
+    // upsert, not create: a user who was invited to an artist they had already claimed
+    // themselves should end up verified, not collide with their own pending row.
+    await ArtistClaimEntity.upsert({
+      artistId: invite.artistId,
+      artistName: invite.artistName,
+      kind: 'claim',
+      subject: params.userId,
+      userId: params.userId,
+      userName: params.userName,
+      userEmail: email,
+      status: 'verified',
+      moderatorId: invite.moderatorId,
+      moderatorNote: invite.moderatorNote,
+      processedAt: now,
+    } as never).go();
+
+    await markArtistVerified(invite.artistId, now);
+
+    // Only once the claim exists. If this throws the invite is simply redeemed again on the
+    // next login and the upsert above is idempotent — the reverse order could drop the
+    // invite while leaving the artist unclaimed, with nothing left to retry from.
+    await ArtistClaimEntity.delete({
+      artistId: invite.artistId,
+      kind: 'invite',
+      subject: email,
+    }).go();
+
+    granted.push({ artistId: invite.artistId, artistName: invite.artistName });
+  }
+
+  return granted;
+}
+
+async function markArtistVerified(artistId: string, now: string): Promise<void> {
+  const { ArtistEntity } = await import('../artist/entity');
+  await ArtistEntity.update({ id: artistId })
+    .set({ claimStatus: 'verified', verifiedAt: now })
+    .go();
+}
+
 export type { ArtistClaim } from './entity';
 export {
   ARTIST_CLAIM_KINDS,

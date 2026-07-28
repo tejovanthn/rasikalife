@@ -1,9 +1,16 @@
 import type { Artist } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { Award, Calendar, ExternalLink, MapPin, Users } from 'lucide-react';
-import { type HeadersFunction, type MetaFunction, data, redirect } from 'react-router';
-import { Link, useLoaderData } from 'react-router';
+import { Award, BadgeCheck, Calendar, ExternalLink, MapPin, Users } from 'lucide-react';
+import { useState } from 'react';
+import {
+  type ActionFunctionArgs,
+  type HeadersFunction,
+  type MetaFunction,
+  data,
+  redirect,
+} from 'react-router';
+import { Link, useFetcher, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
@@ -14,7 +21,9 @@ import {
   PersonStructuredData,
 } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
+import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { Input } from '~/components/ui/input';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { artistOgImageUrl } from '~/lib/og';
@@ -69,20 +78,28 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, events, awards, membership, gallery, activeEdit] = await Promise.all([
-      client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
-      client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
-      client.artist.listAwards.query({ artistId: artist.id }),
-      // A group lists its members; an individual lists the groups it performs in.
-      // Only one direction is ever rendered, so only one is fetched.
-      isGroup
-        ? client.artist.listMembers.query({ groupId: artist.id })
-        : client.artist.listGroups.query({ memberId: artist.id }),
-      client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
-      user
-        ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
-        : Promise.resolve(null),
-    ]);
+    const [compositions, events, awards, membership, gallery, activeEdit, myClaims] =
+      await Promise.all([
+        client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
+        client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
+        client.artist.listAwards.query({ artistId: artist.id }),
+        // A group lists its members; an individual lists the groups it performs in.
+        // Only one direction is ever rendered, so only one is fetched.
+        isGroup
+          ? client.artist.listMembers.query({ groupId: artist.id })
+          : client.artist.listGroups.query({ memberId: artist.id }),
+        client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
+        user
+          ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
+          : Promise.resolve(null),
+        // Signed-in viewers only, and only on the branch that is already uncacheable — the
+        // anonymous document must stay identical for everyone or the CDN would hand one
+        // viewer's claim state to the next. The public verified badge comes from the artist
+        // row's denormalized claimStatus instead, which costs nothing and varies by nobody.
+        user ? client.artistClaim.mine.query() : Promise.resolve([]),
+      ]);
+
+    const myClaim = (myClaims ?? []).find(c => c.artistId === artist.id);
 
     // Repertoire and featured performances are read straight off the denormalized fields
     // on the artist record — no per-view setlist fan-out, no filtered partition scan.
@@ -117,6 +134,7 @@ export async function loader({
         repertoire,
         activeEdit,
         isLoggedIn: !!user,
+        myClaimStatus: myClaim?.status,
         isModerator: user?.role === 'moderator' || user?.role === 'admin',
       },
       { headers: { 'Cache-Control': cacheControl } }
@@ -133,6 +151,32 @@ export async function loader({
     }
     console.error('Failed to load artist:', error);
     throw new Response('Failed to load artist', { status: 500 });
+  }
+}
+
+// Claiming a profile (§8). The claimant is taken from the session inside the router, never
+// from this form, so the only thing posted is which artist and an optional note.
+export async function action({ request, params }: ActionFunctionArgs) {
+  const parsed = params.artistid ? parseSlug(params.artistid) : null;
+  if (!parsed) {
+    return data({ error: 'Invalid URL format' }, { status: 400 });
+  }
+  const artistId = parsed.id;
+
+  const formData = await request.formData();
+  const note = ((formData.get('note') as string) || '').trim() || undefined;
+
+  try {
+    const client = await createServerClient(request);
+    await client.artistClaim.create.mutate({ artistId, note });
+    return data({ success: true });
+  } catch (error) {
+    console.error('Failed to submit claim:', error);
+    const message =
+      error instanceof Error && error.message.includes('already claimed')
+        ? 'You have already claimed this artist.'
+        : 'Could not submit that claim.';
+    return data({ error: message }, { status: 400 });
   }
 }
 
@@ -197,6 +241,68 @@ export const meta: MetaFunction = ({ data }) => {
 };
 
 // Photo, or an initial-based placeholder when the artist has none.
+// The three states a signed-in viewer can be in for this artist. An invited artist never sees
+// any of it: their invite is redeemed into a verified claim at login, so they arrive already
+// managing the profile (§4.3.1).
+function ClaimProfile({ artistName, status }: { artistName: string; status?: string }) {
+  const fetcher = useFetcher<{ success?: true; error?: string }>();
+  const [open, setOpen] = useState(false);
+
+  if (status === 'verified') {
+    return (
+      <section className="mt-8 rounded-md border bg-muted/40 p-4">
+        <p className="text-sm">You manage this profile.</p>
+      </section>
+    );
+  }
+
+  if (status === 'pending' || fetcher.data?.success) {
+    return (
+      <section className="mt-8 rounded-md border bg-muted/40 p-4">
+        <p className="text-sm">
+          Your claim is with a moderator. They may get in touch to confirm who you are.
+        </p>
+      </section>
+    );
+  }
+
+  // A rejected claim shows nothing rather than inviting an immediate re-submission — core
+  // rejects a duplicate anyway, and re-asking is a conversation for a human, not a button.
+  if (status === 'rejected') return null;
+
+  return (
+    <section className="mt-8 rounded-md border p-4">
+      {open ? (
+        <fetcher.Form method="post" className="space-y-2">
+          <p className="text-sm font-medium">Claim {artistName}</p>
+          <p className="text-xs text-muted-foreground">
+            Tell us how we can confirm it&rsquo;s you — an official email address, a social account
+            you post from, anything a moderator can check.
+          </p>
+          <Input name="note" placeholder="How can we verify you?" />
+          <div className="flex gap-2">
+            <Button type="submit" size="sm" disabled={fetcher.state !== 'idle'}>
+              Send claim
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+          {fetcher.data?.error && <p className="text-xs text-destructive">{fetcher.data.error}</p>}
+        </fetcher.Form>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+        >
+          Are you {artistName}? Claim this profile
+        </button>
+      )}
+    </section>
+  );
+}
+
 function HeroAvatar({ photoUrl, name }: { photoUrl?: string; name: string }) {
   if (photoUrl) {
     return (
@@ -260,6 +366,7 @@ export default function ArtistDetails() {
     activeEdit,
     isLoggedIn,
     isModerator,
+    myClaimStatus,
   } = useLoaderData<typeof loader>();
 
   const artistUrl = generateArtistUrl(artist.name, artist.id);
@@ -322,6 +429,12 @@ export default function ArtistDetails() {
       <section className="mb-8 flex items-start gap-5">
         <HeroAvatar photoUrl={artist.photoUrl} name={artist.name} />
         <div className="min-w-0">
+          {artist.claimStatus === 'verified' && (
+            <Badge variant="secondary" className="mb-1 gap-1">
+              <BadgeCheck className="h-3.5 w-3.5" />
+              Verified artist
+            </Badge>
+          )}
           {artist.title && <p className="text-sm text-muted-foreground">{artist.title}</p>}
           <p className="text-lg font-medium">
             {[instrument ? capitalize(instrument) : null, city].filter(Boolean).join(' · ') ||
@@ -620,6 +733,11 @@ export default function ArtistDetails() {
           </div>
         </section>
       )}
+
+      {/* Claim (§8) — signed-in viewers only, so the anonymous document stays identical for
+          everyone and safe to cache at the edge. Deliberately understated and placed low:
+          it speaks to one person in a thousand visitors. */}
+      {isLoggedIn && <ClaimProfile artistName={artist.name} status={myClaimStatus} />}
 
       {/* Explore more */}
       <section className="mt-8 border-t pt-8">

@@ -4,6 +4,9 @@ vi.mock('./entity', () => ({
   ArtistClaimEntity: {
     create: vi.fn(),
     patch: vi.fn(),
+    get: vi.fn(),
+    upsert: vi.fn(),
+    delete: vi.fn(),
     query: { primary: vi.fn(), byStatus: vi.fn(), byActor: vi.fn() },
   },
 }));
@@ -17,10 +20,12 @@ vi.mock('../artist/entity', () => ({
 
 import {
   approveClaim,
+  canManageArtist,
   createArtistClaim,
   createArtistClaimInvite,
   getClaimsByEmail,
   getUserClaims,
+  redeemArtistClaimInvites,
   rejectClaim,
 } from '.';
 import { ArtistEntity } from '../artist/entity';
@@ -257,5 +262,106 @@ describe('rejectClaim', () => {
       /moderatorNote is required/
     );
     expect(ArtistClaimEntity.patch).not.toHaveBeenCalled();
+  });
+});
+
+describe('canManageArtist', () => {
+  function mockClaimRow(data: unknown) {
+    vi.mocked(ArtistClaimEntity.get).mockReturnValue(goResolves(data) as never);
+  }
+
+  it('grants access on a verified claim', async () => {
+    mockClaimRow({ status: 'verified' });
+    expect(await canManageArtist('user_1', 'artist_1')).toBe(true);
+  });
+
+  // A pending claim is an unproven assertion and an invite is only a moderator's intent.
+  // Either one granting access would make the whole approval step decorative.
+  it('refuses a pending claim, a rejected one, and no claim at all', async () => {
+    mockClaimRow({ status: 'pending' });
+    expect(await canManageArtist('user_1', 'artist_1')).toBe(false);
+    mockClaimRow({ status: 'rejected' });
+    expect(await canManageArtist('user_1', 'artist_1')).toBe(false);
+    mockClaimRow(undefined);
+    expect(await canManageArtist('user_1', 'artist_1')).toBe(false);
+  });
+
+  it('refuses a blank user or artist without querying', async () => {
+    expect(await canManageArtist('', 'artist_1')).toBe(false);
+    expect(await canManageArtist('user_1', '  ')).toBe(false);
+    expect(ArtistClaimEntity.get).not.toHaveBeenCalled();
+  });
+});
+
+describe('redeemArtistClaimInvites', () => {
+  const user = { userId: 'user_1', userName: 'Sanjay', email: 'Sanjay@Example.COM ' };
+
+  function mockInvites(rows: unknown[]) {
+    vi.mocked(ArtistClaimEntity.query.byActor).mockReturnValue(goResolves(rows) as never);
+    vi.mocked(ArtistClaimEntity.upsert).mockReturnValue(goResolves({}) as never);
+    vi.mocked(ArtistClaimEntity.delete).mockReturnValue(goResolves({}) as never);
+  }
+
+  it('turns a matching invite into a verified claim and marks the artist verified', async () => {
+    mockInvites([
+      {
+        artistId: 'artist_1',
+        artistName: 'Sanjay Subrahmanyan',
+        moderatorId: 'mod_1',
+        moderatorNote: 'Replied from the address on her site',
+      },
+    ]);
+    const artist = mockArtistUpdate();
+
+    const granted = await redeemArtistClaimInvites(user);
+
+    // Looked up by the normalized address, or an invite recorded in lower case never matches
+    // the mixed-case address the provider hands back.
+    expect(ArtistClaimEntity.query.byActor).toHaveBeenCalledWith({
+      kind: 'invite',
+      subject: 'sanjay@example.com',
+    });
+    expect(ArtistClaimEntity.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'claim',
+        subject: 'user_1',
+        status: 'verified',
+        // The moderator's out-of-band identity check is the only audit trail there is, so it
+        // has to survive onto the claim rather than dying with the invite.
+        moderatorNote: 'Replied from the address on her site',
+      })
+    );
+    expect(artist.setSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ claimStatus: 'verified' })
+    );
+    expect(granted).toEqual([{ artistId: 'artist_1', artistName: 'Sanjay Subrahmanyan' }]);
+  });
+
+  // Ordering matters on a partial failure: dropping the invite first could leave the artist
+  // unclaimed with nothing left to retry from.
+  it('writes the claim before deleting the invite', async () => {
+    mockInvites([{ artistId: 'artist_1', artistName: 'X' }]);
+    mockArtistUpdate();
+
+    await redeemArtistClaimInvites(user);
+
+    const upsertOrder = vi.mocked(ArtistClaimEntity.upsert).mock.invocationCallOrder[0];
+    const deleteOrder = vi.mocked(ArtistClaimEntity.delete).mock.invocationCallOrder[0];
+    expect(upsertOrder).toBeLessThan(deleteOrder);
+  });
+
+  // Runs on every login, so the overwhelmingly common case must cost one query and no writes.
+  it('writes nothing when the user has no invite', async () => {
+    mockInvites([]);
+    mockArtistUpdate();
+
+    expect(await redeemArtistClaimInvites(user)).toEqual([]);
+    expect(ArtistClaimEntity.upsert).not.toHaveBeenCalled();
+    expect(ArtistEntity.update).not.toHaveBeenCalled();
+  });
+
+  it('does nothing for a blank email rather than matching an empty partition', async () => {
+    expect(await redeemArtistClaimInvites({ ...user, email: '   ' })).toEqual([]);
+    expect(ArtistClaimEntity.query.byActor).not.toHaveBeenCalled();
   });
 });

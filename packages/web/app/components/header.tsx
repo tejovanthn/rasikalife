@@ -1,6 +1,7 @@
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import {
   Activity,
+  BadgeCheck,
   Calendar,
   ChevronDown,
   ClipboardList,
@@ -197,6 +198,12 @@ export const Header = () => {
                         <Link to="/moderator/enrich" className="flex items-center gap-2">
                           <Sparkles className="h-4 w-4" />
                           Daily Enrichment
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/moderator/claims" className="flex items-center gap-2">
+                          <BadgeCheck className="h-4 w-4" />
+                          Artist Claims
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>

@@ -1136,6 +1136,11 @@ function ModeratorArtistWizard() {
                   <Label>Gallery</Label>
                   <GalleryEditor artistId={artist.id} initialPhotos={photos} />
                 </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Hand this profile to the artist</Label>
+                  <ClaimInviteEditor artistId={artist.id} artistName={artist.name} />
+                </div>
               </div>
             </div>
 
@@ -1768,6 +1773,62 @@ type Photo = {
   order: number;
   featured: boolean;
 };
+
+type InviteResult = { success: true; email: string } | { error: string };
+
+// The enrichment-time half of §4.3.1. A moderator building this profile is usually already
+// emailing the artist, so recording that address here is the whole handover: next time they
+// sign in with it, the profile is theirs — no claim form, no queue, nothing for them to do.
+//
+// The address is written to an ArtistClaim invite row, never to the Artist record. artist.get
+// is a public procedure and the profile is edge-cached, so an email on that row would be
+// served to every visitor.
+function ClaimInviteEditor({ artistId, artistName }: { artistId: string; artistName: string }) {
+  const [email, setEmail] = useState('');
+  const fetcher = useFetcher<InviteResult>();
+  const isIdle = fetcher.state === 'idle';
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    if ('error' in fetcher.data) {
+      toast.error(fetcher.data.error);
+      return;
+    }
+    setEmail('');
+    toast.success(`${fetcher.data.email} can now claim this profile by signing in`);
+  }, [fetcher.data]);
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground">
+        Use the address you have been corresponding with. Signing in with it grants {artistName}
+        &rsquo;s profile straight away, so only add an address you have actually heard from.
+      </p>
+      <div className="flex gap-2">
+        <Input
+          type="email"
+          placeholder="artist@example.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!isIdle || !email.trim()}
+          onClick={() =>
+            fetcher.submit(
+              { intent: 'invite', artistId, email },
+              { method: 'post', action: '/api/artist/claim' }
+            )
+          }
+        >
+          Invite
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 type AddPhotoResult = { success: true; photo: Photo } | { error: string };
 type UpdatePhotoResult = { success: true; photo: Photo } | { error: string };

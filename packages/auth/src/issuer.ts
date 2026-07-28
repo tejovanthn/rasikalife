@@ -1,7 +1,7 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { issuer } from '@openauthjs/openauth';
 import { GoogleProvider } from '@openauthjs/openauth/provider/google';
-import { Auth, User } from '@rasika/core';
+import { ArtistClaim, Auth, User } from '@rasika/core';
 import { handle } from 'hono/aws-lambda';
 // import sharp from 'sharp';
 import { Resource } from 'sst';
@@ -145,6 +145,30 @@ const app = issuer({
         if (picture) {
           await User.updateUser(user.id, { picture });
         }
+      }
+
+      // If a moderator recorded this address against an artist during enrichment, the profile
+      // becomes theirs now (plan §4.3.1). This is the whole point of the invited-claim path:
+      // the artist signs in with the address the moderator was already emailing and the
+      // profile is simply there, with no claim form and no queue.
+      //
+      // Safe on every login — no invite means one query and no writes. Deliberately not fatal:
+      // a failure here must not lock someone out of the site over a profile grant they can
+      // pick up on their next sign-in, since redemption is idempotent.
+      try {
+        const granted = await ArtistClaim.redeemArtistClaimInvites({
+          userId: user.id,
+          userName: user.name,
+          email,
+        });
+        if (granted.length > 0) {
+          console.log(
+            `[auth] redeemed ${granted.length} artist invite(s) for ${user.id}:`,
+            granted.map(a => a.artistId).join(', ')
+          );
+        }
+      } catch (err) {
+        console.error('[auth] failed to redeem artist claim invites:', err);
       }
 
       return ctx.subject('user', {

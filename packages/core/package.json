@@ -41,6 +41,11 @@
       "import": "./src/domain/artist-photo/client.ts",
       "default": "./src/domain/artist-photo/client.ts"
     },
+    "./domain/artist-claim/client": {
+      "types": "./src/domain/artist-claim/client.ts",
+      "import": "./src/domain/artist-claim/client.ts",
+      "default": "./src/domain/artist-claim/client.ts"
+    },
     "./domain/raga/client": {
       "types": "./src/domain/raga/client.ts",
       "import": "./src/domain/raga/client.ts",
