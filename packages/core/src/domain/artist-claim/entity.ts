@@ -113,37 +113,27 @@ export const ArtistClaimEntity = new Entity(
           template: '${createdAt}',
         },
       },
-      // "What has this user claimed" (getUserClaims). NOT sparse, though it was designed
-      // to be: ElectroDB writes `artist_claim_user#` with an empty suffix for invite rows
-      // rather than omitting the index, so every invite shares one partition. Verified via
-      // .params(). getUserClaims guards against a blank argument; the structural fix is
-      // still owed — see STATE.md.
-      byUser: {
+      // One index answers both "what has this user claimed" (getUserClaims) and "which
+      // artists is this email pre-authorized for" (getClaimsByEmail, §4.3.1, the
+      // login-time check) — `kind` separates them, so the two never collide.
+      //
+      // It keys off `subject` rather than `userId`/`email` because subject is required and
+      // therefore always present. A pair of indexes on the optional fields was the obvious
+      // shape and is a trap: ElectroDB does not omit an index whose composite is missing,
+      // it writes the template with an empty suffix, so every invite would have shared one
+      // `artist_claim_user#` partition and every claim one `artist_claim_email#`. That is a
+      // hot key, and on the byEmail side it is an authorization lookup returning every
+      // pre-authorized artist to a blank argument. Keying on an always-present attribute
+      // removes the empty partition instead of guarding it, and costs one GSI slot less.
+      byActor: {
         index: 'gsi2',
         pk: {
           field: 'gsi2pk',
-          composite: ['userId'],
-          template: 'ARTIST_CLAIM_USER#${userId}',
+          composite: ['kind', 'subject'],
+          template: 'ARTIST_CLAIM_ACTOR#${kind}#${subject}',
         },
         sk: {
           field: 'gsi2sk',
-          composite: ['createdAt'],
-          template: '${createdAt}',
-        },
-      },
-      // "Which artists is this email pre-authorized for" (getClaimsByEmail, §4.3.1),
-      // answered at login without a scan. Also NOT sparse — see byUser above; claim rows
-      // land under an empty `artist_claim_email#`. This is the authorization lookup, so
-      // the empty-argument guard in getClaimsByEmail matters most here.
-      byEmail: {
-        index: 'gsi3',
-        pk: {
-          field: 'gsi3pk',
-          composite: ['email'],
-          template: 'ARTIST_CLAIM_EMAIL#${email}',
-        },
-        sk: {
-          field: 'gsi3sk',
           composite: ['createdAt'],
           template: '${createdAt}',
         },

@@ -109,34 +109,31 @@ export async function getPendingClaims(params?: {
   };
 }
 
-/** Every claim a user has made, across every artist, via the byUser GSI. */
+/** Every claim a user has made, across every artist, via the byActor GSI. */
 export async function getUserClaims(userId: string): Promise<ArtistClaim[]> {
-  // See the WARNING on getClaimsByEmail: byUser is not sparse either, so every invite row
-  // sits under the empty key and a blank userId would return all of them.
   if (!userId.trim()) throw new Error('getUserClaims requires a userId');
-  const result = await ArtistClaimEntity.query.byUser({ userId }).go({ pages: 'all' });
+  const result = await ArtistClaimEntity.query
+    .byActor({ kind: 'claim', subject: userId })
+    .go({ pages: 'all' });
   return (result.data as ArtistClaim[]) || [];
 }
 
 /**
- * "Which artists is this email pre-authorized for" (§4.3.1) — the login-time check.
- * Normalizes before the lookup so a mixed-case or padded address still matches.
+ * "Which artists is this email pre-authorized for" (§4.3.1) — the login-time authorization
+ * check. Normalizes first so a mixed-case or padded address still matches what was stored,
+ * and only ever returns invite rows, because `kind` is part of the partition key.
  *
- * WARNING — the sparseness these two GSIs were designed around does not hold. ElectroDB
- * does not omit an index whose composite attribute is missing; it writes the template with
- * an empty value. Verified against the real entity via `.params()`: an invite row (no
- * userId) still writes `gsi2pk = 'artist_claim_user#'`, and a claim row (no email) still
- * writes `gsi3pk = 'artist_claim_email#'`. So every invite shares one byUser partition and
- * every claim shares one byEmail partition.
- *
- * That makes a blank argument here an authorization hole rather than an empty result: it
- * would return every pre-authorized artist on the site. The guard below is the stopgap; the
- * structural fix is still owed — see STATE.md.
+ * The empty-argument guard is deliberate belt and braces. `subject` is required so the
+ * partition can never be the bare prefix today, but this is the lookup that decides who
+ * gets handed an artist profile, and a query that silently matches everything is the worst
+ * failure it could have.
  */
 export async function getClaimsByEmail(email: string): Promise<ArtistClaim[]> {
   const normalized = normalizeArtistClaimEmail(email);
   if (!normalized) throw new Error('getClaimsByEmail requires an email');
-  const result = await ArtistClaimEntity.query.byEmail({ email: normalized }).go({ pages: 'all' });
+  const result = await ArtistClaimEntity.query
+    .byActor({ kind: 'invite', subject: normalized })
+    .go({ pages: 'all' });
   return (result.data as ArtistClaim[]) || [];
 }
 

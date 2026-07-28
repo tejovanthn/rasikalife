@@ -299,6 +299,7 @@ export async function cascadeArtistMerge(
   const { ArtistEntity } = await import('./artist/entity');
   const { ArtistMembershipEntity } = await import('./artist-membership/entity');
   const { ArtistPhotoEntity } = await import('./artist-photo/entity');
+  const { ArtistClaimEntity } = await import('./artist-claim/entity');
   const now = new Date().toISOString();
 
   // Migrate EventArtist records from loser to canonical
@@ -460,6 +461,85 @@ export async function cascadeArtistMerge(
       })
     );
   } while (photoCursor);
+
+  // Migrate ArtistClaim rows (§4.3, §11.3). Both row kinds ride the same partition, so one
+  // pass moves claims and moderator invites alike. A row is dropped rather than moved when
+  // the canonical artist already has one for the same actor — §4.3's "dropped if a duplicate
+  // claim by the same user already exists there", which the `kind`+`subject` key makes true
+  // of invites by email as well, since that pair is exactly what identifies an actor.
+  //
+  // Dropping is right rather than merging: the surviving row carries the moderator's own
+  // decision and its moderatorNote audit trail, and overwriting that with the loser's status
+  // could quietly downgrade a verified claim to pending, or resurrect a rejected one.
+  let claimCursor: string | null = null;
+  do {
+    const claimResult = (await ArtistClaimEntity.query
+      .primary({ artistId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: claimCursor })) as Page;
+    const claimItems =
+      (claimResult.data as Array<{
+        kind: 'claim' | 'invite';
+        subject: string;
+        artistName: string;
+        userId?: string;
+        userName?: string;
+        userEmail?: string;
+        email?: string;
+        status: string;
+        note?: string;
+        moderatorId?: string;
+        moderatorNote?: string;
+        createdAt: string;
+        processedAt?: string;
+      }>) || [];
+    claimCursor = claimResult.cursor;
+
+    const existingClaimResult = claimItems.length
+      ? await ArtistClaimEntity.get(
+          claimItems.map(item => ({
+            artistId: canonicalId,
+            kind: item.kind,
+            subject: item.subject,
+          }))
+        ).go()
+      : null;
+    // Keyed by the actor pair, so an unprocessed BatchGet key can't be read as "no duplicate"
+    // and overwrite a canonical row — the guard the other blocks here share.
+    const existingClaimSet = existingClaimResult
+      ? existingKeySet(
+          existingClaimResult,
+          (r: { kind: string; subject: string }) => `${r.kind}#${r.subject}`
+        )
+      : new Set<string>();
+
+    await Promise.all(
+      claimItems.map(async item => {
+        if (!existingClaimSet.has(`${item.kind}#${item.subject}`)) {
+          await ArtistClaimEntity.upsert({
+            artistId: canonicalId,
+            artistName: canonicalName,
+            kind: item.kind,
+            subject: item.subject,
+            userId: item.userId,
+            userName: item.userName,
+            userEmail: item.userEmail,
+            email: item.email,
+            status: item.status,
+            note: item.note,
+            moderatorId: item.moderatorId,
+            moderatorNote: item.moderatorNote,
+            createdAt: item.createdAt,
+            processedAt: item.processedAt,
+          } as never).go();
+        }
+        await ArtistClaimEntity.delete({
+          artistId: loserId,
+          kind: item.kind,
+          subject: item.subject,
+        }).go();
+      })
+    );
+  } while (claimCursor);
 
   // Migrate ArtistMembership records where the loser is the group
   let amGroupCursor: string | null = null;

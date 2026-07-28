@@ -144,6 +144,19 @@ vi.mock('./artist-photo/entity', async importOriginal => {
   };
 });
 
+vi.mock('./artist-claim/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./artist-claim/entity')>();
+  return {
+    ArtistClaimEntity: {
+      conversions: actual.ArtistClaimEntity.conversions,
+      query: { primary: vi.fn() },
+      get: vi.fn(),
+      upsert: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
+});
+
 vi.mock('./concert-log-item/entity', async importOriginal => {
   const actual = await importOriginal<typeof import('./concert-log-item/entity')>();
   return {
@@ -188,6 +201,7 @@ vi.mock('./concert-log/entity', () => ({
 
 import { dynamoClient } from '../db/client';
 import { ArtistAwardEntity } from './artist-award/entity';
+import { ArtistClaimEntity } from './artist-claim/entity';
 import { ArtistMembershipEntity } from './artist-membership/entity';
 import { ArtistPhotoEntity } from './artist-photo/entity';
 import { ArtistEntity } from './artist/entity';
@@ -243,6 +257,12 @@ describe('cascade', () => {
     ArtistPhotoEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistPhotoEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistMembershipEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistClaimEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    ArtistClaimEntity.get = vi
+      .fn()
+      .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
+    ArtistClaimEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistClaimEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -798,6 +818,127 @@ describe('cascade', () => {
       const upsertOrder = vi.mocked(ArtistPhotoEntity.upsert).mock.invocationCallOrder[0];
       const deleteOrder = vi.mocked(ArtistPhotoEntity.delete).mock.invocationCallOrder[0];
       expect(upsertOrder).toBeLessThan(deleteOrder);
+    });
+
+    // §11.3 wants a test per reference type, because merge has silently corrupted data twice.
+    it('moves both claim and invite rows to the canonical artist', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistClaimEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              kind: 'claim',
+              subject: 'user1',
+              artistName: 'Loser Name',
+              userId: 'user1',
+              userName: 'A Claimant',
+              status: 'verified',
+              moderatorNote: 'Replied from the address on her site',
+              createdAt: '2026-01-01T00:00:00.000Z',
+            },
+            {
+              kind: 'invite',
+              subject: 'a@b.com',
+              artistName: 'Loser Name',
+              email: 'a@b.com',
+              status: 'invited',
+              createdAt: '2026-01-02T00:00:00.000Z',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+      ArtistClaimEntity.get = vi.fn().mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [] }),
+      });
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      // The status and its audit trail must survive the move — a verified claim silently
+      // arriving as pending would make the artist re-prove themselves.
+      expect(ArtistClaimEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          artistId: 'canonical',
+          artistName: 'Canonical Name',
+          kind: 'claim',
+          subject: 'user1',
+          status: 'verified',
+          moderatorNote: 'Replied from the address on her site',
+        })
+      );
+      expect(ArtistClaimEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'invite', subject: 'a@b.com', status: 'invited' })
+      );
+      expect(ArtistClaimEntity.delete).toHaveBeenCalledWith({
+        artistId: 'loser',
+        kind: 'claim',
+        subject: 'user1',
+      });
+    });
+
+    it('drops a row the canonical artist already has for the same actor', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistClaimEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              kind: 'claim',
+              subject: 'user1',
+              artistName: 'Loser Name',
+              userId: 'user1',
+              status: 'pending',
+              createdAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+      ArtistClaimEntity.get = vi.fn().mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [{ kind: 'claim', subject: 'user1' }] }),
+      });
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      // Overwriting would replace the canonical row's own decision — potentially demoting a
+      // verified claim back to this loser row's pending.
+      expect(ArtistClaimEntity.upsert).not.toHaveBeenCalled();
+      // Still removed from the loser, or the merge leaves the row stranded.
+      expect(ArtistClaimEntity.delete).toHaveBeenCalledWith({
+        artistId: 'loser',
+        kind: 'claim',
+        subject: 'user1',
+      });
+    });
+
+    it('refuses to guess when the duplicate check returns unprocessed keys', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistClaimEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              kind: 'claim',
+              subject: 'user1',
+              artistName: 'Loser Name',
+              userId: 'user1',
+              status: 'pending',
+              createdAt: '2026-01-01T00:00:00.000Z',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+      ArtistClaimEntity.get = vi.fn().mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: [], unprocessed: [{ kind: 'claim' }] }),
+      });
+
+      // An unprocessed key read as "no duplicate" would overwrite a canonical claim.
+      await expect(
+        cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name')
+      ).rejects.toThrow(/unprocessed keys/);
+      expect(ArtistClaimEntity.upsert).not.toHaveBeenCalled();
     });
   });
 

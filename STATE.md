@@ -6,35 +6,36 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step: decide the `ArtistClaim` index shape (below), then finish phase 8 slice 1 — it needs tests and the `cascadeArtistMerge` fixup, neither of which exists.**
+**Next step: phase 8 slice 2 — the tRPC router (`packages/trpc/src/routers/artist-claim.ts`) and `canManageArtist`.** The core domain underneath it is done; nothing in phase 8 has had a DHH review yet, so run one over slices 1+2 together when the budget allows.
 
 Phase 7 is complete and DHH-reviewed (2026-07-27) with every must-fix and should-fix acted on — see "From the phase-7 review" below.
 
-### Phase 8, slice 1: partial and unreviewed (2026-07-28)
+### Phase 8, slice 1: the `ArtistClaim` core domain — done, unreviewed (2026-07-28)
 
-The building agent hit the monthly spend limit part-way, so this slice is **not done and has had no DHH review**. It is committed anyway rather than left dangling, and it is **inert** — `artist-claim` is exported from neither `packages/core/src/index.ts` nor the `exports` map in `package.json`, so nothing can import it and no running code path touches it.
+Built across two commits: an agent wrote the four modules and then hit the monthly spend limit, leaving no tests and no merge fixup (`bbe0f70ad`, committed as wip); both were finished afterwards along with the index redesign below.
 
-Landed: `packages/core/src/domain/artist-claim/{schema,entity,client,index}.ts`, and `'invited'` added to `ARTIST_CLAIM_STATUSES`.
+Landed: `packages/core/src/domain/artist-claim/{schema,entity,client,index,index.test}.ts`, `'invited'` added to `ARTIST_CLAIM_STATUSES`, and the `cascadeArtistMerge` claim fixup with three tests. Two row kinds share the `ARTIST#${artistId}` partition behind a `kind` discriminator — `CLAIM#${userId}` and `INVITE#${normalizedEmail}` — so `getArtistClaims` stays one query.
 
-**Still owed before this slice is done:**
-1. **`index.test.ts` — there are no tests at all.** §11.3 requires a merge test per reference type.
-2. **The `cascadeArtistMerge` claim fixup was never written.** Claims on a merge loser are still stranded, which is precisely the class of silent corruption §11.3 exists to prevent.
-3. The design decision below.
+**Still inert:** `artist-claim` is exported from neither `packages/core/src/index.ts` nor the `exports` map in `package.json`. Slice 2 wires it up.
 
-**The decision owed: these GSIs are not sparse, and the code was written assuming they are.** ElectroDB does not omit an index whose composite attribute is missing — it writes the template with an empty suffix. Verified against the real entity with `.params()`, not inferred:
+**The index trap it was built on, and the fix.** The obvious shape is a `byUser` index on `userId` and a `byEmail` index on `email`, each expected to be sparse because the other kind leaves its field unset. **ElectroDB does not omit an index whose composite is missing — it writes the template with an empty suffix.** Checked against the real entity with `.params()`:
 
 ```
 invite row (no userId) → gsi2pk = "artist_claim_user#"
 claim  row (no email)  → gsi3pk = "artist_claim_email#"
 ```
 
-So every invite shares one `byUser` partition and every claim shares one `byEmail` partition. `getClaimsByEmail` is the **login-time authorization lookup**, so a blank argument would have returned every pre-authorized artist on the site rather than nothing. Both functions now guard against an empty argument, and the misleading "Sparse:" comments in `entity.ts` are corrected — but the guard is a stopgap, not the fix.
+That is a hot partition on both sides, and on the byEmail side it is worse than untidy: `getClaimsByEmail` is the **login-time authorization lookup**, so a blank argument would have matched every pre-authorized artist on the site instead of none.
 
-The structural options, cheapest first: (a) keep one entity and accept two hot partitions plus the guards, which works but leaves a footgun for the next caller; (b) set the unused composite to a per-row unique value so the partitions spread, which fixes the hot key but not the semantics; (c) **split into two entities** — invites keyed by email, claims keyed by userId, each carrying only the index it needs — and use an ElectroDB Collection to keep `getArtistClaims` a single query across the shared partition. (c) is the clean one and is what the single-entity design was avoiding before the sparseness assumption turned out to be false. Decide before wiring any of this to a router.
+Replaced by a single `byActor` index keyed on `['kind', 'subject']` — `ARTIST_CLAIM_ACTOR#${kind}#${subject}`. `subject` is required and always present (the userId or the normalized email), so there is no empty partition to fall into, `kind` keeps the two lookups from ever returning each other, and it costs one GSI slot less: **gsi3 is free again**. Re-verified with `.params()` that no key ends in a bare `#`. The empty-argument guards stay as belt and braces on the authorization path.
 
-Also unstarted in phase 8: the tRPC router, `canManageArtist`, the claim UI, and the moderator queue. Nothing collects artist emails yet, so enrichment done before phase 8 needs a second pass to add them.
+**Worth carrying forward:** that trap is not specific to this entity. Any future ElectroDB index over an optional attribute has the same shape, and the failure is silent — the index simply fills up with one giant partition nobody queries until someone passes a blank value.
 
-The one phase-8 piece that **is** done and committed: `05c7bb941` makes a verified Google email a precondition of signing in, so the email is safe to use as an authorization key. Note it can refuse a login that previously succeeded; unexercised against a deploy.
+Also settled in slice 1: `moderatorNote` is required to approve as well as reject (§8 calls it the audit trail, and a TS `string` still admits `''`); rejecting one of several claimants recomputes the badge as verified-beats-pending-beats-unclaimed rather than dropping straight to unclaimed; and a merge drops rather than overwrites a row the canonical artist already has for the same actor, so a verified claim can't be silently demoted by the loser's copy.
+
+**Still unstarted in phase 8:** the tRPC router, `canManageArtist`, the claim UI, and the moderator queue. Nothing collects artist emails yet, so enrichment done before phase 8 ships needs a second pass to add them.
+
+The other phase-8 piece already done: `05c7bb941` makes a verified Google email a precondition of signing in, so the email is safe to use as an authorization key. Note it can refuse a login that previously succeeded; unexercised against a deploy.
 
 Phase 7 also adds two things to the pre-deploy list: (1) the OG cache key changed shape, so **every existing `og-images/**` object is orphaned** — harmless, but the prefix can be emptied to reclaim the space. (2) The **degraded-card rule is unverified against a real deploy**: a card that should carry a photo but couldn't fetch one is served and deliberately *not* cached, so watch that a genuinely photo-less artist doesn't cause a render on every request (it shouldn't — no `photoUrl` means not degraded).
 
@@ -247,7 +248,7 @@ Raised, judged real, not yet done:
 
 Current at end of phase 7. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **710 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 as each review added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/core`: **728 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
 - `packages/web`: **32 web-own typecheck errors**; **89 tests pass** (65 → 89 across phase 7). The 32 was written as "≤30" through phase 6 and was stale — the phase-7 review measured the identical count at `e49f666db`, so it is a pre-existing figure, not drift. None of the 32 are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
 - `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
