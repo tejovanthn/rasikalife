@@ -199,9 +199,9 @@ Still open — one focused follow-up, its own review:
 
 (The recognition and prefill DHH reviews have both been run; findings applied. These are the leftover UI-polish items only.)
 
-- **Per-performance featureRank input was dropped** for reliability — featuring gives an unranked highlight, which `getFeaturedEventsByArtist` orders most-recent-first. The setter and schema support a rank; the UI just doesn't expose it yet. Add a rank input when polishing.
+- **Per-performance featureRank input was dropped** for reliability — featuring gives an unranked highlight, ordered most-recent-first off the denormalized `featuredPerformances` (the `getFeaturedEventsByArtist` this used to name was deleted as dead in phase 6). The setter and schema still support a rank; the UI doesn't expose it. Add a rank input in phase 9.
 - **Awards use a plain name input, not a picker.** `award.resolveOrCreate` now matches case-insensitively, so it is safe find-or-create; a typeahead would only aid discovery. (Note: the `award.searchLive` endpoint and `/api/search/award-live` route were deleted in the whole-phase review as dead code — a future picker would re-add them.)
-- **Gallery reorder is a future item** — photos store an `order` and `updatePhoto` accepts it, but the UI has no reorder control yet (add/delete only). New photos append via `order = current count`.
+- ~~Gallery reorder is a future item~~ — closed in phase 7: move-up/move-down buttons (not drag, see §5.4e's note), renumbering by position in one request, and new photos append past the highest `order` rather than by count.
 
 ### Deferred from the phase 5 relationships review
 
