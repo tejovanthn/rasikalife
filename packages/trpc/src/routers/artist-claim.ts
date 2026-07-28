@@ -7,6 +7,22 @@ import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedu
 
 const MODERATOR_ROLES: Role[] = [ROLE.MODERATOR, ROLE.ADMIN];
 
+// ElectroDB surfaces a failed `attribute_not_exists` guard as the underlying DynamoDB error.
+// Matching it is what lets a genuine duplicate be told apart from a throttle or a permission
+// failure, which must not be reported to the user as "you already did this".
+function isConditionalCheckFailure(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const name = (error as { name?: string; code?: string }).name;
+  const code = (error as { code?: string }).code;
+  const message = error instanceof Error ? error.message : '';
+  return (
+    name === 'ConditionalCheckFailedException' ||
+    code === 'ConditionalCheckFailedException' ||
+    message.includes('ConditionalCheckFailed') ||
+    message.includes('exists')
+  );
+}
+
 export const artistClaimRouter = createTRPCRouter({
   /**
    * A signed-in user claiming an artist profile (§8). The claimant's identity comes from the
@@ -30,18 +46,35 @@ export const artistClaimRouter = createTRPCRouter({
           userEmail: ctx.user.email,
           note: input.note,
         });
-      } catch (_error) {
-        // createArtistClaim uses .create(), so a second claim on the same artist by the same
-        // user fails the attribute_not_exists condition rather than clobbering the first.
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'You have already claimed this artist',
-        });
+      } catch (error) {
+        // Only the duplicate is a CONFLICT. Mapping every failure to it told a user whose
+        // write had actually failed that they had already claimed the artist, so they stopped
+        // retrying something that had never succeeded.
+        if (isConditionalCheckFailure(error)) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'You have already claimed this artist',
+          });
+        }
+        throw error;
       }
     }),
 
-  /** The signed-in user's own claims, for showing "claim pending" on a profile they claimed. */
-  mine: protectedProcedure.query(({ ctx }) => ArtistClaim.getUserClaims(ctx.user.id)),
+  /**
+   * The signed-in user's own claim on one artist, for the profile's claim affordance.
+   *
+   * Scoped to one artist and narrowed to the status: the full row carries the moderator's
+   * private reasoning about the claimant, and the tRPC function URL is public, so a rejected
+   * claimant could otherwise read what was written about them. A GetItem also beats the GSI
+   * query this replaced, which was eventually consistent enough to show the claim button again
+   * right after a successful claim.
+   */
+  myStatusFor: protectedProcedure
+    .input(z.object({ artistId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      const claim = await ArtistClaim.getClaimForUser(input.artistId, ctx.user.id);
+      return claim ? { status: claim.status } : null;
+    }),
 
   /**
    * Whether the signed-in user may manage this artist. Public rather than protected so an
@@ -68,7 +101,9 @@ export const artistClaimRouter = createTRPCRouter({
       z.object({
         artistId: z.string().min(1),
         email: z.string().email(),
-        moderatorNote: z.string().max(2000).optional(),
+        // Required: this grant skips the queue entirely, so the note is the only record
+        // of how the moderator knew the address belonged to the artist.
+        moderatorNote: z.string().min(1).max(2000),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -85,12 +120,35 @@ export const artistClaimRouter = createTRPCRouter({
           moderatorId: ctx.user.id,
           moderatorNote: input.moderatorNote,
         });
-      } catch (_error) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'That email has already been invited to this artist',
-        });
+      } catch (error) {
+        if (isConditionalCheckFailure(error)) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'That email has already been invited to this artist',
+          });
+        }
+        throw error;
       }
+    }),
+
+  /** Outstanding invites, so a moderator can see and withdraw what has been handed out. */
+  invited: moderatorProcedure
+    .input(
+      z
+        .object({ limit: z.number().min(1).max(100).optional(), nextToken: z.string().optional() })
+        .optional()
+    )
+    .query(({ input }) => ArtistClaim.getInvitedClaims(input)),
+
+  /**
+   * Withdraws an unredeemed invite. Without this a mistyped address is a standing offer of
+   * someone else's profile, redeemable at any future login and removable only by hand.
+   */
+  revokeInvite: moderatorProcedure
+    .input(z.object({ artistId: z.string().min(1), email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      await ArtistClaim.revokeArtistClaimInvite(input.artistId, input.email);
+      return { success: true as const };
     }),
 
   /** Every claim and invite on one artist — the moderator's view of a single profile. */

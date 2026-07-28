@@ -84,6 +84,14 @@ export const ArtistClaimEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // When the invite this claim was redeemed from was written. Its own createdAt is the
+      // moment of redemption, which is not the same question — "when did a moderator decide
+      // to trust this address" is the audit trail, and it would otherwise be destroyed with
+      // the invite row.
+      invitedAt: {
+        type: 'string',
+        required: false,
+      },
     },
     indexes: {
       primary: {

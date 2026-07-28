@@ -19,11 +19,13 @@ export const compositionRouter = createTRPCRouter({
     )
     .query(({ input }) => Composition.listCompositions(input)),
 
-  create: protectedProcedure.input(Composition.CreateCompositionSchema).mutation(async ({ input }) => {
-    const result = await Composition.createComposition(input);
-    triggerReindex();
-    return result;
-  }),
+  create: protectedProcedure
+    .input(Composition.CreateCompositionSchema)
+    .mutation(async ({ input }) => {
+      const result = await Composition.createComposition(input);
+      triggerReindex();
+      return result;
+    }),
 
   update: protectedProcedure
     .input(z.object({ id: z.string().min(1), data: Composition.UpdateCompositionSchema }))
@@ -33,11 +35,13 @@ export const compositionRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
-    const result = await Composition.deleteComposition(input.id);
-    triggerReindex();
-    return result;
-  }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const result = await Composition.deleteComposition(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   byComposer: publicProcedure
     .input(

@@ -22,20 +22,39 @@ export const action: ActionFunction = async ({ request }) => {
   const artistId = ((formData.get('artistId') as string) || '').trim();
   const email = ((formData.get('email') as string) || '').trim();
 
-  if (intent !== 'invite') {
-    return data({ error: 'Invalid intent' }, { status: 400 });
-  }
   if (!artistId || !email) {
     return data({ error: 'Missing artist or email' }, { status: 400 });
   }
 
-  try {
-    const serverClient = await createServerClient(request);
-    await serverClient.artistClaim.invite.mutate({ artistId, email });
-    return data({ success: true, email });
-  } catch (error) {
-    console.error('Failed to invite claimant:', error);
-    const message = error instanceof Error ? error.message : 'Could not send that invite';
-    return data({ error: message }, { status: 400 });
+  const serverClient = await createServerClient(request);
+
+  if (intent === 'invite') {
+    const moderatorNote = ((formData.get('moderatorNote') as string) || '').trim();
+    // Required because this grant reaches 'verified' with no review — the note is the only
+    // record of how the address was known to belong to the artist.
+    if (!moderatorNote) {
+      return data({ error: 'Say how you know this address is theirs' }, { status: 400 });
+    }
+    try {
+      await serverClient.artistClaim.invite.mutate({ artistId, email, moderatorNote });
+      return data({ success: true, intent, email });
+    } catch (error) {
+      console.error('Failed to invite claimant:', error);
+      const message = error instanceof Error ? error.message : 'Could not send that invite';
+      return data({ error: message }, { status: 400 });
+    }
   }
+
+  if (intent === 'revoke') {
+    try {
+      await serverClient.artistClaim.revokeInvite.mutate({ artistId, email });
+      return data({ success: true, intent, email });
+    } catch (error) {
+      console.error('Failed to revoke invite:', error);
+      const message = error instanceof Error ? error.message : 'Could not withdraw that invite';
+      return data({ error: message }, { status: 400 });
+    }
+  }
+
+  return data({ error: 'Invalid intent' }, { status: 400 });
 };

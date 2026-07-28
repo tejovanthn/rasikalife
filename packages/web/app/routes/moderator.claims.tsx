@@ -1,6 +1,6 @@
 import type { ArtistClaim } from '@rasika/core/domain/artist-claim/client';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
-import { Form, Link, data, useLoaderData, useNavigation } from 'react-router';
+import { Form, Link, data, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -64,12 +64,22 @@ export default function ClaimsModeration() {
     nextToken?: string;
     hasMore: boolean;
   }>();
+  const actionData = useActionData<{ error?: string }>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
 
   return (
     <main className="container mx-auto max-w-3xl px-4 py-8">
       <h1 className="mb-2 text-2xl font-bold">Artist claims</h1>
+
+      {/* Without this a failed approve looked exactly like a success: the page revalidated,
+          the claim was still listed, and nothing said why. Silent failure is the wrong
+          default on a write that grants a capability. */}
+      {actionData?.error && (
+        <p className="mb-4 rounded-md border border-destructive/50 p-3 text-sm text-destructive">
+          {actionData.error}
+        </p>
+      )}
       <p className="mb-6 text-sm text-muted-foreground">
         People asking to manage an artist profile. Establish who they are off the record — a reply
         from an official address, a DM from a known handle — then record what convinced you.

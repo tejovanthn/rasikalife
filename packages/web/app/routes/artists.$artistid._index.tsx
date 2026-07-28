@@ -2,7 +2,6 @@ import type { Artist } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { Award, BadgeCheck, Calendar, ExternalLink, MapPin, Users } from 'lucide-react';
-import { useState } from 'react';
 import {
   type ActionFunctionArgs,
   type HeadersFunction,
@@ -78,7 +77,7 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, events, awards, membership, gallery, activeEdit, myClaims] =
+    const [compositions, events, awards, membership, gallery, activeEdit, myClaim] =
       await Promise.all([
         client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
         client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
@@ -96,10 +95,10 @@ export async function loader({
         // anonymous document must stay identical for everyone or the CDN would hand one
         // viewer's claim state to the next. The public verified badge comes from the artist
         // row's denormalized claimStatus instead, which costs nothing and varies by nobody.
-        user ? client.artistClaim.mine.query() : Promise.resolve([]),
+        user
+          ? client.artistClaim.myStatusFor.query({ artistId: artist.id })
+          : Promise.resolve(null),
       ]);
-
-    const myClaim = (myClaims ?? []).find(c => c.artistId === artist.id);
 
     // Repertoire and featured performances are read straight off the denormalized fields
     // on the artist record — no per-view setlist fan-out, no filtered partition scan.
@@ -244,9 +243,30 @@ export const meta: MetaFunction = ({ data }) => {
 // The three states a signed-in viewer can be in for this artist. An invited artist never sees
 // any of it: their invite is redeemed into a verified claim at login, so they arrive already
 // managing the profile (§4.3.1).
-function ClaimProfile({ artistName, status }: { artistName: string; status?: string }) {
+function ClaimProfile({
+  artistName,
+  status,
+  isLoggedIn,
+}: { artistName: string; status?: string; isLoggedIn: boolean }) {
   const fetcher = useFetcher<{ success?: true; error?: string }>();
-  const [open, setOpen] = useState(false);
+
+  // Logged-out visitors are nearly the whole audience, and an artist arriving at their own
+  // page is exactly the person §8 is addressing — hiding the entry point behind a session
+  // hides it from them. This branch is viewer-invariant, so the anonymous document stays
+  // identical for everyone and edge-cacheable; only the stateful variants below need a user.
+  if (!isLoggedIn) {
+    return (
+      <section className="mt-8 rounded-md border p-4">
+        <p className="text-sm text-muted-foreground">
+          Are you {artistName}?{' '}
+          <Link to="/auth/login" className="text-primary hover:underline">
+            Sign in to claim this profile
+          </Link>
+          .
+        </p>
+      </section>
+    );
+  }
 
   if (status === 'verified') {
     return (
@@ -270,35 +290,26 @@ function ClaimProfile({ artistName, status }: { artistName: string; status?: str
   // rejects a duplicate anyway, and re-asking is a conversation for a human, not a button.
   if (status === 'rejected') return null;
 
+  // <details> rather than a useState toggle: the disclosure then works before hydration, like
+  // the rest of this server-rendered page, and there is no state to keep.
   return (
     <section className="mt-8 rounded-md border p-4">
-      {open ? (
-        <fetcher.Form method="post" className="space-y-2">
-          <p className="text-sm font-medium">Claim {artistName}</p>
+      <details>
+        <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+          Are you {artistName}? Claim this profile
+        </summary>
+        <fetcher.Form method="post" className="mt-3 space-y-2">
           <p className="text-xs text-muted-foreground">
             Tell us how we can confirm it&rsquo;s you — an official email address, a social account
             you post from, anything a moderator can check.
           </p>
           <Input name="note" placeholder="How can we verify you?" />
-          <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={fetcher.state !== 'idle'}>
-              Send claim
-            </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-          </div>
+          <Button type="submit" size="sm" disabled={fetcher.state !== 'idle'}>
+            Send claim
+          </Button>
           {fetcher.data?.error && <p className="text-xs text-destructive">{fetcher.data.error}</p>}
         </fetcher.Form>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-        >
-          Are you {artistName}? Claim this profile
-        </button>
-      )}
+      </details>
     </section>
   );
 }
@@ -737,7 +748,7 @@ export default function ArtistDetails() {
       {/* Claim (§8) — signed-in viewers only, so the anonymous document stays identical for
           everyone and safe to cache at the edge. Deliberately understated and placed low:
           it speaks to one person in a thousand visitors. */}
-      {isLoggedIn && <ClaimProfile artistName={artist.name} status={myClaimStatus} />}
+      <ClaimProfile artistName={artist.name} status={myClaimStatus} isLoggedIn={isLoggedIn} />
 
       {/* Explore more */}
       <section className="mt-8 border-t pt-8">

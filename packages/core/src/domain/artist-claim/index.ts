@@ -1,7 +1,11 @@
 import type { z } from 'zod';
 import { ArtistClaimEntity } from './entity';
 import type { ArtistClaim } from './entity';
-import type { CreateArtistClaimInviteSchema, CreateArtistClaimSchema } from './schema';
+import type {
+  ArtistClaimStatus,
+  CreateArtistClaimInviteSchema,
+  CreateArtistClaimSchema,
+} from './schema';
 import { normalizeArtistClaimEmail } from './schema';
 
 export type CreateArtistClaimInput = z.infer<typeof CreateArtistClaimSchema>;
@@ -47,7 +51,7 @@ export async function createArtistClaim(input: CreateArtistClaimInput): Promise<
   const { ArtistEntity } = await import('../artist/entity');
   const artist = await ArtistEntity.get({ id: input.artistId }).go();
   if (artist.data && (!artist.data.claimStatus || artist.data.claimStatus === 'unclaimed')) {
-    await ArtistEntity.update({ id: input.artistId }).set({ claimStatus: 'pending' }).go();
+    await ArtistEntity.patch({ id: input.artistId }).set({ claimStatus: 'pending' }).go();
   }
 
   return result.data as ArtistClaim;
@@ -67,6 +71,10 @@ export async function createArtistClaim(input: CreateArtistClaimInput): Promise<
 export async function createArtistClaimInvite(
   input: CreateArtistClaimInviteInput
 ): Promise<ArtistClaim> {
+  // Required here, not optional. This is the one path that reaches 'verified' with no review
+  // at all, so it is the path that most needs to record why the address was trusted — leaving
+  // it optional guarded the reviewed grant twice and the unreviewed grant not at all.
+  assertModeratorNote(input.moderatorNote ?? '');
   const email = normalizeArtistClaimEmail(input.email);
   const result = await ArtistClaimEntity.create({
     artistId: input.artistId,
@@ -80,6 +88,49 @@ export async function createArtistClaimInvite(
   }).go();
 
   return result.data as ArtistClaim;
+}
+
+/**
+ * One user's claim on one artist, as a GetItem. The profile only ever asks about the artist
+ * being viewed, and a strongly-keyed read avoids the GSI's eventual consistency showing a
+ * claim button again immediately after a successful claim.
+ */
+export async function getClaimForUser(
+  artistId: string,
+  userId: string
+): Promise<ArtistClaim | null> {
+  if (!artistId.trim() || !userId.trim()) return null;
+  const result = await ArtistClaimEntity.get({ artistId, kind: 'claim', subject: userId }).go();
+  return (result.data as ArtistClaim | null) ?? null;
+}
+
+/** Outstanding invites, so a moderator can see and undo what they have handed out. */
+export async function getInvitedClaims(params?: {
+  limit?: number;
+  nextToken?: string;
+}): Promise<{ items: ArtistClaim[]; nextToken?: string; hasMore: boolean }> {
+  const result = await ArtistClaimEntity.query
+    .byStatus({ status: 'invited' })
+    .go({ order: 'asc', limit: params?.limit || 20, cursor: params?.nextToken });
+
+  return {
+    items: result.data || [],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
+/**
+ * Withdraws an unredeemed invite. A mistyped address is otherwise a standing offer of
+ * someone else's profile to whoever owns the typo, redeemable at any future login.
+ *
+ * Only reaches invite rows — once redeemed the row is a verified claim, and undoing that is
+ * `rejectClaim`, which also recomputes the public badge.
+ */
+export async function revokeArtistClaimInvite(artistId: string, email: string): Promise<void> {
+  const normalized = normalizeArtistClaimEmail(email);
+  if (!normalized) throw new Error('revokeArtistClaimInvite requires an email');
+  await ArtistClaimEntity.delete({ artistId, kind: 'invite', subject: normalized }).go();
 }
 
 /**
@@ -157,10 +208,7 @@ export async function approveClaim(
     .set({ status: 'verified', moderatorId, moderatorNote, processedAt: now })
     .go({ response: 'all_new' });
 
-  const { ArtistEntity } = await import('../artist/entity');
-  await ArtistEntity.update({ id: artistId })
-    .set({ claimStatus: 'verified', verifiedAt: now })
-    .go();
+  await markArtistVerified(artistId, now);
 
   return result.data as ArtistClaim;
 }
@@ -186,11 +234,43 @@ export async function rejectClaim(
     .set({ status: 'rejected', moderatorId, moderatorNote, processedAt: now })
     .go({ response: 'all_new' });
 
-  const remaining = await getArtistClaims(artistId);
-  const otherClaims = remaining.filter(row => row.kind === 'claim' && row.userId !== userId);
-  const nextStatus = otherClaims.some(row => row.status === 'verified')
+  await recomputeArtistClaimStatus(artistId, { userId, status: 'rejected' });
+
+  return result.data as ArtistClaim;
+}
+
+/**
+ * Rewrites `artist.claimStatus`/`verifiedAt` from the claim rows that actually exist.
+ *
+ * Anything that moves claim rows around has to call this, or the badge and the rows disagree:
+ * a merge that carries a verified claim onto an artist whose own badge said 'unclaimed' would
+ * otherwise leave `canManageArtist` answering true on a profile showing nothing.
+ *
+ * Invites are ignored — a pre-authorization nobody has acted on must not hold the badge at
+ * anything. Precedence is verified, then pending, then unclaimed: rejecting one of several
+ * claimants must not demote the others.
+ */
+export async function recomputeArtistClaimStatus(
+  artistId: string,
+  // The row a caller has just written. A Query is eventually consistent, so re-reading right
+  // after a patch can still return the old status — which would recompute the badge from the
+  // very value the caller just changed. Callers pass what they know instead.
+  justWritten?: { userId: string; status: ArtistClaimStatus }
+): Promise<void> {
+  const rows = await getArtistClaims(artistId);
+  const claims = rows
+    .filter(row => row.kind === 'claim')
+    .map(row =>
+      justWritten && row.userId === justWritten.userId
+        ? { ...row, status: justWritten.status }
+        : row
+    );
+  if (justWritten && !claims.some(row => row.userId === justWritten.userId)) {
+    claims.push({ userId: justWritten.userId, status: justWritten.status } as ArtistClaim);
+  }
+  const nextStatus = claims.some(row => row.status === 'verified')
     ? 'verified'
-    : otherClaims.some(row => row.status === 'pending')
+    : claims.some(row => row.status === 'pending')
       ? 'pending'
       : 'unclaimed';
 
@@ -198,15 +278,13 @@ export async function rejectClaim(
   if (nextStatus === 'unclaimed') {
     // Remove, not set to undefined — an omitted key in `.set()` is simply dropped
     // from the update, which would leave a stale verifiedAt on an unclaimed artist.
-    await ArtistEntity.update({ id: artistId })
+    await ArtistEntity.patch({ id: artistId })
       .set({ claimStatus: 'unclaimed' })
       .remove(['verifiedAt'])
       .go();
-  } else {
-    await ArtistEntity.update({ id: artistId }).set({ claimStatus: nextStatus }).go();
+    return;
   }
-
-  return result.data as ArtistClaim;
+  await ArtistEntity.patch({ id: artistId }).set({ claimStatus: nextStatus }).go();
 }
 
 /**
@@ -260,7 +338,22 @@ export async function redeemArtistClaimInvites(params: {
   const now = new Date().toISOString();
   const granted: Array<{ artistId: string; artistName: string }> = [];
 
+  const { ArtistEntity } = await import('../artist/entity');
+
   for (const invite of invites) {
+    // An artist deleted or merged away after the invite was written must not be resurrected
+    // with a verified badge. The invite is dropped rather than kept: the record it pointed at
+    // is gone, so re-checking it on every future login would never succeed.
+    const artist = await ArtistEntity.get({ id: invite.artistId }).go();
+    if (!artist.data || artist.data.deletedAt || artist.data.mergedIntoId) {
+      await ArtistClaimEntity.delete({
+        artistId: invite.artistId,
+        kind: 'invite',
+        subject: email,
+      }).go();
+      continue;
+    }
+
     // upsert, not create: a user who was invited to an artist they had already claimed
     // themselves should end up verified, not collide with their own pending row.
     await ArtistClaimEntity.upsert({
@@ -274,8 +367,13 @@ export async function redeemArtistClaimInvites(params: {
       status: 'verified',
       moderatorId: invite.moderatorId,
       moderatorNote: invite.moderatorNote,
+      // Carried explicitly. ElectroDB's upsert re-applies the `createdAt` default
+      // unconditionally, so without this the invite's own timestamp — the only record of
+      // when the address was trusted — is overwritten with the moment of redemption, and a
+      // pre-existing self-serve claim loses its original date too.
+      invitedAt: invite.createdAt,
       processedAt: now,
-    } as never).go();
+    }).go();
 
     await markArtistVerified(invite.artistId, now);
 
@@ -294,11 +392,12 @@ export async function redeemArtistClaimInvites(params: {
   return granted;
 }
 
+// `.patch()`, never `.update()`: update carries no existence condition, so a bad or
+// already-deleted artist id would create a phantom row rather than fail — the exact shape of
+// the uppercase-key bug this repo had to repair in production.
 async function markArtistVerified(artistId: string, now: string): Promise<void> {
   const { ArtistEntity } = await import('../artist/entity');
-  await ArtistEntity.update({ id: artistId })
-    .set({ claimStatus: 'verified', verifiedAt: now })
-    .go();
+  await ArtistEntity.patch({ id: artistId }).set({ claimStatus: 'verified', verifiedAt: now }).go();
 }
 
 export type { ArtistClaim } from './entity';

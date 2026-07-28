@@ -199,6 +199,12 @@ vi.mock('./concert-log/entity', () => ({
   ConcertLogEntity: { query: { byUserDate: vi.fn() } },
 }));
 
+// The claim block recomputes the canonical's badge after moving rows; that path is covered by
+// artist-claim's own tests, so here it only needs to not hit DynamoDB.
+vi.mock('./artist-claim', () => ({
+  recomputeArtistClaimStatus: vi.fn(),
+}));
+
 import { dynamoClient } from '../db/client';
 import { ArtistAwardEntity } from './artist-award/entity';
 import { ArtistClaimEntity } from './artist-claim/entity';
@@ -877,9 +883,7 @@ describe('cascade', () => {
       });
     });
 
-    it('drops a row the canonical artist already has for the same actor', async () => {
-      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
-      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+    function loserClaim(status: string) {
       ArtistClaimEntity.query.primary = pagedQuery([
         {
           data: [
@@ -888,21 +892,31 @@ describe('cascade', () => {
               subject: 'user1',
               artistName: 'Loser Name',
               userId: 'user1',
-              status: 'pending',
+              status,
               createdAt: '2026-01-01T00:00:00.000Z',
             },
           ],
           cursor: null,
         },
       ]);
+    }
+
+    function canonicalClaim(status: string) {
       ArtistClaimEntity.get = vi.fn().mockReturnValue({
-        go: vi.fn().mockResolvedValue({ data: [{ kind: 'claim', subject: 'user1' }] }),
+        go: vi.fn().mockResolvedValue({ data: [{ kind: 'claim', subject: 'user1', status }] }),
       });
+    }
+
+    // Resolved by status precedence, not by "canonical always wins". Overwriting a verified
+    // canonical row with the loser's pending one would make the claimant re-prove themselves.
+    it('keeps the canonical row when it holds the stronger decision', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      loserClaim('pending');
+      canonicalClaim('verified');
 
       await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
 
-      // Overwriting would replace the canonical row's own decision — potentially demoting a
-      // verified claim back to this loser row's pending.
       expect(ArtistClaimEntity.upsert).not.toHaveBeenCalled();
       // Still removed from the loser, or the merge leaves the row stranded.
       expect(ArtistClaimEntity.delete).toHaveBeenCalledWith({
@@ -910,6 +924,21 @@ describe('cascade', () => {
         kind: 'claim',
         subject: 'user1',
       });
+    });
+
+    // The inverse, which "canonical always wins" got silently wrong: the claimant loses
+    // management of their own profile with no log and no trace.
+    it('carries the loser row over when it holds the stronger decision', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      loserClaim('verified');
+      canonicalClaim('rejected');
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistClaimEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({ artistId: 'canonical', subject: 'user1', status: 'verified' })
+      );
     });
 
     it('refuses to guess when the duplicate check returns unprocessed keys', async () => {

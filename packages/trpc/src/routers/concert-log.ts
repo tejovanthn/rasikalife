@@ -52,7 +52,9 @@ export const concertLogRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const log = await ConcertLog.upsertConcertLog(ctx.user.id, input.eventId, { notes: input.notes });
+      const log = await ConcertLog.upsertConcertLog(ctx.user.id, input.eventId, {
+        notes: input.notes,
+      });
       const eventStartDateTime = log.eventStartDateTime;
 
       await ConcertLogItem.replaceUserSetlist(

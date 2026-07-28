@@ -1,6 +1,6 @@
 import { Auth, ConcertLog, User } from '@rasika/core';
-import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
 import { adminProcedure, createTRPCRouter, protectedProcedure, publicProcedure } from '../trpc';
 
 const preferencesSchema = z.object({
@@ -36,9 +36,7 @@ export const userRouter = createTRPCRouter({
       return user;
     }),
 
-  getMyPreferences: protectedProcedure.query(({ ctx }) =>
-    User.getEffectivePreferences(ctx.user)
-  ),
+  getMyPreferences: protectedProcedure.query(({ ctx }) => User.getEffectivePreferences(ctx.user)),
 
   updatePreferences: protectedProcedure
     .input(preferencesSchema)

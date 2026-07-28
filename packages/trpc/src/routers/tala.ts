@@ -33,11 +33,13 @@ export const talaRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
-    const result = await Tala.deleteTala(input.id);
-    triggerReindex();
-    return result;
-  }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const result = await Tala.deleteTala(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   getByName: publicProcedure
     .input(z.object({ name: z.string().min(1) }))

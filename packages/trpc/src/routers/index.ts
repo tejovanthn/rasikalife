@@ -1,7 +1,7 @@
 import { createTRPCRouter } from '../trpc';
 import { adminDataRouter } from './admin-data';
-import { artistClaimRouter } from './artist-claim';
 import { artistRouter } from './artist';
+import { artistClaimRouter } from './artist-claim';
 import { awardRouter } from './award';
 import { compositionRouter } from './composition';
 import { concertLogRouter } from './concert-log';

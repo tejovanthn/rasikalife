@@ -6,17 +6,35 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step: phase 8 slice 2 — the tRPC router (`packages/trpc/src/routers/artist-claim.ts`) and `canManageArtist`.** The core domain underneath it is done; nothing in phase 8 has had a DHH review yet, so run one over slices 1+2 together when the budget allows.
+**Next step: phase 9 — polish.** Phases 7 and 8 are complete and were reviewed together on Opus (2026-07-28); every must-fix and should-fix is acted on. See "From the phases 7–8 review" below for what was found and what was deliberately deferred.
 
-Phase 7 is complete and DHH-reviewed (2026-07-27) with every must-fix and should-fix acted on — see "From the phase-7 review" below.
+**Nothing in phases 7–8 has run against a deploy.** `sst` does not run in this environment, so the composited OG card, the gallery reorder, the login-time invite redemption, the claims queue and the claim form have never executed for real. Highest-risk items to check on the first deploy, in order: (1) a Google sign-in still succeeds — the new `verified_email` gate can refuse a login that previously worked; (2) an invite actually redeems on login; (3) the OG card renders with a photo. The cache-key change also orphans every existing `og-images/**` object, which is harmless but reclaimable.
 
-### Phase 8, slice 1: the `ArtistClaim` core domain — done, unreviewed (2026-07-28)
+### From the phases 7–8 review (2026-07-28)
+
+One `dhh-code-reviewer` on Opus across both phases. It re-verified the phase-7 fixes as correct and confirmed the parts of phase 8 that matter most: the anonymous profile document cannot vary by viewer, no email or claim detail reaches a public read path, email normalization has one definition every writer and reader routes through, no attacker-controlled address can reach it, and the claim-then-delete ordering in redemption is right in every partial-failure case it traced. Its verdict on the whole: the data model was sound and the feature was **write-only** — a grant nothing could see, undo, or use. Everything below is fixed.
+
+- **An invite was irreversible through the product.** Nothing listed invites and nothing deleted them, so a mistyped address was a standing offer of someone else's profile to whoever owned the typo, redeemable at any future login and removable only by hand. Now `getInvitedClaims`/`revokeArtistClaimInvite`, an `invited` + `revokeInvite` procedure pair, and the wizard lists outstanding invites beside the field that creates them with a Withdraw button.
+- **The only grant that skipped review was the only one not requiring a `moderatorNote`.** Approve and reject were guarded twice over; the invite — which reaches `verified` with no review at all — took none. Required now in the Zod schema, in core, in the router and in the wizard. The invite's own timestamp was also being destroyed: ElectroDB's `upsert` re-applies the `createdAt` default unconditionally, so redemption overwrote "when was this address trusted" with the moment of redemption. Carried across as `invitedAt`.
+- **`canManageArtist` was granted and never checked** — see the note below, this one is a design fix rather than a wiring fix.
+- **A merge could strand a verified grant.** "Canonical always wins" silently dropped a verified claim when the loser held it and the canonical held a rejection, and the claimant lost management of their own profile with no trace. Resolved by status precedence (verified > pending > rejected > invited), tested in both directions. The merge also never recomputed the canonical's badge, so a verified claim could arrive on an artist whose `claimStatus` still said unclaimed — `recomputeArtistClaimStatus` is now extracted and called after the claim pass.
+- **Every claim failure reported "you have already claimed this artist."** A bare `catch` mapped throttles and permission errors to CONFLICT, so a user whose write had genuinely failed stopped retrying. Narrowed to the conditional-check failure; everything else rethrows.
+- **The moderator queue never showed its own errors** — a failed approve was indistinguishable from a success. **The claim affordance was hidden from logged-out visitors**, which is nearly the whole audience and includes the artist arriving at their own page; the signed-out branch is viewer-invariant so it stays cacheable. **`mine` was a GSI query used as a point read** and returned full rows including the moderator's private reasoning about the claimant, over a public function URL — replaced by `myStatusFor`, a GetItem returning only the status.
+- **Two artist writes used `.update()`, which has no existence condition** and would create a phantom row rather than fail — the exact shape of the uppercase-key bug this repo repaired in production. Both are `.patch()` now, and redemption skips a soft-deleted or merged-away artist instead of resurrecting it with a verified badge.
+- **`packages/og-image/src/card.ts` contained a literal NUL byte**, so git treated a TypeScript source file as binary and every future change to the OG card would have been undiffable. It came from the phase-7 field-separator fix being written as a raw control character instead of the `\0` escape. Now the escape, with a comment saying why it must stay one.
+- Nits: dropped two `as never` casts on the writes that decide who manages a profile (they suppressed nothing), and the claim disclosure is `<details>` rather than a `useState` toggle so it works before hydration.
+
+**What a verified claim actually confers, and why that needed deciding.** §4.3.1 said it should unlock "the existing editor form on their own record" — but `createDraft` is `protectedProcedure` and the edit route only calls `requireUser`, so **every signed-in user could already do that for any artist**. The grant as specced was vacuous, and a claims queue whose approvals confer nothing is worse than no queue. `edit.submit` now auto-approves a submitted edit when the submitter holds a verified claim on that artist. Deliberately narrow: it applies to the named artist only, requires `verified` (not invited, not pending), and the edit still travels the ordinary Edit pipeline with the same schema, validation and audit row — so it widens *who may approve*, not *what may be written*. The check is server-side in the router because the client must not be able to assert it. **This was chosen as a stated default, not confirmed by the repo owner** — the alternatives were the moderator wizard scoped to the claimant's own record (richer, but it writes across five entity types including shared event data) or recognition-only with no new powers. Reversible in one place.
+
+**Deliberately deferred, with reasons:** `cascadeArtistNameUpdate` does not refresh `ArtistClaim.artistName` — the one junction it skips, cosmetic per §4.2 but now the only exception to the pattern. Nothing bounds claims per user, so any account can fill the pending queue (not an access risk). `api.artist.claim.tsx` is the sixth copy of the `/api/artist/*` boilerplate the whole-phase-5 review said to collapse into `withModerator(handler)` + `field(formData, name)`; fold it into that pending refactor rather than adding a seventh variant. `issuer.ts` throws inside `success()` for an unverified account, which surfaces as a blank 500 rather than a message.
+
+### Phase 8, slice 1: the `ArtistClaim` core domain (2026-07-28)
 
 Built across two commits: an agent wrote the four modules and then hit the monthly spend limit, leaving no tests and no merge fixup (`bbe0f70ad`, committed as wip); both were finished afterwards along with the index redesign below.
 
 Landed: `packages/core/src/domain/artist-claim/{schema,entity,client,index,index.test}.ts`, `'invited'` added to `ARTIST_CLAIM_STATUSES`, and the `cascadeArtistMerge` claim fixup with three tests. Two row kinds share the `ARTIST#${artistId}` partition behind a `kind` discriminator — `CLAIM#${userId}` and `INVITE#${normalizedEmail}` — so `getArtistClaims` stays one query.
 
-**Still inert:** `artist-claim` is exported from neither `packages/core/src/index.ts` nor the `exports` map in `package.json`. Slice 2 wires it up.
+Now wired up: exported from `packages/core/src/index.ts` and given an `./domain/artist-claim/client` subpath for browser-safe types.
 
 **The index trap it was built on, and the fix.** The obvious shape is a `byUser` index on `userId` and a `byEmail` index on `email`, each expected to be sparse because the other kind leaves its field unset. **ElectroDB does not omit an index whose composite is missing — it writes the template with an empty suffix.** Checked against the real entity with `.params()`:
 
@@ -118,7 +136,7 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 5 | Create/edit wizard (moderator-only, direct write) | done |
 | 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | done (reviewed 2026-07-27) |
-| 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | **in progress — slice 1 partial, unreviewed** |
+| 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | done (reviewed 2026-07-28) |
 | 9 | Polish | not started |
 
 ### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
@@ -246,9 +264,9 @@ Raised, judged real, not yet done:
 
 ### Known baselines (so regressions are visible)
 
-Current at end of phase 7. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
+Current at end of phase 8. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **728 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/core`: **740 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
 - `packages/web`: **32 web-own typecheck errors**; **89 tests pass** (65 → 89 across phase 7). The 32 was written as "≤30" through phase 6 and was stale — the phase-7 review measured the identical count at `e49f666db`, so it is a pre-existing figure, not drift. None of the 32 are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
 - `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).

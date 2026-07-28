@@ -96,13 +96,14 @@ export async function loader({
 
   // The Recognition step's three sections seed from these. Only the moderator
   // wizard renders them, so the editor path pays for none of it.
-  const [awards, performances, photos] = isModerator
+  const [awards, performances, photos, claims] = isModerator
     ? await Promise.all([
         serverClient.artist.listAwards.query({ artistId: artist.id }),
         serverClient.event.byArtist.query({ artistId: artist.id, limit: 50 }),
         serverClient.artist.listPhotos.query({ artistId: artist.id }),
+        serverClient.artistClaim.listForArtist.query({ artistId: artist.id }),
       ])
-    : [[], { items: [] }, { items: [] }];
+    : [[], { items: [] }, { items: [] }, []];
 
   return data({
     artist,
@@ -113,6 +114,10 @@ export async function loader({
     awards,
     performances: performances.items,
     photos: photos.items,
+    // Only the invite addresses; the rows also carry the moderator's private note.
+    invitedEmails: (claims as Array<{ kind: string; email?: string }>)
+      .filter(c => c.kind === 'invite' && c.email)
+      .map(c => c.email as string),
   });
 }
 
@@ -718,7 +723,8 @@ type GuruRow = {
 };
 
 function ModeratorArtistWizard() {
-  const { artist, members, awards, performances, photos } = useLoaderData<typeof loader>();
+  const { artist, members, awards, performances, photos, invitedEmails } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const artistUrl = generateArtistUrl(artist.name, artist.id);
@@ -1139,7 +1145,11 @@ function ModeratorArtistWizard() {
 
                 <div className="space-y-3 border-t pt-6">
                   <Label>Hand this profile to the artist</Label>
-                  <ClaimInviteEditor artistId={artist.id} artistName={artist.name} />
+                  <ClaimInviteEditor
+                    artistId={artist.id}
+                    artistName={artist.name}
+                    initialInvites={invitedEmails}
+                  />
                 </div>
               </div>
             </div>
@@ -1774,7 +1784,7 @@ type Photo = {
   featured: boolean;
 };
 
-type InviteResult = { success: true; email: string } | { error: string };
+type InviteResult = { success: true; intent: string; email: string } | { error: string };
 
 // The enrichment-time half of §4.3.1. A moderator building this profile is usually already
 // emailing the artist, so recording that address here is the whole handover: next time they
@@ -1783,8 +1793,14 @@ type InviteResult = { success: true; email: string } | { error: string };
 // The address is written to an ArtistClaim invite row, never to the Artist record. artist.get
 // is a public procedure and the profile is edge-cached, so an email on that row would be
 // served to every visitor.
-function ClaimInviteEditor({ artistId, artistName }: { artistId: string; artistName: string }) {
+function ClaimInviteEditor({
+  artistId,
+  artistName,
+  initialInvites,
+}: { artistId: string; artistName: string; initialInvites: string[] }) {
   const [email, setEmail] = useState('');
+  const [note, setNote] = useState('');
+  const [invites, setInvites] = useState<string[]>(initialInvites);
   const fetcher = useFetcher<InviteResult>();
   const isIdle = fetcher.state === 'idle';
 
@@ -1794,38 +1810,78 @@ function ClaimInviteEditor({ artistId, artistName }: { artistId: string; artistN
       toast.error(fetcher.data.error);
       return;
     }
-    setEmail('');
-    toast.success(`${fetcher.data.email} can now claim this profile by signing in`);
+    const { intent, email: actioned } = fetcher.data;
+    if (intent === 'invite') {
+      setInvites(prev => (prev.includes(actioned) ? prev : [...prev, actioned]));
+      setEmail('');
+      setNote('');
+      toast.success(`${actioned} can now claim this profile by signing in`);
+      return;
+    }
+    setInvites(prev => prev.filter(e => e !== actioned));
+    toast.success(`Withdrew the invite to ${actioned}`);
   }, [fetcher.data]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <p className="text-xs text-muted-foreground">
         Use the address you have been corresponding with. Signing in with it grants {artistName}
-        &rsquo;s profile straight away, so only add an address you have actually heard from.
+        &rsquo;s profile straight away with no further review, so only add an address you have
+        actually heard from — and check the spelling, because whoever owns a mistyped address can
+        claim this profile.
       </p>
-      <div className="flex gap-2">
-        <Input
-          type="email"
-          placeholder="artist@example.com"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!isIdle || !email.trim()}
-          onClick={() =>
-            fetcher.submit(
-              { intent: 'invite', artistId, email },
-              { method: 'post', action: '/api/artist/claim' }
-            )
-          }
-        >
-          Invite
-        </Button>
-      </div>
+
+      {/* Outstanding invites are listed because they are otherwise invisible: a typo would be a
+          standing offer of this profile, with nothing in the product to show or undo it. */}
+      {invites.length > 0 && (
+        <ul className="space-y-1">
+          {invites.map(invited => (
+            <li key={invited} className="flex items-center justify-between gap-2 text-xs">
+              <span className="truncate">{invited}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={!isIdle}
+                onClick={() =>
+                  fetcher.submit(
+                    { intent: 'revoke', artistId, email: invited },
+                    { method: 'post', action: '/api/artist/claim' }
+                  )
+                }
+              >
+                Withdraw
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <Input
+        type="email"
+        placeholder="artist@example.com"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+      <Input
+        placeholder="How do you know this address is theirs?"
+        value={note}
+        onChange={e => setNote(e.target.value)}
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={!isIdle || !email.trim() || !note.trim()}
+        onClick={() =>
+          fetcher.submit(
+            { intent: 'invite', artistId, email, moderatorNote: note },
+            { method: 'post', action: '/api/artist/claim' }
+          )
+        }
+      >
+        Invite
+      </Button>
     </div>
   );
 }

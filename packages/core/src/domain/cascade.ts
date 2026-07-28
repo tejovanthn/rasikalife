@@ -31,6 +31,20 @@ function existingKeySet<T>(
   return new Set((result.data ?? []).map(key));
 }
 
+// Strength of a claim decision, for resolving a merge collision. Higher wins, so a merge can
+// only ever keep the strongest standing decision about an actor rather than whichever artist
+// happened to be the canonical one.
+const CLAIM_STATUS_RANK: Record<string, number> = {
+  invited: 0,
+  rejected: 1,
+  pending: 2,
+  verified: 3,
+};
+
+function claimRank(status: string): number {
+  return CLAIM_STATUS_RANK[status] ?? 0;
+}
+
 async function batchGetCompositions(ids: string[]): Promise<Map<string, Record<string, unknown>>> {
   const map = new Map<string, Record<string, unknown>>();
   if (ids.length === 0) return map;
@@ -463,14 +477,15 @@ export async function cascadeArtistMerge(
   } while (photoCursor);
 
   // Migrate ArtistClaim rows (§4.3, §11.3). Both row kinds ride the same partition, so one
-  // pass moves claims and moderator invites alike. A row is dropped rather than moved when
-  // the canonical artist already has one for the same actor — §4.3's "dropped if a duplicate
-  // claim by the same user already exists there", which the `kind`+`subject` key makes true
-  // of invites by email as well, since that pair is exactly what identifies an actor.
+  // pass moves claims and moderator invites alike. Where both artists have a row for the same
+  // actor — the `kind`+`subject` pair is what identifies one — the two are resolved by status
+  // precedence rather than by "canonical always wins".
   //
-  // Dropping is right rather than merging: the surviving row carries the moderator's own
-  // decision and its moderatorNote audit trail, and overwriting that with the loser's status
-  // could quietly downgrade a verified claim to pending, or resurrect a rejected one.
+  // Precedence, not preference, because either blanket rule silently destroys a grant. Keeping
+  // the canonical's row unconditionally drops a verified claim when the loser held it and the
+  // canonical held a rejection, and the claimant loses management of their own profile with no
+  // trace. Overwriting unconditionally does the reverse. Verified beats pending beats
+  // rejected beats invited, so a merge can only ever preserve the strongest standing decision.
   let claimCursor: string | null = null;
   do {
     const claimResult = (await ArtistClaimEntity.query
@@ -479,13 +494,13 @@ export async function cascadeArtistMerge(
     const claimItems =
       (claimResult.data as Array<{
         kind: 'claim' | 'invite';
+        status: 'unclaimed' | 'pending' | 'verified' | 'rejected' | 'invited';
         subject: string;
         artistName: string;
         userId?: string;
         userName?: string;
         userEmail?: string;
         email?: string;
-        status: string;
         note?: string;
         moderatorId?: string;
         moderatorNote?: string;
@@ -503,18 +518,28 @@ export async function cascadeArtistMerge(
           }))
         ).go()
       : null;
-    // Keyed by the actor pair, so an unprocessed BatchGet key can't be read as "no duplicate"
-    // and overwrite a canonical row — the guard the other blocks here share.
-    const existingClaimSet = existingClaimResult
-      ? existingKeySet(
-          existingClaimResult,
-          (r: { kind: string; subject: string }) => `${r.kind}#${r.subject}`
-        )
-      : new Set<string>();
+    // Runs the same unprocessed-key guard the other blocks share, then keeps the canonical
+    // rows themselves so their status can be compared rather than merely counted.
+    if (existingClaimResult) {
+      existingKeySet(
+        existingClaimResult,
+        (r: { kind: string; subject: string }) => `${r.kind}#${r.subject}`
+      );
+    }
+    const existingByActor = new Map<string, { status: string }>(
+      (
+        (existingClaimResult?.data ?? []) as Array<{
+          kind: string;
+          subject: string;
+          status: string;
+        }>
+      ).map(row => [`${row.kind}#${row.subject}`, row])
+    );
 
     await Promise.all(
       claimItems.map(async item => {
-        if (!existingClaimSet.has(`${item.kind}#${item.subject}`)) {
+        const existing = existingByActor.get(`${item.kind}#${item.subject}`);
+        if (!existing || claimRank(item.status) > claimRank(existing.status)) {
           await ArtistClaimEntity.upsert({
             artistId: canonicalId,
             artistName: canonicalName,
@@ -530,7 +555,7 @@ export async function cascadeArtistMerge(
             moderatorNote: item.moderatorNote,
             createdAt: item.createdAt,
             processedAt: item.processedAt,
-          } as never).go();
+          }).go();
         }
         await ArtistClaimEntity.delete({
           artistId: loserId,
@@ -540,6 +565,12 @@ export async function cascadeArtistMerge(
       })
     );
   } while (claimCursor);
+
+  // The claim rows just moved, so the canonical's denormalized badge is now computed from the
+  // wrong set — a verified claim can arrive on an artist whose own claimStatus says unclaimed,
+  // leaving canManageArtist answering true on a profile that shows nothing.
+  const { recomputeArtistClaimStatus } = await import('./artist-claim');
+  await recomputeArtistClaimStatus(canonicalId);
 
   // Migrate ArtistMembership records where the loser is the group
   let amGroupCursor: string | null = null;

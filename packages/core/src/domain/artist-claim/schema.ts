@@ -49,5 +49,8 @@ export const CreateArtistClaimInviteSchema = z.object({
   artistName: z.string().min(1).max(200),
   email: NormalizedEmailSchema,
   moderatorId: z.string().min(1),
-  moderatorNote: z.string().max(2000).optional(),
+  // Required, unlike most notes. An invite reaches 'verified' with no review at all, so it is
+  // the grant most in need of a record of why the address was trusted — and it was the only
+  // one that did not ask for one.
+  moderatorNote: z.string().min(1).max(2000),
 });

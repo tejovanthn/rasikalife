@@ -14,7 +14,7 @@ vi.mock('./entity', () => ({
 vi.mock('../artist/entity', () => ({
   ArtistEntity: {
     get: vi.fn(),
-    update: vi.fn(),
+    patch: vi.fn(),
   },
 }));
 
@@ -43,11 +43,13 @@ function mockPatch(data: unknown) {
   return setSpy;
 }
 
-/** `.update().set().go()` and `.update().set().remove().go()` on the Artist row. */
+/** `.patch().set().go()` and `.patch().set().remove().go()` on the Artist row. `.patch()`
+ *  rather than `.update()`: update has no existence condition, so a bad id would create a
+ *  phantom artist row instead of failing. */
 function mockArtistUpdate() {
   const removeSpy = vi.fn().mockReturnValue(goResolves({}));
   const setSpy = vi.fn().mockReturnValue({ remove: removeSpy, ...goResolves({}) });
-  vi.mocked(ArtistEntity.update).mockReturnValue({ set: setSpy } as never);
+  vi.mocked(ArtistEntity.patch).mockReturnValue({ set: setSpy } as never);
   return { setSpy, removeSpy };
 }
 
@@ -107,7 +109,7 @@ describe('createArtistClaim', () => {
 
     await createArtistClaim({ ...input, userId: 'user_2' });
 
-    expect(ArtistEntity.update).not.toHaveBeenCalled();
+    expect(ArtistEntity.patch).not.toHaveBeenCalled();
   });
 });
 
@@ -120,6 +122,7 @@ describe('createArtistClaimInvite', () => {
       artistName: 'Sanjay Subrahmanyan',
       email: '  Sanjay@Example.COM ',
       moderatorId: 'mod_1',
+      moderatorNote: 'Replied from the address on her site',
     });
 
     expect(ArtistClaimEntity.create).toHaveBeenCalledWith(
@@ -132,6 +135,22 @@ describe('createArtistClaimInvite', () => {
     );
   });
 
+  // This is the one grant that reaches 'verified' with no review, so it is the one that most
+  // needs a record of why the address was trusted. It was previously the only path that did
+  // not ask for one.
+  it('refuses an invite with no moderator note', async () => {
+    await expect(
+      createArtistClaimInvite({
+        artistId: 'artist_1',
+        artistName: 'X',
+        email: 'a@b.com',
+        moderatorId: 'mod_1',
+        moderatorNote: '   ',
+      })
+    ).rejects.toThrow(/moderatorNote is required/);
+    expect(ArtistClaimEntity.create).not.toHaveBeenCalled();
+  });
+
   // An invite is a pre-authorization, not a claim. Flipping the badge would tell the public
   // someone has claimed the profile when nobody has even signed in yet.
   it('does not touch the artist badge', async () => {
@@ -142,9 +161,10 @@ describe('createArtistClaimInvite', () => {
       artistName: 'X',
       email: 'a@b.com',
       moderatorId: 'mod_1',
+      moderatorNote: 'Confirmed by DM',
     });
 
-    expect(ArtistEntity.update).not.toHaveBeenCalled();
+    expect(ArtistEntity.patch).not.toHaveBeenCalled();
   });
 });
 
@@ -357,11 +377,83 @@ describe('redeemArtistClaimInvites', () => {
 
     expect(await redeemArtistClaimInvites(user)).toEqual([]);
     expect(ArtistClaimEntity.upsert).not.toHaveBeenCalled();
-    expect(ArtistEntity.update).not.toHaveBeenCalled();
+    expect(ArtistEntity.patch).not.toHaveBeenCalled();
   });
 
   it('does nothing for a blank email rather than matching an empty partition', async () => {
     expect(await redeemArtistClaimInvites({ ...user, email: '   ' })).toEqual([]);
     expect(ArtistClaimEntity.query.byActor).not.toHaveBeenCalled();
+  });
+});
+
+describe('redeemArtistClaimInvites — the cases a partial failure exposes', () => {
+  const user = { userId: 'user_1', userName: 'Sanjay', email: 'a@b.com' };
+
+  function invites(rows: unknown[]) {
+    vi.mocked(ArtistClaimEntity.query.byActor).mockReturnValue(goResolves(rows) as never);
+    vi.mocked(ArtistClaimEntity.upsert).mockReturnValue(goResolves({}) as never);
+    vi.mocked(ArtistClaimEntity.delete).mockReturnValue(goResolves({}) as never);
+  }
+
+  // The invite's own timestamp is the record of when a moderator decided to trust the
+  // address. ElectroDB's upsert re-applies the createdAt default unconditionally, so without
+  // carrying it explicitly the audit trail is overwritten with the moment of redemption.
+  it('carries the invite timestamp onto the claim', async () => {
+    invites([{ artistId: 'artist_1', artistName: 'X', createdAt: '2026-01-01T00:00:00.000Z' }]);
+    vi.mocked(ArtistEntity.get).mockReturnValue(goResolves({ id: 'artist_1' }) as never);
+    mockArtistUpdate();
+
+    await redeemArtistClaimInvites(user);
+
+    expect(ArtistClaimEntity.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ invitedAt: '2026-01-01T00:00:00.000Z' })
+    );
+  });
+
+  // An artist deleted or merged away after the invite was written must not come back wearing
+  // a verified badge. The invite is dropped, because the record it named is gone.
+  it('drops the invite instead of verifying a deleted or merged artist', async () => {
+    for (const tombstone of [{ deletedAt: 'x' }, { mergedIntoId: 'other' }]) {
+      vi.clearAllMocks();
+      invites([{ artistId: 'artist_1', artistName: 'X', createdAt: 'n' }]);
+      vi.mocked(ArtistEntity.get).mockReturnValue(
+        goResolves({ id: 'artist_1', ...tombstone }) as never
+      );
+      mockArtistUpdate();
+
+      expect(await redeemArtistClaimInvites(user)).toEqual([]);
+      expect(ArtistClaimEntity.upsert).not.toHaveBeenCalled();
+      expect(ArtistEntity.patch).not.toHaveBeenCalled();
+      expect(ArtistClaimEntity.delete).toHaveBeenCalled();
+    }
+  });
+
+  // A crash part-way must leave the earlier invites redeemed and the rest retryable, never a
+  // half-written claim. Ordering is what makes that true, so the later failure must not
+  // undo the earlier success.
+  it('keeps grants made before a mid-loop failure', async () => {
+    invites([
+      { artistId: 'artist_1', artistName: 'One', createdAt: 'n' },
+      { artistId: 'artist_2', artistName: 'Two', createdAt: 'n' },
+    ]);
+    vi.mocked(ArtistEntity.get).mockReturnValue(goResolves({ id: 'a' }) as never);
+    const removeSpy = vi.fn().mockReturnValue(goResolves({}));
+    let calls = 0;
+    const setSpy = vi.fn().mockImplementation(() => {
+      calls += 1;
+      if (calls === 2)
+        return { remove: removeSpy, go: vi.fn().mockRejectedValue(new Error('boom')) };
+      return { remove: removeSpy, ...goResolves({}) };
+    });
+    vi.mocked(ArtistEntity.patch).mockReturnValue({ set: setSpy } as never);
+
+    await expect(redeemArtistClaimInvites(user)).rejects.toThrow('boom');
+    // The first artist's claim was written and its invite consumed before the second failed.
+    expect(ArtistClaimEntity.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ artistId: 'artist_1' })
+    );
+    expect(ArtistClaimEntity.delete).toHaveBeenCalledWith(
+      expect.objectContaining({ artistId: 'artist_1' })
+    );
   });
 });

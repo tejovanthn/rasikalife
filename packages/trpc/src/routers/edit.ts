@@ -15,7 +15,7 @@ import {
   updateDraft,
   withdrawEdit,
 } from '@rasika/core';
-import { EditEntityTypes } from '@rasika/core';
+import { ArtistClaim, EditEntityTypes } from '@rasika/core';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, moderatorProcedure, protectedProcedure } from '../trpc';
@@ -90,7 +90,25 @@ export const editRouter = createTRPCRouter({
   submit: protectedProcedure
     .input(z.object({ editId: z.string().min(1) }))
     .mutation(async ({ input, ctx }) => {
-      return submitEdit(input.editId, ctx.user.id);
+      const submitted = await submitEdit(input.editId, ctx.user.id);
+
+      // A verified claimant editing their own artist profile does not queue behind a
+      // moderator (plan §4.3.1). This is what the claim actually buys: without it an approved
+      // claim confers nothing, because submitting a draft is already open to every signed-in
+      // user, so the queue would grant a badge and no capability.
+      //
+      // Deliberately narrow. It applies to the artist the claim names and nothing else, the
+      // claim must be `verified` (an invite or a pending claim is not enough), and the edit
+      // still travels the ordinary Edit pipeline — same schema, same validation, same audit
+      // row — so this widens who may approve, not what may be written. The check is here
+      // rather than in the web action because the client must not be able to assert it.
+      const edit = await getEditById(input.editId);
+      if (edit?.entityType === 'artist' && edit.entityId) {
+        const owns = await ArtistClaim.canManageArtist(ctx.user.id, edit.entityId);
+        if (owns) return approveEdit(input.editId, ctx.user.id);
+      }
+
+      return submitted;
     }),
 
   withdraw: protectedProcedure

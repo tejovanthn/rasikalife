@@ -33,11 +33,13 @@ export const ragaRouter = createTRPCRouter({
       return result;
     }),
 
-  delete: protectedProcedure.input(z.object({ id: z.string().min(1) })).mutation(async ({ input }) => {
-    const result = await Raga.deleteRaga(input.id);
-    triggerReindex();
-    return result;
-  }),
+  delete: protectedProcedure
+    .input(z.object({ id: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const result = await Raga.deleteRaga(input.id);
+      triggerReindex();
+      return result;
+    }),
 
   byMela: publicProcedure
     .input(
