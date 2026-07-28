@@ -66,17 +66,27 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       throw new Response('Artist not found', { status: 404 });
     }
 
-    const result = await client.event.byArtist.query({
-      artistId: artist.id,
-      limit: 20,
-      nextToken: nextToken || undefined,
-    });
+    // Past events are the long list, so they own the pagination: newest first, walking
+    // backwards. Upcoming dates are few and belong at the top, so they are fetched whole
+    // and only on the first page — carrying them down every page would repeat them.
+    const [upcoming, past] = await Promise.all([
+      nextToken
+        ? Promise.resolve({ items: [] })
+        : client.event.byArtist.query({ artistId: artist.id, limit: 50, when: 'upcoming' }),
+      client.event.byArtist.query({
+        artistId: artist.id,
+        limit: 20,
+        when: 'past',
+        nextToken: nextToken || undefined,
+      }),
+    ]);
 
     return data({
       artist,
-      events: result.items,
-      hasMore: result.hasMore,
-      nextToken: result.nextToken,
+      upcoming: upcoming.items,
+      events: past.items,
+      hasMore: past.hasMore,
+      nextToken: past.nextToken,
       prevToken: nextToken,
     });
   } catch (error) {
@@ -94,11 +104,39 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   }
 };
 
+function EventCard({ event }: { event: ArtistEvent }) {
+  return (
+    <Link to={generateEventUrl(event.eventTitle, event.eventId)} className="block no-underline">
+      <Card className="hover:border-primary/50 transition-colors">
+        <CardContent className="py-3">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="font-medium text-foreground">{event.eventTitle}</p>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {formatEventDate(event.eventStartDateTime)}
+                </span>
+              </div>
+            </div>
+            {event.role && (
+              <Badge variant="outline" className="text-xs flex-shrink-0">
+                {event.role}
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 export default function ArtistEvents() {
   const { artistid } = useParams();
 
-  const { artist, events, hasMore, nextToken } = useLoaderData<{
+  const { artist, upcoming, events, hasMore, nextToken } = useLoaderData<{
     artist: { id: string; name: string };
+    upcoming: ArtistEvent[];
     events: ArtistEvent[];
     hasMore: boolean;
     nextToken: string | null;
@@ -120,43 +158,38 @@ export default function ArtistEvents() {
         <h1 className="text-3xl font-bold">Events featuring {artist.name}</h1>
         <p className="text-muted-foreground mt-2">All past and upcoming events for {artist.name}</p>
       </div>
-      {!events.length ? (
+      {!events.length && !upcoming.length ? (
         <EmptyState
           message="No events found"
           description={`${artist.name} doesn't have any events in our database yet.`}
         />
       ) : (
         <>
-          <div className="space-y-3">
-            {events.map(event => (
-              <Link
-                key={event.eventId}
-                to={generateEventUrl(event.eventTitle, event.eventId)}
-                className="block no-underline"
-              >
-                <Card className="hover:border-primary/50 transition-colors">
-                  <CardContent className="py-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">{event.eventTitle}</p>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatEventDate(event.eventStartDateTime)}
-                          </span>
-                        </div>
-                      </div>
-                      {event.role && (
-                        <Badge variant="outline" className="text-xs flex-shrink-0">
-                          {event.role}
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          {upcoming.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Upcoming
+              </h2>
+              <div className="space-y-3">
+                {upcoming.map(event => (
+                  <EventCard key={event.eventId} event={event} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {events.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Past
+              </h2>
+              <div className="space-y-3">
+                {events.map(event => (
+                  <EventCard key={event.eventId} event={event} />
+                ))}
+              </div>
+            </section>
+          )}
 
           <EntityPagination
             currentPage={currentPage}

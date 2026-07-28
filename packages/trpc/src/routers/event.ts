@@ -97,6 +97,9 @@ export const eventRouter = createTRPCRouter({
         artistId: z.string().min(1),
         limit: z.number().min(1).max(100).optional(),
         nextToken: z.string().optional(),
+        // Omitted, this returns every event ascending — the whole run, which is what the
+        // wizard's performances section lists. The profile and /events pass a side.
+        when: z.enum(['upcoming', 'past']).optional(),
       })
     )
     .query(({ input }) => Event.listEventsByArtist(input.artistId, input)),

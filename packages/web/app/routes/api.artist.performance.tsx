@@ -2,6 +2,7 @@ import type { ActionFunction, LoaderFunction } from 'react-router';
 import { data } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { requireModerator } from '~/lib/auth.server';
+import { readOptionalInt } from '~/lib/form-fields';
 
 // Toggles the per-artist "featured" flag on an event the artist already
 // performed at. Immediate write, like the other Recognition sections — it does
@@ -75,8 +76,16 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   const featured = formData.get('featured') === 'true';
-  const rankRaw = ((formData.get('featureRank') as string) || '').trim();
-  const featureRank = rankRaw ? Number.parseInt(rankRaw, 10) || undefined : undefined;
+  // parseInt read a prefix, so a rank of '2.7' arrived as 2 and '0' collapsed to undefined.
+  // readOptionalInt rejects the first and keeps the second.
+  const featureRank = readOptionalInt(formData, 'featureRank');
+
+  // The router's schema floors the rank at 1. Catching it here turns a stringified Zod
+  // issues array into something a moderator can read, since the rank box is submitted on
+  // blur and never passes through the browser's min= validation.
+  if (featureRank !== undefined && featureRank < 1) {
+    return data({ error: 'Rank must be 1 or higher' }, { status: 400 });
+  }
 
   try {
     const row = await serverClient.artist.setFeaturedPerformance.mutate({

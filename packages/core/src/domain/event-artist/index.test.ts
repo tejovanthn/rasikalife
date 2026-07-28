@@ -165,9 +165,12 @@ describe('setEventArtistFeatured', () => {
   async function mocks(existingFeatured: unknown[] = []) {
     const { EventArtistEntity } = await import('./entity');
     const { ArtistEntity } = await import('../artist/entity');
-    const patchSet = vi
-      .fn()
-      .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: patchedRow }) });
+    const go = vi.fn().mockResolvedValue({ data: patchedRow });
+    // `.set()` is followed either by `.go()` or by `.remove([...]).go()`, so the mock has
+    // to offer both — an assertion on `.set()` alone cannot tell a cleared attribute from
+    // one that was quietly dropped.
+    const patchRemove = vi.fn().mockReturnValue({ go });
+    const patchSet = vi.fn().mockReturnValue({ go, remove: patchRemove });
     vi.mocked(EventArtistEntity.patch).mockReturnValue({ set: patchSet } as never);
     vi.mocked(ArtistEntity.get).mockReturnValue({
       go: vi
@@ -176,11 +179,11 @@ describe('setEventArtistFeatured', () => {
     } as never);
     const updateSet = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     vi.mocked(ArtistEntity.update).mockReturnValue({ set: updateSet } as never);
-    return { patchSet, updateSet, EventArtistEntity };
+    return { patchSet, patchRemove, updateSet, EventArtistEntity };
   }
 
   it('sets the flag and rank on the artist-event junction row', async () => {
-    const { patchSet, EventArtistEntity } = await mocks();
+    const { patchSet, patchRemove, EventArtistEntity } = await mocks();
 
     await setEventArtistFeatured('event-1', 'artist-1', true, 2);
 
@@ -189,16 +192,40 @@ describe('setEventArtistFeatured', () => {
       artistId: 'artist-1',
     });
     expect(patchSet).toHaveBeenCalledWith({ isFeatured: true, featureRank: 2 });
+    expect(patchRemove).not.toHaveBeenCalled();
   });
 
-  it('clears the rank when unfeaturing', async () => {
-    const { patchSet } = await mocks();
+  // These three all used to pass while clearing nothing: the old code put
+  // `featureRank: undefined` in `.set()`, and ElectroDB drops undefined values out of the
+  // UpdateExpression, so the attribute survived every one of them. The assertion has to be
+  // on `.remove()`, which is the only thing that actually takes an attribute off the row.
+  it('removes the rank when unfeaturing', async () => {
+    const { patchSet, patchRemove } = await mocks();
 
     await setEventArtistFeatured('event-1', 'artist-1', false, 2);
 
-    // A rank left behind on an unfeatured row would silently reorder the
-    // teaser if the row were ever featured again.
-    expect(patchSet).toHaveBeenCalledWith({ isFeatured: false, featureRank: undefined });
+    expect(patchSet).toHaveBeenCalledWith({ isFeatured: false });
+    expect(patchRemove).toHaveBeenCalledWith(['featureRank']);
+  });
+
+  it('removes the rank when featuring without one', async () => {
+    const { patchSet, patchRemove } = await mocks();
+
+    // A moderator emptying the rank box: the row stays featured and drops back to the
+    // unranked, most-recent-first part of the teaser.
+    await setEventArtistFeatured('event-1', 'artist-1', true);
+
+    expect(patchSet).toHaveBeenCalledWith({ isFeatured: true });
+    expect(patchRemove).toHaveBeenCalledWith(['featureRank']);
+  });
+
+  it('keeps a rank of 0 rather than treating it as absent', async () => {
+    const { patchSet, patchRemove } = await mocks();
+
+    await setEventArtistFeatured('event-1', 'artist-1', true, 0);
+
+    expect(patchSet).toHaveBeenCalledWith({ isFeatured: true, featureRank: 0 });
+    expect(patchRemove).not.toHaveBeenCalled();
   });
 
   it('adds the performance to the artist featured list, sorted by rank', async () => {

@@ -484,9 +484,20 @@ export async function listEventsByTag(
   };
 }
 
+/**
+ * The `byArtist` GSI sorts ascending by event date, so an unqualified query hands back an
+ * artist's *earliest* concerts — for anyone with a history that means rows from years ago
+ * and never the date they are about to play. `when` splits the partition at now:
+ * `upcoming` reads forward (next concert first), `past` reads backward (most recent first).
+ * Omitting it keeps the whole run ascending, which is what the wizard's performances
+ * section wants: every row an artist has, in one order, featured or not.
+ *
+ * The boundary matches `listUpcomingEvents`/`listPastEvents` — strictly after and strictly
+ * before `now` — so a date cannot sit in one bucket here and the other on /events.
+ */
 export async function listEventsByArtist(
   artistId: string,
-  params?: { limit?: number; nextToken?: string }
+  params?: { limit?: number; nextToken?: string; when?: 'upcoming' | 'past' }
 ): Promise<{
   items: Array<{
     eventId: string;
@@ -504,9 +515,15 @@ export async function listEventsByArtist(
   nextToken?: string;
   hasMore: boolean;
 }> {
-  const result = await EventArtistEntity.query
-    .byArtist({ artistId })
-    .go({ limit: params?.limit || 20, cursor: params?.nextToken });
+  const query = EventArtistEntity.query.byArtist({ artistId });
+  const now = new Date().toISOString();
+  const options = { limit: params?.limit || 20, cursor: params?.nextToken };
+
+  const result = await (params?.when === 'upcoming'
+    ? query.gt({ eventStartDateTime: now }).go(options)
+    : params?.when === 'past'
+      ? query.lt({ eventStartDateTime: now }).go({ ...options, order: 'desc' })
+      : query.go(options));
 
   return {
     items: result.data || [],

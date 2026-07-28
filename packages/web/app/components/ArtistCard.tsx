@@ -1,17 +1,35 @@
+import { BadgeCheck } from 'lucide-react';
 import { Link } from 'react-router';
 import { Card, CardHeader, CardTitle } from '~/components/ui/card';
+import { artistTagline } from '~/lib/artist-display';
 import { generateArtistUrl } from '~/lib/url-slug';
+import { capitalize } from '~/lib/utils';
 
 interface ArtistCardProps {
   artist: {
     id: string;
     name: string;
     title?: string | null;
+    photoUrl?: string | null;
+    instrument?: string | null;
+    city?: string | null;
+    claimStatus?: string | null;
     specialisations?: unknown;
   };
 }
 
-function ArtistAvatar({ name }: { name: string }) {
+function ArtistAvatar({ photoUrl, name }: { photoUrl?: string | null; name: string }) {
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt=""
+        loading="lazy"
+        className="h-10 w-10 shrink-0 rounded-full border object-cover"
+      />
+    );
+  }
+
   const initials = name
     .split(' ')
     .slice(0, 2)
@@ -32,7 +50,12 @@ export function ArtistCard({ artist }: ArtistCardProps) {
   const specs = Array.isArray(artist.specialisations)
     ? (artist.specialisations as string[]).filter(Boolean)
     : [];
-  const primaryRole = specs[0];
+
+  // Instrument and city are what the profile hero leads with, so the card leads with them
+  // too, through the same helper. Specialisations are the fallback for the many records
+  // nobody has enriched yet, and for search results, which come from the Fuse index and
+  // carry a name and nothing else.
+  const line = artistTagline(artist) ?? (specs[0] ? capitalize(specs[0]) : undefined);
 
   return (
     <Link
@@ -43,15 +66,19 @@ export function ArtistCard({ artist }: ArtistCardProps) {
       <Card className="h-full transition-shadow duration-150 group-hover:shadow-md group-hover:border-primary/40">
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
-            <ArtistAvatar name={artist.name} />
+            <ArtistAvatar photoUrl={artist.photoUrl} name={artist.name} />
             <div className="min-w-0">
               <CardTitle className="text-lg group-hover:underline leading-snug">
                 {artist.title ? `${artist.title} ` : ''}
                 {artist.name}
+                {artist.claimStatus === 'verified' && (
+                  <BadgeCheck
+                    className="ml-1 inline-block h-4 w-4 align-text-bottom text-primary"
+                    aria-label="Verified artist"
+                  />
+                )}
               </CardTitle>
-              {primaryRole && (
-                <p className="text-sm text-muted-foreground capitalize mt-0.5">{primaryRole}</p>
-              )}
+              {line && <p className="text-sm text-muted-foreground mt-0.5 truncate">{line}</p>}
             </div>
           </div>
         </CardHeader>

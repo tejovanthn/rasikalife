@@ -352,6 +352,38 @@ describe('Event', () => {
       expect(EventArtistEntity.query.byArtist).toHaveBeenCalledWith({ artistId: 'artist-1' });
       expect(result.items).toEqual(mockEventArtists);
     });
+
+    // The GSI sorts ascending by date, so without a bound the profile teaser showed an
+    // artist's oldest concerts and never their next one. These two guard the split.
+    it('reads forward from now for upcoming events', async () => {
+      const { EventArtistEntity } = await import('../event-artist/entity');
+      const go = vi.fn().mockResolvedValue({ data: [], cursor: null });
+      const gt = vi.fn().mockReturnValue({ go });
+      const lt = vi.fn();
+      vi.mocked(EventArtistEntity.query.byArtist).mockReturnValue({ gt, lt } as any);
+
+      await listEventsByArtist('artist-1', { when: 'upcoming', limit: 4 });
+
+      expect(gt).toHaveBeenCalledWith({ eventStartDateTime: expect.any(String) });
+      expect(lt).not.toHaveBeenCalled();
+      expect(go).toHaveBeenCalledWith(expect.objectContaining({ limit: 4 }));
+      // Ascending, so the next concert comes first rather than the furthest-off one.
+      expect(go.mock.calls[0][0]).not.toHaveProperty('order');
+    });
+
+    it('reads backward from now for past events', async () => {
+      const { EventArtistEntity } = await import('../event-artist/entity');
+      const go = vi.fn().mockResolvedValue({ data: [], cursor: null });
+      const lt = vi.fn().mockReturnValue({ go });
+      const gt = vi.fn();
+      vi.mocked(EventArtistEntity.query.byArtist).mockReturnValue({ gt, lt } as any);
+
+      await listEventsByArtist('artist-1', { when: 'past', limit: 6 });
+
+      expect(lt).toHaveBeenCalledWith({ eventStartDateTime: expect.any(String) });
+      expect(gt).not.toHaveBeenCalled();
+      expect(go).toHaveBeenCalledWith(expect.objectContaining({ order: 'desc', limit: 6 }));
+    });
   });
 
   describe('approveEvent', () => {

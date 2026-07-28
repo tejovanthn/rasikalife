@@ -1647,6 +1647,76 @@ type Performance = {
 type PerformanceResult = { success: true; performance: Performance } | { error: string };
 type CreatePerformanceResult = { success: true; created: Performance } | { error: string };
 
+// One row of the performances list: the feature toggle, plus a rank box that appears once
+// the row is featured. Rank orders the profile's notable-performances teaser — lowest
+// first, unranked entries after the ranked ones, most recent first within a tie. Leaving
+// every row unranked is the ordinary case and gives a most-recent-first list.
+//
+// It is its own component so the input can hold a draft value without re-rendering the
+// whole list on every keystroke, and so the effect that re-syncs it after a write watches
+// one row's rank rather than the array.
+function PerformanceRow({
+  performance,
+  disabled,
+  onToggle,
+  onRank,
+}: {
+  performance: Performance;
+  disabled: boolean;
+  onToggle: () => void;
+  onRank: (rank: string) => void;
+}) {
+  const storedRank = performance.featureRank?.toString() ?? '';
+  const [rank, setRank] = useState(storedRank);
+
+  // The server is the authority on what stuck: re-sync when it echoes a different value,
+  // including the clear that unfeaturing performs.
+  useEffect(() => {
+    setRank(storedRank);
+  }, [storedRank]);
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm">
+      <div className="min-w-0">
+        <div className="truncate">{performance.eventTitle}</div>
+        <div className="text-xs text-muted-foreground">
+          {performance.eventStartDateTime.slice(0, 10)}
+          {performance.role ? ` — ${performance.role}` : ''}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        {performance.isFeatured && (
+          <Input
+            type="number"
+            min="1"
+            inputMode="numeric"
+            aria-label={`Rank for ${performance.eventTitle}`}
+            placeholder="Rank"
+            className="h-8 w-20"
+            value={rank}
+            disabled={disabled}
+            onChange={e => setRank(e.target.value)}
+            // Commit on blur rather than per keystroke: typing "12" would otherwise write
+            // rank 1 first, reordering the teaser under the moderator's hands.
+            onBlur={() => {
+              if (rank.trim() !== storedRank) onRank(rank.trim());
+            }}
+          />
+        )}
+        <Button
+          type="button"
+          variant={performance.isFeatured ? 'default' : 'outline'}
+          size="sm"
+          disabled={disabled}
+          onClick={onToggle}
+        >
+          {performance.isFeatured ? 'Featured' : 'Feature'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // Toggles the per-artist featured flag on events the artist already performed
 // at, and — via the create form below — records a known performance the poster
 // pipeline never captured, tagging this artist. Both write immediately.
@@ -1703,36 +1773,27 @@ function PerformancesEditor({
         <p className="text-xs text-muted-foreground">No events yet — add one below.</p>
       ) : (
         performances.map(performance => (
-          <div
+          <PerformanceRow
             key={performance.eventId}
-            className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
-          >
-            <div className="min-w-0">
-              <div className="truncate">{performance.eventTitle}</div>
-              <div className="text-xs text-muted-foreground">
-                {performance.eventStartDateTime.slice(0, 10)}
-                {performance.role ? ` — ${performance.role}` : ''}
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant={performance.isFeatured ? 'default' : 'outline'}
-              size="sm"
-              disabled={featureFetcher.state !== 'idle'}
-              onClick={() =>
-                featureFetcher.submit(
-                  {
-                    eventId: performance.eventId,
-                    artistId,
-                    featured: performance.isFeatured ? 'false' : 'true',
-                  },
-                  { method: 'post', action: '/api/artist/performance' }
-                )
-              }
-            >
-              {performance.isFeatured ? 'Featured' : 'Feature'}
-            </Button>
-          </div>
+            performance={performance}
+            disabled={featureFetcher.state !== 'idle'}
+            onToggle={() =>
+              featureFetcher.submit(
+                {
+                  eventId: performance.eventId,
+                  artistId,
+                  featured: performance.isFeatured ? 'false' : 'true',
+                },
+                { method: 'post', action: '/api/artist/performance' }
+              )
+            }
+            onRank={rank =>
+              featureFetcher.submit(
+                { eventId: performance.eventId, artistId, featured: 'true', featureRank: rank },
+                { method: 'post', action: '/api/artist/performance' }
+              )
+            }
+          />
         ))
       )}
 

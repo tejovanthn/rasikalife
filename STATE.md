@@ -6,9 +6,21 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step: phase 9 — polish.** Phases 7 and 8 are complete and were reviewed together on Opus (2026-07-28); every must-fix and should-fix is acted on. See "From the phases 7–8 review" below for what was found and what was deliberately deferred.
+**Next step: review phase 9, then deploy.** Every phase of the redesign is now built. Phase 9 landed 2026-07-28 and has not had a machine review; the pre-deploy list below is the gate on shipping.
 
-**Nothing in phases 7–8 has run against a deploy.** `sst` does not run in this environment, so the composited OG card, the gallery reorder, the login-time invite redemption, the claims queue and the claim form have never executed for real. Highest-risk items to check on the first deploy, in order: (1) a Google sign-in still succeeds — the new `verified_email` gate can refuse a login that previously worked; (2) an invite actually redeems on login; (3) the OG card renders with a photo. The cache-key change also orphans every existing `og-images/**` object, which is harmless but reclaimable.
+**Nothing in phases 7–9 has run against a deploy.** `sst` does not run in this environment, so the composited OG card, the gallery reorder, the login-time invite redemption, the claims queue, the claim form and the new events split have never executed for real. Highest-risk items to check on the first deploy, in order: (1) a Google sign-in still succeeds — the new `verified_email` gate can refuse a login that previously worked; (2) an invite actually redeems on login; (3) the OG card renders with a photo. The cache-key change also orphans every existing `og-images/**` object, which is harmless but reclaimable.
+
+### Phase 9 — polish (2026-07-28)
+
+Scope was settled with the repo owner: surface instrument/city in the UI (not a derived-data sweep), restyle the events block, add the deferred rank input.
+
+- **The events teaser showed an artist's *oldest* concerts.** `byArtist` sorts ascending by date, so `limit: 6` returned six rows from years ago and never the date the artist is about to play — on the profile and on `/artists/:id/events` alike. `listEventsByArtist` takes `when: 'upcoming' | 'past'` now (forward from now, or backward from it), the router passes it through, and omitting it keeps the whole-run behaviour the wizard's performances list wants. The profile renders one Events section as Upcoming → Notable performances → Recent, with an upcoming date beating a featured one on the overlap. The subroute gives past events the pagination and shows upcoming whole, on the first page only.
+- **The artist card ignored two phases of work.** It rendered initials and `specialisations[0]` — no phase-7 photo, no phase-1 instrument/city. Now photo, "instrument · city", and the verified tick, on `/artists` and the home page. Search results still fall back to name + specialisation: the Fuse index carries `{id, name, description}` per §5, and widening `SearchDocument` for one entity type would bloat the shared blob for all eight.
+- **The profile hero rendered the city twice** for anyone with a city and no instrument — once in the joined line, once in the `MapPin` paragraph under it. Both callers now go through one `artistTagline` helper (`app/lib/artist-display.ts`, tested).
+- **`setEventArtistFeatured` never cleared `featureRank`**, despite its own comment claiming it did. It passed `featureRank: undefined` to `.set()`, and ElectroDB drops undefined values out of the UpdateExpression — verified against the real entity with `.params()`, where the attribute was simply absent. So an unfeatured row kept a stale rank that would silently reorder the teaser if it were ever featured again. It is an explicit `.remove(['featureRank'])` now. **The old test was the bug's alibi**, asserting the `.set()` call shape rather than the effect — the same shape of mistake the phase-7 reorder test made. Three tests replace it, including one pinning that a rank of `0` is kept rather than read as absent.
+- The rank input the phase-5 recognition slice dropped is back: a per-row box that appears once a row is featured, committing on blur rather than per keystroke (typing "12" would otherwise write rank 1 first and reorder the list under the moderator's hands). `api.artist.performance` reads it with `readOptionalInt` — its `parseInt` read `'2.7'` as 2 — and rejects a sub-1 rank with a readable message rather than letting a stringified Zod issues array reach the toast.
+
+**Deferred, with reasons:** search results still show the plain card (see above). The per-row rank input shares one fetcher with the feature toggles, so an in-flight write disables every control in the list — the same deferral phase 7 made for the gallery grid, and it should be closed for both at once or neither. Nothing derives instrument or city from the events an artist has played; that sweep was considered and deliberately not built.
 
 ### From the phases 7–8 review (2026-07-28)
 
@@ -137,7 +149,7 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | done (reviewed 2026-07-27) |
 | 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | done (reviewed 2026-07-28) |
-| 9 | Polish | not started |
+| 9 | Polish: events split, instrument/city on cards, rank input | done (unreviewed) |
 
 ### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
 
@@ -199,7 +211,7 @@ Still open — one focused follow-up, its own review:
 
 (The recognition and prefill DHH reviews have both been run; findings applied. These are the leftover UI-polish items only.)
 
-- **Per-performance featureRank input was dropped** for reliability — featuring gives an unranked highlight, ordered most-recent-first off the denormalized `featuredPerformances` (the `getFeaturedEventsByArtist` this used to name was deleted as dead in phase 6). The setter and schema still support a rank; the UI doesn't expose it. Add a rank input in phase 9.
+- ~~**Per-performance featureRank input was dropped**~~ — closed in phase 9: a per-row box that appears once a row is featured, committing on blur. Building it surfaced that the setter had never cleared a rank; see the phase 9 notes.
 - **Awards use a plain name input, not a picker.** `award.resolveOrCreate` now matches case-insensitively, so it is safe find-or-create; a typeahead would only aid discovery. (Note: the `award.searchLive` endpoint and `/api/search/award-live` route were deleted in the whole-phase review as dead code — a future picker would re-add them.)
 - ~~Gallery reorder is a future item~~ — closed in phase 7: move-up/move-down buttons (not drag, see §5.4e's note), renumbering by position in one request, and new photos append past the highest `order` rather than by count.
 
@@ -264,10 +276,10 @@ Raised, judged real, not yet done:
 
 ### Known baselines (so regressions are visible)
 
-Current at end of phase 8. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
+Current at end of phase 9. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **740 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
-- `packages/web`: **32 web-own typecheck errors**; **89 tests pass** (65 → 89 across phase 7). The 32 was written as "≤30" through phase 6 and was stale — the phase-7 review measured the identical count at `e49f666db`, so it is a pre-existing figure, not drift. None of the 32 are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
+- `packages/core`: **744 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 → 744 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/web`: **30 web-own typecheck errors**; **93 tests pass** (65 → 89 across phase 7, → 93 in phase 9). The count was 32 at the end of phase 8 and phase 9 removed two along with the duplicated hero city block. None are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
 - `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
 - Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.

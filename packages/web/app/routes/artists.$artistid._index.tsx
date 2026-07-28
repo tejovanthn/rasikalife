@@ -1,7 +1,7 @@
 import type { Artist } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { Award, BadgeCheck, Calendar, ExternalLink, MapPin, Users } from 'lucide-react';
+import { Award, BadgeCheck, Calendar, ExternalLink, Users } from 'lucide-react';
 import {
   type ActionFunctionArgs,
   type HeadersFunction,
@@ -23,6 +23,7 @@ import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
+import { artistTagline } from '~/lib/artist-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { artistOgImageUrl } from '~/lib/og';
@@ -77,10 +78,14 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, events, awards, membership, gallery, activeEdit, myClaim] =
+    const [compositions, upcoming, past, awards, membership, gallery, activeEdit, myClaim] =
       await Promise.all([
         client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
-        client.event.byArtist.query({ artistId: artist.id, limit: 6 }),
+        // Two sides of the same partition rather than one unbounded read: the GSI sorts
+        // ascending, so a single query would hand back the artist's oldest concerts and
+        // never the date they are about to play.
+        client.event.byArtist.query({ artistId: artist.id, limit: 4, when: 'upcoming' }),
+        client.event.byArtist.query({ artistId: artist.id, limit: 6, when: 'past' }),
         client.artist.listAwards.query({ artistId: artist.id }),
         // A group lists its members; an individual lists the groups it performs in.
         // Only one direction is ever rendered, so only one is fetched.
@@ -124,7 +129,8 @@ export async function loader({
         artist,
         compositions: compositions.items,
         hasMoreCompositions: compositions.hasMore,
-        artistEvents: events.items,
+        upcomingEvents: upcoming.items,
+        pastEvents: past.items,
         featured,
         awards,
         membership,
@@ -367,7 +373,8 @@ export default function ArtistDetails() {
     artist,
     compositions,
     hasMoreCompositions,
-    artistEvents,
+    upcomingEvents,
+    pastEvents,
     featured,
     awards,
     membership,
@@ -384,7 +391,10 @@ export default function ArtistDetails() {
   const shareUrl = `https://rasika.life${artistUrl}`;
 
   const instrument = artist.instrument?.trim();
-  const city = artist.city?.trim();
+  // The one "instrument · city" line, shared with the artist card. It used to be built
+  // inline here, and the city then rendered a second time in its own paragraph below —
+  // so an artist with a city but no instrument saw it twice.
+  const tagline = artistTagline(artist);
   const subtitle = instrument
     ? capitalize(instrument)
     : isGroup
@@ -404,10 +414,14 @@ export default function ArtistDetails() {
     .slice(0, 12);
   const galleryFeatured = galleryPhotos.filter(p => p.featured).slice(0, 6);
 
-  // A featured performance also appears in the general events list; drop the overlap
-  // so the same concert doesn't render twice.
-  const featuredIds = new Set(featured.map(f => f.eventId));
-  const otherEvents = artistEvents.filter(e => !featuredIds.has(e.eventId));
+  // A featured performance can also turn up in the chronological lists; drop the overlap
+  // so the same concert never renders twice. An upcoming date wins the tie — "they play
+  // here next week" is worth more to a reader than "this was a highlight".
+  const upcomingIds = new Set(upcomingEvents.map(e => e.eventId));
+  const notable = featured.filter(f => !upcomingIds.has(f.eventId));
+  const notableIds = new Set(notable.map(f => f.eventId));
+  const recentEvents = pastEvents.filter(e => !notableIds.has(e.eventId));
+  const hasEvents = upcomingEvents.length > 0 || notable.length > 0 || recentEvents.length > 0;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -447,16 +461,7 @@ export default function ArtistDetails() {
             </Badge>
           )}
           {artist.title && <p className="text-sm text-muted-foreground">{artist.title}</p>}
-          <p className="text-lg font-medium">
-            {[instrument ? capitalize(instrument) : null, city].filter(Boolean).join(' · ') ||
-              subtitle}
-          </p>
-          {city && !instrument && (
-            <p className="flex items-center gap-1 text-sm text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5" />
-              {city}
-            </p>
-          )}
+          <p className="text-lg font-medium">{tagline ?? subtitle}</p>
           {(socialLinks.length > 0 || artist.website) && (
             <div className="mt-3 flex flex-wrap gap-3">
               {artist.website && (
@@ -631,40 +636,69 @@ export default function ArtistDetails() {
         </section>
       )}
 
-      {/* Notable performances — featured past */}
-      {featured.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-4 text-xl font-semibold">Notable performances</h2>
-          <div className="space-y-3">
-            {featured.map(f => (
-              <EventRow
-                key={f.eventId}
-                eventId={f.eventId}
-                eventTitle={f.eventTitle}
-                eventStartDateTime={f.eventStartDateTime}
-                role={f.role}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Events */}
-      {otherEvents.length > 0 && (
+      {/* Events — upcoming first, then curated highlights, then recent (§6) */}
+      {hasEvents && (
         <section className="mt-8">
           <h2 className="mb-4 text-xl font-semibold">Events</h2>
-          <div className="space-y-3">
-            {otherEvents.map(event => (
-              <EventRow
-                key={event.eventId}
-                eventId={event.eventId}
-                eventTitle={event.eventTitle}
-                eventStartDateTime={event.eventStartDateTime}
-                role={event.role}
-              />
-            ))}
-          </div>
-          <Link to={`${artistUrl}/events`} className="mt-3 inline-block text-sm text-primary">
+
+          {upcomingEvents.length > 0 && (
+            <div className="mb-6">
+              <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Upcoming
+              </h3>
+              <div className="space-y-3">
+                {upcomingEvents.map(event => (
+                  <EventRow
+                    key={event.eventId}
+                    eventId={event.eventId}
+                    eventTitle={event.eventTitle}
+                    eventStartDateTime={event.eventStartDateTime}
+                    role={event.role}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {notable.length > 0 && (
+            <div className="mb-6">
+              <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Notable performances
+              </h3>
+              <div className="space-y-3">
+                {notable.map(f => (
+                  <EventRow
+                    key={f.eventId}
+                    eventId={f.eventId}
+                    eventTitle={f.eventTitle}
+                    eventStartDateTime={f.eventStartDateTime}
+                    role={f.role}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recentEvents.length > 0 && (
+            <div>
+              <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                Recent
+              </h3>
+              <div className="space-y-3">
+                {recentEvents.map(event => (
+                  <EventRow
+                    key={event.eventId}
+                    eventId={event.eventId}
+                    eventTitle={event.eventTitle}
+                    eventStartDateTime={event.eventStartDateTime}
+                    role={event.role}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Link to={`${artistUrl}/events`} className="mt-4 inline-block text-sm text-primary">
             View all events &rarr;
           </Link>
         </section>

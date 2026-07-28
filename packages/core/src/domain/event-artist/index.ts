@@ -91,8 +91,15 @@ export function sortFeaturedPerformances<
  * for the vocalist and an ordinary night for the accompanist, so the flag belongs to the
  * junction row, not the Event.
  *
- * Clearing `isFeatured` also clears `featureRank`, so an unfeatured row cannot keep a
- * rank that would silently reorder things if it were featured again.
+ * A rank only exists alongside the flag, so it is removed whenever the row is unfeatured
+ * or featured without one — otherwise an unfeatured row keeps a rank that silently
+ * reorders the teaser if it is ever featured again, and a moderator emptying the rank box
+ * has no way to take a rank back off.
+ *
+ * That removal has to be an explicit `.remove()`. ElectroDB drops undefined values out of
+ * `.set()` entirely — checked against this entity with `.params()`, where `featureRank`
+ * was absent from the UpdateExpression rather than being cleared — so the earlier
+ * `featureRank: featured ? featureRank : undefined` was a no-op in every clearing case.
  */
 export async function setEventArtistFeatured(
   eventId: string,
@@ -100,9 +107,14 @@ export async function setEventArtistFeatured(
   featured: boolean,
   featureRank?: number
 ): Promise<EventArtist> {
-  const result = await EventArtistEntity.patch({ eventId, artistId })
-    .set({ isFeatured: featured, featureRank: featured ? featureRank : undefined })
-    .go({ response: 'all_new' });
+  const keepsRank = featured && featureRank !== undefined;
+  const patch = EventArtistEntity.patch({ eventId, artistId }).set({
+    isFeatured: featured,
+    ...(keepsRank ? { featureRank } : {}),
+  });
+  const result = await (keepsRank ? patch : patch.remove(['featureRank'])).go({
+    response: 'all_new',
+  });
 
   const row = result.data as EventArtist;
 
