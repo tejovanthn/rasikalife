@@ -622,6 +622,9 @@ export default function EditEvent() {
                     }
                   }}
                   placeholder="Add tag and press Enter..."
+                  // Sits under the section's "Tags" Label, which labels the chip list, not this
+                  // entry field — see DESIGN.md density rule.
+                  aria-label="Add tag"
                 />
                 <Button
                   type="button"

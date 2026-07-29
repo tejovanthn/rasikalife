@@ -338,9 +338,7 @@ function SuggestionChips({
           type="button"
           onClick={() => onSelect(s)}
           className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors hover:bg-accent ${
-            s.score === 0
-              ? 'border-success/40 bg-success/10'
-              : 'border-border bg-muted'
+            s.score === 0 ? 'border-success/40 bg-success/10' : 'border-border bg-muted'
           }`}
         >
           {s.score === 0 && <Check className="h-3 w-3 text-success" />}
@@ -502,16 +500,18 @@ function FestivalStep({
         )}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Festival Name</Label>
+            <Label htmlFor="festival-name">Festival Name</Label>
             <Input
+              id="festival-name"
               value={festival.name}
               onChange={e => onChange({ ...festival, name: e.target.value })}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label>Description</Label>
+            <Label htmlFor="festival-description">Description</Label>
             <Textarea
+              id="festival-description"
               value={festival.description || ''}
               onChange={e => onChange({ ...festival, description: e.target.value || undefined })}
               rows={3}
@@ -519,16 +519,18 @@ function FestivalStep({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Start Date</Label>
+              <Label htmlFor="festival-start-date">Start Date</Label>
               <Input
+                id="festival-start-date"
                 type="date"
                 value={festival.startDate?.split('T')[0] || ''}
                 onChange={e => onChange({ ...festival, startDate: e.target.value })}
               />
             </div>
             <div className="space-y-2">
-              <Label>End Date</Label>
+              <Label htmlFor="festival-end-date">End Date</Label>
               <Input
+                id="festival-end-date"
                 type="date"
                 value={festival.endDate?.split('T')[0] || ''}
                 onChange={e => onChange({ ...festival, endDate: e.target.value })}
@@ -542,6 +544,9 @@ function FestivalStep({
         <Label>Organiser</Label>
         <div className="border rounded-lg p-3 space-y-2">
           <Input
+            // "Organiser" Label above covers this whole block, including the SearchSelect
+            // below with its own "Link organiser" label — see DESIGN.md density rule.
+            aria-label="Organiser name"
             value={festival.organiser?.name || ''}
             onChange={e =>
               onChange({
