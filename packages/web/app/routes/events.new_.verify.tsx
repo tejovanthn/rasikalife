@@ -296,7 +296,9 @@ function TagInput({
         ))}
       </div>
       <div className="flex gap-2">
+        {/* The section's Label names the tag list; this field is the entry box beside it. */}
         <Input
+          aria-label="Add tag"
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
           onKeyDown={e => {
@@ -375,7 +377,10 @@ function PhonesInput({
     <div className="space-y-2">
       {phones.map((phone, i) => (
         <div key={`phone-${i}`} className="flex gap-2">
+          {/* Repeated row under the section's own "Contact Phone(s)" Label; numbered so the
+              rows are distinguishable when read out one after another. */}
           <Input
+            aria-label={`Contact phone ${i + 1}`}
             value={phone}
             onChange={e => commit(phones.map((p, j) => (j === i ? e.target.value : p)))}
             placeholder="+91 98765 43210"
@@ -423,17 +428,22 @@ function ArtistRow({
     <div className="border rounded-lg p-3 space-y-2">
       <div className="flex items-start gap-2">
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-[5rem_1fr_8rem] gap-2">
+          {/* A three-column repeated row. A visible Label per cell would triple the height of
+              every artist entry, so these carry aria-label instead (DESIGN.md density rule). */}
           <Input
+            aria-label="Artist title or honorific"
             value={artist.title || ''}
             onChange={e => onChange({ ...artist, title: e.target.value || undefined })}
             placeholder="Title"
           />
           <Input
+            aria-label="Artist name"
             value={artist.name}
             onChange={e => onChange({ ...artist, name: e.target.value })}
             placeholder="Artist name"
           />
           <Input
+            aria-label="Artist role"
             value={artist.role || ''}
             onChange={e => onChange({ ...artist, role: e.target.value || undefined })}
             placeholder="Role"
@@ -632,8 +642,9 @@ function EventStep({
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label>Event Title</Label>
+        <Label htmlFor="event-title">Event Title</Label>
         <Input
+          id="event-title"
           value={event.title}
           onChange={e => onChange({ ...event, title: e.target.value })}
           required
@@ -641,8 +652,9 @@ function EventStep({
       </div>
 
       <div className="space-y-2">
-        <Label>Description</Label>
+        <Label htmlFor="event-description">Description</Label>
         <Textarea
+          id="event-description"
           value={event.description || ''}
           onChange={e => onChange({ ...event, description: e.target.value || undefined })}
           rows={2}
@@ -651,16 +663,18 @@ function EventStep({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Start</Label>
+          <Label htmlFor="event-start">Start</Label>
           <Input
+            id="event-start"
             type="datetime-local"
             value={event.startDateTime?.slice(0, 16) || ''}
             onChange={e => onChange({ ...event, startDateTime: e.target.value })}
           />
         </div>
         <div className="space-y-2">
-          <Label>End</Label>
+          <Label htmlFor="event-end">End</Label>
           <Input
+            id="event-end"
             type="datetime-local"
             value={event.endDateTime?.slice(0, 16) || ''}
             onChange={e => onChange({ ...event, endDateTime: e.target.value || undefined })}
@@ -669,14 +683,16 @@ function EventStep({
       </div>
 
       <div className="space-y-2">
-        <Label>Entry Type</Label>
+        <Label htmlFor="event-entry-type">Entry Type</Label>
         <Select
           value={event.entryType}
           onValueChange={value =>
             onChange({ ...event, entryType: value as DraftEvent['entryType'] })
           }
         >
-          <SelectTrigger>
+          {/* The id goes on the trigger, not the Radix root: the trigger is the focusable
+              element the Label needs to point at. */}
+          <SelectTrigger id="event-entry-type">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -692,8 +708,11 @@ function EventStep({
           <Label>Ticketing Details</Label>
           <div className="border rounded-lg p-3 space-y-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Booking URL</Label>
+              <Label className="text-xs text-muted-foreground" htmlFor="ticketing-url">
+                Booking URL
+              </Label>
               <Input
+                id="ticketing-url"
                 type="url"
                 value={event.ticketing?.url || ''}
                 onChange={e =>
@@ -719,8 +738,11 @@ function EventStep({
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Contact Email</Label>
+                <Label className="text-xs text-muted-foreground" htmlFor="ticketing-email">
+                  Contact Email
+                </Label>
                 <Input
+                  id="ticketing-email"
                   type="email"
                   value={event.ticketing?.contactEmail || ''}
                   onChange={e =>
@@ -736,8 +758,11 @@ function EventStep({
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Ticketing Partner</Label>
+              <Label className="text-xs text-muted-foreground" htmlFor="ticketing-partner">
+                Ticketing Partner
+              </Label>
               <Input
+                id="ticketing-partner"
                 value={event.ticketing?.partnerName || ''}
                 onChange={e =>
                   onChange({
@@ -758,7 +783,9 @@ function EventStep({
       <div className="space-y-2">
         <Label>Venue</Label>
         <div className="border rounded-lg p-3 space-y-2">
+          {/* The Venue Label names this whole block, which also holds a SearchSelect. */}
           <Input
+            aria-label="Venue name"
             value={event.venue?.name || ''}
             onChange={e =>
               onChange({
@@ -813,7 +840,9 @@ function EventStep({
       <div className="space-y-2">
         <Label>Organiser</Label>
         <div className="border rounded-lg p-3 space-y-2">
+          {/* The Organiser Label names this whole block, which also holds a SearchSelect. */}
           <Input
+            aria-label="Organiser name"
             value={event.organiser?.name || ''}
             onChange={e =>
               onChange({

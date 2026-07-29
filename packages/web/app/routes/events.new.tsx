@@ -378,7 +378,9 @@ export default function NewEvent() {
         onDragOver={handleDragOver}
         onClick={() => fileInputRef.current?.click()}
       >
+        {/* Visually replaced by the drop zone above; the label is the only thing naming it. */}
         <input
+          aria-label="Upload event posters"
           ref={fileInputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -554,6 +556,7 @@ export default function NewEvent() {
 
         <div className="mt-4 flex gap-2">
           <input
+            aria-label="Instagram post URL"
             type="url"
             placeholder="https://www.instagram.com/p/..."
             value={urlInput}

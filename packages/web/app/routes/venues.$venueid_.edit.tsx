@@ -534,6 +534,8 @@ export default function EditVenue() {
                   )}
                   {socialLinks.map((link, i) => (
                     <div key={i} className="flex items-center gap-2">
+                      {/* Repeated row; numbered so the entries are distinguishable when
+                          read out one after another. */}
                       <Select
                         name="socialLinkPlatform"
                         value={link.platform}
@@ -543,7 +545,7 @@ export default function EditVenue() {
                           )
                         }
                       >
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger aria-label={`Social platform ${i + 1}`} className="flex-1">
                           <SelectValue placeholder="Select platform..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -555,6 +557,7 @@ export default function EditVenue() {
                         </SelectContent>
                       </Select>
                       <Input
+                        aria-label={`Social link URL ${i + 1}`}
                         name="socialLinkUrl"
                         placeholder="https://..."
                         type="url"

@@ -107,8 +107,14 @@ export default function SetlistEventOverride() {
 
               <div className="grid grid-cols-2 gap-2 text-xs pl-8">
                 <div>
-                  <label className="block text-muted-foreground mb-0.5">Composition ID</label>
+                  <label
+                    htmlFor={`compositionId-${row.order}`}
+                    className="block text-muted-foreground mb-0.5"
+                  >
+                    Composition ID
+                  </label>
                   <input
+                    id={`compositionId-${row.order}`}
                     type="text"
                     name="compositionId"
                     defaultValue={row.compositionId ?? ''}
@@ -117,8 +123,14 @@ export default function SetlistEventOverride() {
                   />
                 </div>
                 <div>
-                  <label className="block text-muted-foreground mb-0.5">Title</label>
+                  <label
+                    htmlFor={`compositionTitle-${row.order}`}
+                    className="block text-muted-foreground mb-0.5"
+                  >
+                    Title
+                  </label>
                   <input
+                    id={`compositionTitle-${row.order}`}
                     type="text"
                     name="compositionTitle"
                     defaultValue={row.compositionTitle}
@@ -126,8 +138,14 @@ export default function SetlistEventOverride() {
                   />
                 </div>
                 <div>
-                  <label className="block text-muted-foreground mb-0.5">Raga name</label>
+                  <label
+                    htmlFor={`ragaName-${row.order}`}
+                    className="block text-muted-foreground mb-0.5"
+                  >
+                    Raga name
+                  </label>
                   <input
+                    id={`ragaName-${row.order}`}
                     type="text"
                     name="ragaName"
                     defaultValue={row.ragaName ?? ''}
@@ -135,8 +153,14 @@ export default function SetlistEventOverride() {
                   />
                 </div>
                 <div>
-                  <label className="block text-muted-foreground mb-0.5">Raga ID</label>
+                  <label
+                    htmlFor={`ragaId-${row.order}`}
+                    className="block text-muted-foreground mb-0.5"
+                  >
+                    Raga ID
+                  </label>
                   <input
+                    id={`ragaId-${row.order}`}
                     type="text"
                     name="ragaId"
                     defaultValue={row.ragaId ?? ''}
@@ -144,8 +168,14 @@ export default function SetlistEventOverride() {
                   />
                 </div>
                 <div>
-                  <label className="block text-muted-foreground mb-0.5">Type</label>
+                  <label
+                    htmlFor={`compositionType-${row.order}`}
+                    className="block text-muted-foreground mb-0.5"
+                  >
+                    Type
+                  </label>
                   <input
+                    id={`compositionType-${row.order}`}
                     type="text"
                     name="compositionType"
                     defaultValue={row.compositionType ?? ''}

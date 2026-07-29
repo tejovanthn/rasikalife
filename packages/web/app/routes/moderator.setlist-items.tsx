@@ -107,7 +107,9 @@ export default function SetlistItemsModeration() {
                 <input type="hidden" name="userId" value={item.userId} />
                 <input type="hidden" name="eventId" value={item.eventId} />
                 <input type="hidden" name="order" value={item.order} />
+                {/* Inline single-row form; a visible label would break the flex row. */}
                 <input
+                  aria-label="Composition ID to link"
                   type="text"
                   name="compositionId"
                   placeholder="Composition ID"
@@ -125,6 +127,7 @@ export default function SetlistItemsModeration() {
                 <input type="hidden" name="eventId" value={item.eventId} />
                 <input type="hidden" name="order" value={item.order} />
                 <select
+                  aria-label="Rejection reason"
                   name="reason"
                   defaultValue={REJECT_REASONS[0]}
                   className="px-2 py-1 text-xs rounded border border-input bg-background"

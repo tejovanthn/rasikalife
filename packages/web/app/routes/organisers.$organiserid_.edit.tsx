@@ -8,8 +8,8 @@ import { Form, data, redirect, useActionData, useLoaderData, useNavigation } fro
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
-import { EditDisclaimer } from '~/components/shared';
 import { ImageUpload } from '~/components/ImageUpload';
+import { EditDisclaimer } from '~/components/shared';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
@@ -531,6 +531,8 @@ export default function EditOrganiser() {
                   )}
                   {socialLinks.map((link, i) => (
                     <div key={i} className="flex items-center gap-2">
+                      {/* Repeated row; numbered so the entries are distinguishable when
+                          read out one after another. */}
                       <Select
                         name="socialLinkPlatform"
                         value={link.platform}
@@ -540,7 +542,7 @@ export default function EditOrganiser() {
                           )
                         }
                       >
-                        <SelectTrigger className="flex-1">
+                        <SelectTrigger aria-label={`Social platform ${i + 1}`} className="flex-1">
                           <SelectValue placeholder="Select platform..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -552,6 +554,7 @@ export default function EditOrganiser() {
                         </SelectContent>
                       </Select>
                       <Input
+                        aria-label={`Social link URL ${i + 1}`}
                         name="socialLinkUrl"
                         placeholder="https://..."
                         type="url"

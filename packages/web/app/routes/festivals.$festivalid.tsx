@@ -228,7 +228,9 @@ function PosterUploader() {
   return (
     <div className="border rounded-lg p-4 space-y-3 mt-4">
       <h3 className="text-sm font-semibold">Replace Poster</h3>
+      {/* Named here rather than by the "Replace Poster" heading above it. */}
       <input
+        aria-label="Replace poster image"
         type="file"
         accept="image/*"
         onChange={e => setFile(e.target.files?.[0] ?? null)}

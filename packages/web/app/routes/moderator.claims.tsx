@@ -113,6 +113,7 @@ export default function ClaimsModeration() {
                 <input type="hidden" name="artistId" value={claim.artistId} />
                 <input type="hidden" name="userId" value={claim.userId ?? ''} />
                 <Input
+                  aria-label="How did you verify them?"
                   name="moderatorNote"
                   placeholder="How did you verify them?"
                   required

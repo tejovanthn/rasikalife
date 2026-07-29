@@ -1,5 +1,5 @@
-import type { ConcertLog } from '@rasika/core/domain/concert-log/client';
 import type { ConcertLogItem } from '@rasika/core/domain/concert-log-item/client';
+import type { ConcertLog } from '@rasika/core/domain/concert-log/client';
 import type { EventSetlist } from '@rasika/core/domain/event-setlist/client';
 import { ChevronLeft, Save } from 'lucide-react';
 import { useMemo } from 'react';
@@ -7,8 +7,8 @@ import { Form, Link, data, redirect, useLoaderData, useNavigation } from 'react-
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { SetlistEditor } from '~/components/concert-log/SetlistEditor';
-import { useLocalDraft } from '~/components/concert-log/useLocalDraft';
 import type { SetlistDraft, SetlistItemDraft } from '~/components/concert-log/types';
+import { useLocalDraft } from '~/components/concert-log/useLocalDraft';
 import { Button } from '~/components/ui/button';
 import { Textarea } from '~/components/ui/textarea';
 import { requireUser } from '~/lib/auth.server';
@@ -110,11 +110,17 @@ export default function ConcertSetlistEdit() {
 
   const serverDraft = useMemo(() => toSetlistDraft(log, userOwn), [log, userOwn]);
   const serverUpdatedAt = useMemo(() => {
-    const timestamps = [log?.updatedAt, ...userOwn.map(i => i.updatedAt)].filter(Boolean) as string[];
+    const timestamps = [log?.updatedAt, ...userOwn.map(i => i.updatedAt)].filter(
+      Boolean
+    ) as string[];
     return timestamps.sort().at(-1);
   }, [log, userOwn]);
 
-  const { draft, setDraft, clearDraft, savedAt } = useLocalDraft(eventId, serverDraft, serverUpdatedAt);
+  const { draft, setDraft, clearDraft, savedAt } = useLocalDraft(
+    eventId,
+    serverDraft,
+    serverUpdatedAt
+  );
 
   const navigation = useNavigation();
   const isSubmitting = navigation.state === 'submitting';
@@ -166,6 +172,7 @@ export default function ConcertSetlistEdit() {
         <section>
           <h2 className="text-sm font-semibold mb-3">Private notes</h2>
           <Textarea
+            aria-label="Private notes"
             name="notes"
             defaultValue={draft.notes}
             onChange={e => setDraft(prev => ({ ...prev, notes: e.target.value }))}
@@ -176,10 +183,7 @@ export default function ConcertSetlistEdit() {
           <p className="text-xs text-muted-foreground mt-1">Visible only to you.</p>
         </section>
 
-        <SetlistEditor
-          draft={draft}
-          onChange={updated => setDraft(updated)}
-        />
+        <SetlistEditor draft={draft} onChange={updated => setDraft(updated)} />
 
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="text-xs text-muted-foreground">
