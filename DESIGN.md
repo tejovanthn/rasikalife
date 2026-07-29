@@ -275,6 +275,7 @@ The signature component. A pale domain surface with its own deep ink, fully roun
 - **Don't** use `border-left` or `border-right` above 1px as a coloured accent stripe. Use a full border, a background tint, or nothing.
 - **Don't** use gradient text, `background-clip: text`, or decorative glassmorphism anywhere.
 - **Don't** repeat an identical card grid of icon plus heading plus generic line. Three cards saying "Browse other musicians" tell a reader nothing they could not guess.
+- **Don't** restate the global navigation at the foot of a page. Artists, Compositions, Ragas and Events are in the site header and again in the footer; a third copy in the content column is filler wearing a link's clothes. Compacting such a block is not the fix, removing it is.
 - **Don't** nest a card inside a card, ever.
 - **Don't** animate layout properties. `prefers-reduced-motion` is honoured globally and must stay that way.
 - **Don't** rely on hover for anything critical. Many readers are on a phone in a dark hall.

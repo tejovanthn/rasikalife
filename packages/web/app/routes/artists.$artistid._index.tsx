@@ -854,29 +854,6 @@ export default function ArtistDetails() {
               </ul>
             </section>
           )}
-
-          {/* Three identical cards carrying "Browse other musicians" and the like told a
-              reader nothing they could not guess, on a page otherwise dense with specific
-              links. A plain row of links keeps the navigation and drops the furniture. */}
-          <nav aria-label="Browse elsewhere" className="mt-10 border-t pt-6">
-            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-              <li>
-                <Link to="/artists" className="text-primary hover:underline">
-                  All artists
-                </Link>
-              </li>
-              <li>
-                <Link to="/carnatic/compositions" className="text-primary hover:underline">
-                  Compositions
-                </Link>
-              </li>
-              <li>
-                <Link to="/carnatic" className="text-primary hover:underline">
-                  Carnatic music
-                </Link>
-              </li>
-            </ul>
-          </nav>
         </div>
 
         {/* The factual record, Wikipedia-style. Vital statistics, then the single most recent
