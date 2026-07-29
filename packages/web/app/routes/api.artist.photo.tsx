@@ -3,6 +3,7 @@ import { data } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { requireModerator } from '~/lib/auth.server';
 import { readClearableField, readOptionalInt } from '~/lib/form-fields';
+import { GALLERY_EDITOR_PAGE_SIZE } from '~/lib/gallery-order';
 
 // Backs the moderator wizard's gallery. Photos are their own ArtistPhoto rows,
 // so add/update/delete land immediately. The image bytes are uploaded via the
@@ -115,7 +116,10 @@ export const action: ActionFunction = async ({ request }) => {
       console.error('Failed to reorder photo:', (result as PromiseRejectedResult).reason);
     }
 
-    const current = await serverClient.artist.listPhotos.query({ artistId });
+    const current = await serverClient.artist.listPhotos.query({
+      artistId,
+      limit: GALLERY_EDITOR_PAGE_SIZE,
+    });
     if (failed.length > 0) {
       return data(
         { error: 'Some photos could not be reordered', photos: current.items },

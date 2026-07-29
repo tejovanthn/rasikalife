@@ -234,7 +234,7 @@ export async function rejectClaim(
     .set({ status: 'rejected', moderatorId, moderatorNote, processedAt: now })
     .go({ response: 'all_new' });
 
-  await recomputeArtistClaimStatus(artistId, { userId, status: 'rejected' });
+  await recomputeArtistClaimStatus(artistId, [{ userId, status: 'rejected' }]);
 
   return result.data as ArtistClaim;
 }
@@ -252,21 +252,26 @@ export async function rejectClaim(
  */
 export async function recomputeArtistClaimStatus(
   artistId: string,
-  // The row a caller has just written. A Query is eventually consistent, so re-reading right
-  // after a patch can still return the old status — which would recompute the badge from the
-  // very value the caller just changed. Callers pass what they know instead.
-  justWritten?: { userId: string; status: ArtistClaimStatus }
+  // The rows a caller has just written. A Query is eventually consistent, so re-reading right
+  // after a write can still return the old status — or miss a row entirely — which would
+  // recompute the badge from the very values the caller just changed. Callers pass what they
+  // know instead. It is a list because a merge moves every claim on the loser at once, and
+  // overlaying only one of them would leave the rest to the race.
+  justWritten?: Array<{ userId: string; status: ArtistClaimStatus }>
 ): Promise<void> {
+  const overlay = new Map((justWritten ?? []).map(row => [row.userId, row.status]));
   const rows = await getArtistClaims(artistId);
   const claims = rows
     .filter(row => row.kind === 'claim')
-    .map(row =>
-      justWritten && row.userId === justWritten.userId
-        ? { ...row, status: justWritten.status }
-        : row
-    );
-  if (justWritten && !claims.some(row => row.userId === justWritten.userId)) {
-    claims.push({ userId: justWritten.userId, status: justWritten.status } as ArtistClaim);
+    .map(row => {
+      // A claim row always carries a userId — it is the sort-key subject — but the attribute
+      // is optional on the entity because invite rows share the type. No userId, no overlay.
+      const written = row.userId ? overlay.get(row.userId) : undefined;
+      return written ? { ...row, status: written } : row;
+    });
+  const seen = new Set(claims.map(row => row.userId));
+  for (const [userId, status] of overlay) {
+    if (!seen.has(userId)) claims.push({ userId, status } as ArtistClaim);
   }
   const nextStatus = claims.some(row => row.status === 'verified')
     ? 'verified'

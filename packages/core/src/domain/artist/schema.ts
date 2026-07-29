@@ -51,3 +51,44 @@ export const CreateArtistSchema = z.object({
 // artist-claim flow, so exposing them here would let any editor — or any
 // bulk CSV import — hand themselves a verified badge.
 export const UpdateArtistSchema = CreateArtistSchema.partial();
+
+/**
+ * What a verified claimant may change on their own profile without a moderator (§4.3.1):
+ * descriptive facts about the person, and nothing that reaches past this one record.
+ *
+ * The exclusions are the point, so they are listed rather than inferred:
+ *
+ * - `name` — a rename fires `cascadeArtistNameUpdate` across EventArtist, ArtistAward,
+ *   ArtistMembership and Composition rows. Those are other people's listings.
+ * - `isGroup` — `artist.update` is `moderatorProcedure` largely to hold this line (§11.1),
+ *   and flipping it strands existing membership edges.
+ * - `photoUrl` — the OG card lambda server-side fetches whatever URL this holds, so it is
+ *   a network-request primitive, not a description. It stays with the upload flow.
+ * - `alternateNames` is absent from the create schema entirely, but note for anyone adding
+ *   it: it feeds the dedup matcher, so a claimant could make their record absorb the
+ *   find-or-create for someone else's name.
+ *
+ * An edit proposing anything outside this set is not rejected — it simply goes to the
+ * moderator queue like any other edit, which is where those changes belonged all along.
+ */
+export const CLAIMANT_EDITABLE_ARTIST_FIELDS = [
+  'title',
+  'gurus',
+  'biography',
+  'specialisations',
+  'birthYear',
+  'birthPlace',
+  'website',
+  'socialLinks',
+  'activeYears',
+  'instrument',
+  'city',
+  'practiceStartYear',
+  'debutYear',
+] as const;
+
+/** True when every proposed key is one a verified claimant may self-approve. */
+export function isClaimantEditablePatch(proposedValues: Record<string, unknown>): boolean {
+  const allowed = new Set<string>(CLAIMANT_EDITABLE_ARTIST_FIELDS);
+  return Object.keys(proposedValues).every(key => allowed.has(key));
+}

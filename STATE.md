@@ -6,9 +6,38 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
-**Next step: review phase 9, then deploy.** Every phase of the redesign is now built. Phase 9 landed 2026-07-28 and has not had a machine review; the pre-deploy list below is the gate on shipping.
+**Next step: deploy.** Every phase is built and the whole-feature review is done and acted on (2026-07-29, below). Nothing is outstanding in code; what remains is the pre-deploy list.
 
-**Nothing in phases 7–9 has run against a deploy.** `sst` does not run in this environment, so the composited OG card, the gallery reorder, the login-time invite redemption, the claims queue, the claim form and the new events split have never executed for real. Highest-risk items to check on the first deploy, in order: (1) a Google sign-in still succeeds — the new `verified_email` gate can refuse a login that previously worked; (2) an invite actually redeems on login; (3) the OG card renders with a photo. The cache-key change also orphans every existing `og-images/**` object, which is harmless but reclaimable.
+**Nothing in phases 7–9 has run against a deploy.** `sst` does not run in this environment, so the composited OG card, the gallery reorder, the login-time invite redemption, the claims queue, the claim form and the events split have never executed for real. Check on the first deploy, in order:
+
+1. **A Google sign-in still succeeds** — the `verified_email` gate can refuse a login that previously worked.
+2. **An invite redeems on login.**
+3. **The OG card renders with a photo** — and note the photo fetch is now allowlisted to the CDN host, so if artist photos are served from any other origin the card silently degrades to text. `[og] refusing to fetch off-CDN photoUrl` in the logs is the tell.
+4. **`ArtistDenormRebuildCron` completes.** It now runs three full-table sweeps, not two; its timeout went 300s → 900s and memory 1024 → 2048 MB on estimate, not measurement. Read the duration and max-memory metrics off the first run and bring them back down if there is room.
+5. **Run the backfills once** — `pnpm prod-cli rebuild-repertoire`, `rebuild-featured`, and `rebuild-collaborators`. The last one has never successfully run: it crashed on a missing export until this review.
+
+Also: the OG cache-key change orphans every existing `og-images/**` object (harmless, reclaimable), and `cascadeEventMetadataToArtists` wrote malformed `gsi1sk` values until this review — **any artist whose event was edited before this deploy has a corrupted junction row that will show as "Upcoming" forever**. `pnpm cli rebuild-collaborators` does not fix it; the row needs rewriting through ElectroDB. Worth a scan for `gsi1sk` values not starting with `$eventartist_` if the events lists look wrong.
+
+### From the whole-feature review (2026-07-29)
+
+One `/code-review` fork over phases 0–9. Fifteen findings; I verified the load-bearing ones by hand before acting (dumping the real `gsi1sk` from the entity, reading SST's generated cache policy, checking `UpdateArtistSchema`'s shape). Two were downgraded to plausible — the eventual-consistency pair, real in the code but unobservable without a deploy. All fifteen are now fixed.
+
+**The three that would have hurt in production:**
+
+- **The artist subroutes shared-cached signed-in documents.** `/events`, `/compositions` and `/gallery` each declared `public, s-maxage=120` from a static `headers` export. But the root loader puts the viewer's name and email into every document, and SST's generated CloudFront server cache policy sets `cookieBehavior: "none"` — the session cookie is not in the cache key. So one signed-in moderator loading a subroute would populate the edge cache with their own email and hand it to every subsequent visitor for two minutes. The profile index had this right; the three subroutes diverged from it. All four now route through one `publicPageCacheControl` in `auth.server.ts`, which decides from the session cookie (cheap, no I/O) rather than `getUser` (a token verify plus a tRPC fetch — far too costly for an anonymous path). An expired cookie costs a cache miss, never a leak. Phase 6 flagged the cookie-in-cache-key question and judged it cosmetic; that judgement was only ever true of the index route.
+- **`cascadeEventMetadataToArtists` wrote a raw ISO timestamp into `gsi1sk`.** The real key is `$eventartist_1#eventstartdatetime_<lowercased iso>`; `'2'` sorts above `'$'`, so every row it touched compared greater than every correctly-keyed row. Latent until phase 9 gave `listEventsByArtist` a `.gt(now)`/`.lt(now)` split — after which any concert whose title a moderator had edited read as *upcoming*, permanently. The whole raw `UpdateCommand` is gone: ElectroDB recomputes the GSI key from the composite on `.patch().set()`, verified with `.params()`, and `.patch()` brings the existence condition a raw update lacks. The old test asserted the wrong value and so was the bug's alibi — the same failure mode as the phase-7 reorder test.
+- **The phase-8 claimant auto-approve granted more than it claimed to.** `UpdateArtistSchema` is `CreateArtistSchema.partial()`, so it admits `name`, `isGroup` and `photoUrl` — meaning a verified claimant could rename an artist (cascading across four entity types), flip `isGroup` (the field `artist.update` is `moderatorProcedure` to protect), or set the URL the OG lambda fetches server-side. §4.3.1 described the grant as the editor form on their own record. Narrowed to `CLAIMANT_EDITABLE_ARTIST_FIELDS`, a named allowlist in the artist schema with a test per exclusion. An edit outside the set is not rejected, only left in the moderator queue.
+
+**Also fixed:**
+
+- **JSON-LD was serialised with a bare `JSON.stringify` into `dangerouslySetInnerHTML`.** Phase 6 started feeding it `sameAs` from `socialLinks[].url`, and `z.string().url()` validates without rewriting, so `https://x.com/</script><script>…` stored verbatim would end the script element on the public, edge-cached profile. Both call sites now use a tested `serializeJsonLd` that escapes `<`.
+- **The OG lambda's photo fetch is pinned to the CDN host.** A known phase-7 deferral, closed: `/og/artist/{id}` is public and unauthenticated, and `photoUrl` was an unrestricted URL any editor could set, so an anonymous request could make the lambda fetch instance metadata or a VPC address. An off-CDN URL now reads as "no photo" rather than as a failed fetch, which matters because a failed fetch is deliberately never cached.
+- **`rebuild-collaborators` had never worked.** It imported `collaboratorsFrom` from the artist barrel, which never exported it, so the sweep the plan calls mandatory (§4.5.1) completed both full table scans and then threw. It also reached across the package boundary into core's entity modules by relative path. The sweep now lives in core beside the repertoire and featured ones, the CLI is a thin wrapper, and **the daily cron runs it** — which also gives the inline collaborator recompute a healer it never had: it reads the `byArtist` GSI immediately after writing to it, so a just-approved event can be computed away, and over-cap casts and merges are skipped inline by design.
+- **A merge destroyed guru years and discipline.** The `gurus[]` fixup built a fresh `{id, name}`, dropping the three keys §4.6 widened the element with — the fixup predates the reshape. Spread now, with the years in the test fixture.
+- **The merge's claim recompute raced its own writes.** `recomputeArtistClaimStatus` takes a `justWritten` hint precisely because the re-read is an eventually-consistent Query; the merge passed nothing, so it could compute `unclaimed` and strip `verifiedAt` from an artist that had just received the only verified claim. The parameter takes a list now, since a merge moves many rows at once.
+- **The gallery page was unreachable for most artists.** Both the teaser and its "View all photos" link were gated on there being *featured* photos, and `addArtistPhoto` defaults `featured` to false. The section now shows whenever there are photos at all, preferring featured ones, and the loader fetches 24 rather than 12 so a featured photo further down the order is not silently ignored.
+- **The reorder reply truncated the gallery.** It answered with `listPhotos` at the core default of 20 while the client replaced its whole state with the reply, so a moderator with more than 20 photos watched rows vanish. The editor loader had the same omission. One `GALLERY_EDITOR_PAGE_SIZE` now, used by both.
+- Smaller: the claim prompt no longer invites anonymous visitors to claim a profile that already shows a Verified badge; `resolveArtist` memoizes the candidate *promise*, so the concurrent resolves within one event share a table sweep instead of each starting one; `cascadeArtistNameUpdate`'s silence about `collaborators[].name` is now a stated omission with its reasoning (unindexed, self-heals on the daily sweep, and the URL resolves by id regardless); and the unused 124-line `SourceEntity` is deleted.
 
 ### Phase 9 — polish (2026-07-28)
 
@@ -149,7 +178,8 @@ The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the 
 | 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
 | 7 | Photo enrichment incl. OG compositing in `packages/og-image` | done (reviewed 2026-07-27) |
 | 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | done (reviewed 2026-07-28) |
-| 9 | Polish: events split, instrument/city on cards, rank input | done (unreviewed) |
+| 9 | Polish: events split, instrument/city on cards, rank input | done |
+| — | Whole-feature review (phases 0–9), 15 findings, all fixed | done (2026-07-29) |
 
 ### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
 
@@ -276,9 +306,9 @@ Raised, judged real, not yet done:
 
 ### Known baselines (so regressions are visible)
 
-Current at end of phase 9. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
+Current at end of the whole-feature review. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
-- `packages/core`: **744 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 → 744 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
+- `packages/core`: **758 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 → 744 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
 - `packages/web`: **30 web-own typecheck errors**; **93 tests pass** (65 → 89 across phase 7, → 93 in phase 9). The count was 32 at the end of phase 8 and phase 9 removed two along with the duplicated hero city block. None are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
 - `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).

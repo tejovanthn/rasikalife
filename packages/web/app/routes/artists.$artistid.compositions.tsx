@@ -8,12 +8,16 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
-// Public content, identical for every viewer — safe to cache at the edge unconditionally.
-export const headers: HeadersFunction = () => ({
-  'Cache-Control': 'public, max-age=0, s-maxage=120, stale-while-revalidate=600',
+// This page's own content is identical for every viewer, but the document it ships in is
+// not: the root loader renders the signed-in viewer's name and email into the header. The
+// loader decides per request (see publicPageCacheControl); this only forwards the decision,
+// defaulting to private so a loader that somehow set nothing is never shared-cached.
+export const headers: HeadersFunction = ({ loaderHeaders }) => ({
+  'Cache-Control': loaderHeaders.get('Cache-Control') ?? PRIVATE_PAGE_CACHE_CONTROL,
 });
 
 export const meta: MetaFunction = ({ data }) => {
@@ -63,13 +67,16 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
-    return data({
-      artist,
-      compositions: result.items,
-      hasMore: result.hasMore,
-      nextToken: result.nextToken,
-      prevToken: nextToken,
-    });
+    return data(
+      {
+        artist,
+        compositions: result.items,
+        hasMore: result.hasMore,
+        nextToken: result.nextToken,
+        prevToken: nextToken,
+      },
+      { headers: { 'Cache-Control': await publicPageCacheControl(request) } }
+    );
   } catch (error) {
     if (error instanceof Response) throw error;
     console.error('Failed to load artist compositions:', error);

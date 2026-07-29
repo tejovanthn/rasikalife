@@ -6,6 +6,9 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../db/client';
 import { keyOfEntity as keyOf, keysOfEntity as keysOf } from '../db/keys';
+// Type-only, so it is erased at compile time and adds no runtime cycle with artist-claim,
+// which this module already reaches through a dynamic import.
+import type { ArtistClaimStatus } from './artist/schema';
 
 export const CASCADE_BATCH_SIZE = 1000;
 
@@ -242,21 +245,20 @@ export async function cascadeEventMetadataToArtists(
     const items = (result.data as Array<{ eventId: string; artistId: string }>) || [];
     cursor = result.cursor;
 
+    // ElectroDB, not a raw UpdateCommand. `eventStartDateTime` is the composite behind the
+    // byArtist GSI sort key, and patching it recomputes `gsi1sk` for free — checked with
+    // `.params()`, which emits `$eventartist_1#eventstartdatetime_<lowercased iso>`.
+    //
+    // The raw command this replaces wrote the bare ISO string into `gsi1sk` instead. Since
+    // '2' sorts above '$', every row it touched compared greater than every correctly-keyed
+    // row, so `listEventsByArtist`'s upcoming/past split read an edited past concert as
+    // upcoming, permanently. `.patch()` also carries an existence condition, so a row
+    // deleted underneath us fails loudly rather than being recreated as a phantom.
     await Promise.all(
       items.map(item =>
-        dynamoClient.send(
-          new UpdateCommand({
-            TableName: TABLE_NAME,
-            Key: keyOf(EventArtistEntity, { eventId: item.eventId, artistId: item.artistId }),
-            UpdateExpression:
-              'SET eventTitle = :eventTitle, eventStartDateTime = :eventStartDateTime, gsi1sk = :gsi1sk',
-            ExpressionAttributeValues: {
-              ':eventTitle': newTitle,
-              ':eventStartDateTime': newStartDateTime,
-              ':gsi1sk': newStartDateTime,
-            },
-          })
-        )
+        EventArtistEntity.patch({ eventId: item.eventId, artistId: item.artistId })
+          .set({ eventTitle: newTitle, eventStartDateTime: newStartDateTime })
+          .go()
       )
     );
   } while (cursor);
@@ -487,6 +489,7 @@ export async function cascadeArtistMerge(
   // trace. Overwriting unconditionally does the reverse. Verified beats pending beats
   // rejected beats invited, so a merge can only ever preserve the strongest standing decision.
   let claimCursor: string | null = null;
+  const movedClaims: Array<{ userId: string; status: ArtistClaimStatus }> = [];
   do {
     const claimResult = (await ArtistClaimEntity.query
       .primary({ artistId: loserId })
@@ -540,6 +543,12 @@ export async function cascadeArtistMerge(
       claimItems.map(async item => {
         const existing = existingByActor.get(`${item.kind}#${item.subject}`);
         if (!existing || claimRank(item.status) > claimRank(existing.status)) {
+          // Remember what the canonical now holds for this actor. The recompute below reads
+          // the partition back through a Query, which is eventually consistent, so without
+          // this the badge can be computed from the pre-merge set.
+          if (item.kind === 'claim' && item.userId) {
+            movedClaims.push({ userId: item.userId, status: item.status as ArtistClaimStatus });
+          }
           await ArtistClaimEntity.upsert({
             artistId: canonicalId,
             artistName: canonicalName,
@@ -569,8 +578,12 @@ export async function cascadeArtistMerge(
   // The claim rows just moved, so the canonical's denormalized badge is now computed from the
   // wrong set — a verified claim can arrive on an artist whose own claimStatus says unclaimed,
   // leaving canManageArtist answering true on a profile that shows nothing.
+  //
+  // The rows we wrote are passed in because the recompute re-reads the partition with a Query,
+  // which is eventually consistent: without them a merge carrying the only verified claim could
+  // read the partition as it was before, write 'unclaimed', and strip verifiedAt.
   const { recomputeArtistClaimStatus } = await import('./artist-claim');
-  await recomputeArtistClaimStatus(canonicalId);
+  await recomputeArtistClaimStatus(canonicalId, movedClaims);
 
   // Migrate ArtistMembership records where the loser is the group
   let amGroupCursor: string | null = null;
@@ -711,8 +724,16 @@ export async function cascadeArtistMerge(
       limit: CASCADE_BATCH_SIZE,
     })) as Page;
     const artists =
-      (scanResult.data as Array<{ id: string; gurus?: Array<{ id?: string; name: string }> }>) ||
-      [];
+      (scanResult.data as Array<{
+        id: string;
+        gurus?: Array<{
+          id?: string;
+          name: string;
+          fromYear?: number;
+          toYear?: number;
+          discipline?: string;
+        }>;
+      }>) || [];
     scanCursor = scanResult.cursor;
 
     const artistsWithLoserGuru = artists.filter(artist =>
@@ -721,8 +742,12 @@ export async function cascadeArtistMerge(
 
     await Promise.all(
       artistsWithLoserGuru.map(artist => {
+        // Spread, don't replace. A merge repoints the guru at the canonical record; it says
+        // nothing about when the artist studied under them or in what discipline. Building a
+        // fresh `{id, name}` here dropped the three keys §4.6 widened the guru element with,
+        // and nothing could recover them — this fixup predates that reshape.
         const updatedGurus = (artist.gurus ?? []).map(guru =>
-          guru.id === loserId ? { id: canonicalId, name: canonicalName } : guru
+          guru.id === loserId ? { ...guru, id: canonicalId, name: canonicalName } : guru
         );
         return dynamoClient.send(
           new UpdateCommand({
@@ -746,10 +771,16 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
   // artist name, so they belong here rather than at the call site.
   await cascadeComposerNameUpdate(artistId, newName);
 
-  // NOTE: gurus[].name on other artists is deliberately NOT refreshed here.
-  // There is no index on gurus[], so reaching it means sweeping every artist
-  // (see cascadeArtistMerge), which is defensible for a rare moderator-run
-  // merge but not for an ordinary rename. Guru display names can go stale.
+  // NOTE: two name copies on *other artists' records* are deliberately NOT refreshed here —
+  // gurus[].name and collaborators[].name. Neither is indexed, so reaching either means
+  // sweeping every artist (see cascadeArtistMerge), which is defensible for a rare
+  // moderator-run merge but not for an ordinary rename.
+  //
+  // Both go stale until the next sweep, and neither breaks a link: the rendered URL is built
+  // from the id, which is what actually resolves. Collaborators self-heal daily through
+  // ArtistDenormRebuildCron, which recomputes the lists from the junction — where the name
+  // *is* refreshed, a few lines below. Guru entries have no sweep and stay stale until
+  // someone edits them, which §11.2 accepts as cosmetic.
 
   let eaCursor: string | null = null;
   do {

@@ -45,7 +45,7 @@ import {
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
 import { requireUser } from '~/lib/auth.server';
-import { computePhotoReorder, nextPhotoOrder } from '~/lib/gallery-order';
+import { GALLERY_EDITOR_PAGE_SIZE, computePhotoReorder, nextPhotoOrder } from '~/lib/gallery-order';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
 export const meta: MetaFunction = () => {
@@ -100,7 +100,12 @@ export async function loader({
     ? await Promise.all([
         serverClient.artist.listAwards.query({ artistId: artist.id }),
         serverClient.event.byArtist.query({ artistId: artist.id, limit: 50 }),
-        serverClient.artist.listPhotos.query({ artistId: artist.id }),
+        // Same page size the reorder endpoint replies with, so the grid the moderator sees
+        // and the list it is replaced by after a move can never be different lengths.
+        serverClient.artist.listPhotos.query({
+          artistId: artist.id,
+          limit: GALLERY_EDITOR_PAGE_SIZE,
+        }),
         serverClient.artistClaim.listForArtist.query({ artistId: artist.id }),
       ])
     : [[], { items: [] }, { items: [] }, []];

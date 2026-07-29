@@ -24,7 +24,7 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { artistTagline } from '~/lib/artist-display';
-import { getUser } from '~/lib/auth.server';
+import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { artistOgImageUrl } from '~/lib/og';
 import {
@@ -92,7 +92,10 @@ export async function loader({
         isGroup
           ? client.artist.listMembers.query({ groupId: artist.id })
           : client.artist.listGroups.query({ memberId: artist.id }),
-        client.artist.listPhotos.query({ artistId: artist.id, limit: 12 }),
+        // 24, matching the gallery page's own page size. The teaser prefers featured photos
+        // but there is no featured-first index — they are selected in memory from this page
+        // of rows, so a low limit silently ignores anything featured further down the order.
+        client.artist.listPhotos.query({ artistId: artist.id, limit: 24 }),
         user
           ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
           : Promise.resolve(null),
@@ -115,14 +118,13 @@ export async function loader({
     const featured = (artist.featuredPerformances ?? []).slice(0, 4);
 
     // Anonymous views are identical and safe to serve from the CDN edge; signed-in views
-    // carry per-viewer chrome (edit / moderator controls, a pending-edit banner), so they
-    // stay private. The only content that varies by auth is navigation controls to routes
-    // that enforce auth themselves — nothing sensitive — so a brief cache mismatch is
-    // cosmetic, not a data leak. Full CDN offload still wants the server cache key to
-    // segment on the rasika_session cookie (see the note in STATE.md / §6.2).
-    const cacheControl = user
-      ? 'private, no-cache'
-      : 'public, max-age=0, s-maxage=120, stale-while-revalidate=600';
+    // carry per-viewer chrome and, through the root loader, the viewer's own name and email,
+    // so they stay private. SST's server cache policy sets cookieBehavior: "none", which is
+    // exactly why this cannot be a static `public` header — see publicPageCacheControl.
+    //
+    // This route has the verified user in hand, so it decides on that rather than on the
+    // cookie the subroutes have to settle for. Same two values, one definition.
+    const cacheControl = user ? PRIVATE_PAGE_CACHE_CONTROL : PUBLIC_PAGE_CACHE_CONTROL;
 
     return data(
       {
@@ -189,7 +191,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 // unless a route forwards it here. Default to private so a loader that somehow set nothing
 // is never shared-cached.
 export const headers: HeadersFunction = ({ loaderHeaders }) => ({
-  'Cache-Control': loaderHeaders.get('Cache-Control') ?? 'private, no-cache',
+  'Cache-Control': loaderHeaders.get('Cache-Control') ?? PRIVATE_PAGE_CACHE_CONTROL,
 });
 
 export const meta: MetaFunction = ({ data }) => {
@@ -253,8 +255,15 @@ function ClaimProfile({
   artistName,
   status,
   isLoggedIn,
-}: { artistName: string; status?: string; isLoggedIn: boolean }) {
+  claimStatus,
+}: { artistName: string; status?: string; isLoggedIn: boolean; claimStatus?: string }) {
   const fetcher = useFetcher<{ success?: true; error?: string }>();
+
+  // Somebody already manages this profile, so there is nothing to offer. `claimStatus` is
+  // the artist's own denormalized badge, not the viewer's, so this is viewer-invariant and
+  // must be tested before the signed-out branch below — which otherwise asked passers-by to
+  // claim a profile displaying a Verified badge two sections up.
+  if (claimStatus === 'verified' && status !== 'verified') return null;
 
   // Logged-out visitors are nearly the whole audience, and an artist arriving at their own
   // page is exactly the person §8 is addressing — hiding the entry point behind a session
@@ -412,7 +421,12 @@ export default function ArtistDetails() {
     .slice()
     .sort((a, b) => b.strength - a.strength)
     .slice(0, 12);
-  const galleryFeatured = galleryPhotos.filter(p => p.featured).slice(0, 6);
+  // Featured photos lead the teaser, but the section shows whenever the artist has *any*
+  // photo. Gating the whole block on `featured` left the "View all photos" link inside it,
+  // so a moderator who uploaded a gallery and never pressed Feature — the default, since
+  // addArtistPhoto stores featured: false — had a gallery page nothing on the site linked to.
+  const galleryFeatured = galleryPhotos.filter(p => p.featured);
+  const galleryTeaser = (galleryFeatured.length > 0 ? galleryFeatured : galleryPhotos).slice(0, 6);
 
   // A featured performance can also turn up in the chronological lists; drop the overlap
   // so the same concert never renders twice. An upcoming date wins the tie — "they play
@@ -704,12 +718,12 @@ export default function ArtistDetails() {
         </section>
       )}
 
-      {/* Gallery teaser — featured photos, hidden entirely when none */}
-      {galleryFeatured.length > 0 && (
+      {/* Gallery teaser — featured photos first, hidden only when there are no photos at all */}
+      {galleryTeaser.length > 0 && (
         <section className="mt-8">
           <h2 className="mb-4 text-xl font-semibold">Gallery</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {galleryFeatured.map(photo => (
+            {galleryTeaser.map(photo => (
               <figure key={photo.id} className="overflow-hidden rounded-lg border">
                 <img
                   src={photo.imageUrl}
@@ -782,7 +796,12 @@ export default function ArtistDetails() {
       {/* Claim (§8) — signed-in viewers only, so the anonymous document stays identical for
           everyone and safe to cache at the edge. Deliberately understated and placed low:
           it speaks to one person in a thousand visitors. */}
-      <ClaimProfile artistName={artist.name} status={myClaimStatus} isLoggedIn={isLoggedIn} />
+      <ClaimProfile
+        artistName={artist.name}
+        status={myClaimStatus}
+        isLoggedIn={isLoggedIn}
+        claimStatus={artist.claimStatus}
+      />
 
       {/* Explore more */}
       <section className="mt-8 border-t pt-8">

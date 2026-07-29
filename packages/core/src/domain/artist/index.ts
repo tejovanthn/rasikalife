@@ -184,7 +184,12 @@ export async function getArtistMergeScore(id: string): Promise<number> {
 }
 
 export type { Artist } from './entity';
-export { CreateArtistSchema, UpdateArtistSchema } from './schema';
+export {
+  CLAIMANT_EDITABLE_ARTIST_FIELDS,
+  CreateArtistSchema,
+  UpdateArtistSchema,
+  isClaimantEditablePatch,
+} from './schema';
 export {
   artistNameSimilarity,
   findArtistMatch,
@@ -194,10 +199,15 @@ export {
   normalizeArtistName,
 } from './dedup';
 
-export { rebuildArtistCollaborators } from './collaborators';
+// collaboratorsFrom is exported because the full-table sweep in packages/scripts imports it
+// to build every artist's list from one pass over the junction. It was missing here, so
+// `pnpm cli rebuild-collaborators` completed both scans and then died on `undefined`.
+export { collaboratorsFrom, rebuildArtistCollaborators } from './collaborators';
 export { computeRepertoire } from './repertoire';
 export type { Repertoire, RepertoireSetlistRow } from './repertoire';
 export { rebuildAllRepertoires, rebuildArtistRepertoire } from './repertoire-sweep';
 export type { RepertoireSweepResult } from './repertoire-sweep';
 export { rebuildAllFeatured } from './featured-sweep';
 export type { FeaturedSweepResult } from './featured-sweep';
+export { buildCollaboratorLists, rebuildAllCollaborators } from './collaborators-sweep';
+export type { CollaboratorSweepResult } from './collaborators-sweep';

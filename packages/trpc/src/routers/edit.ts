@@ -15,7 +15,7 @@ import {
   updateDraft,
   withdrawEdit,
 } from '@rasika/core';
-import { ArtistClaim, EditEntityTypes } from '@rasika/core';
+import { Artist, ArtistClaim, EditEntityTypes } from '@rasika/core';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, moderatorProcedure, protectedProcedure } from '../trpc';
@@ -97,14 +97,25 @@ export const editRouter = createTRPCRouter({
       // claim confers nothing, because submitting a draft is already open to every signed-in
       // user, so the queue would grant a badge and no capability.
       //
-      // Deliberately narrow. It applies to the artist the claim names and nothing else, the
-      // claim must be `verified` (an invite or a pending claim is not enough), and the edit
-      // still travels the ordinary Edit pipeline — same schema, same validation, same audit
-      // row — so this widens who may approve, not what may be written. The check is here
-      // rather than in the web action because the client must not be able to assert it.
+      // Deliberately narrow, on three axes. The claim must name this artist and no other; it
+      // must be `verified` (an invite or a pending claim is not enough); and the patch must
+      // touch only the fields §4.3.1 means by "their own record".
+      //
+      // That last one is not decoration. `UpdateArtistSchema` also admits `name`, `isGroup`
+      // and `photoUrl` — a rename cascades across four other entity types, `isGroup` is the
+      // reason `artist.update` is `moderatorProcedure` at all, and `photoUrl` is fetched
+      // server-side by the OG lambda. Auto-approving those would let a claim confer strictly
+      // more than the editor role it was described as granting.
+      //
+      // An edit outside that set is not rejected, only left submitted: it queues for a
+      // moderator like anyone else's. The check is here rather than in the web action
+      // because the client must not be able to assert it.
       const edit = await getEditById(input.editId);
       if (edit?.entityType === 'artist' && edit.entityId) {
-        const owns = await ArtistClaim.canManageArtist(ctx.user.id, edit.entityId);
+        const proposed = (edit.proposedValues ?? {}) as Record<string, unknown>;
+        const selfEditable = Artist.isClaimantEditablePatch(proposed);
+        const owns =
+          selfEditable && (await ArtistClaim.canManageArtist(ctx.user.id, edit.entityId));
         if (owns) return approveEdit(input.editId, ctx.user.id);
       }
 

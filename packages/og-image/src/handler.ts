@@ -5,7 +5,7 @@ import type { APIGatewayProxyHandlerV2, APIGatewayProxyResultV2 } from 'aws-lamb
 import sharp from 'sharp';
 import { CARD_HEIGHT, CARD_VERSION, PHOTO_PANEL_WIDTH, buildSvg, contentHash } from './card';
 import type { OgType } from './request';
-import { parsePath } from './request';
+import { isAllowedPhotoUrl, parsePath } from './request';
 
 const s3 = new S3Client({});
 
@@ -32,7 +32,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (
   // Cost: the entity must be resolved before we can HEAD, so even a cache hit spends one tRPC
   // query. That is real per-request cost on a crawler-heavy path, not free — the cheap fix is to
   // carry the hash in the URL so the page that already loaded the entity supplies it.
-  const { title, subtitle, typeLabel, photoUrl } = await resolveEntity(type, id);
+  const { title, subtitle, typeLabel, photoUrl } = await resolveEntity(type, id, cdn);
   const cacheKey = `og-images/${type}/${id}-${contentHash([CARD_VERSION, title, subtitle, photoUrl])}.jpg`;
   const cdnUrl = `${cdn}/${cacheKey}`;
 
@@ -85,7 +85,7 @@ interface ResolvedEntity {
   photoUrl?: string;
 }
 
-async function resolveEntity(type: OgType, id: string): Promise<ResolvedEntity> {
+async function resolveEntity(type: OgType, id: string, cdnUrl: string): Promise<ResolvedEntity> {
   try {
     if (type === 'raga') {
       const raga = await trpc.raga.get.query({ id });
@@ -104,11 +104,19 @@ async function resolveEntity(type: OgType, id: string): Promise<ResolvedEntity> 
       };
     }
     const artist = await trpc.artist.get.query({ id });
+    // Anything off the CDN is dropped here rather than at fetch time, so it reads as "this
+    // artist has no photo" — a normal, cacheable text-only card — instead of as a failed
+    // fetch, which is deliberately never cached and would re-render on every request.
+    const photoUrl =
+      artist?.photoUrl && isAllowedPhotoUrl(artist.photoUrl, cdnUrl) ? artist.photoUrl : undefined;
+    if (artist?.photoUrl && !photoUrl) {
+      console.warn(`[og] refusing to fetch off-CDN photoUrl for artist ${id}`);
+    }
     return {
       title: artist?.name ?? 'Unknown Artist',
       subtitle: 'Indian Classical Music',
       typeLabel: 'Artist',
-      photoUrl: artist?.photoUrl,
+      photoUrl,
     };
   } catch (err) {
     console.error(`[og] entity lookup failed for ${type}/${id}:`, err);

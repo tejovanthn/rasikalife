@@ -1,3 +1,5 @@
+import { serializeJsonLd } from '~/lib/json-ld';
+
 interface StructuredDataProps {
   type:
     | 'organization'
@@ -40,7 +42,10 @@ export function StructuredData({ type, data }: StructuredDataProps) {
       type="application/ld+json"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData),
+        // serializeJsonLd, not JSON.stringify — several callers pass editor-supplied URLs
+        // (sameAs, memberOf), and an unescaped `</script>` in one of them ends this element
+        // and turns the rest into markup.
+        __html: serializeJsonLd(structuredData),
       }}
     />
   );
@@ -355,7 +360,9 @@ export function RagaFaqStructuredData({
       type="application/ld+json"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify({
+        // Same escaping as StructuredData above: this one interpolates a raga name, which
+        // is entity data like any other, so it must not be the one place that skips it.
+        __html: serializeJsonLd({
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
           mainEntity: faqs,

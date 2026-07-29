@@ -62,6 +62,9 @@ The core package uses a domain-driven design with:
 4. **ACL Pattern**: Artist management uses granular permission system
 5. **Error Handling**: Standardized error codes following `[DOMAIN]_[ERROR_TYPE]` pattern
 6. **Validation**: Zod schemas for all domain entities with consistent error messages
+7. **Never hand-write a GSI key value.** ElectroDB templates them — `EventArtist.gsi1sk` is `$eventartist_1#eventstartdatetime_<lowercased iso>`, not the bare timestamp — and a raw `SET gsi1sk = :v` silently corrupts the index sort order. Patching the composite attribute through `Entity.patch().set()` recomputes every affected key for free. Where a raw command is genuinely unavoidable, derive keys with `keyOfEntity`/`keysOfEntity` (`packages/core/src/db/keys.ts`); `.params()` on the entity prints the truth if you need to check.
+8. **`.set({ x: undefined })` does not clear an attribute.** ElectroDB drops undefined values out of the UpdateExpression entirely, so the attribute survives. Use `.remove(['x'])`. This has caused real bugs twice (a photo caption, a `featureRank`), and both times the test asserted the `.set()` call shape and so passed throughout.
+9. **An ElectroDB index over an optional attribute is not sparse.** A missing composite writes the template with an empty suffix (`artist_claim_user#`), producing one hot partition — and on an authorization lookup, a blank argument then matches *everything*. Key such an index on a required discriminator plus a required subject instead (see `ArtistClaim.byActor`).
 
 ### Database Design
 
@@ -106,6 +109,18 @@ The core package uses a domain-driven design with:
 - `generic-title.ts` — `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
 - `artist-display.ts` — `artistTagline({instrument, city})` builds the "Vocal · Chennai" line the artist profile hero and `ArtistCard` both lead with. Trims both fields, drops blanks so no stray separator is emitted, capitalizes only the instrument, and returns `undefined` when neither is set so callers can fall back with `??`.
 - `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives.
+- `json-ld.ts` — `serializeJsonLd(data)` for anything going into `<script type="application/ld+json">`. Escapes `<` as `<`, because a `</script>` inside an entity-supplied URL would otherwise end the element and turn the rest of the payload into markup. Never use a bare `JSON.stringify` with `dangerouslySetInnerHTML`.
+
+### Caching a public page (`Cache-Control`)
+
+SST's generated CloudFront server cache policy sets `cookieBehavior: "none"`, so **the session cookie is not part of the cache key**. The root loader puts the signed-in viewer's name and email into every document, so a route that declares a static `public, s-maxage=…` header will have one signed-in viewer's document cached and served to everyone else.
+
+Any public page therefore decides per request, not statically:
+
+- Routes with the user already loaded pick `PRIVATE_PAGE_CACHE_CONTROL` / `PUBLIC_PAGE_CACHE_CONTROL` directly (both in `~/lib/auth.server`).
+- Routes without one call `await publicPageCacheControl(request)`, which reads the session cookie rather than calling `getUser` — that verifies a token and fetches the user over tRPC, far too costly for an anonymous read path. An expired cookie costs a cache miss, never a leak.
+
+Either way the loader returns the header via `data(payload, { headers })` and the route's `headers` export forwards `loaderHeaders`, defaulting to private.
 
 ### Admin: bulk CSV export/import (all domains)
 

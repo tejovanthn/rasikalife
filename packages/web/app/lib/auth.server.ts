@@ -36,6 +36,31 @@ export async function destroySession(session: Awaited<ReturnType<typeof getSessi
   return storage.destroySession(session);
 }
 
+/**
+ * Cache-Control for a page whose own content is public but which renders inside the root
+ * layout — and the root loader puts the signed-in viewer's name and email into every
+ * document it produces.
+ *
+ * This matters because SST's generated CloudFront server cache policy sets
+ * `cookieBehavior: "none"`, so `rasika_session` is not part of the cache key. A `public,
+ * s-maxage` document produced for a signed-in viewer is therefore stored once and handed to
+ * everybody, their email included. Anything public must decide this per request, not
+ * declare it statically.
+ *
+ * The decision reads the session cookie rather than calling `getUser`, which verifies the
+ * token and then fetches the user over tRPC — far too expensive to put on an anonymous read
+ * path. An expired or invalid cookie costs one cache miss and never a leak, which is the
+ * right way round to be wrong.
+ */
+export const PUBLIC_PAGE_CACHE_CONTROL =
+  'public, max-age=0, s-maxage=120, stale-while-revalidate=600';
+export const PRIVATE_PAGE_CACHE_CONTROL = 'private, no-cache';
+
+export async function publicPageCacheControl(request: Request): Promise<string> {
+  const tokens = await getTokens(request);
+  return tokens ? PRIVATE_PAGE_CACHE_CONTROL : PUBLIC_PAGE_CACHE_CONTROL;
+}
+
 export async function getTokens(
   request: Request
 ): Promise<{ access: string; refresh: string } | null> {

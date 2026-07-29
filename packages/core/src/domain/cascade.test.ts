@@ -81,6 +81,7 @@ vi.mock('./event-artist/entity', async importOriginal => {
       query: { primary: vi.fn(), byArtist: vi.fn() },
       get: vi.fn(),
       upsert: vi.fn(),
+      patch: vi.fn(),
     },
   };
 });
@@ -206,6 +207,7 @@ vi.mock('./artist-claim', () => ({
 }));
 
 import { dynamoClient } from '../db/client';
+import { keysOfEntity } from '../db/keys';
 import { ArtistAwardEntity } from './artist-award/entity';
 import { ArtistClaimEntity } from './artist-claim/entity';
 import { ArtistMembershipEntity } from './artist-membership/entity';
@@ -428,6 +430,8 @@ describe('cascade', () => {
       EventArtistEntity.query.primary = pagedQuery([
         { data: [{ eventId: 'event1', artistId: 'artist1' }], cursor: null },
       ]);
+      const setSpy = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+      EventArtistEntity.patch = vi.fn().mockReturnValue({ set: setSpy }) as never;
 
       await cascade.cascadeEventMetadataToArtists(
         'event1',
@@ -435,11 +439,31 @@ describe('cascade', () => {
         '2026-02-01T00:00:00.000Z'
       );
 
-      const updates = commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand');
-      expect(updates).toHaveLength(1);
-      expect(updates[0].Key).toEqual({ pk: 'event#event1', sk: 'artist#artist1' });
-      expect(updates[0].ExpressionAttributeValues[':eventTitle']).toBe('New Title');
-      expect(updates[0].ExpressionAttributeValues[':gsi1sk']).toBe('2026-02-01T00:00:00.000Z');
+      expect(EventArtistEntity.patch).toHaveBeenCalledWith({
+        eventId: 'event1',
+        artistId: 'artist1',
+      });
+      expect(setSpy).toHaveBeenCalledWith({
+        eventTitle: 'New Title',
+        eventStartDateTime: '2026-02-01T00:00:00.000Z',
+      });
+      // The write must go through ElectroDB, which recomputes the GSI sort key from the
+      // composite. A raw UpdateCommand here is the bug this replaced.
+      expect(commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand')).toHaveLength(0);
+    });
+
+    it('derives a templated byArtist sort key, not the bare timestamp', () => {
+      // Why the cascade above must not hand-write gsi1sk. The real key is prefixed; the
+      // old code wrote the raw ISO string. Since '2' (0x32) sorts above '$' (0x24), such a
+      // row compares greater than every correctly-keyed one, so listEventsByArtist's
+      // `.gt(now)` / `.lt(now)` split read an edited past concert as upcoming, for good.
+      const keys = keysOfEntity(EventArtistEntity as never, {
+        eventId: 'event1',
+        artistId: 'artist1',
+        eventStartDateTime: '2026-02-01T00:00:00.000Z',
+      });
+      expect(keys.gsi1sk).toBe('$eventartist_1#eventstartdatetime_2026-02-01t00:00:00.000z');
+      expect(keys.gsi1sk).not.toBe('2026-02-01T00:00:00.000Z');
     });
   });
 
@@ -645,7 +669,17 @@ describe('cascade', () => {
             {
               id: 'student1',
               gurus: [
-                { id: 'loser', name: 'Old Name' },
+                // The years and discipline §4.6 widened the guru element with. A merge
+                // repoints the guru; it says nothing about when this artist studied under
+                // them, so rebuilding the entry as a bare {id, name} destroyed data no
+                // sweep could restore.
+                {
+                  id: 'loser',
+                  name: 'Old Name',
+                  fromYear: 1998,
+                  toYear: 2004,
+                  discipline: 'vocal',
+                },
                 { id: 'other', name: 'Unrelated' },
               ],
             },
@@ -661,7 +695,13 @@ describe('cascade', () => {
       const guruUpdate = updates.find((u: any) => u.Key.pk === 'artist#student1');
       expect(guruUpdate.Key).toEqual({ pk: 'artist#student1', sk: '#metadata' });
       expect(guruUpdate.ExpressionAttributeValues[':gurus']).toEqual([
-        { id: 'canonical', name: 'Canonical Name' },
+        {
+          id: 'canonical',
+          name: 'Canonical Name',
+          fromYear: 1998,
+          toYear: 2004,
+          discipline: 'vocal',
+        },
         { id: 'other', name: 'Unrelated' },
       ]);
       expect(updates.some((u: any) => u.Key.pk === 'artist#student2')).toBe(false);
@@ -881,6 +921,16 @@ describe('cascade', () => {
         kind: 'claim',
         subject: 'user1',
       });
+
+      // The badge recompute re-reads the partition with a Query, which is eventually
+      // consistent — it can return the canonical exactly as it was before the upserts above.
+      // Handing it the rows we just wrote is what stops a merge carrying the only verified
+      // claim from computing 'unclaimed' and stripping verifiedAt. Invites are excluded
+      // because a pre-authorization nobody has acted on holds the badge at nothing.
+      const { recomputeArtistClaimStatus } = await import('./artist-claim');
+      expect(recomputeArtistClaimStatus).toHaveBeenCalledWith('canonical', [
+        { userId: 'user1', status: 'verified' },
+      ]);
     });
 
     function loserClaim(status: string) {

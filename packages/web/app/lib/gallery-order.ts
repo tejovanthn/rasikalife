@@ -2,6 +2,17 @@
 // route module so it is testable without a component harness (this package has
 // none — see app/lib/*.test.ts for the established pattern).
 
+/**
+ * How many photos the moderator gallery editor loads, and how many the reorder endpoint
+ * echoes back. One constant because the two must agree: the client replaces its whole photo
+ * list with the reply, so a reply shorter than what the editor loaded makes rows disappear
+ * from the grid, and the next `nextPhotoOrder` is then computed against a list missing them.
+ *
+ * 100 is the ceiling `artist.listPhotos` accepts. Both sites previously passed no limit at
+ * all and silently got the core default of 20.
+ */
+export const GALLERY_EDITOR_PAGE_SIZE = 100;
+
 export interface OrderedPhoto {
   id: string;
   order: number;
@@ -21,8 +32,9 @@ const byOrderThenId = (a: OrderedPhoto, b: OrderedPhoto) =>
 // no-op whenever the two photos share an `order` — writing each one the value it already had.
 // Duplicates are easy to come by: `addArtistPhoto` defaults `order` to 0, and any half-applied
 // reorder leaves one behind. Renumbering both fixes the move and heals the duplicates on the
-// way past, so a gallery can never get stuck. Galleries are capped at 24 photos, so the
-// worst-case write count is not worth optimising for.
+// way past, so a gallery can never get stuck. The editor loads at most
+// GALLERY_EDITOR_PAGE_SIZE photos, so the worst-case write count is bounded and not worth
+// optimising for.
 export function computePhotoReorder(
   photos: OrderedPhoto[],
   id: string,

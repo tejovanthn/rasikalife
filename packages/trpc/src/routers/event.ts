@@ -369,10 +369,15 @@ export const eventRouter = createTRPCRouter({
       };
 
       // Fetched once for the whole batch. Dedup matching needs every artist as
-      // candidates, and resolveArtist runs inside a sequential loop over events,
-      // so leaving the fetch inside would sweep the artist list once per new
-      // name rather than once per import.
-      let artistCandidates: Artist.Artist[] | undefined;
+      // candidates, so leaving the fetch inside resolveArtist would sweep the artist
+      // list once per new name rather than once per import.
+      //
+      // The *promise* is memoized, not the value. The artists of a single event are
+      // resolved concurrently through Promise.all, so `candidates ??= await fetch()`
+      // let every one of them observe `undefined` and start its own full-table sweep —
+      // the exact cost this exists to avoid, multiplied by cast size. Awaiting one
+      // shared promise also means they all append to, and see, the same list.
+      let artistCandidatesPromise: Promise<Artist.Artist[]> | undefined;
 
       const resolveArtist = async (artist: { id?: string; name: string; title?: string }) => {
         if (artist.id) {
@@ -385,7 +390,8 @@ export const eventRouter = createTRPCRouter({
         const key = Artist.normalizeArtistName(artist.name);
         const cached = artistCache.get(key);
         if (cached) return cached;
-        artistCandidates ??= await Artist.listAllArtistsForMatching();
+        artistCandidatesPromise ??= Artist.listAllArtistsForMatching();
+        const artistCandidates = await artistCandidatesPromise;
         const { artist: resolved, created } = await Artist.findOrCreateArtist(artist.name, {
           title: artist.title,
           candidates: artistCandidates,
