@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { artistTagline } from './artist-display';
+import { artistTagline, parseInstruments } from './artist-display';
 
 describe('artistTagline', () => {
   it('joins instrument and city', () => {
@@ -24,5 +24,39 @@ describe('artistTagline', () => {
     expect(artistTagline({ instrument: 'flute', city: '' })).toBe('Flute');
     expect(artistTagline({})).toBeUndefined();
     expect(artistTagline({ instrument: null, city: null })).toBeUndefined();
+  });
+});
+
+// `instrument` is a comma-separated list, so a mridangam player who also sings is
+// "mridangam, vocal". Capitalizing the raw string cased only the first entry.
+describe('parseInstruments', () => {
+  it('splits a comma list and cases every entry', () => {
+    expect(parseInstruments('mridangam, vocal')).toEqual(['Mridangam', 'Vocal']);
+  });
+
+  it('handles a single value', () => {
+    expect(parseInstruments('vocal')).toEqual(['Vocal']);
+  });
+
+  it('drops blanks from trailing and doubled commas', () => {
+    expect(parseInstruments('vocal,, violin,')).toEqual(['Vocal', 'Violin']);
+    expect(parseInstruments('  ')).toEqual([]);
+  });
+
+  it('returns nothing for absent input', () => {
+    expect(parseInstruments()).toEqual([]);
+    expect(parseInstruments(null)).toEqual([]);
+  });
+});
+
+describe('artistTagline with several instruments', () => {
+  it('joins instruments with commas and the city with a middot', () => {
+    expect(artistTagline({ instrument: 'mridangam, vocal', city: 'Chennai' })).toBe(
+      'Mridangam, Vocal · Chennai'
+    );
+  });
+
+  it('cases every instrument, not only the first', () => {
+    expect(artistTagline({ instrument: 'vocal, violin, ghatam' })).toBe('Vocal, Violin, Ghatam');
   });
 });

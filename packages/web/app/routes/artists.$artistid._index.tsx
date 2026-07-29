@@ -22,7 +22,7 @@ import {
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
-import { artistTagline } from '~/lib/artist-display';
+import { artistTagline, parseInstruments } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { artistOgImageUrl } from '~/lib/og';
@@ -458,16 +458,17 @@ export default function ArtistDetails() {
   const artistUrl = generateArtistUrl(artist.name, artist.id);
   const shareUrl = `https://rasika.life${artistUrl}`;
 
-  const instrument = artist.instrument?.trim();
+  const instruments = parseInstruments(artist.instrument);
   // The one "instrument · city" line, shared with the artist card. It used to be built
   // inline here, and the city then rendered a second time in its own paragraph below —
   // so an artist with a city but no instrument saw it twice.
   const tagline = artistTagline(artist);
-  const subtitle = instrument
-    ? capitalize(instrument)
-    : isGroup
-      ? 'Performing group'
-      : 'Indian classical music artist';
+  const subtitle =
+    instruments.length > 0
+      ? instruments.join(', ')
+      : isGroup
+        ? 'Performing group'
+        : 'Indian classical music artist';
   // Honorific, instrument and city on one line under the name. The honorific used to sit
   // beside the portrait on its own, where "Vidhushi" read like the artist's name.
   const identityLine = [artist.title, tagline ?? subtitle].filter(Boolean).join(' · ');
@@ -518,7 +519,12 @@ export default function ArtistDetails() {
       value: `${artist.birthYear}${artist.birthPlace ? `, ${artist.birthPlace}` : ''}`,
     });
   }
-  if (instrument) facts.push({ label: 'Discipline', value: capitalize(instrument) });
+  if (instruments.length > 0) {
+    facts.push({
+      label: instruments.length > 1 ? 'Disciplines' : 'Discipline',
+      value: instruments.join(', '),
+    });
+  }
   if (artist.city) facts.push({ label: 'Based in', value: artist.city });
   if (artist.activeYears) facts.push({ label: 'Active', value: artist.activeYears });
   if (artist.practiceStartYear) {

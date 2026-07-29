@@ -907,12 +907,12 @@ function ModeratorArtistWizard() {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="instrument">Instrument</Label>
+                    <Label htmlFor="instrument">Instruments</Label>
                     <Input
                       id="instrument"
                       name="instrument"
                       type="text"
-                      placeholder="e.g. Vocal, Violin, Mridangam"
+                      placeholder="e.g. Mridangam, Vocal"
                       value={form.instrument}
                       onChange={e => setForm(f => ({ ...f, instrument: e.target.value }))}
                     />

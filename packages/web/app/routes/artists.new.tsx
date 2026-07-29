@@ -133,13 +133,13 @@ export default function NewArtist() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="instrument">Instrument</Label>
+                <Label htmlFor="instrument">Instruments</Label>
                 <Input
                   id="instrument"
                   name="instrument"
                   type="text"
-                  placeholder="e.g. Vocal, Violin, Mridangam"
-                  maxLength={100}
+                  placeholder="e.g. Mridangam, Vocal"
+                  maxLength={200}
                 />
               </div>
               <div className="space-y-2">

@@ -38,7 +38,10 @@ export const CreateArtistSchema = z.object({
   website: z.string().url().optional(),
   socialLinks: z.array(SocialLinkSchema).optional(),
   activeYears: z.string().max(50).optional(),
-  instrument: z.string().max(100).optional(),
+  // A comma-separated list: "mridangam, vocal". One free-text field rather than an array or
+  // an enum, because the values arrive from posters and scrapes where a closed set would
+  // reject real data (§11.1). 200 leaves room for several without inviting an essay.
+  instrument: z.string().max(200).optional(),
   city: z.string().max(200).optional(),
   practiceStartYear: YearSchema.optional(),
   debutYear: YearSchema.optional(),
