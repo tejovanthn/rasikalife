@@ -69,6 +69,8 @@ export function CompositionSearch({ value, displayValue, onSelect, onFreeText }:
           onChange={e => handleChange(e.target.value)}
           onBlur={() => setIsOpen(false)}
           placeholder="Search composition…"
+          // Compact row editor with no room for a visible Label — see DESIGN.md density rule.
+          aria-label="Search composition"
           className="w-full pl-8 pr-8 py-1.5 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
           aria-autocomplete="list"
           aria-expanded={isOpen}

@@ -126,6 +126,8 @@ export default function AdminDataDomain() {
             name="file"
             accept=".csv,text/csv"
             required
+            // Inline upload row next to its own submit button — see DESIGN.md density rule.
+            aria-label="CSV file to upload"
             className="text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5 file:text-sm"
           />
           <Button type="submit" disabled={busy}>

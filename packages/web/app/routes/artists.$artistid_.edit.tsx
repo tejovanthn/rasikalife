@@ -575,6 +575,8 @@ function EditorArtistForm() {
                   <Input
                     name="guruName"
                     placeholder="Guru name"
+                    // One row per guru under the section's "Gurus" Label — see DESIGN.md density rule.
+                    aria-label="Guru name"
                     value={guru.name}
                     onChange={e =>
                       setGurus(prev =>
@@ -622,7 +624,7 @@ function EditorArtistForm() {
                       )
                     }
                   >
-                    <SelectTrigger className="flex-1">
+                    <SelectTrigger className="flex-1" aria-label="Social link platform">
                       <SelectValue placeholder="Select platform..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -637,6 +639,8 @@ function EditorArtistForm() {
                     name="socialLinkUrl"
                     placeholder="https://..."
                     type="url"
+                    // One row per link under the section's "Social Links" Label — see DESIGN.md density rule.
+                    aria-label="Social link URL"
                     value={link.url}
                     onChange={e =>
                       setSocialLinks(prev =>
@@ -1598,6 +1602,7 @@ function AwardsEditor({
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <Input
             placeholder="Award name"
+            aria-label="Award name"
             value={awardName}
             onChange={e => setAwardName(e.target.value)}
           />
@@ -1606,16 +1611,19 @@ function AwardsEditor({
             min={1900}
             max={2100}
             placeholder="Year"
+            aria-label="Award year"
             value={year}
             onChange={e => setYear(e.target.value)}
           />
           <Input
             placeholder="Category (optional)"
+            aria-label="Award category"
             value={category}
             onChange={e => setCategory(e.target.value)}
           />
           <Input
             placeholder="Notes (optional)"
+            aria-label="Award notes"
             value={notes}
             onChange={e => setNotes(e.target.value)}
           />
@@ -1808,15 +1816,27 @@ function PerformancesEditor({
           and featured on this profile.
         </p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-          <Input placeholder="Event title" value={title} onChange={e => setTitle(e.target.value)} />
-          <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+          <Input
+            placeholder="Event title"
+            aria-label="Event title"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+          <Input
+            type="date"
+            aria-label="Event date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+          />
           <Input
             placeholder="Venue (optional)"
+            aria-label="Venue"
             value={venueName}
             onChange={e => setVenueName(e.target.value)}
           />
           <Input
             placeholder="Role (optional)"
+            aria-label="Role"
             value={role}
             onChange={e => setRole(e.target.value)}
           />
@@ -1926,11 +1946,13 @@ function ClaimInviteEditor({
       <Input
         type="email"
         placeholder="artist@example.com"
+        aria-label="Artist email address"
         value={email}
         onChange={e => setEmail(e.target.value)}
       />
       <Input
         placeholder="How do you know this address is theirs?"
+        aria-label="How do you know this address is theirs?"
         value={note}
         onChange={e => setNote(e.target.value)}
       />
@@ -2075,11 +2097,13 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
               <>
                 <Input
                   placeholder="Caption (optional)"
+                  aria-label="Photo caption"
                   value={editCaption}
                   onChange={e => setEditCaption(e.target.value)}
                 />
                 <Input
                   placeholder="Credit (optional)"
+                  aria-label="Photo credit"
                   value={editCredit}
                   onChange={e => setEditCredit(e.target.value)}
                 />
@@ -2205,11 +2229,13 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
           <>
             <Input
               placeholder="Caption (optional)"
+              aria-label="Photo caption"
               value={caption}
               onChange={e => setCaption(e.target.value)}
             />
             <Input
               placeholder="Credit (optional)"
+              aria-label="Photo credit"
               value={credit}
               onChange={e => setCredit(e.target.value)}
             />

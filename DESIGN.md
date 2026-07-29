@@ -6,7 +6,8 @@ colors:
   fired-earthenware-dark: "#ed5e25"
   hall-light: "#ffede5"
   lamp-black: "#130a06"
-  ink: "#000000"
+  ink: "#181310"
+  warm-white: "#fffbfa"
   paper-ink: "#e7e5e4"
   clay-surface: "#f2e0d9"
   ash-rose: "#e4d4cd"
@@ -71,13 +72,13 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.fired-earthenware}"
-    textColor: "#ffffff"
+    textColor: "{colors.warm-white}"
     rounded: "{rounded.md}"
     padding: "8px 16px"
     height: "40px"
   button-primary-hover:
     backgroundColor: "{colors.fired-earthenware}"
-    textColor: "#ffffff"
+    textColor: "{colors.warm-white}"
   button-outline:
     backgroundColor: "{colors.hall-light}"
     textColor: "{colors.ink}"
@@ -164,11 +165,14 @@ These three are a vocabulary, not a palette. A reader who learns them once can s
 - **Ash Rose** (`#e4d4cd` light, `#32211b` dark): Muted blocks, placeholder avatars, the About panel.
 - **Quiet Ink** (`#5e5755` light, `#9e9794` dark): Secondary text, captions, metadata. Clears 4.5:1 on both the page and on Ash Rose.
 - **Clay Line** (`#a66f59` light, `#3c2820` dark): Borders and dividers.
-- **Ink** (`#000000`) / **Paper Ink** (`#e7e5e4`): Body text.
+- **Ink** (`#181310`) / **Paper Ink** (`#e7e5e4`): Body text.
+- **Warm White** (`#fffbfa`): The label on a filled accent button. Not `#ffffff`.
 
 ### Named Rules
 
-**The One Hue Rule.** Every surface, border, neutral, and text colour sits on hue 17. There is no untinted grey anywhere in this system. A token with a hue outside 17, other than the three domain colours and the three status colours, is a bug. Two tokens once carried `-21`, which CSS silently normalises to 339 and renders rose; nothing looked broken and every muted surface on the site was off-brand.
+**The One Hue Rule.** Every surface, border, neutral, and text colour sits on hue 17. There is no untinted grey anywhere in this system, and no pure `#000` or `#fff`: a token at lightness 0% or 100% discards its hue and saturation entirely, which is the same failure by another route. Nine tokens once resolved to pure black or white and two more carried hue `-21`, which CSS normalises to 339 and renders rose. Nothing looked broken in either case.
+
+**The Filled Surface Rule.** Any token ending in `-foreground` names a label sitting on its matching fill, and that pairing is a contrast obligation, not a formality. White on `--success` read 2.30:1, and `bg-success` is what the moderator Approve button uses, so the worst pairing on the site was on an action. Every `-foreground` pair is asserted in `app/lib/contrast.test.ts`.
 
 **The Two Temperatures Rule.** Light and dark are not one value on two backgrounds. `--primary`, `--primary-foreground`, and `--destructive` all differ between themes because a single value cannot clear contrast on both. Any new colour token must be checked in both blocks before it ships.
 

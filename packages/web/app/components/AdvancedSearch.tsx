@@ -70,6 +70,7 @@ export function AdvancedSearch() {
                 name="q"
                 placeholder="Search compositions, artists, ragas, talas..."
                 defaultValue={currentFilters.query}
+                aria-label="Search compositions, artists, ragas, talas"
                 className="w-full pl-10 pr-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring bg-background"
               />
             </div>

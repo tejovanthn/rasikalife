@@ -147,6 +147,22 @@
           "#ffb3b3",
           "#ffe6e6"
         ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "hsl(17 20% 8%)",
+        "note": "Body text. Warm near-black: at L 0% the token resolved to pure #000 and lost the brand hue.",
+        "tonalRamp": [
+          "#262322",
+          "#3f3b39",
+          "#585351",
+          "#726b68",
+          "#8b8380",
+          "#aaa4a1",
+          "#cbc7c5",
+          "#eceaea"
+        ]
       }
     },
     "typographyMeta": {
@@ -158,7 +174,10 @@
         "displayName": "Headline",
         "purpose": "Major section breaks on long documents."
       },
-      "title": { "displayName": "Title", "purpose": "Section headings inside a page. The workhorse." },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section headings inside a page. The workhorse."
+      },
       "body": {
         "displayName": "Body",
         "purpose": "Prose, capped at 65-75ch. Biographies and descriptions are the main crawlable content."
@@ -208,11 +227,26 @@
       }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" },
-      { "name": "2xl", "value": "1400px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1400px"
+      }
     ]
   },
   "components": [
@@ -220,9 +254,9 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The one main action on a surface. Fired Earthenware fill, white label.",
+      "description": "The one main action on a surface. Fired Earthenware fill, warm-white label.",
       "html": "<button class=\"ds-btn-primary\">Send claim</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 8px 16px; background: hsl(17 84.7% 40%); color: #fff; border: none; border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: hsl(17 84.7% 40% / 0.9); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 8px 16px; background: hsl(17 84.7% 40%); color: hsl(17 100% 99%); border: none; border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: hsl(17 84.7% 40% / 0.9); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
     },
     {
       "name": "Outline Button",
@@ -230,7 +264,7 @@
       "refersTo": "button-outline",
       "description": "Secondary action. Clay Line border on the page colour, filling with Ash Rose on hover.",
       "html": "<button class=\"ds-btn-outline\">Withdraw</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 8px 16px; background: hsl(17 100% 95%); color: hsl(17 5% 0%); border: 1px solid hsl(17 30% 18%); border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-outline:hover { background: hsl(17 30% 80%); color: hsl(17 5% 10%); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); }"
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 8px 16px; background: hsl(17 100% 95%); color: hsl(17 20% 8%); border: 1px solid hsl(17 30% 18%); border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-outline:hover { background: hsl(17 30% 80%); color: hsl(17 5% 10%); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); }"
     },
     {
       "name": "Text Input",
@@ -238,7 +272,7 @@
       "refersTo": "input-text",
       "description": "16px text on mobile so iOS does not zoom on focus, 14px from md up.",
       "html": "<input class=\"ds-input-text\" type=\"text\" placeholder=\"How can we verify you?\" />",
-      "css": ".ds-input-text { display: flex; width: 100%; height: 40px; padding: 8px 12px; background: hsl(17 100% 95%); color: hsl(17 5% 0%); border: 1px solid hsl(17 30% 18%); border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 16px; } .ds-input-text::placeholder { color: hsl(17 5% 35%); } .ds-input-text:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); } .ds-input-text:disabled { opacity: 0.5; cursor: not-allowed; } @media (min-width: 768px) { .ds-input-text { font-size: 14px; } }"
+      "css": ".ds-input-text { display: flex; width: 100%; height: 40px; padding: 8px 12px; background: hsl(17 100% 95%); color: hsl(17 20% 8%); border: 1px solid hsl(17 30% 18%); border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 16px; } .ds-input-text::placeholder { color: hsl(17 5% 35%); } .ds-input-text:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); } .ds-input-text:disabled { opacity: 0.5; cursor: not-allowed; } @media (min-width: 768px) { .ds-input-text { font-size: 14px; } }"
     },
     {
       "name": "Card",
@@ -270,7 +304,7 @@
       "refersTo": "card",
       "description": "How a list of events is rendered: hairline-separated rows with a leading time column, not a stack of cards. py-3 puts the tap target at 44px without a wrapper.",
       "html": "<a class=\"ds-event-row\" href=\"#\"><time class=\"ds-event-date\">30 Jan 2026</time><span class=\"ds-event-title\">Margazhi Recital</span><span class=\"ds-event-role\">vocal</span></a>",
-      "css": ".ds-event-row { display: flex; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid hsl(17 30% 50% / 0.4); text-decoration: none; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-event-row:last-child { border-bottom: none; } .ds-event-date { width: 80px; flex-shrink: 0; font-size: 14px; font-variant-numeric: tabular-nums; color: hsl(17 5% 35%); } .ds-event-title { flex: 1; min-width: 0; font-weight: 500; color: hsl(17 5% 0%); } .ds-event-row:hover .ds-event-title { text-decoration: underline; } .ds-event-role { flex-shrink: 0; font-size: 12px; color: hsl(17 5% 35%); } @media (min-width: 640px) { .ds-event-row { gap: 16px; } .ds-event-date { width: 112px; } }"
+      "css": ".ds-event-row { display: flex; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid hsl(17 30% 50% / 0.4); text-decoration: none; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-event-row:last-child { border-bottom: none; } .ds-event-date { width: 80px; flex-shrink: 0; font-size: 14px; font-variant-numeric: tabular-nums; color: hsl(17 5% 35%); } .ds-event-title { flex: 1; min-width: 0; font-weight: 500; color: hsl(17 20% 8%); } .ds-event-row:hover .ds-event-title { text-decoration: underline; } .ds-event-role { flex-shrink: 0; font-size: 12px; color: hsl(17 5% 35%); } @media (min-width: 640px) { .ds-event-row { gap: 16px; } .ds-event-date { width: 112px; } }"
     },
     {
       "name": "Sticky Navigation",
@@ -278,7 +312,7 @@
       "refersTo": "button-ghost",
       "description": "Top bar on the page colour with a floating-layer shadow. 56px on mobile, 64px from md.",
       "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-brand\" href=\"#\">Rasika.life</a><a class=\"ds-nav-link\" href=\"#\">Artists</a><a class=\"ds-nav-link\" href=\"#\">Compositions</a></nav>",
-      "css": ".ds-nav { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 24px; height: 56px; padding: 0 16px; background: hsl(17 100% 95%); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-nav-brand { font-weight: 700; color: hsl(17 5% 0%); text-decoration: none; } .ds-nav-link { font-size: 14px; font-weight: 500; color: hsl(17 84.7% 40%); text-decoration: none; } .ds-nav-link:hover { text-decoration: underline; } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 84.7% 40%); border-radius: 4px; } @media (min-width: 768px) { .ds-nav { height: 64px; padding: 0 24px; } }"
+      "css": ".ds-nav { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 24px; height: 56px; padding: 0 16px; background: hsl(17 100% 95%); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-nav-brand { font-weight: 700; color: hsl(17 20% 8%); text-decoration: none; } .ds-nav-link { font-size: 14px; font-weight: 500; color: hsl(17 84.7% 40%); text-decoration: none; } .ds-nav-link:hover { text-decoration: underline; } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 84.7% 40%); border-radius: 4px; } @media (min-width: 768px) { .ds-nav { height: 64px; padding: 0 24px; } }"
     }
   ],
   "narrative": {
@@ -295,7 +329,12 @@
     "rules": [
       {
         "name": "The One Hue Rule",
-        "body": "Every surface, border, neutral, and text colour sits on hue 17. There is no untinted grey anywhere in this system. A token with a hue outside 17, other than the three domain colours and the three status colours, is a bug. Two tokens once carried -21, which CSS silently normalises to 339 and renders rose; nothing looked broken and every muted surface on the site was off-brand.",
+        "body": "Every surface, border, neutral, and text colour sits on hue 17. There is no untinted grey anywhere in this system, and no pure #000 or #fff: a token at lightness 0% or 100% discards its hue and saturation entirely, which is the same failure by another route. Nine tokens once resolved to pure black or white and two more carried hue -21, which CSS normalises to 339 and renders rose. Nothing looked broken in either case.",
+        "section": "colors"
+      },
+      {
+        "name": "The Filled Surface Rule",
+        "body": "Any token ending in -foreground names a label sitting on its matching fill, and that pairing is a contrast obligation, not a formality. White on --success read 2.30:1, and bg-success is what the moderator Approve button uses, so the worst pairing on the site was on an action. Every -foreground pair is asserted in app/lib/contrast.test.ts.",
         "section": "colors"
       },
       {

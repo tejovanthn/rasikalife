@@ -5,19 +5,24 @@
 @layer base {
   :root {
     --background: 17 100% 95%;
-    --foreground: 17 5% 0%;
+    /* Warm near-black, not #000. At L 0% the hue and saturation are discarded and the token
+       resolves to pure neutral black, the one thing The One Hue Rule forbids. L 8% keeps the
+       ink on hue 17 and still reads 16.2:1 on the page, far past what body text needs. */
+    --foreground: 17 20% 8%;
     --card: 17 50% 90%;
     --card-foreground: 17 5% 10%;
     --popover: 17 100% 95%;
-    --popover-foreground: 17 100% 0%;
+    --popover-foreground: 17 20% 8%;
     /* Deeper than the dark-mode rust on purpose. At the shared L 53.7% this hue gives
        2.97:1 as link text on --background and 3.38:1 for white button labels, both below
        WCAG AA. L 40% takes those to 4.73:1 and 5.38:1 with the hue and saturation
        untouched, so the earthenware character holds and only the value moves. */
     --primary: 17 84.7% 40%;
-    --primary-foreground: 0 0% 100%;
+    /* Warm white, not #fff. L 99% at the brand hue is indistinguishable as a colour but
+       keeps the token on-system, and holds 5.25:1 against the primary fill. */
+    --primary-foreground: 17 100% 99%;
     --secondary: 17 30% 70%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary-foreground: 17 20% 8%;
     /* Hue 17, not -21. These two carried a negative hue that CSS normalises to 339, a rose
        tint, while every other token in the file sits on the brand rust at 17. */
     --muted: 17 30% 85%;
@@ -40,18 +45,22 @@
     --raga-foreground: 270 60% 30%;
     --tala: 30 80% 92%;
     --tala-foreground: 30 80% 30%;
-    /* Status semantic colors */
+    /* Status semantic colors. Both labels are the warm near-black: white on this green was
+       2.30:1, which fails AA on the moderator Approve buttons that use bg-success. */
     --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 17 20% 8%;
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 0%;
+    --warning-foreground: 17 20% 8%;
   }
 
   .dark,
   :root[class~="dark"] {
     --background: 17 50% 5%;
     --foreground: 17 5% 90%;
-    --card: 17 50% 0%;
+    /* L 3%, not 0%. A card still sits a step deeper than the page here, the same direction
+       as in light mode, but at L 0% the token collapsed to pure black and left the hue
+       behind. */
+    --card: 17 45% 3%;
     --card-foreground: 17 5% 90%;
     --popover: 17 50% 5%;
     --popover-foreground: 17 5% 90%;
@@ -62,7 +71,7 @@
        button; the dark label reads 6.21:1 on the same fill. */
     --primary-foreground: 17 5% 5%;
     --secondary: 17 30% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary-foreground: 17 100% 99%;
     /* Hue 17, not -21 (which normalises to 339, rose). See the light block. */
     --muted: 17 30% 15%;
     --muted-foreground: 17 5% 60%;
@@ -87,9 +96,9 @@
     --tala-foreground: 30 80% 75%;
     /* Status semantic colors */
     --success: 142 71% 55%;
-    --success-foreground: 0 0% 0%;
+    --success-foreground: 17 20% 8%;
     --warning: 38 92% 60%;
-    --warning-foreground: 0 0% 0%;
+    --warning-foreground: 17 20% 8%;
   }
 }
 

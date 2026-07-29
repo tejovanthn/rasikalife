@@ -1,5 +1,6 @@
 import { Loader2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { Label } from '~/components/ui/label';
 
 interface ImageUploadProps {
   urlFieldName: string;
@@ -92,9 +93,11 @@ export function ImageUpload({
     }
   };
 
+  const inputId = `image-upload-${urlFieldName}`;
+
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium">{label}</span>
+      <Label htmlFor={inputId}>{label}</Label>
       <div className="flex items-start gap-4">
         <div
           className="relative h-24 w-24 rounded-md border-2 border-dashed border-input bg-muted flex items-center justify-center cursor-pointer overflow-hidden flex-shrink-0"
@@ -130,6 +133,7 @@ export function ImageUpload({
       </div>
       <input
         ref={inputRef}
+        id={inputId}
         type="file"
         accept="image/*"
         className="hidden"

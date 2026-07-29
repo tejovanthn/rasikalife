@@ -62,6 +62,25 @@ describe.each(['light', 'dark'] as const)('%s theme token contrast', mode => {
   it('the focus ring meets non-text contrast against the background', () => {
     expect(contrastRatio(t.ring, t.background)).toBeGreaterThanOrEqual(AA_NON_TEXT);
   });
+
+  // Every filled surface that carries a label. White on --success was 2.30:1 in light mode,
+  // and bg-success is what the moderator Approve buttons use, so the worst offender was on
+  // an action rather than on decoration.
+  it.each(['secondary', 'success', 'warning', 'destructive', 'accent', 'card', 'muted'])(
+    'labels on a filled %s surface meet AA',
+    role => {
+      expect(contrastRatio(t[`${role}-foreground`], t[role])).toBeGreaterThanOrEqual(
+        AA_NORMAL_TEXT
+      );
+    }
+  );
+
+  // The domain vocabulary from DESIGN.md section 2: each pale surface with its own deep ink.
+  it.each(['raga', 'tala', 'language'])('the %s badge pairing meets AA', role => {
+    expect(contrastRatio(t[`${role}-foreground`], t[role])).toBeGreaterThanOrEqual(
+      AA_NORMAL_TEXT
+    );
+  });
 });
 
 // The palette is deliberately anchored to one warm hue (PRODUCT.md: "earthenware, temple

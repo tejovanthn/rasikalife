@@ -317,7 +317,9 @@ function ClaimProfile({
             Tell us how we can confirm it&rsquo;s you — an official email address, a social account
             you post from, anything a moderator can check.
           </p>
-          <Input name="note" placeholder="How can we verify you?" />
+          {/* Single-field disclosure form under its own <summary> — a visible Label would
+              just repeat that line, so this stays label-free per DESIGN.md density rule. */}
+          <Input name="note" placeholder="How can we verify you?" aria-label="How can we verify you?" />
           {/* Default size, not sm. This is a public action on a page many people reach on a
               phone, and PRODUCT.md holds touch targets to 44px; sm is 36. */}
           <Button type="submit" className="min-h-11" disabled={fetcher.state !== 'idle'}>

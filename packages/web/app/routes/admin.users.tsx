@@ -61,6 +61,8 @@ function RoleCell({ user }: { user: UserRow }) {
       <select
         name="role"
         defaultValue={user.role}
+        // One select per table row — see DESIGN.md density rule.
+        aria-label={`Role for ${user.name}`}
         className="text-sm border rounded px-2 py-1 bg-background"
         onChange={e => {
           // track local state via form default value

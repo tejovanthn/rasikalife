@@ -65,6 +65,8 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
                 value={item.compositionTitle}
                 onChange={e => onChange({ ...item, compositionTitle: e.target.value })}
                 placeholder="Composition title (free text)"
+                // Compact per-row editor — see DESIGN.md density rule.
+                aria-label="Composition title (free text)"
                 className="w-full px-2.5 py-1.5 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               />
               <p className="text-xs text-muted-foreground italic">
@@ -121,8 +123,11 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
       <div className="pl-14 space-y-2">
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div>
-            <label className="block text-muted-foreground mb-0.5">Raga</label>
+            <label htmlFor={`raga-name-${item._id}`} className="block text-muted-foreground mb-0.5">
+              Raga
+            </label>
             <input
+              id={`raga-name-${item._id}`}
               type="text"
               value={item.ragaName ?? ''}
               onChange={e => onChange({ ...item, ragaName: e.target.value || undefined })}
@@ -131,8 +136,11 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
             />
           </div>
           <div>
-            <label className="block text-muted-foreground mb-0.5">Tala</label>
+            <label htmlFor={`tala-name-${item._id}`} className="block text-muted-foreground mb-0.5">
+              Tala
+            </label>
             <input
+              id={`tala-name-${item._id}`}
               type="text"
               value={item.talaName ?? ''}
               onChange={e => onChange({ ...item, talaName: e.target.value || undefined })}
@@ -155,6 +163,8 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
               placeholder="Public note — e.g. '15min alapana', 'neraval at pallavi'"
               maxLength={500}
               rows={2}
+              // Revealed inline by the "Add public note" toggle — no room for a visible Label.
+              aria-label="Public note"
               className="w-full px-2 py-1 rounded border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring text-xs resize-y"
             />
             <div className="text-xs text-muted-foreground text-right">
