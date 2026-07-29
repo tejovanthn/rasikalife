@@ -237,35 +237,28 @@ export default function TalaDetails() {
         entitySlug={`${generateSlug(tala.name)}-${tala.id}`}
         showViewMore={hasMoreCompositions}
       />
-      {/* Cross-linking section */}
-      <section className="mt-8 pt-8 border-t">
-        <h2 className="text-xl font-semibold mb-4">Explore Related Content</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link
-            to="/carnatic/talas"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
-          >
-            <h3 className="font-medium">All Talas</h3>
-            <p className="text-sm text-muted-foreground">Browse other talas</p>
-          </Link>
-
-          <Link
-            to="/carnatic/compositions"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
-          >
-            <h3 className="font-medium">Compositions</h3>
-            <p className="text-sm text-muted-foreground">Find compositions in this tala</p>
-          </Link>
-
-          <Link
-            to="/carnatic"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
-          >
-            <h3 className="font-medium">Carnatic Music</h3>
-            <p className="text-sm text-muted-foreground">Learn about the tradition</p>
-          </Link>
-        </div>
-      </section>
+      {/* Three identical cards saying "Browse other talas", "Find compositions in this tala"
+          and "Learn about the tradition" told a reader nothing they could not guess. A plain
+          row of links keeps the navigation and drops the furniture. */}
+      <nav aria-label="Browse elsewhere" className="mt-10 border-t pt-6">
+        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <li>
+            <Link to="/carnatic/talas" className="text-primary hover:underline">
+              All Talas
+            </Link>
+          </li>
+          <li>
+            <Link to="/carnatic/compositions" className="text-primary hover:underline">
+              Compositions
+            </Link>
+          </li>
+          <li>
+            <Link to="/carnatic" className="text-primary hover:underline">
+              Carnatic Music
+            </Link>
+          </li>
+        </ul>
+      </nav>
 
       {/* Structured Data for SEO */}
       <BreadcrumbStructuredData

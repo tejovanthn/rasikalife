@@ -134,7 +134,8 @@ export default function EventsIndex() {
       {uniqueCities.length > 1 && (
         <div className="mb-6">
           <Select value={city || '__all__'} onValueChange={handleCityChange}>
-            <SelectTrigger className="w-48">
+            {/* Standalone toolbar filter, not part of a form — see DESIGN.md density rule. */}
+            <SelectTrigger className="w-48" aria-label="Filter by city">
               <SelectValue placeholder="All cities" />
             </SelectTrigger>
             <SelectContent>

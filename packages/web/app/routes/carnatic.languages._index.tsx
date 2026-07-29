@@ -71,33 +71,28 @@ export default function LanguagesIndex() {
         </div>
       )}
 
-      <section className="mt-12 pt-8 border-t">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            to="/carnatic/compositions"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
-          >
-            <h3 className="font-medium">All Compositions</h3>
-            <p className="text-sm text-muted-foreground">Browse all compositions</p>
-          </Link>
-
-          <Link
-            to="/carnatic"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
-          >
-            <h3 className="font-medium">Carnatic Music</h3>
-            <p className="text-sm text-muted-foreground">Discover the tradition</p>
-          </Link>
-
-          <Link
-            to="/artists"
-            className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors text-center"
-          >
-            <h3 className="font-medium">Artists</h3>
-            <p className="text-sm text-muted-foreground">Explore musicians</p>
-          </Link>
-        </div>
-      </section>
+      {/* Three identical cards saying "Browse all compositions", "Discover the tradition" and
+          "Explore musicians" told a reader nothing they could not guess. A plain row of links
+          keeps the navigation and drops the furniture. */}
+      <nav aria-label="Browse elsewhere" className="mt-10 border-t pt-6">
+        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <li>
+            <Link to="/carnatic/compositions" className="text-primary hover:underline">
+              All Compositions
+            </Link>
+          </li>
+          <li>
+            <Link to="/carnatic" className="text-primary hover:underline">
+              Carnatic Music
+            </Link>
+          </li>
+          <li>
+            <Link to="/artists" className="text-primary hover:underline">
+              Artists
+            </Link>
+          </li>
+        </ul>
+      </nav>
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },

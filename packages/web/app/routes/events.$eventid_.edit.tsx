@@ -468,6 +468,8 @@ export default function EditEvent() {
                             )
                           }
                           placeholder="+91 98765 43210"
+                          // One row per phone number under the section's "Contact Phone(s)" Label.
+                          aria-label="Contact phone"
                         />
                         <Button
                           type="button"
