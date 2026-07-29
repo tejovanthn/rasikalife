@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-29T00:00:00.000Z",
+  "title": "Design System: Rasika.life",
+  "extensions": {
+    "colorMeta": {
+      "fired-earthenware": {
+        "role": "primary",
+        "displayName": "Fired Earthenware",
+        "canonical": "hsl(17 84.7% 40%)",
+        "note": "Light-mode value. Dark mode uses hsl(17 84.7% 53.7%); the two differ so link text clears 4.73:1 on warm paper and 5.78:1 on lamp black.",
+        "tonalRamp": [
+          "#471806",
+          "#76280a",
+          "#a5380e",
+          "#d44912",
+          "#ed622b",
+          "#f39672",
+          "#f9cbb8",
+          "#fdeee7"
+        ]
+      },
+      "hall-light": {
+        "role": "neutral",
+        "displayName": "Hall Light",
+        "canonical": "hsl(17 100% 95%)",
+        "note": "The page. Warm paper, never white.",
+        "tonalRamp": [
+          "#32211b",
+          "#53372d",
+          "#744e3e",
+          "#956450",
+          "#af7d6a",
+          "#c9a99c",
+          "#e4d4cd",
+          "#f6f1ee"
+        ]
+      },
+      "lamp-black": {
+        "role": "neutral",
+        "displayName": "Lamp Black",
+        "canonical": "hsl(17 50% 5%)",
+        "note": "The dark page. Warm black, tinted to the brand hue.",
+        "tonalRamp": [
+          "#32211b",
+          "#53372d",
+          "#744e3e",
+          "#956450",
+          "#af7d6a",
+          "#c9a99c",
+          "#e4d4cd",
+          "#f6f1ee"
+        ]
+      },
+      "clay-surface": {
+        "role": "neutral",
+        "displayName": "Clay Surface",
+        "canonical": "hsl(17 50% 90%)",
+        "note": "Cards, one tonal step below the page. Carries the structural separation that shadow deliberately does not.",
+        "tonalRamp": [
+          "#32211b",
+          "#53372d",
+          "#744e3e",
+          "#956450",
+          "#af7d6a",
+          "#c9a99c",
+          "#e4d4cd",
+          "#f6f1ee"
+        ]
+      },
+      "quiet-ink": {
+        "role": "neutral",
+        "displayName": "Quiet Ink",
+        "canonical": "hsl(17 5% 35%)",
+        "note": "Secondary text. 6.20:1 on the page and 4.71:1 on Ash Rose; both pass AA, the second only just.",
+        "tonalRamp": [
+          "#262322",
+          "#3f3b39",
+          "#585351",
+          "#726b68",
+          "#8b8380",
+          "#aaa4a1",
+          "#cbc7c5",
+          "#eceaea"
+        ]
+      },
+      "raga-violet": {
+        "role": "secondary",
+        "displayName": "Raga Violet",
+        "canonical": "hsl(270 60% 92%)",
+        "note": "Marks a raga and nothing else. Surface pairs with ink at hsl(270 60% 30%).",
+        "tonalRamp": [
+          "#260f3d",
+          "#401a66",
+          "#59248f",
+          "#732eb8",
+          "#8c47d1",
+          "#b385e0",
+          "#d9c2f0",
+          "#f2ebfa"
+        ]
+      },
+      "tala-amber": {
+        "role": "secondary",
+        "displayName": "Tala Amber",
+        "canonical": "hsl(30 80% 92%)",
+        "note": "Marks a tala and nothing else. Kept clear of Caution Amber, which is saturated and used on text.",
+        "tonalRamp": [
+          "#452608",
+          "#73400d",
+          "#a15912",
+          "#cf7317",
+          "#e88c30",
+          "#f0b375",
+          "#f7d9ba",
+          "#fcf2e8"
+        ]
+      },
+      "language-indigo": {
+        "role": "secondary",
+        "displayName": "Language Indigo",
+        "canonical": "hsl(220 60% 92%)",
+        "note": "Marks a script or language and nothing else.",
+        "tonalRamp": [
+          "#0f1f3d",
+          "#1a3366",
+          "#24478f",
+          "#2e5cb8",
+          "#4775d1",
+          "#85a3e0",
+          "#c2d1f0",
+          "#ebf0fa"
+        ]
+      },
+      "alarm-red": {
+        "role": "tertiary",
+        "displayName": "Alarm Red",
+        "canonical": "hsl(0 100% 30%)",
+        "note": "Dark mode lightens this to hsl(0 100% 50%); the shared value read 2.19:1 on lamp black and made form errors nearly invisible.",
+        "tonalRamp": [
+          "#4d0000",
+          "#800000",
+          "#b30000",
+          "#e60000",
+          "#ff1a1a",
+          "#ff6666",
+          "#ffb3b3",
+          "#ffe6e6"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "One page title per screen. Extrabold at 800 is the single loudest thing in the system."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Major section breaks on long documents."
+      },
+      "title": { "displayName": "Title", "purpose": "Section headings inside a page. The workhorse." },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, capped at 65-75ch. Biographies and descriptions are the main crawlable content."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase subsection markers and metadata. Tracking is what separates it from a title at the same size."
+      }
+    },
+    "shadows": [
+      {
+        "name": "resting-card",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Near-invisible baseline on a card, present so the hover has somewhere to travel from."
+      },
+      {
+        "name": "hover-lift",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "The response when a card is interactive. Paired with a 200ms transition on shadow alone."
+      },
+      {
+        "name": "floating-layer",
+        "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "purpose": "Sticky navigation, dialogs, dropdowns. Things literally above the page."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default for colour and opacity changes. Motion conveys state and nothing else."
+      },
+      {
+        "name": "shadow-lift",
+        "value": "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Card hover elevation."
+      },
+      {
+        "name": "page-progress",
+        "value": "8s cubic-bezier(0.1, 0.4, 0.2, 1) forwards",
+        "purpose": "The top progress bar during navigation. The only long-running animation in the system."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { animation-duration: 0.01ms; transition-duration: 0.01ms }",
+        "purpose": "Applied globally to every element and pseudo-element. Not optional."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" },
+      { "name": "2xl", "value": "1400px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action on a surface. Fired Earthenware fill, white label.",
+      "html": "<button class=\"ds-btn-primary\">Send claim</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 8px 16px; background: hsl(17 84.7% 40%); color: #fff; border: none; border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: hsl(17 84.7% 40% / 0.9); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action. Clay Line border on the page colour, filling with Ash Rose on hover.",
+      "html": "<button class=\"ds-btn-outline\">Withdraw</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 8px 16px; background: hsl(17 100% 95%); color: hsl(17 5% 0%); border: 1px solid hsl(17 30% 18%); border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-outline:hover { background: hsl(17 30% 80%); color: hsl(17 5% 10%); } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "16px text on mobile so iOS does not zoom on focus, 14px from md up.",
+      "html": "<input class=\"ds-input-text\" type=\"text\" placeholder=\"How can we verify you?\" />",
+      "css": ".ds-input-text { display: flex; width: 100%; height: 40px; padding: 8px 12px; background: hsl(17 100% 95%); color: hsl(17 5% 0%); border: 1px solid hsl(17 30% 18%); border-radius: 6px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 16px; } .ds-input-text::placeholder { color: hsl(17 5% 35%); } .ds-input-text:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 100% 95%), 0 0 0 4px hsl(17 84.7% 40%); } .ds-input-text:disabled { opacity: 0.5; cursor: not-allowed; } @media (min-width: 768px) { .ds-input-text { font-size: 14px; } }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Clay Surface one tonal step below the page. Flat at rest, lifting only when interactive.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Bombay Jayashri</h3><p class=\"ds-card-body\">Vocal &middot; Chennai</p></div>",
+      "css": ".ds-card { padding: 24px; background: hsl(17 50% 90%); color: hsl(17 5% 10%); border: 1px solid hsl(17 30% 50%); border-radius: 8px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: box-shadow 200ms cubic-bezier(0.4,0,0.2,1); font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-card:hover { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); } .ds-card-title { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.4; } .ds-card-body { margin: 4px 0 0; font-size: 14px; color: hsl(17 5% 35%); }"
+    },
+    {
+      "name": "Domain Badge (raga)",
+      "kind": "chip",
+      "refersTo": "badge-raga",
+      "description": "The signature component. Pale domain surface with its own deep ink, so a reader scanning a page separates raga from tala without reading.",
+      "html": "<span class=\"ds-badge-raga\">Kamboji</span>",
+      "css": ".ds-badge-raga { display: inline-flex; align-items: center; padding: 2px 10px; background: hsl(270 60% 92%); color: hsl(270 60% 30%); border: 1px solid transparent; border-radius: 9999px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 600; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); }"
+    },
+    {
+      "name": "Domain Badge (tala)",
+      "kind": "chip",
+      "refersTo": "badge-tala",
+      "description": "Same shape as the raga badge, different meaning. The pairing is the vocabulary.",
+      "html": "<span class=\"ds-badge-tala\">Adi</span>",
+      "css": ".ds-badge-tala { display: inline-flex; align-items: center; padding: 2px 10px; background: hsl(30 80% 92%); color: hsl(30 80% 30%); border: 1px solid transparent; border-radius: 9999px; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 600; }"
+    },
+    {
+      "name": "Event Row",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "How a list of events is rendered: hairline-separated rows with a leading time column, not a stack of cards. py-3 puts the tap target at 44px without a wrapper.",
+      "html": "<a class=\"ds-event-row\" href=\"#\"><time class=\"ds-event-date\">30 Jan 2026</time><span class=\"ds-event-title\">Margazhi Recital</span><span class=\"ds-event-role\">vocal</span></a>",
+      "css": ".ds-event-row { display: flex; align-items: baseline; gap: 12px; padding: 12px 0; border-bottom: 1px solid hsl(17 30% 50% / 0.4); text-decoration: none; font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-event-row:last-child { border-bottom: none; } .ds-event-date { width: 80px; flex-shrink: 0; font-size: 14px; font-variant-numeric: tabular-nums; color: hsl(17 5% 35%); } .ds-event-title { flex: 1; min-width: 0; font-weight: 500; color: hsl(17 5% 0%); } .ds-event-row:hover .ds-event-title { text-decoration: underline; } .ds-event-role { flex-shrink: 0; font-size: 12px; color: hsl(17 5% 35%); } @media (min-width: 640px) { .ds-event-row { gap: 16px; } .ds-event-date { width: 112px; } }"
+    },
+    {
+      "name": "Sticky Navigation",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "Top bar on the page colour with a floating-layer shadow. 56px on mobile, 64px from md.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-brand\" href=\"#\">Rasika.life</a><a class=\"ds-nav-link\" href=\"#\">Artists</a><a class=\"ds-nav-link\" href=\"#\">Compositions</a></nav>",
+      "css": ".ds-nav { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 24px; height: 56px; padding: 0 16px; background: hsl(17 100% 95%); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); font-family: 'Noto Sans', ui-sans-serif, system-ui, sans-serif; } .ds-nav-brand { font-weight: 700; color: hsl(17 5% 0%); text-decoration: none; } .ds-nav-link { font-size: 14px; font-weight: 500; color: hsl(17 84.7% 40%); text-decoration: none; } .ds-nav-link:hover { text-decoration: underline; } .ds-nav-link:focus-visible { outline: none; box-shadow: 0 0 0 2px hsl(17 84.7% 40%); border-radius: 4px; } @media (min-width: 768px) { .ds-nav { height: 64px; padding: 0 24px; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Sabha Notebook",
+    "overview": "The annotated notebook a rasika keeps at the sabha. Dense, personal, warm with use, built by many hands over many seasons. It is not a museum vitrine and it is not a database dump: it is the thing you actually carry, marked up in the margins, that gets more valuable as more people write in it.\n\nEverything follows from that. The surface is warm paper, never clinical white, because the notebook has been handled. Type is one humanist sans across five scripts, because the notebook does not switch alphabets grudgingly. Depth is almost absent, because paper does not float. Colour is spent on two things only: the accent that marks an action, and the three domain hues that let a reader tell a raga from a tala at a glance while a concert is going on around them.\n\nThe system explicitly rejects four things PRODUCT.md names. It is not a cold, clinical reference tool: no bleached white, no hairline grey on grey. It is not music-journalism editorial: no aggressive display type, no dark magazine posturing. It is not startup SaaS: no generic blue, no gradient CTAs, no AI-slop aesthetic. And it is not \"ethnic\" decoration overload: the cultural resonance lives in the palette and the multi-script typography, never in mandala borders or ornamental frames.",
+    "keyCharacteristics": [
+      "One warm hue (17 degrees) tints every surface, border, and neutral; nothing on screen is untinted grey.",
+      "Five scripts, one family. Noto Sans carries Latin, Devanagari, Tamil, Telugu, and Kannada as equals.",
+      "Flat at rest. Shadow is a response to interaction, not a decoration.",
+      "Three domain colours (raga, tala, language) form a fixed vocabulary a returning reader learns once.",
+      "Density is a feature. Screens are designed to fill as the archive grows, not to look good empty.",
+      "Legible at arm's length in a dim hall, on a phone, mid-performance."
+    ],
+    "rules": [
+      {
+        "name": "The One Hue Rule",
+        "body": "Every surface, border, neutral, and text colour sits on hue 17. There is no untinted grey anywhere in this system. A token with a hue outside 17, other than the three domain colours and the three status colours, is a bug. Two tokens once carried -21, which CSS silently normalises to 339 and renders rose; nothing looked broken and every muted surface on the site was off-brand.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Temperatures Rule",
+        "body": "Light and dark are not one value on two backgrounds. --primary, --primary-foreground, and --destructive all differ between themes because a single value cannot clear contrast on both. Any new colour token must be checked in both blocks before it ships.",
+        "section": "colors"
+      },
+      {
+        "name": "The Vocabulary Rule",
+        "body": "Raga violet, tala amber, and language indigo mean exactly one thing each. Using raga violet for emphasis, or tala amber for a warning, destroys a scanning aid it took a reader months to internalise.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Jump Rule",
+        "body": "Hierarchy is carried by weight, not by size alone. Display is 800 against Title's 600 against Body's 400. A flat scale where everything is semibold reads as noise, and this system leans on scanability harder than most.",
+        "section": "typography"
+      },
+      {
+        "name": "The Script Parity Rule",
+        "body": "Indic script is never smaller, never lighter, and never a fallback. If a term exists in Tamil and in transliteration, both get the same treatment. A script selector is a first-class control, not a footnote.",
+        "section": "typography"
+      },
+      {
+        "name": "The Stored Name Rule",
+        "body": "Person names render exactly as stored and never pass through transliteration. Musical terms (raga, tala, composition titles, lyrics) do transliterate. The split is per field, not per page.",
+        "section": "typography"
+      },
+      {
+        "name": "The Response-Only Rule",
+        "body": "A shadow that is not answering an interaction or marking a floating layer is decoration, and decoration is prohibited here. If a static panel has a shadow, use a tonal step instead.",
+        "section": "elevation"
+      },
+      {
+        "name": "The 2014 Test",
+        "body": "If a surface looks like a 2014 mobile app, the shadow is too dark and its blur too small. Shadows in this system are wide, faint, and warm-neutral, never a hard drop.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do take every colour from the token system. --primary, --muted, --raga, --warning, and their siblings are the entire palette.",
+      "Do check both themes when adding or changing a colour token. Run app/lib/contrast.test.ts, which parses globals.css and asserts each on-screen pair against 4.5:1 for text and 3:1 for the focus ring.",
+      "Do keep every surface, neutral, and border on hue 17.",
+      "Do give Indic script the same size, weight, and prominence as Latin.",
+      "Do hide a section cleanly when it has no content. A bare heading over nothing is worse than an absent section.",
+      "Do reach 44px touch targets on anything a phone user taps at a concert.",
+      "Do use transition-colors, transition-opacity, and transition-shadow. Motion conveys state and nothing else.",
+      "Do design for density. The archive grows; screens should fill well, not look sparse-by-design."
+    ],
+    "donts": [
+      "Don't hard-code a Tailwind palette class. text-amber-600 and bg-green-50 are bugs, not style choices: they break dark mode and they break future theming.",
+      "Don't build a cold, clinical reference tool. No bleached white, no untinted grey, none of Wikipedia's visual bleakness.",
+      "Don't reach for music-journalism editorial. No Pitchfork typography, no dark magazine aesthetic.",
+      "Don't ship startup SaaS. No generic blue, no gradient CTAs, no AI slop aesthetic.",
+      "Don't apply \"ethnic\" decoration overload. No mandala patterns, no ornate borders. The culture is in the palette and the scripts.",
+      "Don't use border-left or border-right above 1px as a coloured accent stripe. Use a full border, a background tint, or nothing.",
+      "Don't use gradient text, background-clip: text, or decorative glassmorphism anywhere.",
+      "Don't repeat an identical card grid of icon plus heading plus generic line. Three cards saying \"Browse other musicians\" tell a reader nothing they could not guess.",
+      "Don't nest a card inside a card, ever.",
+      "Don't animate layout properties. prefers-reduced-motion is honoured globally and must stay that way.",
+      "Don't rely on hover for anything critical. Many readers are on a phone in a dark hall.",
+      "Don't put a raga colour on a non-raga, or a tala colour on a warning. The vocabulary only works while it is exact.",
+      "Don't show a counter that reads \"0 rasikas attended\". An empty community signal is worse than no signal."
+    ]
+  }
+}
