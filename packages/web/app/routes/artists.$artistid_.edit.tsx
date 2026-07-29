@@ -894,7 +894,7 @@ function ModeratorArtistWizard() {
                 </label>
 
                 {isGroupPersisted && !form.isGroup && members.length > 0 && (
-                  <p className="text-xs text-amber-600">
+                  <p className="text-xs text-warning">
                     Unchecking this leaves {members.length} member{members.length === 1 ? '' : 's'}{' '}
                     linked but hidden — the group's membership is not removed. Detach members first
                     if you mean to convert this to an individual.
@@ -1697,7 +1697,7 @@ function PerformanceRow({
             inputMode="numeric"
             aria-label={`Rank for ${performance.eventTitle}`}
             placeholder="Rank"
-            className="h-8 w-20"
+            className="w-20"
             value={rank}
             disabled={disabled}
             onChange={e => setRank(e.target.value)}

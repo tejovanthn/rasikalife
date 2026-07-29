@@ -111,6 +111,15 @@ The core package uses a domain-driven design with:
 - `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives.
 - `json-ld.ts` — `serializeJsonLd(data)` for anything going into `<script type="application/ld+json">`. Escapes `<` as `<`, because a `</script>` inside an entity-supplied URL would otherwise end the element and turn the rest of the payload into markup. Never use a bare `JSON.stringify` with `dangerouslySetInnerHTML`.
 
+### Colour tokens and contrast
+
+Every colour comes from the HSL variables in `app/globals.css`; hard-coded Tailwind palette classes (`text-amber-600`) are a bug, not a style choice. Two rules the tokens now enforce:
+
+- **Light and dark are not the same value.** `--primary` is L40 in light and L53.7 in dark, `--destructive` is L30 and L50, and `--primary-foreground` is white in light but near-black in dark. A single value for both modes is what produced 2.97:1 links and 2.19:1 error text.
+- **Hues stay on the brand.** Every surface token sits on hue 17. Two tokens once carried `-21`, which CSS normalises to 339 and renders rose.
+
+`app/lib/contrast.test.ts` parses `globals.css` and asserts the real pairs against WCAG AA (4.5:1 for text, 3:1 for the focus ring), in both themes, plus that no hue is negative. Run it before committing a token change; `app/lib/contrast.ts` exports the maths so a candidate value can be checked first.
+
 ### Caching a public page (`Cache-Control`)
 
 SST's generated CloudFront server cache policy sets `cookieBehavior: "none"`, so **the session cookie is not part of the cache key**. The root loader puts the signed-in viewer's name and email into every document, so a route that declares a static `public, s-maxage=…` header will have one signed-in viewer's document cached and served to everyone else.

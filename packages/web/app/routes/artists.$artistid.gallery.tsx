@@ -131,9 +131,12 @@ export default function ArtistGallery() {
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {photos.map(photo => (
               <figure key={photo.id} className="overflow-hidden rounded-lg border">
+                {/* Empty alt when a caption is showing: the figcaption below already carries
+                    that text, and repeating it in alt makes a screen reader read it twice.
+                    Without a caption the image needs a description of its own. */}
                 <img
                   src={photo.imageUrl}
-                  alt={photo.caption ?? artist.name}
+                  alt={photo.caption ? '' : `${artist.name}, photograph`}
                   loading="lazy"
                   className="aspect-square w-full object-cover"
                 />

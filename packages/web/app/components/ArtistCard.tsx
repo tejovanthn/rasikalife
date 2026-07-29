@@ -72,10 +72,16 @@ export function ArtistCard({ artist }: ArtistCardProps) {
                 {artist.title ? `${artist.title} ` : ''}
                 {artist.name}
                 {artist.claimStatus === 'verified' && (
-                  <BadgeCheck
-                    className="ml-1 inline-block h-4 w-4 align-text-bottom text-primary"
-                    aria-label="Verified artist"
-                  />
+                  <>
+                    {/* The icon is decorative and the meaning lives in text. aria-label on a
+                        bare <svg> is not reliably announced, so the state would simply be
+                        missing for screen reader users. */}
+                    <BadgeCheck
+                      aria-hidden="true"
+                      className="ml-1 inline-block h-4 w-4 align-text-bottom text-primary"
+                    />
+                    <span className="sr-only">(verified artist)</span>
+                  </>
                 )}
               </CardTitle>
               {line && <p className="text-sm text-muted-foreground mt-0.5 truncate">{line}</p>}

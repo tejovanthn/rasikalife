@@ -10,19 +10,28 @@
     --card-foreground: 17 5% 10%;
     --popover: 17 100% 95%;
     --popover-foreground: 17 100% 0%;
-    --primary: 17 84.7% 53.7%;
+    /* Deeper than the dark-mode rust on purpose. At the shared L 53.7% this hue gives
+       2.97:1 as link text on --background and 3.38:1 for white button labels, both below
+       WCAG AA. L 40% takes those to 4.73:1 and 5.38:1 with the hue and saturation
+       untouched, so the earthenware character holds and only the value moves. */
+    --primary: 17 84.7% 40%;
     --primary-foreground: 0 0% 100%;
     --secondary: 17 30% 70%;
     --secondary-foreground: 0 0% 0%;
-    --muted: -21 30% 85%;
+    /* Hue 17, not -21. These two carried a negative hue that CSS normalises to 339, a rose
+       tint, while every other token in the file sits on the brand rust at 17. */
+    --muted: 17 30% 85%;
     --muted-foreground: 17 5% 35%;
-    --accent: -21 30% 80%;
+    --accent: 17 30% 80%;
     --accent-foreground: 17 5% 10%;
     --destructive: 0 100% 30%;
     --destructive-foreground: 17 5% 90%;
     --border: 17 30% 50%;
     --input: 17 30% 18%;
-    --ring: 17 84.7% 53.7%;
+    /* Tracks --primary. At L 53.7% the focus ring read 2.97:1 against the background, under
+       the 3:1 WCAG 1.4.11 asks of a non-text indicator, and the ring is the only thing
+       telling a keyboard user where they are. */
+    --ring: 17 84.7% 40%;
     --radius: 0.5rem;
     /* Domain semantic colors */
     --language: 220 60% 92%;
@@ -46,16 +55,25 @@
     --card-foreground: 17 5% 90%;
     --popover: 17 50% 5%;
     --popover-foreground: 17 5% 90%;
+    /* Stays at L 53.7% here: against the dark background it reads 5.78:1 as link text, and
+       darkening it the way light mode needs would push that the wrong way. */
     --primary: 17 84.7% 53.7%;
-    --primary-foreground: 0 0% 100%;
+    /* Near-black, not white. White on this rust is 3.38:1 and fails AA on every filled
+       button; the dark label reads 6.21:1 on the same fill. */
+    --primary-foreground: 17 5% 5%;
     --secondary: 17 30% 10%;
     --secondary-foreground: 0 0% 100%;
-    --muted: -21 30% 15%;
+    /* Hue 17, not -21 (which normalises to 339, rose). See the light block. */
+    --muted: 17 30% 15%;
     --muted-foreground: 17 5% 60%;
-    --accent: -21 30% 15%;
+    --accent: 17 30% 15%;
     --accent-foreground: 17 5% 90%;
-    --destructive: 0 100% 30%;
-    --destructive-foreground: 17 5% 90%;
+    /* Lighter than the light-mode red, and with a dark label. At the shared L 30% this red
+       reads 2.19:1 against the dark background, so form errors were close to invisible.
+       L 50% gives 4.89:1 as text; white on it would only reach 4.00:1, so the label flips
+       dark for 4.87:1. */
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 17 5% 5%;
     --border: 17 30% 18%;
     --input: 17 30% 18%;
     --ring: 17 84.7% 53.7%;

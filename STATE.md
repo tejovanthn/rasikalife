@@ -18,6 +18,22 @@ Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 agai
 
 Also: the OG cache-key change orphans every existing `og-images/**` object (harmless, reclaimable), and `cascadeEventMetadataToArtists` wrote malformed `gsi1sk` values until this review — **any artist whose event was edited before this deploy has a corrupted junction row that will show as "Upcoming" forever**. `pnpm cli rebuild-collaborators` does not fix it; the row needs rewriting through ElectroDB. Worth a scan for `gsi1sk` values not starting with `$eventartist_` if the events lists look wrong.
 
+### From the design audit (2026-07-29)
+
+`/impeccable audit` over the feature's surfaces: **15/20, Good**. Accessibility was the weak dimension and the cause was three colour tokens, not diffuse sloppiness. All nine findings are fixed.
+
+**The token defects, which reached far past this feature.** Light-mode `--primary` sat at L 53.7% and gave **2.97:1** as link text, below AA and below even the 3:1 large-text floor. Fixing it exposed two more the audit had missed and a test then caught: white on that same rust was **3.38:1** on every filled button in both themes, and dark-mode `--destructive` was **2.19:1**, so form errors were close to invisible on dark. The shared cause was one value serving both themes. Now light `--primary` is L40 (links 4.73, buttons 5.38), dark `--primary-foreground` flips to near-black (5.76), dark `--destructive` goes to L50 with a dark label (4.89), and `--ring` tracks the light primary so the focus indicator clears 1.4.11's 3:1. Hue and saturation are untouched, so the earthenware character holds; only the value moved.
+
+`--muted` and `--accent` also carried hue **-21**, which CSS normalises to 339 and renders rose while every other token sits on the brand's 17. Every `bg-muted` surface site-wide was quietly off-brand.
+
+**`app/lib/contrast.test.ts` now pins all of it** — it parses the real `globals.css`, asserts each on-screen pair in both themes, and fails on a negative hue. It is what found the destructive failure. `app/lib/contrast.ts` exports the maths so a candidate value can be checked before committing.
+
+**Smaller fixes:** the verified badge on artist cards was an `aria-label` on a bare `<svg>`, which is not reliably announced, so it is an `aria-hidden` icon plus `sr-only` text; gallery images set `alt=""` when a `<figcaption>` already shows the caption, instead of making screen readers hear it twice; the public claim button moved off `size="sm"` (36px) to 44px with a pending label, and the rank input off 32px; `text-amber-600` became `text-warning`.
+
+**Three anti-patterns:** events render as hairline rows with a leading `<time>` column rather than three stacked groups of identical cards (which I introduced in phase 9, and which also gets the row to a 44px tap target for free); "Explore More" — three same-sized cards carrying "Browse other musicians" and the like — is now a plain row of links; and the subtitle stopped printing twice, since the header and the hero each rendered one and with no instrument or city both read "Indian classical music artist".
+
+**Not done, deliberately:** `ui/button.tsx`'s `sm` size stays at 36px. PRODUCT.md asks for 44px, but changing the shared primitive restyles every button on the site, which is a decision worth taking on its own rather than as a side effect of an artist-profile audit. The two public 44px targets that matter are fixed directly. Also unaddressed: no DESIGN.md exists, which is how a hue of `-21` survived; `/impeccable document` would generate one.
+
 ### From the whole-feature review (2026-07-29)
 
 One `/code-review` fork over phases 0–9. Fifteen findings; I verified the load-bearing ones by hand before acting (dumping the real `gsi1sk` from the entity, reading SST's generated cache policy, checking `UpdateArtistSchema`'s shape). Two were downgraded to plausible — the eventual-consistency pair, real in the code but unobservable without a deploy. All fifteen are now fixed.
@@ -309,7 +325,7 @@ Raised, judged real, not yet done:
 Current at end of the whole-feature review. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
 
 - `packages/core`: **758 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 → 744 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
-- `packages/web`: **30 web-own typecheck errors**; **93 tests pass** (65 → 89 across phase 7, → 93 in phase 9). The count was 32 at the end of phase 8 and phase 9 removed two along with the duplicated hero city block. None are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
+- `packages/web`: **30 web-own typecheck errors**; **111 tests pass** (65 → 89 across phase 7, → 93 in phase 9, → 97 with the JSON-LD escaping, → 111 with the token contrast suite). The typecheck count was 32 at the end of phase 8 and phase 9 removed two along with the duplicated hero city block. None are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
 - `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
 - Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.

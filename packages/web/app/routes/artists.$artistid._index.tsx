@@ -1,7 +1,7 @@
 import type { Artist } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { Award, BadgeCheck, Calendar, ExternalLink, Users } from 'lucide-react';
+import { Award, BadgeCheck, ExternalLink, Users } from 'lucide-react';
 import {
   type ActionFunctionArgs,
   type HeadersFunction,
@@ -21,7 +21,6 @@ import {
 } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
-import { Card, CardContent } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import { artistTagline } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
@@ -319,8 +318,10 @@ function ClaimProfile({
             you post from, anything a moderator can check.
           </p>
           <Input name="note" placeholder="How can we verify you?" />
-          <Button type="submit" size="sm" disabled={fetcher.state !== 'idle'}>
-            Send claim
+          {/* Default size, not sm. This is a public action on a page many people reach on a
+              phone, and PRODUCT.md holds touch targets to 44px; sm is 36. */}
+          <Button type="submit" className="min-h-11" disabled={fetcher.state !== 'idle'}>
+            {fetcher.state === 'idle' ? 'Send claim' : 'Sending…'}
           </Button>
           {fetcher.data?.error && <p className="text-xs text-destructive">{fetcher.data.error}</p>}
         </fetcher.Form>
@@ -355,24 +356,25 @@ function EventRow({
   eventStartDateTime,
   role,
 }: { eventId: string; eventTitle: string; eventStartDateTime: string; role?: string }) {
+  // A row, not a card. A date, a title and a role is a list; giving each one a bordered,
+  // hoverable container stacks a dozen near-identical boxes down the page for no gain. The
+  // date leads in its own column so the three groups scan vertically, and py-3 puts the tap
+  // target at 44px without a wrapper.
   return (
-    <Link to={generateEventUrl(eventTitle, eventId)} className="block no-underline">
-      <Card className="transition-colors hover:border-primary/50">
-        <CardContent className="py-3">
-          <p className="font-medium text-foreground">{eventTitle}</p>
-          <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {formatEventDate(eventStartDateTime)}
-            </span>
-            {role && (
-              <Badge variant="outline" className="text-xs">
-                {role}
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    <Link
+      to={generateEventUrl(eventTitle, eventId)}
+      className="group flex items-baseline gap-3 border-b border-border/40 py-3 no-underline last:border-b-0 sm:gap-4"
+    >
+      <time
+        dateTime={eventStartDateTime}
+        className="w-20 shrink-0 text-sm tabular-nums text-muted-foreground sm:w-28"
+      >
+        {formatEventDate(eventStartDateTime)}
+      </time>
+      <span className="min-w-0 flex-1 font-medium text-foreground group-hover:underline">
+        {eventTitle}
+      </span>
+      {role && <span className="shrink-0 text-xs text-muted-foreground">{role}</span>}
     </Link>
   );
 }
@@ -449,9 +451,12 @@ export default function ArtistDetails() {
   return (
     <main className="container mx-auto max-w-4xl px-4 py-8">
       <Breadcrumb items={breadcrumbItems} />
+      {/* The header takes the fullest identity line there is, and the hero below no longer
+          repeats it. Both used to render one: with no instrument or city set they printed
+          "Indian classical music artist" twice, two elements apart. */}
       <DetailPageHeader
         title={artist.name}
-        subtitle={subtitle}
+        subtitle={tagline ?? subtitle}
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}
@@ -474,8 +479,7 @@ export default function ArtistDetails() {
               Verified artist
             </Badge>
           )}
-          {artist.title && <p className="text-sm text-muted-foreground">{artist.title}</p>}
-          <p className="text-lg font-medium">{tagline ?? subtitle}</p>
+          {artist.title && <p className="text-lg font-medium">{artist.title}</p>}
           {(socialLinks.length > 0 || artist.website) && (
             <div className="mt-3 flex flex-wrap gap-3">
               {artist.website && (
@@ -660,7 +664,7 @@ export default function ArtistDetails() {
               <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 Upcoming
               </h3>
-              <div className="space-y-3">
+              <div className="border-t border-border/40">
                 {upcomingEvents.map(event => (
                   <EventRow
                     key={event.eventId}
@@ -679,7 +683,7 @@ export default function ArtistDetails() {
               <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 Notable performances
               </h3>
-              <div className="space-y-3">
+              <div className="border-t border-border/40">
                 {notable.map(f => (
                   <EventRow
                     key={f.eventId}
@@ -698,7 +702,7 @@ export default function ArtistDetails() {
               <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 Recent
               </h3>
-              <div className="space-y-3">
+              <div className="border-t border-border/40">
                 {recentEvents.map(event => (
                   <EventRow
                     key={event.eventId}
@@ -725,9 +729,12 @@ export default function ArtistDetails() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {galleryTeaser.map(photo => (
               <figure key={photo.id} className="overflow-hidden rounded-lg border">
+                {/* Empty alt when a caption is showing: the figcaption below already carries
+                    that text, and repeating it in alt makes a screen reader read it twice.
+                    Without a caption the image needs a description of its own. */}
                 <img
                   src={photo.imageUrl}
-                  alt={photo.caption ?? artist.name}
+                  alt={photo.caption ? '' : `${artist.name}, photograph`}
                   loading="lazy"
                   className="aspect-square w-full object-cover"
                 />
@@ -803,33 +810,28 @@ export default function ArtistDetails() {
         claimStatus={artist.claimStatus}
       />
 
-      {/* Explore more */}
-      <section className="mt-8 border-t pt-8">
-        <h2 className="mb-4 text-xl font-semibold">Explore More</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link
-            to="/artists"
-            className="rounded-lg bg-muted/50 p-4 text-center transition-colors hover:bg-muted"
-          >
-            <h3 className="font-medium">All Artists</h3>
-            <p className="text-sm text-muted-foreground">Browse other musicians</p>
-          </Link>
-          <Link
-            to="/carnatic/compositions"
-            className="rounded-lg bg-muted/50 p-4 text-center transition-colors hover:bg-muted"
-          >
-            <h3 className="font-medium">Compositions</h3>
-            <p className="text-sm text-muted-foreground">Explore musical works</p>
-          </Link>
-          <Link
-            to="/carnatic"
-            className="rounded-lg bg-muted/50 p-4 text-center transition-colors hover:bg-muted"
-          >
-            <h3 className="font-medium">Carnatic Music</h3>
-            <p className="text-sm text-muted-foreground">Discover the tradition</p>
-          </Link>
-        </div>
-      </section>
+      {/* Three identical cards carrying "Browse other musicians" and the like told a reader
+          nothing they could not guess, on a page otherwise dense with specific links. A
+          plain row of links keeps the navigation and drops the furniture. */}
+      <nav aria-label="Browse elsewhere" className="mt-10 border-t pt-6">
+        <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <li>
+            <Link to="/artists" className="text-primary hover:underline">
+              All artists
+            </Link>
+          </li>
+          <li>
+            <Link to="/carnatic/compositions" className="text-primary hover:underline">
+              Compositions
+            </Link>
+          </li>
+          <li>
+            <Link to="/carnatic" className="text-primary hover:underline">
+              Carnatic music
+            </Link>
+          </li>
+        </ul>
+      </nav>
 
       <BreadcrumbStructuredData
         items={[
