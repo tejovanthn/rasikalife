@@ -265,10 +265,8 @@ function buildRefreshUrl(seeds: Record<EntityKey, number>, key: EntityKey): stri
 }
 
 function CompletionBadge({ score }: { score: number }) {
-  const colorClass =
-    score < 40 ? 'text-destructive' : score < 70 ? 'text-warning' : 'text-success';
-  const barClass =
-    score < 40 ? 'bg-destructive' : score < 70 ? 'bg-warning' : 'bg-success';
+  const colorClass = score < 40 ? 'text-destructive' : score < 70 ? 'text-warning' : 'text-success';
+  const barClass = score < 40 ? 'bg-destructive' : score < 70 ? 'bg-warning' : 'bg-success';
   return (
     <div className="flex items-center gap-1.5">
       <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">

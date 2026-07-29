@@ -15,7 +15,15 @@ type Props = {
   onMoveDown: () => void;
 };
 
-export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveUp, onMoveDown }: Props) {
+export function SetlistItemRow({
+  item,
+  index,
+  total,
+  onChange,
+  onRemove,
+  onMoveUp,
+  onMoveDown,
+}: Props) {
   const [showNote, setShowNote] = useState(!!item.publicNote);
   const [freeTextMode, setFreeTextMode] = useState(item.isFreeText);
 
@@ -40,9 +48,7 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
   return (
     <li className="rounded-lg border border-border bg-card p-3 space-y-2">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground w-6 text-right shrink-0">
-          {index + 1}.
-        </span>
+        <span className="text-xs text-muted-foreground w-6 text-right shrink-0">{index + 1}.</span>
 
         <button
           type="button"
@@ -74,7 +80,10 @@ export function SetlistItemRow({ item, index, total, onChange, onRemove, onMoveU
               </p>
               <button
                 type="button"
-                onClick={() => { setFreeTextMode(false); onChange({ ...item, isFreeText: false }); }}
+                onClick={() => {
+                  setFreeTextMode(false);
+                  onChange({ ...item, isFreeText: false });
+                }}
                 className="text-xs text-primary hover:underline"
               >
                 Search again

@@ -1,6 +1,6 @@
 import { PlusCircle } from 'lucide-react';
-import type { SetlistDraft, SetlistItemDraft } from './types';
 import { SetlistItemRow } from './SetlistItemRow';
+import type { SetlistDraft, SetlistItemDraft } from './types';
 
 type Props = {
   draft: SetlistDraft;
@@ -47,7 +47,9 @@ export function SetlistEditor({ draft, onChange }: Props) {
       <h2 className="text-sm font-semibold mb-3">Setlist</h2>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground mb-3">No items yet. Add the first piece performed.</p>
+        <p className="text-sm text-muted-foreground mb-3">
+          No items yet. Add the first piece performed.
+        </p>
       ) : (
         <ul className="space-y-2 mb-3">
           {items.map((item, index) => (

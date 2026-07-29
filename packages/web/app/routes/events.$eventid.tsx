@@ -300,9 +300,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 };
 
 export const meta: MetaFunction = ({ data: loaderData }) => {
-  const ld = loaderData as
-    | { event: EventDetail; festivalPosterUrl?: string }
-    | undefined;
+  const ld = loaderData as { event: EventDetail; festivalPosterUrl?: string } | undefined;
   const event = ld?.event;
   if (!event) {
     return [{ title: 'Event Not Found - Rasika.life' }];
@@ -1064,7 +1062,9 @@ export default function EventDetail() {
                 to={`/my-concerts/${event.id}/edit`}
                 className="text-sm text-primary hover:underline"
               >
-                {setlistUserOwn && setlistUserOwn.length > 0 ? 'Edit your setlist' : 'Add your setlist'}
+                {setlistUserOwn && setlistUserOwn.length > 0
+                  ? 'Edit your setlist'
+                  : 'Add your setlist'}
               </Link>
             )}
           </div>
@@ -1099,7 +1099,8 @@ export default function EventDetail() {
                         )}
                         {row.publicNoteIds.length > 0 && (
                           <span className="text-xs text-muted-foreground ml-1">
-                            ({row.publicNoteIds.length} note{row.publicNoteIds.length !== 1 ? 's' : ''})
+                            ({row.publicNoteIds.length} note
+                            {row.publicNoteIds.length !== 1 ? 's' : ''})
                           </span>
                         )}
                       </div>
@@ -1109,7 +1110,8 @@ export default function EventDetail() {
               {setlistCanonical.some(r => r.status === 'lowConfidence') && (
                 <details className="text-sm">
                   <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                    Also reported ({setlistCanonical.filter(r => r.status === 'lowConfidence').length})
+                    Also reported (
+                    {setlistCanonical.filter(r => r.status === 'lowConfidence').length})
                   </summary>
                   <ol className="space-y-1 mt-1 pl-4">
                     {setlistCanonical

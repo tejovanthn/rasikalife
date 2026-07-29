@@ -1,5 +1,12 @@
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
-import { Form, data, useActionData, useLoaderData, useNavigation, useOutletContext } from 'react-router';
+import {
+  Form,
+  data,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useOutletContext,
+} from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Button } from '~/components/ui/button';
 import { requireUser } from '~/lib/auth.server';
@@ -97,9 +104,7 @@ export default function SettingsContributions() {
           <Button type="submit" disabled={isSaving}>
             {isSaving ? 'Saving…' : 'Save preferences'}
           </Button>
-          {actionData?.success && !isSaving && (
-            <span className="text-sm text-success">Saved</span>
-          )}
+          {actionData?.success && !isSaving && <span className="text-sm text-success">Saved</span>}
         </div>
       </Form>
     </section>

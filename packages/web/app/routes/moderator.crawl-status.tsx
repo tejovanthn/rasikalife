@@ -195,10 +195,7 @@ export default function ModeratorCrawlStatus() {
         cell: ({ row }) => {
           const msg = row.original.errorMessage;
           return msg ? (
-            <span
-              className="text-xs text-destructive max-w-[240px] truncate block"
-              title={msg}
-            >
+            <span className="text-xs text-destructive max-w-[240px] truncate block" title={msg}>
               {msg}
             </span>
           ) : (

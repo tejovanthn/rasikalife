@@ -301,9 +301,7 @@ export default function ModeratorEdits() {
                         {formatValue(change.oldValue)}
                       </span>
                       <span className="text-muted-foreground">→</span>
-                      <span className="text-success">
-                        {formatValue(change.newValue)}
-                      </span>
+                      <span className="text-success">{formatValue(change.newValue)}</span>
                     </div>
                   </div>
                 ))

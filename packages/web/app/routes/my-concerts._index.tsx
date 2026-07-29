@@ -1,9 +1,9 @@
 import type { ConcertLog } from '@rasika/core/domain/concert-log/client';
-import type { RouterOutput } from '~/api.server';
 import { BookOpen } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link, data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
+import type { RouterOutput } from '~/api.server';
 import { createServerClient } from '~/api.server';
 import { requireUser } from '~/lib/auth.server';
 

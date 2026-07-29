@@ -138,7 +138,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { title },
     { name: 'description', content: description },
     { property: 'og:title', content: `${raga.name} Raga | Rasika.life` },
-    { property: 'og:description', content: `Arohanam, avarohanam and compositions in ${raga.name}.` },
+    {
+      property: 'og:description',
+      content: `Arohanam, avarohanam and compositions in ${raga.name}.`,
+    },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: canonicalUrl },
     { property: 'og:image', content: ragaOgImageUrl(raga.id) },
@@ -147,7 +150,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: 'og:image:type', content: 'image/jpeg' },
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: `${raga.name} Raga` },
-    { name: 'twitter:description', content: `Arohanam, avarohanam and compositions in ${raga.name}.` },
+    {
+      name: 'twitter:description',
+      content: `Arohanam, avarohanam and compositions in ${raga.name}.`,
+    },
     { name: 'twitter:image', content: ragaOgImageUrl(raga.id) },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];

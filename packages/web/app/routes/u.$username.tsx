@@ -4,9 +4,7 @@ import { createServerClient } from '~/api.server';
 
 export const meta: MetaFunction = ({ data }) => {
   const d = data as { displayName?: string } | null;
-  return [
-    { title: d?.displayName ? `${d.displayName} - Rasika.life` : 'Profile - Rasika.life' },
-  ];
+  return [{ title: d?.displayName ? `${d.displayName} - Rasika.life` : 'Profile - Rasika.life' }];
 };
 
 export const loader: LoaderFunction = async ({ request, params }) => {
@@ -35,9 +33,7 @@ export default function UserProfile() {
     <main className="container mx-auto px-4 py-8 max-w-2xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-        {profile.bio && (
-          <p className="text-muted-foreground mt-2 text-sm">{profile.bio}</p>
-        )}
+        {profile.bio && <p className="text-muted-foreground mt-2 text-sm">{profile.bio}</p>}
         <p className="text-xs text-muted-foreground mt-2">
           Member since{' '}
           {new Date(profile.createdAt).toLocaleDateString('en-IN', {
