@@ -483,6 +483,7 @@ export default function ArtistDetails() {
     .slice()
     .sort((a, b) => b.strength - a.strength)
     .slice(0, 12);
+  const hasRepeatCollaborator = collaborators.some(c => c.sharedEventCount > 1);
   // Featured photos lead the teaser, but the section shows whenever the artist has *any*
   // photo. Gating the whole block on `featured` left the "View all photos" link inside it,
   // so a moderator who uploaded a gallery and never pressed Feature — the default, since
@@ -827,10 +828,16 @@ export default function ArtistDetails() {
             </section>
           )}
 
-          {/* Frequent collaborators */}
+          {/* Collaborators, under a heading that matches what the data actually says. Calling
+              twelve people who shared one stage "frequent collaborators" is a claim the data
+              does not support; the plan sets no threshold on the list (§4.4) because the links
+              are worth keeping, so the honest move is to let the heading follow the counts.
+              It flips back on its own as soon as anyone shares a second event. */}
           {collaborators.length > 0 && (
             <section className="mt-8">
-              <h2 className="mb-3 text-xl font-semibold">Frequent collaborators</h2>
+              <h2 className="mb-3 text-xl font-semibold">
+                {hasRepeatCollaborator ? 'Frequent collaborators' : 'Performed with'}
+              </h2>
               {/* Chips, not a twelve-card grid. Every card read "1 shared event", so the
                   least informative block on the page was also the largest. The count only
                   appears once it says something a reader could not assume. */}
