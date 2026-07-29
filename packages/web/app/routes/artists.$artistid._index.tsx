@@ -1,8 +1,7 @@
 import { MEDIA_TYPE_LABELS } from '@rasika/core/domain/artist-media/client';
 import type { Artist } from '@rasika/core/domain/artist/client';
-import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { Award, BadgeCheck, ExternalLink, Users } from 'lucide-react';
+import { Award, BadgeCheck, Users } from 'lucide-react';
 import {
   type ActionFunctionArgs,
   type HeadersFunction,
@@ -14,6 +13,7 @@ import { Link, useFetcher, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { SocialIconLink } from '~/components/SocialIconLink';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import {
   BreadcrumbStructuredData,
@@ -976,32 +976,19 @@ export default function ArtistDetails() {
             </dl>
 
             {(socialLinks.length > 0 || artist.website) && (
-              <div className="mt-5 flex flex-col gap-2 border-t pt-4">
-                {artist.website && (
-                  <a
-                    href={artist.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="no-ext-arrow inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    Website
-                  </a>
-                )}
+              /* Icons rather than a stacked list of names: a row of glyphs is a fraction of
+                 the height, which keeps the rail readable next to the facts above it. Each
+                 still carries its name for screen readers and on hover. The website joins the
+                 same row, since it is one more place to find the artist. */
+              <nav
+                aria-label="Elsewhere online"
+                className="mt-5 flex flex-wrap gap-1 border-t pt-4"
+              >
+                {artist.website && <SocialIconLink platform="website" url={artist.website} />}
                 {socialLinks.map(link => (
-                  <a
-                    key={link.platform}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="no-ext-arrow inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    {SOCIAL_PLATFORM_LABELS[link.platform as keyof typeof SOCIAL_PLATFORM_LABELS] ??
-                      link.platform}
-                  </a>
+                  <SocialIconLink key={link.platform} platform={link.platform} url={link.url} />
                 ))}
-              </div>
+              </nav>
             )}
           </div>
 
