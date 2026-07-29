@@ -4,6 +4,7 @@ export * as Award from './domain/award';
 export * as ArtistAward from './domain/artist-award';
 export * as ArtistMembership from './domain/artist-membership';
 export * as ArtistClaim from './domain/artist-claim';
+export * as ArtistMedia from './domain/artist-media';
 export * as ArtistPhoto from './domain/artist-photo';
 export * as Composition from './domain/composition';
 export * as Raga from './domain/raga';

@@ -478,6 +478,51 @@ export async function cascadeArtistMerge(
     );
   } while (photoCursor);
 
+  // Migrate ArtistMedia rows. Same upsert-then-delete order as photos above, for the same
+  // reason: a merge that dies between the two leaves the item duplicated, which a re-run
+  // resolves, where delete-then-upsert would lose the coverage outright. Media has no GSI,
+  // so there is no derived key to worry about here.
+  const { ArtistMediaEntity } = await import('./artist-media/entity');
+  let mediaCursor: string | null = null;
+  do {
+    const mediaResult = (await ArtistMediaEntity.query
+      .primary({ artistId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: mediaCursor })) as Page;
+    const mediaItems =
+      (mediaResult.data as Array<{
+        id: string;
+        title: string;
+        url: string;
+        mediaType: 'article' | 'review' | 'interview' | 'video' | 'feature';
+        outlet?: string;
+        publishedOn?: string;
+        imageUrl?: string;
+        uploadId?: string;
+        createdBy: string;
+        createdAt: string;
+      }>) || [];
+    mediaCursor = mediaResult.cursor;
+
+    await Promise.all(
+      mediaItems.map(async item => {
+        await ArtistMediaEntity.upsert({
+          id: item.id,
+          artistId: canonicalId,
+          title: item.title,
+          url: item.url,
+          mediaType: item.mediaType,
+          outlet: item.outlet,
+          publishedOn: item.publishedOn,
+          imageUrl: item.imageUrl,
+          uploadId: item.uploadId,
+          createdBy: item.createdBy,
+          createdAt: item.createdAt,
+        }).go();
+        await ArtistMediaEntity.delete({ artistId: loserId, id: item.id }).go();
+      })
+    );
+  } while (mediaCursor);
+
   // Migrate ArtistClaim rows (§4.3, §11.3). Both row kinds ride the same partition, so one
   // pass moves claims and moderator invites alike. Where both artists have a row for the same
   // actor — the `kind`+`subject` pair is what identifies one — the two are resolved by status

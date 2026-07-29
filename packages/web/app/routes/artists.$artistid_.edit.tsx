@@ -1,4 +1,10 @@
 import * as Auth from '@rasika/core/auth';
+import {
+  MEDIA_TYPES,
+  MEDIA_TYPE_LABELS,
+  type MediaType,
+  sortArtistMedia,
+} from '@rasika/core/domain/artist-media/client';
 import type { Guru } from '@rasika/core/domain/artist/client';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
@@ -32,6 +38,8 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { ImageUpload } from '~/components/ImageUpload';
 import { SearchSelect } from '~/components/SearchSelect';
+import type { SocialLink } from '~/components/SocialLinksEditor';
+import { SocialLinksEditor, readSocialLinks } from '~/components/SocialLinksEditor';
 import { EditDisclaimer } from '~/components/shared';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -96,7 +104,7 @@ export async function loader({
 
   // The Recognition step's three sections seed from these. Only the moderator
   // wizard renders them, so the editor path pays for none of it.
-  const [awards, performances, photos, claims] = isModerator
+  const [awards, performances, photos, claims, media] = isModerator
     ? await Promise.all([
         serverClient.artist.listAwards.query({ artistId: artist.id }),
         serverClient.event.byArtist.query({ artistId: artist.id, limit: 50 }),
@@ -107,8 +115,9 @@ export async function loader({
           limit: GALLERY_EDITOR_PAGE_SIZE,
         }),
         serverClient.artistClaim.listForArtist.query({ artistId: artist.id }),
+        serverClient.artist.listMedia.query({ artistId: artist.id }),
       ])
-    : [[], { items: [] }, { items: [] }, []];
+    : [[], { items: [] }, { items: [] }, [], []];
 
   return data({
     artist,
@@ -119,6 +128,7 @@ export async function loader({
     awards,
     performances: performances.items,
     photos: photos.items,
+    media,
     // Only the invite addresses; the rows also carry the moderator's private note.
     invitedEmails: (claims as Array<{ kind: string; email?: string }>)
       .filter(c => c.kind === 'invite' && c.email)
@@ -199,6 +209,10 @@ export async function action({
     const debutYear = debutYearRaw ? Number.parseInt(debutYearRaw, 10) || undefined : undefined;
     const activeYears = ((formData.get('activeYears') as string) || '').trim() || undefined;
     const website = ((formData.get('website') as string) || '').trim() || undefined;
+    // §5.3 step 3 specced website *and* social links into this step; only website was built,
+    // so the moderator surface could not set them at all. Unlike the scalars above, an empty
+    // list is meaningful here — removing every row means "clear them" — so it is always sent.
+    const socialLinks = readSocialLinks(formData);
 
     // Parallel arrays, one entry per guru row — the same shape socialLinks
     // below uses. Gurus are part of the Artist record, so the whole list is
@@ -246,6 +260,7 @@ export async function action({
           debutYear,
           activeYears,
           website,
+          socialLinks,
           gurus,
         },
       });
@@ -296,11 +311,7 @@ export async function action({
       return { ...stored, name };
     })
     .filter((g): g is NonNullable<typeof g> => g !== undefined);
-  const socialLinkPlatforms = formData.getAll('socialLinkPlatform') as string[];
-  const socialLinkUrls = formData.getAll('socialLinkUrl') as string[];
-  const socialLinks = socialLinkPlatforms
-    .map((platform, i) => ({ platform: platform.trim(), url: (socialLinkUrls[i] || '').trim() }))
-    .filter(sl => sl.platform && sl.url);
+  const socialLinks = readSocialLinks(formData);
   const userNote = formData.get('userNote') as string;
 
   const proposedValues: Record<string, unknown> = {};
@@ -597,69 +608,7 @@ function EditorArtistForm() {
               ))}
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Social Links</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSocialLinks(prev => [...prev, { platform: '', url: '' }])}
-                >
-                  <Plus className="h-4 w-4" />
-                  Add
-                </Button>
-              </div>
-              {socialLinks.length === 0 && (
-                <p className="text-xs text-muted-foreground">No social links added.</p>
-              )}
-              {socialLinks.map((link, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Select
-                    name="socialLinkPlatform"
-                    value={link.platform}
-                    onValueChange={val =>
-                      setSocialLinks(prev =>
-                        prev.map((l, j) => (j === i ? { ...l, platform: val } : l))
-                      )
-                    }
-                  >
-                    <SelectTrigger className="flex-1" aria-label="Social link platform">
-                      <SelectValue placeholder="Select platform..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SocialPlatform.options.map(p => (
-                        <SelectItem key={p} value={p}>
-                          {SOCIAL_PLATFORM_LABELS[p]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    name="socialLinkUrl"
-                    placeholder="https://..."
-                    type="url"
-                    // One row per link under the section's "Social Links" Label — see DESIGN.md density rule.
-                    aria-label="Social link URL"
-                    value={link.url}
-                    onChange={e =>
-                      setSocialLinks(prev =>
-                        prev.map((l, j) => (j === i ? { ...l, url: e.target.value } : l))
-                      )
-                    }
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSocialLinks(prev => prev.filter((_, j) => j !== i))}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <SocialLinksEditor value={socialLinks} onChange={setSocialLinks} />
 
             <div className="space-y-2">
               <Label htmlFor="userNote">Edit Note (optional)</Label>
@@ -732,7 +681,7 @@ type GuruRow = {
 };
 
 function ModeratorArtistWizard() {
-  const { artist, members, awards, performances, photos, invitedEmails } =
+  const { artist, members, awards, performances, photos, media, invitedEmails } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -780,6 +729,10 @@ function ModeratorArtistWizard() {
     activeYears: (artist.activeYears as string | undefined) ?? '',
     website: (artist.website as string | undefined) ?? '',
   });
+  // A list, so it sits outside `form`, which holds scalars the Review step diffs one by one.
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
+    (artist.socialLinks as SocialLink[] | undefined) ?? []
+  );
 
   const [gurus, setGurus] = useState<GuruRow[]>(
     ((artist.gurus as Guru[] | undefined) ?? []).map(guru => ({
@@ -1048,6 +1001,11 @@ function ModeratorArtistWizard() {
                     onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
                   />
                 </div>
+
+                {/* Beside the website rather than in Relationships, where §5.3 put it: both
+                    answer "where else can this artist be found", and splitting them across
+                    steps would have a moderator enter half the answer twice. */}
+                <SocialLinksEditor value={socialLinks} onChange={setSocialLinks} />
               </div>
             </div>
 
@@ -1150,6 +1108,15 @@ function ModeratorArtistWizard() {
                 <div className="space-y-3 border-t pt-6">
                   <Label>Gallery</Label>
                   <GalleryEditor artistId={artist.id} initialPhotos={photos} />
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Publications & media</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Reviews, interviews and features. The link is required; add the image later if
+                    you do not have one to hand.
+                  </p>
+                  <MediaEditor artistId={artist.id} initialMedia={media} />
                 </div>
 
                 <div className="space-y-3 border-t pt-6">
@@ -1529,6 +1496,176 @@ type RemoveAwardResult = { success: true; awardId: string } | { error: string };
 // staged form (name plus optional year/category/notes) rather than a
 // fire-on-select picker, because the extra fields have to be gathered before
 // the write. The award route resolves the typed name to a real award.
+type MediaItem = {
+  id: string;
+  title: string;
+  url: string;
+  mediaType: MediaType;
+  outlet?: string;
+  publishedOn?: string;
+  imageUrl?: string;
+};
+
+type AddMediaResult = { success: true; media: MediaItem } | { error: string };
+type DeleteMediaResult = { success: true; deletedId: string } | { error: string };
+
+/**
+ * Press and media coverage. Writes immediately, like awards and the gallery beside it.
+ *
+ * The link is required and the image is not: a mention can be logged the moment it appears
+ * and the scan added later, which is the difference between coverage getting recorded and
+ * getting forgotten.
+ */
+function MediaEditor({ artistId, initialMedia }: { artistId: string; initialMedia: MediaItem[] }) {
+  const [media, setMedia] = useState<MediaItem[]>(initialMedia);
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
+  const [mediaType, setMediaType] = useState<MediaType>('article');
+  const [outlet, setOutlet] = useState('');
+  const [publishedOn, setPublishedOn] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const addFetcher = useFetcher<AddMediaResult>();
+  const deleteFetcher = useFetcher<DeleteMediaResult>();
+  const addIsIdle = addFetcher.state === 'idle';
+
+  useEffect(() => {
+    if (!addFetcher.data) return;
+    if ('error' in addFetcher.data) {
+      toast.error(addFetcher.data.error);
+      return;
+    }
+    const added = addFetcher.data.media;
+    setMedia(prev => (prev.some(m => m.id === added.id) ? prev : [added, ...prev]));
+    setTitle('');
+    setUrl('');
+    setOutlet('');
+    setPublishedOn('');
+    setImageUrl('');
+    toast.success(`${added.title} added`);
+  }, [addFetcher.data]);
+
+  useEffect(() => {
+    if (!deleteFetcher.data) return;
+    if ('error' in deleteFetcher.data) {
+      toast.error(deleteFetcher.data.error);
+      return;
+    }
+    const { deletedId } = deleteFetcher.data;
+    setMedia(prev => prev.filter(m => m.id !== deletedId));
+    toast.success('Item removed');
+  }, [deleteFetcher.data]);
+
+  return (
+    <div className="space-y-3">
+      {media.length === 0 && (
+        <p className="text-xs text-muted-foreground">No coverage recorded yet.</p>
+      )}
+
+      {sortArtistMedia(media).map(item => (
+        <div
+          key={item.id}
+          className="flex items-start justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+        >
+          <div className="min-w-0">
+            <a
+              href={item.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-ext-arrow font-medium text-primary hover:underline"
+            >
+              {item.title}
+            </a>
+            <div className="text-xs text-muted-foreground">
+              {[MEDIA_TYPE_LABELS[item.mediaType], item.outlet, item.publishedOn]
+                .filter(Boolean)
+                .join(' · ')}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label={`Remove ${item.title}`}
+            disabled={deleteFetcher.state !== 'idle'}
+            onClick={() =>
+              deleteFetcher.submit(
+                { intent: 'delete', artistId, id: item.id },
+                { method: 'post', action: '/api/artist/media' }
+              )
+            }
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Input
+            aria-label="Coverage title"
+            placeholder="Headline or title"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+          <Input
+            aria-label="Link to the coverage"
+            placeholder="https://..."
+            type="url"
+            value={url}
+            onChange={e => setUrl(e.target.value)}
+          />
+          <Select value={mediaType} onValueChange={v => setMediaType(v as MediaType)}>
+            <SelectTrigger aria-label="Kind of coverage">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MEDIA_TYPES.map(t => (
+                <SelectItem key={t} value={t}>
+                  {MEDIA_TYPE_LABELS[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            aria-label="Publication or outlet"
+            placeholder="Outlet (optional)"
+            value={outlet}
+            onChange={e => setOutlet(e.target.value)}
+          />
+          <Input
+            aria-label="Publication date"
+            type="date"
+            value={publishedOn}
+            onChange={e => setPublishedOn(e.target.value)}
+          />
+          <Input
+            aria-label="Image URL"
+            placeholder="Image URL (optional)"
+            type="url"
+            value={imageUrl}
+            onChange={e => setImageUrl(e.target.value)}
+          />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!addIsIdle || !title.trim() || !url.trim()}
+          onClick={() =>
+            addFetcher.submit(
+              { artistId, title, url, mediaType, outlet, publishedOn, imageUrl },
+              { method: 'post', action: '/api/artist/media' }
+            )
+          }
+        >
+          <Plus className="h-4 w-4" />
+          Add coverage
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function AwardsEditor({
   artistId,
   artistName,

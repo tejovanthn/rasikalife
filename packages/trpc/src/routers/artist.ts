@@ -1,6 +1,7 @@
 import {
   Artist,
   ArtistAward,
+  ArtistMedia,
   ArtistMembership,
   ArtistPhoto,
   Auth,
@@ -324,6 +325,40 @@ export const artistRouter = createTRPCRouter({
   listGroups: publicProcedure
     .input(z.object({ memberId: z.string().min(1) }))
     .query(({ input }) => ArtistMembership.getMemberGroups(input.memberId)),
+
+  // Press and media coverage (§ Publications & Media). Writes are moderator-only, matching
+  // photos and awards; the list is public because the profile renders it to everyone.
+  addMedia: moderatorProcedure
+    .input(ArtistMedia.AddArtistMediaSchema.omit({ createdBy: true }))
+    .mutation(async ({ ctx, input }) => {
+      const artist = await Artist.getArtist(input.artistId);
+      if (!artist) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
+      }
+      // No triggerReindex, for the reason addPhoto gives: the search document is built from
+      // name and alternateNames, so coverage cannot change it.
+      return ArtistMedia.addArtistMedia({ ...input, createdBy: ctx.user.id });
+    }),
+
+  updateMedia: moderatorProcedure
+    .input(
+      z.object({
+        artistId: z.string().min(1),
+        id: z.string().min(1),
+        patch: ArtistMedia.UpdateArtistMediaSchema,
+      })
+    )
+    .mutation(({ input }) => ArtistMedia.updateArtistMedia(input.artistId, input.id, input.patch)),
+
+  deleteMedia: moderatorProcedure
+    .input(z.object({ artistId: z.string().min(1), id: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await ArtistMedia.deleteArtistMedia(input.artistId, input.id);
+    }),
+
+  listMedia: publicProcedure
+    .input(z.object({ artistId: z.string().min(1) }))
+    .query(({ input }) => ArtistMedia.listArtistMedia(input.artistId)),
 
   addPhoto: moderatorProcedure
     .input(ArtistPhoto.AddArtistPhotoSchema.omit({ createdBy: true }))

@@ -130,6 +130,14 @@ vi.mock('./artist-membership/entity', async importOriginal => {
   };
 });
 
+vi.mock('./artist-media/entity', () => ({
+  ArtistMediaEntity: {
+    query: { primary: vi.fn() },
+    upsert: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
+
 vi.mock('./artist-photo/entity', async importOriginal => {
   const actual = await importOriginal<typeof import('./artist-photo/entity')>();
   return {
@@ -210,6 +218,7 @@ import { dynamoClient } from '../db/client';
 import { keysOfEntity } from '../db/keys';
 import { ArtistAwardEntity } from './artist-award/entity';
 import { ArtistClaimEntity } from './artist-claim/entity';
+import { ArtistMediaEntity } from './artist-media/entity';
 import { ArtistMembershipEntity } from './artist-membership/entity';
 import { ArtistPhotoEntity } from './artist-photo/entity';
 import { ArtistEntity } from './artist/entity';
@@ -264,6 +273,9 @@ describe('cascade', () => {
     ArtistPhotoEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
     ArtistPhotoEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistPhotoEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistMediaEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    ArtistMediaEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistMediaEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistMembershipEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistClaimEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
     ArtistClaimEntity.get = vi
@@ -867,6 +879,50 @@ describe('cascade', () => {
     });
 
     // §11.3 wants a test per reference type, because merge has silently corrupted data twice.
+    it('moves media coverage to the canonical artist, upserting before deleting', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistMediaEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              id: 'media-1',
+              title: 'A recital of rare grace',
+              url: 'https://thehindu.com/x',
+              mediaType: 'review',
+              outlet: 'The Hindu',
+              publishedOn: '2026-01-30',
+              createdBy: 'user-1',
+              createdAt: '2026-02-01T00:00:00.000Z',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      // Every field carries across: coverage that lost its outlet or its date in a merge
+      // would be unrecoverable, since the original row is deleted straight after.
+      expect(ArtistMediaEntity.upsert).toHaveBeenCalledWith({
+        id: 'media-1',
+        artistId: 'canonical',
+        title: 'A recital of rare grace',
+        url: 'https://thehindu.com/x',
+        mediaType: 'review',
+        outlet: 'The Hindu',
+        publishedOn: '2026-01-30',
+        imageUrl: undefined,
+        uploadId: undefined,
+        createdBy: 'user-1',
+        createdAt: '2026-02-01T00:00:00.000Z',
+      });
+      expect(ArtistMediaEntity.delete).toHaveBeenCalledWith({
+        artistId: 'loser',
+        id: 'media-1',
+      });
+    });
+
     it('moves both claim and invite rows to the canonical artist', async () => {
       EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
       CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);

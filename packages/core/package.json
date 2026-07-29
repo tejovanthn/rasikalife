@@ -36,6 +36,11 @@
       "import": "./src/domain/artist/client.ts",
       "default": "./src/domain/artist/client.ts"
     },
+    "./domain/artist-media/client": {
+      "types": "./src/domain/artist-media/client.ts",
+      "import": "./src/domain/artist-media/client.ts",
+      "default": "./src/domain/artist-media/client.ts"
+    },
     "./domain/artist-photo/client": {
       "types": "./src/domain/artist-photo/client.ts",
       "import": "./src/domain/artist-photo/client.ts",

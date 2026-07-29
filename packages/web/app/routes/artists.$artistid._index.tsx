@@ -1,3 +1,4 @@
+import { MEDIA_TYPE_LABELS } from '@rasika/core/domain/artist-media/client';
 import type { Artist } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
@@ -77,7 +78,7 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, upcoming, past, awards, membership, gallery, activeEdit, myClaim] =
+    const [compositions, upcoming, past, awards, membership, gallery, media, activeEdit, myClaim] =
       await Promise.all([
         client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
         // Two sides of the same partition rather than one unbounded read: the GSI sorts
@@ -95,6 +96,7 @@ export async function loader({
         // but there is no featured-first index — they are selected in memory from this page
         // of rows, so a low limit silently ignores anything featured further down the order.
         client.artist.listPhotos.query({ artistId: artist.id, limit: 24 }),
+        client.artist.listMedia.query({ artistId: artist.id }),
         user
           ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
           : Promise.resolve(null),
@@ -157,6 +159,7 @@ export async function loader({
         membership,
         isGroup,
         galleryPhotos: gallery.items,
+        media,
         repertoire,
         activeEdit,
         isLoggedIn: !!user,
@@ -448,6 +451,7 @@ export default function ArtistDetails() {
     membership,
     isGroup,
     galleryPhotos,
+    media,
     repertoire,
     activeEdit,
     isLoggedIn,
@@ -775,6 +779,51 @@ export default function ArtistDetails() {
               <Link to={`${artistUrl}/events`} className="mt-4 inline-block text-sm text-primary">
                 View all events &rarr;
               </Link>
+            </section>
+          )}
+
+          {/* Publications & media — after Events, since it reports on them. The images are a
+              large part of what gives the lower half of this page any visual weight, so an
+              item that has one leads with it and an item that does not falls back to a row
+              rather than an empty frame. */}
+          {media.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-4 text-xl font-semibold">Publications & media</h2>
+              <ul className="grid gap-3 sm:grid-cols-2">
+                {media.map(item => (
+                  <li key={item.id}>
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="no-ext-arrow group flex h-full gap-3 rounded-lg border p-3 no-underline transition-colors hover:border-primary/50"
+                    >
+                      {item.imageUrl && (
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          loading="lazy"
+                          className="h-20 w-20 shrink-0 rounded object-cover"
+                        />
+                      )}
+                      <div className="flex min-w-0 flex-col justify-center">
+                        <p className="font-medium leading-snug text-foreground group-hover:underline">
+                          {item.title}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {[
+                            MEDIA_TYPE_LABELS[item.mediaType],
+                            item.outlet,
+                            item.publishedOn ? formatEventDate(item.publishedOn) : null,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </p>
+                      </div>
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
 
