@@ -4,6 +4,7 @@ import {
   createEvent,
   deleteEvent,
   getEvent,
+  getEventsByIds,
   listEventsByArtist,
   listEventsByFestival,
   listEventsByOrganiser,
@@ -433,5 +434,34 @@ describe('Event', () => {
 
       await expect(approveEvent('event-1', 'moderator-1')).rejects.toThrow();
     });
+  });
+});
+
+describe('getEventsByIds', () => {
+  it('reads every id in one batch and drops soft-deleted events', async () => {
+    const { EventEntity } = await import('./entity');
+    const go = vi.fn().mockResolvedValue({
+      data: [
+        { id: 'e1', title: 'Kept', posterUrl: 'https://cdn/x.jpg' },
+        { id: 'e2', title: 'Removed', deletedAt: '2026-01-01T00:00:00.000Z' },
+      ],
+    });
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).get = vi.fn().mockReturnValue({ go });
+
+    const result = await getEventsByIds(['e1', 'e2']);
+
+    // One call carrying both ids, not one call per id — the whole point of the helper.
+    expect(EventEntity.get).toHaveBeenCalledTimes(1);
+    expect(EventEntity.get).toHaveBeenCalledWith([{ id: 'e1' }, { id: 'e2' }]);
+    expect(result.map(e => e.id)).toEqual(['e1']);
+  });
+
+  it('does not hit the table at all for an empty list', async () => {
+    const { EventEntity } = await import('./entity');
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).get = vi.fn();
+    expect(await getEventsByIds([])).toEqual([]);
+    expect(EventEntity.get).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditStatus } from '@rasika/core/domain/edit/client';
 import { Eye, Merge, MoreHorizontal, Pencil, Share2, Trash2 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '~/components/ui/button';
@@ -14,6 +15,11 @@ import {
 interface DetailPageHeaderProps {
   title: string;
   subtitle: string;
+  /**
+   * Rendered above the title, so a page with a portrait leads with the face rather than
+   * tucking it beside the name. Optional: most detail pages have nothing to put here.
+   */
+  media?: ReactNode;
   shareUrl: string;
   shareTitle: string;
   shareDescription: string;
@@ -27,6 +33,7 @@ interface DetailPageHeaderProps {
 export function DetailPageHeader({
   title,
   subtitle,
+  media,
   shareUrl,
   shareTitle,
   shareDescription,
@@ -78,6 +85,7 @@ export function DetailPageHeader({
 
   return (
     <header className="mb-8">
+      {media ? <div className="mb-4">{media}</div> : null}
       <div className="flex items-center gap-3 mb-2">
         <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
 

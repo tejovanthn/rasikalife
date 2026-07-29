@@ -104,6 +104,13 @@ export const eventRouter = createTRPCRouter({
     )
     .query(({ input }) => Event.listEventsByArtist(input.artistId, input)),
 
+  // Batched by design: the artist profile needs posterUrl for its event teaser, and the
+  // junction it reads does not carry one. Capped at 24 so a caller cannot turn this into a
+  // scan of the table one id at a time.
+  byIds: publicProcedure
+    .input(z.object({ ids: z.array(z.string().min(1)).max(24) }))
+    .query(({ input }) => Event.getEventsByIds(input.ids)),
+
   listByMonth: publicProcedure
     .input(z.object({ yearMonth: z.string().regex(/^\d{4}-\d{2}$/) }))
     .query(({ input }) => Event.listApprovedEventsByMonth(input.yearMonth)),

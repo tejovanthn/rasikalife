@@ -680,6 +680,24 @@ export async function getEventMergeScore(id: string): Promise<number> {
   return score;
 }
 
+/**
+ * Fetch several events at once, for callers that hold a set of ids and need a field the
+ * denormalized junction does not carry. The artist profile is the case in point: EventArtist
+ * copies the title and start time but not `posterUrl`, so rendering posters means going back
+ * to the Event rows.
+ *
+ * One BatchGetItem rather than a point read per id. That distinction is the whole reason this
+ * exists: the profile is the most-viewed anonymous page on the site, and a loop of `getEvent`
+ * over a teaser would put six sequential round trips on it.
+ *
+ * Soft-deleted events are dropped, so a caller never renders a concert that has been removed.
+ */
+export async function getEventsByIds(ids: string[]): Promise<Event[]> {
+  if (ids.length === 0) return [];
+  const result = await EventEntity.get(ids.map(id => ({ id }))).go();
+  return ((result.data || []) as Event[]).filter(event => !event.deletedAt);
+}
+
 export { extractFromPoster, extractFromSocialPost } from './gemini';
 export type { SocialPostInput } from './gemini';
 export { getPosterByHash } from './poster-hash';
