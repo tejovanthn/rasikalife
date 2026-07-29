@@ -288,3 +288,55 @@ export async function findOrCreateArtist(
   const created = await createArtist({ name, title: opts?.title, gurus: [] });
   return { artist: created, created: true };
 }
+
+/**
+ * The floor at which a fuzzy score means "probably the same person, spelled differently"
+ * rather than "these two strings share some letters". Deliberately the same bar
+ * `findArtistMatch` uses to auto-match, because that is exactly the claim being made.
+ */
+const SEARCH_FUZZY_FLOOR = DEFAULT_THRESHOLD;
+
+/**
+ * Rank artists for a typeahead.
+ *
+ * `artistNameSimilarity` is the wrong tool on its own here, and using it alone made the
+ * moderator picker actively misleading. It answers "are these two *complete* names the same
+ * person", so a differing surname returns a flat DIFFERING_SURNAME_CAP: querying "Sneha
+ * Devandan" scored "Omkarnath Havaldar", "Madan" and every other unrelated artist at exactly
+ * 0.500, they all tied, and the dropdown filled with whoever the table happened to return
+ * first. Worse, a partial query scored 0.125 against the very name it prefixes, so the more
+ * of a real name you typed the *lower* the right answer ranked until you completed it.
+ *
+ * A typeahead wants prefix and substring matching, with fuzzy only as typo tolerance:
+ *
+ *   3  the name starts with the query          — "sneha" → "Sneha Devandan"
+ *   2  the name contains the query             — "devandan" → "Sneha Devandan"
+ *   1  a spelling variant of the whole name    — "Raghunathan" → "Ragunathan"
+ *
+ * Anything else is not a match and is dropped, which is the part that was missing. Ties break
+ * alphabetically so the order is stable rather than dependent on scan order.
+ *
+ * Pure and I/O-free: the caller supplies the candidates.
+ */
+export function rankArtistSearchResults<
+  T extends { name: string; alternateNames?: string[] | null },
+>(query: string, candidates: T[]): T[] {
+  const needle = query.trim().toLowerCase();
+  if (!needle) return [];
+
+  return candidates
+    .map(candidate => {
+      const names = [candidate.name, ...(candidate.alternateNames ?? [])];
+      let rank = 0;
+      for (const name of names) {
+        const lower = name.toLowerCase();
+        if (lower.startsWith(needle)) rank = Math.max(rank, 3);
+        else if (lower.includes(needle)) rank = Math.max(rank, 2);
+        else if (artistNameSimilarity(query, name) >= SEARCH_FUZZY_FLOOR) rank = Math.max(rank, 1);
+      }
+      return { candidate, rank };
+    })
+    .filter(({ rank }) => rank > 0)
+    .sort((a, b) => b.rank - a.rank || a.candidate.name.localeCompare(b.candidate.name))
+    .map(({ candidate }) => candidate);
+}

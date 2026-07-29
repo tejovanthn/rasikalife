@@ -84,11 +84,11 @@ export const artistRouter = createTRPCRouter({
       // record, so nothing further to filter here.
       const exact = await Artist.getArtistByName(query);
 
-      // Broaden with the same fuzzy scorer dedup.ts uses to decide whether two
-      // names refer to the same artist, rather than a second similarity
-      // function — that module is the single source of truth for artist name
-      // matching, with carefully-tuned threshold behaviour we don't want to
-      // fork.
+      // Broaden with the shared ranker in dedup.ts, which does prefix and substring
+      // matching and keeps the fuzzy scorer for typo tolerance only. Scoring on similarity
+      // alone put every unrelated artist at the differing-surname cap, so they tied and the
+      // dropdown filled with whoever came back first — while a half-typed name ranked below
+      // that noise.
       //
       // listAllArtistsForMatching pages the *entire* artist table into memory
       // (see the scaling-limit note on that function in dedup.ts). Acceptable
@@ -96,16 +96,10 @@ export const artistRouter = createTRPCRouter({
       // will need the same indexed-attribute fix dedup.ts describes if the
       // table grows enough for either call site to feel it.
       const candidates = await Artist.listAllArtistsForMatching();
-      const ranked = candidates
-        .filter(candidate => candidate.id !== exact?.id)
-        .map(candidate => {
-          const names = [candidate.name, ...(candidate.alternateNames ?? [])];
-          const score = Math.max(...names.map(name => Artist.artistNameSimilarity(query, name)));
-          return { candidate, score };
-        })
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(({ candidate }) => candidate);
+      const ranked = Artist.rankArtistSearchResults(
+        query,
+        candidates.filter(candidate => candidate.id !== exact?.id)
+      );
 
       const results = exact ? [exact, ...ranked] : ranked;
       return results

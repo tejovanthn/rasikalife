@@ -197,6 +197,7 @@ export {
   initialsMatch,
   listAllArtistsForMatching,
   normalizeArtistName,
+  rankArtistSearchResults,
 } from './dedup';
 
 // collaboratorsFrom is exported because the full-table sweep in packages/scripts imports it

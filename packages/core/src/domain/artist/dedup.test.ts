@@ -14,6 +14,7 @@ import {
   findOrCreateArtist,
   initialsMatch,
   normalizeArtistName,
+  rankArtistSearchResults,
 } from './dedup';
 
 function makeArtist(overrides: Partial<Artist>): Artist {
@@ -371,4 +372,60 @@ describe('genuine variants still match', () => {
       expect(findArtistMatch(a, candidates)?.id).toBe('a1');
     });
   }
+});
+
+// The moderator picker used artistNameSimilarity alone, which answers a different question:
+// "are these two complete names the same person". Every unrelated name came back at exactly
+// the differing-surname cap, so they tied and the dropdown filled with arbitrary rows, and a
+// partial query ranked the name it prefixes *below* that noise.
+describe('rankArtistSearchResults', () => {
+  const candidates = [
+    { name: 'Sneha Devandan' },
+    { name: 'Omkarnath Havaldar' },
+    { name: 'Madan' },
+    { name: 'Embar S Kannan' },
+  ];
+
+  it('drops names that merely share letters with the query', () => {
+    expect(rankArtistSearchResults('Sneha Devandan', candidates).map(c => c.name)).toEqual([
+      'Sneha Devandan',
+    ]);
+  });
+
+  it('matches while the name is still being typed', () => {
+    expect(rankArtistSearchResults('Sneha', candidates).map(c => c.name)).toEqual([
+      'Sneha Devandan',
+    ]);
+    expect(rankArtistSearchResults('Sne', candidates).map(c => c.name)).toEqual(['Sneha Devandan']);
+  });
+
+  it('matches on a later word, not only the start', () => {
+    expect(rankArtistSearchResults('devandan', candidates).map(c => c.name)).toEqual([
+      'Sneha Devandan',
+    ]);
+  });
+
+  it('ranks a prefix above a mid-name match', () => {
+    const ranked = rankArtistSearchResults('kannan', [
+      { name: 'Embar S Kannan' },
+      { name: 'Kannan Balakrishnan' },
+    ]);
+    expect(ranked.map(c => c.name)).toEqual(['Kannan Balakrishnan', 'Embar S Kannan']);
+  });
+
+  it('still tolerates a spelling variant of a complete name', () => {
+    const ranked = rankArtistSearchResults('T M Krishna', [{ name: 'T M Krishnaa' }]);
+    expect(ranked.map(c => c.name)).toEqual(['T M Krishnaa']);
+  });
+
+  it('searches alternate names too', () => {
+    const ranked = rankArtistSearchResults('Bombay', [
+      { name: 'Jayashri Ramnath', alternateNames: ['Bombay Jayashri'] },
+    ]);
+    expect(ranked).toHaveLength(1);
+  });
+
+  it('returns nothing for an empty query rather than everything', () => {
+    expect(rankArtistSearchResults('   ', candidates)).toEqual([]);
+  });
 });

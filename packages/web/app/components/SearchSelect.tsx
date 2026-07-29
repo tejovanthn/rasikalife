@@ -183,33 +183,49 @@ export function SearchSelect(props: SearchSelectProps) {
         )}
       </div>
 
-      {/* No results message */}
-      {isOpen &&
-        query.length >= 2 &&
-        availableResults.length === 0 &&
-        !isLoading &&
-        fetcher.data && (
-          <div className="absolute z-10 w-full mt-1 py-1 bg-popover border rounded-md shadow-lg">
-            {createNew ? (
-              <button
-                type="button"
-                className="w-full px-4 py-2 text-left text-sm hover:bg-accent focus:bg-accent outline-none flex items-center gap-2"
-                onClick={() => {
-                  createNew(query);
-                  setIsOpen(false);
-                }}
-              >
-                <Plus className="h-3 w-3" />
-                Create &quot;{query}&quot;
-              </button>
-            ) : (
-              <div className="py-1 px-3 text-sm text-muted-foreground">No results found</div>
-            )}
-          </div>
-        )}
+      {/* Results, with the create option always reachable underneath them.
+          It used to render only when the search came back empty, which made creating
+          impossible the moment any result appeared — and since the artist search matched
+          almost everything, that was nearly always. A name the moderator knows is new is
+          exactly the case where some unrelated row is likely to be on screen. */}
+      {isOpen && query.length >= 2 && !isLoading && fetcher.data && (
+        <div className="absolute z-10 w-full mt-1 py-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {availableResults.map(entity => (
+            <button
+              key={entity.id}
+              type="button"
+              className="w-full px-4 py-2 text-left text-sm hover:bg-accent focus:bg-accent outline-none"
+              onClick={() => handleSelect(entity)}
+            >
+              {entity.name}
+            </button>
+          ))}
 
-      {/* Results dropdown */}
-      {isOpen && availableResults.length > 0 && (
+          {createNew ? (
+            <button
+              type="button"
+              className={`w-full px-4 py-2 text-left text-sm hover:bg-accent focus:bg-accent outline-none flex items-center gap-2 ${
+                availableResults.length > 0 ? 'border-t mt-1 pt-2' : ''
+              }`}
+              onClick={() => {
+                createNew(query);
+                setIsOpen(false);
+              }}
+            >
+              <Plus className="h-3 w-3 shrink-0" />
+              Create &quot;{query}&quot;
+            </button>
+          ) : (
+            availableResults.length === 0 && (
+              <div className="py-1 px-3 text-sm text-muted-foreground">No results found</div>
+            )
+          )}
+        </div>
+      )}
+
+      {/* Results while a create option is not on offer and the search is still running: the
+          list alone, so the dropdown does not flicker between two containers. */}
+      {isOpen && availableResults.length > 0 && (isLoading || !fetcher.data) && (
         <div className="absolute z-10 w-full mt-1 py-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
           {availableResults.map(entity => (
             <button
