@@ -1,6 +1,7 @@
 import { Loader2, Upload, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { Label } from '~/components/ui/label';
+import { uploadImageFile } from '~/lib/image-upload';
 
 interface ImageUploadProps {
   urlFieldName: string;
@@ -45,32 +46,10 @@ export function ImageUpload({
     setPreview(localPreview);
 
     try {
-      const formData = new FormData();
-      formData.append('entityType', entityType);
-      formData.append('fileName', file.name);
-      formData.append('contentType', file.type);
-
-      const response = await fetch('/api/upload/image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get upload URL');
-      }
-
-      const {
-        uploadUrl,
-        imageUrl: finalImageUrl,
-        uploadId: newUploadId,
-      } = (await response.json()) as { uploadUrl: string; imageUrl: string; uploadId: string };
-
-      await fetch(uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type },
-      });
-
+      const { imageUrl: finalImageUrl, uploadId: newUploadId } = await uploadImageFile(
+        file,
+        entityType
+      );
       setImageUrl(finalImageUrl);
       setUploadId(newUploadId);
       onUploaded?.({ imageUrl: finalImageUrl, uploadId: newUploadId });

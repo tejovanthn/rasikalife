@@ -27,6 +27,22 @@ export const ArtistPhotoEntity = new Entity(
         type: 'string',
         required: true,
       },
+      /**
+       * Intrinsic pixel size, captured in the browser at upload time.
+       *
+       * Optional, and permanently so: every photo stored before this existed has none, and a
+       * file the browser cannot decode still uploads. The gallery uses them to reserve each
+       * tile's aspect ratio so a masonry column does not reflow as images arrive; without them
+       * a tile simply sizes itself on load.
+       */
+      width: {
+        type: 'number',
+        required: false,
+      },
+      height: {
+        type: 'number',
+        required: false,
+      },
       caption: {
         type: 'string',
         required: false,

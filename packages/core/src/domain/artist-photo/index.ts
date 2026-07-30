@@ -14,6 +14,8 @@ export async function addArtistPhoto(input: AddArtistPhotoInput): Promise<Artist
     artistId: input.artistId,
     imageUrl: input.imageUrl,
     uploadId: input.uploadId,
+    width: input.width,
+    height: input.height,
     caption: input.caption,
     credit: input.credit,
     order: input.order ?? 0,

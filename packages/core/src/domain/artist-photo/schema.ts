@@ -10,6 +10,10 @@ export const AddArtistPhotoSchema = z.object({
   artistId: z.string().min(1),
   imageUrl: z.string().url(),
   uploadId: z.string().min(1),
+  // Positive ints: a zero would be a decode that succeeded and said nothing, and an
+  // aspect-ratio built from it divides by zero.
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
   caption: z.string().max(500).optional(),
   credit: z.string().max(200).optional(),
   order: z.number().int().min(0).max(MAX_PHOTO_ORDER).optional(),

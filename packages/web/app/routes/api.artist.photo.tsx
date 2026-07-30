@@ -56,6 +56,52 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
+  // Several photos in one request. Not a loop of the single `add` on the client: each add
+  // needs an `order` one past the last, and N parallel requests would each read the same
+  // starting point and collide. Assigning them here, in sequence, is the only place that can
+  // be right.
+  if (intent === 'addMany') {
+    const raw = (formData.get('photos') as string) || '';
+    let incoming: Array<{ imageUrl: string; uploadId: string; width?: number; height?: number }>;
+    try {
+      incoming = JSON.parse(raw);
+    } catch {
+      return data({ error: 'Malformed upload batch' }, { status: 400 });
+    }
+    if (!Array.isArray(incoming) || incoming.length === 0) {
+      return data({ error: 'Nothing to add' }, { status: 400 });
+    }
+
+    const startOrder = readOptionalInt(formData, 'startOrder') ?? 0;
+    const added = [];
+    const failed: string[] = [];
+    for (const [i, item] of incoming.entries()) {
+      if (!item?.imageUrl || !item?.uploadId) {
+        failed.push('an image with no upload reference');
+        continue;
+      }
+      try {
+        added.push(
+          await serverClient.artist.addPhoto.mutate({
+            artistId,
+            imageUrl: item.imageUrl,
+            uploadId: item.uploadId,
+            width: item.width,
+            height: item.height,
+            order: startOrder + i,
+          })
+        );
+      } catch (error) {
+        console.error('Failed to add photo in batch:', error);
+        failed.push(item.imageUrl);
+      }
+    }
+
+    // Partial success is reported as such rather than thrown away: photos that landed are
+    // returned so the grid shows them, and the count that did not is the caller's to surface.
+    return data({ success: true, photos: added, failedCount: failed.length });
+  }
+
   if (intent === 'update') {
     const id = ((formData.get('id') as string) || '').trim();
     if (!id) {

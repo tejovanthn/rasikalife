@@ -17,6 +17,9 @@ interface GalleryPhoto {
   imageUrl: string;
   caption?: string;
   credit?: string;
+  /** Absent on every photo stored before dimensions were captured at upload. */
+  width?: number;
+  height?: number;
 }
 
 // This page's own content is identical for every viewer, but the document it ships in is
@@ -128,9 +131,21 @@ export default function ArtistGallery() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {/* Masonry via CSS columns: photographs of performances are a mix of portrait and
+              landscape, and a square crop threw away most of each frame. Columns need no
+              measuring pass and no library. The trade is reading order — content flows down
+              each column before moving across — which is right for a gallery, where the
+              photographs have no sequence, and would be wrong for prose.
+
+              Each tile reserves its own aspect ratio from the stored dimensions, so the page
+              does not reflow as images arrive. Photos stored before dimensions were captured
+              have none, and simply size themselves on load. */}
+          <div className="columns-2 gap-4 sm:columns-3 [&>figure]:mb-4">
             {photos.map(photo => (
-              <figure key={photo.id} className="overflow-hidden rounded-lg border">
+              <figure
+                key={photo.id}
+                className="overflow-hidden break-inside-avoid rounded-lg border"
+              >
                 {/* Empty alt when a caption is showing: the figcaption below already carries
                     that text, and repeating it in alt makes a screen reader read it twice.
                     Without a caption the image needs a description of its own. */}
@@ -138,7 +153,14 @@ export default function ArtistGallery() {
                   src={photo.imageUrl}
                   alt={photo.caption ? '' : `${artist.name}, photograph`}
                   loading="lazy"
-                  className="aspect-square w-full object-cover"
+                  width={photo.width}
+                  height={photo.height}
+                  style={
+                    photo.width && photo.height
+                      ? { aspectRatio: `${photo.width} / ${photo.height}` }
+                      : undefined
+                  }
+                  className="w-full object-cover"
                 />
                 {(photo.caption || photo.credit) && (
                   <figcaption className="px-2 py-1 text-xs text-muted-foreground">

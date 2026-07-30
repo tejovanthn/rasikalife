@@ -54,6 +54,8 @@ import {
 import { Textarea } from '~/components/ui/textarea';
 import { requireUser } from '~/lib/auth.server';
 import { GALLERY_EDITOR_PAGE_SIZE, computePhotoReorder, nextPhotoOrder } from '~/lib/gallery-order';
+import type { UploadedImage } from '~/lib/image-upload';
+import { uploadImageFile } from '~/lib/image-upload';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
 export const meta: MetaFunction = () => {
@@ -2136,7 +2138,7 @@ function ClaimInviteEditor({
   );
 }
 
-type AddPhotoResult = { success: true; photo: Photo } | { error: string };
+type AddPhotoResult = { success: true; photos: Photo[]; failedCount: number } | { error: string };
 type UpdatePhotoResult = { success: true; photo: Photo } | { error: string };
 type DeletePhotoResult = { success: true; id: string } | { error: string };
 // Both arms carry the stored list: on a partial failure the client still needs the truth.
@@ -2153,9 +2155,8 @@ type ReorderResult = { success: true; photos: Photo[] } | { error: string; photo
 // changed, in one request (see computePhotoReorder for why not a swap).
 function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialPhotos: Photo[] }) {
   const [photos, setPhotos] = useState<Photo[]>(initialPhotos);
-  const [pending, setPending] = useState<{ imageUrl: string; uploadId: string } | null>(null);
-  const [caption, setCaption] = useState('');
-  const [credit, setCredit] = useState('');
+  const [uploading, setUploading] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState('');
   const [editCredit, setEditCredit] = useState('');
@@ -2173,12 +2174,19 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
       toast.error(addFetcher.data.error);
       return;
     }
-    const { photo } = addFetcher.data;
-    setPhotos(prev => (prev.some(p => p.id === photo.id) ? prev : [...prev, photo]));
-    setPending(null);
-    setCaption('');
-    setCredit('');
-    toast.success('Photo added');
+    const { photos: added, failedCount } = addFetcher.data;
+    // Dedup by id: the effect reruns whenever the fetcher's data object changes identity, and
+    // appending blindly would double a batch on a re-render.
+    setPhotos(prev => {
+      const known = new Set(prev.map(p => p.id));
+      return [...prev, ...added.filter(p => !known.has(p.id))];
+    });
+    if (added.length > 0) {
+      toast.success(`${added.length} photo${added.length > 1 ? 's' : ''} added`);
+    }
+    if (failedCount > 0) {
+      toast.error(`${failedCount} photo${failedCount > 1 ? 's' : ''} could not be saved`);
+    }
   }, [addFetcher.data]);
 
   useEffect(() => {
@@ -2205,6 +2213,50 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
     setPhotos(prev => prev.filter(p => p.id !== id));
     toast.success('Photo removed');
   }, [deleteFetcher.data]);
+
+  /**
+   * Upload every chosen file, then record the ones that landed in a single request.
+   *
+   * Uploads run together because they are independent S3 PUTs, and `allSettled` so one
+   * unreadable file cannot take the batch down with it. The database writes go in one
+   * `addMany` call rather than N: each photo's `order` has to follow the last, and parallel
+   * requests would all read the same starting point.
+   */
+  async function handleFiles(files: FileList) {
+    const chosen = Array.from(files);
+    setUploading(chosen.length);
+
+    const results = await Promise.allSettled(
+      chosen.map(async file => {
+        try {
+          return await uploadImageFile(file, 'artist');
+        } finally {
+          setUploading(n => n - 1);
+        }
+      })
+    );
+
+    const uploaded = results
+      .filter((r): r is PromiseFulfilledResult<UploadedImage> => r.status === 'fulfilled')
+      .map(r => r.value);
+    const failedUploads = results.length - uploaded.length;
+    if (failedUploads > 0) {
+      toast.error(`${failedUploads} file${failedUploads > 1 ? 's' : ''} could not be uploaded`);
+    }
+    if (uploaded.length === 0) return;
+
+    addFetcher.submit(
+      {
+        intent: 'addMany',
+        artistId,
+        photos: JSON.stringify(uploaded),
+        // Past the highest existing order, not the count: deleting a photo shrinks the count
+        // but not the max, so indexing by count risks colliding with a surviving photo.
+        startOrder: String(nextPhotoOrder(photos)),
+      },
+      { method: 'post', action: '/api/artist/photo' }
+    );
+  }
 
   // Sync to what the server says is stored, never to a rolled-back guess: if only some of the
   // rows were written, the optimistic order and the table have already diverged, and only the
@@ -2380,55 +2432,39 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
         ))}
       </div>
       <div className="space-y-2 rounded-md border border-dashed p-3">
-        <ImageUpload
-          urlFieldName="galleryPhotoUrl"
-          uploadIdFieldName="galleryPhotoUploadId"
-          entityType="artist"
-          label="Add a photo"
-          onUploaded={setPending}
+        {/* Multi-select. Caption and credit are no longer asked for up front: they made sense
+            when one photo went in at a time, and asking for twenty before anything is stored
+            would be absurd. Every row already has an edit form for them. */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          aria-label="Choose photos to upload"
+          onChange={e => {
+            if (e.target.files?.length) void handleFiles(e.target.files);
+            // Cleared so choosing the same file again still fires a change event.
+            e.target.value = '';
+          }}
         />
-        {pending && (
-          <>
-            <Input
-              placeholder="Caption (optional)"
-              aria-label="Photo caption"
-              value={caption}
-              onChange={e => setCaption(e.target.value)}
-            />
-            <Input
-              placeholder="Credit (optional)"
-              aria-label="Photo credit"
-              value={credit}
-              onChange={e => setCredit(e.target.value)}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!addIsIdle}
-              onClick={() =>
-                addFetcher.submit(
-                  {
-                    intent: 'add',
-                    artistId,
-                    imageUrl: pending.imageUrl,
-                    uploadId: pending.uploadId,
-                    caption,
-                    credit,
-                    // Append after the highest existing order, not the photo count —
-                    // deleting a photo shrinks the count but not the max, so indexing
-                    // by count risks colliding with a surviving photo's order.
-                    order: String(nextPhotoOrder(photos)),
-                  },
-                  { method: 'post', action: '/api/artist/photo' }
-                )
-              }
-            >
-              <Plus className="h-4 w-4" />
-              Add photo
-            </Button>
-          </>
-        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading > 0 || !addIsIdle}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading > 0 ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {uploading > 0 ? `Uploading ${uploading}…` : 'Add photos'}
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Select as many as you like. Add captions and credits afterwards.
+        </p>
       </div>
     </div>
   );

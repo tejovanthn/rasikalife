@@ -828,9 +828,14 @@ export default function ArtistDetails() {
           {galleryTeaser.length > 0 && (
             <section className="mt-8">
               <h2 className="mb-4 text-xl font-semibold">Gallery</h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {/* Masonry, matching the full gallery page: portrait and landscape frames both
+                  survive intact rather than being square-cropped. */}
+              <div className="columns-2 gap-3 sm:columns-3 [&>figure]:mb-3">
                 {galleryTeaser.map(photo => (
-                  <figure key={photo.id} className="overflow-hidden rounded-lg border">
+                  <figure
+                    key={photo.id}
+                    className="overflow-hidden break-inside-avoid rounded-lg border"
+                  >
                     {/* Empty alt when a caption is showing: the figcaption below already carries
                     that text, and repeating it in alt makes a screen reader read it twice.
                     Without a caption the image needs a description of its own. */}
@@ -838,7 +843,14 @@ export default function ArtistDetails() {
                       src={photo.imageUrl}
                       alt={photo.caption ? '' : `${artist.name}, photograph`}
                       loading="lazy"
-                      className="aspect-square w-full object-cover"
+                      width={photo.width}
+                      height={photo.height}
+                      style={
+                        photo.width && photo.height
+                          ? { aspectRatio: `${photo.width} / ${photo.height}` }
+                          : undefined
+                      }
+                      className="w-full object-cover"
                     />
                     {photo.caption && (
                       <figcaption className="px-2 py-1 text-xs text-muted-foreground">
