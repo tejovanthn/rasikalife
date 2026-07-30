@@ -17,15 +17,92 @@ export const ARTIST_CLAIM_STATUSES = [
 ] as const;
 export type ArtistClaimStatus = (typeof ARTIST_CLAIM_STATUSES)[number];
 
+/**
+ * How an artist learned from a teacher. The distinction is the whole point: a senior
+ * disciple, someone who attended a three-day workshop, and someone taught by a professor
+ * during a degree are all "studied under" in prose, and flattening them into one list
+ * overstates the weaker three. In this domain guru lineage *is* the credential, so an
+ * inflated edge is a substantive misstatement, not a cosmetic one.
+ *
+ * Deliberately optional on `GuruSchema`. Every row stored before this existed is a real
+ * relationship of unknown type, and defaulting those to 'primary' would assert lineage the
+ * data does not support — so an unlabelled row renders unlabelled and waits for a human.
+ */
+export const GURU_RELATIONSHIPS = ['primary', 'advanced', 'workshop', 'institutional'] as const;
+export type GuruRelationship = (typeof GURU_RELATIONSHIPS)[number];
+
+/**
+ * Where a structured claim came from, recorded per row rather than per record.
+ *
+ * Once artists fill their own profiles, the failure mode is well known from every
+ * self-declared professional profile: no title is ever downgraded, roles inflate, past
+ * positions never end. A per-row provenance marker is what lets the page stay a reference
+ * work — a reader can see that a role is self-asserted, and a moderator can tell an
+ * extraction guess apart from a sabha listing without re-reading the bio.
+ */
+export const CLAIM_SOURCES = [
+  'artist-claimed',
+  'bio-extraction',
+  'sabha-listing',
+  'press',
+  'iccr',
+] as const;
+export type ClaimSource = (typeof CLAIM_SOURCES)[number];
+
 export const GuruSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1).max(200),
   fromYear: YearSchema.optional(),
   toYear: YearSchema.optional(),
   discipline: z.string().max(100).optional(),
+  relationship: z.enum(GURU_RELATIONSHIPS).optional(),
+  source: z.enum(CLAIM_SOURCES).optional(),
 });
 
 export type Guru = z.infer<typeof GuruSchema>;
+
+/**
+ * A formal qualification. Kept as a list attribute rather than its own section-with-edges,
+ * because in Indian classical arts a degree is a weak credential next to lineage — most
+ * artists have none, and an institution page listing "people with a diploma from here"
+ * serves nobody. `institutionId` is therefore a convenience link, not an index.
+ *
+ * `institution` is optional: an extractor that reads "holds a master's degree in yoga
+ * therapy" with no named institution has still found a real qualification.
+ */
+export const CredentialSchema = z.object({
+  qualification: z.string().min(1).max(200),
+  institution: z.string().max(200).optional(),
+  institutionId: z.string().optional(),
+  year: YearSchema.optional(),
+  source: z.enum(CLAIM_SOURCES).optional(),
+});
+
+export type Credential = z.infer<typeof CredentialSchema>;
+
+/**
+ * A production, ballet or choreographed piece — the dance-side equivalent of a Composition,
+ * which is why it does not reuse that entity: a Composition is a repertoire item many
+ * artists perform, a work is one artist's authored piece.
+ *
+ * `role` is optional despite always being present in practice. A production title with an
+ * unclear role is still worth recording, and requiring the field would force an extractor
+ * or a moderator to invent one.
+ *
+ * `ensembleName` is stored alongside the optional `ensembleId` and accepts staleness on a
+ * rename, the same trade `featuredPerformances` documents on the entity: the list is tiny
+ * and there is no reverse index to refresh it cheaply.
+ */
+export const WorkSchema = z.object({
+  title: z.string().min(1).max(300),
+  year: YearSchema.optional(),
+  role: z.string().max(100).optional(),
+  ensembleId: z.string().optional(),
+  ensembleName: z.string().max(200).optional(),
+  source: z.enum(CLAIM_SOURCES).optional(),
+});
+
+export type Work = z.infer<typeof WorkSchema>;
 
 export const CreateArtistSchema = z.object({
   name: z.string().min(1).max(200),
@@ -45,6 +122,17 @@ export const CreateArtistSchema = z.object({
   city: z.string().max(200).optional(),
   practiceStartYear: YearSchema.optional(),
   debutYear: YearSchema.optional(),
+  credentials: z.array(CredentialSchema).optional(),
+  works: z.array(WorkSchema).optional(),
+  // The arangetram — the debut recital that marks the end of formal training — is the
+  // credential that matters here, so it gets flat fields rather than a row in a list.
+  // Guru and venue are ids only, with no denormalized names: a name copy would need a
+  // cascade sweep on every artist and venue rename, and neither has an index to drive
+  // one. The profile loader resolves both, which costs two GetItems on a page already
+  // running several queries and can never go stale.
+  arangetramYear: YearSchema.optional(),
+  arangetramGuruId: z.string().optional(),
+  arangetramVenueId: z.string().optional(),
   photoUrl: z.string().url().optional(),
   photoUploadId: z.string().optional(),
   isGroup: z.boolean().optional(),
@@ -85,6 +173,11 @@ export const CLEARABLE_ARTIST_FIELDS = [
   'website',
   'socialLinks',
   'gurus',
+  'credentials',
+  'works',
+  'arangetramYear',
+  'arangetramGuruId',
+  'arangetramVenueId',
 ] as const;
 
 export type ClearableArtistField = (typeof CLEARABLE_ARTIST_FIELDS)[number];
@@ -104,6 +197,17 @@ export type ClearableArtistField = (typeof CLEARABLE_ARTIST_FIELDS)[number];
  * - `alternateNames` is absent from the create schema entirely, but note for anyone adding
  *   it: it feeds the dedup matcher, so a claimant could make their record absorb the
  *   find-or-create for someone else's name.
+ * - `credentials` — a degree nobody can check. Unlike a guru or a venue, a qualification
+ *   has no other record on the platform to corroborate it, so self-asserted degrees go to
+ *   the moderator queue. `works` stays here: a production is announced publicly and its
+ *   claim is modest.
+ * - `affiliations` does not appear because it is not an artist attribute at all. It lives in
+ *   the ArtistAffiliation junction, written by `moderatorProcedure` — so "artistic director"
+ *   cannot be self-granted, which is the role-inflation vector worth closing first.
+ *
+ * `gurus` stays claimant-editable, as it already was, but note the residual vector: a
+ * claimant can relabel a `workshop` guru as `primary` and so inflate their own lineage. The
+ * per-row `source` is what makes that visible rather than preventing it.
  *
  * An edit proposing anything outside this set is not rejected — it simply goes to the
  * moderator queue like any other edit, which is where those changes belonged all along.
@@ -122,6 +226,10 @@ export const CLAIMANT_EDITABLE_ARTIST_FIELDS = [
   'city',
   'practiceStartYear',
   'debutYear',
+  'works',
+  'arangetramYear',
+  'arangetramGuruId',
+  'arangetramVenueId',
 ] as const;
 
 /** True when every proposed key is one a verified claimant may self-approve. */

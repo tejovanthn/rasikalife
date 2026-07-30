@@ -45,6 +45,96 @@ describe('CreateArtistSchema', () => {
       const result = CreateArtistSchema.parse({ name: 'X' });
       expect(result.gurus).toEqual([]);
     });
+
+    it('accepts a typed relationship and a source', () => {
+      const result = CreateArtistSchema.safeParse({
+        name: 'Yagnika Madhusudan Iyengar',
+        gurus: [
+          { name: 'Sneha Devanandan', relationship: 'primary', fromYear: 1997 },
+          { name: 'Radha Shridhar', relationship: 'advanced' },
+          { name: 'Bragha Bessell', relationship: 'workshop', source: 'bio-extraction' },
+          { name: 'Padma Subrahmanyam', relationship: 'institutional' },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    // The whole point of the field: a workshop teacher and a primary guru must not be
+    // representable as the same thing, and an invented relationship must not slip through.
+    it('rejects a relationship outside the closed set', () => {
+      const result = CreateArtistSchema.safeParse({
+        name: 'X',
+        gurus: [{ name: 'Someone', relationship: 'inspired-by' }],
+      });
+      expect(result.success).toBe(false);
+    });
+
+    // A row stored before relationship existed is a real relationship of unknown type.
+    // Defaulting it to 'primary' would assert lineage the data does not support.
+    it('leaves relationship absent rather than defaulting it', () => {
+      const result = CreateArtistSchema.parse({
+        name: 'X',
+        gurus: [{ name: 'Semmangudi Srinivasa Iyer' }],
+      });
+      expect(result.gurus[0]).not.toHaveProperty('relationship');
+    });
+  });
+
+  describe('credentials and works', () => {
+    it('accepts a credential with no named institution', () => {
+      const result = CreateArtistSchema.safeParse({
+        name: 'X',
+        credentials: [{ qualification: 'MA Yoga Therapy' }],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('accepts the full credential shape', () => {
+      const result = CreateArtistSchema.safeParse({
+        name: 'X',
+        credentials: [
+          {
+            qualification: 'MA Bharatanatyam',
+            institution: 'SASTRA University',
+            institutionId: 'organiser-1',
+            year: 2016,
+            source: 'bio-extraction',
+          },
+        ],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('requires a qualification', () => {
+      expect(
+        CreateArtistSchema.safeParse({ name: 'X', credentials: [{ institution: 'SASTRA' }] })
+          .success
+      ).toBe(false);
+    });
+
+    it('accepts a work with no role, which an extractor may not be able to determine', () => {
+      const result = CreateArtistSchema.safeParse({
+        name: 'X',
+        works: [{ title: 'Matrutvam' }],
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('requires a work title', () => {
+      expect(
+        CreateArtistSchema.safeParse({ name: 'X', works: [{ role: 'director' }] }).success
+      ).toBe(false);
+    });
+
+    it('accepts the arangetram fields', () => {
+      const result = CreateArtistSchema.safeParse({
+        name: 'X',
+        arangetramYear: 2008,
+        arangetramGuruId: 'artist-1',
+        arangetramVenueId: 'venue-1',
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   it('accepts the new profile fields', () => {
@@ -126,6 +216,17 @@ describe('isClaimantEditablePatch', () => {
   it('refuses a field nobody has considered, rather than letting it through', () => {
     expect(isClaimantEditablePatch({ claimStatus: 'verified' })).toBe(false);
     expect(isClaimantEditablePatch({ somethingAddedLater: 1 })).toBe(false);
+  });
+
+  it('accepts works and the arangetram, which are modest public claims', () => {
+    expect(isClaimantEditablePatch({ works: [{ title: 'Matrutvam' }] })).toBe(true);
+    expect(isClaimantEditablePatch({ arangetramYear: 2008 })).toBe(true);
+  });
+
+  // A degree has no other record on the platform to corroborate it, so it goes to the
+  // moderator queue rather than being self-approved.
+  it('refuses credentials, which nothing else on the platform can check', () => {
+    expect(isClaimantEditablePatch({ credentials: [{ qualification: 'PhD' }] })).toBe(false);
   });
 
   it('lists only fields the update schema actually has', () => {

@@ -99,10 +99,15 @@ export function BreadcrumbStructuredData({
   );
 }
 
-// A single artist. `image`, `sameAs`, `award`, and `memberOf` are all optional —
-// JSON.stringify drops undefined keys, so an unenriched artist simply omits them
-// rather than emitting empty arrays. `memberOf` links to the groups this artist
+// A single artist. `image`, `sameAs`, `award`, `memberOf`, `affiliation` and `alumniOf` are
+// all optional — JSON.stringify drops undefined keys, so an unenriched artist simply omits
+// them rather than emitting empty arrays. `memberOf` links to the groups this artist
 // performs in, the inverse of MusicGroup's `member`.
+//
+// `affiliation` and `alumniOf` are kept apart deliberately, matching the split the page makes:
+// an affiliation is a role held at an institution, an alumniOf is where a qualification came
+// from. Collapsing both into `affiliation` would tell a crawler that every artist with a
+// diploma works for the awarding university.
 export function PersonStructuredData({
   person,
 }: {
@@ -113,6 +118,8 @@ export function PersonStructuredData({
     sameAs?: string[];
     awards?: string[];
     memberOf?: Array<{ name: string; url: string }>;
+    affiliations?: Array<{ name: string; url?: string }>;
+    alumniOf?: string[];
   };
 }) {
   return (
@@ -127,6 +134,16 @@ export function PersonStructuredData({
         award: person.awards?.length ? person.awards : undefined,
         memberOf: person.memberOf?.length
           ? person.memberOf.map(g => ({ '@type': 'MusicGroup', name: g.name, url: g.url }))
+          : undefined,
+        affiliation: person.affiliations?.length
+          ? person.affiliations.map(a => ({
+              '@type': 'Organization',
+              name: a.name,
+              url: a.url,
+            }))
+          : undefined,
+        alumniOf: person.alumniOf?.length
+          ? person.alumniOf.map(name => ({ '@type': 'EducationalOrganization', name }))
           : undefined,
         knowsAbout: ['Carnatic Music', 'Indian Classical Music'],
         hasOccupation: {

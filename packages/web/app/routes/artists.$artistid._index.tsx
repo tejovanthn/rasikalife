@@ -1,5 +1,10 @@
 import { MEDIA_TYPE_LABELS } from '@rasika/core/domain/artist-media/client';
-import type { Artist } from '@rasika/core/domain/artist/client';
+import {
+  type Artist,
+  GURU_RELATIONSHIP_LABELS,
+  type GuruRelationship,
+  LINEAGE_RELATIONSHIPS,
+} from '@rasika/core/domain/artist/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { Award, BadgeCheck, Users } from 'lucide-react';
 import {
@@ -23,6 +28,7 @@ import {
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
+import { affiliationPeriod } from '~/lib/affiliation-display';
 import { artistTagline, parseInstruments } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -78,36 +84,45 @@ export async function loader({
     const user = await userPromise;
     const isGroup = !!artist.isGroup;
 
-    const [compositions, upcoming, past, awards, membership, gallery, media, activeEdit, myClaim] =
-      await Promise.all([
-        client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
-        // Two sides of the same partition rather than one unbounded read: the GSI sorts
-        // ascending, so a single query would hand back the artist's oldest concerts and
-        // never the date they are about to play.
-        client.event.byArtist.query({ artistId: artist.id, limit: 4, when: 'upcoming' }),
-        client.event.byArtist.query({ artistId: artist.id, limit: 6, when: 'past' }),
-        client.artist.listAwards.query({ artistId: artist.id }),
-        // A group lists its members; an individual lists the groups it performs in.
-        // Only one direction is ever rendered, so only one is fetched.
-        isGroup
-          ? client.artist.listMembers.query({ groupId: artist.id })
-          : client.artist.listGroups.query({ memberId: artist.id }),
-        // 24, matching the gallery page's own page size. The teaser prefers featured photos
-        // but there is no featured-first index — they are selected in memory from this page
-        // of rows, so a low limit silently ignores anything featured further down the order.
-        client.artist.listPhotos.query({ artistId: artist.id, limit: 24 }),
-        client.artist.listMedia.query({ artistId: artist.id }),
-        user
-          ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
-          : Promise.resolve(null),
-        // Signed-in viewers only, and only on the branch that is already uncacheable — the
-        // anonymous document must stay identical for everyone or the CDN would hand one
-        // viewer's claim state to the next. The public verified badge comes from the artist
-        // row's denormalized claimStatus instead, which costs nothing and varies by nobody.
-        user
-          ? client.artistClaim.myStatusFor.query({ artistId: artist.id })
-          : Promise.resolve(null),
-      ]);
+    const [
+      compositions,
+      upcoming,
+      past,
+      awards,
+      membership,
+      gallery,
+      media,
+      affiliations,
+      activeEdit,
+      myClaim,
+    ] = await Promise.all([
+      client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
+      // Two sides of the same partition rather than one unbounded read: the GSI sorts
+      // ascending, so a single query would hand back the artist's oldest concerts and
+      // never the date they are about to play.
+      client.event.byArtist.query({ artistId: artist.id, limit: 4, when: 'upcoming' }),
+      client.event.byArtist.query({ artistId: artist.id, limit: 6, when: 'past' }),
+      client.artist.listAwards.query({ artistId: artist.id }),
+      // A group lists its members; an individual lists the groups it performs in.
+      // Only one direction is ever rendered, so only one is fetched.
+      isGroup
+        ? client.artist.listMembers.query({ groupId: artist.id })
+        : client.artist.listGroups.query({ memberId: artist.id }),
+      // 24, matching the gallery page's own page size. The teaser prefers featured photos
+      // but there is no featured-first index — they are selected in memory from this page
+      // of rows, so a low limit silently ignores anything featured further down the order.
+      client.artist.listPhotos.query({ artistId: artist.id, limit: 24 }),
+      client.artist.listMedia.query({ artistId: artist.id }),
+      client.artist.listAffiliations.query({ artistId: artist.id }),
+      user
+        ? client.edit.getActiveEditForEntity.query({ entityType: 'artist', entityId: artist.id })
+        : Promise.resolve(null),
+      // Signed-in viewers only, and only on the branch that is already uncacheable — the
+      // anonymous document must stay identical for everyone or the CDN would hand one
+      // viewer's claim state to the next. The public verified badge comes from the artist
+      // row's denormalized claimStatus instead, which costs nothing and varies by nobody.
+      user ? client.artistClaim.myStatusFor.query({ artistId: artist.id }) : Promise.resolve(null),
+    ]);
 
     // Posters are the page's main visual layer, and the EventArtist junction copies the title
     // and start time but not posterUrl, so the teaser's events have to be read back. One
@@ -137,6 +152,25 @@ export async function loader({
     };
     const featured = (artist.featuredPerformances ?? []).slice(0, 4);
 
+    // The record stores the arangetram guru and venue as bare ids — no denormalized names,
+    // because refreshing them on a rename would need a sweep with no index to drive it. Two
+    // point reads on a page already running a dozen queries buys a name that cannot go stale.
+    // A dangling reference resolves to null and simply renders as the year alone.
+    const [arangetramGuru, arangetramVenue] = await Promise.all([
+      artist.arangetramGuruId
+        ? client.artist.get
+            .query({ id: artist.arangetramGuruId })
+            .then(guru => (guru ? { id: guru.id, name: guru.name } : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+      artist.arangetramVenueId
+        ? client.venue.get
+            .query({ id: artist.arangetramVenueId })
+            .then(venue => (venue ? { id: venue.id, name: venue.name } : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+    ]);
+
     // Anonymous views are identical and safe to serve from the CDN edge; signed-in views
     // carry per-viewer chrome and, through the root loader, the viewer's own name and email,
     // so they stay private. SST's server cache policy sets cookieBehavior: "none", which is
@@ -160,6 +194,9 @@ export async function loader({
         isGroup,
         galleryPhotos: gallery.items,
         media,
+        affiliations,
+        arangetramGuru,
+        arangetramVenue,
         repertoire,
         activeEdit,
         isLoggedIn: !!user,
@@ -438,6 +475,59 @@ function EventCard({
   );
 }
 
+/**
+ * One list of gurus, used twice: once for lineage and once, muted, for workshop and
+ * institutional teachers. The two differ only in weight, so they share a renderer rather than
+ * risking two copies that drift.
+ */
+function GuruList({
+  gurus,
+  muted = false,
+}: {
+  gurus: Array<{
+    id?: string;
+    name: string;
+    fromYear?: number;
+    toYear?: number;
+    discipline?: string;
+    relationship?: GuruRelationship;
+  }>;
+  muted?: boolean;
+}) {
+  return (
+    <ul className={`space-y-2 text-sm${muted ? ' text-muted-foreground' : ''}`}>
+      {gurus.map((guru, i) => {
+        const years = [guru.fromYear, guru.toYear].filter(Boolean).join('–');
+        // Only shown on the muted list: on the lineage list every row is either primary,
+        // advanced, or unclassified, and labelling those adds noise without adding a fact.
+        const relationshipLabel =
+          muted && guru.relationship ? GURU_RELATIONSHIP_LABELS[guru.relationship] : '';
+        return (
+          <li key={guru.id ?? `${guru.name}-${i}`}>
+            {guru.id ? (
+              <Link
+                to={generateArtistUrl(guru.name, guru.id)}
+                className="font-medium hover:underline"
+              >
+                {guru.name}
+              </Link>
+            ) : (
+              <span className="font-medium">{guru.name}</span>
+            )}
+            {relationshipLabel ? <span> · {relationshipLabel}</span> : null}
+            {guru.discipline ? (
+              <span className={muted ? '' : 'text-muted-foreground'}> · {guru.discipline}</span>
+            ) : null}
+            {years ? (
+              <span className={muted ? '' : 'text-muted-foreground'}> ({years})</span>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function ArtistDetails() {
   const {
     artist,
@@ -452,6 +542,9 @@ export default function ArtistDetails() {
     isGroup,
     galleryPhotos,
     media,
+    affiliations,
+    arangetramGuru,
+    arangetramVenue,
     repertoire,
     activeEdit,
     isLoggedIn,
@@ -484,6 +577,35 @@ export default function ArtistDetails() {
     .sort(
       (a, b) => (a.fromYear ?? Number.POSITIVE_INFINITY) - (b.fromYear ?? Number.POSITIVE_INFINITY)
     );
+  // Lineage and exposure are different claims and the page says so. A senior disciple, someone
+  // who sat a three-day workshop, and a professor who taught a degree module all read as
+  // "studied under" in prose — listing them together states three of them far too strongly.
+  //
+  // An unclassified row counts as lineage: every guru stored before `relationship` existed is
+  // unlabelled, and demoting all of them to "also studied with" would be the same overstatement
+  // in the other direction.
+  const lineageGurus = gurus.filter(
+    g => !g.relationship || LINEAGE_RELATIONSHIPS.includes(g.relationship)
+  );
+  const otherTeachers = gurus.filter(
+    g => g.relationship && !LINEAGE_RELATIONSHIPS.includes(g.relationship)
+  );
+  const credentials = artist.credentials ?? [];
+  const works = (artist.works ?? [])
+    .slice()
+    .sort((a, b) => (b.year ?? 0) - (a.year ?? 0) || a.title.localeCompare(b.title));
+  // Rendered as one line in the rail rather than a section: it is at most three facts, and a
+  // whole heading for "2008, under Radha Shridhar, at Bharatiya Vidya Bhavan" would be heavier
+  // than what it says.
+  const arangetram = artist.arangetramYear
+    ? [
+        String(artist.arangetramYear),
+        arangetramGuru ? `under ${arangetramGuru.name}` : '',
+        arangetramVenue ? `at ${arangetramVenue.name}` : '',
+      ]
+        .filter(Boolean)
+        .join(', ')
+    : '';
   const collaborators = (artist.collaborators ?? [])
     .slice()
     .sort((a, b) => b.strength - a.strength)
@@ -535,6 +657,7 @@ export default function ArtistDetails() {
     facts.push({ label: 'Training since', value: String(artist.practiceStartYear) });
   }
   if (artist.debutYear) facts.push({ label: 'Debut', value: String(artist.debutYear) });
+  if (arangetram) facts.push({ label: 'Arangetram', value: arangetram });
 
   // The rail still summarises a single honour; the lineage no longer summarises there.
   const latestAward =
@@ -591,31 +714,90 @@ export default function ArtistDetails() {
 
           {/* All of it, always. This used to render only when there was more than one guru,
               because the rail carried a single one; the rail no longer does. */}
-          {gurus.length > 0 && (
+          {lineageGurus.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-xl font-semibold">Gurus & lineage</h2>
+              <GuruList gurus={lineageGurus} />
+            </section>
+          )}
+
+          {/* Workshop and institutional teachers, kept apart from the lineage above and
+              deliberately quieter. Real training, but not discipleship — and in this domain
+              that difference is the difference between two quite different claims. */}
+          {otherTeachers.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-base font-semibold text-muted-foreground">
+                Also studied with
+              </h2>
+              <GuruList gurus={otherTeachers} muted />
+            </section>
+          )}
+
+          {/* Institutional roles. Each one is an edge, so the organisation's own page lists
+              this artist back — which is the whole reason affiliations are not a plain list. */}
+          {affiliations.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-xl font-semibold">Affiliations</h2>
               <ul className="space-y-2 text-sm">
-                {gurus.map((guru, i) => {
-                  const years = [guru.fromYear, guru.toYear].filter(Boolean).join('–');
+                {affiliations.map(affiliation => {
+                  const period = affiliationPeriod(affiliation);
                   return (
-                    <li key={guru.id ?? `${guru.name}-${i}`}>
-                      {guru.id ? (
-                        <Link
-                          to={generateArtistUrl(guru.name, guru.id)}
-                          className="font-medium hover:underline"
-                        >
-                          {guru.name}
-                        </Link>
-                      ) : (
-                        <span className="font-medium">{guru.name}</span>
-                      )}
-                      {guru.discipline ? (
-                        <span className="text-muted-foreground"> · {guru.discipline}</span>
+                    <li key={affiliation.organiserId}>
+                      <Link
+                        to={`/organisers/${affiliation.organiserId}`}
+                        className="font-medium hover:underline"
+                      >
+                        {affiliation.organisationName}
+                      </Link>
+                      {affiliation.role ? (
+                        <span className="text-muted-foreground"> · {affiliation.role}</span>
                       ) : null}
-                      {years ? <span className="text-muted-foreground"> ({years})</span> : null}
+                      {period ? <span className="text-muted-foreground"> ({period})</span> : null}
                     </li>
                   );
                 })}
+              </ul>
+            </section>
+          )}
+
+          {/* Productions the artist authored — as against the repertoire they perform, which
+              is the Repertoire section further down and comes from setlists. */}
+          {works.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-xl font-semibold">Works & productions</h2>
+              <ul className="space-y-2 text-sm">
+                {works.map((work, i) => (
+                  <li key={`${work.title}-${i}`}>
+                    <span className="font-medium">{work.title}</span>
+                    {work.role ? (
+                      <span className="text-muted-foreground"> · {work.role}</span>
+                    ) : null}
+                    {work.year ? (
+                      <span className="text-muted-foreground"> ({work.year})</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Rare enough that most profiles never render this — which is the point of gating
+              every one of these sections on having something to say. */}
+          {credentials.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-xl font-semibold">Qualifications</h2>
+              <ul className="space-y-2 text-sm">
+                {credentials.map((credential, i) => (
+                  <li key={`${credential.qualification}-${i}`}>
+                    <span className="font-medium">{credential.qualification}</span>
+                    {credential.institution ? (
+                      <span className="text-muted-foreground"> · {credential.institution}</span>
+                    ) : null}
+                    {credential.year ? (
+                      <span className="text-muted-foreground"> ({credential.year})</span>
+                    ) : null}
+                  </li>
+                ))}
               </ul>
             </section>
           )}
@@ -1024,6 +1206,15 @@ export default function ArtistDetails() {
               name: m.groupName,
               url: `https://rasika.life${generateArtistUrl(m.groupName, m.groupId)}`,
             })),
+            affiliations: affiliations.map(a => ({
+              name: a.organisationName,
+              url: `https://rasika.life/organisers/${a.organiserId}`,
+            })),
+            // Only the ones that name an institution — a qualification with no awarding body
+            // is still worth showing on the page but is not an alumniOf claim.
+            alumniOf: credentials
+              .map(c => c.institution)
+              .filter((name): name is string => Boolean(name)),
           }}
         />
       )}

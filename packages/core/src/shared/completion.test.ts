@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeCompletionScore } from './completion';
+import { computeCompletionScore, missingFields } from './completion';
 import type { CompletionEntityType } from './completion';
 
 // Each entity type's rule weights are designed to sum to exactly 100.
@@ -8,6 +8,7 @@ const FULLY_COMPLETE_ENTITIES: Record<CompletionEntityType, Record<string, unkno
     biography: 'A long biography',
     specialisations: ['Carnatic vocal'],
     gurus: ['Guru A'],
+    works: [{ title: 'Matrutvam' }],
     birthYear: 1950,
     birthPlace: 'Chennai',
     title: 'Sangeetha Kalanidhi',
@@ -84,7 +85,19 @@ describe('computeCompletionScore', () => {
   it('gives partial credit for partially-filled artist fields', () => {
     const score = computeCompletionScore({ biography: 'Some bio' }, 'artist');
 
-    expect(score).toBe(25);
+    expect(score).toBe(20);
+  });
+
+  // Affiliations live in the ArtistAffiliation junction, and the enrichment queue scores
+  // artists straight off artist.list without loading it. A rule for them here would score
+  // every artist in that pool as missing one and flatten the ranking.
+  it('scores only fields stored on the artist record', () => {
+    const withJunctionData = computeCompletionScore(
+      { ...FULLY_COMPLETE_ENTITIES.artist, affiliations: [{ organisationName: 'X' }] },
+      'artist'
+    );
+
+    expect(withJunctionData).toBe(100);
   });
 
   it('treats an empty string as not filled in', () => {
@@ -117,5 +130,47 @@ describe('computeCompletionScore', () => {
 
     expect(withId).toBe(20);
     expect(withName).toBe(20);
+  });
+});
+
+describe('missingFields', () => {
+  it.each(Object.keys(FULLY_COMPLETE_ENTITIES) as CompletionEntityType[])(
+    'returns nothing for a fully-enriched %s',
+    type => {
+      expect(missingFields(FULLY_COMPLETE_ENTITIES[type], type)).toEqual([]);
+    }
+  );
+
+  it('names every gap on an empty artist', () => {
+    expect(missingFields({}, 'artist')).toEqual([
+      'a short biography',
+      'gurus and lineage',
+      'specialisations',
+      'productions and works',
+      'a title',
+      'a birth year',
+      'a birth place',
+      'a website',
+      'social links',
+    ]);
+  });
+
+  // The first entry is what a claim prompt asks for, so it has to be the heaviest gap
+  // rather than whichever rule happens to be declared first.
+  it('orders gaps heaviest first', () => {
+    const gaps = missingFields({ biography: 'Some bio' }, 'artist');
+
+    expect(gaps[0]).toBe('gurus and lineage');
+    expect(gaps).not.toContain('a short biography');
+  });
+
+  it('omits a field that is filled in', () => {
+    const gaps = missingFields({ gurus: [{ name: 'Radha Shridhar' }] }, 'artist');
+
+    expect(gaps).not.toContain('gurus and lineage');
+  });
+
+  it('treats an empty array as a gap, matching the score', () => {
+    expect(missingFields({ gurus: [] }, 'artist')).toContain('gurus and lineage');
   });
 });

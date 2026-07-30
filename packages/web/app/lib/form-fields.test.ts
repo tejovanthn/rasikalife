@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { readClearableField, readOptionalInt } from './form-fields';
+import { readClearableField, readOptionalInt, readRepeatedRows } from './form-fields';
 
 function formDataWith(entries: Record<string, string>): FormData {
   const formData = new FormData();
   for (const [key, value] of Object.entries(entries)) {
     formData.set(key, value);
+  }
+  return formData;
+}
+
+/** Repeated names, the way a list of rows actually arrives from the wizard. */
+function formDataWithRows(columns: Record<string, string[]>): FormData {
+  const formData = new FormData();
+  for (const [key, values] of Object.entries(columns)) {
+    for (const value of values) formData.append(key, value);
   }
   return formData;
 }
@@ -68,5 +77,91 @@ describe('readOptionalInt', () => {
   it('parses a positive integer', () => {
     const formData = formDataWith({ order: ' 12 ' });
     expect(readOptionalInt(formData, 'order')).toBe(12);
+  });
+});
+
+describe('readRepeatedRows', () => {
+  const spec = {
+    required: 'workTitle',
+    strings: { role: 'workRole' },
+    numbers: { year: 'workYear' },
+  };
+
+  it('reads parallel columns into one object per row', () => {
+    const formData = formDataWithRows({
+      workTitle: ['Shivarpanam', 'Matrutvam'],
+      workRole: ['director', 'director'],
+      workYear: ['2019', '2023'],
+    });
+
+    expect(readRepeatedRows(formData, spec)).toEqual([
+      { required: 'Shivarpanam', rest: { role: 'director', year: 2019 } },
+      { required: 'Matrutvam', rest: { role: 'director', year: 2023 } },
+    ]);
+  });
+
+  // A moderator who adds a row and then leaves it blank means to add nothing, so an empty
+  // required field drops the row rather than submitting a titleless work that fails Zod.
+  it('drops a row whose required field is blank', () => {
+    const formData = formDataWithRows({
+      workTitle: ['Ramayanam', '   ', ''],
+      workRole: ['director', 'director', ''],
+      workYear: ['2021', '2022', ''],
+    });
+
+    expect(readRepeatedRows(formData, spec).map(r => r.required)).toEqual(['Ramayanam']);
+  });
+
+  // Rows correlate by index, so dropping row 0 must not shift row 1's year onto it.
+  it('keeps columns aligned by index when an earlier row is dropped', () => {
+    const formData = formDataWithRows({
+      workTitle: ['', 'Matrutvam'],
+      workRole: ['', 'director'],
+      workYear: ['1999', '2023'],
+    });
+
+    expect(readRepeatedRows(formData, spec)).toEqual([
+      { required: 'Matrutvam', rest: { role: 'director', year: 2023 } },
+    ]);
+  });
+
+  it('omits a blank optional rather than setting it undefined', () => {
+    const formData = formDataWithRows({
+      workTitle: ['Matrutvam'],
+      workRole: [''],
+      workYear: [''],
+    });
+
+    const [row] = readRepeatedRows(formData, spec);
+    expect(row.rest).toEqual({});
+    expect('role' in row.rest).toBe(false);
+  });
+
+  it('omits a number that does not parse as an integer', () => {
+    const formData = formDataWithRows({
+      workTitle: ['Matrutvam'],
+      workRole: ['director'],
+      workYear: ['2o23'],
+    });
+
+    expect(readRepeatedRows(formData, spec)).toEqual([
+      { required: 'Matrutvam', rest: { role: 'director' } },
+    ]);
+  });
+
+  it('returns nothing when the group was never submitted', () => {
+    expect(readRepeatedRows(new FormData(), spec)).toEqual([]);
+  });
+
+  it('tolerates a shorter optional column than the required one', () => {
+    const formData = formDataWithRows({
+      workTitle: ['Shivarpanam', 'Matrutvam'],
+      workRole: ['director'],
+    });
+
+    expect(readRepeatedRows(formData, spec)).toEqual([
+      { required: 'Shivarpanam', rest: { role: 'director' } },
+      { required: 'Matrutvam', rest: {} },
+    ]);
   });
 });

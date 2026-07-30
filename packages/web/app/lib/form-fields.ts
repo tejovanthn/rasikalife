@@ -25,3 +25,56 @@ export function readOptionalInt(formData: FormData, key: string): number | undef
   const parsed = Number(trimmed);
   return Number.isInteger(parsed) ? parsed : undefined;
 }
+
+/**
+ * Reads a repeated group of form fields — one row per index across several parallel arrays —
+ * into a list of objects, dropping any row whose required field is blank.
+ *
+ * Repeated `name` attributes are how the wizard submits a variable-length list without
+ * JSON-encoding it into a hidden input, so `formData.getAll(key)[i]` is row `i` of that
+ * column. The rows are correlated purely by index, which is why a row that renders must
+ * always emit every one of its inputs, even when empty.
+ *
+ * A blank optional is omitted from the result rather than set to `undefined`, so the object
+ * spreads cleanly into a Zod-validated payload where an absent key and an explicitly
+ * undefined one are not the same thing to every consumer.
+ */
+export function readRepeatedRows(
+  formData: FormData,
+  spec: {
+    required: string;
+    strings?: Record<string, string>;
+    numbers?: Record<string, string>;
+  }
+): Array<{ required: string; rest: Record<string, string | number> }> {
+  const requiredValues = formData.getAll(spec.required) as string[];
+  const columns = {
+    strings: Object.entries(spec.strings ?? {}).map(
+      ([field, key]) => [field, formData.getAll(key) as string[]] as const
+    ),
+    numbers: Object.entries(spec.numbers ?? {}).map(
+      ([field, key]) => [field, formData.getAll(key) as string[]] as const
+    ),
+  };
+
+  const rows: Array<{ required: string; rest: Record<string, string | number> }> = [];
+  for (const [index, rawRequired] of requiredValues.entries()) {
+    const required = (rawRequired || '').trim();
+    if (!required) continue;
+
+    const rest: Record<string, string | number> = {};
+    for (const [field, values] of columns.strings) {
+      const value = (values[index] || '').trim();
+      if (value) rest[field] = value;
+    }
+    for (const [field, values] of columns.numbers) {
+      const value = (values[index] || '').trim();
+      if (!value) continue;
+      // Same reasoning as readOptionalInt: reject rather than silently truncate.
+      const parsed = Number(value);
+      if (Number.isInteger(parsed)) rest[field] = parsed;
+    }
+    rows.push({ required, rest });
+  }
+  return rows;
+}

@@ -21,6 +21,21 @@
       "import": "./src/admin/columns.ts",
       "default": "./src/admin/columns.ts"
     },
+    "./admin/csv": {
+      "types": "./src/admin/csv.ts",
+      "import": "./src/admin/csv.ts",
+      "default": "./src/admin/csv.ts"
+    },
+    "./domain/artist/bio-extract": {
+      "types": "./src/domain/artist/bio-extract.ts",
+      "import": "./src/domain/artist/bio-extract.ts",
+      "default": "./src/domain/artist/bio-extract.ts"
+    },
+    "./domain/artist/bio-proposals": {
+      "types": "./src/domain/artist/bio-proposals.ts",
+      "import": "./src/domain/artist/bio-proposals.ts",
+      "default": "./src/domain/artist/bio-proposals.ts"
+    },
     "./domain/social-link": {
       "types": "./src/domain/social-link.ts",
       "import": "./src/domain/social-link.ts",

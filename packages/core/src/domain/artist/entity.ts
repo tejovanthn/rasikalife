@@ -1,7 +1,7 @@
 import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
-import { ARTIST_CLAIM_STATUSES } from './schema';
+import { ARTIST_CLAIM_STATUSES, CLAIM_SOURCES, GURU_RELATIONSHIPS } from './schema';
 
 export const ArtistEntity = new Entity(
   {
@@ -23,9 +23,11 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
-      // The three optional keys widen this in place: every existing {id, name}
-      // row is already valid under the new shape, so there is no backfill and
-      // no window where stored data is invalid.
+      // The optional keys widen this in place: every existing {id, name} row is
+      // already valid under the new shape, so there is no backfill and no window
+      // where stored data is invalid. `relationship` was added the same way and
+      // for the same reason — see GURU_RELATIONSHIPS in schema.ts for why an
+      // unlabelled row is left unlabelled rather than defaulted to 'primary'.
       gurus: {
         type: 'list',
         items: {
@@ -36,10 +38,61 @@ export const ArtistEntity = new Entity(
             fromYear: { type: 'number', required: false },
             toYear: { type: 'number', required: false },
             discipline: { type: 'string', required: false },
+            relationship: { type: GURU_RELATIONSHIPS, required: false },
+            source: { type: CLAIM_SOURCES, required: false },
           },
         },
         required: false,
         default: () => [],
+      },
+      // Formal qualifications. A list attribute, not a junction: a degree is a weak
+      // credential in this domain and an institution gains nothing from a reverse
+      // listing of diploma holders. Contrast ArtistAffiliation, where the reverse
+      // direction ("artists on this school's faculty") is the reason it exists.
+      credentials: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            qualification: { type: 'string', required: true },
+            institution: { type: 'string', required: false },
+            institutionId: { type: 'string', required: false },
+            year: { type: 'number', required: false },
+            source: { type: CLAIM_SOURCES, required: false },
+          },
+        },
+        required: false,
+      },
+      // Productions, ballets and choreographed pieces — the dance-side equivalent of
+      // Composition, authored by this artist rather than performed from repertoire.
+      works: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            title: { type: 'string', required: true },
+            year: { type: 'number', required: false },
+            role: { type: 'string', required: false },
+            ensembleId: { type: 'string', required: false },
+            ensembleName: { type: 'string', required: false },
+            source: { type: CLAIM_SOURCES, required: false },
+          },
+        },
+        required: false,
+      },
+      // The debut recital that ends formal training. Ids only, resolved by the profile
+      // loader — see the note on the schema for why no name is denormalized here.
+      arangetramYear: {
+        type: 'number',
+        required: false,
+      },
+      arangetramGuruId: {
+        type: 'string',
+        required: false,
+      },
+      arangetramVenueId: {
+        type: 'string',
+        required: false,
       },
       biography: {
         type: 'string',

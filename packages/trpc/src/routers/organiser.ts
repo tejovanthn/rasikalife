@@ -1,4 +1,4 @@
-import { Image, Organiser } from '@rasika/core';
+import { ArtistAffiliation, Image, Organiser } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
@@ -22,6 +22,13 @@ export const organiserRouter = createTRPCRouter({
   getByName: publicProcedure
     .input(z.object({ name: z.string().min(1) }))
     .query(({ input }) => Organiser.getOrganiserByName(input.name)),
+
+  // The artists on this organisation's faculty, or who founded or direct it. This reverse
+  // direction is why affiliations are a junction rather than a list on the artist — a list
+  // could not answer it without scanning the table.
+  listArtists: publicProcedure
+    .input(z.object({ organiserId: z.string().min(1) }))
+    .query(({ input }) => ArtistAffiliation.getOrganiserArtists(input.organiserId)),
 
   create: editorProcedure.input(Organiser.CreateOrganiserSchema).mutation(async ({ input }) => {
     const result = await Organiser.createOrganiser(input);

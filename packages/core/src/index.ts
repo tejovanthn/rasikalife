@@ -1,6 +1,7 @@
 // Domain exports
 export * as Artist from './domain/artist';
 export * as Award from './domain/award';
+export * as ArtistAffiliation from './domain/artist-affiliation';
 export * as ArtistAward from './domain/artist-award';
 export * as ArtistMembership from './domain/artist-membership';
 export * as ArtistClaim from './domain/artist-claim';

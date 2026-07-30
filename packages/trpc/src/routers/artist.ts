@@ -1,5 +1,6 @@
 import {
   Artist,
+  ArtistAffiliation,
   ArtistAward,
   ArtistMedia,
   ArtistMembership,
@@ -8,6 +9,7 @@ import {
   ConcertLogItem,
   EventArtist,
   Image,
+  Organiser,
 } from '@rasika/core';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -30,6 +32,28 @@ const addMemberBaseShape = {
 const AddMemberInputSchema = z.union([
   z.object({ ...addMemberBaseShape, memberId: z.string().min(1) }).strict(),
   z.object({ ...addMemberBaseShape, memberName: z.string().min(1).max(200) }).strict(),
+]);
+
+// An affiliation needs a resolved Organiser on the far side, for the same reason a membership
+// needs a resolved Artist: the junction's key is the pair, and a blank organiserId would write
+// a hot partition that then matches every lookup. So the caller gives an existing organiserId
+// or a name to resolve — the same strict two-variant union, enforcing "exactly one".
+//
+// Resolving a *name* here is deliberate and is not the thing the extraction pipeline is
+// forbidden from doing: a moderator typing an organisation into the wizard has made an
+// explicit choice. Bulk extraction never reaches this procedure.
+const addAffiliationBaseShape = {
+  artistId: z.string().min(1),
+  role: z.string().max(200).optional(),
+  discipline: z.string().max(100).optional(),
+  startYear: z.number().int().min(1800).max(2100).optional(),
+  endYear: z.number().int().min(1800).max(2100).optional(),
+  isCurrent: z.boolean().optional(),
+};
+
+const AddAffiliationInputSchema = z.union([
+  z.object({ ...addAffiliationBaseShape, organiserId: z.string().min(1) }).strict(),
+  z.object({ ...addAffiliationBaseShape, organisationName: z.string().min(1).max(200) }).strict(),
 ]);
 
 // A create() against an existing key surfaces DynamoDB's ConditionalCheckFailedException,
@@ -344,6 +368,83 @@ export const artistRouter = createTRPCRouter({
         input.featureRank
       )
     ),
+
+  // Institutional roles — founder, artistic director, faculty (§ Affiliations). Writes are
+  // moderator-only, which is what stops "artistic director" being self-granted through the
+  // claim flow: unlike gurus or works, an affiliation is not on the artist record at all, so
+  // it never reaches CLAIMANT_EDITABLE_ARTIST_FIELDS.
+  addAffiliation: moderatorProcedure
+    .input(AddAffiliationInputSchema)
+    .mutation(async ({ input }) => {
+      const artist = await Artist.getArtist(input.artistId);
+      if (!artist) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
+      }
+      // getArtist returns a merged-away tombstone, so guard against writing an edge onto a
+      // record no profile renders.
+      if (artist.mergedIntoId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message:
+            'This artist has been merged into another record; add affiliations to the surviving artist',
+        });
+      }
+
+      let organiserId: string;
+      let organisationName: string;
+      if ('organiserId' in input) {
+        const organiser = await Organiser.getOrganiser(input.organiserId);
+        if (!organiser) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Organisation not found' });
+        }
+        if (organiser.mergedIntoId) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message:
+              'This organisation has been merged into another record; use the surviving organisation',
+          });
+        }
+        organiserId = organiser.id;
+        organisationName = organiser.name;
+      } else {
+        // Exact-name lookup then create. There is no fuzzy organiser matcher to mirror
+        // findArtistMatch, so "IIM Bangalore" and "Indian Institute of Management Bangalore"
+        // will land as two records until someone merges them — which is a moderator's job
+        // and exactly what cascadeOrganiserMerge now handles for affiliation rows.
+        const existing = await Organiser.getOrganiserByName(input.organisationName);
+        const organiser =
+          existing ?? (await Organiser.createOrganiser({ name: input.organisationName }));
+        organiserId = organiser.id;
+        organisationName = organiser.name;
+      }
+
+      // No pre-check for an existing pair, and no CONFLICT: addArtistAffiliation upserts, so
+      // re-adding the same pair is how a moderator corrects a role or closes a date range.
+      const result = await ArtistAffiliation.addArtistAffiliation({
+        artistId: input.artistId,
+        artistName: artist.name,
+        organiserId,
+        organisationName,
+        role: input.role,
+        discipline: input.discipline,
+        startYear: input.startYear,
+        endYear: input.endYear,
+        isCurrent: input.isCurrent,
+      });
+      triggerReindex();
+      return result;
+    }),
+
+  removeAffiliation: moderatorProcedure
+    .input(z.object({ artistId: z.string().min(1), organiserId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await ArtistAffiliation.removeArtistAffiliation(input.artistId, input.organiserId);
+      triggerReindex();
+    }),
+
+  listAffiliations: publicProcedure
+    .input(z.object({ artistId: z.string().min(1) }))
+    .query(({ input }) => ArtistAffiliation.getArtistAffiliations(input.artistId)),
 
   listMembers: publicProcedure
     .input(z.object({ groupId: z.string().min(1) }))

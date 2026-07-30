@@ -5,7 +5,15 @@ import {
   type MediaType,
   sortArtistMedia,
 } from '@rasika/core/domain/artist-media/client';
-import type { Guru } from '@rasika/core/domain/artist/client';
+import {
+  type Credential,
+  GURU_RELATIONSHIPS,
+  GURU_RELATIONSHIP_LABELS,
+  type Guru,
+  type GuruRelationship,
+  type Work,
+  isGuruRelationship,
+} from '@rasika/core/domain/artist/client';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
 import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
@@ -52,7 +60,9 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
+import { affiliationPeriod } from '~/lib/affiliation-display';
 import { requireUser } from '~/lib/auth.server';
+import { readRepeatedRows } from '~/lib/form-fields';
 import { GALLERY_EDITOR_PAGE_SIZE, computePhotoReorder, nextPhotoOrder } from '~/lib/gallery-order';
 import type { UploadedImage } from '~/lib/image-upload';
 import { uploadImageFile } from '~/lib/image-upload';
@@ -106,7 +116,7 @@ export async function loader({
 
   // The Recognition step's three sections seed from these. Only the moderator
   // wizard renders them, so the editor path pays for none of it.
-  const [awards, performances, photos, claims, media] = isModerator
+  const [awards, performances, photos, claims, media, affiliations] = isModerator
     ? await Promise.all([
         serverClient.artist.listAwards.query({ artistId: artist.id }),
         serverClient.event.byArtist.query({ artistId: artist.id, limit: 50 }),
@@ -118,8 +128,27 @@ export async function loader({
         }),
         serverClient.artistClaim.listForArtist.query({ artistId: artist.id }),
         serverClient.artist.listMedia.query({ artistId: artist.id }),
+        serverClient.artist.listAffiliations.query({ artistId: artist.id }),
       ])
-    : [[], { items: [] }, { items: [] }, [], []];
+    : [[], { items: [] }, { items: [] }, [], [], []];
+
+  // The record stores arangetram guru and venue as bare ids, so resolve each to a name for
+  // the wizard's pickers. Both come back null for a dangling reference, which the picker
+  // renders as empty rather than as a stale name.
+  const [arangetramGuruRef, arangetramVenueRef] = isModerator
+    ? await Promise.all([
+        artist.arangetramGuruId
+          ? serverClient.artist.get
+              .query({ id: artist.arangetramGuruId as string })
+              .then(guru => (guru ? { id: guru.id, name: guru.name } : null))
+          : Promise.resolve(null),
+        artist.arangetramVenueId
+          ? serverClient.venue.get
+              .query({ id: artist.arangetramVenueId as string })
+              .then(venue => (venue ? { id: venue.id, name: venue.name } : null))
+          : Promise.resolve(null),
+      ])
+    : [null, null];
 
   return data({
     artist,
@@ -131,6 +160,9 @@ export async function loader({
     performances: performances.items,
     photos: photos.items,
     media,
+    affiliations,
+    arangetramGuruRef,
+    arangetramVenueRef,
     // Only the invite addresses; the rows also carry the moderator's private note.
     invitedEmails: (claims as Array<{ kind: string; email?: string }>)
       .filter(c => c.kind === 'invite' && c.email)
@@ -213,6 +245,14 @@ export async function action({
     const debutYear = debutYearRaw ? Number.parseInt(debutYearRaw, 10) || undefined : undefined;
     const activeYears = ((formData.get('activeYears') as string) || '').trim() || undefined;
     const website = ((formData.get('website') as string) || '').trim() || undefined;
+    const arangetramYearRaw = ((formData.get('arangetramYear') as string) || '').trim();
+    const arangetramYear = arangetramYearRaw
+      ? Number.parseInt(arangetramYearRaw, 10) || undefined
+      : undefined;
+    const arangetramGuruId =
+      ((formData.get('arangetramGuruId') as string) || '').trim() || undefined;
+    const arangetramVenueId =
+      ((formData.get('arangetramVenueId') as string) || '').trim() || undefined;
     // §5.3 step 3 specced website *and* social links into this step; only website was built,
     // so the moderator surface could not set them at all. Unlike the scalars above, an empty
     // list is meaningful here — removing every row means "clear them" — so it is always sent.
@@ -236,6 +276,9 @@ export async function action({
         ['debutYear', debutYear],
         ['activeYears', activeYears],
         ['website', website],
+        ['arangetramYear', arangetramYear],
+        ['arangetramGuruId', arangetramGuruId],
+        ['arangetramVenueId', arangetramVenueId],
       ] as const
     )
       .filter(([, value]) => value === undefined)
@@ -251,6 +294,7 @@ export async function action({
     const guruFromYears = formData.getAll('guruFromYear') as string[];
     const guruToYears = formData.getAll('guruToYear') as string[];
     const guruDisciplines = formData.getAll('guruDiscipline') as string[];
+    const guruRelationships = formData.getAll('guruRelationship') as string[];
     const gurus = guruNames
       .map((rawName, i) => {
         const guruName = rawName.trim();
@@ -258,15 +302,31 @@ export async function action({
         const fromYearRaw = (guruFromYears[i] || '').trim();
         const toYearRaw = (guruToYears[i] || '').trim();
         const discipline = (guruDisciplines[i] || '').trim();
+        const relationship = (guruRelationships[i] || '').trim();
         return {
           id: (guruIds[i] || '').trim() || undefined,
           name: guruName,
           fromYear: fromYearRaw ? Number.parseInt(fromYearRaw, 10) || undefined : undefined,
           toYear: toYearRaw ? Number.parseInt(toYearRaw, 10) || undefined : undefined,
           discipline: discipline || undefined,
+          // Validated against the closed set rather than trusted: a stray value would fail
+          // the Zod parse for the whole artist, losing every other edit in the submission.
+          relationship: isGuruRelationship(relationship) ? relationship : undefined,
         };
       })
       .filter((guru): guru is NonNullable<typeof guru> => guru !== undefined);
+
+    const credentials = readRepeatedRows(formData, {
+      required: 'credentialQualification',
+      strings: { institution: 'credentialInstitution' },
+      numbers: { year: 'credentialYear' },
+    }).map(row => ({ qualification: row.required, ...row.rest }));
+
+    const works = readRepeatedRows(formData, {
+      required: 'workTitle',
+      strings: { role: 'workRole' },
+      numbers: { year: 'workYear' },
+    }).map(row => ({ title: row.required, ...row.rest }));
 
     try {
       await serverClient.artist.update.mutate({
@@ -289,6 +349,11 @@ export async function action({
           website,
           socialLinks,
           gurus,
+          credentials,
+          works,
+          arangetramYear,
+          arangetramGuruId,
+          arangetramVenueId,
         },
         clearFields,
       });
@@ -314,12 +379,17 @@ export async function action({
         .map(s => s.trim())
         .filter(Boolean)
     : [];
+  // Mirrors the stored shape so the spread below carries every field forward, not just the
+  // ones this form renders. `relationship` and `source` are the reason that matters now: an
+  // editor renaming a guru must not silently downgrade a classified lineage to unlabelled.
   type StoredGuru = {
     id?: string;
     name: string;
     fromYear?: number;
     toYear?: number;
     discipline?: string;
+    relationship?: GuruRelationship;
+    source?: string;
   };
   const storedGurus = (artist.gurus as StoredGuru[]) || [];
   const storedGuruById = new Map(storedGurus.filter(g => g.id).map(g => [g.id as string, g]));
@@ -700,17 +770,61 @@ function EditorArtistForm() {
 const STEP_LABELS = ['Identity', 'About', 'Relationships', 'Recognition', 'Review'];
 const TOTAL_STEPS = 5;
 
+/**
+ * The word count past which the bio counter turns to a warning.
+ *
+ * Soft on purpose. Long bios are the problem this addresses — a 500-word programme note
+ * repeats the sidebar, buries the facts that belong in fields, and reads identically to every
+ * other artist's. But a hard cap would truncate real work mid-edit, so the schema still
+ * accepts far more and this only nudges.
+ */
+const BIO_SOFT_WORD_CAP = 200;
+
+function countWords(text: string): number {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
 type GuruRow = {
   id?: string;
   name: string;
   fromYear: string;
   toYear: string;
   discipline: string;
+  // '' means "not stated", which is a real answer and not a missing one — most stored rows
+  // predate the field, and guessing 'primary' for them would assert lineage nobody verified.
+  relationship: GuruRelationship | '';
+};
+
+// Credentials and works are attributes on the artist record, so unlike affiliations they ride
+// the form's Publish rather than writing immediately. Years are held as strings here for the
+// same reason the rest of `form` is: an <input type="number"> hands back '' while being typed,
+// and coercing on every keystroke makes the field impossible to clear.
+type CredentialRow = {
+  qualification: string;
+  institution: string;
+  year: string;
+};
+
+type WorkRow = {
+  title: string;
+  year: string;
+  role: string;
 };
 
 function ModeratorArtistWizard() {
-  const { artist, members, awards, performances, photos, media, invitedEmails } =
-    useLoaderData<typeof loader>();
+  const {
+    artist,
+    members,
+    awards,
+    performances,
+    photos,
+    media,
+    affiliations,
+    arangetramGuruRef,
+    arangetramVenueRef,
+    invitedEmails,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const artistUrl = generateArtistUrl(artist.name, artist.id);
@@ -756,7 +870,14 @@ function ModeratorArtistWizard() {
     debutYear: (artist.debutYear as number | undefined)?.toString() ?? '',
     activeYears: (artist.activeYears as string | undefined) ?? '',
     website: (artist.website as string | undefined) ?? '',
+    arangetramYear: (artist.arangetramYear as number | undefined)?.toString() ?? '',
   });
+  // The arangetram guru and venue are entity references: the record stores only the ids, so
+  // the loader resolves each to a name for the picker to display. A reference that no longer
+  // resolves — a deleted venue — comes back null and the picker simply shows empty, which is
+  // the honest rendering of a dangling id.
+  const [arangetramGuru, setArangetramGuru] = useState(arangetramGuruRef);
+  const [arangetramVenue, setArangetramVenue] = useState(arangetramVenueRef);
   // A list, so it sits outside `form`, which holds scalars the Review step diffs one by one.
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
     (artist.socialLinks as SocialLink[] | undefined) ?? []
@@ -769,9 +890,27 @@ function ModeratorArtistWizard() {
       fromYear: guru.fromYear?.toString() ?? '',
       toYear: guru.toYear?.toString() ?? '',
       discipline: guru.discipline ?? '',
+      relationship: guru.relationship ?? '',
     }))
   );
 
+  const [credentials, setCredentials] = useState<CredentialRow[]>(
+    ((artist.credentials as Credential[] | undefined) ?? []).map(credential => ({
+      qualification: credential.qualification,
+      institution: credential.institution ?? '',
+      year: credential.year?.toString() ?? '',
+    }))
+  );
+
+  const [works, setWorks] = useState<WorkRow[]>(
+    ((artist.works as Work[] | undefined) ?? []).map(work => ({
+      title: work.title,
+      year: work.year?.toString() ?? '',
+      role: work.role ?? '',
+    }))
+  );
+
+  const bioWordCount = countWords(form.biography);
   const isSubmitting = navigation.state === 'submitting';
 
   useEffect(() => {
@@ -910,6 +1049,55 @@ function ModeratorArtistWizard() {
                   </div>
                 </div>
 
+                {/* The arangetram is the debut recital that ends formal training, and in this
+                    domain it is a stronger credential than any degree — which is why it gets
+                    flat fields here rather than a row in the credentials list. */}
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Arangetram / debut recital</Label>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="arangetramYear" className="text-xs text-muted-foreground">
+                        Year
+                      </Label>
+                      <Input
+                        id="arangetramYear"
+                        name="arangetramYear"
+                        type="number"
+                        min={1800}
+                        max={2100}
+                        value={form.arangetramYear}
+                        onChange={e => setForm(f => ({ ...f, arangetramYear: e.target.value }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <SearchSelect
+                        label="Guru"
+                        placeholder="Search artists..."
+                        searchUrl="/api/search/artist-live"
+                        inputId="arangetram-guru-picker"
+                        fieldName="arangetramGuruPicker"
+                        value={arangetramGuru}
+                        onChange={entity => setArangetramGuru(entity)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <SearchSelect
+                        label="Venue"
+                        placeholder="Search venues..."
+                        searchUrl="/api/search/venue"
+                        inputId="arangetram-venue-picker"
+                        fieldName="arangetramVenuePicker"
+                        value={arangetramVenue}
+                        onChange={entity => setArangetramVenue(entity)}
+                      />
+                    </div>
+                  </div>
+                  {/* Only the ids are submitted; the profile resolves both to names on read,
+                      so nothing here has to be kept fresh when a venue is renamed. */}
+                  <input type="hidden" name="arangetramGuruId" value={arangetramGuru?.id ?? ''} />
+                  <input type="hidden" name="arangetramVenueId" value={arangetramVenue?.id ?? ''} />
+                </div>
+
                 <ImageUpload
                   urlFieldName="photoUrl"
                   uploadIdFieldName="photoUploadId"
@@ -938,6 +1126,25 @@ function ModeratorArtistWizard() {
                     value={form.biography}
                     onChange={e => setForm(f => ({ ...f, biography: e.target.value }))}
                   />
+                  {/* A soft cap, not a maxLength: the schema still accepts 10,000 characters,
+                      and cutting someone off mid-sentence would lose work. The count is a
+                      nudge toward the register — neutral and factual, like a reference work
+                      rather than a programme note. */}
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-xs text-muted-foreground">
+                      Aim for about 200 words of narrative. Gurus, awards, affiliations,
+                      qualifications and productions each have their own fields — facts kept there
+                      are searchable and linked, and repeating them here only makes every bio read
+                      the same.
+                    </p>
+                    <span
+                      className={`shrink-0 text-xs tabular-nums ${
+                        bioWordCount > BIO_SOFT_WORD_CAP ? 'text-warning' : 'text-muted-foreground'
+                      }`}
+                    >
+                      {bioWordCount} {bioWordCount === 1 ? 'word' : 'words'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -1055,7 +1262,7 @@ function ModeratorArtistWizard() {
                       onClick={() =>
                         setGurus(prev => [
                           ...prev,
-                          { name: '', fromYear: '', toYear: '', discipline: '' },
+                          { name: '', fromYear: '', toYear: '', discipline: '', relationship: '' },
                         ])
                       }
                     >
@@ -1081,6 +1288,25 @@ function ModeratorArtistWizard() {
                       onRemove={() => setGurus(prev => prev.filter((_, j) => j !== i))}
                     />
                   ))}
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Affiliations</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Schools, institutions and ensembles this artist founded, directs or teaches at.
+                    These save immediately — like membership, they do not wait for Publish — and
+                    each one also lists the artist on the organisation's own page.
+                  </p>
+                  <AffiliationsEditor artistId={artist.id} initialAffiliations={affiliations} />
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
+                  <Label>Qualifications</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Degrees and diplomas. Most artists have none, and that is not a gap — the
+                    arangetram and the guru lineage above are the credentials that matter here.
+                  </p>
+                  <CredentialsEditor credentials={credentials} onChange={setCredentials} />
                 </div>
 
                 <div className="space-y-3 border-t pt-6">
@@ -1111,11 +1337,21 @@ function ModeratorArtistWizard() {
             >
               <div className="space-y-8">
                 <p className="text-xs text-muted-foreground">
-                  Awards, performances and photos save immediately — like membership, they do not
-                  wait for Publish.
+                  Awards, performances, photos and media save immediately — like membership, they do
+                  not wait for Publish. Works are the exception on this step: they are part of the
+                  artist record, so they save when you publish.
                 </p>
 
                 <div className="space-y-3">
+                  <Label>Works & productions</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Pieces this artist choreographed or directed — not the repertoire they perform,
+                    which comes from setlists.
+                  </p>
+                  <WorksEditor works={works} onChange={setWorks} />
+                </div>
+
+                <div className="space-y-3 border-t pt-6">
                   <Label>Awards</Label>
                   <AwardsEditor
                     artistId={artist.id}
@@ -1358,6 +1594,40 @@ function GuruRowFields({
       </div>
       <input type="hidden" name="guruId" value={guru.id ?? ''} />
       <input type="hidden" name="guruName" value={guru.name} />
+      {/* Select writes no form value of its own, so the choice rides a hidden input like the
+          id and name above — the action reads all four as parallel arrays. */}
+      <input type="hidden" name="guruRelationship" value={guru.relationship} />
+      <div className="space-y-2">
+        <Label htmlFor={`guru-relationship-${index}`}>Relationship</Label>
+        <Select
+          value={guru.relationship || 'unspecified'}
+          onValueChange={value =>
+            onChange({
+              ...guru,
+              relationship: value === 'unspecified' ? '' : (value as GuruRelationship),
+            })
+          }
+        >
+          <SelectTrigger id={`guru-relationship-${index}`}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {/* An explicit "not stated" option, not just an empty default: it has to be
+                choosable, because leaving it unset is the honest answer for an inherited row
+                and a moderator must be able to return to it. */}
+            <SelectItem value="unspecified">Not stated</SelectItem>
+            {GURU_RELATIONSHIPS.map(relationship => (
+              <SelectItem key={relationship} value={relationship}>
+                {GURU_RELATIONSHIP_LABELS[relationship]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Only primary and advanced count as lineage on the profile. A workshop teacher or a
+          professor who taught a degree course is not a guru in the discipleship sense.
+        </p>
+      </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <div className="space-y-2">
           <Label htmlFor={`guru-from-${index}`}>From Year</Label>
@@ -1395,6 +1665,372 @@ function GuruRowFields({
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+type Affiliation = {
+  artistId: string;
+  artistName: string;
+  organiserId: string;
+  organisationName: string;
+  role?: string;
+  discipline?: string;
+  startYear?: number;
+  endYear?: number;
+  isCurrent?: boolean;
+};
+
+type AddAffiliationResult = { success: true; affiliation: Affiliation } | { error: string };
+type RemoveAffiliationResult = { success: true; organiserId: string } | { error: string };
+
+/**
+ * Institutional roles — founder, artistic director, faculty.
+ *
+ * Writes land immediately in the ArtistAffiliation junction, like memberships and unlike the
+ * rest of this form, so each add/remove fires its own fetcher rather than waiting for Publish.
+ *
+ * The organisation must resolve to an Organiser record, which is why this uses a SearchSelect
+ * rather than a free-text box: the junction is keyed on the artist/organiser pair, and a row
+ * with no organiser is not representable. Typing a name that matches nothing creates the
+ * organisation, which is safe here because a moderator is making the call — the bulk
+ * extraction path is forbidden from doing the same thing unattended.
+ */
+function AffiliationsEditor({
+  artistId,
+  initialAffiliations,
+}: { artistId: string; initialAffiliations: Affiliation[] }) {
+  const [affiliations, setAffiliations] = useState<Affiliation[]>(initialAffiliations);
+  const [organisation, setOrganisation] = useState<{ id: string; name: string } | null>(null);
+  const [newOrganisationName, setNewOrganisationName] = useState('');
+  const [role, setRole] = useState('');
+  const [discipline, setDiscipline] = useState('');
+  const [startYear, setStartYear] = useState('');
+  const [endYear, setEndYear] = useState('');
+  const [isCurrent, setIsCurrent] = useState(false);
+  const addFetcher = useFetcher<AddAffiliationResult>();
+  const removeFetcher = useFetcher<RemoveAffiliationResult>();
+  const addIsIdle = addFetcher.state === 'idle';
+
+  useEffect(() => {
+    if (!addFetcher.data) return;
+    if ('error' in addFetcher.data) {
+      toast.error(addFetcher.data.error);
+      return;
+    }
+    const { affiliation } = addFetcher.data;
+    // Replace rather than append when the pair already exists: the write is an upsert, so
+    // re-adding an organisation is how a role or an end year gets corrected.
+    setAffiliations(prev => [
+      ...prev.filter(a => a.organiserId !== affiliation.organiserId),
+      affiliation,
+    ]);
+    setOrganisation(null);
+    setNewOrganisationName('');
+    setRole('');
+    setDiscipline('');
+    setStartYear('');
+    setEndYear('');
+    setIsCurrent(false);
+    toast.success(`${affiliation.organisationName} added`);
+  }, [addFetcher.data]);
+
+  useEffect(() => {
+    if (!removeFetcher.data) return;
+    if ('error' in removeFetcher.data) {
+      toast.error(removeFetcher.data.error);
+      return;
+    }
+    const { organiserId } = removeFetcher.data;
+    setAffiliations(prev => prev.filter(a => a.organiserId !== organiserId));
+    toast.success('Affiliation removed');
+  }, [removeFetcher.data]);
+
+  const canAdd = Boolean(organisation?.id || newOrganisationName.trim());
+
+  return (
+    <div className="space-y-3">
+      {affiliations.length === 0 && (
+        <p className="text-xs text-muted-foreground">No affiliations yet.</p>
+      )}
+      {affiliations.map(affiliation => {
+        const period = affiliationPeriod(affiliation);
+        return (
+          <div
+            key={affiliation.organiserId}
+            className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
+          >
+            <span>
+              <span className="font-medium">{affiliation.organisationName}</span>
+              {affiliation.role ? (
+                <span className="text-muted-foreground"> — {affiliation.role}</span>
+              ) : null}
+              {period ? <span className="text-muted-foreground"> · {period}</span> : null}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={removeFetcher.state !== 'idle'}
+              onClick={() =>
+                removeFetcher.submit(
+                  { intent: 'remove', artistId, organiserId: affiliation.organiserId },
+                  { method: 'post', action: '/api/artist/affiliation' }
+                )
+              }
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      })}
+      <div className="space-y-2 rounded-md border border-dashed p-3">
+        <SearchSelect
+          label="Organisation"
+          placeholder="Search organisations..."
+          searchUrl="/api/search/organiser"
+          inputId="affiliation-organiser-picker"
+          fieldName="affiliationOrganiserPicker"
+          value={organisation}
+          onChange={entity => {
+            setOrganisation(entity);
+            if (entity) setNewOrganisationName('');
+          }}
+          createNew={name => {
+            setOrganisation(null);
+            setNewOrganisationName(name);
+          }}
+        />
+        {newOrganisationName && (
+          <p className="text-xs text-muted-foreground">
+            "{newOrganisationName}" will be created as a new organisation.
+          </p>
+        )}
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+          <Input
+            placeholder="Role, e.g. founder, artistic director"
+            aria-label="Affiliation role"
+            value={role}
+            onChange={e => setRole(e.target.value)}
+          />
+          <Input
+            placeholder="Discipline (optional)"
+            aria-label="Affiliation discipline"
+            value={discipline}
+            onChange={e => setDiscipline(e.target.value)}
+          />
+          <Input
+            type="number"
+            min={1800}
+            max={2100}
+            placeholder="Start year"
+            aria-label="Affiliation start year"
+            value={startYear}
+            onChange={e => setStartYear(e.target.value)}
+          />
+          <Input
+            type="number"
+            min={1800}
+            max={2100}
+            placeholder="End year"
+            aria-label="Affiliation end year"
+            value={endYear}
+            onChange={e => setEndYear(e.target.value)}
+            disabled={isCurrent}
+          />
+        </div>
+        {/* Held apart from a blank end year on purpose: "faculty since some unrecorded date"
+            is the common shape, so an empty endYear cannot mean either current or ended. */}
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={isCurrent}
+            onChange={e => {
+              setIsCurrent(e.target.checked);
+              if (e.target.checked) setEndYear('');
+            }}
+            className="h-4 w-4 rounded border-input"
+          />
+          Still holds this role
+        </label>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={!addIsIdle || !canAdd}
+          onClick={() =>
+            addFetcher.submit(
+              {
+                intent: 'add',
+                artistId,
+                organiserId: organisation?.id ?? '',
+                organisationName: organisation ? '' : newOrganisationName,
+                role,
+                discipline,
+                startYear,
+                endYear,
+                isCurrent: isCurrent ? 'true' : '',
+              },
+              { method: 'post', action: '/api/artist/affiliation' }
+            )
+          }
+        >
+          <Plus className="h-4 w-4" />
+          Add affiliation
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Formal qualifications. Unlike affiliations these are an attribute on the artist record, so
+ * the rows ride the form's Publish rather than writing immediately — the same as gurus.
+ *
+ * Rows submit as parallel arrays of repeated field names, correlated by index, which is why
+ * every row renders all three inputs even when two are blank.
+ */
+function CredentialsEditor({
+  credentials,
+  onChange,
+}: { credentials: CredentialRow[]; onChange: (rows: CredentialRow[]) => void }) {
+  return (
+    <div className="space-y-3">
+      {credentials.length === 0 && (
+        <p className="text-xs text-muted-foreground">No qualifications added.</p>
+      )}
+      {credentials.map((credential, index) => (
+        <div key={index} className="flex items-start gap-2 rounded-md border p-3">
+          <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-3">
+            <Input
+              name="credentialQualification"
+              placeholder="Qualification, e.g. MA Bharatanatyam"
+              aria-label="Qualification"
+              value={credential.qualification}
+              onChange={e =>
+                onChange(
+                  credentials.map((c, i) =>
+                    i === index ? { ...c, qualification: e.target.value } : c
+                  )
+                )
+              }
+            />
+            <Input
+              name="credentialInstitution"
+              placeholder="Institution (optional)"
+              aria-label="Institution"
+              value={credential.institution}
+              onChange={e =>
+                onChange(
+                  credentials.map((c, i) =>
+                    i === index ? { ...c, institution: e.target.value } : c
+                  )
+                )
+              }
+            />
+            <Input
+              name="credentialYear"
+              type="number"
+              min={1800}
+              max={2100}
+              placeholder="Year"
+              aria-label="Qualification year"
+              value={credential.year}
+              onChange={e =>
+                onChange(
+                  credentials.map((c, i) => (i === index ? { ...c, year: e.target.value } : c))
+                )
+              }
+            />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onChange(credentials.filter((_, i) => i !== index))}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onChange([...credentials, { qualification: '', institution: '', year: '' }])}
+      >
+        <Plus className="h-4 w-4" />
+        Add qualification
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Productions, ballets and choreographed pieces — an artist's authored work, as against the
+ * repertoire they perform, which is what Composition holds. An attribute on the record, so it
+ * publishes with the form.
+ */
+function WorksEditor({
+  works,
+  onChange,
+}: { works: WorkRow[]; onChange: (rows: WorkRow[]) => void }) {
+  return (
+    <div className="space-y-3">
+      {works.length === 0 && <p className="text-xs text-muted-foreground">No works added.</p>}
+      {works.map((work, index) => (
+        <div key={index} className="flex items-start gap-2 rounded-md border p-3">
+          <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-3">
+            <Input
+              name="workTitle"
+              placeholder="Title, e.g. Matrutvam"
+              aria-label="Work title"
+              value={work.title}
+              onChange={e =>
+                onChange(works.map((w, i) => (i === index ? { ...w, title: e.target.value } : w)))
+              }
+            />
+            <Input
+              name="workRole"
+              placeholder="Role, e.g. director (optional)"
+              aria-label="Work role"
+              value={work.role}
+              onChange={e =>
+                onChange(works.map((w, i) => (i === index ? { ...w, role: e.target.value } : w)))
+              }
+            />
+            <Input
+              name="workYear"
+              type="number"
+              min={1800}
+              max={2100}
+              placeholder="Year"
+              aria-label="Work year"
+              value={work.year}
+              onChange={e =>
+                onChange(works.map((w, i) => (i === index ? { ...w, year: e.target.value } : w)))
+              }
+            />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => onChange(works.filter((_, i) => i !== index))}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => onChange([...works, { title: '', year: '', role: '' }])}
+      >
+        <Plus className="h-4 w-4" />
+        Add work
+      </Button>
     </div>
   );
 }

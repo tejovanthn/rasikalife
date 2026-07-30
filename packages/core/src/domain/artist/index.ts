@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
 import {
+  cascadeArtistDeleteToAffiliations,
   cascadeArtistDeleteToMemberships,
   cascadeArtistMerge,
   cascadeArtistNameUpdate,
@@ -99,6 +100,8 @@ export async function softDeleteArtist(id: string): Promise<void> {
   // design the junction exists for. Note this makes the delete one-way for
   // memberships even though the artist row itself is only soft-deleted.
   await cascadeArtistDeleteToMemberships(id);
+  // Affiliation edges go for exactly the same reason, on the same terms.
+  await cascadeArtistDeleteToAffiliations(id);
 }
 
 export async function listArtists(params?: { limit?: number; nextToken?: string }): Promise<{

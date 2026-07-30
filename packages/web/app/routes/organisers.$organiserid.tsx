@@ -10,9 +10,15 @@ import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
+import { affiliationPeriod } from '~/lib/affiliation-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { generateOrganiserUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
+import {
+  generateArtistUrl,
+  generateOrganiserUrl,
+  generateVenueUrl,
+  parseSlug,
+} from '~/lib/url-slug';
 
 interface OrganiserDetail {
   id: string;
@@ -49,6 +55,16 @@ interface EventItem {
   entryType?: string;
 }
 
+// One row of the ArtistAffiliation junction, read from the organisation's side.
+interface AffiliatedArtist {
+  artistId: string;
+  artistName: string;
+  role?: string;
+  startYear?: number;
+  endYear?: number;
+  isCurrent?: boolean;
+}
+
 const ORGANISATION_TYPE_LABELS: Record<string, string> = {
   sabha: 'Sabha',
   trust: 'Trust',
@@ -73,9 +89,13 @@ export const loader: LoaderFunction = async ({ request, params }) => {
   try {
     const user = await getUser(request);
     const serverClient = await createServerClient(request);
-    const [organiser, eventsResult] = await Promise.all([
+    const [organiser, eventsResult, affiliatedArtists] = await Promise.all([
       serverClient.organiser.get.query({ id }),
       serverClient.event.byOrganiser.query({ organiserId: id, limit: 50 }),
+      // The reverse side of the ArtistAffiliation junction: one query on the byOrganiser
+      // index, not a scan. Rows are dropped when an artist is deleted, so nothing here needs
+      // to filter on the artist's own deletedAt.
+      serverClient.organiser.listArtists.query({ organiserId: id }),
     ]);
 
     if (!organiser) {
@@ -92,6 +112,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
     return data({
       organiser,
       events: eventsResult.items,
+      affiliatedArtists,
       user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
@@ -136,9 +157,10 @@ function formatAddress(address: OrganiserDetail['address']): string | null {
 }
 
 export default function OrganiserDetailPage() {
-  const { organiser, events, user, isModerator } = useLoaderData<{
+  const { organiser, events, affiliatedArtists, user, isModerator } = useLoaderData<{
     organiser: OrganiserDetail;
     events: EventItem[];
+    affiliatedArtists: AffiliatedArtist[];
     user: { id: string } | null;
     isModerator: boolean;
   }>();
@@ -307,6 +329,35 @@ export default function OrganiserDetailPage() {
               </a>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* Only renders once someone is affiliated, so an organiser with no faculty does not
+          gain an empty heading. This is the payoff for making affiliations a junction: the
+          same rows that show "faculty at IIM Bangalore" on an artist page produce this list
+          from one query on the reverse index. */}
+      {affiliatedArtists.length > 0 && (
+        <section className="mt-6">
+          <h2 className="section-heading mb-6">Artists</h2>
+          <ul className="flex flex-wrap gap-2">
+            {affiliatedArtists.map(affiliation => {
+              const period = affiliationPeriod(affiliation);
+              return (
+                <li key={affiliation.artistId}>
+                  <Link
+                    to={generateArtistUrl(affiliation.artistName, affiliation.artistId)}
+                    className="inline-flex items-baseline gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors hover:border-primary/50"
+                  >
+                    <span className="font-medium">{affiliation.artistName}</span>
+                    {affiliation.role && (
+                      <span className="text-xs text-muted-foreground">{affiliation.role}</span>
+                    )}
+                    {period && <span className="text-xs text-muted-foreground">{period}</span>}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       )}
 

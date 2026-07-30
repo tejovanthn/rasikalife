@@ -186,6 +186,7 @@ export async function cascadeOrganiserNameUpdate(
 ): Promise<void> {
   const { EventEntity } = await import('./event/entity');
   const { AwardEntity } = await import('./award/entity');
+  const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
   const now = new Date().toISOString();
 
   // Awards are a small set — fetch all at once
@@ -230,6 +231,26 @@ export async function cascadeOrganiserNameUpdate(
       )
     );
   } while (cursor);
+
+  // Affiliation rows hold organisationName so an artist profile renders "faculty at IIM
+  // Bangalore" without fetching the organiser. Reached through the byOrganiser index, so a
+  // rename is a query rather than a scan.
+  let affiliationCursor: string | null = null;
+  do {
+    const affiliationResult = (await ArtistAffiliationEntity.query
+      .byOrganiser({ organiserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: affiliationCursor })) as Page;
+    const affiliationItems = (affiliationResult.data as Array<{ artistId: string }>) || [];
+    affiliationCursor = affiliationResult.cursor;
+
+    await Promise.all(
+      affiliationItems.map(item =>
+        ArtistAffiliationEntity.patch({ artistId: item.artistId, organiserId })
+          .set({ organisationName: newName })
+          .go()
+      )
+    );
+  } while (affiliationCursor);
 }
 
 export async function cascadeEventMetadataToArtists(
@@ -316,6 +337,7 @@ export async function cascadeArtistMerge(
   const { ArtistMembershipEntity } = await import('./artist-membership/entity');
   const { ArtistPhotoEntity } = await import('./artist-photo/entity');
   const { ArtistClaimEntity } = await import('./artist-claim/entity');
+  const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
   const now = new Date().toISOString();
 
   // Migrate EventArtist records from loser to canonical
@@ -423,6 +445,67 @@ export async function cascadeArtistMerge(
       })
     );
   } while (awardCursor);
+
+  // Migrate ArtistAffiliation records from loser to canonical. Same write-then-delete shape as
+  // the award block above, with the same existence check: where both records claim a role at
+  // the same organisation the canonical's row wins, so the loser's role and dates are dropped
+  // rather than merged. Two rows for one pair is not representable — the pair is the key.
+  let affiliationCursor: string | null = null;
+  do {
+    const affiliationResult = (await ArtistAffiliationEntity.query
+      .primary({ artistId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: affiliationCursor })) as Page;
+    const affiliationItems =
+      (affiliationResult.data as Array<{
+        organiserId: string;
+        organisationName: string;
+        role?: string;
+        discipline?: string;
+        startYear?: number;
+        endYear?: number;
+        isCurrent?: boolean;
+        source?: 'artist-claimed' | 'bio-extraction' | 'sabha-listing' | 'press' | 'iccr';
+      }>) || [];
+    affiliationCursor = affiliationResult.cursor;
+
+    const existingAffiliationResult = affiliationItems.length
+      ? await ArtistAffiliationEntity.get(
+          affiliationItems.map(item => ({
+            artistId: canonicalId,
+            organiserId: item.organiserId,
+          }))
+        ).go()
+      : { data: [] as Array<{ organiserId: string }> };
+    const existingAffiliationSet = existingKeySet(existingAffiliationResult, r => r.organiserId);
+
+    await Promise.all(
+      affiliationItems.map(async item => {
+        await dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: keyOf(ArtistAffiliationEntity, {
+              artistId: loserId,
+              organiserId: item.organiserId,
+            }),
+          })
+        );
+        if (!existingAffiliationSet.has(item.organiserId)) {
+          await ArtistAffiliationEntity.upsert({
+            artistId: canonicalId,
+            artistName: canonicalName,
+            organiserId: item.organiserId,
+            organisationName: item.organisationName,
+            role: item.role,
+            discipline: item.discipline,
+            startYear: item.startYear,
+            endYear: item.endYear,
+            isCurrent: item.isCurrent,
+            source: item.source,
+          }).go();
+        }
+      })
+    );
+  } while (affiliationCursor);
 
   // Migrate ArtistPhoto records from loser to canonical. The primary key partitions on
   // artistId, so this is a write-then-delete like the junction migrations above. No
@@ -811,6 +894,7 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
   const { EventArtistEntity } = await import('./event-artist/entity');
   const { ArtistAwardEntity } = await import('./artist-award/entity');
   const { ArtistMembershipEntity } = await import('./artist-membership/entity');
+  const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
 
   // One rename, one cascade. Composition composer names are a copy of the same
   // artist name, so they belong here rather than at the call site.
@@ -912,6 +996,55 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
       )
     );
   } while (memberCursor);
+
+  // Affiliation rows carry artistName so an Organiser page can list its faculty without a
+  // fan-out; a rename has to refresh them or that listing shows the old name for good.
+  // Indexed by artistId on the primary key, so this is a query and not a sweep.
+  let affiliationCursor: string | null = null;
+  do {
+    const result = (await ArtistAffiliationEntity.query
+      .primary({ artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: affiliationCursor })) as Page;
+    const items = (result.data as Array<{ organiserId: string }>) || [];
+    affiliationCursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        ArtistAffiliationEntity.patch({ artistId, organiserId: item.organiserId })
+          .set({ artistName: newName })
+          .go()
+      )
+    );
+  } while (affiliationCursor);
+}
+
+/**
+ * Removes an artist's affiliation rows on delete, for the same reason memberships go: a
+ * deleted artist must stop appearing on an institution's "artists affiliated" listing, and
+ * `getOrganiserArtists` is a single-query junction read that does not check the artist's
+ * `deletedAt` — filtering there would cost a lookup per row and defeat the point of the
+ * junction.
+ *
+ * Destructive and one-way, like the membership cascade: there is no undelete path here, so
+ * these edges do not come back if a soft delete is reversed by hand.
+ */
+export async function cascadeArtistDeleteToAffiliations(artistId: string): Promise<void> {
+  const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
+
+  let cursor: string | null = null;
+  do {
+    const result = (await ArtistAffiliationEntity.query
+      .primary({ artistId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Array<{ organiserId: string }>) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        ArtistAffiliationEntity.delete({ artistId, organiserId: item.organiserId }).go()
+      )
+    );
+  } while (cursor);
 }
 
 // Removes an artist's membership rows in both directions. Destructive and one-way: there
@@ -996,6 +1129,7 @@ export async function cascadeOrganiserMerge(
   canonicalName: string
 ): Promise<void> {
   const { EventEntity } = await import('./event/entity');
+  const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
   const now = new Date().toISOString();
 
   let cursor: string | null = null;
@@ -1025,6 +1159,66 @@ export async function cascadeOrganiserMerge(
       )
     );
   } while (cursor);
+
+  // Move affiliation rows off the loser. organiserId is the primary sort key here, so the row
+  // cannot be patched in place — it is deleted and rewritten, like the artist-side merge above.
+  // Where an artist already holds a role at the canonical organisation, that row wins.
+  let affiliationCursor: string | null = null;
+  do {
+    const affiliationResult = (await ArtistAffiliationEntity.query
+      .byOrganiser({ organiserId: loserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor: affiliationCursor })) as Page;
+    const affiliationItems =
+      (affiliationResult.data as Array<{
+        artistId: string;
+        artistName: string;
+        role?: string;
+        discipline?: string;
+        startYear?: number;
+        endYear?: number;
+        isCurrent?: boolean;
+        source?: 'artist-claimed' | 'bio-extraction' | 'sabha-listing' | 'press' | 'iccr';
+      }>) || [];
+    affiliationCursor = affiliationResult.cursor;
+
+    const existingAffiliationResult = affiliationItems.length
+      ? await ArtistAffiliationEntity.get(
+          affiliationItems.map(item => ({
+            artistId: item.artistId,
+            organiserId: canonicalId,
+          }))
+        ).go()
+      : { data: [] as Array<{ artistId: string }> };
+    const existingAffiliationSet = existingKeySet(existingAffiliationResult, r => r.artistId);
+
+    await Promise.all(
+      affiliationItems.map(async item => {
+        await dynamoClient.send(
+          new DeleteCommand({
+            TableName: TABLE_NAME,
+            Key: keyOf(ArtistAffiliationEntity, {
+              artistId: item.artistId,
+              organiserId: loserId,
+            }),
+          })
+        );
+        if (!existingAffiliationSet.has(item.artistId)) {
+          await ArtistAffiliationEntity.upsert({
+            artistId: item.artistId,
+            artistName: item.artistName,
+            organiserId: canonicalId,
+            organisationName: canonicalName,
+            role: item.role,
+            discipline: item.discipline,
+            startYear: item.startYear,
+            endYear: item.endYear,
+            isCurrent: item.isCurrent,
+            source: item.source,
+          }).go();
+        }
+      })
+    );
+  } while (affiliationCursor);
 }
 
 export async function cascadeRagaMerge(

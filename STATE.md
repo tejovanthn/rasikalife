@@ -2,7 +2,23 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Active: artist profile redesign
+## Active: artist bio structuring (2026-07-30)
+
+Plan: `~/.claude/plans/eventual-bubbling-mountain.md`. All eight steps of the handoff spec are built.
+
+**Next step: deploy, then run the pipeline against real bios.** Nothing here has executed against a deploy either — it lands on top of the undeployed artist profile redesign below, so one deploy covers both.
+
+What landed: typed `gurus` (`relationship` + `source`), a new **`ArtistAffiliation` junction** (not a list attribute — the spec said no new entity, but its own step 5 wanted an Organiser reverse lookup, which a list cannot serve without a scan), `credentials` and `works` as list attributes, arangetram fields, wizard editors for all of them, conditional profile sections, the organiser "Artists" listing, and the three-step bio pipeline (`extract-artist-bios` → `import-bio-extractions` → `rewrite-artist-bios`). See CLAUDE.md for the model and the rules that hold it together.
+
+**Post-deploy, in order:**
+
+1. **`pnpm prod-cli extract-artist-bios --dry-run --artist <id>`** on one artist with a long bio. Needs `GEMINI_API_KEY`. Read the CSV and check the three classification traps land in `unresolved` rather than becoming guru edges — an influence, an institutional teacher, and a workshop teacher. **This precision rate is the gate on everything after it.** Do not build the bulk-approval screen until it is known.
+2. **Then the full run**, and hand the CSV over. Only after reviewed rows are imported is `rewrite-artist-bios` safe — it has a `--min-fields` guard (default 2) precisely because shortening a bio whose facts were never extracted destroys them.
+3. **Check a moderator can add an affiliation** through the wizard and that it appears on the organisation's page. This is the one new write path with a junction behind it.
+
+**Two things worth watching on the first artist edit:** the arangetram guru/venue pickers resolve names through two extra loader queries (a dangling id renders blank, by design), and the profile now splits gurus into lineage and "Also studied with" — unclassified rows count as lineage, so nothing existing should move.
+
+## Also active: artist profile redesign
 
 Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
 
@@ -322,10 +338,11 @@ Raised, judged real, not yet done:
 
 ### Known baselines (so regressions are visible)
 
-Current at end of the whole-feature review. All pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate:
+Re-measured 2026-07-30 at the end of the bio-structuring work. All failures below are pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate. **The previously recorded core and web test counts were stale** (758 and 111); the numbers here were measured, and the pre-work figures were verified by running the same suites in a worktree at HEAD.
 
-- `packages/core`: **758 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase); **7 typecheck errors** (6 in `edit/service.ts`, 1 in `event/index.ts:46` — a `festivalId` null). (Grew 688 → 708 → 710 → 728 → 740 → 744 as each review and phase added regression-guard tests.) Measure web-own with: `pnpm typecheck 2>&1 | grep 'error TS' | grep -v '../core' | wc -l`.
-- `packages/web`: **30 web-own typecheck errors**; **111 tests pass** (65 → 89 across phase 7, → 93 in phase 9, → 97 with the JSON-LD escaping, → 111 with the token contrast suite). The typecheck count was 32 at the end of phase 8 and phase 9 removed two along with the duplicated hero city block. None are in artist or gallery files; the biggest cluster is 12 in `carnatic.compositions.$compositionid.tsx`.
+- `packages/core`: **855 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 795 pass before this work; +60 for the affiliation junction, the widened artist schema, the completion labels, and the extraction pipeline.
+- `packages/web`: **151 tests pass, 12 files** (was 137). +14 for `readRepeatedRows` and `affiliationPeriod`. Typecheck errors sit in **11 files**, unchanged by this work and none in artist, organiser or gallery files: `api.server.ts`, `lib/auth.server.ts`, `sessions.server.ts` (SST `Resource.RasikaWeb`, environmental), `$artform.events.tsx`, four `carnatic.*` routes, `events.new_.api.tsx`, `moderator.request-deletion.tsx`.
+- **`packages/scripts` is never typechecked** — it has no `typecheck` script and its `tsconfig.json` errors on `module`/`moduleResolution` when `tsc` is invoked directly. It runs through `tsx`. Note also that importing `@rasika/core`'s main entry from a script fails in this environment on an `@openauthjs/openauth` `./subject` subpath — pre-existing, reproduced with the untouched `rebuildRepertoire.ts`, so the new scripts cannot be smoke-tested locally either.
 - `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
 - `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
 - Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.

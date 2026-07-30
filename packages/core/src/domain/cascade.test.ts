@@ -130,6 +130,23 @@ vi.mock('./artist-membership/entity', async importOriginal => {
   };
 });
 
+vi.mock('./artist-affiliation/entity', async importOriginal => {
+  const actual = await importOriginal<typeof import('./artist-affiliation/entity')>();
+  return {
+    ArtistAffiliationEntity: {
+      // Real conversions so keyOf derives the true (lowercased) key. Everything
+      // else is mocked; deriving keys for real is what makes the key assertions
+      // meaningful rather than a restatement of the test's own literals.
+      conversions: actual.ArtistAffiliationEntity.conversions,
+      query: { primary: vi.fn(), byOrganiser: vi.fn() },
+      get: vi.fn(),
+      upsert: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+    },
+  };
+});
+
 vi.mock('./artist-media/entity', () => ({
   ArtistMediaEntity: {
     query: { primary: vi.fn() },
@@ -216,6 +233,7 @@ vi.mock('./artist-claim', () => ({
 
 import { dynamoClient } from '../db/client';
 import { keysOfEntity } from '../db/keys';
+import { ArtistAffiliationEntity } from './artist-affiliation/entity';
 import { ArtistAwardEntity } from './artist-award/entity';
 import { ArtistClaimEntity } from './artist-claim/entity';
 import { ArtistMediaEntity } from './artist-media/entity';
@@ -283,6 +301,16 @@ describe('cascade', () => {
       .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
     ArtistClaimEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
     ArtistClaimEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistAffiliationEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    ArtistAffiliationEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+    ArtistAffiliationEntity.get = vi
+      .fn()
+      .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) });
+    ArtistAffiliationEntity.upsert = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    ArtistAffiliationEntity.patch = vi
+      .fn()
+      .mockReturnValue({ set: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) }) });
+    ArtistAffiliationEntity.delete = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
   });
 
   describe('cascadeComposerNameUpdate', () => {
@@ -434,6 +462,25 @@ describe('cascade', () => {
       expect(updates[1].Key).toEqual({ pk: 'event#event1', sk: '#metadata' });
       expect(updates[1].ExpressionAttributeValues[':organiserName']).toBe('New Org');
     });
+
+    it('refreshes the denormalized organisationName on affiliation rows', async () => {
+      AwardEntity.query.list = vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) }),
+      });
+      EventEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAffiliationEntity.query.byOrganiser = pagedQuery([
+        { data: [{ artistId: 'artist1' }], cursor: null },
+      ]);
+
+      await cascade.cascadeOrganiserNameUpdate('org1', 'New Org');
+
+      expect(ArtistAffiliationEntity.patch).toHaveBeenCalledWith({
+        artistId: 'artist1',
+        organiserId: 'org1',
+      });
+      const setMock = vi.mocked(ArtistAffiliationEntity.patch).mock.results[0].value.set;
+      expect(setMock).toHaveBeenCalledWith({ organisationName: 'New Org' });
+    });
   });
 
   describe('cascadeEventMetadataToArtists', () => {
@@ -507,6 +554,58 @@ describe('cascade', () => {
   });
 
   describe('cascadeArtistMerge', () => {
+    it('migrates affiliation rows onto the canonical artist with its name', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAffiliationEntity.query.primary = pagedQuery([
+        {
+          data: [
+            {
+              organiserId: 'org1',
+              organisationName: 'Trayag Natyalaya',
+              role: 'founder',
+              startYear: 2017,
+              isCurrent: true,
+              source: 'bio-extraction',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistAffiliationEntity.upsert).toHaveBeenCalledWith({
+        artistId: 'canonical',
+        artistName: 'Canonical Name',
+        organiserId: 'org1',
+        organisationName: 'Trayag Natyalaya',
+        role: 'founder',
+        discipline: undefined,
+        startYear: 2017,
+        endYear: undefined,
+        isCurrent: true,
+        source: 'bio-extraction',
+      });
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes.some((d: any) => d.Key.sk === 'organiser#org1')).toBe(true);
+    });
+
+    it('drops the loser affiliation when the canonical already holds that role', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAffiliationEntity.query.primary = pagedQuery([
+        { data: [{ organiserId: 'org1', organisationName: 'Trayag Natyalaya' }], cursor: null },
+      ]);
+      ArtistAffiliationEntity.get = vi
+        .fn()
+        .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [{ organiserId: 'org1' }] }) });
+
+      await cascade.cascadeArtistMerge('loser', 'canonical', 'Canonical Name');
+
+      expect(ArtistAffiliationEntity.upsert).not.toHaveBeenCalled();
+    });
+
     it('preserves isFeatured and featureRank when migrating an EventArtist row', async () => {
       // Featured status is curated by a moderator; a merge must not reset it.
       EventArtistEntity.query.byArtist = pagedQuery([
@@ -1164,6 +1263,59 @@ describe('cascade', () => {
       expect(setMock).toHaveBeenCalledWith({ groupName: 'New Name' });
       expect(setMock).toHaveBeenCalledWith({ memberName: 'New Name' });
     });
+
+    // Without this, an Organiser page's "artists affiliated" listing shows the old name for
+    // good — the row holds a copy and there is no sweep that would ever correct it.
+    it('refreshes the denormalized artistName on affiliation rows', async () => {
+      EventArtistEntity.query.byArtist = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAwardEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+      CompositionEntity.query.byComposer = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAffiliationEntity.query.primary = pagedQuery([
+        { data: [{ organiserId: 'org1' }, { organiserId: 'org2' }], cursor: null },
+      ]);
+
+      await cascade.cascadeArtistNameUpdate('artist1', 'New Name');
+
+      expect(ArtistAffiliationEntity.patch).toHaveBeenCalledWith({
+        artistId: 'artist1',
+        organiserId: 'org1',
+      });
+      expect(ArtistAffiliationEntity.patch).toHaveBeenCalledWith({
+        artistId: 'artist1',
+        organiserId: 'org2',
+      });
+      const setMock = vi.mocked(ArtistAffiliationEntity.patch).mock.results[0].value.set;
+      expect(setMock).toHaveBeenCalledWith({ artistName: 'New Name' });
+    });
+  });
+
+  describe('cascadeArtistDeleteToAffiliations', () => {
+    // getOrganiserArtists is a single-query junction read that does not check the artist's
+    // deletedAt, so a deleted artist would linger on an institution page unless the edge goes.
+    it('removes every affiliation row for the artist', async () => {
+      ArtistAffiliationEntity.query.primary = pagedQuery([
+        { data: [{ organiserId: 'org1' }, { organiserId: 'org2' }], cursor: null },
+      ]);
+
+      await cascade.cascadeArtistDeleteToAffiliations('artist1');
+
+      expect(ArtistAffiliationEntity.delete).toHaveBeenCalledWith({
+        artistId: 'artist1',
+        organiserId: 'org1',
+      });
+      expect(ArtistAffiliationEntity.delete).toHaveBeenCalledWith({
+        artistId: 'artist1',
+        organiserId: 'org2',
+      });
+    });
+
+    it('deletes nothing when the artist has no affiliations', async () => {
+      ArtistAffiliationEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+
+      await cascade.cascadeArtistDeleteToAffiliations('artist1');
+
+      expect(ArtistAffiliationEntity.delete).not.toHaveBeenCalled();
+    });
   });
 
   describe('cascadeVenueMerge', () => {
@@ -1193,6 +1345,49 @@ describe('cascade', () => {
         ':organiserName': 'Canonical',
         ':gsi5pk': 'organiser#canonicalorg',
       });
+    });
+
+    // organiserId is the sort key, so the row cannot be patched in place — it is rewritten
+    // under the canonical key and the loser's copy deleted.
+    it('moves affiliation rows onto the canonical organiser', async () => {
+      EventEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAffiliationEntity.query.byOrganiser = pagedQuery([
+        {
+          data: [{ artistId: 'artist1', artistName: 'Yagnika', role: 'faculty', isCurrent: true }],
+          cursor: null,
+        },
+      ]);
+
+      await cascade.cascadeOrganiserMerge('loserOrg', 'canonicalOrg', 'Canonical');
+
+      expect(ArtistAffiliationEntity.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          artistId: 'artist1',
+          artistName: 'Yagnika',
+          organiserId: 'canonicalOrg',
+          organisationName: 'Canonical',
+          role: 'faculty',
+          isCurrent: true,
+        })
+      );
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes[0].Key).toEqual({ pk: 'artist#artist1', sk: 'organiser#loserorg' });
+    });
+
+    it('keeps the existing row when the artist already holds a role at the canonical', async () => {
+      EventEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+      ArtistAffiliationEntity.query.byOrganiser = pagedQuery([
+        { data: [{ artistId: 'artist1', artistName: 'Yagnika' }], cursor: null },
+      ]);
+      ArtistAffiliationEntity.get = vi
+        .fn()
+        .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [{ artistId: 'artist1' }] }) });
+
+      await cascade.cascadeOrganiserMerge('loserOrg', 'canonicalOrg', 'Canonical');
+
+      expect(ArtistAffiliationEntity.upsert).not.toHaveBeenCalled();
+      const deletes = commandsSentTo(vi.mocked(dynamoClient.send), 'DeleteCommand');
+      expect(deletes).toHaveLength(1);
     });
   });
 

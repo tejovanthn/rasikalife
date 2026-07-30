@@ -104,6 +104,71 @@ program
     await rebuildRepertoire({ dryRun: opts.dryRun, artistId: opts.artist });
   });
 
+// The three steps of the bio-structuring pipeline, in the order they must run. Extraction
+// seeds the fields; the import lands the reviewed rows; only then is the rewrite safe, because
+// by that point nothing is being deleted, only relocated.
+program
+  .command('extract-artist-bios')
+  .description('Extract structured facts from artist biographies into a CSV for review')
+  .option('-n, --dry-run', 'Print the first rows instead of writing a file')
+  .option('--artist <id>', 'Process a single artist only')
+  .option('--limit <n>', 'Process at most this many artists', Number)
+  .option('--out <path>', 'Where to write the CSV')
+  .action(async (opts: { dryRun?: boolean; artist?: string; limit?: number; out?: string }) => {
+    setup();
+    const { extractArtistBios } = await import('./extractArtistBios.js');
+    await extractArtistBios({
+      dryRun: opts.dryRun,
+      artistId: opts.artist,
+      limit: opts.limit,
+      out: opts.out,
+    });
+  });
+
+program
+  .command('import-bio-extractions')
+  .description('Land reviewed bio-extraction rows as moderation edits and affiliation links')
+  .requiredOption('--file <path>', 'The reviewed CSV, with the decision column filled in')
+  .requiredOption('--user <id>', 'User id to attribute the edits to')
+  .option('-n, --dry-run', 'Report what would be written without writing it')
+  .action(async (opts: { file: string; user: string; dryRun?: boolean }) => {
+    setup();
+    const { importBioExtractions } = await import('./importBioExtractions.js');
+    await importBioExtractions({ file: opts.file, userId: opts.user, dryRun: opts.dryRun });
+  });
+
+program
+  .command('rewrite-artist-bios')
+  .description('Shorten biographies to narrative only, once their facts are stored as fields')
+  .requiredOption('--user <id>', 'User id to attribute the edits to')
+  .option('-n, --dry-run', 'Print the rewrites without creating edits')
+  .option('--artist <id>', 'Process a single artist only')
+  .option('--limit <n>', 'Process at most this many artists', Number)
+  .option(
+    '--min-fields <n>',
+    'Skip artists with fewer populated structured fields than this (default 2)',
+    Number
+  )
+  .action(
+    async (opts: {
+      user: string;
+      dryRun?: boolean;
+      artist?: string;
+      limit?: number;
+      minFields?: number;
+    }) => {
+      setup();
+      const { rewriteArtistBios } = await import('./rewriteArtistBios.js');
+      await rewriteArtistBios({
+        userId: opts.user,
+        dryRun: opts.dryRun,
+        artistId: opts.artist,
+        limit: opts.limit,
+        minFields: opts.minFields,
+      });
+    }
+  );
+
 program
   .command('rebuild-featured')
   .description("Rebuild each artist's featured-performance list from live isFeatured rows")

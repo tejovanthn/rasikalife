@@ -48,7 +48,7 @@ The core package uses a domain-driven design with:
 
 - **Single-Table Design**: All entities stored in one DynamoDB table using composite keys
 - **ElectroDB**: Entity modeling library wrapping DynamoDB (each domain has an `entity.ts`)
-- **Domain Structure**: artist, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, concert-log, and more
+- **Domain Structure**: artist, artist-affiliation, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, concert-log, and more
 - **Access Patterns**: Optimized for DynamoDB with GSI queries via ElectroDB
 - **KSUID IDs**: Time-sortable unique identifiers with domain prefixes
 - **Modular Exports**: Package supports selective imports via subpath exports (`@rasika/core/domain/artist`, `@rasika/core/utils`, etc.)
@@ -108,7 +108,8 @@ The core package uses a domain-driven design with:
 
 - `generic-title.ts` — `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
 - `artist-display.ts` — `artistTagline({instrument, city})` builds the "Vocal · Chennai" line the artist profile hero and `ArtistCard` both lead with. Trims both fields, drops blanks so no stray separator is emitted, capitalizes only the instrument, and returns `undefined` when neither is set so callers can fall back with `??`.
-- `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives.
+- `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives. `readRepeatedRows(formData, {required, strings, numbers})` reads a variable-length list submitted as parallel repeated field names — rows correlate **by index**, so a row that renders must always emit every one of its inputs even when blank, and a row whose required field is empty is dropped.
+- `affiliation-display.ts` — `affiliationPeriod({startYear, endYear, isCurrent})` renders "2017–present", "1998–2015", "since 2017" or `''`. Used by both the artist profile and the organiser page. `isCurrent` is stored apart from `endYear` because a blank end year alone cannot say whether a role is current or merely undated.
 - `json-ld.ts` — `serializeJsonLd(data)` for anything going into `<script type="application/ld+json">`. Escapes `<` as `<`, because a `</script>` inside an entity-supplied URL would otherwise end the element and turn the rest of the payload into markup. Never use a bare `JSON.stringify` with `dangerouslySetInnerHTML`.
 
 ### Colour tokens and contrast
@@ -119,6 +120,76 @@ Every colour comes from the HSL variables in `app/globals.css`; hard-coded Tailw
 - **Hues stay on the brand.** Every surface token sits on hue 17. Two tokens once carried `-21`, which CSS normalises to 339 and renders rose.
 
 `app/lib/contrast.test.ts` parses `globals.css` and asserts the real pairs against WCAG AA (4.5:1 for text, 3:1 for the focus ring), in both themes, plus that no hue is negative. Run it before committing a token change; `app/lib/contrast.ts` exports the maths so a candidate value can be checked first.
+
+### Artist structured sections, and why affiliations are a junction
+
+An artist's facts live in fields, not in the prose. The bio is narrative only, soft-capped at
+~200 words in the wizard; everything else has a home:
+
+| Fact | Where it lives | Why |
+|---|---|---|
+| Gurus | `artist.gurus[]`, each with a `relationship` | Lineage is **the** credential here, so a workshop teacher and a senior disciple must not be representable as the same thing |
+| Affiliations | **`ArtistAffiliation` junction** | The reverse direction — "artists on this school's faculty" — is the point |
+| Credentials | `artist.credentials[]` | A degree is a weak credential in this domain and no institution wants a diploma-holder listing |
+| Works | `artist.works[]` | Productions the artist authored, as against the repertoire they perform (`Composition`) |
+| Arangetram | `artist.arangetram{Year,GuruId,VenueId}` | Ids only; the loaders resolve the names |
+| Tours, festival appearances | **Never typed** — derived from `EventArtist` | A hand-typed field goes stale |
+
+Three rules that are load-bearing:
+
+- **`GURU_RELATIONSHIPS` is `primary | advanced | workshop | institutional`, and it is optional
+  with no backfill.** Every row stored before the field existed is a real relationship of
+  unknown type; defaulting those to `primary` would assert lineage nobody verified. The profile
+  treats unclassified rows as lineage and splits only the explicitly weaker two into "Also
+  studied with".
+- **`ArtistAffiliationEntity.organiserId` is required.** Per DynamoDB rule 9 above, an index
+  over an optional attribute is not sparse. An affiliation exists only once its organisation
+  resolves to an `Organiser`; an unresolved name stays in the extraction CSV. This is why the
+  junction carries denormalized `artistName`/`organisationName` and why four cascade functions
+  (`cascadeArtistNameUpdate`, `cascadeOrganiserNameUpdate`, `cascadeArtistMerge`,
+  `cascadeOrganiserMerge`) must carry it, plus `cascadeArtistDeleteToAffiliations`.
+- **`completion.ts` scores only fields on the artist record.** The moderator enrichment queue
+  scores 100 artists straight off `artist.list`, which never loads a junction — a rule for
+  affiliations there would mark every artist incomplete and flatten the ranking. Use
+  `missingFields(entity, type)` for the gap-naming claim prompt.
+
+Writes split by storage, and the wizard says so: affiliations write immediately (like
+memberships), while gurus, credentials, works and the arangetram ride the form's Publish.
+`affiliations` is deliberately absent from `CLAIMANT_EDITABLE_ARTIST_FIELDS` — it is not an
+artist attribute at all, so "artistic director" cannot be self-granted through a claim.
+`credentials` is excluded too: nothing else on the platform can corroborate a degree.
+
+### Bio structuring pipeline (`pnpm cli`, three steps, in order)
+
+Extraction seeds fields; it does not bind to them. **Fields are canonical and the bio is an
+import source read once.** Never re-derive fields from prose on a write trigger — extraction is
+nondeterministic, so a re-run clobbers a moderator's correction and will not even fail the same
+way twice.
+
+1. `extract-artist-bios [--dry-run] [--artist <id>] [--limit <n>] [--out <path>]` — Gemini
+   (`gemini-flash-lite-latest`, text-only, JSON mode) over every artist with a biography, into a
+   CSV for review. Reads the database, writes nothing to it. Run this and read the precision
+   rate **before** building any UI on top.
+2. `import-bio-extractions --file <path> --user <id> [--dry-run]` — reads the `decision` column.
+   Artist attributes become `Edit` drafts, submitted for moderation; affiliations write straight
+   to the junction. They cannot ride the `Edit` path: `edit/registry.ts` keys every handler on a
+   single entity id and a junction row is keyed on a pair.
+3. `rewrite-artist-bios --user <id> [--dry-run] [--min-fields <n>]` — shortens each bio to
+   narrative only. Safe **only because step 1 ran**: nothing is deleted, it is relocated.
+   `--min-fields` (default 2) skips artists whose facts are still only in the prose.
+
+Core modules: `domain/artist/bio-extract.ts` (the model call and its Zod contract) and
+`domain/artist/bio-proposals.ts` (flattening to CSV rows, and name matching). Two precision
+rules the prompt and the code both enforce:
+
+- **Classify, don't just pull names.** An influence ("influenced by the teachings of X" — who may
+  have died before the artist was born) is not a guru edge; a professor who taught a degree
+  module is `institutional`, not a discipleship. Anything unclassifiable goes to `unresolved`,
+  which is the most useful column in the CSV.
+- **Never auto-create an `Artist` or `Organiser`.** There are already duplicate slugs publicly
+  indexed. `bestArtistMatch` reports a scored candidate and a human picks or creates. Load the
+  corpus **once** with `listAllArtistsForMatching()` and pass it down — see that function's own
+  warning about per-name sweeps.
 
 ### Caching a public page (`Cache-Control`)
 
@@ -160,7 +231,8 @@ Always use a subpath export instead:
 | Edit types/status | `@rasika/core/domain/edit/client` |
 | Artist/Raga/Tala/etc. types & schemas | `@rasika/core/domain/[name]/client` |
 | Concert log types | `@rasika/core/domain/concert-log/client` |
-| Pure utilities (completion score, etc.) | `@rasika/core/shared/completion` (or relevant subpath) |
+| `GURU_RELATIONSHIPS`, `GURU_RELATIONSHIP_LABELS`, `LINEAGE_RELATIONSHIPS`, `isGuruRelationship`, `CLAIM_SOURCES`, `Credential`, `Work` | `@rasika/core/domain/artist/client` |
+| Pure utilities (completion score, `missingFields`) | `@rasika/core/shared/completion` (or relevant subpath) |
 
 All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.
 

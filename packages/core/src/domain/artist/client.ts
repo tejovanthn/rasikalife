@@ -4,16 +4,65 @@
  */
 
 import type { z } from 'zod';
-import type { ArtistClaimStatus, CreateArtistSchema, UpdateArtistSchema } from './schema';
-
-// Re-export schemas (Zod is browser-safe)
-export {
-  ARTIST_CLAIM_STATUSES,
+// GURU_RELATIONSHIPS is imported as a value, not just re-exported, because isGuruRelationship
+// below reads it — `export ... from` creates no local binding.
+import { GURU_RELATIONSHIPS } from './schema';
+import type {
+  ArtistClaimStatus,
   CreateArtistSchema,
-  GuruSchema,
+  GuruRelationship,
   UpdateArtistSchema,
 } from './schema';
-export type { ArtistClaimStatus, Guru } from './schema';
+
+// Re-export schemas (Zod is browser-safe). The constant arrays live in the schema and are
+// re-exported here rather than redeclared in a route: they drive the wizard's selects, the
+// admin CSV columns and the Zod validation, and a second copy is how those three drift.
+export { GURU_RELATIONSHIPS };
+export {
+  ARTIST_CLAIM_STATUSES,
+  CLAIM_SOURCES,
+  CreateArtistSchema,
+  CredentialSchema,
+  GuruSchema,
+  UpdateArtistSchema,
+  WorkSchema,
+} from './schema';
+export type {
+  ArtistClaimStatus,
+  ClaimSource,
+  Credential,
+  Guru,
+  GuruRelationship,
+  Work,
+} from './schema';
+
+/**
+ * Display labels for the guru relationship types, and the order the profile groups them in.
+ *
+ * `primary` and `advanced` are lineage; `workshop` and `institutional` are exposure. The
+ * profile splits on exactly that line, so the order here is the render order.
+ */
+export const GURU_RELATIONSHIP_LABELS: Record<GuruRelationship, string> = {
+  primary: 'Primary guru',
+  advanced: 'Advanced training',
+  workshop: 'Workshops',
+  institutional: 'Institutional',
+};
+
+/** The relationship types that count as discipleship, as against workshop exposure. */
+export const LINEAGE_RELATIONSHIPS: GuruRelationship[] = ['primary', 'advanced'];
+
+/**
+ * Narrows a free string — a form value, a CSV cell, an extractor's output — to a known
+ * relationship.
+ *
+ * Worth having rather than casting at each call site: a stray value passed through would
+ * fail the Zod parse for the *whole artist*, so one bad relationship would discard every
+ * other edit in the same submission.
+ */
+export function isGuruRelationship(value: string): value is GuruRelationship {
+  return (GURU_RELATIONSHIPS as readonly string[]).includes(value);
+}
 
 // Export input types derived from schemas
 export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;

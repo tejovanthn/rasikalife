@@ -269,6 +269,15 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       str('birthPlace'),
       num('practiceStartYear'),
       num('debutYear'),
+      // JSON cells for the same reason gurus is one: both carry several keys per row, and a
+      // flatter encoding would drop all but one of them on a round-trip. Affiliations are
+      // deliberately absent — they live in the ArtistAffiliation junction, not on the artist,
+      // and a blank-organiserId row from a spreadsheet is exactly what that key forbids.
+      json('credentials'),
+      json('works'),
+      num('arangetramYear'),
+      str('arangetramGuruId'),
+      str('arangetramVenueId'),
       str('website'),
       socialLinks('socialLinks'),
       str('activeYears')
