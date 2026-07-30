@@ -2029,7 +2029,9 @@ type Photo = {
   id: string;
   imageUrl: string;
   caption?: string;
-  credit?: string;
+  courtesyArtist?: boolean;
+  photographerId?: string;
+  photographerName?: string;
   order: number;
   featured: boolean;
 };
@@ -2138,6 +2140,8 @@ function ClaimInviteEditor({
   );
 }
 
+type PhotographerResult = { success: true; id: string; name: string } | { error: string };
+
 type AddPhotoResult = { success: true; photos: Photo[]; failedCount: number } | { error: string };
 type UpdatePhotoResult = { success: true; photo: Photo } | { error: string };
 type DeletePhotoResult = { success: true; id: string } | { error: string };
@@ -2159,11 +2163,17 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCaption, setEditCaption] = useState('');
-  const [editCredit, setEditCredit] = useState('');
+  // Courtesy of the artist unless a photographer is named. Checked by default because the
+  // artist is usually the uploader, so naming a photographer is their call to make.
+  const [editCourtesy, setEditCourtesy] = useState(true);
+  const [editPhotographer, setEditPhotographer] = useState<{ id?: string; name: string }>({
+    name: '',
+  });
   const addFetcher = useFetcher<AddPhotoResult>();
   const updateFetcher = useFetcher<UpdatePhotoResult>();
   const deleteFetcher = useFetcher<DeletePhotoResult>();
   const reorderFetcher = useFetcher<ReorderResult>();
+  const photographerFetcher = useFetcher<PhotographerResult>();
   const addIsIdle = addFetcher.state === 'idle';
   const updateIsIdle = updateFetcher.state === 'idle';
   const reorderIsIdle = reorderFetcher.state === 'idle';
@@ -2258,6 +2268,18 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
     );
   }
 
+  // A photographer created from the picker comes back with its new id, which the edit form
+  // needs before Save can link it.
+  useEffect(() => {
+    if (!photographerFetcher.data) return;
+    if ('error' in photographerFetcher.data) {
+      toast.error(photographerFetcher.data.error);
+      return;
+    }
+    const { id, name } = photographerFetcher.data;
+    setEditPhotographer({ id, name });
+  }, [photographerFetcher.data]);
+
   // Sync to what the server says is stored, never to a rolled-back guess: if only some of the
   // rows were written, the optimistic order and the table have already diverged, and only the
   // reply knows which. The list is authoritative on the error arm too.
@@ -2272,7 +2294,8 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
   function startEdit(photo: Photo) {
     setEditingId(photo.id);
     setEditCaption(photo.caption ?? '');
-    setEditCredit(photo.credit ?? '');
+    setEditCourtesy(photo.courtesyArtist ?? true);
+    setEditPhotographer({ id: photo.photographerId, name: photo.photographerName ?? '' });
   }
 
   function handleMove(id: string, direction: 'up' | 'down') {
@@ -2315,12 +2338,43 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                   value={editCaption}
                   onChange={e => setEditCaption(e.target.value)}
                 />
-                <Input
-                  placeholder="Credit (optional)"
-                  aria-label="Photo credit"
-                  value={editCredit}
-                  onChange={e => setEditCredit(e.target.value)}
-                />
+                <label className="flex items-center gap-2 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={editCourtesy}
+                    onChange={e => {
+                      setEditCourtesy(e.target.checked);
+                      // Turning courtesy back on drops the photographer, so a photo is never
+                      // left crediting both the artist and someone else.
+                      if (e.target.checked) setEditPhotographer({ name: '' });
+                    }}
+                  />
+                  Courtesy of the artist
+                </label>
+                {!editCourtesy && (
+                  <SearchSelect
+                    label="Photographer"
+                    placeholder="Search or add a photographer..."
+                    searchUrl="/api/search/artist-live"
+                    inputId={`photographer-${photo.id}`}
+                    fieldName="photographerPicker"
+                    value={
+                      editPhotographer.id
+                        ? { id: editPhotographer.id, name: editPhotographer.name }
+                        : null
+                    }
+                    onChange={entity =>
+                      setEditPhotographer({ id: entity?.id, name: entity?.name ?? '' })
+                    }
+                    createNew={name => {
+                      setEditPhotographer({ name });
+                      photographerFetcher.submit(
+                        { name },
+                        { method: 'post', action: '/api/artist/photographer' }
+                      );
+                    }}
+                  />
+                )}
                 <div className="flex gap-1">
                   <Button
                     type="button"
@@ -2334,7 +2388,11 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
                           artistId,
                           id: photo.id,
                           caption: editCaption,
-                          credit: editCredit,
+                          courtesyArtist: String(editCourtesy),
+                          // Blank clears, so unchecking and naming nobody reverts to courtesy
+                          // rather than storing a credit with an empty name.
+                          photographerId: editCourtesy ? '' : (editPhotographer.id ?? ''),
+                          photographerName: editCourtesy ? '' : editPhotographer.name,
                         },
                         { method: 'post', action: '/api/artist/photo' }
                       )
@@ -2356,9 +2414,11 @@ function GalleryEditor({ artistId, initialPhotos }: { artistId: string; initialP
             ) : (
               <>
                 {photo.caption && <div className="truncate text-xs">{photo.caption}</div>}
-                {photo.credit && (
-                  <div className="truncate text-xs text-muted-foreground">{photo.credit}</div>
-                )}
+                <div className="truncate text-xs text-muted-foreground">
+                  {photo.courtesyArtist === false && photo.photographerName
+                    ? `© ${photo.photographerName}`
+                    : 'Courtesy of the artist'}
+                </div>
                 <div className="flex flex-wrap items-center gap-1">
                   <Button
                     type="button"

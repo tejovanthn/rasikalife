@@ -48,6 +48,9 @@ export const CreateArtistSchema = z.object({
   photoUrl: z.string().url().optional(),
   photoUploadId: z.string().optional(),
   isGroup: z.boolean().optional(),
+  // Keeps a record out of the artist index and the search corpus; see the entity. Set when a
+  // photographer is created from a photo credit, never by a moderator form.
+  unlisted: z.boolean().optional(),
 });
 
 // claimStatus and verifiedAt are deliberately absent. They are set by the

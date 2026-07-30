@@ -816,10 +816,13 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
   // artist name, so they belong here rather than at the call site.
   await cascadeComposerNameUpdate(artistId, newName);
 
-  // NOTE: two name copies on *other artists' records* are deliberately NOT refreshed here —
-  // gurus[].name and collaborators[].name. Neither is indexed, so reaching either means
-  // sweeping every artist (see cascadeArtistMerge), which is defensible for a rare
-  // moderator-run merge but not for an ordinary rename.
+  // NOTE: three denormalized name copies are deliberately NOT refreshed here — gurus[].name
+  // and collaborators[].name on other artists' records, and ArtistPhoto.photographerName.
+  // None is indexed by the artist being renamed: photos are keyed by the artist they depict,
+  // not by whoever took them, so finding the ones crediting a renamed photographer would mean
+  // scanning every photo. Reaching any of the three means a full sweep (see
+  // cascadeArtistMerge), which is defensible for a rare moderator-run merge but not for an
+  // ordinary rename.
   //
   // Both go stale until the next sweep, and neither breaks a link: the rendered URL is built
   // from the id, which is what actually resolves. Collaborators self-heal daily through

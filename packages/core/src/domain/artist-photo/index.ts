@@ -17,7 +17,10 @@ export async function addArtistPhoto(input: AddArtistPhotoInput): Promise<Artist
     width: input.width,
     height: input.height,
     caption: input.caption,
-    credit: input.credit,
+    // Absent means yes: a photo with nobody named is the artist's own courtesy.
+    courtesyArtist: input.courtesyArtist ?? true,
+    photographerId: input.photographerId,
+    photographerName: input.photographerName,
     order: input.order ?? 0,
     featured: input.featured ?? false,
     createdBy: input.createdBy,
@@ -26,7 +29,7 @@ export async function addArtistPhoto(input: AddArtistPhotoInput): Promise<Artist
 }
 
 // Optional text fields a caller may want to empty rather than change.
-const CLEARABLE_FIELDS = ['caption', 'credit'] as const;
+const CLEARABLE_FIELDS = ['caption', 'photographerId', 'photographerName'] as const;
 
 export async function updateArtistPhoto(
   artistId: string,

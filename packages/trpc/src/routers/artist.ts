@@ -120,6 +120,25 @@ export const artistRouter = createTRPCRouter({
       return { id: artist.id, name: artist.name, title: artist.title, created };
     }),
 
+  /**
+   * Resolve a photographer's name to an Artist record, creating an unlisted one if needed.
+   *
+   * A photographer is a person, so they are an Artist rather than a parallel entity: that buys
+   * find-or-create through the shared dedup helper and the byName GSI, both of which a new
+   * entity would have needed building again.
+   *
+   * `unlisted` is set here rather than accepted from the caller, so this endpoint cannot be
+   * used to hide a performer from the artist index.
+   */
+  resolvePhotographer: moderatorProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const { artist, created } = await Artist.findOrCreateArtist(input.name, { unlisted: true });
+      // No triggerReindex: an unlisted record is excluded from the corpus by listArtists, so
+      // there is nothing new to index.
+      return { id: artist.id, name: artist.name, created };
+    }),
+
   create: editorProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
     const result = await Artist.createArtist(input);
     triggerReindex();

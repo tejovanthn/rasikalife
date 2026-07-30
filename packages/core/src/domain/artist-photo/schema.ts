@@ -15,7 +15,10 @@ export const AddArtistPhotoSchema = z.object({
   width: z.number().int().positive().optional(),
   height: z.number().int().positive().optional(),
   caption: z.string().max(500).optional(),
-  credit: z.string().max(200).optional(),
+  // Defaults to the artist's own courtesy; a photographer is named only when it is not.
+  courtesyArtist: z.boolean().optional(),
+  photographerId: z.string().optional(),
+  photographerName: z.string().max(200).optional(),
   order: z.number().int().min(0).max(MAX_PHOTO_ORDER).optional(),
   featured: z.boolean().optional(),
   createdBy: z.string().min(1),
@@ -23,7 +26,9 @@ export const AddArtistPhotoSchema = z.object({
 
 export const UpdateArtistPhotoSchema = z.object({
   caption: z.string().max(500).optional(),
-  credit: z.string().max(200).optional(),
+  courtesyArtist: z.boolean().optional(),
+  photographerId: z.string().optional(),
+  photographerName: z.string().max(200).optional(),
   order: z.number().int().min(0).max(MAX_PHOTO_ORDER).optional(),
   featured: z.boolean().optional(),
 });

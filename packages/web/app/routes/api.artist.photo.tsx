@@ -36,7 +36,6 @@ export const action: ActionFunction = async ({ request }) => {
       return data({ error: 'Missing image' }, { status: 400 });
     }
     const caption = ((formData.get('caption') as string) || '').trim() || undefined;
-    const credit = ((formData.get('credit') as string) || '').trim() || undefined;
     const order = readOptionalInt(formData, 'order');
 
     try {
@@ -45,7 +44,6 @@ export const action: ActionFunction = async ({ request }) => {
         imageUrl,
         uploadId,
         caption,
-        credit,
         order,
       });
       return data({ success: true, photo });
@@ -107,22 +105,28 @@ export const action: ActionFunction = async ({ request }) => {
     if (!id) {
       return data({ error: 'Missing photo' }, { status: 400 });
     }
-    // caption/credit distinguish "not submitted" (undefined, preserve) from "submitted
-    // empty" (clear) — the `((x as string) || '').trim() || undefined` idiom used in the
-    // `add` branch above collapses both to undefined, which means a caption can never be
-    // cleared once set. Callers that don't mean to touch a field (e.g. the featured-only
-    // toggle) simply omit it from the form so it reads as undefined here too.
+    // caption distinguishes "not submitted" (undefined, preserve) from "submitted empty"
+    // (clear) — the `((x as string) || '').trim() || undefined` idiom used in the `add` branch
+    // above collapses both to undefined, which means a caption can never be cleared once set.
+    // Callers that don't mean to touch a field (e.g. the featured-only toggle) simply omit it
+    // from the form so it reads as undefined here too.
     const caption = readClearableField(formData, 'caption');
-    const credit = readClearableField(formData, 'credit');
     const order = readOptionalInt(formData, 'order');
     const featuredRaw = formData.get('featured');
     const featured = featuredRaw === null ? undefined : featuredRaw === 'true';
+
+    // Courtesy of the artist by default. Naming a photographer is what turns it off, and
+    // clearing the name turns it back on rather than leaving a credit with nobody in it.
+    const courtesyRaw = formData.get('courtesyArtist');
+    const courtesyArtist = courtesyRaw === null ? undefined : courtesyRaw === 'true';
+    const photographerId = readClearableField(formData, 'photographerId');
+    const photographerName = readClearableField(formData, 'photographerName');
 
     try {
       const photo = await serverClient.artist.updatePhoto.mutate({
         artistId,
         id,
-        patch: { caption, credit, order, featured },
+        patch: { caption, order, featured, courtesyArtist, photographerId, photographerName },
       });
       return data({ success: true, photo });
     } catch (error) {

@@ -108,6 +108,26 @@ export const ArtistEntity = new Entity(
         type: 'boolean',
         required: false,
       },
+      /**
+       * Keep this record out of the artist index and the search corpus.
+       *
+       * A photographer credited on a gallery photo is an Artist record — reusing the entity
+       * gets find-or-create through the shared dedup helper and the byName GSI for free,
+       * where a separate Photographer entity would have needed both again. But a photographer
+       * is not someone a rasika browses for, so `listArtists` filters these out, and because
+       * the search indexer reads that same function they leave the search index too.
+       *
+       * A flag rather than matching on `specialisations` containing "photography": a
+       * visibility rule keyed off free text is the kind that silently stops working when
+       * someone types "Photography" or "photographer".
+       *
+       * Nothing stops an unlisted record being promoted later — a photographer who turns out
+       * to perform is the same person, and a moderator clears the flag.
+       */
+      unlisted: {
+        type: 'boolean',
+        required: false,
+      },
       // Denormalized badge state. The authoritative claim rows live in the
       // ArtistClaim entity; this copy exists so the profile renders the badge
       // without a second query. Set by the claim flow, never by a form —

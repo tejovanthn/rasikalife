@@ -108,9 +108,12 @@ export async function listArtists(params?: { limit?: number; nextToken?: string 
 }> {
   const limit = params?.limit || 20;
 
+  // Unlisted records are excluded here rather than at each call site, which is what keeps
+  // photographers out of both the artist index and the search corpus: the indexer reads this
+  // same function.
   const result = await ArtistEntity.query
     .list({})
-    .where((attr, op) => op.notExists(attr.deletedAt))
+    .where((attr, op) => `${op.notExists(attr.deletedAt)} AND ${op.ne(attr.unlisted, true)}`)
     .go({
       limit,
       cursor: params?.nextToken,

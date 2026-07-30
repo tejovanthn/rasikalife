@@ -70,14 +70,35 @@ describe('artist-photo', () => {
       expect(createSpy).toHaveBeenCalledWith(expect.objectContaining({ order: 5, featured: true }));
     });
 
-    it('passes through optional caption and credit', async () => {
+    // Absent means yes: a photo with nobody named is the artist's own courtesy, which is the
+    // common case and should not need a moderator to say so.
+    it('defaults courtesyArtist to true', async () => {
+      const { ArtistPhotoEntity } = await import('./entity');
+      await addArtistPhoto(validInput);
+      expect(ArtistPhotoEntity.create).toHaveBeenCalledWith(
+        expect.objectContaining({ courtesyArtist: true })
+      );
+    });
+
+    it('passes through optional caption and photographer', async () => {
       const createSpy = vi.fn().mockReturnValue(goResolves({}));
       vi.mocked(ArtistPhotoEntity.create).mockImplementation(createSpy as never);
 
-      await addArtistPhoto({ ...validInput, caption: 'On stage', credit: 'Jane Doe' });
+      await addArtistPhoto({
+        ...validInput,
+        caption: 'On stage',
+        courtesyArtist: false,
+        photographerId: 'artist-9',
+        photographerName: 'Jane Doe',
+      });
 
       expect(createSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ caption: 'On stage', credit: 'Jane Doe' })
+        expect.objectContaining({
+          caption: 'On stage',
+          courtesyArtist: false,
+          photographerId: 'artist-9',
+          photographerName: 'Jane Doe',
+        })
       );
     });
   });
@@ -153,11 +174,14 @@ describe('artist-photo', () => {
       const setSpy = vi.fn().mockReturnValue({ remove: removeSpy });
       vi.mocked(ArtistPhotoEntity.patch).mockReturnValue({ set: setSpy } as never);
 
-      await updateArtistPhoto('artist-1', 'photo-1', { caption: '', credit: 'Photographer' });
+      await updateArtistPhoto('artist-1', 'photo-1', {
+        caption: '',
+        photographerName: 'Photographer',
+      });
 
       // '' means clear. Storing it would leave the row saying the caption exists and is
       // blank, which disagrees with a UI that renders on `caption &&`.
-      expect(setSpy).toHaveBeenCalledWith({ credit: 'Photographer' });
+      expect(setSpy).toHaveBeenCalledWith({ photographerName: 'Photographer' });
       expect(removeSpy).toHaveBeenCalledWith(['caption']);
     });
 

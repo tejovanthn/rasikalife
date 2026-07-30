@@ -268,7 +268,7 @@ export async function listAllArtistsForMatching(): Promise<Artist[]> {
  */
 export async function findOrCreateArtist(
   name: string,
-  opts?: { threshold?: number; title?: string; candidates?: Artist[] }
+  opts?: { threshold?: number; title?: string; candidates?: Artist[]; unlisted?: boolean }
 ): Promise<{ artist: Artist; created: boolean }> {
   if (normalizeArtistName(name) === '') {
     throw new Error('Cannot resolve an artist from an empty name');
@@ -285,7 +285,15 @@ export async function findOrCreateArtist(
     return { artist: match, created: false };
   }
 
-  const created = await createArtist({ name, title: opts?.title, gurus: [] });
+  // `unlisted` only applies to a record this call creates. An existing artist who happens to
+  // have taken a photograph is a performer already, and must not vanish from the index
+  // because they were credited once.
+  const created = await createArtist({
+    name,
+    title: opts?.title,
+    gurus: [],
+    ...(opts?.unlisted ? { unlisted: true } : {}),
+  });
   return { artist: created, created: true };
 }
 

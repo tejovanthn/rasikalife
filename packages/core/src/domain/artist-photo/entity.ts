@@ -47,7 +47,29 @@ export const ArtistPhotoEntity = new Entity(
         type: 'string',
         required: false,
       },
-      credit: {
+      /**
+       * Whether the photograph is the artist's own to credit. True by default, because the
+       * artist is usually the one uploading it, and naming the photographer is then their
+       * call rather than a field a moderator has to guess at.
+       */
+      courtesyArtist: {
+        type: 'boolean',
+        required: false,
+      },
+      /**
+       * The photographer, as an Artist record with `unlisted` set. Only meaningful when
+       * courtesyArtist is false.
+       */
+      photographerId: {
+        type: 'string',
+        required: false,
+      },
+      /**
+       * Display copy of the photographer's name, so a gallery renders credits in one query.
+       * Same denormalization as EventArtist.artistName and ArtistAward.awardName, and it goes
+       * stale on a rename the same way — cascadeArtistNameUpdate refreshes it.
+       */
+      photographerName: {
         type: 'string',
         required: false,
       },

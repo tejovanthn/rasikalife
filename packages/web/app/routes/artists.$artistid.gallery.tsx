@@ -16,7 +16,8 @@ interface GalleryPhoto {
   id: string;
   imageUrl: string;
   caption?: string;
-  credit?: string;
+  courtesyArtist?: boolean;
+  photographerName?: string;
   /** Absent on every photo stored before dimensions were captured at upload. */
   width?: number;
   height?: number;
@@ -162,11 +163,13 @@ export default function ArtistGallery() {
                   }
                   className="w-full object-cover"
                 />
-                {(photo.caption || photo.credit) && (
+                {/* A named photographer is credited; anything else is the artist's own
+                    courtesy, which needs no line of its own on a page about them. */}
+                {(photo.caption || (photo.courtesyArtist === false && photo.photographerName)) && (
                   <figcaption className="px-2 py-1 text-xs text-muted-foreground">
                     {photo.caption}
-                    {photo.credit ? (
-                      <span className="block text-[0.7rem]">© {photo.credit}</span>
+                    {photo.courtesyArtist === false && photo.photographerName ? (
+                      <span className="block text-[0.7rem]">© {photo.photographerName}</span>
                     ) : null}
                   </figcaption>
                 )}
