@@ -186,11 +186,13 @@ export async function action({
     const photoUrl = ((formData.get('photoUrl') as string) || '').trim() || undefined;
     const photoUploadId = ((formData.get('photoUploadId') as string) || '').trim() || undefined;
     const biography = ((formData.get('biography') as string) || '').trim() || undefined;
-    // Blank preserves rather than clears, matching every scalar below: an
-    // omitted field is dropped from the JSON payload and so left unwritten.
-    // This wizard therefore cannot empty a field — a deliberate, consistent
-    // rule rather than "specialisations clear but biography doesn't", which is
-    // what sending [] here would have produced.
+    // Blanking a field clears it. Every field in this wizard renders pre-filled with what is
+    // stored, so emptying one is a deliberate act, and the previous rule — blank preserves —
+    // meant a website or a biography could be added but never removed.
+    //
+    // An undefined value alone cannot carry that intent, since it is indistinguishable from
+    // "not submitted". So the blank ones are named in clearFields and core removes those
+    // attributes; see updateArtist for why a value cannot express it.
     const specialisationsRaw = ((formData.get('specialisations') as string) || '').trim();
     const specialisations = specialisationsRaw
       ? specialisationsRaw
@@ -213,6 +215,29 @@ export async function action({
     // so the moderator surface could not set them at all. Unlike the scalars above, an empty
     // list is meaningful here — removing every row means "clear them" — so it is always sent.
     const socialLinks = readSocialLinks(formData);
+
+    // Everything the moderator left empty, which core will remove. Built from the parsed
+    // values rather than the raw form so it agrees exactly with what is being written: a
+    // field that failed to parse into a number is blank as far as the record is concerned.
+    const clearFields = (
+      [
+        ['title', title],
+        ['instrument', instrument],
+        ['city', city],
+        ['photoUrl', photoUrl],
+        ['photoUploadId', photoUploadId],
+        ['biography', biography],
+        ['specialisations', specialisations],
+        ['birthYear', birthYear],
+        ['birthPlace', birthPlace],
+        ['practiceStartYear', practiceStartYear],
+        ['debutYear', debutYear],
+        ['activeYears', activeYears],
+        ['website', website],
+      ] as const
+    )
+      .filter(([, value]) => value === undefined)
+      .map(([field]) => field);
 
     // Parallel arrays, one entry per guru row — the same shape socialLinks
     // below uses. Gurus are part of the Artist record, so the whole list is
@@ -263,6 +288,7 @@ export async function action({
           socialLinks,
           gurus,
         },
+        clearFields,
       });
 
       return data({ success: true, redirectUrl: generateArtistUrl(name, slugId) });
@@ -1199,9 +1225,8 @@ function ModeratorArtistWizard() {
                   <SummaryRow label="Gurus" value={gurus.map(guru => guru.name).join(', ')} />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Membership, awards, performances and photos are saved as you go — they are not
-                  part of this publish. A blank field above keeps its current value rather than
-                  clearing it.
+                  Membership, awards, performances, photos and media are saved as you go — they are
+                  not part of this publish. A field left blank above is cleared.
                 </p>
 
                 {actionData && 'error' in actionData && (
@@ -1260,18 +1285,18 @@ function ModeratorArtistWizard() {
 }
 
 function SummaryRow({ label, value, stored }: { label: string; value: string; stored?: string }) {
-  // A blank preserve-on-blank field (see the action) is NOT cleared on publish —
-  // it keeps its stored value. Showing "—" here would promise a clearing that
-  // never happens, so a blanked field with a stored value renders that value,
-  // tagged unchanged. `stored` is omitted for fields that really do take the
-  // form value as-is (isGroup, gurus), where blank means blank.
-  const cleared = !value && stored;
+  // Blanking a field now clears it, so this row says so. It used to render the stored value
+  // tagged "(unchanged)", which was honest about the old preserve-on-blank rule and would be
+  // a lie about this one.
+  const clearing = !value && !!stored;
   return (
     <div className="flex items-start justify-between gap-4 px-3 py-2">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-medium text-right break-words">
-        {value || stored || '—'}
-        {cleared && <span className="ml-1 text-xs text-muted-foreground">(unchanged)</span>}
+        {value || '—'}
+        {clearing && (
+          <span className="ml-1 text-xs text-destructive">(clearing &ldquo;{stored}&rdquo;)</span>
+        )}
       </span>
     </div>
   );

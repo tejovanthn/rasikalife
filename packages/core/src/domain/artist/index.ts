@@ -8,6 +8,7 @@ import {
 import { createFailedError, notFoundError } from '../helpers';
 import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
+import { CLEARABLE_ARTIST_FIELDS } from './schema';
 import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
 
 export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;
@@ -50,8 +51,33 @@ export async function getArtistByName(name: string): Promise<Artist | null> {
   return artist as Artist;
 }
 
-export async function updateArtist(id: string, input: UpdateArtistInput): Promise<Artist> {
-  const result = await ArtistEntity.update({ id }).set(input).go();
+/**
+ * `clearFields` names attributes to remove outright, which is the only way to empty an
+ * optional field. Passing a value cannot express it: `website` is validated with `.url()` so
+ * `''` fails the schema, and writing `''` where it would pass leaves the row claiming the
+ * field exists and is blank, so anything testing `!== undefined` disagrees with the page.
+ *
+ * Filtered against CLEARABLE_ARTIST_FIELDS rather than trusted, because the list arrives from
+ * a request: without it, `clearFields: ['name']` would strip the one attribute every read
+ * path and every merge depends on.
+ */
+export async function updateArtist(
+  id: string,
+  input: UpdateArtistInput,
+  clearFields?: readonly string[]
+): Promise<Artist> {
+  const allowed = new Set<string>(CLEARABLE_ARTIST_FIELDS);
+  // Never remove something the same call is also setting: a field the moderator filled in
+  // should not be wiped because it was blank a moment earlier.
+  const toClear = (clearFields ?? []).filter(
+    field => allowed.has(field) && (input as Record<string, unknown>)[field] === undefined
+  );
+
+  const operation = ArtistEntity.update({ id }).set(input);
+  const result = await (toClear.length > 0
+    ? operation.remove([...toClear] as Parameters<typeof operation.remove>[0])
+    : operation
+  ).go();
 
   if (!result.data) {
     throw notFoundError('artist', id);
@@ -186,6 +212,7 @@ export async function getArtistMergeScore(id: string): Promise<number> {
 export type { Artist } from './entity';
 export {
   CLAIMANT_EDITABLE_ARTIST_FIELDS,
+  CLEARABLE_ARTIST_FIELDS,
   CreateArtistSchema,
   UpdateArtistSchema,
   isClaimantEditablePatch,

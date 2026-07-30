@@ -56,6 +56,37 @@ export const CreateArtistSchema = z.object({
 export const UpdateArtistSchema = CreateArtistSchema.partial();
 
 /**
+ * The optional fields the moderator wizard may empty.
+ *
+ * Clearing needs its own channel rather than riding on the value: `website` is validated with
+ * `.url()`, so `''` would fail the schema, and writing `''` for the ones that would accept it
+ * leaves the row claiming the field exists and is blank. So the caller names what to remove
+ * and `updateArtist` removes those attributes.
+ *
+ * `name` is absent deliberately: it is required, and an artist with no name is not a record
+ * anyone can find or merge. `isGroup` is absent because a checkbox already says false.
+ */
+export const CLEARABLE_ARTIST_FIELDS = [
+  'title',
+  'instrument',
+  'city',
+  'photoUrl',
+  'photoUploadId',
+  'biography',
+  'specialisations',
+  'birthYear',
+  'birthPlace',
+  'practiceStartYear',
+  'debutYear',
+  'activeYears',
+  'website',
+  'socialLinks',
+  'gurus',
+] as const;
+
+export type ClearableArtistField = (typeof CLEARABLE_ARTIST_FIELDS)[number];
+
+/**
  * What a verified claimant may change on their own profile without a moderator (§4.3.1):
  * descriptive facts about the person, and nothing that reaches past this one record.
  *

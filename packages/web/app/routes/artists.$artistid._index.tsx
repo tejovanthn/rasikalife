@@ -535,12 +535,8 @@ export default function ArtistDetails() {
     facts.push({ label: 'Training since', value: String(artist.practiceStartYear) });
   }
   if (artist.debutYear) facts.push({ label: 'Debut', value: String(artist.debutYear) });
-  if (specialisations.length > 0) {
-    facts.push({ label: 'Specialisations', value: specialisations.join(', ') });
-  }
 
-  // `gurus` is sorted oldest-first for the timeline, so the most recent is the last entry.
-  const latestGuru = gurus.length > 0 ? gurus[gurus.length - 1] : undefined;
+  // The rail still summarises a single honour; the lineage no longer summarises there.
   const latestAward =
     awards.length > 0
       ? awards.reduce((latest, a) => ((a.year ?? 0) > (latest.year ?? 0) ? a : latest))
@@ -593,8 +589,9 @@ export default function ArtistDetails() {
             </section>
           )}
 
-          {/* The full lineage, when the rail's summary is not the whole story. */}
-          {gurus.length > 1 && (
+          {/* All of it, always. This used to render only when there was more than one guru,
+              because the rail carried a single one; the rail no longer does. */}
+          {gurus.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-xl font-semibold">Gurus & lineage</h2>
               <ul className="space-y-2 text-sm">
@@ -935,28 +932,6 @@ export default function ArtistDetails() {
                   <dd className="mt-0.5">{fact.value}</dd>
                 </div>
               ))}
-              {latestGuru && (
-                <div>
-                  <dt className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {gurus.length > 1 ? 'Most recent guru' : 'Guru'}
-                  </dt>
-                  <dd className="mt-0.5">
-                    {latestGuru.id ? (
-                      <Link
-                        to={generateArtistUrl(latestGuru.name, latestGuru.id)}
-                        className="font-medium hover:underline"
-                      >
-                        {latestGuru.name}
-                      </Link>
-                    ) : (
-                      <span className="font-medium">{latestGuru.name}</span>
-                    )}
-                    {gurus.length > 1 && (
-                      <span className="text-muted-foreground"> and {gurus.length - 1} more</span>
-                    )}
-                  </dd>
-                </div>
-              )}
               {latestAward && (
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-muted-foreground">

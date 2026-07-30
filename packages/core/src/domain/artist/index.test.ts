@@ -208,3 +208,44 @@ describe('Artist', () => {
     });
   });
 });
+
+describe('updateArtist clearing', () => {
+  async function updateMocks() {
+    const { ArtistEntity } = await import('./entity');
+    const go = vi.fn().mockResolvedValue({ data: { id: 'artist-1', name: 'X' } });
+    const remove = vi.fn().mockReturnValue({ go });
+    const set = vi.fn().mockReturnValue({ go, remove });
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    vi.mocked(ArtistEntity.update).mockReturnValue({ set } as any);
+    return { set, remove, go };
+  }
+
+  it('removes the attributes named in clearFields', async () => {
+    const { remove } = await updateMocks();
+    await updateArtist('artist-1', { city: 'Chennai' }, ['website', 'biography']);
+    expect(remove).toHaveBeenCalledWith(['website', 'biography']);
+  });
+
+  it('does not remove a field the same call is setting', async () => {
+    const { remove } = await updateMocks();
+    // A moderator who filled the website back in should not have it wiped because the
+    // clear list was computed before they typed.
+    await updateArtist('artist-1', { website: 'https://x.com' }, ['website']);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  // The list arrives from a request. Without the allowlist, clearFields: ['name'] would strip
+  // the one attribute every read path and every merge depends on.
+  it('refuses to clear a field that is not clearable', async () => {
+    const { remove } = await updateMocks();
+    await updateArtist('artist-1', {}, ['name', 'id', 'claimStatus']);
+    expect(remove).not.toHaveBeenCalled();
+  });
+
+  it('skips the remove call entirely when nothing is being cleared', async () => {
+    const { remove, set } = await updateMocks();
+    await updateArtist('artist-1', { city: 'Chennai' });
+    expect(set).toHaveBeenCalledWith({ city: 'Chennai' });
+    expect(remove).not.toHaveBeenCalled();
+  });
+});

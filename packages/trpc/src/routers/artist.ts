@@ -133,9 +133,17 @@ export const artistRouter = createTRPCRouter({
   // real API boundary rather than a UI convention — and subsumes the old
   // isGroup-only moderator guard, since the whole mutation is now moderator.
   update: moderatorProcedure
-    .input(z.object({ id: z.string().min(1), data: Artist.UpdateArtistSchema }))
+    .input(
+      z.object({
+        id: z.string().min(1),
+        data: Artist.UpdateArtistSchema,
+        // Names the optional fields to empty. A value cannot say this: website is validated
+        // with .url(), so '' would fail the schema before it reached the write.
+        clearFields: z.array(z.enum(Artist.CLEARABLE_ARTIST_FIELDS)).optional(),
+      })
+    )
     .mutation(async ({ input }) => {
-      const result = await Artist.updateArtist(input.id, input.data);
+      const result = await Artist.updateArtist(input.id, input.data, input.clearFields);
       triggerReindex();
       return result;
     }),
