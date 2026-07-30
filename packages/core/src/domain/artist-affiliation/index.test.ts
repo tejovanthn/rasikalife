@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('./entity', () => ({
   ArtistAffiliationEntity: {
-    upsert: vi.fn(),
+    put: vi.fn(),
     delete: vi.fn(),
     query: { primary: vi.fn(), byOrganiser: vi.fn() },
   },
@@ -34,13 +34,28 @@ describe('artist-affiliation', () => {
   });
 
   describe('addArtistAffiliation', () => {
-    it('upserts so correcting a role is not a duplicate-key error', async () => {
-      vi.mocked(ArtistAffiliationEntity.upsert).mockReturnValue(goResolves(validInput) as never);
+    // put, not upsert. upsert builds an UpdateExpression and ElectroDB drops undefined values
+    // out of one entirely, so clearing a wrong role silently restored the old one — and
+    // `response: 'all_new'` echoed the stale value back into the form.
+    it('puts, so re-adding a pair replaces the row rather than merging into it', async () => {
+      vi.mocked(ArtistAffiliationEntity.put).mockReturnValue(goResolves(validInput) as never);
 
       const result = await addArtistAffiliation(validInput);
 
-      expect(ArtistAffiliationEntity.upsert).toHaveBeenCalledWith(validInput);
+      expect(ArtistAffiliationEntity.put).toHaveBeenCalledWith(validInput);
       expect(result).toEqual(validInput);
+    });
+
+    it('clears an optional the caller omitted', async () => {
+      vi.mocked(ArtistAffiliationEntity.put).mockReturnValue(goResolves(validInput) as never);
+
+      await addArtistAffiliation({ ...validInput, role: undefined });
+
+      // The whole row is written, so an absent role is an absent attribute — not a merge that
+      // leaves the previous one standing.
+      expect(ArtistAffiliationEntity.put).toHaveBeenCalledWith(
+        expect.objectContaining({ role: undefined })
+      );
     });
   });
 
@@ -167,6 +182,24 @@ describe('artist-affiliation', () => {
       expect(() =>
         AddArtistAffiliationSchema.parse({ ...validInput, source: 'hearsay' })
       ).toThrow();
+    });
+
+    // The importer reads isCurrent from one CSV column and endYear from another, so it can
+    // produce the pair. The result renders as "1998–2015" while sorting to the top of the
+    // organisation's faculty list as current.
+    it('rejects a row that is both ended and current', () => {
+      expect(() =>
+        AddArtistAffiliationSchema.parse({ ...validInput, endYear: 2015, isCurrent: true })
+      ).toThrow();
+    });
+
+    it('still accepts an ended row, and a current row with no end year', () => {
+      expect(() =>
+        AddArtistAffiliationSchema.parse({ ...validInput, endYear: 2015, isCurrent: false })
+      ).not.toThrow();
+      expect(() =>
+        AddArtistAffiliationSchema.parse({ ...validInput, startYear: 2017, isCurrent: true })
+      ).not.toThrow();
     });
 
     it('rejects a year outside the valid range', () => {

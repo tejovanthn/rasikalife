@@ -102,10 +102,21 @@ describe('bio-extract', () => {
       ).toThrow();
     });
 
-    it('requires a relationship on every guru, so none can be left unclassified', () => {
-      expect(() =>
-        BioExtractionSchema.parse({ gurus: [{ name: 'X', confidence: 'high' }] })
-      ).toThrow();
+    // The prompt tells the model to refuse rather than guess. A required enum punished it for
+    // obeying — one null relationship failed the parse for the whole document, losing that
+    // artist's affiliations, works and unresolved rows. toProposals routes these to review.
+    it('accepts a guru the model declined to classify', () => {
+      const parsed = BioExtractionSchema.parse({
+        gurus: [{ name: 'X', relationship: null, confidence: 'low' }],
+      });
+
+      expect(parsed.gurus[0].relationship).toBeNull();
+    });
+
+    it('accepts a guru with the relationship key absent entirely', () => {
+      const parsed = BioExtractionSchema.parse({ gurus: [{ name: 'X', confidence: 'low' }] });
+
+      expect(parsed.gurus[0].name).toBe('X');
     });
 
     it('requires a confidence on every proposal', () => {

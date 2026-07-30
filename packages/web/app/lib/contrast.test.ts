@@ -77,9 +77,7 @@ describe.each(['light', 'dark'] as const)('%s theme token contrast', mode => {
 
   // The domain vocabulary from DESIGN.md section 2: each pale surface with its own deep ink.
   it.each(['raga', 'tala', 'language'])('the %s badge pairing meets AA', role => {
-    expect(contrastRatio(t[`${role}-foreground`], t[role])).toBeGreaterThanOrEqual(
-      AA_NORMAL_TEXT
-    );
+    expect(contrastRatio(t[`${role}-foreground`], t[role])).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
   });
 });
 

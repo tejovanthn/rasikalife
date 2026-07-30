@@ -6,6 +6,7 @@ import {
   sortArtistMedia,
 } from '@rasika/core/domain/artist-media/client';
 import {
+  type ClaimSource,
   type Credential,
   GURU_RELATIONSHIPS,
   GURU_RELATIONSHIP_LABELS,
@@ -67,6 +68,23 @@ import { GALLERY_EDITOR_PAGE_SIZE, computePhotoReorder, nextPhotoOrder } from '~
 import type { UploadedImage } from '~/lib/image-upload';
 import { uploadImageFile } from '~/lib/image-upload';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
+
+/**
+ * Mirrors the stored guru shape so a spread carries every field forward, not just the ones a
+ * form renders. `relationship` and `source` are why that matters: neither the moderator wizard
+ * nor the editor form renders `source`, and `updateArtist` replaces the whole list attribute —
+ * so without the merge, publishing any edit erases the provenance the extraction pipeline
+ * wrote. Both action branches use it.
+ */
+type StoredGuru = {
+  id?: string;
+  name: string;
+  fromYear?: number;
+  toYear?: number;
+  discipline?: string;
+  relationship?: GuruRelationship;
+  source?: ClaimSource;
+};
 
 export const meta: MetaFunction = () => {
   return [{ name: 'robots', content: 'noindex, nofollow' }];
@@ -295,6 +313,21 @@ export async function action({
     const guruToYears = formData.getAll('guruToYear') as string[];
     const guruDisciplines = formData.getAll('guruDiscipline') as string[];
     const guruRelationships = formData.getAll('guruRelationship') as string[];
+    // `updateArtist` does `.set(input)`, which replaces a list attribute outright — so every
+    // row this form rebuilds loses any key the form does not render. That is not cosmetic:
+    // `source` is the provenance marker the whole extraction design leans on, and
+    // `institutionId` / `ensembleId` / `ensembleName` are entity links. A moderator opening
+    // the wizard to review an import — exactly what the pipeline tells them to do — and
+    // fixing a typo would erase all of it on Publish.
+    //
+    // So each row is merged onto what is stored, matched by id where there is one and by name
+    // otherwise, the same way the claimant path below already does it. Any field added to
+    // these schemas later survives without touching this form.
+    const storedById = new Map(
+      ((artist.gurus as StoredGuru[]) ?? []).filter(g => g.id).map(g => [g.id as string, g])
+    );
+    const storedByName = new Map(((artist.gurus as StoredGuru[]) ?? []).map(g => [g.name, g]));
+
     const gurus = guruNames
       .map((rawName, i) => {
         const guruName = rawName.trim();
@@ -303,8 +336,11 @@ export async function action({
         const toYearRaw = (guruToYears[i] || '').trim();
         const discipline = (guruDisciplines[i] || '').trim();
         const relationship = (guruRelationships[i] || '').trim();
+        const id = (guruIds[i] || '').trim() || undefined;
+        const stored = (id && storedById.get(id)) || storedByName.get(guruName);
         return {
-          id: (guruIds[i] || '').trim() || undefined,
+          ...stored,
+          id,
           name: guruName,
           fromYear: fromYearRaw ? Number.parseInt(fromYearRaw, 10) || undefined : undefined,
           toYear: toYearRaw ? Number.parseInt(toYearRaw, 10) || undefined : undefined,
@@ -316,17 +352,39 @@ export async function action({
       })
       .filter((guru): guru is NonNullable<typeof guru> => guru !== undefined);
 
+    const storedCredentials = new Map(
+      ((artist.credentials as Array<{ qualification: string }> | undefined) ?? []).map(c => [
+        c.qualification,
+        c,
+      ])
+    );
     const credentials = readRepeatedRows(formData, {
       required: 'credentialQualification',
       strings: { institution: 'credentialInstitution' },
       numbers: { year: 'credentialYear' },
-    }).map(row => ({ qualification: row.required, ...row.rest }));
+    }).map(row => ({
+      ...storedCredentials.get(row.required),
+      qualification: row.required,
+      // Spread after the stored row so a blank field clears rather than being restored.
+      institution: undefined,
+      year: undefined,
+      ...row.rest,
+    }));
 
+    const storedWorks = new Map(
+      ((artist.works as Array<{ title: string }> | undefined) ?? []).map(w => [w.title, w])
+    );
     const works = readRepeatedRows(formData, {
       required: 'workTitle',
       strings: { role: 'workRole' },
       numbers: { year: 'workYear' },
-    }).map(row => ({ title: row.required, ...row.rest }));
+    }).map(row => ({
+      ...storedWorks.get(row.required),
+      title: row.required,
+      role: undefined,
+      year: undefined,
+      ...row.rest,
+    }));
 
     try {
       await serverClient.artist.update.mutate({
@@ -379,18 +437,6 @@ export async function action({
         .map(s => s.trim())
         .filter(Boolean)
     : [];
-  // Mirrors the stored shape so the spread below carries every field forward, not just the
-  // ones this form renders. `relationship` and `source` are the reason that matters now: an
-  // editor renaming a guru must not silently downgrade a classified lineage to unlabelled.
-  type StoredGuru = {
-    id?: string;
-    name: string;
-    fromYear?: number;
-    toYear?: number;
-    discipline?: string;
-    relationship?: GuruRelationship;
-    source?: string;
-  };
   const storedGurus = (artist.gurus as StoredGuru[]) || [];
   const storedGuruById = new Map(storedGurus.filter(g => g.id).map(g => [g.id as string, g]));
   const storedGuruByName = new Map(storedGurus.map(g => [g.name, g]));

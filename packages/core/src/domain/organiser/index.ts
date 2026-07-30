@@ -1,6 +1,10 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeOrganiserMerge, cascadeOrganiserNameUpdate } from '../cascade';
+import {
+  cascadeOrganiserDeleteToAffiliations,
+  cascadeOrganiserMerge,
+  cascadeOrganiserNameUpdate,
+} from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
 import { OrganiserEntity } from './entity';
 import type { Organiser } from './entity';
@@ -63,10 +67,16 @@ export async function updateOrganiser(id: string, input: UpdateOrganiserInput): 
 }
 
 export async function deleteOrganiser(id: string): Promise<void> {
+  // Affiliation edges go with the organisation, for the same reason membership edges go with
+  // a deleted artist: getOrganiserArtists and getArtistAffiliations are single-query junction
+  // reads that never check the far side's deletedAt, so a surviving row renders a link to a
+  // record no page can show.
+  await cascadeOrganiserDeleteToAffiliations(id);
   await OrganiserEntity.delete({ id }).go();
 }
 
 export async function softDeleteOrganiser(id: string): Promise<void> {
+  await cascadeOrganiserDeleteToAffiliations(id);
   await OrganiserEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
 }
 

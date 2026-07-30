@@ -147,7 +147,14 @@ Three rules that are load-bearing:
   resolves to an `Organiser`; an unresolved name stays in the extraction CSV. This is why the
   junction carries denormalized `artistName`/`organisationName` and why four cascade functions
   (`cascadeArtistNameUpdate`, `cascadeOrganiserNameUpdate`, `cascadeArtistMerge`,
-  `cascadeOrganiserMerge`) must carry it, plus `cascadeArtistDeleteToAffiliations`.
+  `cascadeOrganiserMerge`) must carry it, plus **two** delete cascades:
+  `cascadeArtistDeleteToAffiliations` and `cascadeOrganiserDeleteToAffiliations`. The second is
+  the first organiser-delete cascade in the codebase — extend it when another junction hangs
+  off an Organiser.
+- **`addArtistAffiliation` uses `put`, never `upsert`.** The row *is* the pair's complete
+  state. `upsert` builds an UpdateExpression, and rule 8 applies — a blank `role` produced no
+  SET and no REMOVE, so clearing a wrong role silently restored the old one and
+  `response: 'all_new'` echoed the stale value into the form.
 - **`completion.ts` scores only fields on the artist record.** The moderator enrichment queue
   scores 100 artists straight off `artist.list`, which never loads a junction — a rule for
   affiliations there would mark every artist incomplete and flatten the ranking. Use
@@ -155,9 +162,19 @@ Three rules that are load-bearing:
 
 Writes split by storage, and the wizard says so: affiliations write immediately (like
 memberships), while gurus, credentials, works and the arangetram ride the form's Publish.
-`affiliations` is deliberately absent from `CLAIMANT_EDITABLE_ARTIST_FIELDS` — it is not an
-artist attribute at all, so "artistic director" cannot be self-granted through a claim.
-`credentials` is excluded too: nothing else on the platform can corroborate a degree.
+
+**Any form that rebuilds one of these list attributes must merge onto what is stored.**
+`updateArtist` does `.set(input)`, which replaces a list outright, so a row rebuilt from form
+fields alone silently drops every key the form does not render — `source`, `institutionId`,
+`ensembleId`. Both action branches in the artist edit route match stored rows by id, then by
+name, and spread them; copy that shape rather than inventing a third.
+
+Three things stay out of `CLAIMANT_EDITABLE_ARTIST_FIELDS`, each for its own reason:
+`affiliations` is not an artist attribute at all (so "artistic director" cannot be
+self-granted), `credentials` because nothing on the platform can corroborate a degree, and
+`arangetramGuruId` because it is a claim about a *third party* with no per-row `source` to
+mark it self-asserted. A patch whose rows set their own `source` does not self-approve either
+— the field that exposes inflation must not be supplied by the inflater.
 
 ### Bio structuring pipeline (`pnpm cli`, three steps, in order)
 
@@ -185,11 +202,17 @@ rules the prompt and the code both enforce:
 - **Classify, don't just pull names.** An influence ("influenced by the teachings of X" — who may
   have died before the artist was born) is not a guru edge; a professor who taught a degree
   module is `institutional`, not a discipleship. Anything unclassifiable goes to `unresolved`,
-  which is the most useful column in the CSV.
+  which is the most useful column in the CSV. `relationship` is **nullable** so a model that
+  obeys and refuses costs one row rather than failing the parse for the whole document.
 - **Never auto-create an `Artist` or `Organiser`.** There are already duplicate slugs publicly
   indexed. `bestArtistMatch` reports a scored candidate and a human picks or creates. Load the
   corpus **once** with `listAllArtistsForMatching()` and pass it down — see that function's own
   warning about per-name sweeps.
+- **`resolvedId` is a recommendation, so it is withheld unless the match is unambiguous.** The
+  subject is excluded from their own candidate list (nobody is their own guru), and two
+  *different* records tying means duplicates — pre-filling the first sweep hit would bind the
+  edge to an arbitrary one at a confident-looking score. `matchName` is always reported: a
+  reviewer cannot judge a match from a KSUID and a number.
 
 ### Caching a public page (`Cache-Control`)
 

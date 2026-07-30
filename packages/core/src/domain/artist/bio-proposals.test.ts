@@ -283,6 +283,69 @@ describe('toProposals', () => {
     expect(rows[0].resolvedId).toBe('art_radha');
   });
 
+  // The reviewer judges the match from this sheet. An id and a number are not a match.
+  it('reports the matched name, not just an id and a score', () => {
+    const rows = toProposals(
+      artist,
+      extraction({
+        gurus: [{ name: 'Radha Shridhar', relationship: 'advanced', confidence: 'high' }],
+      }),
+      candidates
+    );
+
+    expect(rows[0].matchName).toBe('Radha Shridhar');
+    expect(rows[0].matchScore).toBe('1.00');
+  });
+
+  // Duplicate records for one person are the reason nothing here auto-creates, so a tie is
+  // the expected shape — and pre-filling the first sweep hit would bind the edge to an
+  // arbitrary duplicate at a confident-looking score. Same failure class as the self-match.
+  it('refuses to pre-fill when two different records tie', () => {
+    const withDuplicate = [
+      candidate('art_radha_1', 'Radha Shridhar'),
+      candidate('art_radha_2', 'Radha Shridhar'),
+    ];
+    const rows = toProposals(
+      artist,
+      extraction({
+        gurus: [{ name: 'Radha Shridhar', relationship: 'advanced', confidence: 'high' }],
+      }),
+      withDuplicate
+    );
+
+    expect(rows[0].resolvedId).toBe('');
+    expect(rows[0].matchScore).toBe('1.00');
+    expect(rows[0].matchName).toContain('ambiguous');
+  });
+
+  it('does not call an alias of one record a tie with itself', () => {
+    const withAlias = [candidate('art_tmk', 'T M Krishna', ['T M Krishna'])];
+    const rows = toProposals(
+      artist,
+      extraction({ gurus: [{ name: 'T M Krishna', relationship: 'primary', confidence: 'high' }] }),
+      withAlias
+    );
+
+    expect(rows[0].resolvedId).toBe('art_tmk');
+  });
+
+  // A guru the model would not classify is a judgment call. Emitting it as a guru row with a
+  // blank relationship sends it to the importer, which drops it silently much later.
+  it('routes an unclassified guru to unresolved rather than dropping it', () => {
+    const rows = toProposals(
+      artist,
+      extraction({
+        gurus: [{ name: 'Someone Unclear', relationship: null, confidence: 'low' }],
+      }),
+      candidates
+    );
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].proposalType).toBe('unresolved');
+    expect(rows[0].value).toBe('Someone Unclear');
+    expect(rows[0].role).toContain('unclear');
+  });
+
   it('emits every declared column on every row, so the CSV never ragged-edges', () => {
     const rows = toProposals(
       artist,

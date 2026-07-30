@@ -15,7 +15,7 @@
  * Usage: `pnpm cli rewrite-artist-bios --user <userId> [--dry-run] [--artist <id>] [--limit <n>]`
  */
 // The edit service is exported flat, not under an `Edit` namespace — `Edit` itself is a type.
-import { Artist, createDraft, submitEdit } from '@rasika/core';
+import { Artist, createDraft, getActiveEditForEntity, submitEdit } from '@rasika/core';
 import { rewriteBiography } from '@rasika/core/domain/artist/bio-extract';
 
 const CALL_DELAY_MS = 250;
@@ -29,7 +29,12 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  */
 const DEFAULT_MIN_FIELDS = 2;
 
-/** The facts the model is told are already on the page, so it knows what to cut. */
+/**
+ * The facts the model is told are already on the page, so it knows what to cut.
+ *
+ * Deliberately wider than the set the guard counts: the model does need to know the birth year
+ * and city are rendered elsewhere, or it will leave them in the prose.
+ */
 function storedFactsFor(artist: Record<string, unknown>): Record<string, unknown> {
   return {
     gurus: artist.gurus ?? [],
@@ -45,10 +50,21 @@ function storedFactsFor(artist: Record<string, unknown>): Record<string, unknown
   };
 }
 
-function countPopulatedFields(facts: Record<string, unknown>): number {
-  return Object.values(facts).filter(value =>
-    Array.isArray(value) ? value.length > 0 : value !== null && value !== undefined && value !== ''
-  ).length;
+/**
+ * Only the fields extraction actually produces — which is what the guard must count.
+ *
+ * Counting everything in `storedFactsFor` made the guard useless: `city` and `instrument` are
+ * set on nearly every record by the original scrape, so an artist who was never extracted
+ * scored 2 and sailed past the default threshold. Their gurus were then deleted out of the one
+ * place they existed, which is precisely what the guard is here to prevent.
+ */
+const EXTRACTED_FIELDS = ['gurus', 'credentials', 'works', 'arangetramYear'] as const;
+
+function extractedFieldCount(artist: Record<string, unknown>): number {
+  return EXTRACTED_FIELDS.filter(field => {
+    const value = artist[field];
+    return Array.isArray(value) ? value.length > 0 : value !== null && value !== undefined;
+  }).length;
 }
 
 const wordCount = (text: string): number => (text.trim() ? text.trim().split(/\s+/).length : 0);
@@ -73,18 +89,20 @@ export async function rewriteArtistBios(opts: {
   let rewritten = 0;
   let skippedThin = 0;
   let skippedShort = 0;
+  let skippedOpenEdit = 0;
   let failures = 0;
 
   for (const [index, artist] of selected.entries()) {
     const biography = (artist.biography as string | undefined) ?? '';
     const label = `[${index + 1}/${selected.length}] ${artist.name}`;
 
-    const facts = storedFactsFor(artist as unknown as Record<string, unknown>);
-    const populated = countPopulatedFields(facts);
+    const record = artist as unknown as Record<string, unknown>;
+    const facts = storedFactsFor(record);
+    const populated = extractedFieldCount(record);
     if (populated < minFields) {
       // The important skip. Its facts are still only in the prose, so shortening it would
       // lose them outright.
-      console.log(`${label}: only ${populated} fields populated — extract first, skipped`);
+      console.log(`${label}: only ${populated} extracted fields — extract first, skipped`);
       skippedThin++;
       continue;
     }
@@ -115,6 +133,17 @@ export async function rewriteArtistBios(opts: {
         continue;
       }
 
+      // Same guard the importer has: a second run would stack a second edit on an artist
+      // whose first one is still waiting, and the rewrite is not idempotent — the model
+      // returns different prose each time, so the moderator would be diffing two rewrites
+      // against each other.
+      const active = await getActiveEditForEntity(userId, 'artist', artist.id);
+      if (active) {
+        console.log(`${label}: edit ${active.id} is already open, skipped`);
+        skippedOpenEdit++;
+        continue;
+      }
+
       const draft = await createDraft({
         entityType: 'artist',
         entityId: artist.id,
@@ -139,6 +168,9 @@ export async function rewriteArtistBios(opts: {
     `${skippedThin} skipped for having too few structured fields — run extraction first.`
   );
   console.log(`${skippedShort} skipped for already being short enough.`);
+  if (skippedOpenEdit > 0) {
+    console.log(`${skippedOpenEdit} skipped — an edit is already open. Moderate it, then re-run.`);
+  }
   if (failures > 0) console.log(`${failures} failed.`);
   if (dryRun) console.log('\n[dry-run] No edits were created.');
 }

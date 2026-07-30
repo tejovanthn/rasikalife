@@ -28,10 +28,17 @@ function byRecency<T extends { isCurrent?: boolean; startYear?: number }>(
 export async function addArtistAffiliation(
   input: AddArtistAffiliationInput
 ): Promise<ArtistAffiliation> {
-  // upsert, not create: re-adding the same artist/organiser pair is an edit of the role or
-  // dates, not a duplicate. The key is the pair, so create would throw on the second attempt
-  // and a moderator correcting "faculty" to "senior faculty" would hit an error.
-  const result = await ArtistAffiliationEntity.upsert(input).go({ response: 'all_new' });
+  // `put`, not `create` and emphatically not `upsert`. The key is the pair, so `create` throws
+  // on the second attempt and a moderator correcting "faculty" to "senior faculty" hits an
+  // error. `upsert` looks like the fix and is worse: it builds an UpdateExpression, and
+  // ElectroDB drops undefined values out of one entirely (CLAUDE.md rule 8) — verified with
+  // `.params()`, where a blank `role` produced no SET and no REMOVE. So clearing a wrong role
+  // silently restored the old one, and `response: 'all_new'` echoed the stale value back into
+  // the form, which reads as the UI being broken.
+  //
+  // A `put` is the honest verb anyway: this row *is* the pair's complete state, so there is no
+  // partial-merge case to serve. It resets `createdAt` on a re-add, which nothing reads.
+  const result = await ArtistAffiliationEntity.put(input).go({ response: 'all_new' });
   return result.data as ArtistAffiliation;
 }
 

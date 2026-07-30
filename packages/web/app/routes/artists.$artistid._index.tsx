@@ -37,6 +37,7 @@ import {
   generateArtistUrl,
   generateCompositionUrl,
   generateEventUrl,
+  generateOrganiserUrl,
   generateRagaUrl,
   generateSlug,
   parseSlug,
@@ -95,6 +96,8 @@ export async function loader({
       affiliations,
       activeEdit,
       myClaim,
+      arangetramGuru,
+      arangetramVenue,
     ] = await Promise.all([
       client.composition.byComposer.query({ composerId: artist.id, limit: 6 }),
       // Two sides of the same partition rather than one unbounded read: the GSI sorts
@@ -122,6 +125,23 @@ export async function loader({
       // viewer's claim state to the next. The public verified badge comes from the artist
       // row's denormalized claimStatus instead, which costs nothing and varies by nobody.
       user ? client.artistClaim.myStatusFor.query({ artistId: artist.id }) : Promise.resolve(null),
+      // The record stores the arangetram guru and venue as bare ids — no denormalized names,
+      // because refreshing them on a rename would need a sweep with no index to drive it. Two
+      // point reads buy a name that cannot go stale, and they join this batch rather than
+      // running after it: both depend only on `artist`, which has already resolved. A
+      // dangling reference resolves to null and renders as the year alone.
+      artist.arangetramGuruId
+        ? client.artist.get
+            .query({ id: artist.arangetramGuruId })
+            .then(guru => (guru ? { id: guru.id, name: guru.name } : null))
+            .catch(() => null)
+        : Promise.resolve(null),
+      artist.arangetramVenueId
+        ? client.venue.get
+            .query({ id: artist.arangetramVenueId })
+            .then(venue => (venue ? { id: venue.id, name: venue.name } : null))
+            .catch(() => null)
+        : Promise.resolve(null),
     ]);
 
     // Posters are the page's main visual layer, and the EventArtist junction copies the title
@@ -151,25 +171,6 @@ export async function loader({
       topRagas: artist.topRagas ?? [],
     };
     const featured = (artist.featuredPerformances ?? []).slice(0, 4);
-
-    // The record stores the arangetram guru and venue as bare ids — no denormalized names,
-    // because refreshing them on a rename would need a sweep with no index to drive it. Two
-    // point reads on a page already running a dozen queries buys a name that cannot go stale.
-    // A dangling reference resolves to null and simply renders as the year alone.
-    const [arangetramGuru, arangetramVenue] = await Promise.all([
-      artist.arangetramGuruId
-        ? client.artist.get
-            .query({ id: artist.arangetramGuruId })
-            .then(guru => (guru ? { id: guru.id, name: guru.name } : null))
-            .catch(() => null)
-        : Promise.resolve(null),
-      artist.arangetramVenueId
-        ? client.venue.get
-            .query({ id: artist.arangetramVenueId })
-            .then(venue => (venue ? { id: venue.id, name: venue.name } : null))
-            .catch(() => null)
-        : Promise.resolve(null),
-    ]);
 
     // Anonymous views are identical and safe to serve from the CDN edge; signed-in views
     // carry per-viewer chrome and, through the root loader, the viewer's own name and email,
@@ -744,7 +745,10 @@ export default function ArtistDetails() {
                   return (
                     <li key={affiliation.organiserId}>
                       <Link
-                        to={`/organisers/${affiliation.organiserId}`}
+                        to={generateOrganiserUrl(
+                          affiliation.organisationName,
+                          affiliation.organiserId
+                        )}
                         className="font-medium hover:underline"
                       >
                         {affiliation.organisationName}
@@ -1208,7 +1212,10 @@ export default function ArtistDetails() {
             })),
             affiliations: affiliations.map(a => ({
               name: a.organisationName,
-              url: `https://rasika.life/organisers/${a.organiserId}`,
+              // The canonical slugged form, like every other organiser link. A bare id
+              // resolves, but publishing the non-canonical URL in JSON-LD invites a crawler
+              // to index a second address for the same page.
+              url: `https://rasika.life${generateOrganiserUrl(a.organisationName, a.organiserId)}`,
             })),
             // Only the ones that name an institution — a qualification with no awarding body
             // is still worth showing on the page but is not an alumniOf claim.

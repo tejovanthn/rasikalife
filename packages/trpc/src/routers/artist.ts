@@ -430,6 +430,10 @@ export const artistRouter = createTRPCRouter({
         startYear: input.startYear,
         endYear: input.endYear,
         isCurrent: input.isCurrent,
+        // Server-assigned, never taken from the caller. A row with no source is
+        // indistinguishable from an unmigrated legacy one, and provenance is the thing that
+        // keeps this a reference work once claimants start filling their own profiles.
+        source: 'sabha-listing',
       });
       triggerReindex();
       return result;

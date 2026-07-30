@@ -218,9 +218,30 @@ describe('isClaimantEditablePatch', () => {
     expect(isClaimantEditablePatch({ somethingAddedLater: 1 })).toBe(false);
   });
 
-  it('accepts works and the arangetram, which are modest public claims', () => {
+  it('accepts works and the arangetram year and venue, which are modest public claims', () => {
     expect(isClaimantEditablePatch({ works: [{ title: 'Matrutvam' }] })).toBe(true);
     expect(isClaimantEditablePatch({ arangetramYear: 2008 })).toBe(true);
+    expect(isClaimantEditablePatch({ arangetramVenueId: 'venue-1' })).toBe(true);
+  });
+
+  // A claim about a third party, and the strongest credential the domain has: the profile
+  // renders "Arangetram — 2008, under <a famous name>", resolved and linked. Unlike gurus
+  // there is no per-row source to mark it self-asserted, so it queues for a moderator.
+  it('refuses arangetramGuruId, a third-party lineage claim with no provenance', () => {
+    expect(isClaimantEditablePatch({ arangetramGuruId: 'artist-1' })).toBe(false);
+  });
+
+  // The field that exposes self-assertion must not be set by the self-asserter.
+  it('refuses a patch whose rows assert their own provenance', () => {
+    expect(isClaimantEditablePatch({ gurus: [{ name: 'Someone', source: 'press' }] })).toBe(false);
+    expect(isClaimantEditablePatch({ works: [{ title: 'X', source: 'sabha-listing' }] })).toBe(
+      false
+    );
+  });
+
+  it('still accepts rows that leave source alone', () => {
+    expect(isClaimantEditablePatch({ gurus: [{ name: 'Someone' }] })).toBe(true);
+    expect(isClaimantEditablePatch({ gurus: [{ name: 'Someone', source: null }] })).toBe(true);
   });
 
   // A degree has no other record on the platform to corroborate it, so it goes to the

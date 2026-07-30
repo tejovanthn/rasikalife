@@ -1047,6 +1047,36 @@ export async function cascadeArtistDeleteToAffiliations(artistId: string): Promi
   } while (cursor);
 }
 
+/**
+ * The organisation side of the same rule: an affiliation must not outlive its organisation.
+ *
+ * ArtistAffiliation is the first junction whose far side is an Organiser, so there was no
+ * organiser-delete cascade to extend — this function is the precedent rather than a copy of
+ * one. Without it a deleted organisation keeps rendering in an artist's Affiliations section,
+ * linked, and `PersonStructuredData.affiliation` publishes it to crawlers as a live
+ * Organization.
+ *
+ * Destructive and one-way, like the artist-side cascades.
+ */
+export async function cascadeOrganiserDeleteToAffiliations(organiserId: string): Promise<void> {
+  const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
+
+  let cursor: string | null = null;
+  do {
+    const result = (await ArtistAffiliationEntity.query
+      .byOrganiser({ organiserId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items = (result.data as Array<{ artistId: string }>) || [];
+    cursor = result.cursor;
+
+    await Promise.all(
+      items.map(item =>
+        ArtistAffiliationEntity.delete({ artistId: item.artistId, organiserId }).go()
+      )
+    );
+  } while (cursor);
+}
+
 // Removes an artist's membership rows in both directions. Destructive and one-way: there
 // is no undelete path in this codebase today, so these edges are not recoverable if a
 // delete is reversed by hand.

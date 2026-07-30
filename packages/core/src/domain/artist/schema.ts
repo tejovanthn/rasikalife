@@ -205,9 +205,17 @@ export type ClearableArtistField = (typeof CLEARABLE_ARTIST_FIELDS)[number];
  *   the ArtistAffiliation junction, written by `moderatorProcedure` — so "artistic director"
  *   cannot be self-granted, which is the role-inflation vector worth closing first.
  *
+ * - `arangetramGuruId` — a claim about a *third party*, and the strongest credential this
+ *   domain has. A claimant could point it at any artist and the profile would render
+ *   "Arangetram — 2008, under <a famous name>", resolved and linked. The mitigation relied on
+ *   for `gurus` does not exist here: the arangetram is three flat scalars with no per-row
+ *   `source`, so nothing marks it as self-asserted. `arangetramYear` and `arangetramVenueId`
+ *   stay — an unfalsifiable year is harmless and a venue is a weak claim.
+ *
  * `gurus` stays claimant-editable, as it already was, but note the residual vector: a
  * claimant can relabel a `workshop` guru as `primary` and so inflate their own lineage. The
- * per-row `source` is what makes that visible rather than preventing it.
+ * per-row `source` is what makes that visible rather than preventing it — which is why a patch
+ * that sets its own `source` does not self-approve at all. See `setsOwnSource`.
  *
  * An edit proposing anything outside this set is not rejected — it simply goes to the
  * moderator queue like any other edit, which is where those changes belonged all along.
@@ -228,12 +236,41 @@ export const CLAIMANT_EDITABLE_ARTIST_FIELDS = [
   'debutYear',
   'works',
   'arangetramYear',
-  'arangetramGuruId',
   'arangetramVenueId',
 ] as const;
 
-/** True when every proposed key is one a verified claimant may self-approve. */
+/** The list attributes whose rows carry a `source`. */
+const SOURCED_LIST_FIELDS = ['gurus', 'credentials', 'works'] as const;
+
+/**
+ * True when any row in the patch sets its own `source`.
+ *
+ * `source` is what makes a self-assertion visible, so a self-asserter must not set it — a
+ * claimant could otherwise stamp `'press'` or `'sabha-listing'` on a lineage row they
+ * invented, and the field relied on to expose inflation would be supplied by the inflater.
+ *
+ * Read as a disqualifier rather than stripped in place: rewriting a stored draft before
+ * approving it is both fiddly and dishonest about what the moderator later sees. This routes
+ * the edit to the queue instead, which is the same mechanism every other out-of-scope patch
+ * already uses.
+ */
+function setsOwnSource(proposedValues: Record<string, unknown>): boolean {
+  return SOURCED_LIST_FIELDS.some(field => {
+    const rows = proposedValues[field];
+    return (
+      Array.isArray(rows) &&
+      rows.some(row => row && typeof row === 'object' && 'source' in row && row.source != null)
+    );
+  });
+}
+
+/**
+ * True when every proposed key is one a verified claimant may self-approve, and no row
+ * asserts its own provenance.
+ */
 export function isClaimantEditablePatch(proposedValues: Record<string, unknown>): boolean {
   const allowed = new Set<string>(CLAIMANT_EDITABLE_ARTIST_FIELDS);
-  return Object.keys(proposedValues).every(key => allowed.has(key));
+  return (
+    Object.keys(proposedValues).every(key => allowed.has(key)) && !setsOwnSource(proposedValues)
+  );
 }

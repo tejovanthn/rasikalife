@@ -31,7 +31,16 @@ const ConfidenceSchema = z.enum(EXTRACTION_CONFIDENCES);
 
 export const ExtractedGuruSchema = z.object({
   name: z.string().min(1),
-  relationship: z.enum(GURU_RELATIONSHIPS),
+  /**
+   * Nullable, and that is the precision rule enforced in code rather than asserted in a prompt.
+   *
+   * The prompt tells the model to refuse rather than guess. Making this a required enum
+   * punished it for obeying: a single `relationship: null` failed the parse for the **whole
+   * document**, losing that artist's affiliations, credentials, works and — worst — their
+   * `unresolved` rows, which are the most useful output. `toProposals` routes a null
+   * relationship into `unresolved`, so refusing costs one row instead of the artist.
+   */
+  relationship: z.enum(GURU_RELATIONSHIPS).nullish(),
   startYear: z.number().int().min(1800).max(2100).nullish(),
   endYear: z.number().int().min(1800).max(2100).nullish(),
   discipline: z.string().nullish(),

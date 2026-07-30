@@ -22,6 +22,7 @@ import {
   Artist,
   ArtistAffiliation,
   Organiser,
+  Venue,
   createDraft,
   getActiveEditForEntity,
   submitEdit,
@@ -160,7 +161,22 @@ export async function importBioExtractions(opts: {
           const year = optionalYear(row.startYear);
           if (year) proposedValues.arangetramYear = year;
           if (row.resolvedId) proposedValues.arangetramGuruId = row.resolvedId;
-          if (year || row.resolvedId) touchedArtist = true;
+          // The venue rides the role column (see toProposals). Resolved by exact name only,
+          // like the organisation branch below — nothing is created, so an unrecognised venue
+          // is reported rather than invented. Dropping it silently, which this did, is worse
+          // than either: the extractor asks for it and a reviewer accepting the row would
+          // watch it vanish.
+          if (row.role) {
+            const venue = await Venue.getVenueByName(row.role);
+            if (venue) {
+              proposedValues.arangetramVenueId = venue.id;
+            } else {
+              console.warn(
+                `  ${artist.name}: no venue named "${row.role}" — create it, then re-run`
+              );
+            }
+          }
+          if (year || row.resolvedId || proposedValues.arangetramVenueId) touchedArtist = true;
           break;
         }
         case 'affiliation': {

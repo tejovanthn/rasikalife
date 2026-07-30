@@ -1289,6 +1289,36 @@ describe('cascade', () => {
     });
   });
 
+  // ArtistAffiliation is the first junction whose far side is an Organiser, so there was no
+  // organiser-delete cascade to extend. Without this a deleted organisation keeps rendering in
+  // an artist's Affiliations section, linked, and JSON-LD publishes it as a live Organization.
+  describe('cascadeOrganiserDeleteToAffiliations', () => {
+    it('removes every affiliation row for the organisation', async () => {
+      ArtistAffiliationEntity.query.byOrganiser = pagedQuery([
+        { data: [{ artistId: 'artist1' }, { artistId: 'artist2' }], cursor: null },
+      ]);
+
+      await cascade.cascadeOrganiserDeleteToAffiliations('org1');
+
+      expect(ArtistAffiliationEntity.delete).toHaveBeenCalledWith({
+        artistId: 'artist1',
+        organiserId: 'org1',
+      });
+      expect(ArtistAffiliationEntity.delete).toHaveBeenCalledWith({
+        artistId: 'artist2',
+        organiserId: 'org1',
+      });
+    });
+
+    it('deletes nothing when the organisation has no affiliated artists', async () => {
+      ArtistAffiliationEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+
+      await cascade.cascadeOrganiserDeleteToAffiliations('org1');
+
+      expect(ArtistAffiliationEntity.delete).not.toHaveBeenCalled();
+    });
+  });
+
   describe('cascadeArtistDeleteToAffiliations', () => {
     // getOrganiserArtists is a single-query junction read that does not check the artist's
     // deletedAt, so a deleted artist would linger on an institution page unless the edge goes.
