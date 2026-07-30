@@ -1,7 +1,14 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
-    "module": "NodeNext",
-    "moduleResolution": "Bundler"
-  }
+    // ES2020 rather than NodeNext, matching packages/core. NodeNext and a Bundler resolution
+    // are mutually exclusive, so the previous pairing made `tsc` refuse to start — which is
+    // how a call to a namespace that does not exist (`Edit.createDraft`; the edit service is
+    // exported flat) reached a commit. Nothing builds this package; tsx transpiles it, so this
+    // config only has to serve the typecheck.
+    "module": "ES2020",
+    "moduleResolution": "bundler"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

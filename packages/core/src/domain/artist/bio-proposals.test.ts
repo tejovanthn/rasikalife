@@ -232,6 +232,57 @@ describe('toProposals', () => {
     expect(rows[0].correctedValue).toBe('');
   });
 
+  // A bio opens with the artist's own name, so a model that mis-attributes one sentence hands
+  // back the subject as their own guru — and it arrives matched at score 1.00, which is the
+  // row a reviewer is least likely to question.
+  it('never resolves a guru to the artist themselves', () => {
+    const withSelf = [
+      candidate('art_yagnika', 'Yagnika Madhusudan Iyengar'),
+      candidate('art_radha', 'Radha Shridhar'),
+    ];
+    const rows = toProposals(
+      { id: 'art_yagnika', name: 'Yagnika Madhusudan Iyengar' },
+      extraction({
+        gurus: [
+          { name: 'Yagnika Madhusudan Iyengar', relationship: 'primary', confidence: 'high' },
+        ],
+      }),
+      withSelf
+    );
+
+    expect(rows[0].resolvedId).toBe('');
+    expect(rows[0].matchScore).toBe('');
+  });
+
+  it('never resolves the arangetram guru to the artist themselves', () => {
+    const withSelf = [candidate('art_yagnika', 'Yagnika Madhusudan Iyengar')];
+    const rows = toProposals(
+      { id: 'art_yagnika', name: 'Yagnika Madhusudan Iyengar' },
+      extraction({
+        arangetram: { year: 2008, guruName: 'Y M Iyengar', confidence: 'high' },
+      }),
+      withSelf
+    );
+
+    expect(rows[0].resolvedId).toBe('');
+  });
+
+  it('still resolves a genuine guru when the subject is in the corpus', () => {
+    const withSelf = [
+      candidate('art_yagnika', 'Yagnika Madhusudan Iyengar'),
+      candidate('art_radha', 'Radha Shridhar'),
+    ];
+    const rows = toProposals(
+      { id: 'art_yagnika', name: 'Yagnika Madhusudan Iyengar' },
+      extraction({
+        gurus: [{ name: 'Radha Shridhar', relationship: 'advanced', confidence: 'high' }],
+      }),
+      withSelf
+    );
+
+    expect(rows[0].resolvedId).toBe('art_radha');
+  });
+
   it('emits every declared column on every row, so the CSV never ragged-edges', () => {
     const rows = toProposals(
       artist,

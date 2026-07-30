@@ -139,8 +139,17 @@ export function toProposals(
 ): Proposal[] {
   const rows: Proposal[] = [];
 
+  // The subject cannot be their own guru, so they are not a candidate for one.
+  //
+  // Without this the failure is quiet and convincing: a bio opens with the artist's full name,
+  // the model attributes one sentence to the wrong person, and the row comes back matched to
+  // the subject at score 1.00 — which is exactly the row a reviewer waves through. The result
+  // is an artist listed as their own guru, rendering on their own lineage section and linking
+  // to themselves.
+  const others = candidates.filter(c => c.id !== artist.id);
+
   for (const guru of extraction.gurus) {
-    const match = bestArtistMatch(guru.name, candidates);
+    const match = bestArtistMatch(guru.name, others);
     rows.push({
       ...blankProposal(artist.id, artist.name, 'guru'),
       value: guru.name,
@@ -194,7 +203,7 @@ export function toProposals(
   const arangetram = extraction.arangetram;
   // A year alone is still worth a row; a row with neither year nor guru says nothing.
   if (arangetram && (arangetram.year || arangetram.guruName)) {
-    const match = arangetram.guruName ? bestArtistMatch(arangetram.guruName, candidates) : null;
+    const match = arangetram.guruName ? bestArtistMatch(arangetram.guruName, others) : null;
     rows.push({
       ...blankProposal(artist.id, artist.name, 'arangetram'),
       value: arangetram.guruName ?? '',

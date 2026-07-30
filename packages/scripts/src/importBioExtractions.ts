@@ -17,7 +17,15 @@
  * Usage: `pnpm cli import-bio-extractions --file <path> --user <userId> [--dry-run]`
  */
 import { readFile } from 'node:fs/promises';
-import { Artist, ArtistAffiliation, Edit, Organiser } from '@rasika/core';
+// The edit service is exported flat, not under an `Edit` namespace — `Edit` itself is a type.
+import {
+  Artist,
+  ArtistAffiliation,
+  Organiser,
+  createDraft,
+  getActiveEditForEntity,
+  submitEdit,
+} from '@rasika/core';
 import { parseCsv } from '@rasika/core/admin/csv';
 import { PROPOSAL_COLUMNS } from '@rasika/core/domain/artist/bio-proposals';
 import { isGuruRelationship } from '@rasika/core/domain/artist/client';
@@ -82,6 +90,7 @@ export async function importBioExtractions(opts: {
   let draftsCreated = 0;
   let affiliationsWritten = 0;
   let affiliationsSkipped = 0;
+  let skippedOpenEdit = 0;
   let failures = 0;
 
   for (const [artistId, artistRows] of byArtist) {
@@ -203,6 +212,17 @@ export async function importBioExtractions(opts: {
 
     if (Object.keys(proposedValues).length === 0) continue;
 
+    // The dedup guards above compare against what is *stored*, and a submitted edit has not
+    // been applied yet — so a second run of this script (having wondered whether the first
+    // worked) would propose every one of these rows again and double the moderation queue.
+    // One outstanding edit per artist is the limit; approve or reject it, then re-run.
+    const active = await getActiveEditForEntity(userId, 'artist', artist.id);
+    if (active) {
+      console.log(`  ${artist.name}: edit ${active.id} is already open, skipped`);
+      skippedOpenEdit++;
+      continue;
+    }
+
     if (dryRun) {
       console.log(
         `  [dry-run] ${artist.name}: draft with ${Object.keys(proposedValues).join(', ')}`
@@ -212,7 +232,7 @@ export async function importBioExtractions(opts: {
     }
 
     try {
-      const draft = await Edit.createDraft({
+      const draft = await createDraft({
         entityType: 'artist',
         entityId: artist.id,
         userId,
@@ -222,7 +242,7 @@ export async function importBioExtractions(opts: {
       });
       // Submitted, not left as a draft: a draft sits in one person's queue and is invisible to
       // the moderation surface, which is the whole point of routing through Edit.
-      await Edit.submitEdit(draft.id, userId);
+      await submitEdit(draft.id, userId);
       draftsCreated++;
       console.log(`  ${artist.name}: edit ${draft.id} submitted`);
     } catch (error) {
@@ -235,6 +255,11 @@ export async function importBioExtractions(opts: {
   console.log(`${affiliationsWritten} affiliations ${dryRun ? 'would be' : ''} written.`);
   if (affiliationsSkipped > 0) {
     console.log(`${affiliationsSkipped} affiliations skipped — the organisation does not exist.`);
+  }
+  if (skippedOpenEdit > 0) {
+    console.log(
+      `${skippedOpenEdit} artists skipped — an edit is already open. Moderate it, then re-run.`
+    );
   }
   if (failures > 0) console.log(`${failures} artists failed.`);
   if (dryRun) console.log('\n[dry-run] Nothing was written.');

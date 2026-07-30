@@ -14,7 +14,8 @@
  *
  * Usage: `pnpm cli rewrite-artist-bios --user <userId> [--dry-run] [--artist <id>] [--limit <n>]`
  */
-import { Artist, Edit } from '@rasika/core';
+// The edit service is exported flat, not under an `Edit` namespace — `Edit` itself is a type.
+import { Artist, createDraft, submitEdit } from '@rasika/core';
 import { rewriteBiography } from '@rasika/core/domain/artist/bio-extract';
 
 const CALL_DELAY_MS = 250;
@@ -114,7 +115,7 @@ export async function rewriteArtistBios(opts: {
         continue;
       }
 
-      const draft = await Edit.createDraft({
+      const draft = await createDraft({
         entityType: 'artist',
         entityId: artist.id,
         userId,
@@ -123,7 +124,7 @@ export async function rewriteArtistBios(opts: {
         userNote:
           'Shortened to narrative only; the facts removed are stored as fields and render in their own sections.',
       });
-      await Edit.submitEdit(draft.id, userId);
+      await submitEdit(draft.id, userId);
       rewritten++;
     } catch (error) {
       failures++;

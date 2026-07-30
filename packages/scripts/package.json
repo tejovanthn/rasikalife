@@ -7,6 +7,7 @@
     "cli": "sst shell -- tsx src/cli.ts",
     "prod-cli": "sst shell --stage prod -- tsx src/cli.ts",
     "shell": "sst shell tsx",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
