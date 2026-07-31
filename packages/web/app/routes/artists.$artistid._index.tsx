@@ -805,11 +805,17 @@ export default function ArtistDetails() {
    * Capped at five, which is what the widest arrangement shows. The gallery page does the rest
    * better than a hero can.
    */
+  const toHeroPhoto = (p: (typeof galleryPhotos)[number]) => ({
+    id: p.id,
+    url: p.imageUrl,
+    caption: p.caption,
+    // Carried so the hero can put the widest shot in the landscape lead frame.
+    width: p.width,
+    height: p.height,
+  });
   const heroPhotos = [
-    ...galleryFeatured.map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
-    ...galleryPhotos
-      .filter(p => !p.featured)
-      .map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
+    ...galleryFeatured.map(toHeroPhoto),
+    ...galleryPhotos.filter(p => !p.featured).map(toHeroPhoto),
   ].slice(0, 5);
 
   // A featured performance can also turn up in the chronological lists; drop the overlap

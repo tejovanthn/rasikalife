@@ -5,6 +5,34 @@ export interface HeroPhoto {
   id: string;
   url: string;
   caption?: string;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Puts the widest photograph in the lead frame.
+ *
+ * The lead frame is landscape; a portrait photograph dropped into it loses most of its height to
+ * the crop, which is how the mosaic ended up leading with a sliver of a dancer lying down. The
+ * smaller cells are nearer to square and take a portrait shot far better, so trading the lead
+ * for the widest available image improves both.
+ *
+ * Only reorders *within* what it is given, so a moderator's featured photographs still come
+ * ahead of the rest — this picks the best lead among them, it does not overrule the choice of
+ * which photographs matter. A photo with no stored dimensions sorts as square, which keeps it
+ * eligible without letting it displace a known-landscape shot.
+ */
+export function leadWithWidest(photos: HeroPhoto[]): HeroPhoto[] {
+  if (photos.length < 2) return photos;
+
+  const ratio = (p: HeroPhoto) => (p.width && p.height ? p.width / p.height : 1);
+  let best = 0;
+  for (let i = 1; i < photos.length; i++) {
+    if (ratio(photos[i]) > ratio(photos[best])) best = i;
+  }
+  if (best === 0) return photos;
+
+  return [photos[best], ...photos.filter((_, i) => i !== best)];
 }
 
 /**
@@ -38,7 +66,7 @@ export function ArtistGalleryHero({
 }) {
   if (photos.length === 0) return null;
 
-  const [lead, ...rest] = photos;
+  const [lead, ...rest] = leadWithWidest(photos);
 
   const frame =
     'relative block min-h-0 overflow-hidden rounded-lg border bg-muted transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
@@ -54,10 +82,12 @@ export function ArtistGalleryHero({
    * Taking the image out of flow removes it from the sizing calculation altogether. The frame
    * is sized by the grid, the image fills the frame, and no photograph can push anything.
    *
-   * object-top, not object-center: these are performance photographs, faces and full-body poses
-   * both sit in the upper half, and a centred crop of a standing dancer is a torso.
+   * Centred, not top-anchored. Anchoring to the top was a guess from headshots — faces sit high
+   * in a portrait — and it is wrong for this material. A dance photographer composes the whole
+   * figure in the frame, so the top third is usually stage and air: the first lead image it
+   * produced was an empty backdrop and one hand. Centre is where the subject is.
    */
-  const image = 'absolute inset-0 h-full w-full object-cover object-top';
+  const image = 'absolute inset-0 h-full w-full object-cover';
 
   function Frame({ photo, className }: { photo: HeroPhoto; className?: string }) {
     return (
@@ -124,7 +154,9 @@ export function ArtistGalleryHero({
       {totalCount > photos.length && (
         <Link
           to={galleryUrl}
-          className="absolute bottom-3 right-3 inline-flex min-h-11 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          // text-foreground explicitly: a bare Link inherits the accent colour, and an orange
+          // label on a white chip over a photograph read as a stray link rather than a control.
+          className="absolute bottom-3 right-3 inline-flex min-h-11 items-center gap-2 rounded-md border bg-background px-4 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <Images className="h-4 w-4" />
           Show all {totalCount} photos
