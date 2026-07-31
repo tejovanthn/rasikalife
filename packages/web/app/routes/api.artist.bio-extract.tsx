@@ -39,8 +39,8 @@ export const action: ActionFunction = async ({ request }) => {
   const serverClient = await createServerClient(request);
 
   try {
-    const proposals = await serverClient.artist.extractFromBio.mutate({ artistId, biography });
-    return data({ success: true, proposals });
+    const result = await serverClient.artist.extractFromBio.mutate({ artistId, biography });
+    return data({ success: true, ...result });
   } catch (error) {
     console.error('Failed to extract from biography:', error);
     const message = error instanceof Error ? error.message : 'Extraction failed';

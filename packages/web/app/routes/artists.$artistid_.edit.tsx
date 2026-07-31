@@ -1166,6 +1166,57 @@ function ModeratorArtistWizard() {
                   </div>
                 </div>
 
+                {/* The biography and the extractor sit on the first step, ahead of every field
+                    extraction can fill. A moderator holding a long bio should paste it, press
+                    Extract, and let the arangetram and the rest arrive already populated —
+                    putting the bio after them meant typing by hand what the button was about
+                    to propose. */}
+                <div className="space-y-2 border-t pt-6">
+                  <Label htmlFor="biography">Biography</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Paste a full biography here first. Extract below will read it and propose the
+                    gurus, qualifications, works and arangetram, then offer a shortened version of
+                    this text with those facts removed.
+                  </p>
+                  <Textarea
+                    id="biography"
+                    name="biography"
+                    rows={6}
+                    placeholder="Paste the artist's biography..."
+                    value={form.biography}
+                    onChange={e => setForm(f => ({ ...f, biography: e.target.value }))}
+                  />
+                  {/* A soft cap, not a maxLength: the schema still accepts 10,000 characters,
+                      and cutting someone off mid-sentence would lose work. The count is a
+                      nudge toward the register — neutral and factual, like a reference work
+                      rather than a programme note. */}
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-xs text-muted-foreground">
+                      Aim for about 200 words of narrative. Gurus, awards, affiliations,
+                      qualifications and productions each have their own fields — facts kept there
+                      are searchable and linked, and repeating them here only makes every bio read
+                      the same.
+                    </p>
+                    <span
+                      className={`shrink-0 text-xs tabular-nums ${
+                        bioWordCount > BIO_SOFT_WORD_CAP ? 'text-warning' : 'text-muted-foreground'
+                      }`}
+                    >
+                      {bioWordCount} {bioWordCount === 1 ? 'word' : 'words'}
+                    </span>
+                  </div>
+                </div>
+
+                <BioExtractionPanel
+                  artistId={artist.id}
+                  biography={form.biography}
+                  onApply={applyBioProposals}
+                  onApplyBiography={condensed => {
+                    setForm(f => ({ ...f, biography: condensed }));
+                    toast.success('Biography shortened. Publish to save it.');
+                  }}
+                />
+
                 {/* The arangetram is the debut recital that ends formal training, and in this
                     domain it is a stronger credential than any degree — which is why it gets
                     flat fields here rather than a row in the credentials list. */}
@@ -1233,43 +1284,6 @@ function ModeratorArtistWizard() {
               className={step === 1 ? '' : 'hidden'}
             >
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="biography">Biography</Label>
-                  <Textarea
-                    id="biography"
-                    name="biography"
-                    rows={6}
-                    placeholder="About the artist..."
-                    value={form.biography}
-                    onChange={e => setForm(f => ({ ...f, biography: e.target.value }))}
-                  />
-                  {/* A soft cap, not a maxLength: the schema still accepts 10,000 characters,
-                      and cutting someone off mid-sentence would lose work. The count is a
-                      nudge toward the register — neutral and factual, like a reference work
-                      rather than a programme note. */}
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-xs text-muted-foreground">
-                      Aim for about 200 words of narrative. Gurus, awards, affiliations,
-                      qualifications and productions each have their own fields — facts kept there
-                      are searchable and linked, and repeating them here only makes every bio read
-                      the same.
-                    </p>
-                    <span
-                      className={`shrink-0 text-xs tabular-nums ${
-                        bioWordCount > BIO_SOFT_WORD_CAP ? 'text-warning' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {bioWordCount} {bioWordCount === 1 ? 'word' : 'words'}
-                    </span>
-                  </div>
-                </div>
-
-                <BioExtractionPanel
-                  artistId={artist.id}
-                  biography={form.biography}
-                  onApply={applyBioProposals}
-                />
-
                 <div className="space-y-2">
                   <Label htmlFor="specialisations">Specialisations</Label>
                   <Input
@@ -1714,7 +1728,11 @@ function GuruRowFields({
             searchUrl="/api/search/artist-live"
             inputId={`guru-picker-${index}`}
             fieldName="guruPicker"
-            value={guru.id ? { id: guru.id, name: guru.name } : null}
+            // Gated on the *name*, not the id. Gating on the id blanked the box for every guru
+            // who has no artist record yet — which is most of them after an extraction, and all
+            // of them when a moderator types a new name. The name was still in the hidden field
+            // and still saved, so the row looked empty while holding real data.
+            value={guru.name ? { id: guru.id ?? '', name: guru.name } : null}
             onChange={entity =>
               onChange({ ...guru, id: entity?.id, name: entity?.name ?? guru.name })
             }
@@ -1728,6 +1746,37 @@ function GuruRowFields({
           <X className="h-4 w-4" />
         </Button>
       </div>
+      {/* A guru with a name but no id is stored and rendered — just not linked to a profile.
+          That is correct and deliberate: extraction never creates an Artist, because the corpus
+          already carries duplicate slugs and a machine adding more at scale outruns anyone
+          cleaning them up. But leaving the moderator no visible way to link it made the rule
+          look like a bug, so the choice is offered here, one click, made by a person. */}
+      {guru.name && !guru.id && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-muted/60 px-3 py-2">
+          <p className="text-xs text-muted-foreground">
+            No profile linked — “{guru.name}” will show as plain text.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={resolveFetcher.state !== 'idle'}
+            onClick={() =>
+              resolveFetcher.submit(
+                { name: guru.name },
+                { method: 'post', action: '/api/artist/resolve' }
+              )
+            }
+          >
+            {resolveFetcher.state !== 'idle' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            Create profile
+          </Button>
+        </div>
+      )}
       <input type="hidden" name="guruId" value={guru.id ?? ''} />
       <input type="hidden" name="guruName" value={guru.name} />
       {/* Select writes no form value of its own, so the choice rides a hidden input like the
@@ -1824,7 +1873,9 @@ type BioProposal = {
   sourceSentence: string;
 };
 
-type ExtractBioResult = { success: true; proposals: BioProposal[] } | { error: string };
+type ExtractBioResult =
+  | { success: true; proposals: BioProposal[]; condensedBiography: string }
+  | { error: string };
 
 const PROPOSAL_GROUP_LABELS: Record<string, string> = {
   guru: 'Gurus',
@@ -1851,13 +1902,17 @@ function BioExtractionPanel({
   artistId,
   biography,
   onApply,
+  onApplyBiography,
 }: {
   artistId: string;
   biography: string;
   onApply: (accepted: BioProposal[]) => void;
+  onApplyBiography: (biography: string) => void;
 }) {
   const fetcher = useFetcher<ExtractBioResult>();
   const [proposals, setProposals] = useState<BioProposal[] | null>(null);
+  const [condensed, setCondensed] = useState('');
+  const [fieldsApplied, setFieldsApplied] = useState(false);
   const [rejected, setRejected] = useState<Set<number>>(new Set());
   const isRunning = fetcher.state !== 'idle';
 
@@ -1868,6 +1923,8 @@ function BioExtractionPanel({
       return;
     }
     setProposals(fetcher.data.proposals);
+    setCondensed(fetcher.data.condensedBiography);
+    setFieldsApplied(false);
     setRejected(new Set());
     const applicable = fetcher.data.proposals.filter(p => p.proposalType !== 'unresolved');
     toast.success(
@@ -1993,16 +2050,51 @@ function BioExtractionPanel({
             type="button"
             variant="default"
             size="sm"
-            disabled={accepted.length === 0}
+            disabled={accepted.length === 0 || fieldsApplied}
             onClick={() => {
               onApply(accepted);
-              setProposals(null);
-              setRejected(new Set());
+              setFieldsApplied(true);
             }}
           >
-            <Plus className="h-4 w-4" />
-            Add {accepted.length} to the form
+            {fieldsApplied ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {fieldsApplied ? 'Added to the form' : `Add ${accepted.length} to the form`}
           </Button>
+        </div>
+      )}
+
+      {condensed && (
+        <div className="space-y-2 border-t pt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Shortened biography
+          </p>
+          {/* Gated on the fields being applied first, and that ordering is the whole safety
+              argument for the rewrite. Shortening the prose is only ever safe *because* the
+              facts it drops have gone somewhere else — take this without adding the fields and
+              they are deleted from the one place they exist. Same rule the CLI enforces with
+              --min-fields, made unskippable here rather than merely documented. */}
+          <p className="whitespace-pre-line rounded-md border bg-muted/40 p-3 text-sm leading-6">
+            {condensed}
+          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              {fieldsApplied
+                ? `${countWords(biography)} words → ${countWords(condensed)}. The facts above now live in fields, so the prose no longer repeats them.`
+                : 'Add the fields above first — this version drops the facts they now hold, so taking it on its own would lose them.'}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!fieldsApplied}
+              onClick={() => {
+                onApplyBiography(condensed);
+                setCondensed('');
+                setProposals(null);
+              }}
+            >
+              Use this biography
+            </Button>
+          </div>
         </div>
       )}
 

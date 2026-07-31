@@ -11,7 +11,7 @@ import {
   Image,
   Organiser,
 } from '@rasika/core';
-import { extractFromBiography } from '@rasika/core/domain/artist/bio-extract';
+import { extractFromBiography, rewriteBiography } from '@rasika/core/domain/artist/bio-extract';
 import { toProposals } from '@rasika/core/domain/artist/bio-proposals';
 import type { MediaKitFacts } from '@rasika/core/domain/artist/media-kit';
 import { generateMediaKitBios, mediaKitFactsHash } from '@rasika/core/domain/artist/media-kit';
@@ -495,7 +495,39 @@ export const artistRouter = createTRPCRouter({
       // button, not a request path — but it is the reason this is a mutation and not a query,
       // so nothing caches or refetches it.
       const candidates = await Artist.listAllArtistsForMatching();
-      return toProposals({ id: artist.id, name: artist.name }, extraction, candidates);
+      const proposals = toProposals({ id: artist.id, name: artist.name }, extraction, candidates);
+
+      // The shortened bio, written against *what this extraction found* rather than what is
+      // stored. That is the correct input: the facts are about to move into fields, so those
+      // are the ones the prose should stop repeating. Rewriting against the stored record would
+      // condense on the assumption that nothing was extracted.
+      //
+      // Returned alongside, not applied. The moderator accepts the fields and the prose
+      // separately, because rejecting a proposal and taking the shortened bio anyway would
+      // delete a fact from the only place it exists — the whole reason the CLI's rewrite step
+      // runs last and guards on how many fields are populated.
+      let condensedBiography = '';
+      try {
+        condensedBiography = await rewriteBiography(input.biography, {
+          gurus: extraction.gurus,
+          credentials: extraction.credentials,
+          works: extraction.works,
+          arangetramYear: extraction.arangetram?.year ?? null,
+          affiliations: extraction.affiliations,
+          birthYear: artist.birthYear ?? null,
+          birthPlace: artist.birthPlace ?? null,
+          city: artist.city ?? null,
+          instrument: artist.instrument ?? null,
+          activeYears: artist.activeYears ?? null,
+          specialisations: artist.specialisations ?? [],
+        });
+      } catch (error) {
+        // A failed rewrite must not cost the proposals — they are the expensive part and the
+        // reason the button was pressed.
+        console.error('[bio-extract] shortening failed, returning proposals only:', error);
+      }
+
+      return { proposals, condensedBiography };
     }),
 
   /**
