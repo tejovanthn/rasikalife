@@ -792,26 +792,25 @@ export default function ArtistDetails() {
   const galleryTeaser = (galleryFeatured.length > 0 ? galleryFeatured : galleryPhotos).slice(0, 6);
 
   /**
-   * What the hero leads with: the portrait first, then featured photographs, then the rest.
+   * The hero shows gallery photographs, featured first. **The profile photo is deliberately not
+   * among them.**
    *
-   * The portrait leads because it is the one image a moderator chose to represent the artist —
-   * every other photo is documentation of an occasion. Deduped by URL, since the portrait is
-   * often also in the gallery and the same face twice in one hero reads as a mistake.
+   * They are different kinds of image doing different jobs. The portrait is an identity photo —
+   * chosen to be recognisable, cropped for a small circle, reused on cards and the share image.
+   * Gallery photographs document performances. Leading a mosaic with the portrait put the one
+   * image framed for a 100px circle in the largest frame on the page, beside four shots composed
+   * for a stage; it read as the weakest picture in the set precisely because it was the only one
+   * not doing that job.
    *
-   * Capped at five: that is what the widest arrangement can show, and fetching more into the
-   * hero would only push work the gallery page already does better.
+   * Capped at five, which is what the widest arrangement shows. The gallery page does the rest
+   * better than a hero can.
    */
-  const heroPhotos = (() => {
-    const seen = new Set<string>();
-    const ordered = [
-      ...(artist.photoUrl ? [{ id: 'portrait', url: artist.photoUrl }] : []),
-      ...galleryFeatured.map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
-      ...galleryPhotos
-        .filter(p => !p.featured)
-        .map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
-    ];
-    return ordered.filter(p => !seen.has(p.url) && seen.add(p.url)).slice(0, 5);
-  })();
+  const heroPhotos = [
+    ...galleryFeatured.map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
+    ...galleryPhotos
+      .filter(p => !p.featured)
+      .map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
+  ].slice(0, 5);
 
   // A featured performance can also turn up in the chronological lists; drop the overlap
   // so the same concert never renders twice. An upcoming date wins the tie — "they play
@@ -867,8 +866,9 @@ export default function ArtistDetails() {
           the right one here for the same reason: for a performer the images carry information a
           fact list cannot, and a 100px circle spent none of it.
 
-          The avatar only returns as the header's `media` when there are no photographs at all.
-          With nothing to lead on, a small portrait beside the name beats an empty frame. */}
+          The portrait keeps its place above the name whenever there is no gallery to lead with.
+          With nothing else to show, a small identity photo beats an empty frame — and when
+          there *is* a gallery, the portrait would only compete with it, so it steps aside. */}
       <DetailPageHeader
         title={artist.name}
         media={

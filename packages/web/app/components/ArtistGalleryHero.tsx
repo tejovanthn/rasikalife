@@ -40,12 +40,24 @@ export function ArtistGalleryHero({
 
   const [lead, ...rest] = photos;
 
-  // object-top, not object-center. These are performance photographs — full-body poses and
-  // faces both sit in the upper half, and a centred crop of a standing dancer is a torso.
   const frame =
-    'relative block overflow-hidden rounded-lg border bg-muted transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+    'relative block min-h-0 overflow-hidden rounded-lg border bg-muted transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
-  const image = 'h-full w-full object-cover object-top';
+  /**
+   * Absolutely positioned, and that is what keeps the hero a fixed height.
+   *
+   * An `h-full` image inside an `h-full` grid item only resolves if every ancestor has a
+   * definite height. A grid with `grid-cols-2` and no explicit rows has one *auto* row, so the
+   * chain broke at the row: the image fell back to its natural size, the row grew to match, and
+   * the photographs overflowed the hero and painted over the biography and the rail beneath it.
+   *
+   * Taking the image out of flow removes it from the sizing calculation altogether. The frame
+   * is sized by the grid, the image fills the frame, and no photograph can push anything.
+   *
+   * object-top, not object-center: these are performance photographs, faces and full-body poses
+   * both sit in the upper half, and a centred crop of a standing dancer is a torso.
+   */
+  const image = 'absolute inset-0 h-full w-full object-cover object-top';
 
   function Frame({ photo, className }: { photo: HeroPhoto; className?: string }) {
     return (
@@ -70,33 +82,36 @@ export function ArtistGalleryHero({
         <>
           <Frame photo={lead} className="aspect-[4/3] w-full sm:hidden" />
 
-          <div className="hidden gap-2 sm:grid sm:h-[22rem] sm:grid-cols-2 lg:h-[26rem]">
-            <Frame photo={lead} className="h-full" />
+          {/* grid-rows-1 is not redundant. Without an explicit row track the single implicit row
+              is `auto`, every `h-full` beneath it resolves against nothing, and the hero's fixed
+              height stops meaning anything. Same reason the nested grids state their rows. */}
+          <div className="hidden gap-2 sm:grid sm:h-[22rem] sm:grid-cols-2 sm:grid-rows-1 lg:h-[26rem]">
+            <Frame photo={lead} />
 
             {/* Two, three or four beside the lead, each arrangement filling the same height so
                 the hero's silhouette does not change with the artist's photo count. */}
-            {rest.length === 1 && <Frame photo={rest[0]} className="h-full" />}
+            {rest.length === 1 && <Frame photo={rest[0]} />}
 
             {rest.length === 2 && (
-              <div className="grid grid-rows-2 gap-2">
+              <div className="grid min-h-0 grid-rows-2 gap-2">
                 {rest.map(photo => (
-                  <Frame key={photo.id} photo={photo} className="h-full" />
+                  <Frame key={photo.id} photo={photo} />
                 ))}
               </div>
             )}
 
             {rest.length === 3 && (
-              <div className="grid grid-cols-2 grid-rows-2 gap-2">
-                <Frame photo={rest[0]} className="row-span-2 h-full" />
-                <Frame photo={rest[1]} className="h-full" />
-                <Frame photo={rest[2]} className="h-full" />
+              <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-2">
+                <Frame photo={rest[0]} className="row-span-2" />
+                <Frame photo={rest[1]} />
+                <Frame photo={rest[2]} />
               </div>
             )}
 
             {rest.length >= 4 && (
-              <div className="grid grid-cols-2 grid-rows-2 gap-2">
+              <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-2">
                 {rest.slice(0, 4).map(photo => (
-                  <Frame key={photo.id} photo={photo} className="h-full" />
+                  <Frame key={photo.id} photo={photo} />
                 ))}
               </div>
             )}
