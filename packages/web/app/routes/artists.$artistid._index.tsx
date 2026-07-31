@@ -6,7 +6,8 @@ import {
   LINEAGE_RELATIONSHIPS,
 } from '@rasika/core/domain/artist/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { Award, BadgeCheck, Users } from 'lucide-react';
+import { Award, BadgeCheck, Check, Copy, FileText, Loader2, Users } from 'lucide-react';
+import { useState } from 'react';
 import {
   type ActionFunctionArgs,
   type HeadersFunction,
@@ -526,6 +527,155 @@ function GuruList({
         );
       })}
     </ul>
+  );
+}
+
+type MediaKit = {
+  short: string;
+  long: string;
+  generatedAt: string;
+  cached: boolean;
+  facts: {
+    gurus: Array<{ name: string; relationship?: string }>;
+    credentials: Array<{ qualification: string; institution?: string; year?: number }>;
+    works: Array<{ title: string; role?: string; year?: number }>;
+    affiliations: Array<{ organisationName: string; role?: string; startYear?: number }>;
+    awards: Array<{ awardName: string; year?: number }>;
+  };
+};
+
+type MediaKitResult = { success: true; kit: MediaKit } | { error: string };
+
+/** A copy-to-clipboard block. The whole point of the kit is text you can paste elsewhere. */
+function CopyBlock({ label, text }: { label: string; text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            navigator.clipboard.writeText(text).then(
+              () => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              },
+              () => setCopied(false)
+            );
+          }}
+        >
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          {copied ? 'Copied' : 'Copy'}
+        </Button>
+      </div>
+      <p className="whitespace-pre-line rounded-md border bg-muted/40 p-3 text-sm leading-6">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Promotional copy written from this profile's own fields.
+ *
+ * The direction of derivation is the point. Every other artist platform lets a press-kit
+ * paragraph *become* the record, which is how a biography ends up asserting things nobody
+ * checked. Here the record is the neutral reference and the flowery version is generated from
+ * it on request — so the copy cannot contain a fact the profile does not already show, and
+ * nothing written here is ever saved back into the biography.
+ */
+function MediaKitPanel({ artistId, artistName }: { artistId: string; artistName: string }) {
+  const fetcher = useFetcher<MediaKitResult>();
+  const [open, setOpen] = useState(false);
+  const isRunning = fetcher.state !== 'idle';
+  const kit = fetcher.data && 'success' in fetcher.data ? fetcher.data.kit : null;
+  const error = fetcher.data && 'error' in fetcher.data ? fetcher.data.error : null;
+
+  function build(regenerate = false) {
+    setOpen(true);
+    fetcher.submit(
+      { artistId, regenerate: regenerate ? 'true' : 'false' },
+      { method: 'post', action: '/api/artist/media-kit' }
+    );
+  }
+
+  const factsText = kit
+    ? [
+        `${artistName}`,
+        ...kit.facts.gurus.map(
+          g => `Guru: ${g.name}${g.relationship ? ` (${g.relationship})` : ''}`
+        ),
+        ...kit.facts.affiliations.map(
+          a =>
+            `${a.role ?? 'Affiliated'}: ${a.organisationName}${a.startYear ? `, ${a.startYear}` : ''}`
+        ),
+        ...kit.facts.credentials.map(
+          c => `${c.qualification}${c.institution ? `, ${c.institution}` : ''}`
+        ),
+        ...kit.facts.works.map(w => `Production: ${w.title}${w.year ? ` (${w.year})` : ''}`),
+        ...kit.facts.awards.map(a => `Award: ${a.awardName}${a.year ? ` (${a.year})` : ''}`),
+      ].join('\n')
+    : '';
+
+  return (
+    <section className="mt-8 rounded-lg border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold">Media kit</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Copy for a programme note, a listing or a festival submission — written from the facts
+            on this page, so it says nothing the profile does not.
+          </p>
+        </div>
+        {!open && (
+          <Button type="button" variant="outline" size="sm" onClick={() => build()}>
+            <FileText className="h-4 w-4" />
+            Get media kit
+          </Button>
+        )}
+      </div>
+
+      {open && (
+        <div className="mt-4 space-y-4 border-t pt-4">
+          {isRunning && (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Writing…
+            </p>
+          )}
+
+          {error && !isRunning && <p className="text-sm text-destructive">{error}</p>}
+
+          {kit && !isRunning && (
+            <>
+              <CopyBlock label="Short — for a listing" text={kit.short} />
+              <CopyBlock label="Long — for a submission" text={kit.long} />
+              {factsText && <CopyBlock label="Facts" text={factsText} />}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                <p className="text-xs text-muted-foreground">
+                  {/* Worth stating: this is generated, and it refreshes itself when the facts
+                      change rather than going quietly stale. */}
+                  Written from this profile's fields. It updates on its own when they change.
+                </p>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={isRunning}
+                  onClick={() => build(true)}
+                >
+                  Write it again
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1164,6 +1314,11 @@ export default function ArtistDetails() {
               </nav>
             )}
           </div>
+
+          {/* Signed-in only, because a miss costs a model call and an anonymous page must not
+              be able to spend anything. Placed in the rail rather than the main column: it is a
+              tool for the handful of people who need copy, not part of the public record. */}
+          {isLoggedIn && <MediaKitPanel artistId={artist.id} artistName={artist.name} />}
 
           {/* Claim (§8) — understated and low in the reading order: it speaks to one person
               in a thousand visitors. */}

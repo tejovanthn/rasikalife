@@ -91,6 +91,24 @@ export async function updateArtist(
   return result.data as Artist;
 }
 
+/**
+ * Stores the generated media kit on the record.
+ *
+ * Its own function rather than a field on `updateArtist`, for the same reason `claimStatus` has
+ * one: `mediaKit` is outside `CreateArtistSchema`, so no form, no CSV import and no claimant
+ * edit can reach it. Only this writes it.
+ *
+ * `patch` rather than `update` so it carries the existence condition — a media kit must never
+ * bring a record into being, which is the phantom-row failure this codebase has already repaired
+ * in production once.
+ */
+export async function setArtistMediaKit(
+  id: string,
+  mediaKit: { short: string; long: string; factsHash: string; generatedAt: string }
+): Promise<void> {
+  await ArtistEntity.patch({ id }).set({ mediaKit }).go();
+}
+
 export async function softDeleteArtist(id: string): Promise<void> {
   await ArtistEntity.update({ id }).set({ deletedAt: new Date().toISOString() }).go();
   // Membership edges are dropped, not hidden. A deleted artist should stop

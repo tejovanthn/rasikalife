@@ -53,6 +53,21 @@ export const GURU_RELATIONSHIP_LABELS: Record<GuruRelationship, string> = {
 export const LINEAGE_RELATIONSHIPS: GuruRelationship[] = ['primary', 'advanced'];
 
 /**
+ * How each relationship reads in a sentence.
+ *
+ * Used where prose is generated from the field — the media kit hands these to the model rather
+ * than the bare enum, because "workshop" left as a label invites "a disciple of", which is the
+ * exact overstatement the relationship field exists to prevent. Distinguishing them in the data
+ * and then flattening them in the copy would give the inflation back.
+ */
+export const GURU_RELATIONSHIP_PROSE: Record<GuruRelationship, string> = {
+  primary: 'trained under',
+  advanced: 'took advanced training with',
+  workshop: 'attended workshops with',
+  institutional: 'was taught during formal study by',
+};
+
+/**
  * Narrows a free string — a form value, a CSV cell, an extractor's output — to a known
  * relationship.
  *

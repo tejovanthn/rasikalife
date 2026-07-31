@@ -268,6 +268,29 @@ export const ArtistEntity = new Entity(
         },
         required: false,
       },
+      /**
+       * Cached promotional copy, generated from this record's own fields.
+       *
+       * Deliberately absent from `CreateArtistSchema`, like `claimStatus` and `collaborators`:
+       * it is written by the media-kit procedure and by nothing else, so no form, no CSV import
+       * and no claimant edit can put words here. It is also never read back into `biography` —
+       * the record keeps the neutral narrative; this is an output.
+       *
+       * `factsHash` is what makes it self-invalidating. It hashes exactly the fields the copy
+       * was written from, so editing a guru or adding an award makes the stored hash stop
+       * matching and the next request regenerates. A record whose facts are untouched costs
+       * nothing to serve. Same shape as the OG card's content-keyed cache.
+       */
+      mediaKit: {
+        type: 'map',
+        properties: {
+          short: { type: 'string', required: true },
+          long: { type: 'string', required: true },
+          factsHash: { type: 'string', required: true },
+          generatedAt: { type: 'string', required: true },
+        },
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

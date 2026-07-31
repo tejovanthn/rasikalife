@@ -198,6 +198,31 @@ sentences the extractor refused to convert.
 Cost: one Gemini call plus one full artist-corpus sweep per press. Moderator-only, and a
 mutation rather than a query so nothing refetches it.
 
+### Media kit: generating flowery copy *from* the fields
+
+The inverse of extraction, and the direction is the whole point. Every artist platform lets a
+press-kit paragraph *become* the record, which is how biographies fill up with claims nobody
+checked. Here the record stays the neutral reference and the promotional version is derived from
+it on request — so the copy cannot contain a fact the profile does not already show.
+
+`domain/artist/media-kit.ts` builds two lengths (≈50 words for a listing, ≈200 for a
+submission) from a `MediaKitFacts` object and nothing else. `artist.mediaKit`
+(`protectedProcedure`) → `api.artist.media-kit` → a panel in the profile's rail, signed-in only.
+
+- **It never writes back to `biography`.** The result is cached in the entity-only `mediaKit`
+  attribute, which is absent from `CreateArtistSchema` — so no form, no CSV import and no
+  claimant edit can put words there. `setArtistMediaKit` is the only writer.
+- **The cache is content-keyed on the facts**, like the OG card. `mediaKitFactsHash` hashes
+  field-by-field rather than stringifying its argument, so a new photo or a bumped `updatedAt`
+  cannot cost a model call — and a caller who later passes a whole artist record cannot silently
+  break caching site-wide. `MEDIA_KIT_VERSION` is folded in, so a prompt change invalidates
+  every kit instead of freezing the old ones.
+- **Guru relationships are rendered as prose before the model sees them**
+  (`GURU_RELATIONSHIP_PROSE`). A bare `workshop` invites "a disciple of", which would hand back
+  exactly the inflation the relationship field exists to prevent.
+- A mutation, not a query, so nothing refetches it. Signed-in only, so an anonymous page cannot
+  spend anything; beyond that the hash bounds it to one call per artist per version of the data.
+
 ### Bio structuring pipeline (`pnpm cli`, three steps, in order)
 
 For the corpus. The wizard button above is the single-artist path; these share the same core

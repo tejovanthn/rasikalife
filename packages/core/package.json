@@ -36,6 +36,11 @@
       "import": "./src/domain/artist/bio-proposals.ts",
       "default": "./src/domain/artist/bio-proposals.ts"
     },
+    "./domain/artist/media-kit": {
+      "types": "./src/domain/artist/media-kit.ts",
+      "import": "./src/domain/artist/media-kit.ts",
+      "default": "./src/domain/artist/media-kit.ts"
+    },
     "./domain/social-link": {
       "types": "./src/domain/social-link.ts",
       "import": "./src/domain/social-link.ts",

@@ -13,10 +13,18 @@ import {
 } from '@rasika/core';
 import { extractFromBiography } from '@rasika/core/domain/artist/bio-extract';
 import { toProposals } from '@rasika/core/domain/artist/bio-proposals';
+import type { MediaKitFacts } from '@rasika/core/domain/artist/media-kit';
+import { generateMediaKitBios, mediaKitFactsHash } from '@rasika/core/domain/artist/media-kit';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
-import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
+import {
+  createTRPCRouter,
+  editorProcedure,
+  moderatorProcedure,
+  protectedProcedure,
+  publicProcedure,
+} from '../trpc';
 
 // Every membership must resolve to a real Artist row on each side, so the
 // caller gives either an existing memberId or a name to resolve via
@@ -488,6 +496,101 @@ export const artistRouter = createTRPCRouter({
       // so nothing caches or refetches it.
       const candidates = await Artist.listAllArtistsForMatching();
       return toProposals({ id: artist.id, name: artist.name }, extraction, candidates);
+    }),
+
+  /**
+   * Promotional copy for an artist, written from their own structured fields.
+   *
+   * The inverse of `extractFromBio`, and the reason the direction matters: the record stays a
+   * neutral reference and the flowery version is derived from it, so marketing copy cannot
+   * introduce a fact nobody verified. It is never written back into `biography`.
+   *
+   * A mutation, not a query, because a miss costs a model call — nothing should refetch this on
+   * focus or on a cache eviction. Signed-in callers only, so an anonymous crawler cannot spend
+   * anything, and the cache is keyed on a hash of the facts themselves: one generation per
+   * artist per version of their data, however many people ask for it.
+   */
+  mediaKit: protectedProcedure
+    .input(z.object({ artistId: z.string().min(1), regenerate: z.boolean().optional() }))
+    .mutation(async ({ input }) => {
+      const artist = await Artist.getArtist(input.artistId);
+      if (!artist) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
+      }
+
+      const [awards, affiliations] = await Promise.all([
+        ArtistAward.getArtistAwards(artist.id),
+        ArtistAffiliation.getArtistAffiliations(artist.id),
+      ]);
+
+      // Resolved rather than passed as ids: the copy needs a guru's name, and a model handed a
+      // KSUID writes the KSUID.
+      const arangetramGuru = artist.arangetramGuruId
+        ? await Artist.getArtist(artist.arangetramGuruId)
+        : null;
+
+      const facts: MediaKitFacts = {
+        name: artist.name,
+        title: artist.title,
+        instrument: artist.instrument,
+        city: artist.city,
+        activeYears: artist.activeYears,
+        birthPlace: artist.birthPlace,
+        specialisations: artist.specialisations ?? [],
+        gurus: (artist.gurus ?? []).map(g => ({
+          name: g.name,
+          relationship: g.relationship,
+          fromYear: g.fromYear,
+          toYear: g.toYear,
+        })),
+        credentials: (artist.credentials ?? []).map(c => ({
+          qualification: c.qualification,
+          institution: c.institution,
+          year: c.year,
+        })),
+        works: (artist.works ?? []).map(w => ({ title: w.title, role: w.role, year: w.year })),
+        affiliations: affiliations.map(a => ({
+          organisationName: a.organisationName,
+          role: a.role,
+          startYear: a.startYear,
+        })),
+        awards: awards.map(a => ({ awardName: a.awardName, year: a.year })),
+        arangetram: artist.arangetramYear
+          ? { year: artist.arangetramYear, guruName: arangetramGuru?.name }
+          : undefined,
+      };
+
+      const factsHash = mediaKitFactsHash(facts);
+      const cached = artist.mediaKit as
+        | { short: string; long: string; factsHash: string; generatedAt: string }
+        | undefined;
+
+      if (!input.regenerate && cached?.factsHash === factsHash) {
+        return { ...cached, facts, cached: true as const };
+      }
+
+      // Nothing to write copy about. Better an honest empty than a paragraph of adjectives
+      // spun out of a name, which is the failure this whole effort is undoing.
+      const factCount =
+        facts.gurus.length +
+        facts.works.length +
+        facts.credentials.length +
+        facts.affiliations.length +
+        facts.awards.length;
+      if (factCount === 0 && !facts.instrument && !facts.city) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'This profile has too few facts to write a media kit from. Add some first.',
+        });
+      }
+
+      const bios = await generateMediaKitBios(facts);
+      const generatedAt = new Date().toISOString();
+      // patch, not update: it carries the existence condition, and this must never create a
+      // record. The attribute is outside CreateArtistSchema, so nothing else can touch it.
+      await Artist.setArtistMediaKit(artist.id, { ...bios, factsHash, generatedAt });
+
+      return { ...bios, factsHash, generatedAt, facts, cached: false as const };
     }),
 
   listMembers: publicProcedure
