@@ -28,6 +28,13 @@ import {
 } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { artistTagline, parseInstruments } from '~/lib/artist-display';
@@ -597,6 +604,10 @@ function MediaKitPanel({ artistId, artistName }: { artistId: string; artistName:
 
   function build(regenerate = false) {
     setOpen(true);
+    // Reopening the dialog should not re-ask. The server would serve the same cached copy, but
+    // a round trip per open is still a round trip, and a modal is opened and dismissed far more
+    // freely than an inline block was.
+    if (!regenerate && kit) return;
     fetcher.submit(
       { artistId, regenerate: regenerate ? 'true' : 'false' },
       { method: 'post', action: '/api/artist/media-kit' }
@@ -622,60 +633,70 @@ function MediaKitPanel({ artistId, artistName }: { artistId: string; artistName:
     : '';
 
   return (
-    <section className="mt-8 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold">Media kit</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Copy for a programme note, a listing or a festival submission — written from the facts
-            on this page, so it says nothing the profile does not.
-          </p>
-        </div>
-        {!open && (
-          <Button type="button" variant="outline" size="sm" onClick={() => build()}>
-            <FileText className="h-4 w-4" />
-            Get media kit
-          </Button>
-        )}
-      </div>
+    <>
+      {/* A quiet trigger in the rail. The kit is a tool for the few people who need copy, not
+          part of the public record, so it earns a button rather than a block of the page. */}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="mt-4 w-full"
+        onClick={() => build()}
+      >
+        <FileText className="h-4 w-4" />
+        Get media kit
+      </Button>
 
-      {open && (
-        <div className="mt-4 space-y-4 border-t pt-4">
-          {isRunning && (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Writing…
-            </p>
-          )}
+      <Dialog open={open} onOpenChange={setOpen}>
+        {/* Wider than the default `max-w-lg` and capped in height: the long bio is a paragraph
+            and the facts list grows with the record, so on a full profile this would otherwise
+            run past the fold with no way to scroll it. */}
+        <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Media kit — {artistName}</DialogTitle>
+            <DialogDescription>
+              Copy for a programme note, a listing or a festival submission. Written from the facts
+              on this page, so it says nothing the profile does not.
+            </DialogDescription>
+          </DialogHeader>
 
-          {error && !isRunning && <p className="text-sm text-destructive">{error}</p>}
+          <div className="space-y-4">
+            {isRunning && (
+              <p className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Writing…
+              </p>
+            )}
 
-          {kit && !isRunning && (
-            <>
-              <CopyBlock label="Short — for a listing" text={kit.short} />
-              <CopyBlock label="Long — for a submission" text={kit.long} />
-              {factsText && <CopyBlock label="Facts" text={factsText} />}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
-                <p className="text-xs text-muted-foreground">
-                  {/* Worth stating: this is generated, and it refreshes itself when the facts
-                      change rather than going quietly stale. */}
-                  Written from this profile's fields. It updates on its own when they change.
-                </p>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={isRunning}
-                  onClick={() => build(true)}
-                >
-                  Write it again
-                </Button>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </section>
+            {error && !isRunning && <p className="text-sm text-destructive">{error}</p>}
+
+            {kit && !isRunning && (
+              <>
+                <CopyBlock label="Short — for a listing" text={kit.short} />
+                <CopyBlock label="Long — for a submission" text={kit.long} />
+                {factsText && <CopyBlock label="Facts" text={factsText} />}
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+                  <p className="text-xs text-muted-foreground">
+                    {/* Worth stating: this is generated, and it refreshes itself when the facts
+                        change rather than going quietly stale. */}
+                    Written from this profile's fields. It updates on its own when they change.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={isRunning}
+                    onClick={() => build(true)}
+                  >
+                    Write it again
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
