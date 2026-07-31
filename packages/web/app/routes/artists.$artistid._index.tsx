@@ -17,6 +17,7 @@ import {
 } from 'react-router';
 import { Link, useFetcher, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
+import { ArtistGalleryHero } from '~/components/ArtistGalleryHero';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { SocialIconLink } from '~/components/SocialIconLink';
@@ -790,6 +791,28 @@ export default function ArtistDetails() {
   const galleryFeatured = galleryPhotos.filter(p => p.featured);
   const galleryTeaser = (galleryFeatured.length > 0 ? galleryFeatured : galleryPhotos).slice(0, 6);
 
+  /**
+   * What the hero leads with: the portrait first, then featured photographs, then the rest.
+   *
+   * The portrait leads because it is the one image a moderator chose to represent the artist —
+   * every other photo is documentation of an occasion. Deduped by URL, since the portrait is
+   * often also in the gallery and the same face twice in one hero reads as a mistake.
+   *
+   * Capped at five: that is what the widest arrangement can show, and fetching more into the
+   * hero would only push work the gallery page already does better.
+   */
+  const heroPhotos = (() => {
+    const seen = new Set<string>();
+    const ordered = [
+      ...(artist.photoUrl ? [{ id: 'portrait', url: artist.photoUrl }] : []),
+      ...galleryFeatured.map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
+      ...galleryPhotos
+        .filter(p => !p.featured)
+        .map(p => ({ id: p.id, url: p.imageUrl, caption: p.caption })),
+    ];
+    return ordered.filter(p => !seen.has(p.url) && seen.add(p.url)).slice(0, 5);
+  })();
+
   // A featured performance can also turn up in the chronological lists; drop the overlap
   // so the same concert never renders twice. An upcoming date wins the tie — "they play
   // here next week" is worth more to a reader than "this was a highlight".
@@ -840,22 +863,26 @@ export default function ArtistDetails() {
   return (
     <main className="container mx-auto max-w-6xl px-4 py-8">
       <Breadcrumb items={breadcrumbItems} />
-      {/* Photo above the name, not beside it: the portrait is the first credibility signal a
-          reader gets, and tucking it next to the honorific made "Vidhushi" read like a name.
-          The identity line carries honorific, instrument and city together so nothing repeats
-          further down. */}
+      {/* Name first, then the photographs, then the record — the order a listing page uses, and
+          the right one here for the same reason: for a performer the images carry information a
+          fact list cannot, and a 100px circle spent none of it.
+
+          The avatar only returns as the header's `media` when there are no photographs at all.
+          With nothing to lead on, a small portrait beside the name beats an empty frame. */}
       <DetailPageHeader
         title={artist.name}
         media={
-          <div className="flex items-end gap-4">
-            <HeroAvatar photoUrl={artist.photoUrl} name={artist.name} />
-            {artist.claimStatus === 'verified' && (
-              <Badge variant="secondary" className="mb-2 gap-1">
-                <BadgeCheck className="h-3.5 w-3.5" />
-                Verified artist
-              </Badge>
-            )}
-          </div>
+          heroPhotos.length === 0 ? (
+            <div className="flex items-end gap-4">
+              <HeroAvatar photoUrl={artist.photoUrl} name={artist.name} />
+              {artist.claimStatus === 'verified' && (
+                <Badge variant="secondary" className="mb-2 gap-1">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                  Verified artist
+                </Badge>
+              )}
+            </div>
+          ) : undefined
         }
         subtitle={identityLine}
         shareUrl={shareUrl}
@@ -870,10 +897,26 @@ export default function ArtistDetails() {
         }
       />
 
+      <ArtistGalleryHero
+        photos={heroPhotos}
+        artistName={artist.name}
+        galleryUrl={`${artistUrl}/gallery`}
+        totalCount={galleryPhotos.length}
+      />
+
+      {/* The verified badge moves below the images when there are images, so it sits with the
+          identity line rather than floating over a photograph. */}
+      {heroPhotos.length > 0 && artist.claimStatus === 'verified' && (
+        <Badge variant="secondary" className="mt-4 gap-1">
+          <BadgeCheck className="h-3.5 w-3.5" />
+          Verified artist
+        </Badge>
+      )}
+
       {/* Two columns from lg up: prose and everything visual on the left, the factual record
           on the right. Below lg the rail stacks under the main column, so a phone reads
           biography first and reference facts after. */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
+      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
         <div className="min-w-0">
           {/* Biography — the main crawlable block, and the reason the rail exists: the facts
               that used to crowd it now sit alongside instead of underneath. */}
@@ -1182,7 +1225,11 @@ export default function ArtistDetails() {
           )}
 
           {/* Gallery teaser — featured photos first, hidden only when there are no photos at all */}
-          {galleryTeaser.length > 0 && (
+          {/* Only when the hero did not already lead with these. The hero *is* the teaser now,
+              and its "Show all photos" is the same link this section carried — repeating the
+              images further down the same page is the kind of duplication a reader reads as a
+              bug. The section survives for the case the hero skips: no portrait, no photos. */}
+          {heroPhotos.length === 0 && galleryTeaser.length > 0 && (
             <section className="mt-8">
               <h2 className="mb-4 text-xl font-semibold">Gallery</h2>
               {/* Masonry, matching the full gallery page: portrait and landscape frames both
