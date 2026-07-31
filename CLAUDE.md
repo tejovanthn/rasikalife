@@ -176,7 +176,32 @@ self-granted), `credentials` because nothing on the platform can corroborate a d
 mark it self-asserted. A patch whose rows set their own `source` does not self-approve either
 — the field that exposes inflation must not be supplied by the inflater.
 
+### Extracting fields from one bio, in the wizard
+
+The About step has an **Extract** button (`BioExtractionPanel`) that reads the biography
+*currently in the form* — not the stored one — and proposes gurus, qualifications, works and the
+arangetram. It goes through `artist.extractFromBio` (`moderatorProcedure`) →
+`api.artist.bio-extract`, which calls the same `extractFromBiography` + `toProposals` the CLI
+does, so the classifier and the match thresholds cannot diverge between the two paths.
+
+**It writes nothing.** Proposals land in the wizard's form state and the ordinary Publish saves
+them. That is what makes it safe to ship before the precision rate is known: every proposal is
+seen in context by the person who can tell it is wrong. Applying is additive — a row already
+present by name is skipped, and the arangetram fills only fields still empty, because what is on
+the record was put there by a person.
+
+Two things it deliberately does not do. **Affiliations are listed but cannot be applied**: they
+need a resolved Organiser (see below), so the panel points at the Relationships step. And
+`unresolved` rows render under "Needs your judgment" and are never applicable — they are the
+sentences the extractor refused to convert.
+
+Cost: one Gemini call plus one full artist-corpus sweep per press. Moderator-only, and a
+mutation rather than a query so nothing refetches it.
+
 ### Bio structuring pipeline (`pnpm cli`, three steps, in order)
+
+For the corpus. The wizard button above is the single-artist path; these share the same core
+modules.
 
 Extraction seeds fields; it does not bind to them. **Fields are canonical and the bio is an
 import source read once.** Never re-derive fields from prose on a write trigger — extraction is
@@ -196,8 +221,19 @@ way twice.
    `--min-fields` (default 2) skips artists whose facts are still only in the prose.
 
 Core modules: `domain/artist/bio-extract.ts` (the model call and its Zod contract) and
-`domain/artist/bio-proposals.ts` (flattening to CSV rows, and name matching). Two precision
-rules the prompt and the code both enforce:
+`domain/artist/bio-proposals.ts` (flattening to CSV rows, and name matching).
+
+**The extractor's schemas and the record's schemas are separate on purpose, and
+`bio-contract.test.ts` is what stops them drifting.** The extractor carries `confidence` and
+`sourceSentence`, is `.nullish()` throughout because a model emits `null` for "not stated", and
+says `startYear`/`endYear` where the guru record says `fromYear`/`toYear`. Collapsing them would
+force the database to accept a confidence score. So instead the contract test applies the
+importer's mapping and asserts the domain schema accepts the result — a renamed field or a
+widened bound fails there rather than one artist at a time mid-import. Year bounds derive from
+the shared `YearSchema` rather than being restated, and `GURU_RELATIONSHIPS` is one constant
+both sides import.
+
+Two precision rules the prompt and the code both enforce:
 
 - **Classify, don't just pull names.** An influence ("influenced by the teachings of X" — who may
   have died before the artist was born) is not a guru edge; a professor who taught a degree

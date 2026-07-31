@@ -11,6 +11,8 @@ import {
   Image,
   Organiser,
 } from '@rasika/core';
+import { extractFromBiography } from '@rasika/core/domain/artist/bio-extract';
+import { toProposals } from '@rasika/core/domain/artist/bio-proposals';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
@@ -449,6 +451,44 @@ export const artistRouter = createTRPCRouter({
   listAffiliations: publicProcedure
     .input(z.object({ artistId: z.string().min(1) }))
     .query(({ input }) => ArtistAffiliation.getArtistAffiliations(input.artistId)),
+
+  /**
+   * Reads a biography and proposes structured fields for it. Writes nothing.
+   *
+   * The single-artist counterpart to `pnpm cli extract-artist-bios`, which produces a CSV for a
+   * corpus. Both go through the same `extractFromBiography` + `toProposals`, so the classifier,
+   * the refusals and the match thresholds cannot diverge between the two.
+   *
+   * `biography` comes from the caller rather than the stored record on purpose: a moderator
+   * pasting a long bio into the wizard wants the fields extracted from what is on screen, not
+   * from what was saved last week.
+   *
+   * The reply is a proposal list. Nothing here touches the artist — the wizard drops these into
+   * its form and the moderator publishes, which is what keeps an unknown precision rate safe:
+   * every proposal is seen in context by the person best placed to reject it.
+   */
+  extractFromBio: moderatorProcedure
+    .input(
+      z.object({
+        artistId: z.string().min(1),
+        // Matches the biography field's own cap in CreateArtistSchema.
+        biography: z.string().min(1).max(10000),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const artist = await Artist.getArtist(input.artistId);
+      if (!artist) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Artist not found' });
+      }
+
+      const extraction = await extractFromBiography(input.biography);
+      // One full sweep of the artist corpus per call, which is the documented cost of matching
+      // (see listAllArtistsForMatching). Acceptable here because this is a moderator pressing a
+      // button, not a request path — but it is the reason this is a mutation and not a query,
+      // so nothing caches or refetches it.
+      const candidates = await Artist.listAllArtistsForMatching();
+      return toProposals({ id: artist.id, name: artist.name }, extraction, candidates);
+    }),
 
   listMembers: publicProcedure
     .input(z.object({ groupId: z.string().min(1) }))

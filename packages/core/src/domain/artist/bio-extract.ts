@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod';
 
+import { YearSchema } from '../shared/schemas';
 import { GURU_RELATIONSHIPS } from './schema';
 
 /**
@@ -29,6 +30,17 @@ export type ExtractionConfidence = (typeof EXTRACTION_CONFIDENCES)[number];
 
 const ConfidenceSchema = z.enum(EXTRACTION_CONFIDENCES);
 
+/**
+ * A year the model may legitimately not know, bounded exactly as the database bounds one.
+ *
+ * Derived from `YearSchema` rather than restating `.min(1800).max(2100)`, which is how the
+ * extractor and the record it feeds drift apart: a bound widened in one place and not the
+ * other produces rows that pass extraction and then fail the write, one artist at a time.
+ * `.nullish()` on top because a model emits `null` for "not stated" where the database simply
+ * omits the key.
+ */
+const ExtractedYearSchema = YearSchema.nullish();
+
 export const ExtractedGuruSchema = z.object({
   name: z.string().min(1),
   /**
@@ -41,8 +53,8 @@ export const ExtractedGuruSchema = z.object({
    * relationship into `unresolved`, so refusing costs one row instead of the artist.
    */
   relationship: z.enum(GURU_RELATIONSHIPS).nullish(),
-  startYear: z.number().int().min(1800).max(2100).nullish(),
-  endYear: z.number().int().min(1800).max(2100).nullish(),
+  startYear: ExtractedYearSchema,
+  endYear: ExtractedYearSchema,
   discipline: z.string().nullish(),
   confidence: ConfidenceSchema,
   /** The sentence this came from, so a reviewer can judge without reopening the bio. */
@@ -53,8 +65,8 @@ export const ExtractedAffiliationSchema = z.object({
   organisationName: z.string().min(1),
   role: z.string().nullish(),
   discipline: z.string().nullish(),
-  startYear: z.number().int().min(1800).max(2100).nullish(),
-  endYear: z.number().int().min(1800).max(2100).nullish(),
+  startYear: ExtractedYearSchema,
+  endYear: ExtractedYearSchema,
   isCurrent: z.boolean().nullish(),
   confidence: ConfidenceSchema,
   sourceSentence: z.string().nullish(),
@@ -63,7 +75,7 @@ export const ExtractedAffiliationSchema = z.object({
 export const ExtractedCredentialSchema = z.object({
   qualification: z.string().min(1),
   institution: z.string().nullish(),
-  year: z.number().int().min(1800).max(2100).nullish(),
+  year: ExtractedYearSchema,
   confidence: ConfidenceSchema,
   sourceSentence: z.string().nullish(),
 });
@@ -71,13 +83,13 @@ export const ExtractedCredentialSchema = z.object({
 export const ExtractedWorkSchema = z.object({
   title: z.string().min(1),
   role: z.string().nullish(),
-  year: z.number().int().min(1800).max(2100).nullish(),
+  year: ExtractedYearSchema,
   confidence: ConfidenceSchema,
   sourceSentence: z.string().nullish(),
 });
 
 export const ExtractedArangetramSchema = z.object({
-  year: z.number().int().min(1800).max(2100).nullish(),
+  year: ExtractedYearSchema,
   guruName: z.string().nullish(),
   venueName: z.string().nullish(),
   confidence: ConfidenceSchema,

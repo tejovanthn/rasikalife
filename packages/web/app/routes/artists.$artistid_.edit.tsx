@@ -29,6 +29,7 @@ import {
   Pencil,
   Plus,
   Save,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -956,6 +957,76 @@ function ModeratorArtistWizard() {
     }))
   );
 
+  /**
+   * Drops accepted proposals into the form's own state.
+   *
+   * Additive and never destructive. A row already present by name is skipped rather than
+   * replaced, because what is on the record was put there by a person and what is being applied
+   * came from a model reading prose. The arangetram is the one exception in shape — it is three
+   * scalars, not a list — so it fills only the fields that are still empty.
+   *
+   * The `source` is not set here. It is stamped server-side by the write path, so a row a
+   * moderator has since corrected is not still labelled as the machine's reading.
+   */
+  function applyBioProposals(accepted: BioProposal[]) {
+    const asYear = (value: string) => (value.trim() ? value.trim() : '');
+
+    const newGurus = accepted.filter(p => p.proposalType === 'guru');
+    if (newGurus.length > 0) {
+      setGurus(prev => {
+        const seen = new Set(prev.map(g => g.name.trim().toLowerCase()));
+        const additions = newGurus
+          .filter(p => !seen.has(p.value.trim().toLowerCase()))
+          .map(p => ({
+            // Only a match confident enough to have been resolved carries an id; the rest
+            // arrive as a name for the moderator to link with the picker.
+            id: p.resolvedId || undefined,
+            name: p.value,
+            fromYear: asYear(p.startYear),
+            toYear: asYear(p.endYear),
+            discipline: '',
+            relationship: isGuruRelationship(p.relationship) ? p.relationship : ('' as const),
+          }));
+        return [...prev, ...additions];
+      });
+    }
+
+    const newCredentials = accepted.filter(p => p.proposalType === 'credential');
+    if (newCredentials.length > 0) {
+      setCredentials(prev => {
+        const seen = new Set(prev.map(c => c.qualification.trim().toLowerCase()));
+        const additions = newCredentials
+          .filter(p => !seen.has(p.value.trim().toLowerCase()))
+          .map(p => ({ qualification: p.value, institution: p.role, year: asYear(p.startYear) }));
+        return [...prev, ...additions];
+      });
+    }
+
+    const newWorks = accepted.filter(p => p.proposalType === 'work');
+    if (newWorks.length > 0) {
+      setWorks(prev => {
+        const seen = new Set(prev.map(w => w.title.trim().toLowerCase()));
+        const additions = newWorks
+          .filter(p => !seen.has(p.value.trim().toLowerCase()))
+          .map(p => ({ title: p.value, role: p.role, year: asYear(p.startYear) }));
+        return [...prev, ...additions];
+      });
+    }
+
+    const arangetram = accepted.find(p => p.proposalType === 'arangetram');
+    if (arangetram) {
+      // Fills gaps only. A year already entered is a moderator's, and outranks a model's.
+      if (arangetram.startYear && !form.arangetramYear) {
+        setForm(f => ({ ...f, arangetramYear: arangetram.startYear }));
+      }
+      if (arangetram.resolvedId && !arangetramGuru) {
+        setArangetramGuru({ id: arangetram.resolvedId, name: arangetram.value });
+      }
+    }
+
+    toast.success(`${accepted.length} added to the form. Publish to save them.`);
+  }
+
   const bioWordCount = countWords(form.biography);
   const isSubmitting = navigation.state === 'submitting';
 
@@ -1192,6 +1263,12 @@ function ModeratorArtistWizard() {
                     </span>
                   </div>
                 </div>
+
+                <BioExtractionPanel
+                  artistId={artist.id}
+                  biography={form.biography}
+                  onApply={applyBioProposals}
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="specialisations">Specialisations</Label>
@@ -1539,13 +1616,26 @@ function ModeratorArtistWizard() {
               </div>
 
               <div className="flex items-center gap-3">
+                {/* The keys are load-bearing, not decoration. Both branches render a
+                    <Button variant="default"> at the same position, so React reconciles them
+                    as one element and merely flips `type` from "button" to "submit". The click
+                    that advanced to the last step then had its default action evaluated
+                    against a button that had *become* a submit control — so arriving at Review
+                    published immediately, skipping the review it exists for. Distinct keys
+                    force a fresh DOM node, so the clicked element can never change type under
+                    the click. */}
                 {step < TOTAL_STEPS - 1 ? (
-                  <Button type="button" variant="default" onClick={() => goToStep(step + 1)}>
+                  <Button
+                    key="wizard-next"
+                    type="button"
+                    variant="default"
+                    onClick={() => goToStep(step + 1)}
+                  >
                     Next
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button variant="default" type="submit">
+                  <Button key="wizard-publish" variant="default" type="submit">
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1711,6 +1801,252 @@ function GuruRowFields({
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * One proposed fact from a biography. Declared here rather than imported: `bio-proposals`
+ * reaches the artist barrel through the dedup matcher, which pulls in ElectroDB and the AWS
+ * SDK, and this is a route module the client bundles.
+ */
+type BioProposal = {
+  proposalType: 'guru' | 'affiliation' | 'credential' | 'work' | 'arangetram' | 'unresolved';
+  value: string;
+  relationship: string;
+  role: string;
+  startYear: string;
+  endYear: string;
+  resolvedId: string;
+  matchName: string;
+  matchScore: string;
+  confidence: string;
+  sourceSentence: string;
+};
+
+type ExtractBioResult = { success: true; proposals: BioProposal[] } | { error: string };
+
+const PROPOSAL_GROUP_LABELS: Record<string, string> = {
+  guru: 'Gurus',
+  credential: 'Qualifications',
+  work: 'Works & productions',
+  arangetram: 'Arangetram',
+  affiliation: 'Affiliations',
+};
+
+/**
+ * Reads the bio in the form and proposes fields from it.
+ *
+ * Proposals land in the form, never in the database — the moderator accepts what is right and
+ * publishes, which is the same write path as typing them by hand. That is deliberate while the
+ * extractor's precision is still unmeasured: a wrong guru edge is caught here, in context, by
+ * the person who can see it is wrong, rather than after it has rendered on two profiles.
+ *
+ * Affiliations are shown but cannot be applied from here. They live in a junction keyed on the
+ * artist/organiser pair, so they need a resolved Organiser — and the extractor deliberately
+ * does not resolve organisations. Adding one is a pick-or-create the moderator does in the
+ * Relationships step.
+ */
+function BioExtractionPanel({
+  artistId,
+  biography,
+  onApply,
+}: {
+  artistId: string;
+  biography: string;
+  onApply: (accepted: BioProposal[]) => void;
+}) {
+  const fetcher = useFetcher<ExtractBioResult>();
+  const [proposals, setProposals] = useState<BioProposal[] | null>(null);
+  const [rejected, setRejected] = useState<Set<number>>(new Set());
+  const isRunning = fetcher.state !== 'idle';
+
+  useEffect(() => {
+    if (!fetcher.data) return;
+    if ('error' in fetcher.data) {
+      toast.error(fetcher.data.error);
+      return;
+    }
+    setProposals(fetcher.data.proposals);
+    setRejected(new Set());
+    const applicable = fetcher.data.proposals.filter(p => p.proposalType !== 'unresolved');
+    toast.success(
+      applicable.length > 0
+        ? `${applicable.length} proposals — review them before publishing`
+        : 'Nothing could be extracted from this bio'
+    );
+  }, [fetcher.data]);
+
+  const applicable = (proposals ?? []).filter(
+    p => p.proposalType !== 'unresolved' && p.proposalType !== 'affiliation'
+  );
+  const affiliations = (proposals ?? []).filter(p => p.proposalType === 'affiliation');
+  const unresolved = (proposals ?? []).filter(p => p.proposalType === 'unresolved');
+  const accepted = applicable.filter((_, i) => !rejected.has(i));
+
+  return (
+    <div className="space-y-3 rounded-md border border-dashed p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium">Extract fields from this bio</p>
+          <p className="text-xs text-muted-foreground">
+            Reads the biography above and proposes gurus, qualifications, works and the arangetram.
+            Nothing is saved until you publish.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={isRunning || !biography.trim()}
+          onClick={() =>
+            fetcher.submit(
+              { artistId, biography },
+              { method: 'post', action: '/api/artist/bio-extract' }
+            )
+          }
+        >
+          {isRunning ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Reading…
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              {proposals ? 'Extract again' : 'Extract'}
+            </>
+          )}
+        </Button>
+      </div>
+
+      {applicable.length > 0 && (
+        <div className="space-y-3 border-t pt-3">
+          {Object.entries(PROPOSAL_GROUP_LABELS)
+            .filter(([type]) => applicable.some(p => p.proposalType === type))
+            .map(([type, label]) => (
+              <div key={type} className="space-y-1.5">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  {label}
+                </p>
+                {applicable.map((proposal, index) =>
+                  proposal.proposalType !== type ? null : (
+                    <label
+                      key={`${type}-${proposal.value}-${index}`}
+                      className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={!rejected.has(index)}
+                        onChange={e =>
+                          setRejected(prev => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.delete(index);
+                            else next.add(index);
+                            return next;
+                          })
+                        }
+                        className="mt-1 h-4 w-4 rounded border-input"
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="font-medium">{proposal.value}</span>
+                        {proposal.relationship && (
+                          <span className="text-muted-foreground"> · {proposal.relationship}</span>
+                        )}
+                        {proposal.role && (
+                          <span className="text-muted-foreground"> · {proposal.role}</span>
+                        )}
+                        {proposal.startYear && (
+                          <span className="text-muted-foreground"> ({proposal.startYear})</span>
+                        )}
+                        {/* The matched record and its score, not the id — a reviewer cannot
+                            judge a match from a KSUID. Absent when nothing resembled it, which
+                            is itself worth seeing: it means a new record. */}
+                        {proposal.matchName ? (
+                          <span className="block text-xs text-muted-foreground">
+                            matches {proposal.matchName} ({proposal.matchScore})
+                            {!proposal.resolvedId && ' — not linked, confirm in Relationships'}
+                          </span>
+                        ) : proposal.proposalType === 'guru' ? (
+                          <span className="block text-xs text-muted-foreground">
+                            no existing artist resembles this name
+                          </span>
+                        ) : null}
+                        {proposal.sourceSentence && (
+                          <span className="mt-1 block text-xs italic text-muted-foreground">
+                            “{proposal.sourceSentence}”
+                          </span>
+                        )}
+                      </span>
+                      {proposal.confidence && proposal.confidence !== 'high' && (
+                        <span className="shrink-0 text-xs text-warning">
+                          {proposal.confidence} confidence
+                        </span>
+                      )}
+                    </label>
+                  )
+                )}
+              </div>
+            ))}
+
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            disabled={accepted.length === 0}
+            onClick={() => {
+              onApply(accepted);
+              setProposals(null);
+              setRejected(new Set());
+            }}
+          >
+            <Plus className="h-4 w-4" />
+            Add {accepted.length} to the form
+          </Button>
+        </div>
+      )}
+
+      {affiliations.length > 0 && (
+        <div className="space-y-1.5 border-t pt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Affiliations found
+          </p>
+          <p className="text-xs text-muted-foreground">
+            These need an organisation record, so add them on the Relationships step — searching for
+            the name there links the two, or creates the organisation if it is genuinely new.
+          </p>
+          <ul className="space-y-1 text-sm">
+            {affiliations.map((proposal, index) => (
+              <li key={`${proposal.value}-${index}`} className="text-muted-foreground">
+                <span className="font-medium text-foreground">{proposal.value}</span>
+                {proposal.role ? ` — ${proposal.role}` : ''}
+                {proposal.startYear ? ` (${proposal.startYear})` : ''}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {unresolved.length > 0 && (
+        <div className="space-y-1.5 border-t pt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Needs your judgment
+          </p>
+          {/* The most useful part of the output. These are the sentences the extractor
+              deliberately refused to convert — an influence that is not a guru, a degree still
+              in progress — so they are shown, never applied. */}
+          <ul className="space-y-1.5 text-sm">
+            {unresolved.map((proposal, index) => (
+              <li key={`${proposal.value}-${index}`}>
+                <span className="italic text-muted-foreground">“{proposal.value}”</span>
+                {proposal.role && (
+                  <span className="block text-xs text-muted-foreground">{proposal.role}</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
