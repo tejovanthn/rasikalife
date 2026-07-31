@@ -28,7 +28,38 @@ const MODEL = 'gemini-flash-lite-latest';
 export const EXTRACTION_CONFIDENCES = ['high', 'medium', 'low'] as const;
 export type ExtractionConfidence = (typeof EXTRACTION_CONFIDENCES)[number];
 
-const ConfidenceSchema = z.enum(EXTRACTION_CONFIDENCES);
+/**
+ * Lenient, and defaulting to `low` rather than failing.
+ *
+ * Confidence only drives a warning label a reviewer sees, so an unreadable one is not worth
+ * losing a document over — and `low` is the honest reading of "the model did not tell us",
+ * because it makes the reviewer look harder rather than less hard.
+ */
+const ConfidenceSchema = z
+  .preprocess(value => {
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    return (EXTRACTION_CONFIDENCES as readonly string[]).includes(normalized)
+      ? normalized
+      : undefined;
+  }, z.enum(EXTRACTION_CONFIDENCES).optional())
+  .catch(undefined)
+  .transform(value => value ?? 'low');
+
+/**
+ * Case-insensitive, and anything unrecognised becomes null rather than an exception.
+ *
+ * A model that answers `"Primary"` is answering correctly in every sense that matters, and a
+ * model that invents `"guru"` has failed at one row — neither should cost the document. Null
+ * routes to `unresolved` in `toProposals`, which is where an unclassifiable teacher belongs.
+ */
+const RelationshipSchema = z
+  .preprocess(value => {
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim().toLowerCase();
+    return (GURU_RELATIONSHIPS as readonly string[]).includes(normalized) ? normalized : undefined;
+  }, z.enum(GURU_RELATIONSHIPS).optional())
+  .catch(undefined);
 
 /**
  * A year the model may legitimately not know, bounded exactly as the database bounds one.
@@ -36,10 +67,46 @@ const ConfidenceSchema = z.enum(EXTRACTION_CONFIDENCES);
  * Derived from `YearSchema` rather than restating `.min(1800).max(2100)`, which is how the
  * extractor and the record it feeds drift apart: a bound widened in one place and not the
  * other produces rows that pass extraction and then fail the write, one artist at a time.
- * `.nullish()` on top because a model emits `null` for "not stated" where the database simply
- * omits the key.
+ *
+ * **Lenient on the way in, strict on the way out.** A model asked for JSON returns `"2017"` as
+ * often as `2017`, and the strict version turned that one slip into a failed parse for the
+ * *whole document* — losing the artist's gurus, works and, worst, their `unresolved` rows. That
+ * is the second time a plausible type slip has cost everything (see `relationship` below), so
+ * the rule here is general: a value that cannot be read as a year in range becomes "not
+ * stated" rather than an exception. What survives is always a real year or nothing, so the
+ * record can never receive something it would reject.
  */
-const ExtractedYearSchema = YearSchema.nullish();
+const ExtractedYearSchema = z
+  .preprocess(value => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return undefined;
+      const parsed = Number(trimmed);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  }, YearSchema.optional())
+  // Anything still unacceptable — 12345, 1500, a nested object — is dropped rather than thrown.
+  // One unreadable year must not cost the other twenty facts in the document.
+  .catch(undefined);
+
+/**
+ * A boolean the model may render as `"true"`. Same reasoning as the year: read it if it can be
+ * read, drop it if it cannot, never throw over it.
+ */
+const ExtractedBooleanSchema = z
+  .preprocess(value => {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', 'yes', '1'].includes(normalized)) return true;
+      if (['false', 'no', '0'].includes(normalized)) return false;
+    }
+    return undefined;
+  }, z.boolean().optional())
+  .catch(undefined);
 
 export const ExtractedGuruSchema = z.object({
   name: z.string().min(1),
@@ -52,7 +119,7 @@ export const ExtractedGuruSchema = z.object({
    * `unresolved` rows, which are the most useful output. `toProposals` routes a null
    * relationship into `unresolved`, so refusing costs one row instead of the artist.
    */
-  relationship: z.enum(GURU_RELATIONSHIPS).nullish(),
+  relationship: RelationshipSchema,
   startYear: ExtractedYearSchema,
   endYear: ExtractedYearSchema,
   discipline: z.string().nullish(),
@@ -67,7 +134,7 @@ export const ExtractedAffiliationSchema = z.object({
   discipline: z.string().nullish(),
   startYear: ExtractedYearSchema,
   endYear: ExtractedYearSchema,
-  isCurrent: z.boolean().nullish(),
+  isCurrent: ExtractedBooleanSchema,
   confidence: ConfidenceSchema,
   sourceSentence: z.string().nullish(),
 });
@@ -107,13 +174,34 @@ export const UnresolvedSchema = z.object({
   reason: z.string().min(1),
 });
 
+/**
+ * Keeps the rows that parse and drops the ones that do not, instead of failing the array.
+ *
+ * The last line of defence behind the lenient fields above. Those handle the type slips seen so
+ * far; this handles the ones not yet seen — a row missing its `name`, a string where an object
+ * belongs. One malformed row out of twenty is worth losing; the other nineteen are not, and
+ * neither is the `unresolved` list, which is the most useful thing in the document.
+ */
+function lenientArray<T extends z.ZodTypeAny>(schema: T) {
+  return z
+    .array(z.unknown())
+    .default([])
+    .transform(rows =>
+      rows
+        .map(row => schema.safeParse(row))
+        .filter((result): result is { success: true; data: z.infer<T> } => result.success)
+        .map(result => result.data)
+    );
+}
+
 export const BioExtractionSchema = z.object({
-  gurus: z.array(ExtractedGuruSchema).default([]),
-  affiliations: z.array(ExtractedAffiliationSchema).default([]),
-  credentials: z.array(ExtractedCredentialSchema).default([]),
-  works: z.array(ExtractedWorkSchema).default([]),
-  arangetram: ExtractedArangetramSchema.nullish(),
-  unresolved: z.array(UnresolvedSchema).default([]),
+  gurus: lenientArray(ExtractedGuruSchema),
+  affiliations: lenientArray(ExtractedAffiliationSchema),
+  credentials: lenientArray(ExtractedCredentialSchema),
+  works: lenientArray(ExtractedWorkSchema),
+  // Not an array, so a malformed one costs only itself. `.catch` rather than a lenient wrapper.
+  arangetram: ExtractedArangetramSchema.nullish().catch(undefined),
+  unresolved: lenientArray(UnresolvedSchema),
 });
 
 export type BioExtraction = z.infer<typeof BioExtractionSchema>;
@@ -135,6 +223,9 @@ Return ONLY JSON matching this shape:
 }
 
 Use null for anything not stated. "confidence" is "high", "medium" or "low".
+
+TYPES. Years are JSON numbers, not strings — 2017, never "2017". "isCurrent" is a JSON boolean,
+true or false, never "true". Getting these wrong costs the whole extraction.
 
 CLASSIFY THE RELATIONSHIP. Do not merely pull names. Every guru MUST carry one of:
 - "primary": the first or main teacher; where training began. "began training under X", "senior disciple of X".

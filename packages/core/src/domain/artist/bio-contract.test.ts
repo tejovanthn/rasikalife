@@ -81,21 +81,51 @@ describe('extractor → record contract', () => {
       }
     });
 
-    // Both derive from YearSchema. If one is widened and the other is not, extraction accepts
-    // a year the write then rejects — and the failure surfaces mid-import, per artist.
-    it('agrees with the record on what counts as a year', () => {
-      for (const year of [1799, 2101]) {
-        expect(
-          ExtractedGuruSchema.safeParse({ name: 'X', startYear: year, confidence: 'high' }).success
-        ).toBe(false);
-        expect(GuruSchema.safeParse({ name: 'X', fromYear: year }).success).toBe(false);
+    /**
+     * The contract, stated as the property that actually matters: **no year that survives
+     * extraction can be rejected by the record.**
+     *
+     * The extractor is lenient by design — it reads `"2017"`, and it drops 1500 rather than
+     * failing a whole document over one bad row. So it no longer mirrors the record's
+     * rejections, and asserting that it does would be asserting the old strictness back.
+     * What must hold is one-directional: whatever comes out is storable.
+     */
+    it('never emits a year the record would reject', () => {
+      const inputs = [1799, 2101, 1500, 99999, '2017', '', 'nineteen', null, {}, 0, -1, 2017.5];
+
+      for (const startYear of inputs) {
+        const extracted = ExtractedGuruSchema.parse({
+          name: 'X',
+          startYear,
+          confidence: 'high',
+        });
+        // Whatever it produced, the record must accept it.
+        expect(GuruSchema.safeParse(toGuruRecord(extracted)).success).toBe(true);
       }
-      for (const year of [1800, 2100]) {
-        expect(
-          ExtractedGuruSchema.safeParse({ name: 'X', startYear: year, confidence: 'high' }).success
-        ).toBe(true);
-        expect(GuruSchema.safeParse({ name: 'X', fromYear: year }).success).toBe(true);
+    });
+
+    it('still carries a year through when the model gets it right', () => {
+      for (const year of [1800, 2017, 2100]) {
+        const extracted = ExtractedGuruSchema.parse({
+          name: 'X',
+          startYear: year,
+          confidence: 'high',
+        });
+        expect(extracted.startYear).toBe(year);
+        expect(GuruSchema.parse(toGuruRecord(extracted)).fromYear).toBe(year);
       }
+    });
+
+    // Leniency must not become a way for an out-of-range year to reach the database.
+    it('drops rather than passes through a year outside the record bounds', () => {
+      const extracted = ExtractedGuruSchema.parse({
+        name: 'X',
+        startYear: 1500,
+        confidence: 'high',
+      });
+
+      expect(extracted.startYear).toBeUndefined();
+      expect(GuruSchema.safeParse({ name: 'X', fromYear: 1500 }).success).toBe(false);
     });
   });
 

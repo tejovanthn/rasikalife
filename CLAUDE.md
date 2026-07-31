@@ -263,8 +263,16 @@ Two precision rules the prompt and the code both enforce:
 - **Classify, don't just pull names.** An influence ("influenced by the teachings of X" — who may
   have died before the artist was born) is not a guru edge; a professor who taught a degree
   module is `institutional`, not a discipleship. Anything unclassifiable goes to `unresolved`,
-  which is the most useful column in the CSV. `relationship` is **nullable** so a model that
-  obeys and refuses costs one row rather than failing the parse for the whole document.
+  which is the most useful column in the CSV.
+- **The extraction schemas are lenient on the way in and strict on the way out, and that is a
+  rule, not an accident.** A model asked for JSON returns `"2017"` as readily as `2017`, and
+  `"Primary"` as readily as `"primary"`. Twice now a single type slip failed the parse for the
+  *whole document*, losing every other fact for that artist along with the `unresolved` rows.
+  So: years and booleans are coerced, enums are matched case-insensitively, an unreadable value
+  becomes "not stated" rather than an exception, and `lenientArray` keeps the rows that parse
+  and drops the ones that do not. **Nothing that survives is storable-but-invalid** — the bounds
+  still come from `YearSchema`, so what comes out is always a real year or nothing. When adding a
+  field here, make it lenient; the strict version will eventually cost a whole extraction.
 - **Never auto-create an `Artist` or `Organiser`.** There are already duplicate slugs publicly
   indexed. `bestArtistMatch` reports a scored candidate and a human picks or creates. Load the
   corpus **once** with `listAllArtistsForMatching()` and pass it down — see that function's own

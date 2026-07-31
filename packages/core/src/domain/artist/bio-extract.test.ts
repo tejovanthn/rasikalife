@@ -92,14 +92,65 @@ describe('bio-extract', () => {
       });
     });
 
-    // The classification is the whole point. A model returning a relationship outside the
-    // closed set must fail loudly here rather than reach the CSV as an unusable value.
-    it('rejects a relationship outside the closed set', () => {
-      expect(() =>
-        BioExtractionSchema.parse({
-          gurus: [{ name: 'X', relationship: 'inspired-by', confidence: 'high' }],
-        })
-      ).toThrow();
+    // A relationship outside the closed set is dropped to "unclassified", which toProposals
+    // routes to `unresolved`. It must never reach a record as an unusable value, and it must
+    // never cost the rest of the document — the failure mode this schema keeps relearning.
+    it('drops a relationship outside the closed set instead of failing the document', () => {
+      const parsed = BioExtractionSchema.parse({
+        gurus: [{ name: 'X', relationship: 'inspired-by', confidence: 'high' }],
+        works: [{ title: 'Matrutvam', confidence: 'high' }],
+      });
+
+      expect(parsed.gurus[0].relationship).toBeFalsy();
+      expect(parsed.works).toHaveLength(1);
+    });
+
+    // A model answering "Primary" has answered correctly in every sense that matters.
+    it('accepts a relationship in any case', () => {
+      const parsed = BioExtractionSchema.parse({
+        gurus: [{ name: 'X', relationship: 'Primary', confidence: 'high' }],
+      });
+
+      expect(parsed.gurus[0].relationship).toBe('primary');
+    });
+
+    // The reported failure: Gemini returned "2017" and the strict schema lost the whole
+    // extraction — every guru, work and unresolved row with it.
+    it('reads a year the model sent as a string', () => {
+      const parsed = BioExtractionSchema.parse({
+        affiliations: [
+          { organisationName: 'Trayag Natyalaya', startYear: '2017', confidence: 'high' },
+        ],
+      });
+
+      expect(parsed.affiliations[0].startYear).toBe(2017);
+    });
+
+    it('reads a boolean the model sent as a string', () => {
+      const parsed = BioExtractionSchema.parse({
+        affiliations: [
+          { organisationName: 'Trayag Natyalaya', isCurrent: 'true', confidence: 'high' },
+        ],
+      });
+
+      expect(parsed.affiliations[0].isCurrent).toBe(true);
+    });
+
+    // The general rule behind all of the above: one malformed row is worth losing, the other
+    // nineteen are not, and neither is the unresolved list.
+    it('keeps the rows that parse when one row is unusable', () => {
+      const parsed = BioExtractionSchema.parse({
+        gurus: [
+          { name: 'Radha Shridhar', relationship: 'advanced', confidence: 'high' },
+          { relationship: 'primary', confidence: 'high' },
+          'not even an object',
+        ],
+        unresolved: [{ text: 'influenced by X', reason: 'influence, not instruction' }],
+      });
+
+      expect(parsed.gurus).toHaveLength(1);
+      expect(parsed.gurus[0].name).toBe('Radha Shridhar');
+      expect(parsed.unresolved).toHaveLength(1);
     });
 
     // The prompt tells the model to refuse rather than guess. A required enum punished it for
@@ -110,7 +161,7 @@ describe('bio-extract', () => {
         gurus: [{ name: 'X', relationship: null, confidence: 'low' }],
       });
 
-      expect(parsed.gurus[0].relationship).toBeNull();
+      expect(parsed.gurus[0].relationship).toBeFalsy();
     });
 
     it('accepts a guru with the relationship key absent entirely', () => {
@@ -119,14 +170,23 @@ describe('bio-extract', () => {
       expect(parsed.gurus[0].name).toBe('X');
     });
 
-    it('requires a confidence on every proposal', () => {
-      expect(() =>
-        BioExtractionSchema.parse({ gurus: [{ name: 'X', relationship: 'primary' }] })
-      ).toThrow();
+    // Confidence only drives a warning label, so a missing one falls back to the reading that
+    // makes a reviewer look harder rather than costing the row.
+    it('falls back to low confidence rather than dropping the row', () => {
+      const parsed = BioExtractionSchema.parse({
+        gurus: [{ name: 'X', relationship: 'primary' }],
+      });
+
+      expect(parsed.gurus[0].confidence).toBe('low');
     });
 
-    it('rejects an unresolved entry with no reason', () => {
-      expect(() => BioExtractionSchema.parse({ unresolved: [{ text: 'something' }] })).toThrow();
+    it('drops an unresolved entry with no reason, keeping the rest', () => {
+      const parsed = BioExtractionSchema.parse({
+        unresolved: [{ text: 'something' }, { text: 'other', reason: 'influence' }],
+      });
+
+      expect(parsed.unresolved).toHaveLength(1);
+      expect(parsed.unresolved[0].reason).toBe('influence');
     });
 
     it('accepts nulls for every optional, which is what the model emits', () => {
@@ -148,12 +208,15 @@ describe('bio-extract', () => {
       expect(parsed.gurus[0].name).toBe('X');
     });
 
-    it('rejects a year outside the plausible range', () => {
-      expect(() =>
-        BioExtractionSchema.parse({
-          gurus: [{ name: 'X', relationship: 'primary', startYear: 1500, confidence: 'high' }],
-        })
-      ).toThrow();
+    // Dropped, not stored and not thrown. What survives is always a real year or nothing, so
+    // the record can never be handed something it would reject.
+    it('drops a year outside the plausible range without losing the row', () => {
+      const parsed = BioExtractionSchema.parse({
+        gurus: [{ name: 'X', relationship: 'primary', startYear: 1500, confidence: 'high' }],
+      });
+
+      expect(parsed.gurus).toHaveLength(1);
+      expect(parsed.gurus[0].startYear).toBeUndefined();
     });
   });
 
