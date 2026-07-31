@@ -46,6 +46,26 @@ describe('artist-affiliation', () => {
       expect(result).toEqual(validInput);
     });
 
+    /**
+     * DynamoDB accepts `ALL_NEW` only on UpdateItem. A put is a PutItem, which allows `NONE` or
+     * `ALL_OLD`, so requesting all_new fails at the API and adding an affiliation errors
+     * outright — which is exactly what shipped, because the option was carried over from the
+     * `upsert` this replaced.
+     *
+     * The test above did not catch it: it asserted which method was called and left `.go()`
+     * mocked to accept anything. That is the third time in this codebase a test has agreed with
+     * the call shape while the effect was wrong, so this one reads the options.
+     */
+    it('does not ask a put for ALL_NEW, which DynamoDB rejects', async () => {
+      const go = vi.fn().mockResolvedValue({ data: validInput });
+      vi.mocked(ArtistAffiliationEntity.put).mockReturnValue({ go } as never);
+
+      await addArtistAffiliation(validInput);
+
+      const options = go.mock.calls[0]?.[0];
+      expect(options?.response).not.toBe('all_new');
+    });
+
     it('clears an optional the caller omitted', async () => {
       vi.mocked(ArtistAffiliationEntity.put).mockReturnValue(goResolves(validInput) as never);
 

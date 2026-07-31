@@ -38,7 +38,13 @@ export async function addArtistAffiliation(
   //
   // A `put` is the honest verb anyway: this row *is* the pair's complete state, so there is no
   // partial-merge case to serve. It resets `createdAt` on a re-add, which nothing reads.
-  const result = await ArtistAffiliationEntity.put(input).go({ response: 'all_new' });
+  //
+  // No `response: 'all_new'`. That option carried over from the `upsert` and is invalid here —
+  // DynamoDB accepts ALL_NEW only on UpdateItem, and a put is a PutItem, which allows NONE or
+  // ALL_OLD. It failed at the API, so adding an affiliation errored outright. Nothing is lost
+  // by dropping it: a put writes the whole row, so ElectroDB already returns exactly what was
+  // written, defaults included.
+  const result = await ArtistAffiliationEntity.put(input).go();
   return result.data as ArtistAffiliation;
 }
 
