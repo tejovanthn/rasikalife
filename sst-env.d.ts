@@ -6,6 +6,77 @@
 
 declare module "sst" {
   export interface Resource {
+    "EventPosters": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "GeminiApiKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "GoogleClientId": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "GoogleClientSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "InstagramDLQ": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
+    "InstagramImageFetcher": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "InstagramPostQueue": {
+      "type": "sst.aws.Queue"
+      "url": string
+    }
+    "InstagramScraper": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "InstagramSyncOrchestrator": {
+      "name": string
+      "type": "sst.aws.Function"
+    }
+    "OgImage": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "RasikaAuth": {
+      "type": "sst.aws.Auth"
+      "url": string
+    }
+    "RasikaBucket": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "RasikaTRPC": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "RasikaTable": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "RasikaWeb": {
+      "type": "sst.aws.React"
+      "url": string
+    }
+    "SearchIndexBucket": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
+    "SearchReindex": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />
