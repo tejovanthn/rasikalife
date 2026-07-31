@@ -53,6 +53,25 @@ export async function updateArtistPhoto(
   return result.data as ArtistPhoto;
 }
 
+/**
+ * Records a photograph's pixel dimensions.
+ *
+ * Its own function rather than fields on `UpdateArtistPhotoSchema`, and deliberately so: the
+ * dimensions are a property of the file, not metadata anyone should be able to type. Putting
+ * them in the update schema would let a moderator form or a CSV import claim a portrait is
+ * landscape, and the masonry grid and the profile hero both lay out from these numbers.
+ *
+ * Written by the upload path, which knows them, and by `backfill-photo-dimensions`, which
+ * measures them for the rows uploaded before that path existed.
+ */
+export async function setArtistPhotoDimensions(
+  artistId: string,
+  id: string,
+  size: { width: number; height: number }
+): Promise<void> {
+  await ArtistPhotoEntity.patch({ artistId, id }).set(size).go();
+}
+
 export async function deleteArtistPhoto(artistId: string, id: string): Promise<void> {
   await ArtistPhotoEntity.delete({ artistId, id }).go();
 }
@@ -74,5 +93,9 @@ export async function listArtistPhotos(
   };
 }
 
+// The entity itself, for the rare caller that needs a scan the domain functions do not expose —
+// today the dimensions backfill, which walks every row rather than one artist's. Same shape as
+// artist-affiliation's export.
+export { ArtistPhotoEntity } from './entity';
 export type { ArtistPhoto } from './entity';
 export { AddArtistPhotoSchema, MAX_PHOTO_ORDER, UpdateArtistPhotoSchema } from './schema';

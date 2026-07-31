@@ -1,5 +1,4 @@
 import { Images } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 
 export interface HeroPhoto {
@@ -11,11 +10,11 @@ export interface HeroPhoto {
 }
 
 /**
- * How much wider the challenger must be before the lead is worth swapping.
+ * How much wider the challenger must be before it takes the lead.
  *
- * A swap that happens after the images load is visible, so it has to buy something. Two photos
- * within a few percent of each other crop about the same, and shuffling between them would be
- * motion for nothing.
+ * Two photographs within a few percent of each other crop about the same, so reordering between
+ * them would change the page without improving it — and it would override the order a moderator
+ * set, for nothing.
  */
 const LEAD_SWAP_MARGIN = 1.15;
 
@@ -31,16 +30,16 @@ const LEAD_SWAP_MARGIN = 1.15;
  * ahead of the rest: this picks the best lead among them, it does not overrule the choice of
  * which photographs matter.
  *
- * `ratios` is a lookup by photo id rather than a read of `photo.width`, because **most stored
- * photographs have no dimensions**. They are optional on the entity and only written by the
- * multi-select upload path, so every row predating it measures as square — which made the
- * first version of this a silent no-op on every real profile. The caller supplies what it
- * knows and measures the rest.
+ * Reads the stored dimensions, which is only reliable because `backfill-photo-dimensions` fills
+ * them in. An earlier version of this was a silent no-op for exactly that reason — `width` and
+ * `height` are optional on the entity, so every row predating the multi-select upload path
+ * measured as square and nothing ever moved. A row still missing them sorts as square, which
+ * keeps it eligible without letting an unknown shape displace a known landscape.
  */
-export function leadWithWidest(photos: HeroPhoto[], ratios: Record<string, number>): HeroPhoto[] {
+export function leadWithWidest(photos: HeroPhoto[]): HeroPhoto[] {
   if (photos.length < 2) return photos;
 
-  const ratioOf = (p: HeroPhoto) => ratios[p.id] ?? (p.width && p.height ? p.width / p.height : 1);
+  const ratioOf = (p: HeroPhoto) => (p.width && p.height ? p.width / p.height : 1);
 
   let best = 0;
   for (let i = 1; i < photos.length; i++) {
@@ -51,59 +50,6 @@ export function leadWithWidest(photos: HeroPhoto[], ratios: Record<string, numbe
   }
 
   return [photos[best], ...photos.filter((_, i) => i !== best)];
-}
-
-/**
- * Fills in the aspect ratios the database does not have, by asking the browser.
- *
- * The images are being downloaded regardless, so `new Image()` on the same URL resolves from
- * cache and costs nothing extra. Photographs that already carry stored dimensions are skipped,
- * so this does nothing at all once the corpus has been through an upload path that records them.
- *
- * The cost is honest: on a first, uncached view the lead can swap once the sizes are known. It
- * is a swap inside a fixed grid, so nothing reflows and no text moves — only which photograph
- * sits in which frame — and `LEAD_SWAP_MARGIN` keeps it from happening for a negligible gain.
- */
-function useMeasuredRatios(photos: HeroPhoto[]): Record<string, number> {
-  const [ratios, setRatios] = useState<Record<string, number>>({});
-
-  // Keyed on the ids so this re-runs when the artist changes, not on every render.
-  const key = photos.map(p => p.id).join(',');
-
-  // Depends on `key`, not on `photos`: the array is rebuilt every render, so listing it would
-  // re-measure on every keystroke elsewhere on the page.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the photo ids, see above
-  useEffect(() => {
-    const unmeasured = photos.filter(p => !(p.width && p.height));
-    if (unmeasured.length === 0) return;
-
-    let live = true;
-    Promise.all(
-      unmeasured.map(
-        photo =>
-          new Promise<[string, number] | null>(resolve => {
-            const img = new Image();
-            img.onload = () =>
-              resolve(
-                img.naturalHeight > 0 ? [photo.id, img.naturalWidth / img.naturalHeight] : null
-              );
-            // A photo that will not load tells us nothing; leave it at its default.
-            img.onerror = () => resolve(null);
-            img.src = photo.url;
-          })
-      )
-    ).then(results => {
-      if (!live) return;
-      const measured = Object.fromEntries(results.filter((r): r is [string, number] => r !== null));
-      if (Object.keys(measured).length > 0) setRatios(measured);
-    });
-
-    return () => {
-      live = false;
-    };
-  }, [key]);
-
-  return ratios;
 }
 
 /**
@@ -135,11 +81,9 @@ export function ArtistGalleryHero({
   /** Every photo the artist has, which may exceed what this hero shows. */
   totalCount: number;
 }) {
-  const measured = useMeasuredRatios(photos);
-
   if (photos.length === 0) return null;
 
-  const [lead, ...rest] = leadWithWidest(photos, measured);
+  const [lead, ...rest] = leadWithWidest(photos);
 
   const frame =
     'relative block min-h-0 overflow-hidden rounded-lg border bg-muted transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';

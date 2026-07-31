@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "main": "index.js",
+  "//": "type: module matches core, trpc and web. Without it tsx loaded these scripts as CommonJS and resolved dependencies under the `require` condition — and @openauthjs/openauth exports only `import`, so every script importing @rasika/core died on ERR_PACKAGE_PATH_NOT_EXPORTED before running a line. That took out the whole CLI, backfills included.",
+  "type": "module",
   "scripts": {
     "cli": "sst shell -- tsx src/cli.ts",
     "prod-cli": "sst shell --stage prod -- tsx src/cli.ts",

@@ -170,6 +170,22 @@ program
   );
 
 program
+  .command('backfill-photo-dimensions')
+  .description('Store width and height on gallery photographs that have none')
+  .option('-n, --dry-run', 'Report the measurements without writing them')
+  .option('--artist <id>', 'Only this artist’s photographs')
+  .option('--force', 'Re-measure photographs that already carry dimensions')
+  .action(async (opts: { dryRun?: boolean; artist?: string; force?: boolean }) => {
+    setup();
+    const { backfillPhotoDimensions } = await import('./backfillPhotoDimensions.js');
+    await backfillPhotoDimensions({
+      dryRun: opts.dryRun,
+      artistId: opts.artist,
+      force: opts.force,
+    });
+  });
+
+program
   .command('rebuild-featured')
   .description("Rebuild each artist's featured-performance list from live isFeatured rows")
   .option('-n, --dry-run', 'Preview changes without writing to the database')

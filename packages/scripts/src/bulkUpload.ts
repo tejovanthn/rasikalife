@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 interface NormalizedComposition {
   title: string | null;
@@ -96,7 +97,10 @@ export async function bulkUpload(opts: { drop?: boolean; limit?: number } = {}) 
     await dropAllData();
   }
 
-  const filePath = path.join(__dirname, '../../../data/full-normalized.json');
+  // Derived rather than global: this package is ESM now, where __dirname does not exist.
+  // enrichRagas.ts already did it this way; this line was the one that had not caught up.
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const filePath = path.join(here, '../../../data/full-normalized.json');
 
   // Cache for created entities to avoid duplicate API calls
   const artistCache = new Map<string, string>();
