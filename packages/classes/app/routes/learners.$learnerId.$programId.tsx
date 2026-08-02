@@ -27,6 +27,7 @@ import {
   useNavigation,
 } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
+import { FormDialog } from '~/components/form-dialog';
 import { LocalTime } from '~/components/local-time';
 import { ScreenshotField } from '~/components/screenshot-field';
 import { ScreenshotLink } from '~/components/screenshot-link';
@@ -223,9 +224,28 @@ export default function LearnerLedger() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionTitle>Classes</SectionTitle>
             {isTeacher ? (
-              <a href="#add-class" className={buttonVariants({ variant: 'outline' })}>
-                + Add class
-              </a>
+              <FormDialog
+                trigger="+ Add class"
+                title="Add a class"
+                description={`For ${enrollment.learnerName}. It is confirmed straight away — you are the one recording it.`}
+              >
+                <Form method="post" className="space-y-4">
+                  <input type="hidden" name="intent" value="add-class" />
+                  <Field
+                    label="Date"
+                    htmlFor="add-class-date"
+                    hint="Leave blank for today. A class cannot be added before it has happened."
+                  >
+                    <Input id="add-class-date" name="sessionDate" type="date" />
+                  </Field>
+                  <Field label="What you covered" htmlFor="add-class-notes" hint="Optional.">
+                    <Textarea id="add-class-notes" name="notes" rows={3} />
+                  </Field>
+                  <Button type="submit" size="wide" pending={pending}>
+                    Add class
+                  </Button>
+                </Form>
+              </FormDialog>
             ) : null}
           </div>
 
@@ -281,6 +301,7 @@ export default function LearnerLedger() {
                             session={session}
                             institutionId={enrollment.institutionId}
                             pending={pending}
+                            label={formatSessionDateStable(session)}
                           />
                         ) : (
                           <Badge tone={SESSION_STATUS_TONES[session.status]}>
@@ -300,9 +321,36 @@ export default function LearnerLedger() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionTitle>Payments</SectionTitle>
             {isTeacher ? (
-              <a href="#add-payment" className={buttonVariants({ variant: 'outline' })}>
-                + Add payment
-              </a>
+              <FormDialog
+                trigger="+ Add payment"
+                title="Record a payment"
+                description={`For ${enrollment.learnerName}. Nothing here moves money — it records what you have already been paid.`}
+              >
+                <Form method="post" className="space-y-4">
+                  <input type="hidden" name="intent" value="add-payment" />
+                  <input type="hidden" name="institutionId" value={enrollment.institutionId} />
+                  <Field
+                    label="Classes"
+                    htmlFor="delta"
+                    hint="A negative number corrects a mistake, and then a reason is required."
+                  >
+                    <Input
+                      id="delta"
+                      name="delta"
+                      type="number"
+                      inputMode="numeric"
+                      defaultValue={8}
+                    />
+                  </Field>
+                  <Field label="Note" htmlFor="reason">
+                    <Input id="reason" name="reason" placeholder="e.g. paid by UPI" />
+                  </Field>
+                  <ScreenshotField institutionId={enrollment.institutionId} />
+                  <Button type="submit" size="wide" pending={pending}>
+                    Record
+                  </Button>
+                </Form>
+              </FormDialog>
             ) : null}
           </div>
 
@@ -358,98 +406,54 @@ export default function LearnerLedger() {
             </TableScroll>
           )}
         </section>
-
-        {isTeacher ? (
-          <>
-            <details className="rounded-lg border border-border p-4">
-              <summary className="min-h-tap cursor-pointer font-medium">Add a class</summary>
-              {/* Id on the form, not the `<details>` — a fragment aimed at a closed disclosure
-                  scrolls to it without opening it. */}
-              <Form id="add-class" method="post" className="mt-4 space-y-4">
-                <input type="hidden" name="intent" value="add-class" />
-                <Field
-                  label="Date"
-                  htmlFor="add-class-date"
-                  hint="Leave blank for today. A class cannot be added before it has happened."
-                >
-                  <Input id="add-class-date" name="sessionDate" type="date" />
-                </Field>
-                <Field label="What you covered" htmlFor="add-class-notes" hint="Optional.">
-                  <Textarea id="add-class-notes" name="notes" rows={3} />
-                </Field>
-                <Button type="submit" size="wide" pending={pending}>
-                  Add class
-                </Button>
-              </Form>
-            </details>
-
-            <details className="rounded-lg border border-border p-4">
-              <summary className="min-h-tap cursor-pointer font-medium">Record a payment</summary>
-              <Form id="add-payment" method="post" className="mt-4 space-y-4">
-                <input type="hidden" name="intent" value="add-payment" />
-                <input type="hidden" name="institutionId" value={enrollment.institutionId} />
-                <Field
-                  label="Classes"
-                  htmlFor="delta"
-                  hint="A negative number corrects a mistake, and then a reason is required."
-                >
-                  <Input
-                    id="delta"
-                    name="delta"
-                    type="number"
-                    inputMode="numeric"
-                    defaultValue={8}
-                  />
-                </Field>
-                <Field label="Note" htmlFor="reason">
-                  <Input id="reason" name="reason" placeholder="e.g. paid by UPI" />
-                </Field>
-                <ScreenshotField institutionId={enrollment.institutionId} />
-                <Button type="submit" size="wide" pending={pending}>
-                  Record
-                </Button>
-              </Form>
-            </details>
-          </>
-        ) : null}
       </div>
     </Chrome>
   );
 }
 
 /**
- * The inline settle control, in the Actions column.
+ * The settle control, in the Actions column.
  *
- * A disclosure rather than three buttons per row: her default action is still to do nothing —
- * everything here auto-confirms — and a table that shouts on every row is one she reads less.
+ * A modal rather than the disclosure this used to be: a `<details>` expanding inside a `<td>`
+ * stretches its own row and shoves every class below it down the page, so the row she was
+ * looking at moves the moment she reaches for it.
+ *
+ * The dialog also carries the date in its title, which the inline version could not — she is
+ * confirming *that* Tuesday, and the row it came from is now behind an overlay.
  */
 function SettleSession({
   session,
   institutionId,
   pending,
+  label,
 }: {
   session: { id: string; sessionDate: string };
   institutionId: string;
   pending: boolean;
+  label: string;
 }) {
   return (
-    <details className="text-left">
-      <summary className="inline-flex min-h-tap cursor-pointer items-center text-sm text-primary underline">
-        Settle
-      </summary>
-      <Form method="post" className="mt-2 space-y-2">
+    <FormDialog
+      trigger="Settle"
+      triggerVariant="ghost"
+      title={`Settle ${label}`}
+      description="Confirming takes one class off the balance. Leaving it alone confirms it after seven days anyway."
+    >
+      <Form method="post" className="space-y-3">
         <input type="hidden" name="sessionId" value={session.id} />
         <input type="hidden" name="sessionDate" value={session.sessionDate} />
         <input type="hidden" name="institutionId" value={institutionId} />
-        <Textarea
-          name="notes"
-          rows={2}
-          aria-label="What you covered"
-          placeholder="What you covered (optional)"
-        />
+
+        <Field label="What you covered" htmlFor={`settle-notes-${session.id}`} hint="Optional.">
+          <Textarea id={`settle-notes-${session.id}`} name="notes" rows={3} />
+        </Field>
+
         <Button type="submit" name="intent" value="confirm" size="wide" pending={pending}>
           Confirm
         </Button>
+
+        {/* As prominent as confirm, because confirm is the thing that happens by itself. The
+            only reason to open this is to stop it. */}
         <div className="flex gap-2">
           <Button
             type="submit"
@@ -473,6 +477,6 @@ function SettleSession({
           </Button>
         </div>
       </Form>
-    </details>
+    </FormDialog>
   );
 }

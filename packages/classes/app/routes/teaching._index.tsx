@@ -30,6 +30,7 @@ import {
 } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { ContextSwitcher } from '~/components/context-switcher';
+import { FormDialog } from '~/components/form-dialog';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
 import { pageMeta } from '~/lib/meta';
@@ -128,9 +129,54 @@ export default function Roster() {
         */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <PageTitle>Classes</PageTitle>
-          <a href="#add-class" className={buttonVariants({ variant: 'outline' })}>
-            + Add class
-          </a>
+          <FormDialog
+            trigger="+ Add class"
+            title="Add a class"
+            description="A weekly one-to-one needs no name — everything below is already set to the usual answer."
+          >
+            <Form method="post" className="space-y-4">
+              <input type="hidden" name="intent" value="create-program" />
+              <input type="hidden" name="institutionId" value={institution.id} />
+
+              <Field label="Name" htmlFor="title" hint="Leave blank for an ordinary weekly class.">
+                <Input id="title" name="title" placeholder="e.g. Tyagaraja intensive" />
+              </Field>
+
+              <Field label="Kind" htmlFor="type">
+                <Select id="type" name="type" defaultValue="regular">
+                  <option value="regular">Weekly class</option>
+                  <option value="workshop">Workshop</option>
+                </Select>
+              </Field>
+
+              <Field label="Usually held" htmlFor="defaultMode">
+                <Select id="defaultMode" name="defaultMode" defaultValue="in-person">
+                  <option value="in-person">In person</option>
+                  <option value="online">Online</option>
+                </Select>
+              </Field>
+
+              <Field
+                label="If a student misses a class"
+                htmlFor="skipPolicy"
+                hint="Most gurus count it. You can change this per class later."
+              >
+                <Select id="skipPolicy" name="skipPolicy" defaultValue="burn">
+                  <option value="burn">Count it</option>
+                  <option value="no-burn">Do not count it</option>
+                </Select>
+              </Field>
+
+              <label className="flex min-h-tap items-center gap-3 text-sm">
+                <input type="checkbox" name="isGroup" className="size-6" />
+                More than one student attends together
+              </label>
+
+              <Button type="submit" size="wide" pending={navigation.state === 'submitting'}>
+                Add class
+              </Button>
+            </Form>
+          </FormDialog>
         </div>
 
         {actionData && 'error' in actionData && actionData.error ? (
@@ -177,57 +223,6 @@ export default function Roster() {
             {includeArchived ? 'Hide archived' : 'Show archived'}
           </Button>
         </Form>
-
-        <details className="rounded-lg border border-border p-4">
-          {/* `<details>` rather than a state toggle, so the form is reachable before hydration
-              and the page does not open with a wall of inputs. */}
-          <summary className="min-h-tap cursor-pointer font-medium">Add a class</summary>
-          {/* The id lives on the form, not on the `<details>`. A fragment pointing at a closed
-              `<details>` scrolls to it and leaves it shut — the browser only auto-expands when the
-              target is a *descendant*. Both behaviours confirmed in a browser. */}
-          <Form id="add-class" method="post" className="mt-4 space-y-4">
-            <input type="hidden" name="intent" value="create-program" />
-            <input type="hidden" name="institutionId" value={institution.id} />
-
-            <Field label="Name" htmlFor="title" hint="Leave blank for an ordinary weekly class.">
-              <Input id="title" name="title" placeholder="e.g. Tyagaraja intensive" />
-            </Field>
-
-            <Field label="Kind" htmlFor="type">
-              <Select id="type" name="type" defaultValue="regular">
-                <option value="regular">Weekly class</option>
-                <option value="workshop">Workshop</option>
-              </Select>
-            </Field>
-
-            <Field label="Usually held" htmlFor="defaultMode">
-              <Select id="defaultMode" name="defaultMode" defaultValue="in-person">
-                <option value="in-person">In person</option>
-                <option value="online">Online</option>
-              </Select>
-            </Field>
-
-            <Field
-              label="If a student misses a class"
-              htmlFor="skipPolicy"
-              hint="Most gurus count it. You can change this per class later."
-            >
-              <Select id="skipPolicy" name="skipPolicy" defaultValue="burn">
-                <option value="burn">Count it</option>
-                <option value="no-burn">Do not count it</option>
-              </Select>
-            </Field>
-
-            <label className="flex min-h-tap items-center gap-3 text-sm">
-              <input type="checkbox" name="isGroup" className="size-6" />
-              More than one student attends together
-            </label>
-
-            <Button type="submit" size="wide" pending={navigation.state === 'submitting'}>
-              Add class
-            </Button>
-          </Form>
-        </details>
       </div>
     </Chrome>
   );

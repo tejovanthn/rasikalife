@@ -27,6 +27,7 @@ import {
   useNavigation,
 } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
+import { FormDialog } from '~/components/form-dialog';
 import { LocalTime } from '~/components/local-time';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
@@ -149,11 +150,13 @@ export default function ProgramRoster() {
         ) : null}
 
         {program.isGroup ? (
-          <details className="rounded-lg border border-border p-4">
-            <summary className="min-h-tap cursor-pointer font-medium">
-              Mark today's class for everyone
-            </summary>
-            <Form method="post" className="mt-4 space-y-4">
+          <FormDialog
+            trigger="Mark today's class"
+            triggerVariant="primary"
+            title="Mark today's class"
+            description={`This marks it for all ${active.length} students on the class. Anyone who missed it, you can mark absent afterwards.`}
+          >
+            <Form method="post" className="space-y-4">
               <input type="hidden" name="intent" value="group-session" />
               <Field label="What you covered" htmlFor="notes" hint="Optional.">
                 <Textarea id="notes" name="notes" rows={3} />
@@ -162,15 +165,58 @@ export default function ProgramRoster() {
                 Mark for all {active.length} students
               </Button>
             </Form>
-          </details>
+          </FormDialog>
         ) : null}
 
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SectionTitle>Students</SectionTitle>
-            <a href="#add-student" className={buttonVariants({ variant: 'outline' })}>
-              + Add student
-            </a>
+            <FormDialog
+              trigger="+ Add student"
+              title="Add a student"
+              description="They get access when they sign in with the email you give."
+            >
+              <Form method="post" className="space-y-4">
+                <input type="hidden" name="intent" value="add-learner" />
+
+                <Field label="First name" htmlFor="firstName">
+                  <Input id="firstName" name="firstName" required maxLength={80} />
+                </Field>
+
+                <Field
+                  label="Last initial"
+                  htmlFor="lastInitial"
+                  hint="Only if you teach two students with the same first name."
+                >
+                  <Input id="lastInitial" name="lastInitial" maxLength={4} />
+                </Field>
+
+                <Field
+                  label="Email to share with"
+                  htmlFor="email"
+                  hint="A parent's address for a child."
+                >
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="off"
+                  />
+                </Field>
+
+                {/* No date of birth anywhere. This is a policy flag the guru sets, not a fact the
+                    product derives — collecting a birthday would put a child's data in scope. */}
+                <label className="flex min-h-tap items-center gap-3 text-sm">
+                  <input type="checkbox" name="isMinor" className="size-6" defaultChecked />
+                  Under 18 (a parent keeps access)
+                </label>
+
+                <Button type="submit" size="wide" pending={pending}>
+                  Add student
+                </Button>
+              </Form>
+            </FormDialog>
           </div>
 
           {roster.length === 0 ? (
@@ -264,46 +310,6 @@ export default function ProgramRoster() {
             </TableScroll>
           )}
         </section>
-
-        <details className="rounded-lg border border-border p-4">
-          <summary className="min-h-tap cursor-pointer font-medium">Add a student</summary>
-          {/* See `teaching._index.tsx`: the id belongs on a descendant so the browser expands
-              the disclosure rather than scrolling to a closed one. */}
-          <Form id="add-student" method="post" className="mt-4 space-y-4">
-            <input type="hidden" name="intent" value="add-learner" />
-
-            <Field label="First name" htmlFor="firstName">
-              <Input id="firstName" name="firstName" required maxLength={80} />
-            </Field>
-
-            <Field
-              label="Last initial"
-              htmlFor="lastInitial"
-              hint="Only if you teach two students with the same first name."
-            >
-              <Input id="lastInitial" name="lastInitial" maxLength={4} />
-            </Field>
-
-            <Field
-              label="Email to share with"
-              htmlFor="email"
-              hint="A parent's address for a child. They get access when they next sign in."
-            >
-              <Input id="email" name="email" type="email" inputMode="email" autoComplete="off" />
-            </Field>
-
-            {/* No date of birth anywhere. This is a policy flag the guru sets, not a fact the
-                product derives — collecting a birthday would put a child's data in scope. */}
-            <label className="flex min-h-tap items-center gap-3 text-sm">
-              <input type="checkbox" name="isMinor" className="size-6" defaultChecked />
-              Under 18 (a parent keeps access)
-            </label>
-
-            <Button type="submit" size="wide" pending={pending}>
-              Add student
-            </Button>
-          </Form>
-        </details>
       </div>
     </Chrome>
   );

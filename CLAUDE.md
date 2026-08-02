@@ -454,10 +454,21 @@ table scrolls the *document* sideways, which on iOS drags the whole app shell. T
 is the other shape — one section per program with its last few classes inline, because "what did
 we do last week" is what a student opens the app for and it used to be a navigation away.
 
-**A fragment link into a `<details>` must target a descendant, not the `<details>`.** The browser
-auto-expands a closed disclosure when the fragment names something *inside* it and does nothing
-but scroll when the fragment names the element itself. Three "+ Add" buttons shipped pointing at
-the wrong one and looked broken. The id therefore lives on the `<Form>`.
+**Every form that adds something is a `FormDialog`, and `<details>` is for disclosing, not for
+forms.** On a phone an expanding disclosure pushes the page around underneath the thumb reaching
+for it; a modal takes the screen, which is what filling in a form is. The two remaining
+`<details>` are a real disclosure (the review queue's group expansion) and a menu (the context
+switcher), which is what the element is for.
+
+`FormDialog` renders its form **once**. A `<noscript>` copy would duplicate every field `id`, so
+every `<label for>` in the fallback would bind to the modal's hidden inputs instead. Rather than
+that, the `<noscript>` stylesheet in `root.tsx` changes what a `<dialog>` *is*: `.js-only` hides
+the trigger, and `dialog.form-dialog` becomes a static block, so the modal degrades into an
+inline form. Both paths are verified in a browser, not reasoned about.
+
+(Superseded, kept because `<details>` is still used: a fragment link into a `<details>` must
+target a **descendant**. The browser auto-expands only then, and merely scrolls when the fragment
+names the element itself — which is how three "+ Add" buttons shipped looking broken.)
 
 **`classEnrollment.lastSessionDate` / `lastPaidAt` are display-only.** They exist so the roster
 table is one query rather than two per learner, they are written where the row they summarise is

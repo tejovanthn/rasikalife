@@ -62,11 +62,23 @@ function Document({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <Meta />
         <Links />
-        {/* Controls that only work with JavaScript hide themselves when there is none, so a
-            `<noscript>` fallback beside them is the only thing on screen rather than the second
-            of two identical-looking buttons. */}
+        {/*
+          What the app looks like with no JavaScript.
+
+          `.js-only` hides every control that needs scripting to do anything — a dialog trigger,
+          chiefly — so a fallback beside it is the only thing on screen rather than the second of
+          two identical-looking buttons.
+
+          The `<dialog>` rule is the other half, and it is what lets `FormDialog` render its form
+          exactly once: a closed `<dialog>` is `display: none` by default, and here it becomes an
+          ordinary block in the page instead. So the modal degrades into an inline form rather
+          than into a second copy of itself with duplicated field ids.
+        */}
         <noscript>
-          <style>{'.js-only{display:none!important}'}</style>
+          <style>
+            {'.js-only{display:none!important}' +
+              'dialog.form-dialog{display:block;position:static;width:auto;max-width:none;margin:0 0 1rem;border:1px solid hsl(var(--border));border-radius:var(--radius)}'}
+          </style>
         </noscript>
       </head>
       <body>
