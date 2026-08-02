@@ -2,27 +2,41 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Active: artist bio structuring (2026-07-30)
+## Active: Rasika Classes (2026-08-02)
 
-Plan: `~/.claude/plans/eventual-bubbling-mountain.md`. All eight steps of the handoff spec are built.
+Plan: `docs/plans/260802-01-rasika-classes.md`. Nine phases. **Phase 1 is built and green.**
 
-**Next step: deploy, then run the pipeline against real bios.** Nothing here has executed against a deploy either — it lands on top of the undeployed artist profile redesign below, so one deploy covers both.
+**Next step: phase 2, the private upload bucket.** A new S3 bucket in `/infra/` with all public
+access blocked and no CDN distribution, `Image.getPrivateUploadUrl(namespace, fileName, contentType)`
+returning a presigned PUT under `private/classes/{uploadId}/{fileName}`, and a tRPC procedure that
+runs the access check and returns a short-lived presigned GET. Payment screenshots are people's UPI
+transaction records and cannot go through `Image.getImageUploadUrl`, which writes to
+`EVENT_POSTERS_BUCKET` behind a public CDN. `classPack.screenshotKey` already exists and holds a
+key, never a URL.
 
-What landed: typed `gurus` (`relationship` + `source`), a new **`ArtistAffiliation` junction** (not a list attribute — the spec said no new entity, but its own step 5 wanted an Organiser reverse lookup, which a list cannot serve without a scan), `credentials` and `works` as list attributes, arangetram fields, wizard editors for all of them, conditional profile sections, the organiser "Artists" listing, and the three-step bio pipeline (`extract-artist-bios` → `import-bio-extractions` → `rewrite-artist-bios`). See CLAUDE.md for the model and the rules that hold it together.
+What landed in phase 1: eight `class-*` domains in `packages/core` — institution, program, learner,
+learner-access, enrollment, pack, session, invite — plus `shared/timezone.ts`, a `client.ts` and a
+subpath export for each, and 146 tests. The credit ledger is a two-item DynamoDB transaction
+(`ClassLedgerService`, the first ElectroDB transaction in this codebase) guarded on a conditional
+transition from `pending`; `creditsRemaining` is never assigned. See the CLAUDE.md section "Rasika
+Classes: the credit ledger" for the rules, and §4.9 of the plan for the three places the built keys
+depart from the spec and why.
 
-**There are no bios in the prod database yet** (confirmed by the repo owner 2026-07-31), so the corpus pipeline has nothing to chew on. The wizard's per-artist Extract button is therefore the path that matters first: paste a bio, press Extract, read what it proposes. That is now also the cheapest way to measure precision — it shows every proposal in context instead of requiring a CSV round trip.
+Nothing here is deployed and no rows exist. Phases 2, 3, 4 and 9 are all backend and can land in any
+order; phase 5 (`packages/classes` and `packages/ui`) is the first that needs the founder's logo and
+brand assets.
 
-Note `sst shell --stage prod` **does** run here; what fails is importing `@rasika/core`'s main entry from a script, on an `@openauthjs/openauth` `./subject` subpath. So the CLI cannot be exercised locally, but SST itself is not the blocker.
+**One thing to test out of phase order:** on iOS, an OAuth redirect from a standalone-mode PWA can
+open in the in-app browser and land the session cookie outside the installed app's storage, leaving
+the user signed out on return. Worth a spike during phase 5 rather than discovering it in phase 8.
 
-**Post-deploy, in order:**
+## Done: artist bio structuring (2026-07-30, verified 2026-08-02)
 
-1. **Paste a long bio into the wizard's About step and press Extract.** Needs `GEMINI_API_KEY`, already linked to the tRPC lambda (`infra/trpc.ts`). Check the three classification traps land under "Needs your judgment" rather than becoming guru edges — an influence, an institutional teacher, and a workshop teacher. **This is the gate on the bulk-approval screen**, which is still unbuilt on purpose.
-2. **Then the corpus tools**, once there are bios to run them over: `extract-artist-bios` → review the CSV → `import-bio-extractions`. Only after that is `rewrite-artist-bios` safe — its `--min-fields` guard (default 2, counting only extracted fields) exists precisely because shortening a bio whose facts were never extracted destroys them.
-3. **Check a moderator can add an affiliation** through the wizard and that it appears on the organisation's page. This is the one new write path with a junction behind it.
+The three-step corpus pipeline (`extract-artist-bios` → `import-bio-extractions` →
+`rewrite-artist-bios`) and the wizard's per-artist Extract button are built, and the extraction has
+been checked against a real bio. The bulk-approval screen stays unbuilt on purpose.
 
-**Also new: a "Get media kit" panel** in the artist page rail, signed-in only. Generates promotional copy *from* the structured fields and caches it on the record, keyed by a hash of those facts. Check on first deploy that it refuses an artist with almost no facts rather than padding adjectives, and that a workshop guru is not described as a disciple.
-
-**Two things worth watching on the first artist edit:** the arangetram guru/venue pickers resolve names through two extra loader queries (a dangling id renders blank, by design), and the profile now splits gurus into lineage and "Also studied with" — unclassified rows count as lineage, so nothing existing should move.
+What landed: typed `gurus` (`relationship` + `source`), a new **`ArtistAffiliation` junction** (not a list attribute — the spec said no new entity, but its own step 5 wanted an Organiser reverse lookup, which a list cannot serve without a scan), `credentials` and `works` as list attributes, arangetram fields, wizard editors for all of them, conditional profile sections, the organiser "Artists" listing, and a "Get media kit" panel in the artist page rail that generates promotional copy *from* the structured fields. See CLAUDE.md for the model and the rules that hold it together.
 
 ## Also active: artist profile redesign
 
@@ -346,7 +360,7 @@ Raised, judged real, not yet done:
 
 Re-measured 2026-07-30 at the end of the bio-structuring work. All failures below are pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate. **The previously recorded core and web test counts were stale** (758 and 111); the numbers here were measured, and the pre-work figures were verified by running the same suites in a worktree at HEAD.
 
-- `packages/core`: **899 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 795 pass before this work; +103 for the affiliation junction, the widened artist schema, the completion labels, the extraction pipeline, the two review passes, the extractor↔record contract tests, and the media kit.
+- `packages/core`: **1045 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD, and again on a clean tree 2026-08-02); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 899 pass before Rasika Classes phase 1; +146 for the eight `class-*` domains and `shared/timezone.ts`. Before the bio work it was 795.
 - `packages/web`: **151 tests pass, 12 files** (was 137). +14 for `readRepeatedRows` and `affiliationPeriod`. Typecheck errors sit in **8 files**, unchanged by this work and none in artist, organiser or gallery files: `api.server.ts`, `lib/auth.server.ts`, `$artform.events.tsx`, four `carnatic.*` routes, `events.new_.api.tsx`, `moderator.request-deletion.tsx`. It was 11 until `sst-env.d.ts` was committed with the current resource declarations — the three `Resource.*` errors were stale generated types, not real.
 - `packages/scripts`: **17 typecheck errors, all pre-existing**, in `check-id.ts` (6), `recompute-performance-counts.ts` (3), `enrichRagas.ts` (3), `cli.ts` (2 — `Resource.RasikaTable`/`SearchIndexBucket`, environmental like the web ones), `bulkUpload.ts` (2), `backfillWebp.ts` (1). **This package was never typechecked until 2026-07-30**: it had no `typecheck` script, and its tsconfig paired `module: NodeNext` with `moduleResolution: Bundler`, which are mutually exclusive, so `tsc` refused to start. That gap let a call to a non-existent `Edit` namespace reach a commit — the edit service is exported flat from core, not as a namespace. Both are fixed; run `pnpm typecheck` here now.
 - ~~Importing `@rasika/core` from a script fails on an `@openauthjs/openauth` subpath~~ — **fixed 2026-07-31.** `packages/scripts` was the only package without `"type": "module"`, so tsx loaded it as CommonJS and resolved dependencies under the `require` condition; openauth exports only `import`, so every script died before running a line. That had disabled the entire CLI, including the `rebuild-*` backfills listed above as required post-deploy. `bulkUpload.ts` also needed a real `__dirname` under ESM. The CLI runs now — `pnpm prod-cli backfill-photo-dimensions` was exercised against prod end to end.

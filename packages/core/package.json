@@ -146,6 +146,46 @@
       "import": "./src/domain/event-setlist/client.ts",
       "default": "./src/domain/event-setlist/client.ts"
     },
+    "./domain/class-institution/client": {
+      "types": "./src/domain/class-institution/client.ts",
+      "import": "./src/domain/class-institution/client.ts",
+      "default": "./src/domain/class-institution/client.ts"
+    },
+    "./domain/class-program/client": {
+      "types": "./src/domain/class-program/client.ts",
+      "import": "./src/domain/class-program/client.ts",
+      "default": "./src/domain/class-program/client.ts"
+    },
+    "./domain/class-learner/client": {
+      "types": "./src/domain/class-learner/client.ts",
+      "import": "./src/domain/class-learner/client.ts",
+      "default": "./src/domain/class-learner/client.ts"
+    },
+    "./domain/class-learner-access/client": {
+      "types": "./src/domain/class-learner-access/client.ts",
+      "import": "./src/domain/class-learner-access/client.ts",
+      "default": "./src/domain/class-learner-access/client.ts"
+    },
+    "./domain/class-enrollment/client": {
+      "types": "./src/domain/class-enrollment/client.ts",
+      "import": "./src/domain/class-enrollment/client.ts",
+      "default": "./src/domain/class-enrollment/client.ts"
+    },
+    "./domain/class-pack/client": {
+      "types": "./src/domain/class-pack/client.ts",
+      "import": "./src/domain/class-pack/client.ts",
+      "default": "./src/domain/class-pack/client.ts"
+    },
+    "./domain/class-session/client": {
+      "types": "./src/domain/class-session/client.ts",
+      "import": "./src/domain/class-session/client.ts",
+      "default": "./src/domain/class-session/client.ts"
+    },
+    "./domain/class-invite/client": {
+      "types": "./src/domain/class-invite/client.ts",
+      "import": "./src/domain/class-invite/client.ts",
+      "default": "./src/domain/class-invite/client.ts"
+    },
     "./domain/*": {
       "types": "./src/domain/*/index.ts",
       "import": "./src/domain/*/index.ts",
@@ -160,6 +200,11 @@
       "types": "./src/shared/roles.ts",
       "import": "./src/shared/roles.ts",
       "default": "./src/shared/roles.ts"
+    },
+    "./shared/timezone": {
+      "types": "./src/shared/timezone.ts",
+      "import": "./src/shared/timezone.ts",
+      "default": "./src/shared/timezone.ts"
     },
     "./shared/*": {
       "types": "./src/shared/*/index.ts",

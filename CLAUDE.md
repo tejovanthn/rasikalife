@@ -283,6 +283,73 @@ Two precision rules the prompt and the code both enforce:
   edge to an arbitrary one at a confident-looking score. `matchName` is always reported: a
   reviewer cannot judge a match from a KSUID and a number.
 
+### Rasika Classes: the credit ledger (`class-*` domains)
+
+A class-tracking product for gurus, to be served at `classes.rasika.life` from its own
+`packages/classes` app. Only the core domains exist so far — plan `docs/plans/260802-01-rasika-classes.md`,
+phase 1 of 9. Eight entities, all `class-*`, all on the same single table reusing gsi1–gsi3.
+
+**Never move money.** A screenshot upload plus the guru tapping "received" is the entire payment
+surface. No gateway, no UPI collect, no payment intent, and `amount`/`currency` on `classPack`
+are reserved and uncollected. Anything more puts the project in financial compliance territory.
+
+**Payment screenshots must not touch the public image pipeline.** `Image.getImageUploadUrl`
+writes to `EVENT_POSTERS_BUCKET` behind a public CDN, and these are people's UPI transaction
+records. `classPack.screenshotKey` stores a private S3 key, never a URL. The private bucket and
+signed-read procedure are phase 2 and do not exist yet.
+
+**Class routes are private and are not `Event`s.** Events are public, moderated and wiki-editable;
+a program is private to its roster. Overloading `Event` would drag a child's attendance record
+into the moderation queue. Nothing in `class-*` is indexed, sitemapped, or wiki-editable.
+
+Four rules the code depends on:
+
+- **`creditsRemaining` is never assigned.** It is a denormalized cache of an append-only ledger:
+  signed `classPack` rows in, confirmed sessions out. Every movement is an atomic `ADD` inside a
+  two-item transaction (`ClassLedgerService`, `class-enrollment/ledger.ts`) so the number and its
+  own audit trail cannot disagree. A correction is a *new* pack row with a negative delta and a
+  reason — never an edit, never a direct write. Changing the guru's standard pack size edits
+  `defaultPackSize` on the program instead, and is not retroactive. `expectedCredits` in
+  `class-session/schema.ts` is the invariant, and what a repair would rebuild from.
+- **Every status transition is guarded on being `pending`, not on the button press.** The
+  auto-confirm cron and the guru's thumb race for the same row every week; without the condition
+  the loser takes a second credit. `applied: false` is an ordinary outcome — the caller says
+  nothing happened rather than erroring. Bulk confirm is a *loop* of transactions (cap 50, per-row
+  results), because `BatchWrite` cannot carry a condition.
+- **`sessionDate` is `YYYY-MM-DD` in the teacher's zone and it is the ledger key; `startsAt` is
+  the instant.** Storing only UTC relocates the off-by-one to a third zone wrong for both parties
+  — an 8am Chennai class is 02:30Z, which the student in New York experienced the previous
+  evening. `shared/timezone.ts` does the zone arithmetic through `Intl`; `startOfDayInstant`
+  corrects its offset *twice* because a single pass reads the zone at the wrong instant and lands
+  an hour out around a DST change. The institution holds the zone, because a session's date must
+  be decided before the session row exists.
+- **No index here is sparse, so no composite is optional** (CLAUDE.md rule 9). `groupSessionId` is
+  required and defaults to the row's own id — a solo class is a group of one, which also makes
+  fan-out and solo the same code path. `autoConfirmAt` is required for the same reason.
+  `classSession` carries `status` in two of its three GSI partition keys so the review queue and
+  the cron each read only rows they are about to act on.
+
+Two shapes that look like modelling accidents and are not. A learner is **not a user account** —
+children have no email and one parent manages several, so `classLearnerAccess` maps Google
+accounts to learners, and a young adult gets a *second* row (`self`) beside the guardian's rather
+than a migration. A `self` row may not remove a `guardian` row (`checkRevokeLearnerAccess`),
+because otherwise a fifteen year old locks out the parent who is paying. And a learner on both a
+weekly class and a workshop has **two independent balances**, shown as two cards, never merged.
+
+`classLearner` holds a first name, an optional last initial and a guru-set `isMinor` flag. No DOB,
+photo, address, phone or notes field — India's DPDP Act treats under-18 data as needing verifiable
+parental consent, and the cheapest way to stay clear is to hold nothing. Do not add fields here.
+
+Balances go negative on purpose (`creditBalanceLabel` renders "3 classes over"). A workshop sold
+as ten routinely runs to thirteen, and a tool that blocks the eleventh is one the guru stops
+opening. `nominalCount` is reference only, never a constraint.
+
+Three places the built model departs from the plan document, each for a reason worth keeping:
+`byPending` became `byInstitutionStatus` plus a separate `byDue` (the plan's key was dense over
+every session ever taught, so the queue would read thousands of confirmed rows to find three
+pending ones, and the cron had no way to sweep across institutions); `groupSessionId` and
+`autoConfirmAt` became required; and `classInstitution` gained a `timezone`.
+
 ### Caching a public page (`Cache-Control`)
 
 SST's generated CloudFront server cache policy sets `cookieBehavior: "none"`, so **the session cookie is not part of the cache key**. The root loader puts the signed-in viewer's name and email into every document, so a route that declares a static `public, s-maxage=…` header will have one signed-in viewer's document cached and served to everyone else.
@@ -325,6 +392,8 @@ Always use a subpath export instead:
 | Concert log types | `@rasika/core/domain/concert-log/client` |
 | `GURU_RELATIONSHIPS`, `GURU_RELATIONSHIP_LABELS`, `LINEAGE_RELATIONSHIPS`, `isGuruRelationship`, `CLAIM_SOURCES`, `Credential`, `Work` | `@rasika/core/domain/artist/client` |
 | Pure utilities (completion score, `missingFields`) | `@rasika/core/shared/completion` (or relevant subpath) |
+| Class schemas, enums, `programDisplayTitle`, `creditBalanceLabel`, `expectedCredits`, `checkRevokeLearnerAccess`, `normalizeInviteEmail` | `@rasika/core/domain/class-[name]/client` |
+| `todayInTimeZone`, `dateInTimeZone`, `startOfDayInstant` | `@rasika/core/shared/timezone` |
 
 All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.
 
