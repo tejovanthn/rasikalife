@@ -58,6 +58,27 @@ export const ClassEnrollmentEntity = new Entity(
         required: true,
         default: 0,
       },
+      /**
+       * Two denormalized aggregates, for the roster table's "Last class" and "Last paid"
+       * columns.
+       *
+       * The alternative is two queries per learner on a page that lists all of them — a
+       * twelve-person workshop would be twenty-four reads to render one table. Both are written
+       * where the row they summarise is written, and both are display-only: nothing decides
+       * anything from them, so a stale value costs a wrong date on a screen and never a wrong
+       * credit.
+       *
+       * `lastSessionDate` is the marked date, not the confirmed one — the column asks when the
+       * class was, and a class awaiting confirmation still happened.
+       */
+      lastSessionDate: {
+        type: 'string',
+        required: false,
+      },
+      lastPaidAt: {
+        type: 'string',
+        required: false,
+      },
       status: {
         type: ENROLLMENT_STATUSES,
         required: true,

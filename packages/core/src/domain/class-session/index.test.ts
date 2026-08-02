@@ -22,6 +22,7 @@ vi.mock('../class-enrollment/ledger', () => ({
 
 vi.mock('../class-enrollment', () => ({
   listProgramEnrollments: vi.fn(),
+  touchLastSession: vi.fn(),
 }));
 
 import {
@@ -35,7 +36,7 @@ import {
   markClassSessionAbsent,
   markGroupClassSession,
 } from '.';
-import { listProgramEnrollments } from '../class-enrollment';
+import { listProgramEnrollments, touchLastSession } from '../class-enrollment';
 import { ClassLedgerService } from '../class-enrollment/ledger';
 import { ClassSessionEntity } from './entity';
 
@@ -141,6 +142,20 @@ describe('class-session', () => {
       };
       expect(written.groupSessionId).toBe(written.id);
       expect(written.groupSessionId).toBeTruthy();
+    });
+
+    /**
+     * Display-only, and deliberately outside the create. A failure here leaves the roster's
+     * "Last class" column stale and nothing else — it decides no credit.
+     */
+    it('records the date on the enrollment for the roster column', async () => {
+      vi.mocked(ClassSessionEntity.create).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: {} }),
+      } as never);
+
+      await markClassSession(MARK_INPUT);
+
+      expect(touchLastSession).toHaveBeenCalledWith('prog1', 'learn1', '2026-08-04');
     });
 
     it('keeps the supplied group id when there is one', async () => {

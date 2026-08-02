@@ -10,7 +10,7 @@ import {
   ClassTeacher,
   PrivateImage,
 } from '@rasika/core';
-import { todayInTimeZone } from '@rasika/core/shared/timezone';
+import { addDaysToDate, todayInTimeZone } from '@rasika/core/shared/timezone';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -266,6 +266,13 @@ export const classesRouter = createTRPCRouter({
 
   // ---------------------------------------------------------------- teacher: roster
 
+  /**
+   * The roster table: one row per learner, with the three columns the guru scans.
+   *
+   * `lastSessionDate` and `lastPaidAt` are read off the enrollment rather than derived, so this
+   * is one query for the whole table — the alternative was two per learner, which on a
+   * twelve-person workshop is twenty-four reads to draw one screen.
+   */
   roster: protectedProcedure
     .input(z.object({ programId, activeOnly: z.boolean().default(false) }))
     .query(async ({ ctx, input }) => {
@@ -273,6 +280,44 @@ export const classesRouter = createTRPCRouter({
       return ClassEnrollment.listProgramEnrollments(input.programId, {
         activeOnly: input.activeOnly,
       });
+    }),
+
+  /**
+   * A learner's cards *with* their most recent classes, for the home screen.
+   *
+   * The sections show the last few classes inline, so the common question — "what did we do last
+   * week" — is answered without a navigation. One query per enrollment, and a learner has one or
+   * two.
+   */
+  learnerHomeDetailed: protectedProcedure
+    .input(z.object({ learnerId, recent: z.number().int().min(1).max(20).default(3) }))
+    .query(async ({ ctx, input }) => {
+      await assertClassAccess(ctx, { learnerId: input.learnerId });
+      const enrollments = await ClassEnrollment.listLearnerEnrollments(input.learnerId);
+
+      return Promise.all(
+        enrollments.map(async enrollment => {
+          const [program, sessions, timezone] = await Promise.all([
+            ClassProgram.getClassProgram(enrollment.programId),
+            ClassSession.listLearnerSessions(enrollment.programId, enrollment.learnerId),
+            institutionTimezone(enrollment.institutionId),
+          ]);
+
+          // Per program, because a learner may study under two gurus in two zones — and "today"
+          // is always the teacher's day, never the phone's.
+          const today = todayInTimeZone(timezone);
+
+          return {
+            enrollment,
+            program,
+            total: sessions.length,
+            // Newest first, trimmed — "View all" goes to the full ledger.
+            recent: [...sessions].reverse().slice(0, input.recent),
+            today,
+            earliest: addDaysToDate(today, -31),
+          };
+        })
+      );
     }),
 
   /**
@@ -500,6 +545,11 @@ export const classesRouter = createTRPCRouter({
         learnerId,
         mode: z.enum(ClassProgram.CLASS_MODES).optional(),
         notes: z.string().max(2000).optional(),
+        // Optional, and bounded below. Defaults to today on the teacher's wall.
+        sessionDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -510,7 +560,36 @@ export const classesRouter = createTRPCRouter({
       }
 
       const timezone = await institutionTimezone(actor.institutionId);
-      const sessionDate = todayInTimeZone(timezone);
+      const today = todayInTimeZone(timezone);
+
+      /**
+       * A learner may name an earlier date, within a month, and never a later one.
+       *
+       * This used to be computed server-side full stop, on the reasoning that taking it from the
+       * client lets someone fabricate history. The reasoning was half right: the *future* is
+       * fabrication and stays refused, but "I forgot to mark Tuesday" is the ordinary case and
+       * refusing it made the student's only honest option to mark the wrong day.
+       *
+       * What makes the past safe is the thing that was always there: the row lands `pending` and
+       * the guru sees it in her review queue with the date on it. The bound stops a backdate
+       * reaching a pack she settled months ago; a month is longer than the seven-day
+       * auto-confirm window, so anything older is a conversation rather than a form.
+       */
+      const requested = input.sessionDate ?? today;
+      const earliest = addDaysToDate(today, -31);
+      if (requested > today) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'A class cannot be marked before it has happened',
+        });
+      }
+      if (requested < earliest) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'That is too long ago — ask your guru to add it',
+        });
+      }
+      const sessionDate = requested;
 
       /**
        * One mark per learner per day, returned rather than refused.
@@ -528,8 +607,8 @@ export const classesRouter = createTRPCRouter({
        * A read-then-write, so two genuinely simultaneous taps can still both land. That is a far
        * smaller window than the one it closes, and the guru sees the duplicate in her queue.
        */
-      const today = await ClassSession.listLearnerSessions(input.programId, input.learnerId);
-      const existing = today.find(session => session.sessionDate === sessionDate);
+      const marked = await ClassSession.listLearnerSessions(input.programId, input.learnerId);
+      const existing = marked.find(session => session.sessionDate === sessionDate);
       if (existing) {
         return existing;
       }

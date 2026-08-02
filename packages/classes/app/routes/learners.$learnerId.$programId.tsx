@@ -3,15 +3,18 @@ import { programDisplayTitle } from '@rasika/core/domain/class-program/client';
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   EmptyState,
   Field,
+  Input,
   PageTitle,
   SectionTitle,
+  Table,
+  TableScroll,
+  Td,
   Textarea,
+  Th,
+  Tr,
+  buttonVariants,
 } from '@rasika/ui';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 import {
@@ -25,6 +28,7 @@ import {
 } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { LocalTime } from '~/components/local-time';
+import { ScreenshotField } from '~/components/screenshot-field';
 import { ScreenshotLink } from '~/components/screenshot-link';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
@@ -100,22 +104,53 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const programId = params.programId as string;
   const intent = String(formData.get('intent') ?? '');
 
-  // `institutionId` is deliberately absent: the router derives it from the program, because a
-  // wrong one cancels the transaction in a way that reads as "already confirmed".
-  const ref = {
-    programId,
-    learnerId,
-    sessionDate: String(formData.get('sessionDate') ?? ''),
-    id: String(formData.get('sessionId') ?? ''),
-  };
   const institutionId = String(formData.get('institutionId') ?? '');
   const notes = String(formData.get('notes') ?? '').trim();
 
-  if (!ref.sessionDate || !ref.id) {
-    return data({ error: 'Something was missing. Try again.' }, { status: 400 });
-  }
-
   try {
+    // The guru adding a class the student never marked, and recording a payment. Both used to
+    // live a page away — on the roster, which is where she is *not* looking when she has one
+    // learner's history open in front of her.
+    if (intent === 'add-class') {
+      await trpc.classes.markAttended.mutate({
+        programId,
+        learnerId,
+        sessionDate: String(formData.get('sessionDate') ?? '') || undefined,
+        notes: notes || undefined,
+      });
+      return redirect(`/learners/${learnerId}/${programId}`);
+    }
+
+    if (intent === 'add-payment') {
+      const delta = Number(formData.get('delta'));
+      const reason = String(formData.get('reason') ?? '').trim();
+      const screenshotKey = String(formData.get('screenshotKey') ?? '').trim();
+      if (!Number.isInteger(delta) || delta === 0) {
+        return data({ error: 'Enter a whole number of classes.' }, { status: 400 });
+      }
+      await trpc.classes.grantPack.mutate({
+        programId,
+        learnerId,
+        delta,
+        reason: reason || undefined,
+        screenshotKey: screenshotKey || undefined,
+      });
+      return redirect(`/learners/${learnerId}/${programId}`);
+    }
+
+    // `institutionId` is deliberately absent from the ref: the router derives it from the
+    // program, because a wrong one cancels the transaction in a way that reads as "already
+    // confirmed".
+    const ref = {
+      programId,
+      learnerId,
+      sessionDate: String(formData.get('sessionDate') ?? ''),
+      id: String(formData.get('sessionId') ?? ''),
+    };
+    if (!ref.sessionDate || !ref.id) {
+      return data({ error: 'Something was missing. Try again.' }, { status: 400 });
+    }
+
     if (intent === 'confirm') {
       const [result] = await trpc.classes.confirmSessions.mutate({
         institutionId,
@@ -168,14 +203,13 @@ export default function LearnerLedger() {
           >
             {followsThisLearner ? '← Back' : '← Back to the class'}
           </Link>
-          <PageTitle className="mt-2">
+          <PageTitle className="mt-2">{enrollment.learnerName}</PageTitle>
+          <p className="text-sm text-muted-foreground">
             {programDisplayTitle({
               title: enrollment.programTitle,
               type: enrollment.programType,
-            })}
-          </PageTitle>
-          <p className="text-sm text-muted-foreground">
-            {enrollment.learnerName} · {creditBalanceLabel(enrollment.creditsRemaining)}
+            })}{' '}
+            · {creditBalanceLabel(enrollment.creditsRemaining)}
           </p>
         </div>
 
@@ -186,169 +220,257 @@ export default function LearnerLedger() {
         ) : null}
 
         <section className="space-y-3">
-          <SectionTitle>Classes</SectionTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SectionTitle>Classes</SectionTitle>
+            {isTeacher ? (
+              <a href="#add-class" className={buttonVariants({ variant: 'outline' })}>
+                + Add class
+              </a>
+            ) : null}
+          </div>
+
           {sessions.length === 0 ? (
             <EmptyState title="No classes recorded yet">
               When a class is marked, it appears here with whatever your teacher noted.
             </EmptyState>
           ) : (
-            <ul className="space-y-2">
-              {sessions.map(session => (
-                <li key={session.id}>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <CardTitle as="h3" className="text-base">
-                          {formatSessionDate(session)}
-                        </CardTitle>
-                        <Badge tone={SESSION_STATUS_TONES[session.status]}>
-                          {SESSION_STATUS_LABELS[session.status]}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {modeLabel(session.mode)}
-                        {/* The absolute date, where the review queue gives the relative one.
-                            There the rows are scanned and "in 6 days" triages; here one class is
-                            being read, and the date is what somebody plans around. */}
+            /*
+              A table, so a term of classes reads as a term of classes. As cards it was one
+              screenful per lesson, which made "when did we last do the varnam" a scroll rather
+              than a glance — and the notes are the thing this product exists to keep.
+            */
+            <TableScroll className="rounded-lg border border-border">
+              <Table>
+                <caption className="sr-only">
+                  Classes for {enrollment.learnerName}, newest first.
+                </caption>
+                <thead>
+                  <Tr>
+                    <Th scope="col">Date</Th>
+                    <Th scope="col">Type</Th>
+                    <Th scope="col">Notes</Th>
+                    <Th scope="col" className="text-right">
+                      {isTeacher ? 'Actions' : 'Status'}
+                    </Th>
+                  </Tr>
+                </thead>
+                <tbody>
+                  {sessions.map(session => (
+                    <Tr key={session.id}>
+                      <Td className="whitespace-nowrap align-top">
+                        <LocalTime fallback={formatSessionDateStable(session)}>
+                          {() => formatSessionDate(session)}
+                        </LocalTime>
                         {session.status === 'pending' && session.autoConfirmAt ? (
-                          <>
-                            {' · '}
-                            <LocalTime fallback="confirms automatically in a few days">
+                          <span className="block text-xs text-muted-foreground">
+                            <LocalTime fallback="confirms automatically soon">
                               {() => autoConfirmOnLabel(session.autoConfirmAt)}
                             </LocalTime>
-                          </>
+                          </span>
                         ) : null}
-                      </p>
-                    </CardHeader>
-                    {/* The notes are the point of the whole product — what the learner still
-                        reads two years later — so they are body text, not a tooltip. */}
-                    {session.notes ? (
-                      <CardContent className="pt-0 text-sm">{session.notes}</CardContent>
-                    ) : null}
-
-                    {/*
-                      Only for a teacher, and only while there is something to settle. A
-                      confirmed class is terminal, so a control that reopened it would be
-                      offering to rewrite a ledger entry rather than to make one.
-
-                      `<details>` rather than three buttons on every row: the guru's default
-                      action here is still to do nothing, exactly as in the review queue, and a
-                      history page that shouts at her about every class is one she reads less.
-                    */}
-                    {isTeacher && session.status === 'pending' ? (
-                      <CardContent className="pt-0">
-                        <details className="rounded-md border border-border p-3">
-                          <summary className="min-h-tap cursor-pointer text-sm font-medium">
-                            Confirm or dispute
-                          </summary>
-                          <Form method="post" className="mt-3 space-y-3">
-                            <input type="hidden" name="sessionId" value={session.id} />
-                            <input type="hidden" name="sessionDate" value={session.sessionDate} />
-                            <input
-                              type="hidden"
-                              name="institutionId"
-                              value={enrollment.institutionId}
-                            />
-
-                            <Field
-                              label="What you covered"
-                              htmlFor={`notes-${session.id}`}
-                              hint="Optional. Your student reads this later."
-                            >
-                              <Textarea id={`notes-${session.id}`} name="notes" rows={3} />
-                            </Field>
-
-                            <Button
-                              type="submit"
-                              name="intent"
-                              value="confirm"
-                              size="wide"
-                              pending={pending}
-                              pendingLabel="Confirming…"
-                            >
-                              Confirm
-                            </Button>
-
-                            {/* As prominent as confirm, because confirm is the thing that
-                                happens by itself. The only reason to open this is to stop it. */}
-                            <div className="flex gap-2">
-                              <Button
-                                type="submit"
-                                name="intent"
-                                value="absent"
-                                variant="outline"
-                                className="flex-1"
-                                pending={pending}
-                              >
-                                Did not attend
-                              </Button>
-                              <Button
-                                type="submit"
-                                name="intent"
-                                value="dispute"
-                                variant="destructive"
-                                className="flex-1"
-                                pending={pending}
-                              >
-                                Did not happen
-                              </Button>
-                            </div>
-                          </Form>
-                        </details>
-                      </CardContent>
-                    ) : null}
-                  </Card>
-                </li>
-              ))}
-            </ul>
+                      </Td>
+                      <Td className="whitespace-nowrap align-top text-muted-foreground">
+                        {modeLabel(session.mode)}
+                      </Td>
+                      {/* The widest column and the only one allowed to wrap: the note is the
+                          durable value here, not the metadata around it. */}
+                      <Td className="w-full align-top">{session.notes || '—'}</Td>
+                      <Td className="align-top text-right">
+                        {isTeacher && session.status === 'pending' ? (
+                          <SettleSession
+                            session={session}
+                            institutionId={enrollment.institutionId}
+                            pending={pending}
+                          />
+                        ) : (
+                          <Badge tone={SESSION_STATUS_TONES[session.status]}>
+                            {SESSION_STATUS_LABELS[session.status]}
+                          </Badge>
+                        )}
+                      </Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
+            </TableScroll>
           )}
         </section>
 
         <section className="space-y-3">
-          <SectionTitle>Payments</SectionTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SectionTitle>Payments</SectionTitle>
+            {isTeacher ? (
+              <a href="#add-payment" className={buttonVariants({ variant: 'outline' })}>
+                + Add payment
+              </a>
+            ) : null}
+          </div>
+
           {packs.length === 0 ? (
             <EmptyState title="No packs yet">
               Classes bought in advance show up here, with the screenshot where there is one.
             </EmptyState>
           ) : (
-            <ul className="space-y-2">
-              {packs.map(pack => (
-                <li key={pack.id}>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <CardTitle as="h3" className="text-base">
-                          {pack.delta > 0 ? `+${pack.delta}` : pack.delta}{' '}
-                          {Math.abs(pack.delta) === 1 ? 'class' : 'classes'}
-                        </CardTitle>
-                        <span className="text-sm text-muted-foreground">
-                          <LocalTime fallback={formatInstantStable(pack.createdAt)}>
-                            {() => formatInstant(pack.createdAt)}
-                          </LocalTime>
-                        </span>
-                      </div>
+            <TableScroll className="rounded-lg border border-border">
+              <Table>
+                <caption className="sr-only">
+                  Payments for {enrollment.learnerName}, newest first.
+                </caption>
+                <thead>
+                  <Tr>
+                    <Th scope="col">Date</Th>
+                    <Th scope="col" className="text-right">
+                      Classes
+                    </Th>
+                    <Th scope="col">Note</Th>
+                    <Th scope="col">Screenshot</Th>
+                  </Tr>
+                </thead>
+                <tbody>
+                  {packs.map(pack => (
+                    <Tr key={pack.id}>
+                      <Td className="whitespace-nowrap align-top text-muted-foreground">
+                        <LocalTime fallback={formatInstantStable(pack.createdAt)}>
+                          {() => formatInstant(pack.createdAt)}
+                        </LocalTime>
+                      </Td>
+                      <Td className="whitespace-nowrap text-right align-top tabular-nums font-medium">
+                        {pack.delta > 0 ? `+${pack.delta}` : pack.delta}
+                      </Td>
                       {/* A correction always carries its reason. That is the whole argument for
                           an append-only ledger: "why do I have seven credits" stays answerable. */}
-                      {pack.reason ? (
-                        <p className="text-sm text-muted-foreground">{pack.reason}</p>
-                      ) : null}
-                    </CardHeader>
-                    {pack.screenshotKey ? (
-                      <CardContent className="pt-0">
-                        <ScreenshotLink
-                          programId={programId}
-                          learnerId={learnerId}
-                          packId={pack.id}
-                        />
-                      </CardContent>
-                    ) : null}
-                  </Card>
-                </li>
-              ))}
-            </ul>
+                      <Td className="w-full align-top">{pack.reason || '—'}</Td>
+                      <Td className="align-top">
+                        {pack.screenshotKey ? (
+                          <ScreenshotLink
+                            programId={programId}
+                            learnerId={learnerId}
+                            packId={pack.id}
+                          />
+                        ) : (
+                          '—'
+                        )}
+                      </Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
+            </TableScroll>
           )}
         </section>
+
+        {isTeacher ? (
+          <>
+            <details id="add-class" className="rounded-lg border border-border p-4">
+              <summary className="min-h-tap cursor-pointer font-medium">Add a class</summary>
+              <Form method="post" className="mt-4 space-y-4">
+                <input type="hidden" name="intent" value="add-class" />
+                <Field
+                  label="Date"
+                  htmlFor="add-class-date"
+                  hint="Leave blank for today. A class cannot be added before it has happened."
+                >
+                  <Input id="add-class-date" name="sessionDate" type="date" />
+                </Field>
+                <Field label="What you covered" htmlFor="add-class-notes" hint="Optional.">
+                  <Textarea id="add-class-notes" name="notes" rows={3} />
+                </Field>
+                <Button type="submit" size="wide" pending={pending}>
+                  Add class
+                </Button>
+              </Form>
+            </details>
+
+            <details id="add-payment" className="rounded-lg border border-border p-4">
+              <summary className="min-h-tap cursor-pointer font-medium">Record a payment</summary>
+              <Form method="post" className="mt-4 space-y-4">
+                <input type="hidden" name="intent" value="add-payment" />
+                <input type="hidden" name="institutionId" value={enrollment.institutionId} />
+                <Field
+                  label="Classes"
+                  htmlFor="delta"
+                  hint="A negative number corrects a mistake, and then a reason is required."
+                >
+                  <Input
+                    id="delta"
+                    name="delta"
+                    type="number"
+                    inputMode="numeric"
+                    defaultValue={8}
+                  />
+                </Field>
+                <Field label="Note" htmlFor="reason">
+                  <Input id="reason" name="reason" placeholder="e.g. paid by UPI" />
+                </Field>
+                <ScreenshotField institutionId={enrollment.institutionId} />
+                <Button type="submit" size="wide" pending={pending}>
+                  Record
+                </Button>
+              </Form>
+            </details>
+          </>
+        ) : null}
       </div>
     </Chrome>
+  );
+}
+
+/**
+ * The inline settle control, in the Actions column.
+ *
+ * A disclosure rather than three buttons per row: her default action is still to do nothing —
+ * everything here auto-confirms — and a table that shouts on every row is one she reads less.
+ */
+function SettleSession({
+  session,
+  institutionId,
+  pending,
+}: {
+  session: { id: string; sessionDate: string };
+  institutionId: string;
+  pending: boolean;
+}) {
+  return (
+    <details className="text-left">
+      <summary className="inline-flex min-h-tap cursor-pointer items-center text-sm text-primary underline">
+        Settle
+      </summary>
+      <Form method="post" className="mt-2 space-y-2">
+        <input type="hidden" name="sessionId" value={session.id} />
+        <input type="hidden" name="sessionDate" value={session.sessionDate} />
+        <input type="hidden" name="institutionId" value={institutionId} />
+        <Textarea
+          name="notes"
+          rows={2}
+          aria-label="What you covered"
+          placeholder="What you covered (optional)"
+        />
+        <Button type="submit" name="intent" value="confirm" size="wide" pending={pending}>
+          Confirm
+        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="submit"
+            name="intent"
+            value="absent"
+            variant="outline"
+            className="flex-1"
+            pending={pending}
+          >
+            Did not attend
+          </Button>
+          <Button
+            type="submit"
+            name="intent"
+            value="dispute"
+            variant="destructive"
+            className="flex-1"
+            pending={pending}
+          >
+            Did not happen
+          </Button>
+        </div>
+      </Form>
+    </details>
   );
 }

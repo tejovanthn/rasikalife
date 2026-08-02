@@ -120,7 +120,18 @@ export default function Roster() {
       }
     >
       <div className="space-y-5">
-        <PageTitle>Students</PageTitle>
+        {/*
+          Tiles, not cards. A class is a thing you open — the per-class settings that used to be
+          spelled out under each name (weekly · in person · missed classes are counted) belong on
+          the class itself, where they are edited, not repeated down a list you are scanning to
+          find one name.
+        */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <PageTitle>Classes</PageTitle>
+          <a href="#add-class" className={buttonVariants({ variant: 'outline' })}>
+            + Add class
+          </a>
+        </div>
 
         {actionData && 'error' in actionData && actionData.error ? (
           <p className="text-sm text-destructive" role="alert">
@@ -130,52 +141,30 @@ export default function Roster() {
 
         {/*
           §A5: an institution with zero programs, reachable by abandoning onboarding at step 2.
-          The roster must not render blank — the thing to do next is right here, so this points at
-          the form below rather than sending them back through /welcome, which would refuse them
-          anyway now that they have an institution.
+          The roster must not render blank — the thing to do next is right here.
         */}
         {programs.length === 0 ? (
           <EmptyState title="No classes set up yet">
             Add your first class below. A weekly one-to-one needs no name.
           </EmptyState>
         ) : (
-          <ul className="space-y-3">
+          <ul className="flex flex-wrap gap-3">
             {programs.map(program => (
               <li key={program.id}>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <CardTitle className="text-base">{programDisplayTitle(program)}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        {program.isGroup ? <Badge>Group</Badge> : null}
-                        {program.archivedAt ? <Badge tone="neutral">Archived</Badge> : null}
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {program.type === 'workshop' ? 'Workshop' : 'Weekly'} ·{' '}
-                      {program.defaultMode === 'online' ? 'Online' : 'In person'} ·{' '}
-                      {program.skipPolicy === 'burn'
-                        ? 'missed classes are counted'
-                        : 'missed classes are not counted'}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                    <Link
-                      to={`/teaching/${program.id}`}
-                      className={buttonVariants({ variant: 'outline' })}
-                    >
-                      Open
-                    </Link>
-                    <Form method="post">
-                      <input type="hidden" name="intent" value="archive" />
-                      <input type="hidden" name="programId" value={program.id} />
-                      <input type="hidden" name="archived" value={program.archivedAt ? '0' : '1'} />
-                      <Button type="submit" variant="ghost">
-                        {program.archivedAt ? 'Unarchive' : 'Archive'}
-                      </Button>
-                    </Form>
-                  </CardContent>
-                </Card>
+                {/* The whole tile is the link. A single "Open" button inside a card meant two
+                    targets for one intent, and the smaller of them was the real one. */}
+                <Link
+                  to={`/teaching/${program.id}`}
+                  className="flex min-h-tap min-w-[12rem] flex-col justify-between gap-2 rounded-lg border border-border bg-card p-4 text-card-foreground no-underline hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <span className="font-semibold leading-tight">
+                    {programDisplayTitle(program)}
+                  </span>
+                  <span className="flex flex-wrap items-center gap-2">
+                    {program.isGroup ? <Badge>Group</Badge> : null}
+                    {program.archivedAt ? <Badge tone="neutral">Archived</Badge> : null}
+                  </span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -188,7 +177,7 @@ export default function Roster() {
           </Button>
         </Form>
 
-        <details className="rounded-lg border border-border p-4">
+        <details id="add-class" className="rounded-lg border border-border p-4">
           {/* `<details>` rather than a state toggle, so the form is reachable before hydration
               and the page does not open with a wall of inputs. */}
           <summary className="min-h-tap cursor-pointer font-medium">Add a class</summary>

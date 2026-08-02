@@ -40,6 +40,9 @@ export async function grantClassPack(
         // moment produce both packs rather than one, and it treats a missing attribute as
         // zero rather than failing.
         .add({ creditsRemaining: input.delta })
+        // Free: the transaction already writes this row. Only a real payment moves the column,
+        // so a correction does not read as "paid today".
+        .set(input.delta > 0 ? { lastPaidAt: pack.createdAt } : {})
         .commit(),
     ])
     .go();

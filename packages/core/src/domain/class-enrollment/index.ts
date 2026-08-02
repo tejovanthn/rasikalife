@@ -48,6 +48,28 @@ export async function listLearnerEnrollments(learnerId: string): Promise<ClassEn
   return (result.data as ClassEnrollment[]) ?? [];
 }
 
+/**
+ * Records when a class was last marked, for the roster table's "Last class" column.
+ *
+ * A separate write from the session itself rather than a transaction: this is display-only, so a
+ * failure here costs a stale date on a screen and never a wrong credit. Guarded so a backdated
+ * mark cannot pull the column *backwards* — a student catching up on last Tuesday should not make
+ * the roster claim nothing has happened since.
+ */
+export async function touchLastSession(
+  programId: string,
+  learnerId: string,
+  sessionDate: string
+): Promise<void> {
+  const enrollment = await getEnrollment(programId, learnerId);
+  if (!enrollment || (enrollment.lastSessionDate ?? '') >= sessionDate) {
+    return;
+  }
+  await ClassEnrollmentEntity.patch({ programId, learnerId })
+    .set({ lastSessionDate: sessionDate })
+    .go();
+}
+
 export async function setEnrollmentStatus(
   programId: string,
   learnerId: string,

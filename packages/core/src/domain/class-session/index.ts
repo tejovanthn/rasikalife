@@ -1,6 +1,6 @@
 import { addDaysToDate, startOfDayInstant } from '../../shared/timezone';
 import { generateId } from '../../utils';
-import { listProgramEnrollments } from '../class-enrollment';
+import { listProgramEnrollments, touchLastSession } from '../class-enrollment';
 import { ClassLedgerService } from '../class-enrollment/ledger';
 import { isConditionalFailure, rejectedIndices } from '../class-enrollment/outcome';
 import type { LedgerOutcome } from '../class-enrollment/outcome';
@@ -78,6 +78,11 @@ export async function markClassSession(input: MarkClassSessionInput): Promise<Cl
     markedBy: input.markedBy,
     autoConfirmAt: autoConfirmDeadline(input.sessionDate, input.timezone),
   }).go();
+
+  // Display-only, and deliberately not part of the create: a failure here leaves a stale column
+  // on the roster and nothing else.
+  await touchLastSession(input.programId, input.learnerId, input.sessionDate);
+
   return result.data as ClassSession;
 }
 

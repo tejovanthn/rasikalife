@@ -3,17 +3,17 @@ import { programDisplayTitle } from '@rasika/core/domain/class-program/client';
 import {
   Badge,
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   EmptyState,
   Field,
   Input,
   PageTitle,
   SectionTitle,
-  Select,
+  Table,
+  TableScroll,
+  Td,
   Textarea,
+  Th,
+  Tr,
   buttonVariants,
 } from '@rasika/ui';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
@@ -27,9 +27,15 @@ import {
   useNavigation,
 } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
-import { ScreenshotField } from '~/components/screenshot-field';
+import { LocalTime } from '~/components/local-time';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
+import {
+  formatDay,
+  formatInstant,
+  formatInstantStable,
+  formatSessionDateStable,
+} from '~/lib/format';
 import { pageMeta } from '~/lib/meta';
 
 export const meta = () => pageMeta('Class');
@@ -80,21 +86,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
       return redirect(`/teaching/${programId}`);
     }
 
-    if (intent === 'grant-pack') {
-      const delta = Number(formData.get('delta'));
-      const reason = String(formData.get('reason') ?? '').trim();
-      const screenshotKey = String(formData.get('screenshotKey') ?? '').trim();
-      if (!Number.isInteger(delta) || delta === 0) {
-        return data({ error: 'Enter a whole number of classes.' }, { status: 400 });
-      }
-      await trpc.classes.grantPack.mutate({
+    if (intent === 'archive') {
+      await trpc.classes.archiveProgram.mutate({
         programId,
-        learnerId: String(formData.get('learnerId') ?? ''),
-        delta,
-        reason: reason || undefined,
-        screenshotKey: screenshotKey || undefined,
+        archived: formData.get('archived') === '1',
       });
-      return redirect(`/teaching/${programId}`);
+      return redirect(formData.get('archived') === '1' ? '/teaching' : `/teaching/${programId}`);
     }
 
     if (intent === 'group-session') {
@@ -115,10 +112,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ProgramRoster() {
-  const { contexts, institution, program, roster } = useLoaderData<typeof loader>();
+  const { contexts, program, roster } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const pending = navigation.state === 'submitting';
+  const active = roster.filter(row => row.status === 'active');
 
   return (
     <Chrome isTeacher isLearner={contexts.learners.length > 0} headerRight={<SignOutButton />}>
@@ -127,10 +125,26 @@ export default function ProgramRoster() {
           <Link to="/teaching" className="text-sm text-primary underline">
             ← All classes
           </Link>
-          <PageTitle className="mt-2">{programDisplayTitle(program)}</PageTitle>
-          <p className="text-sm text-muted-foreground">
-            {roster.length} {roster.length === 1 ? 'student' : 'students'}
-          </p>
+          <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <PageTitle>{programDisplayTitle(program)}</PageTitle>
+              <p className="text-sm text-muted-foreground">
+                {program.type === 'workshop' ? 'Workshop' : 'Weekly'} ·{' '}
+                {program.defaultMode === 'online' ? 'Online' : 'In person'} ·{' '}
+                {program.skipPolicy === 'burn'
+                  ? 'missed classes are counted'
+                  : 'missed classes are not counted'}
+              </p>
+            </div>
+            {/* Archiving belongs to the class, not to a row in a list of classes. */}
+            <Form method="post">
+              <input type="hidden" name="intent" value="archive" />
+              <input type="hidden" name="archived" value={program.archivedAt ? '0' : '1'} />
+              <Button type="submit" variant="ghost">
+                {program.archivedAt ? 'Unarchive' : 'Archive'}
+              </Button>
+            </Form>
+          </div>
         </div>
 
         {actionData && 'error' in actionData && actionData.error ? (
@@ -146,102 +160,116 @@ export default function ProgramRoster() {
             </summary>
             <Form method="post" className="mt-4 space-y-4">
               <input type="hidden" name="intent" value="group-session" />
-              <Field
-                label="What you covered"
-                htmlFor="notes"
-                hint="Optional here. You will be asked for it again when you confirm."
-              >
+              <Field label="What you covered" htmlFor="notes" hint="Optional.">
                 <Textarea id="notes" name="notes" rows={3} />
               </Field>
               <Button type="submit" size="wide" pending={pending}>
-                Mark for all {roster.filter(r => r.status === 'active').length} students
+                Mark for all {active.length} students
               </Button>
             </Form>
           </details>
         ) : null}
 
         <section className="space-y-3">
-          <SectionTitle>Students</SectionTitle>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SectionTitle>Students</SectionTitle>
+            <a href="#add-student" className={buttonVariants({ variant: 'outline' })}>
+              + Add student
+            </a>
+          </div>
+
           {roster.length === 0 ? (
             <EmptyState title="Nobody on this class yet">
               Add a student below. They get access when they sign in with the email you give.
             </EmptyState>
           ) : (
-            <ul className="space-y-3">
-              {roster.map(enrollment => (
-                <li key={enrollment.learnerId}>
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <CardTitle as="h3" className="text-base">
+            /*
+              A table, because the guru is comparing rows: who has run out, who has not paid, who
+              has not been in for a fortnight. Cards put one learner per screenful and made every
+              one of those questions a scroll.
+
+              `TableScroll` is what keeps a wide table from scrolling the document sideways — on
+              iOS that drags the whole app shell, not just the table.
+            */
+            <TableScroll className="rounded-lg border border-border">
+              <Table>
+                <caption className="sr-only">
+                  Students on {programDisplayTitle(program)}. Each row opens that student's history.
+                </caption>
+                <thead>
+                  <Tr>
+                    <Th scope="col">Name</Th>
+                    <Th scope="col">Last class</Th>
+                    <Th scope="col">Last paid</Th>
+                    <Th scope="col" className="text-right">
+                      Left
+                    </Th>
+                  </Tr>
+                </thead>
+                <tbody>
+                  {roster.map(enrollment => (
+                    <Tr key={enrollment.learnerId} className="hover:bg-accent/40">
+                      <Td>
+                        {/*
+                          The link is on the name rather than the row. A whole `<tr>` cannot be an
+                          anchor without either nesting one per cell — which reads as four links to
+                          a screen reader — or faking it with JavaScript, which kills middle-click
+                          and copy-link. One clear target, padded to a real tap size.
+                        */}
+                        <Link
+                          to={`/learners/${enrollment.learnerId}/${program.id}`}
+                          className="flex min-h-tap items-center font-medium text-primary underline"
+                        >
                           {enrollment.learnerName}
-                        </CardTitle>
-                        {enrollment.status === 'ended' ? <Badge>Left</Badge> : null}
-                      </div>
-                      <p
-                        className={
-                          isLowBalance(enrollment.creditsRemaining)
-                            ? 'text-sm font-medium text-destructive'
-                            : 'text-sm text-muted-foreground'
-                        }
-                      >
-                        {creditBalanceLabel(enrollment.creditsRemaining)}
-                      </p>
-                    </CardHeader>
-                    <CardContent className="space-y-3 pt-0">
-                      <Link
-                        to={`/learners/${enrollment.learnerId}/${program.id}`}
-                        className={buttonVariants({ variant: 'outline' })}
-                      >
-                        History
-                      </Link>
-
-                      <details className="rounded-md border border-border p-3">
-                        <summary className="min-h-tap cursor-pointer text-sm font-medium">
-                          Record a payment
-                        </summary>
-                        <Form method="post" className="mt-3 space-y-3">
-                          <input type="hidden" name="intent" value="grant-pack" />
-                          <input type="hidden" name="learnerId" value={enrollment.learnerId} />
-
-                          <Field
-                            label="Classes"
-                            htmlFor={`delta-${enrollment.learnerId}`}
-                            hint="A negative number corrects a mistake, and then a reason is required."
+                        </Link>
+                        {enrollment.status === 'ended' ? (
+                          <Badge className="ml-2">Left</Badge>
+                        ) : null}
+                      </Td>
+                      <Td className="text-muted-foreground">
+                        {enrollment.lastSessionDate ? (
+                          <LocalTime
+                            fallback={formatSessionDateStable({
+                              sessionDate: enrollment.lastSessionDate,
+                            })}
                           >
-                            <Input
-                              id={`delta-${enrollment.learnerId}`}
-                              name="delta"
-                              type="number"
-                              inputMode="numeric"
-                              defaultValue={program.defaultPackSize ?? 8}
-                            />
-                          </Field>
-
-                          <Field label="Note" htmlFor={`reason-${enrollment.learnerId}`}>
-                            <Input
-                              id={`reason-${enrollment.learnerId}`}
-                              name="reason"
-                              placeholder="e.g. paid by UPI"
-                            />
-                          </Field>
-
-                          <ScreenshotField institutionId={institution.id} />
-
-                          <Button type="submit" size="wide" pending={pending}>
-                            Record
-                          </Button>
-                        </Form>
-                      </details>
-                    </CardContent>
-                  </Card>
-                </li>
-              ))}
-            </ul>
+                            {() => formatDay(enrollment.lastSessionDate as string)}
+                          </LocalTime>
+                        ) : (
+                          '—'
+                        )}
+                      </Td>
+                      <Td className="text-muted-foreground">
+                        {enrollment.lastPaidAt ? (
+                          <LocalTime fallback={formatInstantStable(enrollment.lastPaidAt)}>
+                            {() => formatInstant(enrollment.lastPaidAt as string)}
+                          </LocalTime>
+                        ) : (
+                          '—'
+                        )}
+                      </Td>
+                      <Td
+                        className={`text-right tabular-nums ${
+                          isLowBalance(enrollment.creditsRemaining)
+                            ? 'font-medium text-destructive'
+                            : ''
+                        }`}
+                      >
+                        {/* The number, with the words only where they change meaning — a
+                            negative balance is "over", not minus three. */}
+                        {enrollment.creditsRemaining < 0
+                          ? creditBalanceLabel(enrollment.creditsRemaining)
+                          : enrollment.creditsRemaining}
+                      </Td>
+                    </Tr>
+                  ))}
+                </tbody>
+              </Table>
+            </TableScroll>
           )}
         </section>
 
-        <details className="rounded-lg border border-border p-4">
+        <details id="add-student" className="rounded-lg border border-border p-4">
           <summary className="min-h-tap cursor-pointer font-medium">Add a student</summary>
           <Form method="post" className="mt-4 space-y-4">
             <input type="hidden" name="intent" value="add-learner" />

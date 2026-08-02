@@ -445,6 +445,27 @@ would have to land on `/teaching` and bounce — the exact flash the same paragr
 teach?" screen for ever. `institutionName` is denormalized onto it because the context switcher
 renders it on every page load; `cascadeInstitutionNameUpdate` is the obligation that buys.
 
+**The guru's screens are tables; the learner's are sections.** A guru is comparing rows — who has
+run out, who has not paid, who has not been in for a fortnight — and cards put one learner per
+screenful, making every one of those a scroll. So `/teaching` is tiles, `/teaching/:id` is a
+roster table (name, last class, last paid, left), and the ledger is two tables with the settle
+control inline. `packages/ui`'s `TableScroll` is not optional on any of them: without it a wide
+table scrolls the *document* sideways, which on iOS drags the whole app shell. The learner's home
+is the other shape — one section per program with its last few classes inline, because "what did
+we do last week" is what a student opens the app for and it used to be a navigation away.
+
+**`classEnrollment.lastSessionDate` / `lastPaidAt` are display-only.** They exist so the roster
+table is one query rather than two per learner, they are written where the row they summarise is
+written, and nothing decides anything from them — a stale value costs a wrong date on a screen,
+never a wrong credit.
+
+**A learner may backdate a mark by up to a month, and never into the future.** `markAttended` used
+to compute the date server-side and refuse a client one, which is right about the future and wrong
+about the past: "I forgot to mark Tuesday" is the ordinary case, and refusing it left marking the
+wrong day as the student's only option. What makes the past safe is the review queue — the row
+lands `pending` with its date on it and the guru decides. The bound is longer than the seven-day
+auto-confirm window, so anything older is a conversation rather than a form.
+
 **Session notes are optional for everyone**, including the guru confirming. They were required
 of a person once, on the reasoning that the note is the durable value of the product — still
 true, and still the wrong trade: a required field on a Sunday-evening catch-up buys "ok" and

@@ -1,23 +1,21 @@
 import { creditBalanceLabel, isLowBalance } from '@rasika/core/domain/class-enrollment/client';
 import { programDisplayTitle } from '@rasika/core/domain/class-program/client';
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  EmptyState,
-  PageTitle,
-  buttonVariants,
-} from '@rasika/ui';
+import { Badge, EmptyState, PageTitle, SectionTitle, buttonVariants } from '@rasika/ui';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
-import { Form, Link, data, redirect, useLoaderData, useNavigation } from 'react-router';
+import { Link, data, redirect, useActionData, useLoaderData } from 'react-router';
+import { AddClassDialog } from '~/components/add-class-dialog';
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { ContextSwitcher } from '~/components/context-switcher';
 import { InstallPrompt } from '~/components/install-prompt';
+import { LocalTime } from '~/components/local-time';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser, requireUserId } from '~/lib/auth.server';
+import {
+  SESSION_STATUS_LABELS,
+  SESSION_STATUS_TONES,
+  formatSessionDate,
+  formatSessionDateStable,
+} from '~/lib/format';
 import { pageMeta } from '~/lib/meta';
 
 export const meta = () => pageMeta('My classes');
@@ -35,7 +33,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const requested = url.searchParams.get('learner');
   const active = learners.find(l => l.id === requested) ?? learners[0] ?? null;
 
-  const cards = active ? await trpc.classes.learnerHome.query({ learnerId: active.id }) : [];
+  const cards = active
+    ? await trpc.classes.learnerHomeDetailed.query({ learnerId: active.id, recent: 3 })
+    : [];
 
   return data({ user, contexts, learners, active, cards });
 }
@@ -54,9 +54,15 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    // No date is sent. `sessionDate` is computed server-side in the teacher's zone — a student
-    // in California pressing this at 9pm Monday is marking the teacher's Tuesday.
-    await trpc.classes.markAttended.mutate({ programId, learnerId });
+    // A date is optional and bounded server-side: never the future, never over a month back.
+    // Omitted, it is today on the *teacher's* wall — a student in California pressing this at
+    // 9pm Monday is marking the teacher's Tuesday.
+    await trpc.classes.markAttended.mutate({
+      programId,
+      learnerId,
+      sessionDate: String(formData.get('sessionDate') ?? '') || undefined,
+      notes: String(formData.get('notes') ?? '').trim() || undefined,
+    });
   } catch (error) {
     return data(
       { error: error instanceof Error ? error.message : 'Could not mark that class' },
@@ -72,7 +78,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function StudentHome() {
   const { user, contexts, learners, active, cards } = useLoaderData<typeof loader>();
-  const navigation = useNavigation();
+  const actionData = useActionData<typeof action>();
   const isTeacher = contexts.teaching.length > 0;
 
   /**
@@ -117,66 +123,103 @@ export default function StudentHome() {
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="space-y-6">
         <PageTitle>{active ? active.name : 'My classes'}</PageTitle>
+
+        {actionData && 'error' in actionData && actionData.error ? (
+          <p className="text-sm text-destructive" role="alert">
+            {actionData.error}
+          </p>
+        ) : null}
 
         {cards.length === 0 ? (
           <EmptyState title="No programs yet">
             {active?.name} is not on a program yet. Your teacher adds one when classes start.
           </EmptyState>
         ) : (
-          <ul className="space-y-3">
-            {cards.map(({ enrollment, program }) => (
-              <li key={enrollment.programId}>
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle>
-                        {programDisplayTitle({
-                          title: enrollment.programTitle,
-                          type: enrollment.programType,
-                        })}
-                      </CardTitle>
-                      {program?.archivedAt ? <Badge>Ended</Badge> : null}
-                    </div>
-                    <p
-                      className={
-                        isLowBalance(enrollment.creditsRemaining)
-                          ? 'text-sm font-medium text-destructive'
-                          : 'text-sm text-muted-foreground'
-                      }
-                    >
-                      {creditBalanceLabel(enrollment.creditsRemaining)}
-                    </p>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                    {/* An archived program keeps every note it ever held — that is the durable
-                        value of this product — but nothing new can be marked against it. */}
-                    {enrollment.status === 'active' && !program?.archivedAt ? (
-                      <Form method="post">
-                        <input type="hidden" name="programId" value={enrollment.programId} />
-                        <input type="hidden" name="learnerId" value={enrollment.learnerId} />
-                        <Button
-                          type="submit"
-                          pending={navigation.state === 'submitting'}
-                          pendingLabel="Marking…"
+          /*
+            One open section per program, with the last few classes in it.
+            
+            The card used to be a balance and two buttons, so "what did we do last week" — the
+            question a student actually opens this for — was always one navigation away. The
+            notes are the durable value of the product; they belong on the first screen.
+          */
+          <ul className="space-y-4">
+            {cards.map(({ enrollment, program, recent, total, today, earliest }) => {
+              const title = programDisplayTitle({
+                title: enrollment.programTitle,
+                type: enrollment.programType,
+              });
+              const closed = enrollment.status !== 'active' || Boolean(program?.archivedAt);
+
+              return (
+                <li key={enrollment.programId}>
+                  <section className="rounded-lg border border-border">
+                    <div className="flex flex-wrap items-start justify-between gap-3 p-4 pb-2">
+                      <div>
+                        <SectionTitle>{title}</SectionTitle>
+                        <p
+                          className={
+                            isLowBalance(enrollment.creditsRemaining)
+                              ? 'text-sm font-medium text-destructive'
+                              : 'text-sm text-muted-foreground'
+                          }
                         >
-                          I attended today
-                        </Button>
-                      </Form>
-                    ) : null}
-                    {/* A real link wearing the button's classes, not a button that navigates:
-                        it opens in a new tab, it can be copied, and it works before hydration. */}
-                    <Link
-                      to={`/learners/${enrollment.learnerId}/${enrollment.programId}`}
-                      className={buttonVariants({ variant: 'outline' })}
-                    >
-                      History
-                    </Link>
-                  </CardContent>
-                </Card>
-              </li>
-            ))}
+                          {creditBalanceLabel(enrollment.creditsRemaining)}
+                          {closed ? ' · ended' : ''}
+                        </p>
+                      </div>
+                      {/* An archived program keeps every note it ever held — that is the durable
+                          value of this product — but nothing new can be marked against it. */}
+                      {closed ? null : (
+                        <AddClassDialog
+                          programId={enrollment.programId}
+                          learnerId={enrollment.learnerId}
+                          programTitle={title}
+                          today={today}
+                          earliest={earliest}
+                        />
+                      )}
+                    </div>
+
+                    {recent.length === 0 ? (
+                      <p className="px-4 pb-4 text-sm text-muted-foreground">
+                        No classes recorded yet.
+                      </p>
+                    ) : (
+                      <ul className="divide-y divide-border border-t border-border">
+                        {recent.map(session => (
+                          <li key={session.id} className="px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-medium">
+                                <LocalTime fallback={formatSessionDateStable(session)}>
+                                  {() => formatSessionDate(session)}
+                                </LocalTime>
+                              </span>
+                              <Badge tone={SESSION_STATUS_TONES[session.status]}>
+                                {SESSION_STATUS_LABELS[session.status]}
+                              </Badge>
+                            </div>
+                            {session.notes ? (
+                              <p className="mt-1 text-sm text-muted-foreground">{session.notes}</p>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="border-t border-border p-3">
+                      <Link
+                        to={`/learners/${enrollment.learnerId}/${enrollment.programId}`}
+                        className="text-sm text-primary underline"
+                      >
+                        View all{total > recent.length ? ` ${total} classes` : ''} and payments
+                      </Link>
+                    </div>
+                  </section>
+                </li>
+              );
+            })}
           </ul>
         )}
 

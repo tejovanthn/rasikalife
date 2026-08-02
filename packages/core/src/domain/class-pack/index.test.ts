@@ -32,6 +32,7 @@ function transactionEntities() {
   const pack = { create: vi.fn().mockReturnValue({ commit: vi.fn() }) };
   const enrollmentChain: Record<string, unknown> = { commit: vi.fn() };
   enrollmentChain.add = vi.fn().mockReturnValue(enrollmentChain);
+  enrollmentChain.set = vi.fn().mockReturnValue(enrollmentChain);
   const enrollment = { patch: vi.fn().mockReturnValue(enrollmentChain) };
 
   const build = vi.mocked(ClassLedgerService.transaction.write).mock.calls[0]?.[0] as (
@@ -71,6 +72,9 @@ describe('class-pack', () => {
      * `add`, not `set`. An atomic ADD is what makes two gurus granting packs at the same moment
      * produce both packs rather than one, and non-negotiable 5 forbids assigning the number at
      * all — it is a denormalized sum, not a field.
+     *
+     * The chain does call `.set` now, for the display-only `lastPaidAt`, so the assertion is
+     * about the *attribute* rather than the method: nothing may ever assign `creditsRemaining`.
      */
     it('never assigns the balance, only adds to it', async () => {
       transactionResolves({ canceled: false, data: [] });
@@ -78,7 +82,24 @@ describe('class-pack', () => {
       await grantClassPack(INPUT);
 
       const { enrollmentChain } = transactionEntities();
-      expect(enrollmentChain).not.toHaveProperty('set');
+      expect(enrollmentChain.add).toHaveBeenCalledWith({ creditsRemaining: 8 });
+      for (const call of vi.mocked(enrollmentChain.set as never).mock.calls) {
+        expect(call[0]).not.toHaveProperty('creditsRemaining');
+      }
+    });
+
+    // A correction is not a payment, so it must not move the roster's "Last paid" column.
+    it('stamps lastPaidAt for a payment and not for a correction', async () => {
+      transactionResolves({ canceled: false, data: [] });
+      await grantClassPack(INPUT);
+      expect(transactionEntities().enrollmentChain.set).toHaveBeenCalledWith(
+        expect.objectContaining({ lastPaidAt: expect.any(String) })
+      );
+
+      vi.clearAllMocks();
+      transactionResolves({ canceled: false, data: [] });
+      await grantClassPack({ ...INPUT, delta: -2, reason: 'Counted twice' });
+      expect(transactionEntities().enrollmentChain.set).toHaveBeenCalledWith({});
     });
 
     it('carries a negative delta through as a correction', async () => {
