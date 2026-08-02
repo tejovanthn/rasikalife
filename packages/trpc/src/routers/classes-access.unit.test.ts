@@ -15,16 +15,8 @@ vi.mock('@rasika/core', () => ({
   deleteItem: vi.fn(),
   ClassProgram: { getClassProgram: vi.fn() },
   ClassLearner: { getClassLearner: vi.fn() },
-  ClassInstitution: {
-    getClassInstitution: vi.fn(),
-    // The real predicate, not a stub: it is half of what is under test.
-    isInstitutionTeacher: (
-      institution: { ownerUserId: string; teacherIds?: string[] },
-      userId: string
-    ) =>
-      Boolean(userId) &&
-      (institution.ownerUserId === userId || (institution.teacherIds ?? []).includes(userId)),
-  },
+  ClassInstitution: { getClassInstitution: vi.fn() },
+  ClassTeacher: { isClassTeacher: vi.fn() },
   ClassLearnerAccess: { hasLearnerAccess: vi.fn() },
   ClassEnrollment: { getEnrollment: vi.fn() },
 }));
@@ -35,6 +27,7 @@ import {
   ClassLearner,
   ClassLearnerAccess,
   ClassProgram,
+  ClassTeacher,
 } from '@rasika/core';
 import { assertClassAccess, assertEnrollmentAccess, assertTeacher } from './classes-access';
 
@@ -42,12 +35,17 @@ const TEACHER = { user: { id: 'guru' } };
 const PARENT = { user: { id: 'parent' } };
 const STRANGER = { user: { id: 'stranger' } };
 
-const institution = { id: 'inst1', ownerUserId: 'guru', teacherIds: ['guru'] };
+const institution = { id: 'inst1', ownerUserId: 'guru' };
+
+/** A teacher row exists for `guru` at `inst1`, and for nobody else. */
+const onlyGuruTeaches = (institutionId: string, userId: string) =>
+  Promise.resolve(institutionId === 'inst1' && userId === 'guru');
 
 describe('assertClassAccess', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(ClassInstitution.getClassInstitution).mockResolvedValue(institution as never);
+    vi.mocked(ClassTeacher.isClassTeacher).mockImplementation(onlyGuruTeaches as never);
     vi.mocked(ClassProgram.getClassProgram).mockResolvedValue({
       id: 'prog1',
       institutionId: 'inst1',
@@ -59,6 +57,10 @@ describe('assertClassAccess', () => {
     vi.mocked(ClassLearnerAccess.hasLearnerAccess).mockResolvedValue(false);
   });
 
+  /**
+   * Resolved from the `classTeacher` junction, not from ownership. A co-teacher owns nothing, and
+   * checking `byOwner` alone would refuse them everywhere.
+   */
   it('lets a teacher in on any handle', async () => {
     await expect(assertClassAccess(TEACHER, { institutionId: 'inst1' })).resolves.toEqual({
       kind: 'teacher',
@@ -132,11 +134,28 @@ describe('assertClassAccess', () => {
     await expect(assertClassAccess(TEACHER, {})).rejects.toThrow();
   });
 
-  it('resolves the institution from the program, not from the caller', async () => {
+  /**
+   * The teacher check has to run against the institution the *program* belongs to. Running it
+   * against anything the caller supplied is how a write lands somewhere the check never looked.
+   */
+  it('checks teaching against the institution the program belongs to', async () => {
     await assertClassAccess(TEACHER, { programId: 'prog1' });
 
     expect(ClassProgram.getClassProgram).toHaveBeenCalledWith('prog1');
-    expect(ClassInstitution.getClassInstitution).toHaveBeenCalledWith('inst1');
+    expect(ClassTeacher.isClassTeacher).toHaveBeenCalledWith('inst1', 'guru');
+  });
+
+  /**
+   * A bogus institutionId now reads as FORBIDDEN rather than NOT_FOUND, because the teacher check
+   * is a junction lookup and never loads the institution. That is the better answer anyway: an
+   * id nobody may touch should not report whether it exists.
+   */
+  it('refuses an institution that does not exist without disclosing that', async () => {
+    vi.mocked(ClassTeacher.isClassTeacher).mockResolvedValue(false);
+
+    await expect(assertClassAccess(TEACHER, { institutionId: 'nope' })).rejects.toThrow(
+      /do not have access/
+    );
   });
 });
 
@@ -144,6 +163,7 @@ describe('assertTeacher', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(ClassInstitution.getClassInstitution).mockResolvedValue(institution as never);
+    vi.mocked(ClassTeacher.isClassTeacher).mockImplementation(onlyGuruTeaches as never);
     vi.mocked(ClassLearner.getClassLearner).mockResolvedValue({
       id: 'learn1',
       institutionId: 'inst1',
@@ -163,12 +183,26 @@ describe('assertTeacher', () => {
 
     await expect(assertTeacher(PARENT, { learnerId: 'learn1' })).rejects.toThrow();
   });
+
+  /**
+   * §A5: a teacher added to an institution they do not own. `byOwner` finds nothing for them, so
+   * only the junction can answer — which is the whole reason it replaced a list attribute.
+   */
+  it('admits a teacher who owns nothing', async () => {
+    vi.mocked(ClassTeacher.isClassTeacher).mockResolvedValue(true);
+
+    await expect(assertTeacher(STRANGER, { institutionId: 'inst1' })).resolves.toMatchObject({
+      kind: 'teacher',
+      userId: 'stranger',
+    });
+  });
 });
 
 describe('assertEnrollmentAccess', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(ClassInstitution.getClassInstitution).mockResolvedValue(institution as never);
+    vi.mocked(ClassTeacher.isClassTeacher).mockImplementation(onlyGuruTeaches as never);
     vi.mocked(ClassProgram.getClassProgram).mockResolvedValue({
       id: 'prog1',
       institutionId: 'inst1',

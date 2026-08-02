@@ -151,6 +151,11 @@
       "import": "./src/domain/class-institution/client.ts",
       "default": "./src/domain/class-institution/client.ts"
     },
+    "./domain/class-teacher/client": {
+      "types": "./src/domain/class-teacher/client.ts",
+      "import": "./src/domain/class-teacher/client.ts",
+      "default": "./src/domain/class-teacher/client.ts"
+    },
     "./domain/class-program/client": {
       "types": "./src/domain/class-program/client.ts",
       "import": "./src/domain/class-program/client.ts",

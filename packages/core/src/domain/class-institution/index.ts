@@ -1,9 +1,25 @@
 import { generateId } from '../../utils';
-import { isInstitutionTeacher } from './access';
+import {
+  addClassTeacher,
+  cascadeInstitutionNameUpdate,
+  isClassTeacher,
+  removeClassTeacher,
+} from '../class-teacher';
 import { ClassInstitutionEntity } from './entity';
 import type { ClassInstitution } from './entity';
 import type { CreateClassInstitutionInput, UpdateClassInstitutionInput } from './schema';
 
+/**
+ * Creates the institution **and** the owner's teacher row, in that order.
+ *
+ * Not a transaction, deliberately: the two rows are in different partitions and the failure mode
+ * is recoverable and visible. An institution with no teacher row belongs to nobody, so its owner
+ * lands back on the "do you teach?" screen and creating again is idempotent from their side —
+ * `createClassInstitution` is only reached through a path that first checks they own none.
+ *
+ * The reverse order would be worse: a teacher row pointing at an institution that does not exist
+ * would put a phantom entry in the context switcher that navigates to a 404.
+ */
 export async function createClassInstitution(
   input: CreateClassInstitutionInput
 ): Promise<ClassInstitution> {
@@ -12,12 +28,18 @@ export async function createClassInstitution(
     name: input.name,
     ownerUserId: input.ownerUserId,
     timezone: input.timezone,
-    // The owner is seeded into the teacher list rather than being checked separately on every
-    // authorisation call. One list to read means one thing to get wrong, and a substitute
-    // teacher added later is then indistinguishable from the owner at the point of use.
-    teacherIds: [input.ownerUserId],
   }).go();
-  return result.data as ClassInstitution;
+
+  const institution = result.data as ClassInstitution;
+
+  await addClassTeacher({
+    institutionId: institution.id,
+    userId: input.ownerUserId,
+    institutionName: institution.name,
+    role: 'owner',
+  });
+
+  return institution;
 }
 
 export async function getClassInstitution(id: string): Promise<ClassInstitution | null> {
@@ -31,10 +53,10 @@ export async function listInstitutionsByOwner(ownerUserId: string): Promise<Clas
 }
 
 /**
- * The guru's first write to anything creates their institution behind their back.
+ * Idempotent provisioning, used by any teaching write that must not fail on a missing record.
  *
- * Onboarding a guru is "add your first student", not "set up your organisation". The MVP UI
- * never mentions the word, so nothing may ever block on it existing.
+ * `createInstitution` in the router is the deliberate, named path a guru takes through
+ * onboarding and refuses a second institution; this is the safety net underneath it.
  */
 export async function ensureClassInstitution(input: {
   ownerUserId: string;
@@ -58,7 +80,15 @@ export async function updateClassInstitution(
   input: UpdateClassInstitutionInput
 ): Promise<ClassInstitution | null> {
   const result = await ClassInstitutionEntity.patch({ id }).set(input).go({ response: 'all_new' });
-  return (result.data as ClassInstitution) ?? null;
+  const institution = (result.data as ClassInstitution) ?? null;
+
+  // The context switcher renders the denormalized name on every page load, so a rename that
+  // stopped here would show the old one to every teacher until they were re-added.
+  if (institution && input.name !== undefined) {
+    await cascadeInstitutionNameUpdate(id, institution.name);
+  }
+
+  return institution;
 }
 
 export async function addInstitutionTeacher(
@@ -69,17 +99,36 @@ export async function addInstitutionTeacher(
   if (!institution) {
     return null;
   }
-  if (isInstitutionTeacher(institution, userId)) {
+  if (await isClassTeacher(id, userId)) {
     return institution;
   }
-  const result = await ClassInstitutionEntity.patch({ id })
-    .append({ teacherIds: [userId] })
-    .go({ response: 'all_new' });
-  return (result.data as ClassInstitution) ?? null;
+  await addClassTeacher({
+    institutionId: id,
+    userId,
+    institutionName: institution.name,
+    role: 'teacher',
+  });
+  return institution;
 }
 
-export { isInstitutionTeacher } from './access';
-export type { ClassInstitutionRef } from './access';
+/**
+ * Removing the owner is refused rather than allowed and repaired.
+ *
+ * An institution whose owner cannot reach it has a credit ledger nobody can correct, and there
+ * is no ownership-transfer path yet to fix it with.
+ */
+export async function removeInstitutionTeacher(
+  id: string,
+  userId: string
+): Promise<{ removed: boolean; reason?: 'owner' }> {
+  const institution = await getClassInstitution(id);
+  if (institution?.ownerUserId === userId) {
+    return { removed: false, reason: 'owner' };
+  }
+  await removeClassTeacher(id, userId);
+  return { removed: true };
+}
+
 export { ClassInstitutionEntity } from './entity';
 export type { ClassInstitution } from './entity';
 export { CreateClassInstitutionSchema, UpdateClassInstitutionSchema } from './schema';

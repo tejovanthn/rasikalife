@@ -27,6 +27,7 @@ export * as ConcertLog from './domain/concert-log';
 export * as ConcertLogItem from './domain/concert-log-item';
 export * as EventSetlist from './domain/event-setlist';
 export * as ClassInstitution from './domain/class-institution';
+export * as ClassTeacher from './domain/class-teacher';
 export * as ClassProgram from './domain/class-program';
 export * as ClassLearner from './domain/class-learner';
 export * as ClassLearnerAccess from './domain/class-learner-access';

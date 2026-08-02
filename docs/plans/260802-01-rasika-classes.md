@@ -712,3 +712,60 @@ Code-complete does not mean live. In order:
    auth in the browser and deep-link back.
 5. **Replace the placeholder icons.** `packages/classes/scripts/generate-icons.mjs` holds one SVG;
    swap the mark and run `pnpm icons`.
+
+---
+
+# Addendum A: Guru onboarding and context resolution
+
+Built 2026-08-02, on top of phases 1–9 and before any deploy. §A6 (backfill) was skipped — the
+repo owner confirmed no data exists.
+
+## What landed
+
+| § | Built |
+|---|---|
+| A1 | `classes.getMyContexts`, `/` as a server-side resolver, `/home`, `/teaching`, permanent 301s from `/students` and `/students/:programId` |
+| A2 | `ContextSwitcher` — one control merging teaching contexts and learner profiles, hidden below two contexts |
+| A3 | `/welcome/teaching`, three resumable steps, one mutation each; `classes.createInstitution` and `classes.onboardingState` |
+| A4 | `/welcome` chooser, with the learner side a deliberate dead end showing their signed-in address |
+| A5 | Every case handled; see below for the one that changed the schema |
+| A7 | Thirteen tests in `packages/classes/app/lib/context.test.ts`, covering the whole matrix |
+
+## Two departures from the addendum
+
+**1. `teacherIds` is gone, replaced by a `classTeacher` junction.**
+
+§A1 says "both queries use indexes that already exist". That is true of `byOwner` and false of the
+other half: `teacherIds` was a **list attribute** on `classInstitution`, and DynamoDB cannot index
+one. So "which institutions does this user teach at" was answerable only by a table scan — and
+§A5's non-owner teacher, whom `byOwner` never returns, would have landed on `/welcome` for ever.
+
+Keeping the list *and* adding a junction was the other option and is worse: two sources of truth
+for who may write to a credit ledger, drifting the first time one is updated without the other.
+With no data to migrate, replacement was free.
+
+The junction mirrors `classLearnerAccess` exactly — same problem, same shape. It also made
+`assertClassAccess` cheaper: a GetItem on a small row, where it used to load the whole institution
+to read a list off it. One consequence worth knowing: a bogus `institutionId` now returns
+`FORBIDDEN` rather than `NOT_FOUND`, because nothing loads the institution any more. That is the
+better answer anyway — an id nobody may touch should not report whether it exists.
+
+**2. Last-used context is a cookie, not `localStorage`.**
+
+§A1 asks for two things that cannot both hold with `localStorage`: resolve server-side and
+redirect, *and* send a both-contexts user to their last used learner. The server cannot read
+`localStorage`, so that version must land on `/teaching` first and bounce — which is exactly the
+flash of the wrong context the same paragraph forbids, and worst on the PWA cold start it names as
+the common entry.
+
+A cookie is server-readable, so the redirect is one hop and always right. It is not a field on the
+shared `user` entity, which is what §A1 actually rules out.
+
+## Also changed
+
+The stopgap "Do you teach?" button on the student home, added the day before this addendum, is
+gone. Onboarding lives at `/welcome` and nowhere else — two front doors would have drifted.
+
+`removeInstitutionTeacher` refuses to remove an owner. An institution whose owner cannot reach it
+has a ledger nobody can correct, and ownership transfer is deferred (§A8) so there would be no way
+to repair it.

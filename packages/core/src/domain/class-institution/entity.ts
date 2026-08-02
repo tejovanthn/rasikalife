@@ -11,8 +11,9 @@ import { dynamoClient } from '../../db/client';
  * stand-in would either be free or need a second ledger. So credits belong here, and
  * `classSession.teacherId` records who actually took the class.
  *
- * `teacherIds` is the authorisation list. It always includes the owner — `createClassInstitution`
- * seeds it, rather than every read having to remember to check `ownerUserId` as a special case.
+ * Who may teach here lives in the `classTeacher` junction, not in a list attribute on this row.
+ * A list cannot be indexed, and the context resolver has to answer "which institutions does this
+ * user teach at" on every page load — see that entity for the whole argument.
  *
  * `timezone` is the guru's zone and it is the source of every `sessionDate`. It lives here
  * rather than on the program because a session's date has to be decided before the session
@@ -37,12 +38,6 @@ export const ClassInstitutionEntity = new Entity(
       ownerUserId: {
         type: 'string',
         required: true,
-      },
-      teacherIds: {
-        type: 'list',
-        items: { type: 'string' },
-        required: true,
-        default: () => [],
       },
       timezone: {
         type: 'string',

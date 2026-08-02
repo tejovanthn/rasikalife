@@ -9,12 +9,20 @@ vi.mock('./entity', () => ({
   },
 }));
 
+vi.mock('../class-teacher', () => ({
+  addClassTeacher: vi.fn(),
+  isClassTeacher: vi.fn(),
+  removeClassTeacher: vi.fn(),
+  cascadeInstitutionNameUpdate: vi.fn(),
+}));
+
 import {
   addInstitutionTeacher,
   createClassInstitution,
   ensureClassInstitution,
-  isInstitutionTeacher,
+  removeInstitutionTeacher,
 } from '.';
+import { addClassTeacher, isClassTeacher } from '../class-teacher';
 import { ClassInstitutionEntity } from './entity';
 
 function goResolves(data: unknown) {
@@ -28,12 +36,14 @@ describe('class-institution', () => {
 
   describe('createClassInstitution', () => {
     /**
-     * One list to read means one thing to get wrong. A substitute teacher added later is then
-     * indistinguishable from the owner at the point of use, which is the whole reason credits
-     * belong to an institution rather than to a guru.
+     * The institution and the owner's teacher row are one act. Without the second, the
+     * institution belongs to nobody: `assertClassAccess` reads the junction and so does the
+     * context resolver, so its owner would be locked out of their own ledger.
      */
-    it('seeds the owner into the teacher list', async () => {
-      vi.mocked(ClassInstitutionEntity.create).mockReturnValue(goResolves({}) as never);
+    it('writes the owner a teacher row', async () => {
+      vi.mocked(ClassInstitutionEntity.create).mockReturnValue(
+        goResolves({ id: 'inst1', name: 'Smt Radha' }) as never
+      );
 
       await createClassInstitution({
         name: 'Smt Radha',
@@ -41,9 +51,36 @@ describe('class-institution', () => {
         timezone: 'Asia/Kolkata',
       });
 
-      expect(ClassInstitutionEntity.create).toHaveBeenCalledWith(
-        expect.objectContaining({ ownerUserId: 'user9', teacherIds: ['user9'] })
-      );
+      expect(addClassTeacher).toHaveBeenCalledWith({
+        institutionId: 'inst1',
+        userId: 'user9',
+        institutionName: 'Smt Radha',
+        role: 'owner',
+      });
+    });
+
+    // Institution first. The reverse order would leave a teacher row pointing at nothing, which
+    // is a phantom entry in the context switcher that navigates to a 404.
+    it('creates the institution before the teacher row', async () => {
+      const order: string[] = [];
+      vi.mocked(ClassInstitutionEntity.create).mockReturnValue({
+        go: vi.fn().mockImplementation(async () => {
+          order.push('institution');
+          return { data: { id: 'inst1', name: 'Smt Radha' } };
+        }),
+      } as never);
+      vi.mocked(addClassTeacher).mockImplementation(async () => {
+        order.push('teacher');
+        return {} as never;
+      });
+
+      await createClassInstitution({
+        name: 'Smt Radha',
+        ownerUserId: 'user9',
+        timezone: 'Asia/Kolkata',
+      });
+
+      expect(order).toEqual(['institution', 'teacher']);
     });
   });
 
@@ -85,55 +122,56 @@ describe('class-institution', () => {
   });
 
   describe('addInstitutionTeacher', () => {
-    it('appends a teacher', async () => {
+    it('writes a junction row carrying the institution name', async () => {
       vi.mocked(ClassInstitutionEntity.get).mockReturnValue(
-        goResolves({ id: 'inst1', ownerUserId: 'user9', teacherIds: ['user9'] }) as never
+        goResolves({ id: 'inst1', ownerUserId: 'user9', name: 'Smt Radha' }) as never
       );
-      const chain: Record<string, unknown> = { go: vi.fn().mockResolvedValue({ data: {} }) };
-      chain.append = vi.fn().mockReturnValue(chain);
-      vi.mocked(ClassInstitutionEntity.patch).mockReturnValue(chain as never);
+      vi.mocked(isClassTeacher).mockResolvedValue(false);
 
       await addInstitutionTeacher('inst1', 'sub1');
 
-      expect(chain.append).toHaveBeenCalledWith({ teacherIds: ['sub1'] });
+      expect(addClassTeacher).toHaveBeenCalledWith({
+        institutionId: 'inst1',
+        userId: 'sub1',
+        institutionName: 'Smt Radha',
+        role: 'teacher',
+      });
     });
 
     it('does nothing when they are already a teacher', async () => {
       vi.mocked(ClassInstitutionEntity.get).mockReturnValue(
-        goResolves({ id: 'inst1', ownerUserId: 'user9', teacherIds: ['user9', 'sub1'] }) as never
+        goResolves({ id: 'inst1', ownerUserId: 'user9', name: 'Smt Radha' }) as never
       );
+      vi.mocked(isClassTeacher).mockResolvedValue(true);
 
       await addInstitutionTeacher('inst1', 'sub1');
 
-      expect(ClassInstitutionEntity.patch).not.toHaveBeenCalled();
+      expect(addClassTeacher).not.toHaveBeenCalled();
     });
-  });
-});
-
-describe('isInstitutionTeacher', () => {
-  const institution = { ownerUserId: 'user9', teacherIds: ['user9', 'sub1'] };
-
-  it('is true for anyone on the list', () => {
-    expect(isInstitutionTeacher(institution, 'user9')).toBe(true);
-    expect(isInstitutionTeacher(institution, 'sub1')).toBe(true);
-  });
-
-  it('is false for anyone else', () => {
-    expect(isInstitutionTeacher(institution, 'stranger')).toBe(false);
   });
 
   /**
-   * A row written before the list was seeded, or one whose list a form rebuilt, must not lock
-   * the owner out of their own institution.
+   * An institution whose owner cannot reach it has a credit ledger nobody can correct, and there
+   * is no ownership-transfer path yet to fix it with. Refused rather than allowed and repaired.
    */
-  it('is true for the owner even when the list has lost them', () => {
-    expect(isInstitutionTeacher({ ownerUserId: 'user9', teacherIds: [] }, 'user9')).toBe(true);
-    expect(isInstitutionTeacher({ ownerUserId: 'user9' }, 'user9')).toBe(true);
-  });
+  describe('removeInstitutionTeacher', () => {
+    it('refuses to remove the owner', async () => {
+      vi.mocked(ClassInstitutionEntity.get).mockReturnValue(
+        goResolves({ id: 'inst1', ownerUserId: 'user9' }) as never
+      );
 
-  // A blank id must never read as "matches everything" — CLAUDE.md rule 9's failure mode,
-  // applied to an in-memory check rather than an index.
-  it('is false for a blank user id', () => {
-    expect(isInstitutionTeacher({ ownerUserId: '', teacherIds: [] }, '')).toBe(false);
+      expect(await removeInstitutionTeacher('inst1', 'user9')).toEqual({
+        removed: false,
+        reason: 'owner',
+      });
+    });
+
+    it('removes anybody else', async () => {
+      vi.mocked(ClassInstitutionEntity.get).mockReturnValue(
+        goResolves({ id: 'inst1', ownerUserId: 'user9' }) as never
+      );
+
+      expect(await removeInstitutionTeacher('inst1', 'sub1')).toEqual({ removed: true });
+    });
   });
 });

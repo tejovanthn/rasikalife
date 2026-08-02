@@ -4,14 +4,15 @@ import {
   ClassLearner,
   ClassLearnerAccess,
   ClassProgram,
+  ClassTeacher,
 } from '@rasika/core';
 import { TRPCError } from '@trpc/server';
 
 /**
  * The one authorisation helper every class procedure goes through.
  *
- * Two ways in and no third. A **teacher** is on the institution's `teacherIds` and may read and
- * write everything under it. A **learner viewer** holds a `classLearnerAccess` row for the
+ * Two ways in and no third. A **teacher** holds a `classTeacher` row for the institution and may
+ * read and write everything under it. A **learner viewer** holds a `classLearnerAccess` row for the
  * target learner and may read that learner's own rows, mark a class attended, and write notes on
  * it. Anything else is `FORBIDDEN`.
  *
@@ -90,12 +91,9 @@ export async function assertClassAccess(
   const userId = ctx.user.id;
   const institutionId = await resolveInstitutionId(target);
 
-  const institution = await ClassInstitution.getClassInstitution(institutionId);
-  if (!institution) {
-    notFound('Institution');
-  }
-
-  if (ClassInstitution.isInstitutionTeacher(institution, userId)) {
+  // A GetItem on the junction row, where this used to load the whole institution to read a list
+  // attribute off it. Cheaper, and it is the same lookup the learner branch below makes.
+  if (await ClassTeacher.isClassTeacher(institutionId, userId)) {
     return { kind: 'teacher', userId, institutionId };
   }
 

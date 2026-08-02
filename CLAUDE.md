@@ -362,8 +362,8 @@ wearing the same clothes. Changing the secret signs everybody out of both at onc
 
 - **Authorisation is membership, never role.** A student signs in with Google and stays `editor`,
   the ordinary default. `assertClassAccess` (`packages/trpc/src/routers/classes-access.ts`) is
-  the single gate: a teacher is on the institution's `teacherIds`; a learner viewer holds a
-  `classLearnerAccess` row for the named learner. A learner viewer is **never** admitted on a
+  the single gate: a teacher holds a `classTeacher` row for the institution; a learner viewer
+  holds a `classLearnerAccess` row for the named learner. A learner viewer is **never** admitted on a
   `programId` alone — a program is a roster, so that would hand one family another's notes. The
   institution is resolved *from* whichever handle was passed, and a supplied `institutionId` that
   disagrees is refused rather than ignored: the mismatched pair is exactly what an attacker sends
@@ -393,6 +393,31 @@ wearing the same clothes. Changing the secret signs everybody out of both at onc
   lose the conditional-transition race, and there is nothing honest to show the student then.
 - **PWA icons are placeholders.** `pnpm icons` in `packages/classes` regenerates the whole set
   from one SVG in `scripts/generate-icons.mjs`; swap the mark when real brand assets arrive.
+
+**A person here may teach, learn, or both**, and that is the ordinary case rather than an edge —
+gurus study under a senior vidwan for decades while running their own class. Role is a property of
+a *relationship*, so it can be neither a field on the user nor a separate subdomain. `/` is a
+**resolver**: it reads `classes.getMyContexts`, redirects server-side, and renders nothing. Doing
+it on the server matters because the manifest's `start_url` is `/`, so it runs on every cold start
+from the installed icon, where a flash of the wrong context reads as breakage. `app/lib/context.ts`
+holds the pure table and is tested against the §A7 matrix directly.
+
+The last-used context is a **cookie** (`rl_ctx_v1`), not `localStorage`, which is a departure from
+§A1 and the reason is in that file: the server cannot read `localStorage`, so a both-contexts user
+would have to land on `/teaching` and bounce — the exact flash the same paragraph forbids.
+
+**Who may teach lives in the `classTeacher` junction, not a list attribute.** It replaced
+`classInstitution.teacherIds`, which could not answer "which institutions does this user teach at"
+— a list is not indexable, so a co-teacher who owns nothing would have been sent to the "do you
+teach?" screen for ever. `institutionName` is denormalized onto it because the context switcher
+renders it on every page load; `cascadeInstitutionNameUpdate` is the obligation that buys.
+
+**Guru onboarding is `/welcome/teaching`, three steps, one mutation each** — never one submit at
+the end. Which step to show is read from the records (`classes.onboardingState`), not from a
+progress flag, so abandoning halfway resumes rather than restarting. **Learners have no
+onboarding and must never self-provision**: a `classLearner` with no institution has no guru to
+confirm sessions and no source of credits, and there is no merge tooling to clean up the orphan.
+`/welcome` shows them their signed-in address to forward instead.
 
 Payment screenshots use `PrivateImage` (`domain/image/private-s3.ts`), a separate namespace from
 `Image` on purpose — different bucket, no CDN, and it returns a **key** rather than a URL, so

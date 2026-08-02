@@ -37,10 +37,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
   const trpc = await createServerClient(request);
 
-  const institution = await trpc.classes.myInstitution.query();
-  if (!institution) {
-    throw new Response('Not found', { status: 404 });
+  const contexts = await trpc.classes.getMyContexts.query();
+  const teaching = contexts.teaching[0] ?? null;
+  if (!teaching) {
+    // Back to the resolver rather than a 404: somebody who is a learner here has a real place to
+    // be, and this URL is reachable from a stale bookmark after a context changes.
+    return redirect('/');
   }
+  const institution = { id: teaching.institutionId };
 
   const [pending, programs] = await Promise.all([
     trpc.classes.reviewQueue.query({ institutionId: institution.id }),
@@ -52,7 +56,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const groups = groupSessions(pending);
   const titles = Object.fromEntries(programs.map(p => [p.id, programDisplayTitle(p)]));
 
-  return data({ institution, groups, titles });
+  return data({ contexts, institution, groups, titles });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -140,14 +144,19 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function ReviewQueue() {
-  const { institution, groups, titles } = useLoaderData<typeof loader>();
+  const { contexts, institution, groups, titles } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const pending = navigation.state === 'submitting';
   const total = groups.reduce((sum, group) => sum + group.sessions.length, 0);
 
   return (
-    <Chrome title="Review" isTeacher headerRight={<SignOutButton />}>
+    <Chrome
+      title="Review"
+      isTeacher
+      isLearner={contexts.learners.length > 0}
+      headerRight={<SignOutButton />}
+    >
       <div className="space-y-5">
         <div>
           <PageTitle>Review</PageTitle>

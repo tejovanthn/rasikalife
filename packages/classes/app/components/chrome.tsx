@@ -5,18 +5,23 @@ import { Form, Link, useLocation } from 'react-router';
 /**
  * The app's frame.
  *
- * The tab bar renders **only** when the signed-in user actually teaches. Most people here are
- * parents with one child and one card, and a "Students" tab they can never open is worse than
- * no tab bar at all. `isTeacher` comes from whether they own an institution, not from a role.
+ * The tab bar renders only for someone who teaches, and its "My classes" tab only when they also
+ * learn. Most people here are parents with one child and one card; a tab bar with one tab is
+ * furniture, and a tab they can never open is worse than none.
+ *
+ * Both facts come from `getMyContexts`, never from a role — a guru is frequently also a learner,
+ * so this is a property of what they have, not of who they are.
  */
 export function Chrome({
   title,
   isTeacher,
+  isLearner,
   headerRight,
   children,
 }: {
   title: ReactNode;
   isTeacher?: boolean;
+  isLearner?: boolean;
   headerRight?: ReactNode;
   children: ReactNode;
 }) {
@@ -29,8 +34,10 @@ export function Chrome({
       nav={
         isTeacher ? (
           <>
-            <NavLink to="/" label="My classes" active={pathname === '/'} />
-            <NavLink to="/students" label="Students" active={pathname.startsWith('/students')} />
+            {isLearner ? (
+              <NavLink to="/home" label="My classes" active={pathname.startsWith('/home')} />
+            ) : null}
+            <NavLink to="/teaching" label="Students" active={pathname.startsWith('/teaching')} />
             <NavLink to="/review" label="Review" active={pathname.startsWith('/review')} />
           </>
         ) : null

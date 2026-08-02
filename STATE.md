@@ -18,12 +18,22 @@ leaving the user signed out on return. It is the one thing in this project that 
 without a device and a deploy. Fallback if it breaks: complete auth in the browser and deep-link
 back.
 
-What landed: eight `class-*` domains and `shared/timezone.ts` in core; a private `ClassUploads`
+What landed: nine `class-*` domains and `shared/timezone.ts` in core; a private `ClassUploads`
 bucket with `PrivateImage` presigning; a `classes` tRPC router behind one `assertClassAccess`;
 invite claiming hooked into the sign-in issuer; `packages/ui` (shared Tailwind preset, tokens,
 primitives) and `packages/classes` (React Router v7 PWA); student and guru screens including the
 review queue; manifest, placeholder icons and a hand-written service worker; and a daily
-auto-confirm cron. 187 new tests.
+auto-confirm cron.
+
+**Addendum A** then added the piece the MVP plan had no path for: a guru with nothing set up. `/`
+is now a server-side **context resolver** — a person here may teach, learn, or both, and that is
+the ordinary case rather than an edge. `/welcome` chooses, `/welcome/teaching` is three resumable
+steps, `/students` moved to `/teaching` behind a permanent redirect, and a context switcher merges
+teaching and children into one control. Two departures from the addendum are written up in its own
+section of the plan: `teacherIds` became a `classTeacher` junction (a list attribute cannot be
+indexed, so a co-teacher could never have been resolved), and last-used context is a cookie rather
+than `localStorage` (the server cannot read `localStorage`, and the addendum forbids the bounce
+that would follow). 218 new tests.
 
 **One change touches the live main site.** `rasika_session` now carries an explicit `Domain`. The
 plan claimed this was already true and verified — it was not, the cookie was host-only, and shared
@@ -368,10 +378,10 @@ Raised, judged real, not yet done:
 
 Re-measured 2026-07-30 at the end of the bio-structuring work. All failures below are pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate. **The previously recorded core and web test counts were stale** (758 and 111); the numbers here were measured, and the pre-work figures were verified by running the same suites in a worktree at HEAD.
 
-- `packages/core`: **1068 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD, and again on a clean tree 2026-08-02); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 899 before Rasika Classes; +169 for the eight `class-*` domains, `shared/timezone.ts`, the invite claim and the auto-confirm sweep. Before the bio work it was 795.
-- `packages/classes`: **5 tests pass**, typecheck clean, `pnpm build` succeeds. Tests run under `TZ=America/New_York` deliberately — that is the zone where the date-only rendering bug would show.
+- `packages/core`: **1074 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD, and again on a clean tree 2026-08-02); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 899 before Rasika Classes; +175 for the nine `class-*` domains, `shared/timezone.ts`, the invite claim, the auto-confirm sweep and the teacher junction. Before the bio work it was 795.
+- `packages/classes`: **18 tests pass**, typecheck clean, `pnpm build` succeeds. Tests run under `TZ=America/New_York` deliberately — that is the zone where the date-only rendering bug would show.
 - `packages/ui`: typecheck clean, no tests of its own (the token-drift assertion lives in web, which already has the CSS-parsing machinery).
-- `packages/trpc`: **13 unit tests pass** via `pnpm test:unit` (no AWS needed). `pnpm test` is still the integration suite and still needs `sst shell`. 0 own typecheck errors.
+- `packages/trpc`: **15 unit tests pass** via `pnpm test:unit` (no AWS needed). `pnpm test` is still the integration suite and still needs `sst shell`. 0 own typecheck errors.
 - `packages/web`: **166 tests pass, 14 files** (was 151; +5 for `token-drift.test.ts`, +10 elsewhere). `pnpm build` verified after the session-cookie change.
 - `packages/web`: **151 tests pass, 12 files** (was 137). +14 for `readRepeatedRows` and `affiliationPeriod`. Typecheck errors sit in **8 files**, unchanged by this work and none in artist, organiser or gallery files: `api.server.ts`, `lib/auth.server.ts`, `$artform.events.tsx`, four `carnatic.*` routes, `events.new_.api.tsx`, `moderator.request-deletion.tsx`. It was 11 until `sst-env.d.ts` was committed with the current resource declarations — the three `Resource.*` errors were stale generated types, not real.
 - `packages/scripts`: **17 typecheck errors, all pre-existing**, in `check-id.ts` (6), `recompute-performance-counts.ts` (3), `enrichRagas.ts` (3), `cli.ts` (2 — `Resource.RasikaTable`/`SearchIndexBucket`, environmental like the web ones), `bulkUpload.ts` (2), `backfillWebp.ts` (1). **This package was never typechecked until 2026-07-30**: it had no `typecheck` script, and its tsconfig paired `module: NodeNext` with `moduleResolution: Bundler`, which are mutually exclusive, so `tsc` refused to start. That gap let a call to a non-existent `Edit` namespace reach a commit — the edit service is exported flat from core, not as a namespace. Both are fixed; run `pnpm typecheck` here now.

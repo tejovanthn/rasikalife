@@ -33,11 +33,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 
   // Every one of these runs `assertClassAccess` server-side. A guardian who guesses another
   // family's ids gets FORBIDDEN, not a page.
-  const [cards, sessions, packs, institution] = await Promise.all([
+  const [cards, sessions, packs, contexts] = await Promise.all([
     trpc.classes.learnerHome.query({ learnerId }),
     trpc.classes.sessions.query({ programId, learnerId }),
     trpc.classes.packs.query({ programId, learnerId }),
-    trpc.classes.myInstitution.query(),
+    trpc.classes.getMyContexts.query(),
   ]);
 
   const card = cards.find(entry => entry.enrollment.programId === programId);
@@ -51,20 +51,27 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     packs: [...packs].reverse(),
     learnerId,
     programId,
-    isTeacher: Boolean(institution),
+    isTeacher: contexts.teaching.length > 0,
+    isLearner: contexts.learners.length > 0,
   });
 }
 
 export default function LearnerLedger() {
-  const { card, sessions, packs, learnerId, programId, isTeacher } = useLoaderData<typeof loader>();
+  const { card, sessions, packs, learnerId, programId, isTeacher, isLearner } =
+    useLoaderData<typeof loader>();
   const { enrollment } = card;
 
   return (
-    <Chrome title="History" isTeacher={isTeacher} headerRight={<SignOutButton />}>
+    <Chrome
+      title="History"
+      isTeacher={isTeacher}
+      isLearner={isLearner}
+      headerRight={<SignOutButton />}
+    >
       <div className="space-y-6">
         <div>
           <Link
-            to={`/?learner=${encodeURIComponent(learnerId)}`}
+            to={`/home?learner=${encodeURIComponent(learnerId)}`}
             className="text-sm text-primary underline"
           >
             ← Back

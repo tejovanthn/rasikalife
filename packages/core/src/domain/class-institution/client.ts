@@ -7,5 +7,3 @@ export {
   UpdateClassInstitutionSchema,
 } from './schema';
 export type { CreateClassInstitutionInput, UpdateClassInstitutionInput } from './schema';
-export { isInstitutionTeacher } from './access';
-export type { ClassInstitutionRef } from './access';

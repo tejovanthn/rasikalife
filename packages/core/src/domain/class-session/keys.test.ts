@@ -6,6 +6,7 @@ import { ClassLearnerAccessEntity } from '../class-learner-access/entity';
 import { ClassLearnerEntity } from '../class-learner/entity';
 import { ClassPackEntity } from '../class-pack/entity';
 import { ClassProgramEntity } from '../class-program/entity';
+import { ClassTeacherEntity } from '../class-teacher/entity';
 import { ClassSessionEntity } from './entity';
 
 /**
@@ -160,6 +161,14 @@ describe('class entity keys', () => {
         ownerUserId: 'user9',
       }).params()
     );
+    const teacher = keysOf(
+      ClassTeacherEntity.put({
+        institutionId: 'inst1',
+        userId: 'user9',
+        institutionName: 'Smt Radha',
+        role: 'owner',
+      }).params()
+    );
 
     // Roster by program, and every program a learner is on.
     expect(enrollment.pk).toBe('class_program#prog1');
@@ -170,6 +179,12 @@ describe('class entity keys', () => {
     expect(access.gsi1pk).toBe('class_user_learners#user1');
 
     expect(institution.gsi1pk).toBe('class_institution_owner#user9');
+
+    // Every institution a user teaches at, which ownership alone cannot answer. Shares the
+    // institution partition with programs and learners.
+    expect(teacher.pk).toBe('class_institution#inst1');
+    expect(teacher.sk).toBe('teacher#user9');
+    expect(teacher.gsi1pk).toBe('class_user_teaches#user9');
   });
 
   it('keys an invite on the normalized address, since that is what both sides agree on', () => {

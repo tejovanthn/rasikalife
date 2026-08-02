@@ -7,6 +7,7 @@ import {
   ClassPack,
   ClassProgram,
   ClassSession,
+  ClassTeacher,
   PrivateImage,
 } from '@rasika/core';
 import { todayInTimeZone } from '@rasika/core/shared/timezone';
@@ -54,6 +55,108 @@ export const classesRouter = createTRPCRouter({
   }),
 
   ensureInstitution: protectedProcedure.mutation(({ ctx }) => ensureOwnInstitution(ctx.user)),
+
+  /**
+   * Every context this sign-in has. Powers both the resolver and the switcher.
+   *
+   * Teaching comes from the `classTeacher` junction rather than `byOwner`, which is the whole
+   * point of that entity: a co-teacher owns nothing, and resolving on ownership alone would send
+   * them to the "do you teach?" screen for ever.
+   *
+   * Two queries and a fan-out of gets for learner names. It runs on every page load, so it is
+   * worth knowing the shape: the teaching side costs one query because the institution name is
+   * denormalized onto the junction, and the learner side costs one query plus one get per
+   * learner — bounded by how many children one parent has.
+   */
+  getMyContexts: protectedProcedure.query(async ({ ctx }) => {
+    const [teaching, access] = await Promise.all([
+      ClassTeacher.listUserTeaching(ctx.user.id),
+      ClassLearnerAccess.listUserLearnerAccess(ctx.user.id),
+    ]);
+
+    const learners = await Promise.all(
+      access.map(async row => {
+        const learner = await ClassLearner.getClassLearner(row.learnerId);
+        return learner
+          ? {
+              id: learner.id,
+              name: ClassLearner.learnerDisplayName(learner),
+              isMinor: learner.isMinor,
+              relation: row.relation,
+            }
+          : null;
+      })
+    );
+
+    return {
+      teaching: teaching.map(row => ({
+        institutionId: row.institutionId,
+        name: row.institutionName,
+        isOwner: row.role === 'owner',
+      })),
+      // A row whose learner has been deleted is dropped rather than rendered — the switcher
+      // must never offer a context that navigates to a 404.
+      learners: learners.filter((l): l is NonNullable<typeof l> => l !== null),
+    };
+  }),
+
+  /**
+   * Step 1 of guru onboarding. Refuses a second institution.
+   *
+   * Not `ensureInstitution`: that one is idempotent by design and is the safety net under any
+   * teaching write. This is the deliberate, named act, and it says no rather than silently
+   * handing back the existing one — a guru who taps twice should learn that they already have
+   * one, not be left wondering which of two they are looking at. Multiple institutions per
+   * teacher is deferred (§A8) and nothing should create the second one by accident.
+   */
+  createInstitution: protectedProcedure
+    .input(
+      z.object({ name: z.string().min(1).max(200), timezone: z.string().min(1).max(64).optional() })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ClassInstitution.listInstitutionsByOwner(ctx.user.id);
+      if (existing.length > 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message: 'You already have a set of classes',
+        });
+      }
+      return ClassInstitution.createClassInstitution({
+        ownerUserId: ctx.user.id,
+        name: input.name,
+        timezone: input.timezone ?? 'Asia/Kolkata',
+      });
+    }),
+
+  /**
+   * Which of the three onboarding steps remain.
+   *
+   * Read from the records themselves rather than from a stored progress flag, so a guru who
+   * abandons after step 1 and returns a week later resumes at step 2 — and one who created a
+   * program by some other route is never asked to create another.
+   */
+  onboardingState: protectedProcedure.query(async ({ ctx }) => {
+    const owned = await ClassInstitution.listInstitutionsByOwner(ctx.user.id);
+    const institution = owned[0] ?? null;
+    if (!institution) {
+      return { step: 1 as const, institution: null, programCount: 0, learnerCount: 0 };
+    }
+
+    const [programs, learners] = await Promise.all([
+      ClassProgram.listInstitutionPrograms(institution.id, { includeArchived: true }),
+      ClassLearner.listInstitutionLearners(institution.id),
+    ]);
+
+    const step =
+      programs.length === 0 ? (2 as const) : learners.length === 0 ? (3 as const) : (0 as const);
+    return {
+      step,
+      institution,
+      programCount: programs.length,
+      learnerCount: learners.length,
+      firstProgramId: programs[0]?.id ?? null,
+    };
+  }),
 
   updateInstitution: protectedProcedure
     .input(
