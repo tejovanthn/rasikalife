@@ -391,7 +391,18 @@ wearing the same clothes. Changing the secret signs everybody out of both at onc
 - **`packages/ui` is where visual consistency comes from**, not shared components. Both apps use
   `tailwind-preset.cjs`; `tokens.css` is a copy of the `@layer base` block in web's `globals.css`,
   because `contrast.test.ts` parses that file directly and moving the values would disarm it.
-  `token-drift.test.ts` in web asserts the two agree. Extracting web's component library into
+  `token-drift.test.ts` in web asserts all **three** blocks agree — light, the `.dark` class, and
+  the `prefers-color-scheme` block that only ui has.
+- **Classes follows the OS theme; web has a toggle.** Classes is an installed phone app opened at
+  7am and 10pm, so `tokens.css` carries a `@media (prefers-color-scheme: dark)` block and there is
+  no switch. Web deliberately has no such block — a media query would fight its cookie-backed
+  toggle. `theme-color` is two media-scoped meta tags, because a single light value paints a cream
+  status bar above a dark app.
+- **Contrast is only tested for shapes the test can see.** `contrast.test.ts` reads *solid* token
+  pairs, which is exactly how the badges shipped broken: they were alpha composites
+  (`bg-primary/15 text-primary`) at 3.46:1 in light and 1.31:1 in dark. `badge-contrast.test.ts`
+  now parses the tone map out of `card.tsx` and composites any alpha back over both surfaces, so a
+  new tone is checked automatically and a reintroduced tint cannot slip through. Extracting web's component library into
   `packages/ui` is explicitly not a prerequisite for anything.
 - **Tailwind `content` globs must include `../ui/src/**/*.{ts,tsx}`** or every class used only
   inside a shared primitive is purged and the buttons render unstyled.

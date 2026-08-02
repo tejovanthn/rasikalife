@@ -16,7 +16,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 import { autoConfirmLabel, formatSessionDate, modeLabel } from '~/lib/format';
 import { pageMeta } from '~/lib/meta';
 
@@ -37,7 +37,7 @@ function decodeRef(value: string): Ref | null {
 export const meta = () => pageMeta('Review');
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const trpc = await createServerClient(request);
 
   const contexts = await trpc.classes.getMyContexts.query();
@@ -63,7 +63,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const formData = await request.formData();
   const trpc = await createServerClient(request);
   const institutionId = String(formData.get('institutionId') ?? '');
@@ -191,31 +191,32 @@ export default function ReviewQueue() {
                   <li key={group.groupSessionId}>
                     <Card>
                       <CardHeader className="pb-2">
-                        <div className="flex items-start gap-3">
+                        {/*
+                          The whole row is the label, so the tap target is the card rather than a
+                          checkbox. This is the primary interaction of the screen and it was a
+                          20px box — under the 24px WCAG 2.2 asks and far under what a thumb
+                          wants. The box itself clears 24px too, for anyone who aims at it.
+                        */}
+                        <label className="flex cursor-pointer items-start gap-3 py-1">
                           <input
                             type="checkbox"
                             // A group ticks by its id and is expanded server-side; a solo class
                             // carries its own ref. Same form, two names, no JavaScript needed.
                             name={isGroup ? 'group' : 'ref'}
                             value={isGroup ? group.groupSessionId : encodeRef(first)}
-                            className="mt-1 size-5 shrink-0"
-                            aria-label={
-                              isGroup
-                                ? `Select all ${group.sessions.length} students, ${title}, ${formatSessionDate(first)}`
-                                : `Select ${first.learnerName}, ${formatSessionDate(first)}`
-                            }
+                            className="mt-0.5 size-6 shrink-0"
                           />
-                          <div className="min-w-0 flex-1">
-                            <CardTitle className="text-base">
+                          <span className="min-w-0 flex-1">
+                            <CardTitle as="span" className="block text-base">
                               {isGroup ? title : first.learnerName}
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground">
+                            <span className="block text-sm text-muted-foreground">
                               {formatSessionDate(first)} · {isGroup ? '' : `${title} · `}
                               {modeLabel(first.mode)} · {autoConfirmLabel(first.autoConfirmAt)}
-                            </p>
-                          </div>
+                            </span>
+                          </span>
                           {isGroup ? <Badge tone="primary">{group.sessions.length}</Badge> : null}
-                        </div>
+                        </label>
                       </CardHeader>
 
                       {isGroup ? (
@@ -228,15 +229,16 @@ export default function ReviewQueue() {
                                 answer from the rest of the group. */}
                             <ul className="mt-2 space-y-2">
                               {group.sessions.map(session => (
-                                <li key={session.id} className="flex items-center gap-3 text-sm">
-                                  <input
-                                    type="checkbox"
-                                    name="ref"
-                                    value={encodeRef(session)}
-                                    className="size-5"
-                                    aria-label={`Select ${session.learnerName}`}
-                                  />
-                                  <span>{session.learnerName}</span>
+                                <li key={session.id}>
+                                  <label className="flex min-h-tap cursor-pointer items-center gap-3 text-sm">
+                                    <input
+                                      type="checkbox"
+                                      name="ref"
+                                      value={encodeRef(session)}
+                                      className="size-6"
+                                    />
+                                    {session.learnerName}
+                                  </label>
                                 </li>
                               ))}
                             </ul>

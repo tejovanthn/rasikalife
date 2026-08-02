@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 import { CONTEXT_COOKIE, parseContext, serializeContext } from '~/lib/context';
 
 /**
@@ -14,7 +14,7 @@ import { CONTEXT_COOKIE, parseContext, serializeContext } from '~/lib/context';
  * last choice later. `SameSite=Lax` so an ordinary navigation carries it.
  */
 export async function action({ request }: ActionFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const formData = await request.formData();
 
   const stored = parseContext(String(formData.get('context') ?? ''));

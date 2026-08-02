@@ -12,7 +12,12 @@ export function pageMeta(title?: string) {
     // Belt. `robots.txt` on this origin is the braces, and neither is a permission system —
     // authorisation is enforced in tRPC on every request.
     { name: 'robots', content: 'noindex, nofollow, noarchive' },
-    { name: 'theme-color', content: 'hsl(17, 100%, 95%)' },
+    // Two, media-scoped. In standalone mode this paints the status bar and the task-switcher
+    // card, so a single light value left a cream band above a dark app the moment
+    // `prefers-color-scheme` started being honoured. Values are `--background` from
+    // `@rasika/ui/tokens.css`, resolved — a meta tag cannot read a custom property.
+    { name: 'theme-color', media: '(prefers-color-scheme: light)', content: 'hsl(17, 100%, 95%)' },
+    { name: 'theme-color', media: '(prefers-color-scheme: dark)', content: 'hsl(17, 50%, 5%)' },
     { name: 'apple-mobile-web-app-capable', content: 'yes' },
     { name: 'apple-mobile-web-app-title', content: 'Classes' },
     { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },

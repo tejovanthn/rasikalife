@@ -86,3 +86,52 @@
     --warning-foreground: 17 20% 8%;
   }
 }
+
+/**
+ * The same values, applied from the operating system.
+ *
+ * Rasika Classes has no theme toggle: it is an installed phone app opened at 7am and again at
+ * 10pm, and the OS already knows which the person wants. Without this block the whole dark
+ * palette below was unreachable — defined, guarded by a drift test, and never once rendered.
+ * `packages/web` deliberately does **not** get this, because it has an explicit toggle backed by
+ * a cookie and a media query would fight it.
+ *
+ * The values are a third copy of the block above. `token-drift.test.ts` asserts all three agree,
+ * which is the price of CSS having no way to alias a selector into a media query.
+ *
+ * Scoped away from an explicit light class so a toggle added later still wins.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light):not([data-theme="light"]) {
+    --background: 17 50% 5%;
+    --foreground: 17 5% 90%;
+    --card: 17 45% 3%;
+    --card-foreground: 17 5% 90%;
+    --popover: 17 50% 5%;
+    --popover-foreground: 17 5% 90%;
+    --primary: 17 84.7% 53.7%;
+    --primary-foreground: 17 5% 5%;
+    --secondary: 17 30% 10%;
+    --secondary-foreground: 17 100% 99%;
+    --muted: 17 30% 15%;
+    --muted-foreground: 17 5% 60%;
+    --accent: 17 30% 15%;
+    --accent-foreground: 17 5% 90%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 17 5% 5%;
+    --border: 17 30% 18%;
+    --input: 17 30% 18%;
+    --ring: 17 84.7% 53.7%;
+    --radius: 0.5rem;
+    --language: 220 40% 20%;
+    --language-foreground: 220 60% 80%;
+    --raga: 270 40% 20%;
+    --raga-foreground: 270 60% 80%;
+    --tala: 30 50% 20%;
+    --tala-foreground: 30 80% 75%;
+    --success: 142 71% 55%;
+    --success-foreground: 17 20% 8%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 17 20% 8%;
+  }
+}

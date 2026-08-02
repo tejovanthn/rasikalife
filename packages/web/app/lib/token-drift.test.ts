@@ -18,9 +18,10 @@ const UI_TOKENS = join(CSS_ROOT, '../../ui/src/tokens.css');
 
 type Tokens = Record<string, string>;
 
-function parseBlocks(css: string): { light: Tokens; dark: Tokens } {
+function parseBlocks(css: string): { light: Tokens; dark: Tokens; preferred: Tokens } {
   const light: Tokens = {};
   const dark: Tokens = {};
+  const preferred: Tokens = {};
 
   // Strip comments first: several token values carry a paragraph of reasoning above them, and
   // one of those comments contains a colon-and-number that would otherwise parse as a token.
@@ -28,10 +29,16 @@ function parseBlocks(css: string): { light: Tokens; dark: Tokens } {
 
   const rootMatch = withoutComments.match(/:root\s*\{([^}]*)\}/);
   const darkMatch = withoutComments.match(/\.dark\s*,\s*:root\[class~="dark"\]\s*\{([^}]*)\}/);
+  // The `prefers-color-scheme` block, which only packages/ui has — see its comment for why web
+  // deliberately does not.
+  const preferredMatch = withoutComments.match(
+    /@media \(prefers-color-scheme: dark\)\s*\{\s*:root[^{]*\{([^}]*)\}/
+  );
 
   for (const [body, target] of [
     [rootMatch?.[1] ?? '', light],
     [darkMatch?.[1] ?? '', dark],
+    [preferredMatch?.[1] ?? '', preferred],
   ] as const) {
     for (const line of body.split(';')) {
       const declaration = line.match(/(--[\w-]+)\s*:\s*(.+)/);
@@ -41,7 +48,7 @@ function parseBlocks(css: string): { light: Tokens; dark: Tokens } {
     }
   }
 
-  return { light, dark };
+  return { light, dark, preferred };
 }
 
 describe('design token drift', () => {
@@ -72,5 +79,22 @@ describe('design token drift', () => {
     for (const token of ['--primary', '--destructive', '--primary-foreground']) {
       expect(ui.light[token]).not.toEqual(ui.dark[token]);
     }
+  });
+
+  /**
+   * The third copy. CSS has no way to alias a selector into a media query, so the dark palette
+   * is written twice in `packages/ui/src/tokens.css`: once for an explicit `.dark` class and
+   * once for `prefers-color-scheme`. Only the second is reachable in Rasika Classes today, which
+   * is precisely the sort of asymmetry that rots — a value corrected in the class block and not
+   * the media block would leave the app rendering the old one with nothing to show for it.
+   */
+  it('gives the prefers-color-scheme block the same values as the dark class', () => {
+    expect(Object.keys(ui.preferred).length).toBeGreaterThan(20);
+    expect(ui.preferred).toEqual(ui.dark);
+  });
+
+  // packages/web has an explicit toggle backed by a cookie; a media query there would fight it.
+  it('does not add a prefers-color-scheme block to the app that has a toggle', () => {
+    expect(Object.keys(web.preferred)).toHaveLength(0);
   });
 });

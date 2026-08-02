@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from 'react-router';
 import { data } from 'react-router';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 
 /**
  * A presigned PUT into the private bucket, for one payment screenshot.
@@ -11,7 +11,7 @@ import { requireUser } from '~/lib/auth.server';
  * `/api/screenshot`, which signs a short-lived GET after checking who is asking.
  */
 export async function action({ request }: ActionFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const formData = await request.formData();
   const trpc = await createServerClient(request);
 

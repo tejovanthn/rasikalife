@@ -1,5 +1,5 @@
 import { ToastProvider } from '@rasika/ui';
-import type { LinksFunction, LoaderFunctionArgs, MetaFunction } from 'react-router';
+import type { LinksFunction, MetaFunction } from 'react-router';
 import {
   Links,
   Meta,
@@ -11,7 +11,6 @@ import {
   useRouteError,
 } from 'react-router';
 import { RegisterServiceWorker } from '~/components/register-sw';
-import { getUser } from '~/lib/auth.server';
 import { pageMeta } from '~/lib/meta';
 import styles from './globals.css?url';
 
@@ -29,12 +28,21 @@ export const links: LinksFunction = () => [
  */
 export const meta: MetaFunction = () => pageMeta();
 
-export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await getUser(request);
-  // Nothing on this origin is ever shared-cacheable: every document is somebody's private
-  // ledger. The main site has to decide this per request; here the answer is always the same.
+/**
+ * Headers only. It deliberately does **not** resolve the signed-in user.
+ *
+ * It used to, and nothing read the result: no component called `useRouteLoaderData('root')` and
+ * the headers below do not depend on it. So every page load paid a token verification and a
+ * `user.me` round trip for a value that was thrown away — and every route loader then did the
+ * same work again through `requireUser`. Routes that genuinely need a name or an email ask for
+ * one; the rest gate on `requireUserId`, which verifies the token and stops there.
+ *
+ * Nothing on this origin is ever shared-cacheable: every document is somebody's private ledger.
+ * The main site has to decide that per request; here the answer is always the same.
+ */
+export function loader() {
   return data(
-    { user },
+    {},
     { headers: { 'Cache-Control': 'private, no-store', 'X-Robots-Tag': 'noindex, nofollow' } }
   );
 }

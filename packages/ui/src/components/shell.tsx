@@ -77,7 +77,10 @@ export function AppShell({
  * responsive string describes both without either knowing about the other.
  */
 export const navItemClasses =
-  'flex min-h-tap flex-1 flex-col items-center justify-center gap-0.5 px-2 py-2 text-xs font-medium md:min-h-0 md:flex-none md:flex-row md:px-3 md:text-sm';
+  // The focus ring is explicit rather than left to the UA default, so a keyboard user sees the
+  // same indicator here as on every button and field. `--ring` tracks `--primary` and clears the
+  // 3:1 that 1.4.11 asks of a non-text indicator.
+  'flex min-h-tap flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-2 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:min-h-0 md:flex-none md:flex-row md:px-3 md:text-sm';
 
 export function NavItem({
   active,

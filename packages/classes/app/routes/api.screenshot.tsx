@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from 'react-router';
 import { data } from 'react-router';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 
 /**
  * Hands back a short-lived signed GET for one payment screenshot.
@@ -12,7 +12,7 @@ import { requireUser } from '~/lib/auth.server';
  * over somebody else's object.
  */
 export async function action({ request }: ActionFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const formData = await request.formData();
   const trpc = await createServerClient(request);
 

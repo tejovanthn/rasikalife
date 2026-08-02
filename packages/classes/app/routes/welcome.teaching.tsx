@@ -185,8 +185,8 @@ export default function TeachingOnboarding() {
               </Select>
             </Field>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="isGroup" className="size-5" />
+            <label className="flex min-h-tap items-center gap-3 text-sm">
+              <input type="checkbox" name="isGroup" className="size-6" />
               More than one student attends together
             </label>
 
@@ -217,8 +217,8 @@ export default function TeachingOnboarding() {
                 <Input id="email" name="email" type="email" inputMode="email" autoComplete="off" />
               </Field>
 
-              <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" name="isMinor" className="size-5" defaultChecked />
+              <label className="flex min-h-tap items-center gap-3 text-sm">
+                <input type="checkbox" name="isMinor" className="size-6" defaultChecked />
                 Under 18 (a parent keeps access)
               </label>
 

@@ -34,7 +34,10 @@ export function RegisterServiceWorker() {
   }
 
   return (
-    <output className="sticky top-14 z-40 block border-b border-warning bg-warning px-4 py-2 text-center text-sm text-warning-foreground">
+    // `top-14` alone put the banner under a 3.5rem header — but the header is 3.5rem *plus*
+    // `env(safe-area-inset-top)`, so in standalone mode on a notched phone the banner slid
+    // beneath it by the inset.
+    <output className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 block border-b border-warning bg-warning px-4 py-2 text-center text-sm text-warning-foreground">
       You are offline. Nothing can be marked or confirmed until you reconnect.
     </output>
   );

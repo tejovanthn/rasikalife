@@ -26,7 +26,7 @@ import {
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { ScreenshotLink } from '~/components/screenshot-link';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 import {
   SESSION_STATUS_LABELS,
   SESSION_STATUS_TONES,
@@ -40,7 +40,7 @@ import { pageMeta } from '~/lib/meta';
 export const meta = () => pageMeta('History');
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const trpc = await createServerClient(request);
   const learnerId = params.learnerId as string;
   const programId = params.programId as string;
@@ -89,7 +89,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
  * controls is courtesy; the enforcement is in tRPC.
  */
 export async function action({ request, params }: ActionFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const formData = await request.formData();
   const trpc = await createServerClient(request);
 
@@ -195,7 +195,9 @@ export default function LearnerLedger() {
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <CardTitle className="text-base">{formatSessionDate(session)}</CardTitle>
+                        <CardTitle as="h3" className="text-base">
+                          {formatSessionDate(session)}
+                        </CardTitle>
                         <Badge tone={SESSION_STATUS_TONES[session.status]}>
                           {SESSION_STATUS_LABELS[session.status]}
                         </Badge>
@@ -307,7 +309,7 @@ export default function LearnerLedger() {
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <CardTitle className="text-base">
+                        <CardTitle as="h3" className="text-base">
                           {pack.delta > 0 ? `+${pack.delta}` : pack.delta}{' '}
                           {Math.abs(pack.delta) === 1 ? 'class' : 'classes'}
                         </CardTitle>

@@ -29,13 +29,13 @@ import {
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { ScreenshotField } from '~/components/screenshot-field';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 import { pageMeta } from '~/lib/meta';
 
 export const meta = () => pageMeta('Class');
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const trpc = await createServerClient(request);
   const programId = params.programId as string;
 
@@ -60,7 +60,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const programId = params.programId as string;
   const formData = await request.formData();
   const trpc = await createServerClient(request);
@@ -173,7 +173,9 @@ export default function ProgramRoster() {
                   <Card>
                     <CardHeader className="pb-2">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <CardTitle className="text-base">{enrollment.learnerName}</CardTitle>
+                        <CardTitle as="h3" className="text-base">
+                          {enrollment.learnerName}
+                        </CardTitle>
                         {enrollment.status === 'ended' ? <Badge>Left</Badge> : null}
                       </div>
                       <p
@@ -266,8 +268,8 @@ export default function ProgramRoster() {
 
             {/* No date of birth anywhere. This is a policy flag the guru sets, not a fact the
                 product derives — collecting a birthday would put a child's data in scope. */}
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="isMinor" className="size-5" defaultChecked />
+            <label className="flex min-h-tap items-center gap-3 text-sm">
+              <input type="checkbox" name="isMinor" className="size-6" defaultChecked />
               Under 18 (a parent keeps access)
             </label>
 

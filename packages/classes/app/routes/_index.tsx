@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUserId } from '~/lib/auth.server';
 import { CONTEXT_COOKIE, parseContext, resolveDestination } from '~/lib/context';
 
 /**
@@ -19,7 +19,7 @@ import { CONTEXT_COOKIE, parseContext, resolveDestination } from '~/lib/context'
  * correctly on the next launch without reinstalling anything.
  */
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireUser(request);
+  await requireUserId(request);
   const trpc = await createServerClient(request);
   const contexts = await trpc.classes.getMyContexts.query();
 

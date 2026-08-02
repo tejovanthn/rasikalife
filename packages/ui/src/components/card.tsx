@@ -14,8 +14,24 @@ export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDiv
   return <div className={cn('flex flex-col gap-1 p-4', className)} {...props} />;
 }
 
-export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn('text-lg font-semibold leading-tight', className)} {...props} />;
+/**
+ * The level is the caller's to choose, because only the caller knows what encloses the card.
+ *
+ * It was always `<h2>`, which is right on a page whose cards sit directly under the `<h1>` and
+ * wrong on one where they sit inside a `<SectionTitle>` — there a screen reader heard h1 →
+ * h2 "Classes" → h2 "Sun 2 Aug", so the sessions read as siblings of the section containing
+ * them and heading navigation stopped describing the page.
+ *
+ * `h2` stays the default: it is correct for the majority of screens here, and a wrong default
+ * that flattens is less harmful than one that skips a level. `as="span"` is for the cards whose
+ * title sits inside a `<label>`, where a heading is not permitted content.
+ */
+export function CardTitle({
+  as: Tag = 'h2',
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement> & { as?: 'h2' | 'h3' | 'span' }) {
+  return <Tag className={cn('text-lg font-semibold leading-tight', className)} {...props} />;
 }
 
 export function CardDescription({
@@ -33,12 +49,30 @@ export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDiv
   return <div className={cn('flex items-center gap-2 p-4 pt-0', className)} {...props} />;
 }
 
+/**
+ * Solid fills, paired with the foreground each token was designed against.
+ *
+ * These were tints — `bg-primary/15 text-primary` and friends — and every one of them was a
+ * colour nothing could check. `contrast.test.ts` asserts *solid* token pairs, so an alpha
+ * composite over a surface slipped through the one test built to catch exactly this. Measured
+ * afterwards: the primary badge read **3.46:1** in light mode at `text-xs`, and the success and
+ * warning badges read **1.31:1** and **1.50:1** in dark, because `--success-foreground` and
+ * `--warning-foreground` are near-black in *both* themes — they exist for a solid fill, and at
+ * 20% alpha over a near-black card that assumption inverts.
+ *
+ * A tint needs a foreground that flips with the theme, and there is no such token; inventing one
+ * per tone is three more values to keep in step for a status pill. Solid uses the pairs the
+ * tokens were computed for and already tested as, and a badge earning attention is its job.
+ *
+ * `badge-contrast.test.ts` in packages/web now parses this map and asserts every pair in both
+ * themes — including compositing the alpha back over both surfaces if anyone reintroduces one.
+ */
 const badgeTones = {
   neutral: 'bg-muted text-muted-foreground',
-  primary: 'bg-primary/15 text-primary',
-  success: 'bg-success/20 text-success-foreground',
-  warning: 'bg-warning/25 text-warning-foreground',
-  destructive: 'bg-destructive/15 text-destructive',
+  primary: 'bg-primary text-primary-foreground',
+  success: 'bg-success text-success-foreground',
+  warning: 'bg-warning text-warning-foreground',
+  destructive: 'bg-destructive text-destructive-foreground',
 } as const;
 
 export type BadgeTone = keyof typeof badgeTones;

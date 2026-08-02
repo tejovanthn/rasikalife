@@ -77,7 +77,32 @@ export interface SessionUser {
   picture?: string;
 }
 
-export async function getUser(request: Request): Promise<SessionUser | null> {
+/**
+ * One resolution per request, however many loaders ask for it.
+ *
+ * The root loader calls `getUser` and every route loader called it again through `requireUser`,
+ * so each navigation paid two token verifications and two `user.me` round trips before any page
+ * data started. Keyed on the `Request`, so it is correct by construction: two different requests
+ * never share an entry, and if React Router ever hands a route a different `Request` instance
+ * than the root got, this simply misses and behaves exactly as it did before. A `WeakMap` means
+ * the entry dies with the request.
+ *
+ * The *promise* is cached rather than the result, so two loaders running in parallel share one
+ * in-flight verification instead of starting two.
+ */
+const userByRequest = new WeakMap<Request, Promise<SessionUser | null>>();
+
+export function getUser(request: Request): Promise<SessionUser | null> {
+  const cached = userByRequest.get(request);
+  if (cached) {
+    return cached;
+  }
+  const resolving = resolveUser(request);
+  userByRequest.set(request, resolving);
+  return resolving;
+}
+
+async function resolveUser(request: Request): Promise<SessionUser | null> {
   const tokens = await getTokens(request);
   if (!tokens) {
     return null;
@@ -113,12 +138,49 @@ export async function getUser(request: Request): Promise<SessionUser | null> {
   }
 }
 
+function loginRedirect(request: Request): never {
+  const url = new URL(request.url);
+  const params = new URLSearchParams([['redirectTo', url.pathname + url.search]]);
+  throw redirect(`/auth/login?${params}`);
+}
+
 export async function requireUser(request: Request): Promise<SessionUser> {
   const user = await getUser(request);
   if (!user) {
-    const url = new URL(request.url);
-    const params = new URLSearchParams([['redirectTo', url.pathname + url.search]]);
-    throw redirect(`/auth/login?${params}`);
+    loginRedirect(request);
   }
   return user;
+}
+
+/**
+ * The gate without the profile, for the loaders and actions that only need "is somebody signed
+ * in, else send them to log in".
+ *
+ * Most routes here discard `requireUser`'s return value entirely: the tRPC procedures behind
+ * them do their own authorisation from the bearer token, so the page never needed a name or an
+ * email. Verifying the token is the actual security check; fetching the profile on top of it was
+ * a second network round trip bought for nothing.
+ *
+ * One behaviour it does not reproduce: a user deleted mid-session still passes here, because
+ * their token is still validly signed. Their first tRPC call then fails `protectedProcedure` and
+ * they see an error rather than a login page. That is a rare enough trade for halving the auth
+ * cost of every navigation, and `requireUser` remains for the three screens that show a name.
+ */
+export async function requireUserId(request: Request): Promise<string> {
+  const tokens = await getTokens(request);
+  if (!tokens) {
+    loginRedirect(request);
+  }
+  try {
+    const verified = await authClient.verify(Auth.subjects, tokens.access, {
+      refresh: tokens.refresh,
+    });
+    const userId = verified.err ? null : verified.subject?.properties.userID;
+    if (!userId) {
+      loginRedirect(request);
+    }
+    return userId;
+  } catch {
+    loginRedirect(request);
+  }
 }
