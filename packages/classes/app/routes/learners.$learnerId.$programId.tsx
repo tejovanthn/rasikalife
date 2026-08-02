@@ -24,6 +24,9 @@ import {
   formatSessionDate,
   modeLabel,
 } from '~/lib/format';
+import { pageMeta } from '~/lib/meta';
+
+export const meta = () => pageMeta('History');
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   await requireUser(request);
@@ -62,12 +65,7 @@ export default function LearnerLedger() {
   const { enrollment } = card;
 
   return (
-    <Chrome
-      title="History"
-      isTeacher={isTeacher}
-      isLearner={isLearner}
-      headerRight={<SignOutButton />}
-    >
+    <Chrome isTeacher={isTeacher} isLearner={isLearner} headerRight={<SignOutButton />}>
       <div className="space-y-6">
         <div>
           <Link

@@ -391,6 +391,17 @@ wearing the same clothes. Changing the secret signs everybody out of both at onc
   Hand-written rather than generated (`packages/classes/public/sw.js`) so the omission is visible
   at a glance. There are no offline writes: a queued "mark attended" replayed an hour later can
   lose the conditional-transition race, and there is nothing honest to show the student then.
+- **Navigation changes place, not shape.** `AppShell` renders the same `nav` node into two slots
+  — a bottom tab bar below `md`, the header at `md` and above — each hidden at the other
+  breakpoint. Two copies in the DOM, one in the accessibility tree, because `display: none` is not
+  exposed. `navItemClasses` styles both placements in one responsive string, which works only
+  because exactly one container is ever visible. A bar pinned to the bottom of a 1200px window is
+  a phone convention applied to something that is not a phone.
+- **The header carries the product name, not the page's.** Every screen opens with an `<h1>`, so a
+  page title there said the same word twice. Wayfinding lives in the document title instead, and
+  every route emits it through `~/lib/meta`'s `pageMeta` — a child `meta` export **replaces** the
+  root's rather than merging, so a route that set only a title would silently drop `noindex` from
+  a page showing a child's attendance record.
 - **PWA icons are placeholders.** `pnpm icons` in `packages/classes` regenerates the whole set
   from one SVG in `scripts/generate-icons.mjs`; swap the mark when real brand assets arrive.
 

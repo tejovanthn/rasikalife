@@ -18,6 +18,7 @@ import { Chrome, SignOutButton } from '~/components/chrome';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
 import { autoConfirmLabel, formatSessionDate, modeLabel } from '~/lib/format';
+import { pageMeta } from '~/lib/meta';
 
 type Ref = { programId: string; learnerId: string; sessionDate: string; id: string };
 
@@ -32,6 +33,8 @@ function decodeRef(value: string): Ref | null {
     ? { programId, learnerId, sessionDate, id }
     : null;
 }
+
+export const meta = () => pageMeta('Review');
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
@@ -151,12 +154,7 @@ export default function ReviewQueue() {
   const total = groups.reduce((sum, group) => sum + group.sessions.length, 0);
 
   return (
-    <Chrome
-      title="Review"
-      isTeacher
-      isLearner={contexts.learners.length > 0}
-      headerRight={<SignOutButton />}
-    >
+    <Chrome isTeacher isLearner={contexts.learners.length > 0} headerRight={<SignOutButton />}>
       <div className="space-y-5">
         <div>
           <PageTitle>Review</PageTitle>

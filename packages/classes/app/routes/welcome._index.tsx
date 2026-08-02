@@ -13,6 +13,9 @@ import { Chrome, SignOutButton } from '~/components/chrome';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
 import { contextCount } from '~/lib/context';
+import { pageMeta } from '~/lib/meta';
+
+export const meta = () => pageMeta('Welcome');
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
@@ -32,7 +35,7 @@ export default function Welcome() {
   const { user } = useLoaderData<typeof loader>();
 
   return (
-    <Chrome title="Rasika Classes" headerRight={<SignOutButton />}>
+    <Chrome headerRight={<SignOutButton />}>
       <div className="space-y-6">
         <PageTitle>Welcome</PageTitle>
 

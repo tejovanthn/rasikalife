@@ -12,6 +12,7 @@ import {
 } from 'react-router';
 import { RegisterServiceWorker } from '~/components/register-sw';
 import { getUser } from '~/lib/auth.server';
+import { pageMeta } from '~/lib/meta';
 import styles from './globals.css?url';
 
 export const links: LinksFunction = () => [
@@ -22,19 +23,11 @@ export const links: LinksFunction = () => [
 ];
 
 /**
- * Every page here is private, so `noindex` is unconditional rather than per route.
- *
- * `robots.txt` disallows the whole origin as well, and the subdomain is in no sitemap — a meta
- * tag alone is a request, and only a request.
+ * Every page here is private, so `noindex` is unconditional rather than per route — and because
+ * a child's `meta` export replaces this one wholesale, every route emits it through the same
+ * helper. See `~/lib/meta`.
  */
-export const meta: MetaFunction = () => [
-  { title: 'Rasika Classes' },
-  { name: 'robots', content: 'noindex, nofollow, noarchive' },
-  { name: 'theme-color', content: 'hsl(17, 100%, 95%)' },
-  { name: 'apple-mobile-web-app-capable', content: 'yes' },
-  { name: 'apple-mobile-web-app-title', content: 'Classes' },
-  { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-];
+export const meta: MetaFunction = () => pageMeta();
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUser(request);

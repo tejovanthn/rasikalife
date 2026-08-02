@@ -17,6 +17,7 @@ import {
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
+import { pageMeta } from '~/lib/meta';
 
 /**
  * Guru onboarding: three steps, one mutation each.
@@ -30,6 +31,8 @@ import { requireUser } from '~/lib/auth.server';
  * stored flag. That makes resuming free, and it means a guru who created a program by some other
  * route is never asked to create another.
  */
+export const meta = () => pageMeta('Set up your classes');
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
   const trpc = await createServerClient(request);
@@ -105,7 +108,7 @@ export default function TeachingOnboarding() {
   const pending = navigation.state === 'submitting';
 
   return (
-    <Chrome title="Set up your classes" headerRight={<SignOutButton />}>
+    <Chrome headerRight={<SignOutButton />}>
       <div className="space-y-5">
         <PageTitle>Set up your classes</PageTitle>
 

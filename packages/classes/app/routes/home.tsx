@@ -18,6 +18,9 @@ import { ContextSwitcher } from '~/components/context-switcher';
 import { InstallPrompt } from '~/components/install-prompt';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
+import { pageMeta } from '~/lib/meta';
+
+export const meta = () => pageMeta('My classes');
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);
@@ -73,7 +76,7 @@ export default function StudentHome() {
    */
   if (learners.length === 0) {
     return (
-      <Chrome title="Rasika Classes" isTeacher={isTeacher} headerRight={<SignOutButton />}>
+      <Chrome isTeacher={isTeacher} headerRight={<SignOutButton />}>
         <EmptyState
           title="No classes yet"
           action={
@@ -92,7 +95,6 @@ export default function StudentHome() {
 
   return (
     <Chrome
-      title="Rasika Classes"
       isTeacher={isTeacher}
       isLearner
       headerRight={

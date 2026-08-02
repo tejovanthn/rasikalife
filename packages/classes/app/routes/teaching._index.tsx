@@ -32,6 +32,9 @@ import { Chrome, SignOutButton } from '~/components/chrome';
 import { ContextSwitcher } from '~/components/context-switcher';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
+import { pageMeta } from '~/lib/meta';
+
+export const meta = () => pageMeta('Students');
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
@@ -104,7 +107,6 @@ export default function Roster() {
 
   return (
     <Chrome
-      title="Students"
       isTeacher
       isLearner={contexts.learners.length > 0}
       headerRight={

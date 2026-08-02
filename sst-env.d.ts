@@ -6,6 +6,10 @@
 
 declare module "sst" {
   export interface Resource {
+    "ClassUploads": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
     "EventPosters": {
       "name": string
       "type": "sst.aws.Bucket"
@@ -54,6 +58,10 @@ declare module "sst" {
     "RasikaBucket": {
       "name": string
       "type": "sst.aws.Bucket"
+    }
+    "RasikaClasses": {
+      "type": "sst.aws.React"
+      "url": string
     }
     "RasikaTRPC": {
       "name": string

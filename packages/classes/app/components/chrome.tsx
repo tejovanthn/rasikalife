@@ -1,25 +1,26 @@
-import { AppShell } from '@rasika/ui';
+import { AppShell, navItemClasses } from '@rasika/ui';
 import type { ReactNode } from 'react';
 import { Form, Link, useLocation } from 'react-router';
 
 /**
  * The app's frame.
  *
- * The tab bar renders only for someone who teaches, and its "My classes" tab only when they also
- * learn. Most people here are parents with one child and one card; a tab bar with one tab is
- * furniture, and a tab they can never open is worse than none.
+ * The nav renders only for someone who teaches, and its "My classes" entry only when they also
+ * learn. Most people here are parents with one child and one card; navigation with one
+ * destination is furniture, and a destination they can never open is worse than none.
  *
  * Both facts come from `getMyContexts`, never from a role — a guru is frequently also a learner,
  * so this is a property of what they have, not of who they are.
+ *
+ * Where the nav *sits* is `AppShell`'s business: a bottom tab bar on a phone, the header on a
+ * desktop. Nothing here needs to know which.
  */
 export function Chrome({
-  title,
   isTeacher,
   isLearner,
   headerRight,
   children,
 }: {
-  title: ReactNode;
   isTeacher?: boolean;
   isLearner?: boolean;
   headerRight?: ReactNode;
@@ -29,7 +30,13 @@ export function Chrome({
 
   return (
     <AppShell
-      title={title}
+      brand={
+        // Home is the resolver, which knows where this person belongs better than a fixed link
+        // would — a guru who also learns lands wherever she was last.
+        <Link to="/" className="no-underline">
+          Classes
+        </Link>
+      }
       headerRight={headerRight}
       nav={
         isTeacher ? (
@@ -53,8 +60,8 @@ function NavLink({ to, label, active }: { to: string; label: string; active: boo
     <Link
       to={to}
       aria-current={active ? 'page' : undefined}
-      className={`flex min-h-tap flex-1 flex-col items-center justify-center px-2 py-2 text-xs font-medium ${
-        active ? 'text-primary' : 'text-muted-foreground'
+      className={`${navItemClasses} ${
+        active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
       }`}
     >
       {label}

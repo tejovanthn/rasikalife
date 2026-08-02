@@ -30,6 +30,9 @@ import { Chrome, SignOutButton } from '~/components/chrome';
 import { ScreenshotField } from '~/components/screenshot-field';
 import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
+import { pageMeta } from '~/lib/meta';
+
+export const meta = () => pageMeta('Class');
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   await requireUser(request);
@@ -118,7 +121,7 @@ export default function ProgramRoster() {
   const pending = navigation.state === 'submitting';
 
   return (
-    <Chrome title={programDisplayTitle(program)} isTeacher headerRight={<SignOutButton />}>
+    <Chrome isTeacher headerRight={<SignOutButton />}>
       <div className="space-y-6">
         <div>
           <Link to="/teaching" className="text-sm text-primary underline">
