@@ -65,6 +65,27 @@ export const SESSION_STATUS_TONES: Record<SessionStatus, BadgeTone> = {
   absent: 'neutral',
 };
 
+/**
+ * The date an unconfirmed class settles itself.
+ *
+ * The absolute date, where the review queue uses the relative one. Both are the same fact told to
+ * different jobs: the queue is scanned, so "in 6 days" sorts and triages at a glance, while one
+ * session on a history page is being *read*, and "the 11th" is what somebody plans around.
+ *
+ * Rendered in the viewer's own zone, like `startsAt` and for the same reason — this is a real
+ * instant, and it is when the thing will actually happen *to them*. A student far enough west of
+ * their guru may see the previous date, which is not a discrepancy: it is genuinely their
+ * Monday afternoon and her Tuesday midnight.
+ */
+export function autoConfirmOnLabel(autoConfirmAt: string): string {
+  const on = new Date(autoConfirmAt).toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  return `confirms automatically on ${on}`;
+}
+
 /** "in 6 days", "today", "overdue" — what the guru needs to know about an auto-confirm. */
 export function autoConfirmLabel(autoConfirmAt: string, now: Date = new Date()): string {
   const due = new Date(autoConfirmAt).getTime();

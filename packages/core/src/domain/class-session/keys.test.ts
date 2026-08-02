@@ -201,4 +201,65 @@ describe('class entity keys', () => {
 
     expect(invite.pk).toBe('class_invite#priyaraman@gmail.com');
   });
+
+  /**
+   * The write every mocked test in this feature agreed with and none of them exercised.
+   *
+   * `status` is a composite of two GSI partition keys, so a transition has to re-format them —
+   * and `institutionId` is not in the primary key, so ElectroDB cannot know it. Without
+   * `.composite()` this throws `Incomplete composite attributes` and *every* confirm, dispute and
+   * absent fails. That reached a running deploy, because a suite that mocks the entity can only
+   * ever confirm which methods were called.
+   */
+  it('re-formats both status keys on a transition, given the institution', () => {
+    const params = ClassSessionEntity.patch({
+      programId: 'prog1',
+      learnerId: 'learn1',
+      sessionDate: '2026-08-04',
+      id: 'sess1',
+    })
+      .set({ status: 'confirmed' })
+      .composite({ institutionId: 'inst1' })
+      .params();
+
+    const values = (params as { ExpressionAttributeValues: Record<string, string> })
+      .ExpressionAttributeValues;
+
+    expect(values[':gsi1pk_u0']).toBe('class_session#inst1#confirmed');
+    expect(values[':gsi3pk_u0']).toBe('class_session_due#confirmed');
+  });
+
+  it('throws rather than writing a half-formed key when the institution is missing', () => {
+    expect(() =>
+      ClassSessionEntity.patch({
+        programId: 'prog1',
+        learnerId: 'learn1',
+        sessionDate: '2026-08-04',
+        id: 'sess1',
+      })
+        .set({ status: 'confirmed' })
+        .params()
+    ).toThrow(/Incomplete composite attributes/);
+  });
+
+  /**
+   * The supplied value is not taken on trust: ElectroDB folds it into the ConditionExpression, so
+   * a caller who passes an institution the row does not belong to has the write refused rather
+   * than silently moving the row into somebody else's review queue.
+   */
+  it('guards the supplied institution with a condition', () => {
+    const params = ClassSessionEntity.patch({
+      programId: 'prog1',
+      learnerId: 'learn1',
+      sessionDate: '2026-08-04',
+      id: 'sess1',
+    })
+      .set({ status: 'confirmed' })
+      .composite({ institutionId: 'inst1' })
+      .params();
+
+    expect((params as { ConditionExpression: string }).ConditionExpression).toContain(
+      '#institutionId = :institutionId0'
+    );
+  });
 });

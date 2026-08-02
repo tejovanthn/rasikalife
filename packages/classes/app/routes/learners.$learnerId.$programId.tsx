@@ -2,16 +2,27 @@ import { creditBalanceLabel } from '@rasika/core/domain/class-enrollment/client'
 import { programDisplayTitle } from '@rasika/core/domain/class-program/client';
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   EmptyState,
+  Field,
   PageTitle,
   SectionTitle,
+  Textarea,
 } from '@rasika/ui';
-import type { LoaderFunctionArgs } from 'react-router';
-import { Link, data, useLoaderData } from 'react-router';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
+import {
+  Form,
+  Link,
+  data,
+  redirect,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+} from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
 import { ScreenshotLink } from '~/components/screenshot-link';
 import { createServerClient } from '~/lib/api.server';
@@ -19,7 +30,7 @@ import { requireUser } from '~/lib/auth.server';
 import {
   SESSION_STATUS_LABELS,
   SESSION_STATUS_TONES,
-  autoConfirmLabel,
+  autoConfirmOnLabel,
   formatInstant,
   formatSessionDate,
   modeLabel,
@@ -59,9 +70,79 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   });
 }
 
+/**
+ * Confirm, absent and dispute, from the history page.
+ *
+ * The review queue is for triage — a flat list of everything waiting, scanned once a week. This
+ * is the other way round: the guru is *looking at one learner*, sees the class she remembers, and
+ * has to settle it there rather than hold the row in her head and go hunting for it in a list.
+ *
+ * Teacher-only, but the check that matters is not here. Every one of these procedures runs
+ * `assertTeacher` server-side, so a guardian who posts this form gets FORBIDDEN. Hiding the
+ * controls is courtesy; the enforcement is in tRPC.
+ */
+export async function action({ request, params }: ActionFunctionArgs) {
+  await requireUser(request);
+  const formData = await request.formData();
+  const trpc = await createServerClient(request);
+
+  const learnerId = params.learnerId as string;
+  const programId = params.programId as string;
+  const intent = String(formData.get('intent') ?? '');
+
+  // `institutionId` is deliberately absent: the router derives it from the program, because a
+  // wrong one cancels the transaction in a way that reads as "already confirmed".
+  const ref = {
+    programId,
+    learnerId,
+    sessionDate: String(formData.get('sessionDate') ?? ''),
+    id: String(formData.get('sessionId') ?? ''),
+  };
+  const institutionId = String(formData.get('institutionId') ?? '');
+  const notes = String(formData.get('notes') ?? '').trim();
+
+  if (!ref.sessionDate || !ref.id) {
+    return data({ error: 'Something was missing. Try again.' }, { status: 400 });
+  }
+
+  try {
+    if (intent === 'confirm') {
+      // The note is what the learner still reads two years later, so it is asked for at the one
+      // moment the tool moves a credit.
+      if (!notes) {
+        return data({ error: 'Add a note about what you covered.' }, { status: 400 });
+      }
+      const [result] = await trpc.classes.confirmSessions.mutate({
+        institutionId,
+        refs: [ref],
+        notes,
+      });
+      if (result && !result.applied) {
+        return data({ error: 'That class had already been settled.' }, { status: 409 });
+      }
+    } else if (intent === 'absent') {
+      await trpc.classes.markAbsent.mutate({ institutionId, ref, notes: notes || undefined });
+    } else if (intent === 'dispute') {
+      await trpc.classes.disputeSession.mutate({ institutionId, ref, notes: notes || undefined });
+    } else {
+      return data({ error: 'Unknown action' }, { status: 400 });
+    }
+  } catch (error) {
+    return data(
+      { error: error instanceof Error ? error.message : 'Something went wrong' },
+      { status: 400 }
+    );
+  }
+
+  return redirect(`/learners/${learnerId}/${programId}`);
+}
+
 export default function LearnerLedger() {
   const { card, sessions, packs, learnerId, programId, isTeacher, isLearner } =
     useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
+  const navigation = useNavigation();
+  const pending = navigation.state === 'submitting';
   const { enrollment } = card;
 
   return (
@@ -85,6 +166,12 @@ export default function LearnerLedger() {
           </p>
         </div>
 
+        {actionData && 'error' in actionData && actionData.error ? (
+          <p className="text-sm text-destructive" role="alert">
+            {actionData.error}
+          </p>
+        ) : null}
+
         <section className="space-y-3">
           <SectionTitle>Classes</SectionTitle>
           {sessions.length === 0 ? (
@@ -105,8 +192,11 @@ export default function LearnerLedger() {
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {modeLabel(session.mode)}
+                        {/* The absolute date, where the review queue gives the relative one.
+                            There the rows are scanned and "in 6 days" triages; here one class is
+                            being read, and the date is what somebody plans around. */}
                         {session.status === 'pending' && session.autoConfirmAt
-                          ? ` · ${autoConfirmLabel(session.autoConfirmAt)}`
+                          ? ` · ${autoConfirmOnLabel(session.autoConfirmAt)}`
                           : ''}
                       </p>
                     </CardHeader>
@@ -114,6 +204,78 @@ export default function LearnerLedger() {
                         reads two years later — so they are body text, not a tooltip. */}
                     {session.notes ? (
                       <CardContent className="pt-0 text-sm">{session.notes}</CardContent>
+                    ) : null}
+
+                    {/*
+                      Only for a teacher, and only while there is something to settle. A
+                      confirmed class is terminal, so a control that reopened it would be
+                      offering to rewrite a ledger entry rather than to make one.
+
+                      `<details>` rather than three buttons on every row: the guru's default
+                      action here is still to do nothing, exactly as in the review queue, and a
+                      history page that shouts at her about every class is one she reads less.
+                    */}
+                    {isTeacher && session.status === 'pending' ? (
+                      <CardContent className="pt-0">
+                        <details className="rounded-md border border-border p-3">
+                          <summary className="min-h-tap cursor-pointer text-sm font-medium">
+                            Confirm or dispute
+                          </summary>
+                          <Form method="post" className="mt-3 space-y-3">
+                            <input type="hidden" name="sessionId" value={session.id} />
+                            <input type="hidden" name="sessionDate" value={session.sessionDate} />
+                            <input
+                              type="hidden"
+                              name="institutionId"
+                              value={enrollment.institutionId}
+                            />
+
+                            <Field
+                              label="What you covered"
+                              htmlFor={`notes-${session.id}`}
+                              hint="Required to confirm. Your student reads this later."
+                            >
+                              <Textarea id={`notes-${session.id}`} name="notes" rows={3} />
+                            </Field>
+
+                            <Button
+                              type="submit"
+                              name="intent"
+                              value="confirm"
+                              size="wide"
+                              pending={pending}
+                              pendingLabel="Confirming…"
+                            >
+                              Confirm
+                            </Button>
+
+                            {/* As prominent as confirm, because confirm is the thing that
+                                happens by itself. The only reason to open this is to stop it. */}
+                            <div className="flex gap-2">
+                              <Button
+                                type="submit"
+                                name="intent"
+                                value="absent"
+                                variant="outline"
+                                className="flex-1"
+                                pending={pending}
+                              >
+                                Did not attend
+                              </Button>
+                              <Button
+                                type="submit"
+                                name="intent"
+                                value="dispute"
+                                variant="destructive"
+                                className="flex-1"
+                                pending={pending}
+                              >
+                                Did not happen
+                              </Button>
+                            </div>
+                          </Form>
+                        </details>
+                      </CardContent>
                     ) : null}
                   </Card>
                 </li>

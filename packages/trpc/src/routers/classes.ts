@@ -39,6 +39,38 @@ const sessionRefInput = z.object({
  * appears in the UI. So every teacher write goes through this rather than failing on a missing
  * record.
  */
+/**
+ * Fills in the `institutionId` a session transition needs to re-format its keys.
+ *
+ * Derived from the program rather than taken from the request. A client-supplied value would not
+ * corrupt anything — ElectroDB guards it with a condition — but a wrong one cancels the
+ * transaction as `ConditionalCheckFailed`, which is indistinguishable from "somebody already
+ * confirmed this" and would be reported as such.
+ *
+ * Memoized per call because a bulk confirm of fifty rows is usually one or two programs, and
+ * `assertClassAccess` also re-checks teaching at whichever institution the program really
+ * belongs to — so a ref smuggled in from elsewhere is refused rather than merely mis-keyed.
+ */
+async function withInstitution<T extends { programId: string; learnerId: string }>(
+  ctx: { user: { id: string } },
+  refs: T[]
+): Promise<Array<T & { institutionId: string }>> {
+  const byProgram = new Map<string, Promise<string>>();
+
+  return Promise.all(
+    refs.map(async ref => {
+      let resolved = byProgram.get(ref.programId);
+      if (!resolved) {
+        resolved = assertClassAccess(ctx, { programId: ref.programId }).then(
+          actor => actor.institutionId
+        );
+        byProgram.set(ref.programId, resolved);
+      }
+      return { ...ref, institutionId: await resolved };
+    })
+  );
+}
+
 async function ensureOwnInstitution(user: { id: string; name: string }) {
   return ClassInstitution.ensureClassInstitution({
     ownerUserId: user.id,
@@ -529,7 +561,8 @@ export const classesRouter = createTRPCRouter({
       await assertTeacher(ctx, { institutionId: input.institutionId });
       // Confirming is the moment the tool asks for something in exchange for moving a credit,
       // and the note is what a learner still reads two years later.
-      const results = await ClassSession.confirmClassSessions(input.refs, {
+      const refs = await withInstitution(ctx, input.refs);
+      const results = await ClassSession.confirmClassSessions(refs, {
         confirmedBy: ctx.user.id,
         notes: input.notes,
       });
@@ -546,7 +579,11 @@ export const classesRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       await assertTeacher(ctx, { institutionId: input.institutionId });
-      return ClassSession.disputeClassSession(input.ref, {
+      const [ref] = await withInstitution(ctx, [input.ref]);
+      if (!ref) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Session not found' });
+      }
+      return ClassSession.disputeClassSession(ref, {
         confirmedBy: ctx.user.id,
         notes: input.notes,
       });
@@ -562,9 +599,13 @@ export const classesRouter = createTRPCRouter({
       if (!program) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Program not found' });
       }
+      const [ref] = await withInstitution(ctx, [input.ref]);
+      if (!ref) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Session not found' });
+      }
       // The policy is read from the program, never sent by the client — it decides whether a
       // credit burns, so it is not the caller's to assert.
-      return ClassSession.markClassSessionAbsent(input.ref, {
+      return ClassSession.markClassSessionAbsent(ref, {
         confirmedBy: ctx.user.id,
         notes: input.notes,
         skipPolicy: program.skipPolicy,

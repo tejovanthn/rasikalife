@@ -10,12 +10,30 @@ import type { ClassSession } from './entity';
 import { AUTO_CONFIRM_DAYS, BULK_CONFIRM_LIMIT } from './schema';
 import type { ConfirmClassSessionInput, MarkClassSessionInput, SessionStatus } from './schema';
 
-/** Everything needed to address one row. The sort key carries the date, so the id alone will not do. */
+/**
+ * Everything needed to address one row **and rewrite its keys**.
+ *
+ * The first four address it: the sort key carries the date, so the id alone will not do.
+ * `institutionId` is not part of the primary key at all — it is here because `status` is a
+ * composite of `byInstitutionStatus`, so every transition has to re-format `gsi1pk`, and
+ * ElectroDB cannot do that without the other half. Omitting it does not corrupt the index; it
+ * throws `Incomplete composite attributes` and the write simply fails.
+ *
+ * It should be the session's **real** institution rather than one the caller asserts. ElectroDB
+ * is not relying on trust here — it folds `#institutionId = :institutionId` into the
+ * ConditionExpression, so a wrong value refuses the write instead of writing a key that points
+ * at an institution the row does not belong to. What a wrong value costs is a *misleading* answer:
+ * the transaction cancels with `ConditionalCheckFailed` on the session item, which this code
+ * cannot tell apart from "somebody already confirmed it". So the router derives it from the
+ * program instead of accepting it from the client, and the guarantee stays a guarantee rather
+ * than becoming an error message.
+ */
 export type ClassSessionRef = {
   programId: string;
   learnerId: string;
   sessionDate: string;
   id: string;
+  institutionId: string;
 };
 
 export type SessionTransition = ClassSessionRef & { status: SessionStatus };
@@ -122,9 +140,17 @@ async function transitionSession(
     fields.notes = update.notes;
   }
 
+  // `status` is a composite of `byInstitutionStatus` and `byDue`, so changing it re-formats
+  // those keys — and `institutionId` is not in the primary key, so ElectroDB has no way to know
+  // it. `.composite()` is how a value is supplied purely for key formatting. Without it every
+  // confirm, dispute and absent fails outright. CLAUDE.md rule 7, in its other form: patching
+  // through the entity recomputes the keys, but only if you give it enough to recompute them.
+  const composite = { institutionId: ref.institutionId };
+
   if (creditDelta === 0) {
     const result = await ClassSessionEntity.patch(ref)
       .set(fields)
+      .composite(composite)
       .where((attr, op) => op.eq(attr.status, 'pending'))
       .go({ response: 'all_new' })
       .catch(error => {
@@ -143,6 +169,7 @@ async function transitionSession(
       classSession
         .patch(ref)
         .set(fields)
+        .composite(composite)
         .where((attr, op) => op.eq(attr.status, 'pending'))
         .commit(),
       classEnrollment
@@ -292,6 +319,8 @@ export function sessionRef(session: ClassSession): ClassSessionRef {
     learnerId: session.learnerId,
     sessionDate: session.sessionDate,
     id: session.id,
+    // Read off the row, so it is the true one by construction.
+    institutionId: session.institutionId,
   };
 }
 

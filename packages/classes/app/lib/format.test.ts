@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoConfirmLabel, formatDay, formatSessionDate } from './format';
+import { autoConfirmLabel, autoConfirmOnLabel, formatDay, formatSessionDate } from './format';
 
 describe('formatSessionDate', () => {
   /**
@@ -51,5 +51,22 @@ describe('autoConfirmLabel', () => {
    */
   it('reads a passed deadline as imminent, not as a failure', () => {
     expect(autoConfirmLabel('2026-08-01T00:00:00.000Z', now)).toBe('confirming now');
+  });
+});
+
+/**
+ * The absolute form, used on a history page where one class is read rather than a queue scanned.
+ * Rendered in the viewer's own zone, like `startsAt` — this is a real instant, and it is when the
+ * thing happens to them.
+ */
+describe('autoConfirmOnLabel', () => {
+  it('names the day rather than counting down to it', () => {
+    const label = autoConfirmOnLabel('2026-08-10T18:30:00.000Z');
+    expect(label).toMatch(/^confirms automatically on /);
+    expect(label).toMatch(/Aug/);
+  });
+
+  it('carries no time, because a deadline at midnight is a date', () => {
+    expect(autoConfirmOnLabel('2026-08-10T18:30:00.000Z')).not.toMatch(/:\d\d/);
   });
 });

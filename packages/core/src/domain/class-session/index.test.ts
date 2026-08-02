@@ -44,6 +44,7 @@ const REF = {
   learnerId: 'learn1',
   sessionDate: '2026-08-04',
   id: 'sess1',
+  institutionId: 'inst1',
 };
 
 const MARK_INPUT = {
@@ -64,6 +65,7 @@ function patchChain(result: unknown = { data: {} }) {
   chain.set = vi.fn().mockReturnValue(chain);
   chain.add = vi.fn().mockReturnValue(chain);
   chain.where = vi.fn().mockReturnValue(chain);
+  chain.composite = vi.fn().mockReturnValue(chain);
   return { chain, go, commit };
 }
 
@@ -221,6 +223,21 @@ describe('class-session', () => {
       );
       // Exactly one credit, and via ADD so two writers cannot lose one another's decrement.
       expect(enrollment.chain.add).toHaveBeenCalledWith({ creditsRemaining: -1 });
+    });
+
+    /**
+     * `status` is a composite of two GSI partition keys and `institutionId` is not in the primary
+     * key, so without this ElectroDB cannot re-format them and the write throws outright. It
+     * reached a deploy: every test in this file mocks the entity, so they could only ever agree
+     * about which methods were called. `keys.test.ts` exercises the real one.
+     */
+    it('supplies the institution the status keys are re-formatted from', async () => {
+      transactionResolves({ canceled: false, data: [] });
+
+      await confirmClassSession(REF, { confirmedBy: 'user9', notes: 'ok' });
+
+      const { session } = transactionEntities();
+      expect(session.chain.composite).toHaveBeenCalledWith({ institutionId: 'inst1' });
     });
 
     /**

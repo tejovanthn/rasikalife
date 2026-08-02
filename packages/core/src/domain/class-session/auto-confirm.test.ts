@@ -8,6 +8,7 @@ vi.mock('./index', () => ({
     learnerId: session.learnerId,
     sessionDate: session.sessionDate,
     id: session.id,
+    institutionId: session.institutionId,
   }),
 }));
 
@@ -15,7 +16,13 @@ import { autoConfirmDueSessions } from './auto-confirm';
 import { confirmClassSession, listSessionsDueForAutoConfirm } from './index';
 
 function session(id: string) {
-  return { id, programId: 'prog1', learnerId: `learn-${id}`, sessionDate: '2026-08-04' };
+  return {
+    id,
+    programId: 'prog1',
+    learnerId: `learn-${id}`,
+    sessionDate: '2026-08-04',
+    institutionId: 'inst1',
+  };
 }
 
 describe('autoConfirmDueSessions', () => {

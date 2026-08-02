@@ -313,6 +313,14 @@ Four rules the code depends on:
   reason — never an edit, never a direct write. Changing the guru's standard pack size edits
   `defaultPackSize` on the program instead, and is not retroactive. `expectedCredits` in
   `class-session/schema.ts` is the invariant, and what a repair would rebuild from.
+- **A status transition must supply `institutionId` via `.composite()`.** `status` is a composite
+  of two GSI partition keys and `institutionId` is not in the primary key, so ElectroDB cannot
+  re-format them on its own — it throws `Incomplete composite attributes` and the write fails
+  outright. This shipped broken because every test mocked the entity and could only agree about
+  which methods were called; `class-session/keys.test.ts` now exercises the real one. Supply the
+  session's **true** institution (the router derives it from the program): ElectroDB folds the
+  value into the ConditionExpression, so a wrong one is refused rather than mis-keyed, but it
+  cancels as `ConditionalCheckFailed` and reads as "already confirmed".
 - **Every status transition is guarded on being `pending`, not on the button press.** The
   auto-confirm cron and the guru's thumb race for the same row every week; without the condition
   the loser takes a second credit. `applied: false` is an ordinary outcome — the caller says
