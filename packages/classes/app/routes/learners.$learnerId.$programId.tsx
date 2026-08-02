@@ -67,6 +67,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     programId,
     isTeacher: contexts.teaching.length > 0,
     isLearner: contexts.learners.length > 0,
+    /**
+     * Whether the viewer follows **this** learner, which is not the same as being a learner
+     * somewhere. A guru reaches this page from her roster and has no access row for her student,
+     * so sending her "back" to `/home` showed her her own empty learner list — which is correct
+     * and useless. It decides where Back goes.
+     */
+    followsThisLearner: contexts.learners.some(learner => learner.id === learnerId),
   });
 }
 
@@ -107,15 +114,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   try {
     if (intent === 'confirm') {
-      // The note is what the learner still reads two years later, so it is asked for at the one
-      // moment the tool moves a credit.
-      if (!notes) {
-        return data({ error: 'Add a note about what you covered.' }, { status: 400 });
-      }
       const [result] = await trpc.classes.confirmSessions.mutate({
         institutionId,
         refs: [ref],
-        notes,
+        // Optional, and an empty one leaves the student's own note standing.
+        notes: notes || undefined,
       });
       if (result && !result.applied) {
         return data({ error: 'That class had already been settled.' }, { status: 409 });
@@ -138,7 +141,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function LearnerLedger() {
-  const { card, sessions, packs, learnerId, programId, isTeacher, isLearner } =
+  const { card, sessions, packs, learnerId, programId, isTeacher, isLearner, followsThisLearner } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -149,11 +152,18 @@ export default function LearnerLedger() {
     <Chrome isTeacher={isTeacher} isLearner={isLearner} headerRight={<SignOutButton />}>
       <div className="space-y-6">
         <div>
+          {/* Back to wherever this page is actually reached from. A guardian arrives from their
+              own card; a guru arrives from the program roster and has no access row for the
+              learner, so `/home` would show her an empty list of her own children. */}
           <Link
-            to={`/home?learner=${encodeURIComponent(learnerId)}`}
+            to={
+              followsThisLearner
+                ? `/home?learner=${encodeURIComponent(learnerId)}`
+                : `/teaching/${programId}`
+            }
             className="text-sm text-primary underline"
           >
-            ← Back
+            {followsThisLearner ? '← Back' : '← Back to the class'}
           </Link>
           <PageTitle className="mt-2">
             {programDisplayTitle({
@@ -233,7 +243,7 @@ export default function LearnerLedger() {
                             <Field
                               label="What you covered"
                               htmlFor={`notes-${session.id}`}
-                              hint="Required to confirm. Your student reads this later."
+                              hint="Optional. Your student reads this later."
                             >
                               <Textarea id={`notes-${session.id}`} name="notes" rows={3} />
                             </Field>

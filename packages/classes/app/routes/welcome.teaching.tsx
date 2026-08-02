@@ -237,9 +237,24 @@ export default function TeachingOnboarding() {
           </div>
         ) : null}
 
-        <Link to="/welcome" className="block text-center text-sm text-muted-foreground underline">
-          Back
-        </Link>
+        {/*
+          Past step 1 there is no "back" to go to: the institution exists, so `/welcome` bounces
+          straight through the resolver to `/teaching`. Saying Back and landing on the roster is a
+          small lie, and leaving is a real thing a guru wants to do here — she can resume from
+          where she stopped, since the step is read from the records rather than a progress flag.
+        */}
+        {state.step === 1 ? (
+          <Link to="/welcome" className="block text-center text-sm text-muted-foreground underline">
+            Back
+          </Link>
+        ) : (
+          <Link
+            to="/teaching"
+            className="block text-center text-sm text-muted-foreground underline"
+          >
+            Finish this later
+          </Link>
+        )}
       </div>
     </Chrome>
   );

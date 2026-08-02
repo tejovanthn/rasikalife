@@ -554,13 +554,13 @@ export const classesRouter = createTRPCRouter({
       z.object({
         institutionId,
         refs: z.array(sessionRefInput).min(1).max(ClassSession.BULK_CONFIRM_LIMIT),
-        notes: z.string().min(1).max(2000),
+        notes: z.string().max(2000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       await assertTeacher(ctx, { institutionId: input.institutionId });
-      // Confirming is the moment the tool asks for something in exchange for moving a credit,
-      // and the note is what a learner still reads two years later.
+      // Optional — see `ConfirmClassSessionSchema` for why a required note bought "ok" and
+      // "done" rather than anything worth reading.
       const refs = await withInstitution(ctx, input.refs);
       const results = await ClassSession.confirmClassSessions(refs, {
         confirmedBy: ctx.user.id,

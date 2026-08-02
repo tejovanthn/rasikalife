@@ -431,6 +431,18 @@ would have to land on `/teaching` and bounce — the exact flash the same paragr
 teach?" screen for ever. `institutionName` is denormalized onto it because the context switcher
 renders it on every page load; `cascadeInstitutionNameUpdate` is the obligation that buys.
 
+**Session notes are optional for everyone**, including the guru confirming. They were required
+of a person once, on the reasoning that the note is the durable value of the product — still
+true, and still the wrong trade: a required field on a Sunday-evening catch-up buys "ok" and
+"done", which is noise in the one column meant to be worth reading, and a reason to leave the
+queue to the cron. An empty note is never written (rule 8 drops it), so the student's own note
+survives. Revisit with a prompt rather than a requirement if the column turns out empty.
+
+**A "back" link has to know who is looking.** The learner ledger is reached by a guardian from
+their own card and by a guru from the program roster — and the guru has no `classLearnerAccess`
+row for her student, so sending her to `/home` showed her her own empty learner list. The page
+branches on whether the viewer follows *that* learner, not on whether they are a learner at all.
+
 **Guru onboarding is `/welcome/teaching`, three steps, one mutation each** — never one submit at
 the end. Which step to show is read from the records (`classes.onboardingState`), not from a
 progress flag, so abandoning halfway resumes rather than restarting. **Learners have no

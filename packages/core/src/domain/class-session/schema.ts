@@ -48,22 +48,25 @@ export const MarkClassSessionSchema = z.object({
 export type MarkClassSessionInput = z.infer<typeof MarkClassSessionSchema>;
 
 /**
- * Confirming requires notes from a person and does not from the cron.
+ * Notes are optional, for everyone.
  *
- * The note is the durable value of the whole product — it is what a learner still reads two
- * years later, and what survives a program being archived. Requiring it of the guru is the
- * only moment in the flow where the tool asks for something in exchange for moving money's
- * worth of credit. The cron has nothing to say and must not be made to invent something.
+ * They were required of a person confirming, on the reasoning that the note is the durable value
+ * of the product — what a learner still reads two years later — and that confirming is the one
+ * moment worth asking for something in exchange for moving a credit.
+ *
+ * That reasoning is still true and it was still the wrong trade. A guru settling six classes on a
+ * Sunday evening does not have six paragraphs, and a required field there buys "ok", "done", "as
+ * usual" — noise in the one column meant to be worth reading, and a reason to leave the queue
+ * alone until the cron clears it. An empty note leaves whatever the student wrote standing
+ * (`transitionSession` never sets a blank), so nothing is lost by not asking.
+ *
+ * Worth revisiting once a guru has used it for a term: if the notes turn out to be mostly empty,
+ * the answer is probably a prompt rather than a requirement.
  */
-export const ConfirmClassSessionSchema = z
-  .object({
-    confirmedBy: z.string().min(1),
-    notes: z.string().max(2000).optional(),
-  })
-  .refine(input => input.confirmedBy === 'system' || Boolean(input.notes?.trim()), {
-    message: 'Add a note about what you covered',
-    path: ['notes'],
-  });
+export const ConfirmClassSessionSchema = z.object({
+  confirmedBy: z.string().min(1),
+  notes: z.string().max(2000).optional(),
+});
 
 export type ConfirmClassSessionInput = z.infer<typeof ConfirmClassSessionSchema>;
 

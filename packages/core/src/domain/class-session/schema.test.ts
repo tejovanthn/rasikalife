@@ -121,21 +121,39 @@ describe('groupSessions', () => {
 
 describe('ConfirmClassSessionSchema', () => {
   /**
-   * The note is what a learner still reads two years later and what survives a program being
-   * archived. Confirming is the one moment the tool asks for something in exchange for moving
-   * a credit, so it asks then.
+   * Notes are optional for everyone now. Requiring them of a person confirming bought "ok" and
+   * "done" — noise in the one column meant to be worth reading — and gave a guru settling six
+   * classes a reason to leave the queue alone until the cron cleared it.
    */
-  it('requires a note from a person', () => {
-    expect(() => ConfirmClassSessionSchema.parse({ confirmedBy: 'user9' })).toThrow();
-    expect(() => ConfirmClassSessionSchema.parse({ confirmedBy: 'user9', notes: '  ' })).toThrow();
+  it('accepts a confirmation with no note, from anyone', () => {
+    expect(() => ConfirmClassSessionSchema.parse({ confirmedBy: 'user9' })).not.toThrow();
+    expect(() => ConfirmClassSessionSchema.parse({ confirmedBy: 'system' })).not.toThrow();
     expect(() =>
-      ConfirmClassSessionSchema.parse({ confirmedBy: 'user9', notes: 'Varnam in Kalyani' })
+      ConfirmClassSessionSchema.parse({ confirmedBy: 'user9', notes: '  ' })
     ).not.toThrow();
   });
 
-  // The cron has nothing to say and must not be made to invent something.
-  it('does not require one from the cron', () => {
-    expect(() => ConfirmClassSessionSchema.parse({ confirmedBy: 'system' })).not.toThrow();
+  it('still takes one when there is something to say', () => {
+    expect(
+      ConfirmClassSessionSchema.parse({ confirmedBy: 'user9', notes: 'Varnam in Kalyani' }).notes
+    ).toBe('Varnam in Kalyani');
+  });
+
+  // Somebody has to be named, or a learner cannot tell a class the guru looked at from one the
+  // clock let through.
+  it('still requires who confirmed it', () => {
+    expect(() => ConfirmClassSessionSchema.parse({ notes: 'Varnam' })).toThrow();
+    expect(() => ConfirmClassSessionSchema.parse({ confirmedBy: '' })).toThrow();
+  });
+
+  /**
+   * The reason an empty note is safe: `transitionSession` never sends a blank, and an undefined
+   * value falls out of an ElectroDB UpdateExpression entirely (CLAUDE.md rule 8) — so confirming
+   * without a note leaves whatever the student wrote standing rather than erasing it.
+   */
+  it('leaves a blank note to be dropped rather than written', () => {
+    const parsed = ConfirmClassSessionSchema.parse({ confirmedBy: 'user9', notes: '   ' });
+    expect(parsed.notes?.trim()).toBe('');
   });
 });
 

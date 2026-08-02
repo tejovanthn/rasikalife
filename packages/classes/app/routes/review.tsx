@@ -106,13 +106,12 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     if (intent === 'confirm') {
       const notes = String(formData.get('notes') ?? '').trim();
-      if (!notes) {
-        return data({ error: 'Add a note about what you covered.' }, { status: 400 });
-      }
       const results = await trpc.classes.confirmSessions.mutate({
         institutionId,
         refs: refs.slice(0, BULK_CONFIRM_LIMIT),
-        notes,
+        // Optional. An empty one leaves whatever the student wrote standing rather than
+        // blanking it — undefined values fall out of an ElectroDB UpdateExpression entirely.
+        notes: notes || undefined,
       });
       // Per-row results, not one boolean. One failure in a selection of fifty must not silently
       // drop the other forty-nine, and she has to be told which ones did not go through.
@@ -258,7 +257,7 @@ export default function ReviewQueue() {
               <Field
                 label="What you covered"
                 htmlFor="notes"
-                hint="Required to confirm. Your students read this later."
+                hint="Optional. Your students read this later."
               >
                 <Textarea id="notes" name="notes" rows={3} />
               </Field>
