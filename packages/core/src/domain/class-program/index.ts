@@ -1,7 +1,12 @@
 import { generateId } from '../../utils';
 import { ClassProgramEntity } from './entity';
 import type { ClassProgram } from './entity';
-import type { CreateClassProgramInput, UpdateClassProgramInput } from './schema';
+import { CLEARABLE_PROGRAM_FIELDS } from './schema';
+import type {
+  ClearableProgramField,
+  CreateClassProgramInput,
+  UpdateClassProgramInput,
+} from './schema';
 
 export async function createClassProgram(input: CreateClassProgramInput): Promise<ClassProgram> {
   const result = await ClassProgramEntity.create({
@@ -41,17 +46,39 @@ export async function listInstitutionPrograms(
   return [...visible].reverse();
 }
 
+/**
+ * Clearing a field needs `.remove`, not `.set(undefined)` — CLAUDE.md rule 8.
+ *
+ * This was a plain `.set(input)`, and every optional field on the schema is the shape that rule
+ * describes: a guru who titles a program "Tyagaraja intensive" and later wants it back to a
+ * plain weekly class submits a blank, the key falls out of the UpdateExpression entirely, and the
+ * old title survives while the call reports success. Worse downstream — the router then passes
+ * the *stale* title to `cascadeProgramTitleUpdate`, so that function's own `.remove` branch,
+ * written for exactly this case, could never be reached.
+ *
+ * `clear` names the fields the caller means to empty, rather than inferring it from `undefined`:
+ * "not submitted" and "submitted blank" are different intents and a single `undefined` cannot
+ * carry both. `CLEARABLE_PROGRAM_FIELDS` bounds it, because the list arrives from a request.
+ */
 export async function updateClassProgram(
   id: string,
-  input: UpdateClassProgramInput
+  input: UpdateClassProgramInput,
+  clear: readonly ClearableProgramField[] = []
 ): Promise<ClassProgram | null> {
   const program = await getClassProgram(id);
   if (!program) {
     return null;
   }
-  const result = await ClassProgramEntity.patch(primaryKeyOf(program))
-    .set(input)
-    .go({ response: 'all_new' });
+
+  const clearing = clear.filter(
+    (field): field is ClearableProgramField =>
+      CLEARABLE_PROGRAM_FIELDS.includes(field) && input[field] === undefined
+  );
+
+  const patch = ClassProgramEntity.patch(primaryKeyOf(program)).set(input);
+  const result = await (clearing.length > 0 ? patch.remove([...clearing]) : patch).go({
+    response: 'all_new',
+  });
   return (result.data as ClassProgram) ?? null;
 }
 
@@ -93,6 +120,8 @@ function primaryKeyOf(program: ClassProgram): {
   };
 }
 
+export { CLEARABLE_PROGRAM_FIELDS } from './schema';
+export type { ClearableProgramField } from './schema';
 export { ClassProgramEntity } from './entity';
 export type { ClassProgram } from './entity';
 export {

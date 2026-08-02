@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { authClient, commitSession, getSession } from '~/lib/auth.server';
+import { safeRedirectTo } from '~/lib/redirect-to';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -53,10 +54,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
     session.unset('pkce_challenge');
     session.unset('pkce_timestamp');
 
-    const redirectTo = (session.get('redirect_to') as string) ?? '/';
+    const redirectTo = session.get('redirect_to') as string | undefined;
     session.unset('redirect_to');
 
-    return redirect(redirectTo.startsWith('/') ? redirectTo : '/', {
+    // Checked again on the way out as well as on the way in. The cookie is signed, so this is
+    // belt and braces rather than distrust — but it is the line that actually emits `Location`.
+    return redirect(safeRedirectTo(redirectTo), {
       headers: { 'Set-Cookie': await commitSession(session) },
     });
   } catch (err) {

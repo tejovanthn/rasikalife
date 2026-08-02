@@ -25,7 +25,7 @@ export {
 } from './components/card';
 export type { BadgeTone } from './components/card';
 export { Dialog } from './components/dialog';
-export { Field, Input, Label, Select, Textarea, fieldAria } from './components/field';
+export { Field, Input, Label, Select, Textarea } from './components/field';
 export { AppShell, NavItem, PageTitle, SectionTitle, navItemClasses } from './components/shell';
 export { Table, TableScroll, Td, Th, Tr } from './components/table';
 export { ToastProvider, useToast } from './components/toast';

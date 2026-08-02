@@ -287,9 +287,10 @@ Two precision rules the prompt and the code both enforce:
 
 ### Rasika Classes: the credit ledger (`class-*` domains)
 
-A class-tracking product for gurus, to be served at `classes.rasika.life` from its own
-`packages/classes` app. Only the core domains exist so far — plan `docs/plans/260802-01-rasika-classes.md`,
-phase 1 of 9. Eight entities, all `class-*`, all on the same single table reusing gsi1–gsi3.
+A class-tracking product for gurus, served at `classes.rasika.life` from its own
+`packages/classes` app. Plan and its addendum: `docs/plans/260802-01-rasika-classes.md`. All nine
+phases are built; nothing is deployed. Nine entities, all `class-*`, all on the same single table
+reusing gsi1–gsi3.
 
 **Never move money.** A screenshot upload plus the guru tapping "received" is the entire payment
 surface. No gateway, no UPI collect, no payment intent, and `amount`/`currency` on `classPack`
@@ -297,8 +298,10 @@ are reserved and uncollected. Anything more puts the project in financial compli
 
 **Payment screenshots must not touch the public image pipeline.** `Image.getImageUploadUrl`
 writes to `EVENT_POSTERS_BUCKET` behind a public CDN, and these are people's UPI transaction
-records. `classPack.screenshotKey` stores a private S3 key, never a URL. The private bucket and
-signed-read procedure are phase 2 and do not exist yet.
+records. `classPack.screenshotKey` stores a private S3 key, never a URL — see `PrivateImage` and
+`classes.screenshotUrl` below. The key is prefixed with the institution so the **write** path can
+check ownership; without that, a teacher could attach another institution's key to their own pack
+row and the read path would sign a GET for it, since it only checks who may see the row.
 
 **Class routes are private and are not `Event`s.** Events are public, moderated and wiki-editable;
 a program is private to its roster. Overloading `Event` would drag a child's attendance record

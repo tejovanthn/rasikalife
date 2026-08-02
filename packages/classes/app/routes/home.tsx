@@ -17,7 +17,7 @@ import { Chrome, SignOutButton } from '~/components/chrome';
 import { ContextSwitcher } from '~/components/context-switcher';
 import { InstallPrompt } from '~/components/install-prompt';
 import { createServerClient } from '~/lib/api.server';
-import { requireUser } from '~/lib/auth.server';
+import { requireUser, requireUserId } from '~/lib/auth.server';
 import { pageMeta } from '~/lib/meta';
 
 export const meta = () => pageMeta('My classes');
@@ -41,6 +41,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
+  // The one action that was not gated. Without it an expired cookie produced a raw UNAUTHORIZED
+  // rendered on the page instead of a trip to the login screen.
+  await requireUserId(request);
   const formData = await request.formData();
   const trpc = await createServerClient(request);
 
@@ -61,7 +64,10 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  return redirect(`/?learner=${encodeURIComponent(learnerId)}&marked=1`);
+  // `/home`, not `/`. `/` is the context resolver: it ignores the query string and sends the
+  // viewer wherever their stored context points, so a guru who also learns marked her own class
+  // and landed on the teaching roster, and a guardian of two children landed back on the first.
+  return redirect(`/home?learner=${encodeURIComponent(learnerId)}&marked=1`);
 }
 
 export default function StudentHome() {

@@ -34,6 +34,30 @@ export function formatSessionDate(session: {
   });
 }
 
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/**
+ * The zone-free *and* locale-free form of a session, for the server and the first client render.
+ *
+ * Pinning `timeZone: 'UTC'` is only half of it: `toLocaleDateString(undefined, …)` still resolves
+ * the **locale** from the environment, so a Lambda on `en-US` writes "Aug 4" into the HTML and a
+ * browser on `en-GB` renders "4 Aug" from the same input — a hydration mismatch with no timezone
+ * involved at all. Assembling the string by hand removes the last ambient input.
+ *
+ * `sessionDate` is the teacher's own calendar day and carries no zone, so this is a real fact
+ * rather than a placeholder. `LocalTime` swaps in the precise local time after mount.
+ */
+export function formatSessionDateStable(session: { sessionDate: string }): string {
+  const [year, month, day] = session.sessionDate.split('-').map(Number);
+  const name = MONTHS[(month ?? 1) - 1] ?? '';
+  return `${day} ${name} ${year}`;
+}
+
+/** The same, for a full ISO instant. */
+export function formatInstantStable(iso: string): string {
+  return formatSessionDateStable({ sessionDate: iso.slice(0, 10) });
+}
+
 export function formatDay(dateOnly: string): string {
   return new Date(`${dateOnly}T00:00:00Z`).toLocaleDateString(undefined, {
     day: 'numeric',

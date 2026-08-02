@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { authClient, commitSession, getSession } from '~/lib/auth.server';
+import { safeRedirectTo } from '~/lib/redirect-to';
 
 /**
  * The callback URL is built from **this** origin, not the main site's.
@@ -30,9 +31,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   session.set('pkce_challenge', JSON.stringify(challenge));
   session.set('pkce_timestamp', Date.now());
-  if (redirectTo?.startsWith('/')) {
-    // Only a path, never a full URL: an absolute value here is an open redirect.
-    session.set('redirect_to', redirectTo);
+  // Only a path, and `startsWith('/')` is not that check — see `safeRedirectTo`.
+  const safe = safeRedirectTo(redirectTo, '');
+  if (safe) {
+    session.set('redirect_to', safe);
   }
 
   return redirect(authUrl, { headers: { 'Set-Cookie': await commitSession(session) } });

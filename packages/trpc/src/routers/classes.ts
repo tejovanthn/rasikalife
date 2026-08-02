@@ -217,6 +217,12 @@ export const classesRouter = createTRPCRouter({
       });
     }),
 
+  /** One program by id. The roster page needs exactly this and used to list them all to get it. */
+  program: protectedProcedure.input(z.object({ programId })).query(async ({ ctx, input }) => {
+    await assertClassAccess(ctx, { programId: input.programId });
+    return ClassProgram.getClassProgram(input.programId);
+  }),
+
   createProgram: protectedProcedure
     .input(ClassProgram.CreateClassProgramSchema)
     .mutation(async ({ ctx, input }) => {
@@ -225,13 +231,25 @@ export const classesRouter = createTRPCRouter({
     }),
 
   updateProgram: protectedProcedure
-    .input(z.object({ programId, patch: ClassProgram.UpdateClassProgramSchema }))
+    .input(
+      z.object({
+        programId,
+        patch: ClassProgram.UpdateClassProgramSchema,
+        // Named, because `undefined` cannot tell "not submitted" apart from "submitted blank".
+        clear: z.array(z.enum(ClassProgram.CLEARABLE_PROGRAM_FIELDS)).default([]),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       await assertTeacher(ctx, { programId: input.programId });
-      const updated = await ClassProgram.updateClassProgram(input.programId, input.patch);
+      const updated = await ClassProgram.updateClassProgram(
+        input.programId,
+        input.patch,
+        input.clear
+      );
       // The roster shows a denormalized title, so a rename that stopped here would leave every
-      // student's card naming the old thing.
-      if (updated && 'title' in input.patch) {
+      // student's card naming the old thing — and a *cleared* title has to reach the junction's
+      // `.remove` branch, which it never did while the clear silently failed upstream.
+      if (updated && ('title' in input.patch || input.clear.includes('title'))) {
         await ClassEnrollment.cascadeProgramTitleUpdate(input.programId, updated.title);
       }
       return updated;
@@ -359,6 +377,17 @@ export const classesRouter = createTRPCRouter({
     .input(z.object({ normalizedEmail: z.string().min(1), id: z.string().min(1), institutionId }))
     .mutation(async ({ ctx, input }) => {
       await assertTeacher(ctx, { institutionId: input.institutionId });
+
+      // The row decides, not the request. `assertTeacher` only proves the caller teaches at the
+      // institution they *named*; without this, any teacher could delete any other guru's
+      // outstanding invite given its email and id, and neither party would see anything — the
+      // student would simply never gain access.
+      const invites = await ClassInvite.listInvitesForEmail(input.normalizedEmail);
+      const invite = invites.find(row => row.id === input.id);
+      if (!invite || invite.institutionId !== input.institutionId) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Invite not found' });
+      }
+
       await ClassInvite.deleteClassInvite(input.normalizedEmail, input.id);
       return { ok: true };
     }),
@@ -377,7 +406,21 @@ export const classesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       // Teacher only. A learner viewer topping up their own balance is the one write that would
       // make the ledger worthless.
-      await assertTeacher(ctx, { programId: input.programId });
+      const actor = await assertTeacher(ctx, { programId: input.programId });
+
+      /**
+       * A screenshot key is accepted from the client, so it has to be *proved* rather than
+       * trusted. Without this, a teacher could attach another institution's key to their own
+       * pack row and `screenshotUrl` would then sign a GET for it — the read path checks who may
+       * see the row, and the row is exactly what this would have poisoned.
+       */
+      if (
+        input.screenshotKey &&
+        !PrivateImage.isKeyOwnedBy('classes', actor.institutionId, input.screenshotKey)
+      ) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'That upload is not yours' });
+      }
+
       const outcome = await ClassPack.grantClassPack({ ...input, grantedBy: ctx.user.id });
       if (!outcome.applied) {
         throw new TRPCError({
@@ -411,7 +454,14 @@ export const classesRouter = createTRPCRouter({
       if (!PrivateImage.isAllowedPrivateContentType(input.contentType)) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'That file type is not supported' });
       }
-      return PrivateImage.getPrivateUploadUrl('classes', input.fileName, input.contentType);
+      // Keys are prefixed with the institution, which is what makes the ownership check on
+      // `grantPack` possible at all.
+      return PrivateImage.getPrivateUploadUrl(
+        'classes',
+        input.institutionId,
+        input.fileName,
+        input.contentType
+      );
     }),
 
   /**
@@ -460,11 +510,35 @@ export const classesRouter = createTRPCRouter({
       }
 
       const timezone = await institutionTimezone(actor.institutionId);
+      const sessionDate = todayInTimeZone(timezone);
+
+      /**
+       * One mark per learner per day, returned rather than refused.
+       *
+       * Nothing stopped a second one: `markClassSession` mints a fresh KSUID, so the sort key
+       * `SESSION#${sessionDate}#${id}` never collides and a double submission produced two
+       * `pending` rows — two queue rows for the guru, or two credits taken by the cron a week
+       * later for one class. The whole transition path is guarded against double-decrement
+       * precisely to prevent that, and creation was the unguarded end of it.
+       *
+       * Idempotent rather than an error, because the student's intent is "today happened" and
+       * they should see that state, not a complaint. A settled row is left alone: if the guru
+       * already marked them absent, re-marking must not quietly reopen it.
+       *
+       * A read-then-write, so two genuinely simultaneous taps can still both land. That is a far
+       * smaller window than the one it closes, and the guru sees the duplicate in her queue.
+       */
+      const today = await ClassSession.listLearnerSessions(input.programId, input.learnerId);
+      const existing = today.find(session => session.sessionDate === sessionDate);
+      if (existing) {
+        return existing;
+      }
+
       return ClassSession.markClassSession({
         programId: input.programId,
         learnerId: input.learnerId,
         institutionId: actor.institutionId,
-        sessionDate: todayInTimeZone(timezone),
+        sessionDate,
         startsAt: new Date().toISOString(),
         timezone,
         mode: input.mode ?? program.defaultMode,

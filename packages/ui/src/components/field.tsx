@@ -51,11 +51,18 @@ export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLab
 }
 
 /**
- * Label, control and error as one unit.
+ * Label, control and error as one unit — and it wires them, rather than describing wiring.
  *
- * The error is wired with `aria-describedby` and rendered in `--destructive`, which is a
- * different value in each theme precisely so it stays readable — a single value gave 2.19:1 on
- * dark, which is close to invisible.
+ * It used to compute `hintId` and `errorId`, render them as `id`s, and leave the association to
+ * `fieldAria`, a helper **no caller ever used**. So every hint and every error message in the app
+ * was visually present and invisible to a screen reader: a person focusing "Classes" heard the
+ * label and never "a negative number corrects a mistake, and then a reason is required", nor the
+ * `role="alert"` text on re-focus.
+ *
+ * Cloning the child is what makes that impossible to forget. A caller still supplies `id` and
+ * `name` — those are theirs — but `aria-describedby` and `aria-invalid` are derived from what
+ * this component actually rendered, so they cannot disagree with it. Anything the child sets
+ * itself wins, for the rare control that manages its own description.
  */
 export function Field({
   label,
@@ -72,36 +79,35 @@ export function Field({
   children: React.ReactNode;
   className?: string;
 }) {
-  const hintId = hint ? `${htmlFor}-hint` : undefined;
-  const errorId = error ? `${htmlFor}-error` : undefined;
+  const hintId = hint ? `${htmlFor}-hint` : null;
+  const errorId = error ? `${htmlFor}-error` : null;
+  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+
+  const control = React.isValidElement(children)
+    ? React.cloneElement(children as React.ReactElement<Record<string, unknown>>, {
+        'aria-describedby':
+          (children.props as Record<string, unknown>)['aria-describedby'] ?? describedBy,
+        'aria-invalid':
+          (children.props as Record<string, unknown>)['aria-invalid'] ?? (error ? true : undefined),
+      })
+    : children;
 
   return (
     <div className={cn('space-y-1.5', className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {hint ? (
-        <p id={hintId} className="text-sm text-muted-foreground">
+        <p id={hintId ?? undefined} className="text-sm text-muted-foreground">
           {hint}
         </p>
       ) : null}
-      {children}
+      {control}
+      {/* `--destructive` is a different value in each theme precisely so this stays readable —
+          a single value gave 2.19:1 on dark, which is close to invisible. */}
       {error ? (
-        <p id={errorId} className="text-sm text-destructive" role="alert">
+        <p id={errorId ?? undefined} className="text-sm text-destructive" role="alert">
           {error}
         </p>
       ) : null}
     </div>
   );
-}
-
-/** The ids a `Field`'s control should point at, so the wiring cannot drift from the markup. */
-export function fieldAria(name: string, options: { error?: string | null; hint?: string }) {
-  const described = [options.hint ? `${name}-hint` : null, options.error ? `${name}-error` : null]
-    .filter(Boolean)
-    .join(' ');
-  return {
-    id: name,
-    name,
-    'aria-invalid': options.error ? true : undefined,
-    'aria-describedby': described || undefined,
-  };
 }

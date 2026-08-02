@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { autoConfirmLabel, autoConfirmOnLabel, formatDay, formatSessionDate } from './format';
+import {
+  autoConfirmLabel,
+  autoConfirmOnLabel,
+  formatDay,
+  formatInstantStable,
+  formatSessionDate,
+  formatSessionDateStable,
+} from './format';
 
 describe('formatSessionDate', () => {
   /**
@@ -68,5 +75,32 @@ describe('autoConfirmOnLabel', () => {
 
   it('carries no time, because a deadline at midnight is a date', () => {
     expect(autoConfirmOnLabel('2026-08-10T18:30:00.000Z')).not.toMatch(/:\d\d/);
+  });
+});
+
+/**
+ * What the server and the first client render agree on.
+ *
+ * Every other helper here formats with the ambient zone *and* the ambient locale, which is right
+ * in a browser and wrong on a Lambda: UTC + `en-US` produced "Aug 4" in the HTML while a phone in
+ * Chennai on `en-GB` produced "4 Aug" from the same input, so React discarded the server markup
+ * for every session row. These two take neither input from the environment.
+ */
+describe('server-stable formats', () => {
+  it('is identical whatever the ambient zone and locale are', () => {
+    expect(formatSessionDateStable({ sessionDate: '2026-08-04' })).toBe('4 Aug 2026');
+    expect(formatInstantStable('2026-08-04T21:30:00.000Z')).toBe('4 Aug 2026');
+  });
+
+  it('does not shift a date, which is the bug the whole helper exists for', () => {
+    // Late-evening UTC is the next day in Chennai and the same day in New York; a stable format
+    // must not care.
+    expect(formatSessionDateStable({ sessionDate: '2026-01-01' })).toBe('1 Jan 2026');
+    expect(formatSessionDateStable({ sessionDate: '2026-12-31' })).toBe('31 Dec 2026');
+  });
+
+  it('reads the month name from the date rather than a locale table', () => {
+    expect(formatSessionDateStable({ sessionDate: '2026-03-09' })).toContain('Mar');
+    expect(formatSessionDateStable({ sessionDate: '2026-11-01' })).toContain('Nov');
   });
 });

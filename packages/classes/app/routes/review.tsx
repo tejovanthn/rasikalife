@@ -15,9 +15,15 @@ import {
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router';
 import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
+import { LocalTime } from '~/components/local-time';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
-import { autoConfirmLabel, formatSessionDate, modeLabel } from '~/lib/format';
+import {
+  autoConfirmLabel,
+  formatSessionDate,
+  formatSessionDateStable,
+  modeLabel,
+} from '~/lib/format';
 import { pageMeta } from '~/lib/meta';
 
 type Ref = { programId: string; learnerId: string; sessionDate: string; id: string };
@@ -211,8 +217,18 @@ export default function ReviewQueue() {
                               {isGroup ? title : first.learnerName}
                             </CardTitle>
                             <span className="block text-sm text-muted-foreground">
-                              {formatSessionDate(first)} · {isGroup ? '' : `${title} · `}
-                              {modeLabel(first.mode)} · {autoConfirmLabel(first.autoConfirmAt)}
+                              <LocalTime fallback={formatSessionDateStable(first)}>
+                                {() => formatSessionDate(first)}
+                              </LocalTime>
+                              {' · '}
+                              {isGroup ? '' : `${title} · `}
+                              {modeLabel(first.mode)}
+                              {' · '}
+                              {/* Relative to *now*, so the server's clock and the client's would
+                                  disagree across a day boundary even in the same zone. */}
+                              <LocalTime fallback="confirms soon">
+                                {() => autoConfirmLabel(first.autoConfirmAt)}
+                              </LocalTime>
                             </span>
                           </span>
                           {isGroup ? <Badge tone="primary">{group.sessions.length}</Badge> : null}

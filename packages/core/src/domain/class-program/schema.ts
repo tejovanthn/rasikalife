@@ -39,6 +39,16 @@ export const UpdateClassProgramSchema = CreateClassProgramSchema.partial().omit(
 export type UpdateClassProgramInput = z.infer<typeof UpdateClassProgramSchema>;
 
 /**
+ * Fields a form may empty.
+ *
+ * Bounded because the list arrives from a request: `clear: ['skipPolicy']` would strip a
+ * required attribute that every credit decision reads. Only the two free-text fields a guru can
+ * legitimately blank are here.
+ */
+export const CLEARABLE_PROGRAM_FIELDS = ['title', 'agenda'] as const;
+export type ClearableProgramField = (typeof CLEARABLE_PROGRAM_FIELDS)[number];
+
+/**
  * What the roster and the student's card call this program.
  *
  * A regular class has no title on purpose — asking a guru to name her weekly Tuesday lesson is

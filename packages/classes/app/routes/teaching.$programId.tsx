@@ -39,24 +39,24 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const trpc = await createServerClient(request);
   const programId = params.programId as string;
 
-  const [institution, roster] = await Promise.all([
-    trpc.classes.myInstitution.query(),
+  // `getMyContexts`, not `myInstitution`. The latter is `listInstitutionsByOwner`, so a
+  // co-teacher — who owns nothing — got a 404 on every program they teach, which is the exact
+  // case the `classTeacher` junction was introduced to serve.
+  //
+  // And one program by id rather than the institution's entire list, archived included, filtered
+  // down to the one the URL already names.
+  const [contexts, program, roster] = await Promise.all([
+    trpc.classes.getMyContexts.query(),
+    trpc.classes.program.query({ programId }),
     trpc.classes.roster.query({ programId }),
   ]);
-  if (!institution) {
-    throw new Response('Not found', { status: 404 });
-  }
 
-  const programs = await trpc.classes.programs.query({
-    institutionId: institution.id,
-    includeArchived: true,
-  });
-  const program = programs.find(p => p.id === programId);
   if (!program) {
     throw new Response('Not found', { status: 404 });
   }
 
-  return data({ institution, program, roster });
+  const institution = { id: program.institutionId };
+  return data({ contexts, institution, program, roster });
 }
 
 export async function action({ request, params }: ActionFunctionArgs) {
@@ -115,13 +115,13 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ProgramRoster() {
-  const { institution, program, roster } = useLoaderData<typeof loader>();
+  const { contexts, institution, program, roster } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const pending = navigation.state === 'submitting';
 
   return (
-    <Chrome isTeacher headerRight={<SignOutButton />}>
+    <Chrome isTeacher isLearner={contexts.learners.length > 0} headerRight={<SignOutButton />}>
       <div className="space-y-6">
         <div>
           <Link to="/teaching" className="text-sm text-primary underline">

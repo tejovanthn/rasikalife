@@ -35,6 +35,16 @@ import { SESSION_STATUSES } from './schema';
  *   - `byDue` — the auto-confirm cron, which needs every overdue pending session across all
  *     institutions and cannot enumerate institutions to get there.
  *
+ * `byDue` is partitioned on `status` alone, and that is a scale trade taken deliberately rather
+ * than an oversight. Only `class_session_due#pending` is ever read, but all four partitions are
+ * *written*: every confirmation moves a row into `class_session_due#confirmed`, which grows
+ * without bound and nothing queries. At one guru it is nothing. The ceiling is the pending
+ * partition, which takes every mark on the platform and caps around 1000 WCU — comfortable into
+ * the thousands of gurus. **Trigger to revisit: sustained write throttling on gsi3, or GSI
+ * storage becoming visible on the bill.** The fix is to bucket the key by day
+ * (`#${status}#${autoConfirmAt.slice(0, 10)}`) and have the cron sweep the last N buckets, which
+ * keeps its access pattern and drops the three dead partitions.
+ *
  * `groupSessionId` is required and defaults to the session's own id, which makes a solo class
  * a group of one. That is not a trick to satisfy the index: it means fan-out and solo are the
  * same code path, and the review queue's grouping logic has no special case.

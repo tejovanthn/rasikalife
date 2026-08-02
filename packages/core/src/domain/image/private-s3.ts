@@ -60,17 +60,45 @@ export function safeFileName(fileName: string): string {
   return cleaned.slice(0, 100) || 'upload';
 }
 
+/**
+ * The prefix every key for one owner shares.
+ *
+ * The key used to be `private/classes/{uploadId}/{file}` — flat, with nothing in it saying whose
+ * upload it was. That made the write path the weak side: a teacher could put *any* key on their
+ * own pack row, and the read path would then dutifully check that they may see that row and sign
+ * a GET for somebody else's UPI screenshot. The read path's guarantee is only as good as what the
+ * write path let in.
+ *
+ * With the owner in the prefix, `isKeyOwnedBy` turns that into a check the write path can make.
+ */
+export function privateKeyPrefix(namespace: PrivateUploadNamespace, ownerId: string): string {
+  return `private/${namespace}/${ownerId}/`;
+}
+
+/** Whether this key was minted for this owner. Used on the **write** path. */
+export function isKeyOwnedBy(
+  namespace: PrivateUploadNamespace,
+  ownerId: string,
+  key: string
+): boolean {
+  return Boolean(ownerId) && key.startsWith(privateKeyPrefix(namespace, ownerId));
+}
+
 export async function getPrivateUploadUrl(
   namespace: PrivateUploadNamespace,
+  ownerId: string,
   fileName: string,
   contentType: string
 ): Promise<{ uploadId: string; uploadUrl: string; key: string }> {
   if (!isAllowedPrivateContentType(contentType)) {
     throw new Error(`Unsupported content type: ${contentType}`);
   }
+  if (!ownerId) {
+    throw new Error('A private upload needs an owner');
+  }
 
   const uploadId = generateId();
-  const key = `private/${namespace}/${uploadId}/${safeFileName(fileName)}`;
+  const key = `${privateKeyPrefix(namespace, ownerId)}${uploadId}/${safeFileName(fileName)}`;
 
   const command = new PutObjectCommand({
     Bucket: BUCKET_NAME,

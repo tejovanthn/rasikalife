@@ -24,6 +24,7 @@ import {
   useNavigation,
 } from 'react-router';
 import { Chrome, SignOutButton } from '~/components/chrome';
+import { LocalTime } from '~/components/local-time';
 import { ScreenshotLink } from '~/components/screenshot-link';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
@@ -32,7 +33,9 @@ import {
   SESSION_STATUS_TONES,
   autoConfirmOnLabel,
   formatInstant,
+  formatInstantStable,
   formatSessionDate,
+  formatSessionDateStable,
   modeLabel,
 } from '~/lib/format';
 import { pageMeta } from '~/lib/meta';
@@ -207,9 +210,14 @@ export default function LearnerLedger() {
                         {/* The absolute date, where the review queue gives the relative one.
                             There the rows are scanned and "in 6 days" triages; here one class is
                             being read, and the date is what somebody plans around. */}
-                        {session.status === 'pending' && session.autoConfirmAt
-                          ? ` · ${autoConfirmOnLabel(session.autoConfirmAt)}`
-                          : ''}
+                        {session.status === 'pending' && session.autoConfirmAt ? (
+                          <>
+                            {' · '}
+                            <LocalTime fallback="confirms automatically in a few days">
+                              {() => autoConfirmOnLabel(session.autoConfirmAt)}
+                            </LocalTime>
+                          </>
+                        ) : null}
                       </p>
                     </CardHeader>
                     {/* The notes are the point of the whole product — what the learner still
@@ -314,7 +322,9 @@ export default function LearnerLedger() {
                           {Math.abs(pack.delta) === 1 ? 'class' : 'classes'}
                         </CardTitle>
                         <span className="text-sm text-muted-foreground">
-                          {formatInstant(pack.createdAt)}
+                          <LocalTime fallback={formatInstantStable(pack.createdAt)}>
+                            {() => formatInstant(pack.createdAt)}
+                          </LocalTime>
                         </span>
                       </div>
                       {/* A correction always carries its reason. That is the whole argument for
