@@ -17,6 +17,7 @@ export default $config({
 
     return {
       site: infra.site.url,
+      classes: infra.classesSite.url,
       trpc: infra.trpc.url,
       search: infra.searchReindexFunction.url,
       auth: infra.auth.url,

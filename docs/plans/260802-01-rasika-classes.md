@@ -1,7 +1,8 @@
 # Rasika Classes: Build Plan (MVP)
 
 Spec ID: `260802-01-rasika-classes`
-Status: phase 1 of 9 built (2026-08-02). Phases 2–9 unstarted.
+Status: **all nine phases built (2026-08-02)**, not yet deployed. See §11 for what each landed
+and §14 for where the build departs from this document.
 
 A class-tracking product for Carnatic gurus, served at `classes.rasika.life`.
 
@@ -99,10 +100,10 @@ auth system.
 
 | Item | Status |
 |---|---|
-| Session cookie set with explicit `Domain=.rasika.life`, not host-only | Verified |
-| `classes.rasika.life` added to Google OAuth redirect allowlist | To do |
-| Same origin added to OpenAuth issuer config | To do |
-| Sign-in redirect returns to the classes origin, not the main site | To do |
+| Session cookie set with explicit `Domain=.rasika.life`, not host-only | **This was wrong.** `rasika_session` had no `domain` and was host-only. Fixed 2026-08-02: both apps read `SESSION_COOKIE_DOMAIN`, which infra sets from the stage root. |
+| `classes.rasika.life` added to Google OAuth redirect allowlist | **Still to do — needs the Google console** |
+| Same origin added to OpenAuth issuer config | Already true: `issuer.ts` allows any `*.rasika.life` host |
+| Sign-in redirect returns to the classes origin, not the main site | Done: the callback is built from `url.origin` |
 
 **PWA auth gotcha, worth testing early.** On iOS, an OAuth redirect from a standalone-mode PWA can
 open in the in-app browser and land the session cookie outside the installed app's storage,
@@ -578,28 +579,38 @@ schemas and collocated tests, plus `shared/timezone.ts`. 146 tests. Includes the
 invariant, conditional status transitions and the group fan-out. `class-session/keys.test.ts`
 asserts real key shapes off `.params()` rather than off mocks.
 
-**Phase 2: private upload.** New bucket in `/infra/`, `getPrivateUploadUrl`, signed-read procedure.
+**Phase 2: private upload. — DONE.** `infra/class-uploads.ts` (no public access, no CDN, no S3
+notification), `PrivateImage.getPrivateUploadUrl` / `getPrivateDownloadUrl` in
+`domain/image/private-s3.ts`, and `classes.screenshotUrl`, which re-reads the key off the pack row
+after the access check rather than accepting one from the client.
 
-**Phase 3: tRPC router.** `packages/trpc/src/routers/classes.ts`, registered in `routers/index.ts`.
-`assertClassAccess` on every procedure. Tests via `sst shell vitest run`.
+**Phase 3: tRPC router. — DONE.** `routers/classes.ts` and `routers/classes-access.ts`, registered
+in `routers/index.ts`. 13 tests via the new `pnpm test:unit` (no AWS needed — the integration
+setup file cannot coexist with a module-wide mock).
 
-**Phase 4: invites and sign-in claim.** Hook into `findOrCreateUser`. The entity, normalisation and
-conditional claim already exist; the orchestration does not.
+**Phase 4: invites and sign-in claim. — DONE.** `ClassInvite.claimClassInvites`, called from
+`packages/auth/src/issuer.ts` beside the artist-claim redemption and non-fatal for the same
+reason. Claims **before** doing the work — see §14.
 
-**Phase 5: app scaffold.** `packages/classes` React Router v7 app, `packages/ui` seeded with the
-shared Tailwind preset and the primitives Classes needs, SST site component, `classes.rasika.life`
-domain, tRPC handler route, OAuth allowlist, `noindex` and `robots.txt`. Ends with a deployed
-signed-in blank page.
+**Phase 5: app scaffold. — DONE**, except deployment. `packages/ui` (preset, tokens, primitives),
+`packages/classes` (RR7, auth routes, `noindex`, `robots.txt`), `infra/classes.ts`. No tRPC handler
+route — see §14. The OAuth allowlist still needs the Google console.
 
-**Phase 6: student screens.**
+**Phase 6: student screens. — DONE.** `_index.tsx` (cards per enrollment, profile switcher shown
+only above one learner, mark-attended) and `learners.$learnerId.$programId.tsx` (session history
+with notes, pack history with on-demand screenshots).
 
-**Phase 7: guru screens** including the review queue.
+**Phase 7: guru screens. — DONE.** `students._index.tsx` (programs, archive toggle, add class),
+`students.$programId.tsx` (roster, record a payment with screenshot, add student, group session)
+and `review.tsx` (collapsed groups, bulk confirm with required notes, dispute and absent).
 
-**Phase 8: PWA.** Manifest, icons, service worker, install prompt. **Test the iOS installed-app
-sign-in flow here at the latest**, ideally as a spike during phase 5.
+**Phase 8: PWA. — DONE.** Manifest, generated placeholder icon set including maskable and iOS
+splash screens, hand-written service worker, install prompt with an iOS branch. **The iOS
+installed-app sign-in flow is still untested** — it needs a real device against a real deploy.
 
-**Phase 9: auto-confirm cron.** `listSessionsDueForAutoConfirm` and `confirmClassSession` with
-`confirmedBy: 'system'` already exist; the scheduled function does not.
+**Phase 9: auto-confirm cron. — DONE.** `ClassSession.autoConfirmDueSessions` in core (sequential,
+not `Promise.all`), `packages/scripts/src/autoConfirmClassSessionsCron.ts`, and
+`ClassAutoConfirmCron` in `infra/classes.ts` on a daily schedule.
 
 Each phase ships independently. Do not start a phase before the previous one's tests pass. Do not
 migrate `packages/web` components into `packages/ui` as part of any phase.
@@ -632,3 +643,72 @@ Standard `CLAUDE.md` rules apply. Reiterating the ones most likely to be missed 
 | `publicEventId` bridge to the main events site | A guru wants a workshop filled publicly. This is the version where Classes stops being a side tool. |
 | Multi-teacher UI | A second teacher exists. Schema already supports it. |
 | Reminders and notifications | Retention data shows students forgetting to mark. |
+
+## 14. Where the build departs from this document
+
+Recorded here rather than argued in a commit message. Six, each with the reason.
+
+1. **The session cookie was not what §3.4 claimed.** The table said `Domain=.rasika.life` was
+   "Verified"; `rasika_session` in fact had no `domain` at all and was host-only, so no session
+   created on `rasika.life` would ever have reached this app. Both apps now read
+   `SESSION_COOKIE_DOMAIN`, which infra sets from the stage root (`rasika.life` in prod,
+   `dev.rasika.life` on a dev stage — pinning the root everywhere would let two stages overwrite
+   each other's sessions). **Note for the deploy:** already-signed-in users hold a host-only
+   cookie of the same name and the browser sends both until the old one expires. Same session, so
+   the only effect is that the change takes hold on their next sign-in.
+
+2. **No tRPC handler route inside `packages/classes`** (§3.3). The reasoning there was avoiding a
+   CORS allowlist and a preflight on browser calls — and §12 also says loaders for reads, actions
+   for writes, which means the browser never calls tRPC at all. It calls this app's own routes,
+   same-origin by construction. Mounting the router anyway would be a second database-linked
+   endpoint that nothing uses. Add it when a genuine client-side call appears; `api.server.ts`
+   carries this note.
+
+3. **`addLearner` creates the learner and the enrollment immediately**, and the invite carries
+   `learnerId`. §9 described creating them when the invite is claimed. That does not survive the
+   real sequence: money changes hands first, so the guru needs a roster row to grant a pack
+   against before the student has ever opened the app. The `learnerName` branch of the claim
+   stays supported and tested for invites created any other way.
+
+4. **The invite is claimed *before* the work is done, not after.** The safer-looking order is
+   work-then-claim, so a crash leaves the invite to be retried — but the retry is not idempotent
+   where it matters: `createClassLearner` mints a KSUID, so a second pass produces a second child
+   with the same name, a second enrollment and a second balance. An invite that achieved nothing
+   is a much better failure than a family's history split across two records, and it is visible
+   (the student says the app is empty).
+
+5. **The service worker is hand-written**, not generated by `vite-plugin-pwa` (§3.5). What this
+   app needs is one rule and one deliberate omission — cache built assets, never touch a document
+   or an API response — and the omission is the part worth being able to read at a glance.
+
+6. **`packages/trpc` gained a second vitest config.** `vitest.config.ts` is the integration suite
+   and needs `sst shell`; its `test/setup.ts` imports `@rasika/core` at load time, before any test
+   file's `vi.mock` applies, so a unit test that mocks the module wholesale fails in `beforeEach`.
+   `pnpm test:unit` runs `*.unit.test.ts` with no setup file.
+
+Also worth knowing, and **not** fixed here: the session cookie's signing secret is the literal
+`'dev-secret-change-in-production'` in both apps. The practical impact is limited — the cookie
+carries an OpenAuth access token verified with real crypto, so forging the cookie yields a forged
+envelope around a token an attacker still cannot mint — but it is a real thing to close. Not by
+this project alone: changing it signs everybody out of both apps at once, which is its own
+decision.
+
+## 15. Before it works end to end
+
+Code-complete does not mean live. In order:
+
+1. **Add `https://classes.rasika.life/auth/callback` to the Google OAuth redirect allowlist.**
+   The OpenAuth issuer already allows any `*.rasika.life` host, so this is the only console
+   change. Nothing signs in until it is done.
+2. **`sst deploy --stage prod`.** Creates the `ClassUploads` bucket, the `RasikaClasses` site and
+   its DNS record, and `ClassAutoConfirmCron`. It also redeploys `RasikaWeb` with the cookie
+   domain change.
+3. **Sign in at `classes.rasika.life` in a browser** and confirm the session carries over from
+   `rasika.life` rather than bouncing to a login loop.
+4. **Then, on a real iPhone:** install to the home screen, sign out, and sign in *from the
+   installed icon*. This is the §3.4 gotcha and the one thing that cannot be checked from here —
+   an OAuth redirect out of standalone mode can land the cookie in Safari's storage rather than
+   the app's, leaving the user signed out on return. If it breaks, the fallback is to complete
+   auth in the browser and deep-link back.
+5. **Replace the placeholder icons.** `packages/classes/scripts/generate-icons.mjs` holds one SVG;
+   swap the mark and run `pnpm icons`.

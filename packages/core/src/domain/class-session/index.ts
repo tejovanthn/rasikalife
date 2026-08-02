@@ -295,6 +295,7 @@ export function sessionRef(session: ClassSession): ClassSessionRef {
   };
 }
 
+export { autoConfirmDueSessions } from './auto-confirm';
 export { ClassSessionEntity } from './entity';
 export type { ClassSession } from './entity';
 export {

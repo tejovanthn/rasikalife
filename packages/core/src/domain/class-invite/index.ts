@@ -65,6 +65,8 @@ export async function deleteClassInvite(normalizedEmail: string, id: string): Pr
   await ClassInviteEntity.delete({ normalizedEmail, id }).go();
 }
 
+export { claimClassInvites } from './claim';
+export type { ClaimedInvite } from './claim';
 export { ClassInviteEntity } from './entity';
 export type { ClassInvite } from './entity';
 export { CreateClassInviteSchema, normalizeInviteEmail } from './schema';

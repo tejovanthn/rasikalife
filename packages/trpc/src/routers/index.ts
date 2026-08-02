@@ -3,6 +3,7 @@ import { adminDataRouter } from './admin-data';
 import { artistRouter } from './artist';
 import { artistClaimRouter } from './artist-claim';
 import { awardRouter } from './award';
+import { classesRouter } from './classes';
 import { compositionRouter } from './composition';
 import { concertLogRouter } from './concert-log';
 import { contentRouter } from './content';
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   artist: artistRouter,
   artistClaim: artistClaimRouter,
   award: awardRouter,
+  classes: classesRouter,
   composition: compositionRouter,
   concertLog: concertLogRouter,
   content: contentRouter,

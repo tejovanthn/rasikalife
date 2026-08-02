@@ -1,0 +1,566 @@
+import {
+  ClassEnrollment,
+  ClassInstitution,
+  ClassInvite,
+  ClassLearner,
+  ClassLearnerAccess,
+  ClassPack,
+  ClassProgram,
+  ClassSession,
+  PrivateImage,
+} from '@rasika/core';
+import { todayInTimeZone } from '@rasika/core/shared/timezone';
+import { TRPCError } from '@trpc/server';
+import { z } from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../trpc';
+import {
+  assertClassAccess,
+  assertEnrollmentAccess,
+  assertTeacher,
+  institutionTimezone,
+} from './classes-access';
+
+const programId = z.string().min(1);
+const learnerId = z.string().min(1);
+const institutionId = z.string().min(1);
+
+const sessionRefInput = z.object({
+  programId,
+  learnerId,
+  sessionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  id: z.string().min(1),
+});
+
+/**
+ * The guru's own institution, created on first use.
+ *
+ * Onboarding a guru is "add your first student", not "set up your organisation" — the word never
+ * appears in the UI. So every teacher write goes through this rather than failing on a missing
+ * record.
+ */
+async function ensureOwnInstitution(user: { id: string; name: string }) {
+  return ClassInstitution.ensureClassInstitution({
+    ownerUserId: user.id,
+    name: user.name || 'My classes',
+  });
+}
+
+export const classesRouter = createTRPCRouter({
+  // ---------------------------------------------------------------- teacher: institution
+
+  myInstitution: protectedProcedure.query(async ({ ctx }) => {
+    const owned = await ClassInstitution.listInstitutionsByOwner(ctx.user.id);
+    return owned[0] ?? null;
+  }),
+
+  ensureInstitution: protectedProcedure.mutation(({ ctx }) => ensureOwnInstitution(ctx.user)),
+
+  updateInstitution: protectedProcedure
+    .input(
+      z.object({
+        institutionId,
+        name: z.string().min(1).max(200).optional(),
+        timezone: z.string().min(1).max(64).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      return ClassInstitution.updateClassInstitution(input.institutionId, {
+        name: input.name,
+        timezone: input.timezone,
+      });
+    }),
+
+  // ---------------------------------------------------------------- teacher: programs
+
+  programs: protectedProcedure
+    .input(z.object({ institutionId, includeArchived: z.boolean().default(false) }))
+    .query(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      return ClassProgram.listInstitutionPrograms(input.institutionId, {
+        includeArchived: input.includeArchived,
+      });
+    }),
+
+  createProgram: protectedProcedure
+    .input(ClassProgram.CreateClassProgramSchema)
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      return ClassProgram.createClassProgram(input);
+    }),
+
+  updateProgram: protectedProcedure
+    .input(z.object({ programId, patch: ClassProgram.UpdateClassProgramSchema }))
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { programId: input.programId });
+      const updated = await ClassProgram.updateClassProgram(input.programId, input.patch);
+      // The roster shows a denormalized title, so a rename that stopped here would leave every
+      // student's card naming the old thing.
+      if (updated && 'title' in input.patch) {
+        await ClassEnrollment.cascadeProgramTitleUpdate(input.programId, updated.title);
+      }
+      return updated;
+    }),
+
+  archiveProgram: protectedProcedure
+    .input(z.object({ programId, archived: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { programId: input.programId });
+      return input.archived
+        ? ClassProgram.archiveClassProgram(input.programId)
+        : ClassProgram.unarchiveClassProgram(input.programId);
+    }),
+
+  // ---------------------------------------------------------------- teacher: roster
+
+  roster: protectedProcedure
+    .input(z.object({ programId, activeOnly: z.boolean().default(false) }))
+    .query(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { programId: input.programId });
+      return ClassEnrollment.listProgramEnrollments(input.programId, {
+        activeOnly: input.activeOnly,
+      });
+    }),
+
+  /**
+   * Adds a learner to a program and invites the account that will watch it.
+   *
+   * The learner and the enrollment are created **now**, not when the invite is claimed. The plan
+   * described the other order, and it does not survive contact with the sequence: money changes
+   * hands first, so the guru needs to grant a pack against a roster row before the student has
+   * ever opened the app. Deferring creation would leave her with nothing to grant against.
+   *
+   * The invite therefore carries `learnerId`, which is the same shape the young-adult and
+   * second-guardian flows use. The `learnerName` branch of the claim stays supported for an
+   * invite created any other way.
+   */
+  addLearner: protectedProcedure
+    .input(
+      z.object({
+        programId,
+        firstName: z.string().min(1).max(80),
+        lastInitial: z.string().max(4).optional(),
+        isMinor: z.boolean().default(false),
+        email: z.string().email().max(254).optional(),
+        relation: z.enum(ClassLearnerAccess.ACCESS_RELATIONS).default('guardian'),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const actor = await assertTeacher(ctx, { programId: input.programId });
+      const program = await ClassProgram.getClassProgram(input.programId);
+      if (!program) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Program not found' });
+      }
+
+      const learner = await ClassLearner.createClassLearner({
+        institutionId: actor.institutionId,
+        firstName: input.firstName,
+        lastInitial: input.lastInitial,
+        isMinor: input.isMinor,
+      });
+
+      const enrollment = await ClassEnrollment.enrollLearner({
+        programId: input.programId,
+        learnerId: learner.id,
+        institutionId: actor.institutionId,
+        learnerName: ClassLearner.learnerDisplayName(learner),
+        programTitle: program.title,
+        programType: program.type,
+      });
+
+      const invite = input.email
+        ? await ClassInvite.createClassInvite({
+            email: input.email,
+            institutionId: actor.institutionId,
+            programId: input.programId,
+            learnerId: learner.id,
+            relation: input.relation,
+            invitedBy: ctx.user.id,
+          })
+        : null;
+
+      return { learner, enrollment, invite };
+    }),
+
+  updateLearner: protectedProcedure
+    .input(z.object({ learnerId, patch: ClassLearner.UpdateClassLearnerSchema }))
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { learnerId: input.learnerId });
+      const updated = await ClassLearner.updateClassLearner(input.learnerId, input.patch);
+      if (updated) {
+        await ClassEnrollment.cascadeLearnerNameUpdate(
+          input.learnerId,
+          ClassLearner.learnerDisplayName(updated)
+        );
+      }
+      return updated;
+    }),
+
+  endEnrollment: protectedProcedure
+    .input(z.object({ programId, learnerId, status: z.enum(ClassEnrollment.ENROLLMENT_STATUSES) }))
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { programId: input.programId });
+      return ClassEnrollment.setEnrollmentStatus(input.programId, input.learnerId, input.status);
+    }),
+
+  invites: protectedProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ ctx, input }) => {
+      // A teacher may look up what is outstanding for an address they invited; anyone may look
+      // up their own. Nothing else, because the reply names learners and institutions.
+      const invites = await ClassInvite.listInvitesForEmail(input.email);
+      const isOwnAddress =
+        ClassInvite.normalizeInviteEmail(ctx.user.email) ===
+        ClassInvite.normalizeInviteEmail(input.email);
+      if (isOwnAddress) {
+        return invites;
+      }
+      const owned = await ClassInstitution.listInstitutionsByOwner(ctx.user.id);
+      const ownedIds = new Set(owned.map(i => i.id));
+      return invites.filter(invite => ownedIds.has(invite.institutionId));
+    }),
+
+  revokeInvite: protectedProcedure
+    .input(z.object({ normalizedEmail: z.string().min(1), id: z.string().min(1), institutionId }))
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      await ClassInvite.deleteClassInvite(input.normalizedEmail, input.id);
+      return { ok: true };
+    }),
+
+  // ---------------------------------------------------------------- credits
+
+  packs: protectedProcedure
+    .input(z.object({ programId, learnerId }))
+    .query(async ({ ctx, input }) => {
+      await assertEnrollmentAccess(ctx, input);
+      return ClassPack.listClassPacks(input.programId, input.learnerId);
+    }),
+
+  grantPack: protectedProcedure
+    .input(ClassPack.GrantClassPackRequestSchema)
+    .mutation(async ({ ctx, input }) => {
+      // Teacher only. A learner viewer topping up their own balance is the one write that would
+      // make the ledger worthless.
+      await assertTeacher(ctx, { programId: input.programId });
+      const outcome = await ClassPack.grantClassPack({ ...input, grantedBy: ctx.user.id });
+      if (!outcome.applied) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message:
+            outcome.reason === 'no-enrollment'
+              ? 'That learner is not enrolled on this program'
+              : 'Could not record the pack',
+        });
+      }
+      return outcome.result;
+    }),
+
+  /**
+   * A presigned PUT into the private bucket.
+   *
+   * Teacher only, because the guru is the one holding the screenshot the student sent her over
+   * WhatsApp. Returns a key, never a URL — see `PrivateImage` for why the two uploaders are kept
+   * apart.
+   */
+  screenshotUploadUrl: protectedProcedure
+    .input(
+      z.object({
+        institutionId,
+        fileName: z.string().min(1).max(200),
+        contentType: z.string().min(1).max(100),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      if (!PrivateImage.isAllowedPrivateContentType(input.contentType)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'That file type is not supported' });
+      }
+      return PrivateImage.getPrivateUploadUrl('classes', input.fileName, input.contentType);
+    }),
+
+  /**
+   * A short-lived signed GET, handed out only after the access check.
+   *
+   * The key is re-read from the pack row rather than taken from the client. A caller who could
+   * pass their own key would get a signature for any object in the bucket, which is the entire
+   * access control undone by one parameter.
+   */
+  screenshotUrl: protectedProcedure
+    .input(z.object({ programId, learnerId, packId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      await assertEnrollmentAccess(ctx, input);
+      const packs = await ClassPack.listClassPacks(input.programId, input.learnerId);
+      const pack = packs.find(p => p.id === input.packId);
+      if (!pack?.screenshotKey) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'No screenshot on that payment' });
+      }
+      return { url: await PrivateImage.getPrivateDownloadUrl('classes', pack.screenshotKey) };
+    }),
+
+  // ---------------------------------------------------------------- sessions
+
+  /**
+   * The student marks today's class attended.
+   *
+   * `sessionDate` is computed here from the *institution's* zone and is never taken from the
+   * client. A student in California pressing this at 9pm Monday is marking the teacher's
+   * Tuesday, and the ledger has to agree with the teacher. Taking it as input would also let a
+   * client fabricate history.
+   */
+  markAttended: protectedProcedure
+    .input(
+      z.object({
+        programId,
+        learnerId,
+        mode: z.enum(ClassProgram.CLASS_MODES).optional(),
+        notes: z.string().max(2000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { actor, enrollment } = await assertEnrollmentAccess(ctx, input);
+      const program = await ClassProgram.getClassProgram(input.programId);
+      if (!program) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Program not found' });
+      }
+
+      const timezone = await institutionTimezone(actor.institutionId);
+      return ClassSession.markClassSession({
+        programId: input.programId,
+        learnerId: input.learnerId,
+        institutionId: actor.institutionId,
+        sessionDate: todayInTimeZone(timezone),
+        startsAt: new Date().toISOString(),
+        timezone,
+        mode: input.mode ?? program.defaultMode,
+        teacherId: program.defaultTeacherId,
+        notes: input.notes,
+        programTitle: enrollment.programTitle,
+        programType: enrollment.programType,
+        markedBy: ctx.user.id,
+      });
+    }),
+
+  /**
+   * The guru marks a group class, which fans out to one row per active enrollment.
+   *
+   * A teacher may name the date, because she is reconstructing last Tuesday from memory. A
+   * student may not — see `markAttended`.
+   */
+  markGroupSession: protectedProcedure
+    .input(
+      z.object({
+        programId,
+        sessionDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        mode: z.enum(ClassProgram.CLASS_MODES).optional(),
+        notes: z.string().max(2000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const actor = await assertTeacher(ctx, { programId: input.programId });
+      const program = await ClassProgram.getClassProgram(input.programId);
+      if (!program) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Program not found' });
+      }
+
+      const timezone = await institutionTimezone(actor.institutionId);
+      return ClassSession.markGroupClassSession({
+        programId: input.programId,
+        institutionId: actor.institutionId,
+        sessionDate: input.sessionDate ?? todayInTimeZone(timezone),
+        timezone,
+        mode: input.mode ?? program.defaultMode,
+        teacherId: program.defaultTeacherId,
+        notes: input.notes,
+        programTitle: program.title,
+        programType: program.type,
+        markedBy: ctx.user.id,
+      });
+    }),
+
+  sessions: protectedProcedure
+    .input(z.object({ programId, learnerId }))
+    .query(async ({ ctx, input }) => {
+      await assertEnrollmentAccess(ctx, input);
+      const sessions = await ClassSession.listLearnerSessions(input.programId, input.learnerId);
+      return [...sessions].reverse();
+    }),
+
+  /**
+   * The review queue, with learner names resolved.
+   *
+   * A session row carries `programTitle` but not a learner name, and a queue of KSUIDs is
+   * useless. Rather than denormalizing another field onto every session — one more thing for a
+   * rename to have to cascade to — the names come from one extra query over the institution's
+   * learners, which is a small list by construction.
+   */
+  reviewQueue: protectedProcedure
+    .input(z.object({ institutionId }))
+    .query(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      const [sessions, learners] = await Promise.all([
+        ClassSession.listPendingSessions(input.institutionId),
+        ClassLearner.listInstitutionLearners(input.institutionId),
+      ]);
+      const names = new Map(
+        learners.map(learner => [learner.id, ClassLearner.learnerDisplayName(learner)])
+      );
+      return sessions.map(session => ({
+        ...session,
+        learnerName: names.get(session.learnerId) ?? 'Student',
+      }));
+    }),
+
+  confirmSessions: protectedProcedure
+    .input(
+      z.object({
+        institutionId,
+        refs: z.array(sessionRefInput).min(1).max(ClassSession.BULK_CONFIRM_LIMIT),
+        notes: z.string().min(1).max(2000),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      // Confirming is the moment the tool asks for something in exchange for moving a credit,
+      // and the note is what a learner still reads two years later.
+      const results = await ClassSession.confirmClassSessions(input.refs, {
+        confirmedBy: ctx.user.id,
+        notes: input.notes,
+      });
+      return results.map(result => ({
+        id: result.ref.id,
+        applied: result.applied,
+        reason: result.applied ? null : result.reason,
+      }));
+    }),
+
+  disputeSession: protectedProcedure
+    .input(
+      z.object({ institutionId, ref: sessionRefInput, notes: z.string().max(2000).optional() })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      return ClassSession.disputeClassSession(input.ref, {
+        confirmedBy: ctx.user.id,
+        notes: input.notes,
+      });
+    }),
+
+  markAbsent: protectedProcedure
+    .input(
+      z.object({ institutionId, ref: sessionRefInput, notes: z.string().max(2000).optional() })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      const program = await ClassProgram.getClassProgram(input.ref.programId);
+      if (!program) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Program not found' });
+      }
+      // The policy is read from the program, never sent by the client — it decides whether a
+      // credit burns, so it is not the caller's to assert.
+      return ClassSession.markClassSessionAbsent(input.ref, {
+        confirmedBy: ctx.user.id,
+        notes: input.notes,
+        skipPolicy: program.skipPolicy,
+      });
+    }),
+
+  groupSessions: protectedProcedure
+    .input(z.object({ institutionId, groupSessionId: z.string().min(1) }))
+    .query(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      const rows = await ClassSession.listGroupSessions(input.groupSessionId);
+      // The group id came from the client, so the rows have to be checked rather than trusted.
+      return rows.filter(row => row.institutionId === input.institutionId);
+    }),
+
+  // ---------------------------------------------------------------- learner side
+
+  /** Every learner this sign-in can see. One means no profile switcher. */
+  myLearners: protectedProcedure.query(async ({ ctx }) => {
+    const access = await ClassLearnerAccess.listUserLearnerAccess(ctx.user.id);
+    const learners = await Promise.all(
+      access.map(row => ClassLearner.getClassLearner(row.learnerId))
+    );
+    return learners
+      .map((learner, index) =>
+        learner
+          ? {
+              id: learner.id,
+              name: ClassLearner.learnerDisplayName(learner),
+              isMinor: learner.isMinor,
+              relation: access[index]?.relation ?? 'guardian',
+            }
+          : null
+      )
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  }),
+
+  /**
+   * A learner's cards: one per enrollment, archived programs included.
+   *
+   * No archive filter, deliberately. A program the guru archived still holds this learner's
+   * session notes, and hiding it would delete the record from the only person it belongs to.
+   */
+  learnerHome: protectedProcedure.input(z.object({ learnerId })).query(async ({ ctx, input }) => {
+    await assertClassAccess(ctx, { learnerId: input.learnerId });
+    const enrollments = await ClassEnrollment.listLearnerEnrollments(input.learnerId);
+    const programs = await Promise.all(
+      enrollments.map(enrollment => ClassProgram.getClassProgram(enrollment.programId))
+    );
+    return enrollments.map((enrollment, index) => ({
+      enrollment,
+      program: programs[index] ?? null,
+    }));
+  }),
+
+  learnerAccess: protectedProcedure.input(z.object({ learnerId })).query(async ({ ctx, input }) => {
+    await assertClassAccess(ctx, { learnerId: input.learnerId });
+    return ClassLearnerAccess.listLearnerAccess(input.learnerId);
+  }),
+
+  revokeAccess: protectedProcedure
+    .input(z.object({ learnerId, targetUserId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const actor = await assertClassAccess(ctx, { learnerId: input.learnerId });
+      const result = await ClassLearnerAccess.revokeLearnerAccess({
+        learnerId: input.learnerId,
+        targetUserId: input.targetUserId,
+        actorUserId: ctx.user.id,
+        actorIsTeacher: actor.kind === 'teacher',
+      });
+      if (!result.allowed) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: result.message ?? 'Not allowed' });
+      }
+      return { ok: true };
+    }),
+
+  /** Invites another account to watch a learner: a second guardian, or the student themselves. */
+  inviteToLearner: protectedProcedure
+    .input(
+      z.object({
+        learnerId,
+        email: z.string().email().max(254),
+        relation: z.enum(ClassLearnerAccess.ACCESS_RELATIONS),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // A guardian may add a second guardian or hand the student their own access — that is the
+      // young-adult path, and requiring a teacher for it would put the guru in the middle of a
+      // family arrangement.
+      const actor = await assertClassAccess(ctx, { learnerId: input.learnerId });
+      if (actor.kind === 'learner' && actor.learnerId !== input.learnerId) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Not your learner' });
+      }
+      return ClassInvite.createClassInvite({
+        email: input.email,
+        institutionId: actor.institutionId,
+        learnerId: input.learnerId,
+        relation: input.relation,
+        invitedBy: ctx.user.id,
+      });
+    }),
+});

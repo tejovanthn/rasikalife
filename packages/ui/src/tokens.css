@@ -1,0 +1,88 @@
+/**
+ * The Rasika colour tokens, shared with packages/web.
+ *
+ * These values are a copy of the `@layer base` block in `packages/web/app/globals.css`, and
+ * that is deliberate rather than lazy: `packages/web/app/lib/contrast.test.ts` parses that file
+ * directly and asserts every on-screen pair against WCAG AA in both themes. Moving the tokens
+ * out from under it would disarm the test that found three real contrast failures.
+ *
+ * `token-drift.test.ts` in packages/web asserts the two files agree, so a value corrected in
+ * one and not the other fails there rather than showing up as two apps in slightly different
+ * colours.
+ *
+ * Two rules the values encode, both learned the hard way:
+ *
+ *   - Light and dark are not the same value. A single `--primary` for both gave 2.97:1 links;
+ *     a single `--destructive` gave 2.19:1 error text on dark.
+ *   - Every surface hue is 17. Two tokens once carried -21, which CSS normalises to 339 and
+ *     renders rose.
+ */
+
+@layer base {
+  :root {
+    --background: 17 100% 95%;
+    --foreground: 17 20% 8%;
+    --card: 17 50% 90%;
+    --card-foreground: 17 5% 10%;
+    --popover: 17 100% 95%;
+    --popover-foreground: 17 20% 8%;
+    --primary: 17 84.7% 40%;
+    --primary-foreground: 17 100% 99%;
+    --secondary: 17 30% 70%;
+    --secondary-foreground: 17 20% 8%;
+    --muted: 17 30% 85%;
+    --muted-foreground: 17 5% 35%;
+    --accent: 17 30% 80%;
+    --accent-foreground: 17 5% 10%;
+    --destructive: 0 100% 30%;
+    --destructive-foreground: 17 5% 90%;
+    --border: 17 30% 50%;
+    --input: 17 30% 18%;
+    --ring: 17 84.7% 40%;
+    --radius: 0.5rem;
+    --language: 220 60% 92%;
+    --language-foreground: 220 60% 30%;
+    --raga: 270 60% 92%;
+    --raga-foreground: 270 60% 30%;
+    --tala: 30 80% 92%;
+    --tala-foreground: 30 80% 30%;
+    --success: 142 71% 45%;
+    --success-foreground: 17 20% 8%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 17 20% 8%;
+  }
+
+  .dark,
+  :root[class~="dark"] {
+    --background: 17 50% 5%;
+    --foreground: 17 5% 90%;
+    --card: 17 45% 3%;
+    --card-foreground: 17 5% 90%;
+    --popover: 17 50% 5%;
+    --popover-foreground: 17 5% 90%;
+    --primary: 17 84.7% 53.7%;
+    --primary-foreground: 17 5% 5%;
+    --secondary: 17 30% 10%;
+    --secondary-foreground: 17 100% 99%;
+    --muted: 17 30% 15%;
+    --muted-foreground: 17 5% 60%;
+    --accent: 17 30% 15%;
+    --accent-foreground: 17 5% 90%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 17 5% 5%;
+    --border: 17 30% 18%;
+    --input: 17 30% 18%;
+    --ring: 17 84.7% 53.7%;
+    --radius: 0.5rem;
+    --language: 220 40% 20%;
+    --language-foreground: 220 60% 80%;
+    --raga: 270 40% 20%;
+    --raga-foreground: 270 60% 80%;
+    --tala: 30 50% 20%;
+    --tala-foreground: 30 80% 75%;
+    --success: 142 71% 55%;
+    --success-foreground: 17 20% 8%;
+    --warning: 38 92% 60%;
+    --warning-foreground: 17 20% 8%;
+  }
+}

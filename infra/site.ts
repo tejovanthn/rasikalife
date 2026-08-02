@@ -1,5 +1,5 @@
 import { auth } from './auth';
-import { getDomain } from './domain';
+import { getCookieDomain, getDomain } from './domain';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
 import { ogImageFunction } from './og-image';
 import { bucket } from './storage';
@@ -15,6 +15,8 @@ const site = new sst.aws.React('RasikaWeb', {
     EVENT_POSTERS_BUCKET: eventPostersBucket.name,
     EVENT_POSTERS_CDN_URL: eventPostersCdn.url,
     OG_IMAGE_URL: ogImageFunction.url,
+    // Scopes `rasika_session` to the stage root so classes.rasika.life shares the sign-in.
+    SESSION_COOKIE_DOMAIN: getCookieDomain(),
   },
   server: {
     timeout: '60 seconds',

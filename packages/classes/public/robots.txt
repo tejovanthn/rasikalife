@@ -1,0 +1,7 @@
+# Every page on this origin is somebody's private class ledger, including children's
+# attendance records. Nothing here is ever indexed.
+#
+# The `noindex` meta tag on every route is the belt; this is the braces. Neither is a
+# permission system — authorisation is enforced in tRPC on every request.
+User-agent: *
+Disallow: /

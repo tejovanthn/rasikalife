@@ -1,4 +1,5 @@
 import { auth } from './auth';
+import { classUploadsBucket } from './class-uploads';
 import { database } from './database';
 import { eventPostersBucket, eventPostersCdn, geminiApiKey } from './event-posters';
 import { instagramImageFetcherFunction, instagramScraperFunction } from './instagram';
@@ -14,6 +15,7 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     eventPostersBucket,
     instagramScraperFunction,
     instagramImageFetcherFunction,
+    classUploadsBucket,
   ],
   handler: './packages/trpc/src/index.handler',
   timeout: '5 minutes',
@@ -28,6 +30,7 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     SEARCH_REINDEX_FUNCTION_NAME: searchReindexFunction.name,
     INSTAGRAM_SCRAPER_FUNCTION_NAME: instagramScraperFunction.name,
     INSTAGRAM_IMAGE_FETCHER_FUNCTION_NAME: instagramImageFetcherFunction.name,
+    CLASS_UPLOADS_BUCKET: classUploadsBucket.name,
   },
 });
 

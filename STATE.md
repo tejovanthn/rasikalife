@@ -4,31 +4,39 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 
 ## Active: Rasika Classes (2026-08-02)
 
-Plan: `docs/plans/260802-01-rasika-classes.md`. Nine phases. **Phase 1 is built and green.**
+Plan: `docs/plans/260802-01-rasika-classes.md`. **All nine phases are built and green. Nothing is
+deployed.**
 
-**Next step: phase 2, the private upload bucket.** A new S3 bucket in `/infra/` with all public
-access blocked and no CDN distribution, `Image.getPrivateUploadUrl(namespace, fileName, contentType)`
-returning a presigned PUT under `private/classes/{uploadId}/{fileName}`, and a tRPC procedure that
-runs the access check and returns a short-lived presigned GET. Payment screenshots are people's UPI
-transaction records and cannot go through `Image.getImageUploadUrl`, which writes to
-`EVENT_POSTERS_BUCKET` behind a public CDN. `classPack.screenshotKey` already exists and holds a
-key, never a URL.
+**Next step: add `https://classes.rasika.life/auth/callback` to the Google OAuth redirect
+allowlist, then `sst deploy --stage prod`.** That console change is the only thing standing between
+the code and a working sign-in, and it cannot be done from the repo. The full ordered list is §15
+of the plan.
 
-What landed in phase 1: eight `class-*` domains in `packages/core` — institution, program, learner,
-learner-access, enrollment, pack, session, invite — plus `shared/timezone.ts`, a `client.ts` and a
-subpath export for each, and 146 tests. The credit ledger is a two-item DynamoDB transaction
-(`ClassLedgerService`, the first ElectroDB transaction in this codebase) guarded on a conditional
-transition from `pending`; `creditsRemaining` is never assigned. See the CLAUDE.md section "Rasika
-Classes: the credit ledger" for the rules, and §4.9 of the plan for the three places the built keys
-depart from the spec and why.
+**Then, on a real iPhone, sign in from the installed icon** — not from Safari. An OAuth redirect
+out of standalone mode can land the session cookie in Safari's storage rather than the app's,
+leaving the user signed out on return. It is the one thing in this project that cannot be checked
+without a device and a deploy. Fallback if it breaks: complete auth in the browser and deep-link
+back.
 
-Nothing here is deployed and no rows exist. Phases 2, 3, 4 and 9 are all backend and can land in any
-order; phase 5 (`packages/classes` and `packages/ui`) is the first that needs the founder's logo and
-brand assets.
+What landed: eight `class-*` domains and `shared/timezone.ts` in core; a private `ClassUploads`
+bucket with `PrivateImage` presigning; a `classes` tRPC router behind one `assertClassAccess`;
+invite claiming hooked into the sign-in issuer; `packages/ui` (shared Tailwind preset, tokens,
+primitives) and `packages/classes` (React Router v7 PWA); student and guru screens including the
+review queue; manifest, placeholder icons and a hand-written service worker; and a daily
+auto-confirm cron. 187 new tests.
 
-**One thing to test out of phase order:** on iOS, an OAuth redirect from a standalone-mode PWA can
-open in the in-app browser and land the session cookie outside the installed app's storage, leaving
-the user signed out on return. Worth a spike during phase 5 rather than discovering it in phase 8.
+**One change touches the live main site.** `rasika_session` now carries an explicit `Domain`. The
+plan claimed this was already true and verified — it was not, the cookie was host-only, and shared
+auth could never have worked. Already-signed-in users hold both cookies until the old one expires;
+same session, so the change takes hold on their next sign-in.
+
+Read the CLAUDE.md sections "Rasika Classes: the credit ledger" and "Rasika Classes: the app" for
+the rules that hold it together, plan §4.9 for the three places the keys depart from the spec, and
+plan §14 for the six places the build does.
+
+Known gaps, all deliberate: PWA icons are placeholders (`pnpm icons` regenerates from one SVG); the
+session cookie secret is still a literal in the repo (limited impact, own decision — plan §14); and
+`packages/web` has not adopted `packages/ui`, which the plan says should stay opportunistic.
 
 ## Done: artist bio structuring (2026-07-30, verified 2026-08-02)
 
@@ -360,7 +368,11 @@ Raised, judged real, not yet done:
 
 Re-measured 2026-07-30 at the end of the bio-structuring work. All failures below are pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate. **The previously recorded core and web test counts were stale** (758 and 111); the numbers here were measured, and the pre-work figures were verified by running the same suites in a worktree at HEAD.
 
-- `packages/core`: **1045 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD, and again on a clean tree 2026-08-02); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 899 pass before Rasika Classes phase 1; +146 for the eight `class-*` domains and `shared/timezone.ts`. Before the bio work it was 795.
+- `packages/core`: **1068 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD, and again on a clean tree 2026-08-02); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 899 before Rasika Classes; +169 for the eight `class-*` domains, `shared/timezone.ts`, the invite claim and the auto-confirm sweep. Before the bio work it was 795.
+- `packages/classes`: **5 tests pass**, typecheck clean, `pnpm build` succeeds. Tests run under `TZ=America/New_York` deliberately — that is the zone where the date-only rendering bug would show.
+- `packages/ui`: typecheck clean, no tests of its own (the token-drift assertion lives in web, which already has the CSS-parsing machinery).
+- `packages/trpc`: **13 unit tests pass** via `pnpm test:unit` (no AWS needed). `pnpm test` is still the integration suite and still needs `sst shell`. 0 own typecheck errors.
+- `packages/web`: **166 tests pass, 14 files** (was 151; +5 for `token-drift.test.ts`, +10 elsewhere). `pnpm build` verified after the session-cookie change.
 - `packages/web`: **151 tests pass, 12 files** (was 137). +14 for `readRepeatedRows` and `affiliationPeriod`. Typecheck errors sit in **8 files**, unchanged by this work and none in artist, organiser or gallery files: `api.server.ts`, `lib/auth.server.ts`, `$artform.events.tsx`, four `carnatic.*` routes, `events.new_.api.tsx`, `moderator.request-deletion.tsx`. It was 11 until `sst-env.d.ts` was committed with the current resource declarations — the three `Resource.*` errors were stale generated types, not real.
 - `packages/scripts`: **17 typecheck errors, all pre-existing**, in `check-id.ts` (6), `recompute-performance-counts.ts` (3), `enrichRagas.ts` (3), `cli.ts` (2 — `Resource.RasikaTable`/`SearchIndexBucket`, environmental like the web ones), `bulkUpload.ts` (2), `backfillWebp.ts` (1). **This package was never typechecked until 2026-07-30**: it had no `typecheck` script, and its tsconfig paired `module: NodeNext` with `moduleResolution: Bundler`, which are mutually exclusive, so `tsc` refused to start. That gap let a call to a non-existent `Edit` namespace reach a commit — the edit service is exported flat from core, not as a namespace. Both are fixed; run `pnpm typecheck` here now.
 - ~~Importing `@rasika/core` from a script fails on an `@openauthjs/openauth` subpath~~ — **fixed 2026-07-31.** `packages/scripts` was the only package without `"type": "module"`, so tsx loaded it as CommonJS and resolved dependencies under the `require` condition; openauth exports only `import`, so every script died before running a line. That had disabled the entire CLI, including the `rebuild-*` backfills listed above as required post-deploy. `bulkUpload.ts` also needed a real `__dirname` under ESM. The CLI runs now — `pnpm prod-cli backfill-photo-dimensions` was exercised against prod end to end.

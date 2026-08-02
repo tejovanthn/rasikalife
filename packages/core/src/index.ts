@@ -26,7 +26,19 @@ export * as Rsvp from './domain/rsvp';
 export * as ConcertLog from './domain/concert-log';
 export * as ConcertLogItem from './domain/concert-log-item';
 export * as EventSetlist from './domain/event-setlist';
+export * as ClassInstitution from './domain/class-institution';
+export * as ClassProgram from './domain/class-program';
+export * as ClassLearner from './domain/class-learner';
+export * as ClassLearnerAccess from './domain/class-learner-access';
+export * as ClassEnrollment from './domain/class-enrollment';
+export * as ClassPack from './domain/class-pack';
+export * as ClassSession from './domain/class-session';
+export * as ClassInvite from './domain/class-invite';
 export * as Image from './domain/image/s3';
+// Its own namespace rather than merged into `Image`, so a call site cannot reach for the public
+// uploader by habit when it meant the private one. The two differ in bucket, in what they
+// return, and in whether the result is safe to store.
+export * as PrivateImage from './domain/image/private-s3';
 export * as AdminData from './admin/bulk-data';
 
 // Social link types (browser-safe exports)

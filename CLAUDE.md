@@ -40,6 +40,8 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - **packages/image-processor**: S3-triggered Lambda for image processing (Sharp)
 - **packages/og-image**: Lambda that renders OG share images (Sharp); kept separate from the web Lambda because `sst.aws.React` does not bundle `node_modules/` so native modules like Sharp can't live in the React server function
 - **packages/scraper**: Data scraping utilities
+- **packages/classes**: React Router v7 PWA for Rasika Classes, deployed to `classes.rasika.life` as its own SST site
+- **packages/ui**: Shared Tailwind preset, design tokens and the primitives Classes needs. Browser-only; never imports `@rasika/core` outside a `/client` subpath
 - **infra/**: SST infrastructure definitions
 
 ### Core Package Architecture
@@ -349,6 +351,58 @@ Three places the built model departs from the plan document, each for a reason w
 every session ever taught, so the queue would read thousands of confirmed rows to find three
 pending ones, and the cron had no way to sweep across institutions); `groupSessionId` and
 `autoConfirmAt` became required; and `classInstitution` gained a `timezone`.
+
+### Rasika Classes: the app (`packages/classes`, `packages/ui`)
+
+The whole product runs on **one shared sign-in**. `rasika_session` now carries an explicit
+`Domain` (`SESSION_COOKIE_DOMAIN`, set by infra from the stage root) — without it the cookie is
+host-only and every visitor to `classes.rasika.life` looks signed out, whatever the app does.
+Both apps must keep the cookie's name, secret and domain identical or they are two auth systems
+wearing the same clothes. Changing the secret signs everybody out of both at once.
+
+- **Authorisation is membership, never role.** A student signs in with Google and stays `editor`,
+  the ordinary default. `assertClassAccess` (`packages/trpc/src/routers/classes-access.ts`) is
+  the single gate: a teacher is on the institution's `teacherIds`; a learner viewer holds a
+  `classLearnerAccess` row for the named learner. A learner viewer is **never** admitted on a
+  `programId` alone — a program is a roster, so that would hand one family another's notes. The
+  institution is resolved *from* whichever handle was passed, and a supplied `institutionId` that
+  disagrees is refused rather than ignored: the mismatched pair is exactly what an attacker sends
+  to have the check run against one institution while the write lands in another.
+- **Every read and write goes through a loader or an action.** There is deliberately **no** tRPC
+  handler route inside `packages/classes`, though the plan's §3.3 asked for one. Its reasoning
+  was CORS on browser calls, and with loaders and actions the browser never calls tRPC at all —
+  mounting the router here would be a second database-linked endpoint that nothing uses. Add it
+  if a genuine client-side call ever appears.
+- **`sessionDate` is never taken from the client.** `markAttended` computes it server-side in the
+  institution's zone. A teacher may name a date (she is reconstructing last Tuesday); a student
+  may not.
+- **Nothing on this origin is cacheable.** Every document is somebody's ledger, so the root
+  loader sends `private, no-store` unconditionally rather than deciding per request the way the
+  main site must. `noindex` on every route, `X-Robots-Tag`, and `robots.txt` disallowing the
+  whole origin.
+- **`packages/ui` is where visual consistency comes from**, not shared components. Both apps use
+  `tailwind-preset.cjs`; `tokens.css` is a copy of the `@layer base` block in web's `globals.css`,
+  because `contrast.test.ts` parses that file directly and moving the values would disarm it.
+  `token-drift.test.ts` in web asserts the two agree. Extracting web's component library into
+  `packages/ui` is explicitly not a prerequisite for anything.
+- **Tailwind `content` globs must include `../ui/src/**/*.{ts,tsx}`** or every class used only
+  inside a shared primitive is purged and the buttons render unstyled.
+- **The service worker caches static assets only — never a document, never an API response.**
+  Hand-written rather than generated (`packages/classes/public/sw.js`) so the omission is visible
+  at a glance. There are no offline writes: a queued "mark attended" replayed an hour later can
+  lose the conditional-transition race, and there is nothing honest to show the student then.
+- **PWA icons are placeholders.** `pnpm icons` in `packages/classes` regenerates the whole set
+  from one SVG in `scripts/generate-icons.mjs`; swap the mark when real brand assets arrive.
+
+Payment screenshots use `PrivateImage` (`domain/image/private-s3.ts`), a separate namespace from
+`Image` on purpose — different bucket, no CDN, and it returns a **key** rather than a URL, so
+nothing stored would resolve if it leaked. Reads go through `classes.screenshotUrl`, which reads
+the key off the pack row after the access check; a key accepted from the client would sign a GET
+for any object in the bucket.
+
+`packages/trpc` now has two vitest configs. `pnpm test` is the integration suite and needs
+`sst shell`; `pnpm test:unit` (`*.unit.test.ts`, `vitest.unit.config.ts`) has no setup file,
+because the integration setup imports `@rasika/core` before any test file's `vi.mock` applies.
 
 ### Caching a public page (`Cache-Control`)
 

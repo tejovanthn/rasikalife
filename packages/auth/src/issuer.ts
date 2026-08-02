@@ -1,7 +1,7 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { issuer } from '@openauthjs/openauth';
 import { GoogleProvider } from '@openauthjs/openauth/provider/google';
-import { ArtistClaim, Auth, User } from '@rasika/core';
+import { ArtistClaim, Auth, ClassInvite, User } from '@rasika/core';
 import { handle } from 'hono/aws-lambda';
 // import sharp from 'sharp';
 import { Resource } from 'sst';
@@ -169,6 +169,28 @@ const app = issuer({
         }
       } catch (err) {
         console.error('[auth] failed to redeem artist claim invites:', err);
+      }
+
+      // The same shape, for Rasika Classes. A guru invited an address to watch a learner; this
+      // is where that becomes real access, so the student's first sign-in lands on a populated
+      // app rather than an empty one.
+      //
+      // On **every** sign-in, not just the first: existing students get invited to new programs
+      // later, and a first-sign-in-only check would drop those with nothing to show for it. No
+      // invite means one query and no writes.
+      //
+      // Non-fatal for the same reason as above — a failure here must not lock someone out of
+      // the site, and the guru can re-invite.
+      try {
+        const claimed = await ClassInvite.claimClassInvites({ userId: user.id, email });
+        if (claimed.length > 0) {
+          console.log(
+            `[auth] claimed ${claimed.length} class invite(s) for ${user.id}:`,
+            claimed.map(c => c.learnerId).join(', ')
+          );
+        }
+      } catch (err) {
+        console.error('[auth] failed to claim class invites:', err);
       }
 
       return ctx.subject('user', {

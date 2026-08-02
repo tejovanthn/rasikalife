@@ -60,5 +60,10 @@ export async function listClassPacks(programId: string, learnerId: string): Prom
 
 export { ClassPackEntity } from './entity';
 export type { ClassPack } from './entity';
-export { GrantClassPackSchema, isCorrection, sumPackDeltas } from './schema';
-export type { GrantClassPackInput } from './schema';
+export {
+  GrantClassPackRequestSchema,
+  GrantClassPackSchema,
+  isCorrection,
+  sumPackDeltas,
+} from './schema';
+export type { GrantClassPackInput, GrantClassPackRequest } from './schema';

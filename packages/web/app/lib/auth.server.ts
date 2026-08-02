@@ -7,6 +7,28 @@ import { Resource } from 'sst';
 
 const sessionSecret = process.env.SESSION_SECRET || 'dev-secret-change-in-production';
 
+/**
+ * The session is shared across every Rasika subdomain, so the cookie has to say so.
+ *
+ * Without a `Domain` attribute a cookie is *host-only*: set on `rasika.life`, it is never sent
+ * to `classes.rasika.life`, and the Classes app would see every visitor as signed out however
+ * correct its own code was. A leading dot makes it apply to the domain and everything under it.
+ *
+ * Production only, and by hostname rather than by stage, because a non-prod stage lives at
+ * `dev.rasika.life` and wants `.dev.rasika.life` — pinning the root there would let two stages
+ * overwrite each other's sessions. Locally there is no domain to speak of and the cookie stays
+ * host-only on `localhost`, which is what a browser wants.
+ *
+ * Note for the deploy: existing signed-in users hold a host-only cookie of the same name. The
+ * browser will send both until the old one expires, and whichever the parser reads first wins.
+ * They carry the same session, so the only effect is that the change takes hold on the next
+ * sign-in rather than immediately.
+ */
+function sessionCookieDomain(): string | undefined {
+  const configured = process.env.SESSION_COOKIE_DOMAIN;
+  return configured ? `.${configured.replace(/^\./, '')}` : undefined;
+}
+
 const storage = createCookieSessionStorage({
   cookie: {
     name: 'rasika_session',
@@ -16,6 +38,7 @@ const storage = createCookieSessionStorage({
     path: '/',
     maxAge: 60 * 60 * 24 * 30,
     httpOnly: true,
+    domain: sessionCookieDomain(),
   },
 });
 
