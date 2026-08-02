@@ -43,6 +43,19 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
   const trpc = await createServerClient(request);
 
+  /**
+   * A guru's very first act, and the only way into the teaching side of the app.
+   *
+   * It has to live here because of a bootstrap the rest of the navigation cannot solve: the tab
+   * bar holds the only link to `/students`, and it renders only for someone who already owns an
+   * institution. A teacher signing in for the first time owns nothing, so without this they land
+   * on an empty student screen with no route onward but the address bar.
+   */
+  if (String(formData.get('intent') ?? '') === 'start-teaching') {
+    await trpc.classes.ensureInstitution.mutate();
+    return redirect('/students');
+  }
+
   const programId = String(formData.get('programId') ?? '');
   const learnerId = String(formData.get('learnerId') ?? '');
   if (!programId || !learnerId) {
@@ -70,11 +83,33 @@ export default function StudentHome() {
   if (learners.length === 0) {
     return (
       <Chrome title="Rasika Classes" isTeacher={isTeacher} headerRight={<SignOutButton />}>
-        <EmptyState title="No classes yet">
-          {isTeacher
-            ? 'You teach here. Add your first student from the Students tab.'
-            : `Nothing has been shared with ${user.email} yet. When your teacher adds you, it will appear here.`}
-        </EmptyState>
+        <div className="space-y-4">
+          <EmptyState title="No classes yet">
+            {isTeacher
+              ? 'You teach here. Add your first student from the Students tab.'
+              : `Nothing has been shared with ${user.email} yet. When your teacher adds you, it will appear here.`}
+          </EmptyState>
+
+          {/* The teacher's front door, and the only one. Shown to anyone who owns no institution,
+              which includes a student whose invite has not been set up yet — harmless, because an
+              institution is private to its owner and an empty one costs nothing. Kept secondary,
+              because most people arriving here are parents and this is not for them. */}
+          {isTeacher ? null : (
+            <Form method="post" className="text-center">
+              <input type="hidden" name="intent" value="start-teaching" />
+              <p className="text-sm text-muted-foreground">Do you teach?</p>
+              <Button
+                type="submit"
+                variant="outline"
+                className="mt-2"
+                pending={navigation.state === 'submitting'}
+                pendingLabel="Setting up…"
+              >
+                Set up my classes
+              </Button>
+            </Form>
+          )}
+        </div>
       </Chrome>
     );
   }
