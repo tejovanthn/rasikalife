@@ -361,9 +361,11 @@ export default function LearnerLedger() {
 
         {isTeacher ? (
           <>
-            <details id="add-class" className="rounded-lg border border-border p-4">
+            <details className="rounded-lg border border-border p-4">
               <summary className="min-h-tap cursor-pointer font-medium">Add a class</summary>
-              <Form method="post" className="mt-4 space-y-4">
+              {/* Id on the form, not the `<details>` — a fragment aimed at a closed disclosure
+                  scrolls to it without opening it. */}
+              <Form id="add-class" method="post" className="mt-4 space-y-4">
                 <input type="hidden" name="intent" value="add-class" />
                 <Field
                   label="Date"
@@ -381,9 +383,9 @@ export default function LearnerLedger() {
               </Form>
             </details>
 
-            <details id="add-payment" className="rounded-lg border border-border p-4">
+            <details className="rounded-lg border border-border p-4">
               <summary className="min-h-tap cursor-pointer font-medium">Record a payment</summary>
-              <Form method="post" className="mt-4 space-y-4">
+              <Form id="add-payment" method="post" className="mt-4 space-y-4">
                 <input type="hidden" name="intent" value="add-payment" />
                 <input type="hidden" name="institutionId" value={enrollment.institutionId} />
                 <Field

@@ -1,6 +1,7 @@
 import { Button, Dialog, Field, Input, Textarea } from '@rasika/ui';
 import { useState } from 'react';
 import { Form, useNavigation } from 'react-router';
+import { formatSessionDateStable } from '~/lib/format';
 
 /**
  * "I attended today" — with the date editable, because it is not always today.
@@ -37,9 +38,25 @@ export function AddClassDialog({
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)}>
+      {/*
+        `js-only` is hidden by a `<noscript>` stylesheet in the root document, and the plain form
+        below takes its place. Every other write in this app degrades to a form post; this one
+        stopped doing so the moment it moved behind a `<dialog>`, which cannot be opened without
+        JavaScript. The fallback loses the date picker and nothing else — without JS the answer
+        is always today.
+      */}
+      <Button type="button" className="js-only" onClick={() => setOpen(true)}>
         I attended today
       </Button>
+
+      <noscript>
+        <Form method="post">
+          <input type="hidden" name="intent" value="mark-attended" />
+          <input type="hidden" name="programId" value={programId} />
+          <input type="hidden" name="learnerId" value={learnerId} />
+          <Button type="submit">I attended today</Button>
+        </Form>
+      </noscript>
 
       <Dialog
         open={open}
@@ -74,7 +91,9 @@ export function AddClassDialog({
             <div className="flex items-center justify-between gap-3">
               <span className="text-sm">
                 <span className="text-muted-foreground">Date: </span>
-                {today}
+                {/* Locale-free and zone-free, so it is safe in server-rendered markup — the same
+                    reason `LocalTime` exists. A raw `2026-08-04` is not a date anybody reads. */}
+                {formatSessionDateStable({ sessionDate: today })}
               </span>
               <Button type="button" variant="ghost" onClick={() => setEditingDate(true)}>
                 Change

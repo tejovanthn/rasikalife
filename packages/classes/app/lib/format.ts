@@ -67,6 +67,27 @@ export function formatDay(dateOnly: string): string {
   });
 }
 
+/**
+ * Day and month, no year — for table columns where the width is the constraint.
+ *
+ * "2 Aug 2026" is roughly twice the width of "2 Aug", and four columns of it at 390px made every
+ * cell in the roster wrap, names breaking mid-word. A roster shows an *active* class, so the year
+ * is nearly always the current one; the full date is a tap away on the learner's page.
+ */
+export function formatDayShort(dateOnly: string): string {
+  return new Date(`${dateOnly}T00:00:00Z`).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'UTC',
+  });
+}
+
+/** The zone-free and locale-free counterpart, for the server render. See `formatSessionDateStable`. */
+export function formatDayShortStable(dateOnly: string): string {
+  const [, month, day] = dateOnly.split('-').map(Number);
+  return `${day} ${MONTHS[(month ?? 1) - 1] ?? ''}`;
+}
+
 export function formatInstant(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {
     day: 'numeric',

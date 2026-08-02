@@ -34,7 +34,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const active = learners.find(l => l.id === requested) ?? learners[0] ?? null;
 
   const cards = active
-    ? await trpc.classes.learnerHomeDetailed.query({ learnerId: active.id, recent: 3 })
+    ? await trpc.classes.learnerHome.query({ learnerId: active.id, recent: 3 })
     : [];
 
   return data({ user, contexts, learners, active, cards });

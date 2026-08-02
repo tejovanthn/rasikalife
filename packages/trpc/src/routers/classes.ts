@@ -283,44 +283,6 @@ export const classesRouter = createTRPCRouter({
     }),
 
   /**
-   * A learner's cards *with* their most recent classes, for the home screen.
-   *
-   * The sections show the last few classes inline, so the common question — "what did we do last
-   * week" — is answered without a navigation. One query per enrollment, and a learner has one or
-   * two.
-   */
-  learnerHomeDetailed: protectedProcedure
-    .input(z.object({ learnerId, recent: z.number().int().min(1).max(20).default(3) }))
-    .query(async ({ ctx, input }) => {
-      await assertClassAccess(ctx, { learnerId: input.learnerId });
-      const enrollments = await ClassEnrollment.listLearnerEnrollments(input.learnerId);
-
-      return Promise.all(
-        enrollments.map(async enrollment => {
-          const [program, sessions, timezone] = await Promise.all([
-            ClassProgram.getClassProgram(enrollment.programId),
-            ClassSession.listLearnerSessions(enrollment.programId, enrollment.learnerId),
-            institutionTimezone(enrollment.institutionId),
-          ]);
-
-          // Per program, because a learner may study under two gurus in two zones — and "today"
-          // is always the teacher's day, never the phone's.
-          const today = todayInTimeZone(timezone);
-
-          return {
-            enrollment,
-            program,
-            total: sessions.length,
-            // Newest first, trimmed — "View all" goes to the full ledger.
-            recent: [...sessions].reverse().slice(0, input.recent),
-            today,
-            earliest: addDaysToDate(today, -31),
-          };
-        })
-      );
-    }),
-
-  /**
    * Adds a learner to a program and invites the account that will watch it.
    *
    * The learner and the enrollment are created **now**, not when the invite is claimed. The plan
@@ -797,22 +759,50 @@ export const classesRouter = createTRPCRouter({
   }),
 
   /**
-   * A learner's cards: one per enrollment, archived programs included.
+   * A learner's programs, with as many recent classes as the caller asks for.
    *
    * No archive filter, deliberately. A program the guru archived still holds this learner's
    * session notes, and hiding it would delete the record from the only person it belongs to.
+   *
+   * `recent` is what used to be a second procedure sitting beside this one. The ledger page wants
+   * the enrollments and nothing else (`recent: 0`, the default); the home screen wants the last
+   * few classes inline. Two procedures answering nearly the same question is how one of them
+   * drifts from the other.
    */
-  learnerHome: protectedProcedure.input(z.object({ learnerId })).query(async ({ ctx, input }) => {
-    await assertClassAccess(ctx, { learnerId: input.learnerId });
-    const enrollments = await ClassEnrollment.listLearnerEnrollments(input.learnerId);
-    const programs = await Promise.all(
-      enrollments.map(enrollment => ClassProgram.getClassProgram(enrollment.programId))
-    );
-    return enrollments.map((enrollment, index) => ({
-      enrollment,
-      program: programs[index] ?? null,
-    }));
-  }),
+  learnerHome: protectedProcedure
+    .input(z.object({ learnerId, recent: z.number().int().min(0).max(20).default(0) }))
+    .query(async ({ ctx, input }) => {
+      await assertClassAccess(ctx, { learnerId: input.learnerId });
+      const enrollments = await ClassEnrollment.listLearnerEnrollments(input.learnerId);
+
+      return Promise.all(
+        enrollments.map(async enrollment => {
+          const [program, sessions, timezone] = await Promise.all([
+            ClassProgram.getClassProgram(enrollment.programId),
+            // Skipped entirely when the caller wants none, so the ledger page pays nothing for a
+            // feature only the home screen uses.
+            input.recent > 0
+              ? ClassSession.listLearnerSessions(enrollment.programId, enrollment.learnerId)
+              : Promise.resolve([]),
+            institutionTimezone(enrollment.institutionId),
+          ]);
+
+          // Per program, because a learner may study under two gurus in two zones — and "today"
+          // is always the teacher's day, never the phone's.
+          const today = todayInTimeZone(timezone);
+
+          return {
+            enrollment,
+            program,
+            total: sessions.length,
+            // Newest first, trimmed — "View all" goes to the full ledger.
+            recent: [...sessions].reverse().slice(0, input.recent),
+            today,
+            earliest: addDaysToDate(today, -31),
+          };
+        })
+      );
+    }),
 
   learnerAccess: protectedProcedure.input(z.object({ learnerId })).query(async ({ ctx, input }) => {
     await assertClassAccess(ctx, { learnerId: input.learnerId });

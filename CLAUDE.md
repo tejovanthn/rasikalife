@@ -454,6 +454,11 @@ table scrolls the *document* sideways, which on iOS drags the whole app shell. T
 is the other shape — one section per program with its last few classes inline, because "what did
 we do last week" is what a student opens the app for and it used to be a navigation away.
 
+**A fragment link into a `<details>` must target a descendant, not the `<details>`.** The browser
+auto-expands a closed disclosure when the fragment names something *inside* it and does nothing
+but scroll when the fragment names the element itself. Three "+ Add" buttons shipped pointing at
+the wrong one and looked broken. The id therefore lives on the `<Form>`.
+
 **`classEnrollment.lastSessionDate` / `lastPaidAt` are display-only.** They exist so the roster
 table is one query rather than two per learner, they are written where the row they summarise is
 written, and nothing decides anything from them — a stale value costs a wrong date on a screen,

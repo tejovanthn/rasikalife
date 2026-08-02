@@ -157,9 +157,10 @@ export default function Roster() {
                   to={`/teaching/${program.id}`}
                   className="flex min-h-tap min-w-[12rem] flex-col justify-between gap-2 rounded-lg border border-border bg-card p-4 text-card-foreground no-underline hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <span className="font-semibold leading-tight">
-                    {programDisplayTitle(program)}
-                  </span>
+                  {/* A heading inside the anchor: the whole tile stays one target, and a screen
+                      reader can still navigate the list by heading the way it could when these
+                      were cards. */}
+                  <h2 className="font-semibold leading-tight">{programDisplayTitle(program)}</h2>
                   <span className="flex flex-wrap items-center gap-2">
                     {program.isGroup ? <Badge>Group</Badge> : null}
                     {program.archivedAt ? <Badge tone="neutral">Archived</Badge> : null}
@@ -177,11 +178,14 @@ export default function Roster() {
           </Button>
         </Form>
 
-        <details id="add-class" className="rounded-lg border border-border p-4">
+        <details className="rounded-lg border border-border p-4">
           {/* `<details>` rather than a state toggle, so the form is reachable before hydration
               and the page does not open with a wall of inputs. */}
           <summary className="min-h-tap cursor-pointer font-medium">Add a class</summary>
-          <Form method="post" className="mt-4 space-y-4">
+          {/* The id lives on the form, not on the `<details>`. A fragment pointing at a closed
+              `<details>` scrolls to it and leaves it shut — the browser only auto-expands when the
+              target is a *descendant*. Both behaviours confirmed in a browser. */}
+          <Form id="add-class" method="post" className="mt-4 space-y-4">
             <input type="hidden" name="intent" value="create-program" />
             <input type="hidden" name="institutionId" value={institution.id} />
 

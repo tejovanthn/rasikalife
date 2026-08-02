@@ -62,6 +62,12 @@ function Document({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <Meta />
         <Links />
+        {/* Controls that only work with JavaScript hide themselves when there is none, so a
+            `<noscript>` fallback beside them is the only thing on screen rather than the second
+            of two identical-looking buttons. */}
+        <noscript>
+          <style>{'.js-only{display:none!important}'}</style>
+        </noscript>
       </head>
       <body>
         {children}

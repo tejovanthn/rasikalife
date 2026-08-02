@@ -75,10 +75,17 @@ export function Dialog({
         {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
         <div className="mt-4">{children}</div>
         <div className="mt-6 flex justify-end gap-2">
-          {footer ?? (
+          {/*
+            `undefined`, not nullish. `footer ?? default` meant a caller passing an explicit
+            `null` to say "I have my own buttons" got the default anyway — the add-class dialog
+            rendered Cancel, Add class *and* a stray Close that did the same thing as Cancel.
+          */}
+          {footer === undefined ? (
             <Button type="button" variant="outline" onClick={onClose}>
               Close
             </Button>
+          ) : (
+            footer
           )}
         </div>
       </div>

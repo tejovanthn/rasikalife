@@ -30,12 +30,7 @@ import { Chrome, SignOutButton } from '~/components/chrome';
 import { LocalTime } from '~/components/local-time';
 import { createServerClient } from '~/lib/api.server';
 import { requireUserId } from '~/lib/auth.server';
-import {
-  formatDay,
-  formatInstant,
-  formatInstantStable,
-  formatSessionDateStable,
-} from '~/lib/format';
+import { formatDayShort, formatDayShortStable } from '~/lib/format';
 import { pageMeta } from '~/lib/meta';
 
 export const meta = () => pageMeta('Class');
@@ -201,8 +196,10 @@ export default function ProgramRoster() {
                     <Th scope="col">Name</Th>
                     <Th scope="col">Last class</Th>
                     <Th scope="col">Last paid</Th>
+                    {/* "Left" meant remaining here and departed on the badge below — the same
+                        word for opposite things, in a table read by scanning. */}
                     <Th scope="col" className="text-right">
-                      Left
+                      Classes left
                     </Th>
                   </Tr>
                 </thead>
@@ -218,31 +215,30 @@ export default function ProgramRoster() {
                         */}
                         <Link
                           to={`/learners/${enrollment.learnerId}/${program.id}`}
-                          className="flex min-h-tap items-center font-medium text-primary underline"
+                          className="flex min-h-tap items-center whitespace-nowrap font-medium text-primary underline"
                         >
                           {enrollment.learnerName}
                         </Link>
+                        {/* `Ended`, matching `ENROLLMENT_STATUSES`. */}
                         {enrollment.status === 'ended' ? (
-                          <Badge className="ml-2">Left</Badge>
+                          <Badge className="ml-2">Ended</Badge>
                         ) : null}
                       </Td>
-                      <Td className="text-muted-foreground">
+                      <Td className="whitespace-nowrap text-muted-foreground">
                         {enrollment.lastSessionDate ? (
-                          <LocalTime
-                            fallback={formatSessionDateStable({
-                              sessionDate: enrollment.lastSessionDate,
-                            })}
-                          >
-                            {() => formatDay(enrollment.lastSessionDate as string)}
+                          <LocalTime fallback={formatDayShortStable(enrollment.lastSessionDate)}>
+                            {() => formatDayShort(enrollment.lastSessionDate as string)}
                           </LocalTime>
                         ) : (
                           '—'
                         )}
                       </Td>
-                      <Td className="text-muted-foreground">
+                      <Td className="whitespace-nowrap text-muted-foreground">
                         {enrollment.lastPaidAt ? (
-                          <LocalTime fallback={formatInstantStable(enrollment.lastPaidAt)}>
-                            {() => formatInstant(enrollment.lastPaidAt as string)}
+                          <LocalTime
+                            fallback={formatDayShortStable(enrollment.lastPaidAt.slice(0, 10))}
+                          >
+                            {() => formatDayShort((enrollment.lastPaidAt as string).slice(0, 10))}
                           </LocalTime>
                         ) : (
                           '—'
@@ -269,9 +265,11 @@ export default function ProgramRoster() {
           )}
         </section>
 
-        <details id="add-student" className="rounded-lg border border-border p-4">
+        <details className="rounded-lg border border-border p-4">
           <summary className="min-h-tap cursor-pointer font-medium">Add a student</summary>
-          <Form method="post" className="mt-4 space-y-4">
+          {/* See `teaching._index.tsx`: the id belongs on a descendant so the browser expands
+              the disclosure rather than scrolling to a closed one. */}
+          <Form id="add-student" method="post" className="mt-4 space-y-4">
             <input type="hidden" name="intent" value="add-learner" />
 
             <Field label="First name" htmlFor="firstName">

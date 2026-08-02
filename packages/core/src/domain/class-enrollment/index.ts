@@ -1,5 +1,6 @@
 import { ClassEnrollmentEntity } from './entity';
 import type { ClassEnrollment } from './entity';
+import { isConditionalFailure } from './outcome';
 import type { EnrollLearnerInput } from './schema';
 
 /**
@@ -51,23 +52,38 @@ export async function listLearnerEnrollments(learnerId: string): Promise<ClassEn
 /**
  * Records when a class was last marked, for the roster table's "Last class" column.
  *
- * A separate write from the session itself rather than a transaction: this is display-only, so a
- * failure here costs a stale date on a screen and never a wrong credit. Guarded so a backdated
- * mark cannot pull the column *backwards* — a student catching up on last Tuesday should not make
- * the roster claim nothing has happened since.
+ * One conditional write, no read. It used to read the enrollment first to decide whether the new
+ * date was newer — which doubled the cost of marking a class, and `markGroupClassSession` calls
+ * this once per enrollment, so a two-hundred-person workshop paid two hundred extra reads on top
+ * of two hundred extra writes.
+ *
+ * DynamoDB can answer "only if this is newer" itself. A backdated mark must not pull the column
+ * *backwards* — a student catching up on last Tuesday should not make the roster claim nothing has
+ * happened since — and the condition says exactly that, once, server-side.
+ *
+ * A separate write from the session rather than a transaction, because this is display-only: a
+ * failure costs a stale date on a screen and never a wrong credit. So a refused condition is an
+ * expected outcome here, not an error.
  */
 export async function touchLastSession(
   programId: string,
   learnerId: string,
   sessionDate: string
 ): Promise<void> {
-  const enrollment = await getEnrollment(programId, learnerId);
-  if (!enrollment || (enrollment.lastSessionDate ?? '') >= sessionDate) {
-    return;
+  try {
+    await ClassEnrollmentEntity.patch({ programId, learnerId })
+      .set({ lastSessionDate: sessionDate })
+      .where(
+        (attr, op) =>
+          `${op.notExists(attr.lastSessionDate)} OR ${op.lt(attr.lastSessionDate, sessionDate)}`
+      )
+      .go();
+  } catch (error) {
+    // The row already holds a later date, or there is no enrollment. Both mean "leave it alone".
+    if (!isConditionalFailure(error)) {
+      throw error;
+    }
   }
-  await ClassEnrollmentEntity.patch({ programId, learnerId })
-    .set({ lastSessionDate: sessionDate })
-    .go();
 }
 
 export async function setEnrollmentStatus(
