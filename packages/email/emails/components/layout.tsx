@@ -11,14 +11,24 @@ import {
 } from '@react-email/components';
 
 const APP_NAME = 'Rasika Classes';
-const APP_DOMAIN = 'classes.rasika.life';
 
 interface LayoutProps {
   preview: string;
+  /**
+   * The app's base URL, which is stage-aware and therefore has to be passed in rather than
+   * written here. A hardcoded footer domain sent every dev-stage test email pointing at
+   * production, while the button beside it pointed at the stage.
+   */
+  appUrl: string;
   children: React.ReactNode;
 }
 
-export function EmailLayout({ preview, children }: LayoutProps) {
+/** Regex rather than `new URL`, so a malformed base URL degrades the footer instead of throwing. */
+function displayDomain(appUrl: string): string {
+  return appUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+
+export function EmailLayout({ preview, appUrl, children }: LayoutProps) {
   return (
     <Html lang="en">
       <Head />
@@ -30,8 +40,8 @@ export function EmailLayout({ preview, children }: LayoutProps) {
           <Hr style={hr} />
           <Text style={footerText}>
             {APP_NAME} ·{' '}
-            <Link href={`https://${APP_DOMAIN}`} style={footerLink}>
-              {APP_DOMAIN}
+            <Link href={appUrl} style={footerLink}>
+              {displayDomain(appUrl)}
             </Link>
           </Text>
         </Container>

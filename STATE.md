@@ -52,10 +52,25 @@ workspace package (React Email templates, modelled on the ShipPad project's `pac
 `infra/email.ts` (`sst.aws.Email` verifying the whole stage domain, linked into `RasikaTRPC` with
 `EMAIL_SENDER` and `CLASSES_URL`). Only the one template exists (`studentAddedEmail`); the other
 two `ClassInvite.createClassInvite` call sites (`changeLearnerEmail`, `inviteToLearner`) do not
-send anything yet — same event, not yet asked for. **Not verified against a deploy**: SES domain
-verification needs the DNS records `sst.aws.Email` creates to propagate before send actually
-works, and there is no test coverage proving `EMAIL_SENDER`/`CLASSES_URL` resolve correctly outside
-a deployed stage. Check first send in the SES console after the next deploy.
+send anything yet — same event, not yet asked for.
+
+Verified by bundling the tRPC handler with esbuild using SST's own `createRequire` banner and
+*running* it, not just by unit test: React Email renders CommonJS `react-dom/server`, which throws
+`Dynamic require of "stream" is not supported` in a plain ESM bundle. SST injects the banner (the
+committed `.sst/artifacts/RasikaTRPC-src/bundle.mjs` shows it), so it works — but vitest resolves
+natively and would never have caught it either way. Linking `email` into the function is what
+grants `ses:SendEmail`; the env vars alone would not.
+
+**Three things the first deploy has to confirm, none checkable here:**
+
+1. **SES starts in sandbox mode**, where it will only deliver to verified addresses. Every student
+   email silently fails until the production-access request is granted. Request it before relying
+   on this.
+2. **`ses.DomainIdentityVerification` blocks the deploy** until SES verifies `rasika.life` from the
+   DKIM records SST creates in the same zone. First deploy may sit for minutes or time out.
+3. **It writes a `_dmarc.rasika.life` TXT record** (`v=DMARC1; p=none;`). If one already exists,
+   Route53 creation conflicts — check before deploying, since this domain already serves the live
+   site.
 
 Known gaps, all deliberate: PWA icons are placeholders (`pnpm icons` regenerates from one SVG); the
 session cookie secret is still a literal in the repo (limited impact, own decision — plan §14); and

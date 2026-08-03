@@ -22,14 +22,18 @@ export default function StudentAddedEmail({
   recipientEmail,
   signInUrl,
 }: StudentAddedEmailProps) {
-  const whoWasAdded = relation === 'self' ? 'You have' : `${learnerName} has`;
-  const preview = `${guruName} added ${relation === 'self' ? 'you' : learnerName} to ${programTitle}`;
+  const isSelf = relation === 'self';
+  // A guardian was not added to anything; their child was. Saying "you" to them is simply wrong.
+  const whoWasAdded = isSelf ? 'You have' : `${learnerName} has`;
+  const preview = `${guruName} added ${isSelf ? 'you' : learnerName} to ${programTitle}`;
 
   return (
-    <EmailLayout preview={preview}>
-      <Heading style={heading}>You've been added to a class</Heading>
+    <EmailLayout preview={preview} appUrl={signInUrl}>
+      <Heading style={heading}>
+        {isSelf ? "You've been added to a class" : `${learnerName} has been added to a class`}
+      </Heading>
       <Text style={paragraph}>
-        {guruName} at {institutionName} added {relation === 'self' ? 'you' : learnerName} to{' '}
+        {guruName} at {institutionName} added {isSelf ? 'you' : learnerName} to{' '}
         <strong>{programTitle}</strong>.
       </Text>
       <Text style={paragraph}>
@@ -39,7 +43,7 @@ export default function StudentAddedEmail({
       <Button href={signInUrl}>Open Rasika Classes</Button>
       <Text style={muted}>
         Sign in with Google using <strong>{recipientEmail}</strong>, the address {guruName} used to
-        add {relation === 'self' ? 'you' : learnerName}.
+        add {isSelf ? 'you' : learnerName}.
       </Text>
       <Text style={muted}>If you were not expecting this, you can ignore this email.</Text>
     </EmailLayout>

@@ -26,4 +26,28 @@ describe('studentAddedEmail', () => {
     expect(email.subject).toBe('Priya Raman added you to Saturday Bharatanatyam');
     expect(email.html).not.toContain('Meera');
   });
+
+  /** Case-insensitive because the plain-text renderer upper-cases headings. A case-sensitive
+   * negative here would pass even with the bug present. */
+  it('never tells a guardian that they were added to the class', async () => {
+    const email = await studentAddedEmail({ ...base, relation: 'guardian' });
+    expect(email.text).toMatch(/Meera has been added to a class/i);
+    expect(email.text).not.toMatch(/You've been added/i);
+  });
+
+  /**
+   * The footer domain used to be hardcoded to production, so a dev-stage email pointed its
+   * button at the stage and its footer at the live site.
+   */
+  it('takes the footer link from the stage URL rather than hardcoding production', async () => {
+    const email = await studentAddedEmail({
+      ...base,
+      relation: 'guardian',
+      signInUrl: 'https://classes.dev.rasika.life',
+    });
+    expect(email.html).toContain('https://classes.dev.rasika.life');
+    // Not a substring of the dev host, so this catches a reintroduced hardcoded production link.
+    expect(email.html).not.toContain('//classes.rasika.life');
+    expect(email.text).not.toContain('//classes.rasika.life');
+  });
 });

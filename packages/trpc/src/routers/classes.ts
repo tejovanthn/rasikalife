@@ -81,6 +81,13 @@ async function ensureOwnInstitution(user: { id: string; name: string }) {
 }
 
 /**
+ * Where the invite email points. Set by infra, which is the only place that knows the stage's
+ * real domain. The fallback is not decoration: a missing variable would otherwise interpolate
+ * as the string `undefined`, and the broken link would already be in somebody's inbox.
+ */
+const CLASSES_URL = process.env.CLASSES_URL || 'https://classes.rasika.life';
+
+/**
  * Best-effort: the invite is already saved by the time this runs, so a send failure must not
  * fail the mutation. The student still shows up on the roster; they just don't hear about it
  * until they check the address themselves.
@@ -102,7 +109,7 @@ async function sendStudentAddedEmail(input: {
       programTitle: input.programTitle,
       relation: input.relation,
       recipientEmail: input.to,
-      signInUrl: `${process.env.CLASSES_URL}/`,
+      signInUrl: CLASSES_URL,
     });
     await Email.sendTransactional({ to: input.to, ...content });
   } catch (error) {
