@@ -88,6 +88,7 @@ export const Footer = () => {
     { href: '/contribute', label: 'Contribute' },
     { href: '/community', label: 'Community' },
     { href: '/donate', label: 'Donate' },
+    { href: '/classes', label: 'Rasika Classes (for teachers)' },
   ];
 
   return (
