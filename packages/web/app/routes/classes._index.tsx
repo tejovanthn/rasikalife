@@ -29,7 +29,7 @@ export const meta: MetaFunction = () => {
     {
       name: 'description',
       content:
-        'A class register built for Indian classical music and dance teachers. Track attendance and class credits, and see who has paid — without a payment gateway.',
+        'A class register for Indian classical music and dance teachers. Track attendance and class credits, and see who has paid. No payment gateway involved.',
     },
     {
       name: 'keywords',
@@ -40,7 +40,7 @@ export const meta: MetaFunction = () => {
     {
       property: 'og:description',
       content:
-        'The class register for music and dance teachers: attendance, class packs, and payments received — no gateway, no fees.',
+        'The class register for music and dance teachers: attendance, class packs, and payments received. No gateway, no fees.',
     },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://rasika.life/classes' },
@@ -60,12 +60,12 @@ const FEATURES = [
   {
     icon: Rows3,
     title: 'One roster, not a notebook',
-    body: "See every student's classes left, last class, and last payment in a single table — the view you need when deciding who to remind.",
+    body: "Every student's classes left, last class, and last payment sit in one table. That's the view you check before deciding who to remind.",
   },
   {
     icon: Layers,
     title: 'Credits that count themselves',
-    body: 'Add classes in whatever size you sell them — ten at a time, a month at a time, or a whole workshop. The balance drops by one each time a class is confirmed, never by hand and never twice for the same class.',
+    body: 'Add classes in whatever size you sell them: ten at a time, a month at a time, or a whole workshop. The balance drops by one each time a class is confirmed, never by hand and never twice for the same class.',
   },
   {
     icon: CalendarRange,
@@ -75,17 +75,17 @@ const FEATURES = [
   {
     icon: ShieldCheck,
     title: 'Payments stay off the platform',
-    body: "A family uploads a screenshot of what they paid; you tap 'received.' No gateway, no card numbers — nothing that puts your students' money through us.",
+    body: "A family uploads a screenshot of what they paid; you tap 'received.' No gateway, no card numbers. Your students' money never passes through us.",
   },
   {
     icon: Users,
     title: 'One sign-in for the whole family',
-    body: 'A parent manages every child from one account. A student old enough to sign in for themselves keeps their own — nobody loses access when they want to check their own balance too.',
+    body: 'A parent manages every child from one account. A student old enough to sign in for themselves keeps their own too, so nobody loses access when they want to check their balance directly.',
   },
   {
     icon: CalendarCheck,
     title: 'Nobody has to remember alone',
-    body: "A student can mark a class they forgot, up to a month later — it waits in your review queue, and no credit moves until you say so. Or mark it yourself in one tap, confirmed on the spot since you're the one recording it.",
+    body: 'A student can mark a class they forgot, up to a month later. It waits in your review queue, and no credit moves until you say so. Or you can mark it yourself in one tap, confirmed on the spot.',
   },
   {
     icon: Smartphone,
@@ -159,7 +159,7 @@ function RosterPreview() {
       </div>
       <figcaption className="mt-3 text-center text-sm text-muted-foreground">
         Karthik is down to his last class and hasn't paid since June. Nikhil has run two over. You
-        knew that in about a second — that's the whole product.
+        knew that in about a second. That's the whole product.
       </figcaption>
     </figure>
   );
@@ -172,11 +172,11 @@ const STEPS = [
   },
   {
     title: 'Add your class and your students',
-    body: 'One-on-one or a whole group — each family gets an invite by email.',
+    body: 'One-on-one or a whole group. Each family gets an invite by email.',
   },
   {
     title: 'Add classes, mark attendance',
-    body: 'Ten at a time, a month at a time, or a whole workshop — every confirmed class counts down from it.',
+    body: 'However you sell them. Every confirmed class counts down from what you added.',
   },
   {
     title: 'See who needs a nudge',
@@ -193,7 +193,7 @@ const FAQS = [
   {
     question: 'Is this only for schools with many students?',
     answer:
-      'No. A one-on-one class works the same way as a group of twenty — Rasika Classes was built around the solo teacher first.',
+      'No. A one-on-one class works the same way as a group of twenty. Rasika Classes was built around the solo teacher first.',
   },
   {
     question: 'I charge monthly, not by the class. Does this still work?',
@@ -202,18 +202,17 @@ const FAQS = [
   },
   {
     question: 'What happens if a student forgets to mark a class?',
-    answer:
-      "You can mark it for them, on the spot. It's confirmed straight away, since you're the one recording it.",
+    answer: "You mark it for them. One tap, and it's already confirmed.",
   },
   {
     question: 'What do you keep about my students, especially children?',
     answer:
-      "A first name, a last initial, and whether they're a minor. No date of birth, photo, phone number, or address — and nothing here is ever indexed or made public.",
+      "A first name, a last initial, and whether they're a minor. No date of birth, photo, phone number, or address. And nothing here is ever indexed or made public.",
   },
   {
     question: 'Do I need to download anything?',
     answer:
-      "No app store. Sign in from your phone's browser and add it to your home screen — it opens and behaves like an app from there.",
+      "No app store. Sign in from your phone's browser and add it to your home screen. From there it opens and behaves like an app.",
   },
 ];
 
@@ -249,7 +248,7 @@ export default function ClassesLandingPage() {
         </h1>
         <p className="hero-description">
           Rasika Classes keeps that register for you. One glance shows every student's balance, last
-          class, and last payment — no payment gateway, no card details, nothing but the record.
+          class, and last payment. No payment gateway, no card details. Just the record.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild size="lg">
