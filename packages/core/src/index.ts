@@ -35,6 +35,7 @@ export * as ClassEnrollment from './domain/class-enrollment';
 export * as ClassPack from './domain/class-pack';
 export * as ClassSession from './domain/class-session';
 export * as ClassInvite from './domain/class-invite';
+export * as Email from './email';
 export * as Image from './domain/image/s3';
 // Its own namespace rather than merged into `Image`, so a call site cannot reach for the public
 // uploader by habit when it meant the private one. The two differ in bucket, in what they

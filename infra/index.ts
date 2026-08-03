@@ -1,5 +1,6 @@
 export * from './database';
 export * from './class-uploads';
+export * from './email';
 export * from './classes';
 export * from './event-posters';
 export * from './og-image';

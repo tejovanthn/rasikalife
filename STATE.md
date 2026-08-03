@@ -44,6 +44,19 @@ Read the CLAUDE.md sections "Rasika Classes: the credit ledger" and "Rasika Clas
 the rules that hold it together, plan §4.9 for the three places the keys depart from the spec, and
 plan §14 for the six places the build does.
 
+**Transactional email landed (2026-08-03).** A guru adding a student to a program now triggers a
+"you've been added to a class" email — `addLearner` in `packages/trpc/src/routers/classes.ts`
+calls it best-effort (a send failure logs and does not fail the mutation) after the invite row is
+written. New: `packages/core/src/email` (`Email.sendTransactional`, SESv2), a new `@rasika/email`
+workspace package (React Email templates, modelled on the ShipPad project's `packages/email`), and
+`infra/email.ts` (`sst.aws.Email` verifying the whole stage domain, linked into `RasikaTRPC` with
+`EMAIL_SENDER` and `CLASSES_URL`). Only the one template exists (`studentAddedEmail`); the other
+two `ClassInvite.createClassInvite` call sites (`changeLearnerEmail`, `inviteToLearner`) do not
+send anything yet — same event, not yet asked for. **Not verified against a deploy**: SES domain
+verification needs the DNS records `sst.aws.Email` creates to propagate before send actually
+works, and there is no test coverage proving `EMAIL_SENDER`/`CLASSES_URL` resolve correctly outside
+a deployed stage. Check first send in the SES console after the next deploy.
+
 Known gaps, all deliberate: PWA icons are placeholders (`pnpm icons` regenerates from one SVG); the
 session cookie secret is still a literal in the repo (limited impact, own decision — plan §14); and
 `packages/web` has not adopted `packages/ui`, which the plan says should stay opportunistic.

@@ -8,9 +8,11 @@ import {
   ClassProgram,
   ClassSession,
   ClassTeacher,
+  Email,
   PrivateImage,
 } from '@rasika/core';
 import { addDaysToDate, todayInTimeZone } from '@rasika/core/shared/timezone';
+import { studentAddedEmail } from '@rasika/email';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -76,6 +78,36 @@ async function ensureOwnInstitution(user: { id: string; name: string }) {
     ownerUserId: user.id,
     name: user.name || 'My classes',
   });
+}
+
+/**
+ * Best-effort: the invite is already saved by the time this runs, so a send failure must not
+ * fail the mutation. The student still shows up on the roster; they just don't hear about it
+ * until they check the address themselves.
+ */
+async function sendStudentAddedEmail(input: {
+  to: string;
+  learnerName: string;
+  guruName: string;
+  institutionId: string;
+  programTitle: string;
+  relation: ClassLearnerAccess.AccessRelation;
+}) {
+  try {
+    const institution = await ClassInstitution.getClassInstitution(input.institutionId);
+    const content = await studentAddedEmail({
+      learnerName: input.learnerName,
+      guruName: input.guruName,
+      institutionName: institution?.name ?? 'Rasika Classes',
+      programTitle: input.programTitle,
+      relation: input.relation,
+      recipientEmail: input.to,
+      signInUrl: `${process.env.CLASSES_URL}/`,
+    });
+    await Email.sendTransactional({ to: input.to, ...content });
+  } catch (error) {
+    console.error('[classes] Failed to send student-added email', error);
+  }
 }
 
 export const classesRouter = createTRPCRouter({
@@ -343,6 +375,15 @@ export const classesRouter = createTRPCRouter({
         learnerId: learner.id,
         relation: input.relation,
         invitedBy: ctx.user.id,
+      });
+
+      await sendStudentAddedEmail({
+        to: invite.rawEmail,
+        learnerName: ClassLearner.learnerDisplayName(learner),
+        guruName: ctx.user.name,
+        institutionId: actor.institutionId,
+        programTitle: ClassProgram.programDisplayTitle(program),
+        relation: input.relation,
       });
 
       return { learner, enrollment, invite };
