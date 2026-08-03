@@ -62,6 +62,14 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     trpc.classes.getMyContexts.query(),
   ]);
 
+  // Only a teacher sees who else can reach a learner, and only she can change it.
+  const institutionId = contexts.teaching[0]?.institutionId;
+  const outstanding = institutionId
+    ? (await trpc.classes.outstandingInvites.query({ institutionId })).filter(
+        invite => invite.learnerId === learnerId
+      )
+    : [];
+
   const card = cards.find(entry => entry.enrollment.programId === programId);
   if (!card) {
     throw new Response('Not found', { status: 404 });
@@ -73,6 +81,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     packs: [...packs].reverse(),
     learnerId,
     programId,
+    outstanding,
     isTeacher: contexts.teaching.length > 0,
     isLearner: contexts.learners.length > 0,
     /**
@@ -113,11 +122,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
     // live a page away — on the roster, which is where she is *not* looking when she has one
     // learner's history open in front of her.
     if (intent === 'add-class') {
-      await trpc.classes.markAttended.mutate({
+      // `markClassForLearner`, not `markAttended`. The latter is the *student's* path and lands
+      // `pending` — so the guru's own entry went into the guru's own review queue, while the
+      // dialog beside it promised it was already confirmed.
+      await trpc.classes.markClassForLearner.mutate({
         programId,
         learnerId,
         sessionDate: String(formData.get('sessionDate') ?? '') || undefined,
         notes: notes || undefined,
+      });
+      return redirect(`/learners/${learnerId}/${programId}`);
+    }
+
+    if (intent === 'change-email') {
+      await trpc.classes.changeLearnerEmail.mutate({
+        learnerId,
+        email: String(formData.get('email') ?? '').trim(),
       });
       return redirect(`/learners/${learnerId}/${programId}`);
     }
@@ -180,8 +200,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function LearnerLedger() {
-  const { card, sessions, packs, learnerId, programId, isTeacher, isLearner, followsThisLearner } =
-    useLoaderData<typeof loader>();
+  const {
+    card,
+    sessions,
+    packs,
+    learnerId,
+    programId,
+    isTeacher,
+    isLearner,
+    followsThisLearner,
+    outstanding,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const pending = navigation.state === 'submitting';
@@ -227,7 +256,7 @@ export default function LearnerLedger() {
               <FormDialog
                 trigger="+ Add class"
                 title="Add a class"
-                description={`For ${enrollment.learnerName}. It is confirmed straight away — you are the one recording it.`}
+                description={`For ${enrollment.learnerName}. Confirmed on the spot — you are the one recording it.`}
               >
                 <Form method="post" className="space-y-4">
                   <input type="hidden" name="intent" value="add-class" />
@@ -406,6 +435,56 @@ export default function LearnerLedger() {
             </TableScroll>
           )}
         </section>
+        {isTeacher ? (
+          <section className="space-y-3">
+            <SectionTitle>Who can see this</SectionTitle>
+            {outstanding.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {enrollment.learnerName}'s family has signed in and can see these classes.
+              </p>
+            ) : (
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                {outstanding.map(invite => (
+                  <div key={invite.id} className="space-y-2">
+                    <p className="text-sm">
+                      Invited <span className="break-all font-medium">{invite.rawEmail}</span> —
+                      waiting for them to sign in.
+                    </p>
+                    {/* Correctable only until it is accepted. After that a real person holds
+                        access, and retyping an address must not quietly take it away. */}
+                    <FormDialog
+                      trigger="Change email"
+                      triggerVariant="outline"
+                      title="Change the invited email"
+                      description={`${invite.rawEmail} has not signed in yet, so nothing is lost by correcting it.`}
+                    >
+                      <Form method="post" className="space-y-4">
+                        <input type="hidden" name="intent" value="change-email" />
+                        <Field
+                          label="Email to share with"
+                          htmlFor={`email-${invite.id}`}
+                          hint="The old invitation is withdrawn."
+                        >
+                          <Input
+                            id={`email-${invite.id}`}
+                            name="email"
+                            type="email"
+                            inputMode="email"
+                            defaultValue={invite.rawEmail}
+                            required
+                          />
+                        </Field>
+                        <Button type="submit" size="wide" pending={pending}>
+                          Send to this address instead
+                        </Button>
+                      </Form>
+                    </FormDialog>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        ) : null}
       </div>
     </Chrome>
   );

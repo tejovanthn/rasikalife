@@ -82,10 +82,18 @@ export async function action({ request }: ActionFunctionArgs) {
       if (formData.get('skip') === '1') {
         return redirect('/teaching');
       }
+      const email = String(formData.get('email') ?? '').trim();
+      if (!email) {
+        // "Skip for now" below is the way past this step. Adding a learner nobody can see is not.
+        return data(
+          { error: 'An email is needed so they can see their classes — or skip this for now.' },
+          { status: 400 }
+        );
+      }
       await trpc.classes.addLearner.mutate({
         programId: String(formData.get('programId') ?? ''),
         firstName: String(formData.get('firstName') ?? '').trim(),
-        email: String(formData.get('email') ?? '').trim() || undefined,
+        email,
         isMinor: formData.get('isMinor') === 'on',
         relation: formData.get('isMinor') === 'on' ? 'guardian' : 'self',
       });
@@ -212,9 +220,16 @@ export default function TeachingOnboarding() {
               <Field
                 label="Email to share with"
                 htmlFor="email"
-                hint="A parent's address for a child."
+                hint="A parent's address for a child. They get access when they sign in with it."
               >
-                <Input id="email" name="email" type="email" inputMode="email" autoComplete="off" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="off"
+                  required
+                />
               </Field>
 
               <label className="flex min-h-tap items-center gap-3 text-sm">

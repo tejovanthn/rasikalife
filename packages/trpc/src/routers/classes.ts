@@ -301,7 +301,15 @@ export const classesRouter = createTRPCRouter({
         firstName: z.string().min(1).max(80),
         lastInitial: z.string().max(4).optional(),
         isMinor: z.boolean().default(false),
-        email: z.string().email().max(254).optional(),
+        /**
+         * Required, where it used to be optional.
+         *
+         * A learner created without one had **no access rows at all** — nobody could see it,
+         * which quietly broke the rule that every learner keeps at least one account with access.
+         * The guru got a roster row she could grant packs against and the family got nothing, with
+         * no error anywhere to say so.
+         */
+        email: z.string().email().max(254),
         relation: z.enum(ClassLearnerAccess.ACCESS_RELATIONS).default('guardian'),
       })
     )
@@ -328,16 +336,14 @@ export const classesRouter = createTRPCRouter({
         programType: program.type,
       });
 
-      const invite = input.email
-        ? await ClassInvite.createClassInvite({
-            email: input.email,
-            institutionId: actor.institutionId,
-            programId: input.programId,
-            learnerId: learner.id,
-            relation: input.relation,
-            invitedBy: ctx.user.id,
-          })
-        : null;
+      const invite = await ClassInvite.createClassInvite({
+        email: input.email,
+        institutionId: actor.institutionId,
+        programId: input.programId,
+        learnerId: learner.id,
+        relation: input.relation,
+        invitedBy: ctx.user.id,
+      });
 
       return { learner, enrollment, invite };
     }),
@@ -378,6 +384,61 @@ export const classesRouter = createTRPCRouter({
       const owned = await ClassInstitution.listInstitutionsByOwner(ctx.user.id);
       const ownedIds = new Set(owned.map(i => i.id));
       return invites.filter(invite => ownedIds.has(invite.institutionId));
+    }),
+
+  /**
+   * Which of this institution's invites are still waiting on somebody to sign in.
+   *
+   * Read off the new by-institution index rather than by address, because the guru does not know
+   * the address she is looking for — that is the whole point of asking.
+   */
+  outstandingInvites: protectedProcedure
+    .input(z.object({ institutionId }))
+    .query(async ({ ctx, input }) => {
+      await assertTeacher(ctx, { institutionId: input.institutionId });
+      return ClassInvite.listOutstandingInvites(input.institutionId);
+    }),
+
+  /**
+   * Corrects the address a learner was invited at.
+   *
+   * Withdraws the outstanding invite and sends a new one, which is what "change the email" means
+   * while nobody has signed in: the old address never gains access and the new one does.
+   *
+   * It refuses once an invite has been **claimed**, rather than doing something clever. At that
+   * point a real person holds access, and silently revoking it because a guru retyped an address
+   * would take a family's session notes away without saying so. Adding a second account and
+   * removing the first are two deliberate acts, and there are two procedures for them.
+   */
+  changeLearnerEmail: protectedProcedure
+    .input(z.object({ learnerId, email: z.string().email().max(254) }))
+    .mutation(async ({ ctx, input }) => {
+      const actor = await assertTeacher(ctx, { learnerId: input.learnerId });
+
+      const outstanding = await ClassInvite.listOutstandingInvites(actor.institutionId);
+      const forLearner = outstanding.filter(invite => invite.learnerId === input.learnerId);
+
+      if (forLearner.length === 0) {
+        throw new TRPCError({
+          code: 'CONFLICT',
+          message:
+            'That invitation has already been accepted. Invite the new address, then remove the old one.',
+        });
+      }
+
+      const [first] = forLearner;
+      await Promise.all(
+        forLearner.map(invite => ClassInvite.deleteClassInvite(invite.normalizedEmail, invite.id))
+      );
+
+      return ClassInvite.createClassInvite({
+        email: input.email,
+        institutionId: actor.institutionId,
+        programId: first?.programId,
+        learnerId: input.learnerId,
+        relation: first?.relation ?? 'guardian',
+        invitedBy: ctx.user.id,
+      });
     }),
 
   revokeInvite: protectedProcedure
@@ -589,6 +650,89 @@ export const classesRouter = createTRPCRouter({
         programType: enrollment.programType,
         markedBy: ctx.user.id,
       });
+    }),
+
+  /**
+   * The guru records a class for one learner, already settled.
+   *
+   * `markAttended` is the *student's* path: it lands `pending`, because the guru has the final
+   * say and has not looked at it yet. When she is the one recording it there is nobody left to
+   * ask, so leaving it pending would put her own entry in her own review queue — which is exactly
+   * what the ledger's "Add class" did while its description promised the opposite.
+   *
+   * Two writes rather than one, deliberately: it creates through `markClassSession` and settles
+   * through `confirmClassSession`, so the credit still moves inside the guarded transaction that
+   * every other confirmation uses. A create that wrote `confirmed` directly would be a second way
+   * to spend a credit, and the first way is the one with the conditional on it.
+   *
+   * If the confirm loses — the session already settled between the two writes — the row stays
+   * pending and shows up in her queue, which is a visible outcome rather than a lost class.
+   */
+  markClassForLearner: protectedProcedure
+    .input(
+      z.object({
+        programId,
+        learnerId,
+        sessionDate: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/)
+          .optional(),
+        mode: z.enum(ClassProgram.CLASS_MODES).optional(),
+        notes: z.string().max(2000).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const actor = await assertTeacher(ctx, { programId: input.programId });
+      const [program, enrollment] = await Promise.all([
+        ClassProgram.getClassProgram(input.programId),
+        ClassEnrollment.getEnrollment(input.programId, input.learnerId),
+      ]);
+      if (!program || !enrollment) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'That learner is not on this class' });
+      }
+
+      const timezone = await institutionTimezone(actor.institutionId);
+      const today = todayInTimeZone(timezone);
+      const sessionDate = input.sessionDate ?? today;
+
+      // She may reconstruct the past — she is doing this because somebody forgot — but not the
+      // future, which is the one date that cannot describe a class that happened.
+      if (sessionDate > today) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'A class cannot be recorded before it has happened',
+        });
+      }
+
+      // Same guard as the student's path: one class per learner per day, and an existing row is
+      // returned rather than duplicated.
+      const marked = await ClassSession.listLearnerSessions(input.programId, input.learnerId);
+      const existing = marked.find(session => session.sessionDate === sessionDate);
+      if (existing) {
+        return existing;
+      }
+
+      const session = await ClassSession.markClassSession({
+        programId: input.programId,
+        learnerId: input.learnerId,
+        institutionId: actor.institutionId,
+        sessionDate,
+        startsAt: input.sessionDate ? undefined : new Date().toISOString(),
+        timezone,
+        mode: input.mode ?? program.defaultMode,
+        teacherId: program.defaultTeacherId,
+        notes: input.notes,
+        programTitle: enrollment.programTitle,
+        programType: enrollment.programType,
+        markedBy: ctx.user.id,
+      });
+
+      await ClassSession.confirmClassSession(ClassSession.sessionRef(session), {
+        confirmedBy: ctx.user.id,
+        notes: input.notes,
+      });
+
+      return session;
     }),
 
   /**

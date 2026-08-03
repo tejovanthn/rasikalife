@@ -482,6 +482,27 @@ wrong day as the student's only option. What makes the past safe is the review q
 lands `pending` with its date on it and the guru decides. The bound is longer than the seven-day
 auto-confirm window, so anything older is a conversation rather than a form.
 
+**A guru may record a class for a learner too, and it lands `confirmed`, not `pending`.**
+`markClassForLearner` exists beside `markAttended` because she is the one recording it — leaving
+it `pending` would put her own entry in her own review queue. It still writes through
+`markClassSession` then `confirmClassSession` as two calls rather than one, so the credit still
+moves inside the guarded transaction every other confirmation uses; a create that wrote
+`confirmed` directly would be a second, unguarded way to spend a credit. She may backdate but
+never postdate, same as the student's path, and one class per learner per day still holds — a
+second attempt returns the existing row rather than duplicating it.
+
+**`classLearner.email` is required at creation, not merely encouraged.** A learner created
+without one had no `classLearnerAccess` row and no invite — a roster row the guru could grant
+packs against, and a family with no way to ever see them, with nothing to say so. Once a family
+has signed in, `changeLearnerEmail` corrects a typo by withdrawing the outstanding invite and
+sending a new one; it refuses once the invite is **claimed**; because that means a real person
+already holds access, and silently revoking it because a guru retyped an address would take a
+family's session notes away without saying so — adding a new account and removing the old one are
+two deliberate acts, not one. `ClassInvite.byInstitution` (gsi1, keyed on `institutionId` +
+`createdAt`) is what lets a guru see what is still outstanding; it could not key on `learnerId`
+instead because that attribute is optional (an invite may carry a name for a learner that does
+not exist yet), and rule 9 applies.
+
 **Session notes are optional for everyone**, including the guru confirming. They were required
 of a person once, on the reasoning that the note is the durable value of the product — still
 true, and still the wrong trade: a required field on a Sunday-evening catch-up buys "ok" and

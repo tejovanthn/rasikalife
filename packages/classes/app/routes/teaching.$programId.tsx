@@ -71,13 +71,31 @@ export async function action({ request, params }: ActionFunctionArgs) {
   try {
     if (intent === 'add-learner') {
       const email = String(formData.get('email') ?? '').trim();
+      if (!email) {
+        return data(
+          { error: 'An email is needed so they can see their classes.' },
+          { status: 400 }
+        );
+      }
       await trpc.classes.addLearner.mutate({
         programId,
         firstName: String(formData.get('firstName') ?? '').trim(),
         lastInitial: String(formData.get('lastInitial') ?? '').trim() || undefined,
         isMinor: formData.get('isMinor') === 'on',
-        email: email || undefined,
+        email,
         relation: formData.get('isMinor') === 'on' ? 'guardian' : 'self',
+      });
+      return redirect(`/teaching/${programId}`);
+    }
+
+    // The guru recording a class the student forgot to mark. Confirmed on the spot — she is the
+    // one recording it, so there is nobody left to ask.
+    if (intent === 'mark-class') {
+      await trpc.classes.markClassForLearner.mutate({
+        programId,
+        learnerId: String(formData.get('learnerId') ?? ''),
+        sessionDate: String(formData.get('sessionDate') ?? '') || undefined,
+        notes: String(formData.get('notes') ?? '').trim() || undefined,
       });
       return redirect(`/teaching/${programId}`);
     }
@@ -194,7 +212,7 @@ export default function ProgramRoster() {
                 <Field
                   label="Email to share with"
                   htmlFor="email"
-                  hint="A parent's address for a child."
+                  hint="A parent's address for a child. They get access when they sign in with it."
                 >
                   <Input
                     id="email"
@@ -202,6 +220,7 @@ export default function ProgramRoster() {
                     type="email"
                     inputMode="email"
                     autoComplete="off"
+                    required
                   />
                 </Field>
 
@@ -247,6 +266,14 @@ export default function ProgramRoster() {
                     <Th scope="col" className="text-right">
                       Classes left
                     </Th>
+                    {/* Only on a one-to-one: a group class is marked for everyone at once from
+                        the button by the title, and a per-row control there would invite the guru
+                        to mark twelve people one at a time. */}
+                    {program.isGroup ? null : (
+                      <Th scope="col" className="text-right">
+                        <span className="sr-only">Record a class</span>
+                      </Th>
+                    )}
                   </Tr>
                 </thead>
                 <tbody>
@@ -303,6 +330,52 @@ export default function ProgramRoster() {
                           ? creditBalanceLabel(enrollment.creditsRemaining)
                           : enrollment.creditsRemaining}
                       </Td>
+                      {program.isGroup ? null : (
+                        <Td className="text-right">
+                          {enrollment.status === 'active' && !program.archivedAt ? (
+                            <FormDialog
+                              trigger="Mark class"
+                              triggerVariant="ghost"
+                              title={`Record a class for ${enrollment.learnerName}`}
+                              description="For when they forget to. It is confirmed on the spot — you are the one recording it."
+                            >
+                              <Form method="post" className="space-y-4">
+                                <input type="hidden" name="intent" value="mark-class" />
+                                <input
+                                  type="hidden"
+                                  name="learnerId"
+                                  value={enrollment.learnerId}
+                                />
+                                <Field
+                                  label="Date"
+                                  htmlFor={`mark-date-${enrollment.learnerId}`}
+                                  hint="Leave blank for today."
+                                >
+                                  <Input
+                                    id={`mark-date-${enrollment.learnerId}`}
+                                    name="sessionDate"
+                                    type="date"
+                                  />
+                                </Field>
+                                <Field
+                                  label="What you covered"
+                                  htmlFor={`mark-notes-${enrollment.learnerId}`}
+                                  hint="Optional."
+                                >
+                                  <Textarea
+                                    id={`mark-notes-${enrollment.learnerId}`}
+                                    name="notes"
+                                    rows={3}
+                                  />
+                                </Field>
+                                <Button type="submit" size="wide" pending={pending}>
+                                  Record class
+                                </Button>
+                              </Form>
+                            </FormDialog>
+                          ) : null}
+                        </Td>
+                      )}
                     </Tr>
                   ))}
                 </tbody>

@@ -200,6 +200,15 @@ describe('class entity keys', () => {
     );
 
     expect(invite.pk).toBe('class_invite#priyaraman@gmail.com');
+
+    /**
+     * Keyed on the institution, not the learner. `learnerId` is optional — an invite may name an
+     * existing learner or carry a name for one that does not exist yet — and an index over an
+     * optional attribute is not sparse (rule 9), so every `learnerName` invite would have landed
+     * in `class_invite_institution#` together.
+     */
+    expect(invite.gsi1pk).toBe('class_invite_institution#inst1');
+    expect(invite.gsi1pk).not.toBe('class_invite_institution#');
   });
 
   /**

@@ -27,6 +27,23 @@ export async function listInvitesForEmail(email: string): Promise<ClassInvite[]>
   return (result.data as ClassInvite[]) ?? [];
 }
 
+/** Every invite this institution has sent, newest last. */
+export async function listInstitutionInvites(institutionId: string): Promise<ClassInvite[]> {
+  if (!institutionId) {
+    return [];
+  }
+  const result = await ClassInviteEntity.query
+    .byInstitution({ institutionId })
+    .go({ pages: 'all' });
+  return (result.data as ClassInvite[]) ?? [];
+}
+
+/** The ones still waiting on somebody to sign in — what a guru can correct or withdraw. */
+export async function listOutstandingInvites(institutionId: string): Promise<ClassInvite[]> {
+  const invites = await listInstitutionInvites(institutionId);
+  return invites.filter(invite => !invite.claimedAt);
+}
+
 /** What the sign-in hook acts on. */
 export async function listUnclaimedInvites(email: string): Promise<ClassInvite[]> {
   const invites = await listInvitesForEmail(email);
