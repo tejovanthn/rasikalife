@@ -1,4 +1,4 @@
-import { addDaysToDate, startOfDayInstant } from '../../shared/timezone';
+import { addDaysToDate, startOfDayInstant, todayInTimeZone } from '../../shared/timezone';
 import { generateId } from '../../utils';
 import { listProgramEnrollments, touchLastSession } from '../class-enrollment';
 import { ClassLedgerService } from '../class-enrollment/ledger';
@@ -41,12 +41,26 @@ export type SessionTransition = ClassSessionRef & { status: SessionStatus };
 /**
  * When the ledger moves without the guru.
  *
- * Midnight on the seventh day after the class, on her wall — not seven times twenty-four
- * hours from an instant, which would drift by an hour twice a year and land the deadline in
- * the middle of a Tuesday.
+ * Midnight on the seventh day, on her wall — not seven times twenty-four hours from an instant,
+ * which would drift by an hour twice a year and land the deadline in the middle of a Tuesday.
+ *
+ * Counted from the **later** of the class and the day it was marked, which is the whole point of
+ * `markedOn`. Counting from `sessionDate` alone was wrong the moment backdating was allowed: a
+ * learner may name a date up to a month ago, so anything older than `AUTO_CONFIRM_DAYS` was
+ * created with its deadline already in the past and the very next cron sweep confirmed it. The
+ * guru never saw the row, and the review queue — the only thing that makes backdating safe —
+ * was skipped precisely for the classes least likely to be remembered correctly.
+ *
+ * So the seven days are a promise about *her* reviewing time, not about the class's age.
+ * A class marked the day it happened is unaffected, which is nearly all of them.
  */
-export function autoConfirmDeadline(sessionDate: string, timezone: string): string {
-  return startOfDayInstant(addDaysToDate(sessionDate, AUTO_CONFIRM_DAYS), timezone);
+export function autoConfirmDeadline(
+  sessionDate: string,
+  timezone: string,
+  markedOn: string = todayInTimeZone(timezone)
+): string {
+  const anchor = sessionDate > markedOn ? sessionDate : markedOn;
+  return startOfDayInstant(addDaysToDate(anchor, AUTO_CONFIRM_DAYS), timezone);
 }
 
 /**

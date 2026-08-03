@@ -36,6 +36,7 @@ import {
   markClassSessionAbsent,
   markGroupClassSession,
 } from '.';
+import { startOfDayInstant } from '../../shared/timezone';
 import { listProgramEnrollments, touchLastSession } from '../class-enrollment';
 import { ClassLedgerService } from '../class-enrollment/ledger';
 import { ClassSessionEntity } from './entity';
@@ -98,13 +99,43 @@ describe('class-session', () => {
   describe('autoConfirmDeadline', () => {
     it('is midnight seven days later on the teacher wall, not 168 hours later', () => {
       // 2026-08-04 + 7 = 2026-08-11, which begins at 18:30Z the previous day in Chennai.
-      expect(autoConfirmDeadline('2026-08-04', 'Asia/Kolkata')).toBe('2026-08-10T18:30:00.000Z');
+      expect(autoConfirmDeadline('2026-08-04', 'Asia/Kolkata', '2026-08-04')).toBe(
+        '2026-08-10T18:30:00.000Z'
+      );
     });
 
     it('follows the zone across a DST change rather than drifting an hour', () => {
       // 2026-10-26 + 7 = 2026-11-02, by which point New York is back on standard time.
-      expect(autoConfirmDeadline('2026-10-26', 'America/New_York')).toBe(
+      expect(autoConfirmDeadline('2026-10-26', 'America/New_York', '2026-10-26')).toBe(
         '2026-11-02T05:00:00.000Z'
+      );
+    });
+
+    /**
+     * The regression that made backdating unsafe.
+     *
+     * A learner may name a date up to a month ago. Counted from `sessionDate`, a class three
+     * weeks old was created with a deadline a fortnight in the past, so
+     * `listSessionsDueForAutoConfirm` picked it up on the next sweep and spent the credit before
+     * the guru had opened the app. Seven days of review time is the guarantee; it has to be
+     * seven days of *hers*.
+     */
+    it('gives the guru a full week to review a backdated class, not a deadline already past', () => {
+      const marked = '2026-08-04';
+      const deadline = autoConfirmDeadline('2026-07-13', 'Asia/Kolkata', marked);
+
+      // Seven days from the day it was marked, not from the class three weeks earlier.
+      expect(deadline).toBe('2026-08-10T18:30:00.000Z');
+      expect(deadline > startOfDayInstant(marked, 'Asia/Kolkata')).toBe(true);
+    });
+
+    /**
+     * Neither router can reach this — both refuse a future date — but the anchor must still be
+     * the later of the two, or a session marked in advance would fall due before it was taught.
+     */
+    it('anchors on the class when it is still ahead of the day it was marked', () => {
+      expect(autoConfirmDeadline('2026-08-04', 'Asia/Kolkata', '2026-07-01')).toBe(
+        '2026-08-10T18:30:00.000Z'
       );
     });
   });

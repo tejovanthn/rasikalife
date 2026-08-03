@@ -482,6 +482,17 @@ wrong day as the student's only option. What makes the past safe is the review q
 lands `pending` with its date on it and the guru decides. The bound is longer than the seven-day
 auto-confirm window, so anything older is a conversation rather than a form.
 
+**`autoConfirmAt` counts from the day a class was *marked*, not from `sessionDate`.** Those were
+the same thing until backdating shipped, and then they were not: a class named three weeks ago was
+written with a deadline a fortnight in the past, so `listSessionsDueForAutoConfirm` — which is
+simply `autoConfirmAt <= now` — swept it up on the next run and spent the credit before the guru
+had opened the app. The review queue is the only thing that makes backdating safe, and it was
+being skipped for exactly the classes least likely to be remembered right. `autoConfirmDeadline`
+therefore takes a third argument and anchors on the **later** of the class and the marking day, so
+the seven days are a promise about *her* reviewing time rather than about the class's age. A class
+marked the day it happened is unaffected, which is nearly all of them. Do not reintroduce a
+`sessionDate`-only deadline; `index.test.ts` fails if you do.
+
 **A guru may record a class for a learner too, and it lands `confirmed`, not `pending`.**
 `markClassForLearner` exists beside `markAttended` because she is the one recording it — leaving
 it `pending` would put her own entry in her own review queue. It still writes through
