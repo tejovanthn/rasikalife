@@ -96,6 +96,12 @@ async function sendStudentAddedEmail(input: {
   to: string;
   learnerName: string;
   guruName: string;
+  /**
+   * The guru's own address, used as `Reply-To`. A parent told their child has been added to a
+   * class will answer the message, and the From address is an unattended `noreply@`. She chose
+   * to add the student, so replying to her is the expected end of that exchange.
+   */
+  guruEmail: string;
   institutionId: string;
   programTitle: string;
   relation: ClassLearnerAccess.AccessRelation;
@@ -111,7 +117,7 @@ async function sendStudentAddedEmail(input: {
       recipientEmail: input.to,
       signInUrl: CLASSES_URL,
     });
-    await Email.sendTransactional({ to: input.to, ...content });
+    await Email.sendTransactional({ to: input.to, replyTo: input.guruEmail, ...content });
   } catch (error) {
     console.error('[classes] Failed to send student-added email', error);
   }
@@ -388,6 +394,7 @@ export const classesRouter = createTRPCRouter({
         to: invite.rawEmail,
         learnerName: ClassLearner.learnerDisplayName(learner),
         guruName: ctx.user.name,
+        guruEmail: ctx.user.email,
         institutionId: actor.institutionId,
         programTitle: ClassProgram.programDisplayTitle(program),
         relation: input.relation,

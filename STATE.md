@@ -61,16 +61,26 @@ committed `.sst/artifacts/RasikaTRPC-src/bundle.mjs` shows it), so it works — 
 natively and would never have caught it either way. Linking `email` into the function is what
 grants `ses:SendEmail`; the env vars alone would not.
 
-**Three things the first deploy has to confirm, none checkable here:**
+**The sender is `Rasika Classes <noreply@classes.rasika.life>`** — the subdomain, deliberately not
+the root. Reputation is tracked per domain, and this configuration set inherits the account-level
+suppression list, so a complaint against a future marketing email sent from the same domain would
+suppress that address account-wide and the next "you've been added to a class" to the same family
+would be dropped rather than refused, with no error to catch. **A marketing stream must get its own
+subdomain and therefore its own identity** (`news.`, say); nothing provisions one today because
+nothing sends marketing today. Port ShipPad's `sendMarketing` when it does — it already carries
+`List-Unsubscribe` and one-click, which Gmail and Yahoo require of bulk senders. `Reply-To` is the
+guru's own address, since `noreply@` is unattended and a parent will answer the message.
+
+**Two things the first deploy has to confirm, neither checkable here:**
 
 1. **SES starts in sandbox mode**, where it will only deliver to verified addresses. Every student
    email silently fails until the production-access request is granted. Request it before relying
    on this.
-2. **`ses.DomainIdentityVerification` blocks the deploy** until SES verifies `rasika.life` from the
+2. **`ses.DomainIdentityVerification` blocks the deploy** until SES verifies the domain from the
    DKIM records SST creates in the same zone. First deploy may sit for minutes or time out.
-3. **It writes a `_dmarc.rasika.life` TXT record** (`v=DMARC1; p=none;`). If one already exists,
-   Route53 creation conflicts — check before deploying, since this domain already serves the live
-   site.
+
+(A third risk is now gone: verifying the subdomain puts DMARC at `_dmarc.classes.rasika.life`, so
+it can no longer collide with a record on the root domain that already serves the live site.)
 
 Known gaps, all deliberate: PWA icons are placeholders (`pnpm icons` regenerates from one SVG); the
 session cookie secret is still a literal in the repo (limited impact, own decision — plan §14); and
