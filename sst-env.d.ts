@@ -10,6 +10,11 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Bucket"
     }
+    "Email": {
+      "configSet": string
+      "sender": string
+      "type": "sst.aws.Email"
+    }
     "EventPosters": {
       "name": string
       "type": "sst.aws.Bucket"

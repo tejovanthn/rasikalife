@@ -71,13 +71,22 @@ nothing sends marketing today. Port ShipPad's `sendMarketing` when it does — i
 `List-Unsubscribe` and one-click, which Gmail and Yahoo require of bulk senders. `Reply-To` is the
 guru's own address, since `noreply@` is unattended and a parent will answer the message.
 
-**Two things the first deploy has to confirm, neither checkable here:**
+**SES production access is already granted on this account** — checked 2026-08-03 with
+`aws sesv2 get-account --region us-east-1`: `ProductionAccessEnabled: true`, `EnforcementStatus:
+HEALTHY`, quota 50,000/day at 14/sec (sandbox is 200/day at 1/sec). So there is no sandbox step and
+nothing to request. Do **not** run `put-account-details` to "confirm" it: that call overwrites the
+account-level details, which currently name Pottle (`WebsiteURL: https://pottleapp.com`).
 
-1. **SES starts in sandbox mode**, where it will only deliver to verified addresses. Every student
-   email silently fails until the production-access request is granted. Request it before relying
-   on this.
-2. **`ses.DomainIdentityVerification` blocks the deploy** until SES verifies the domain from the
-   DKIM records SST creates in the same zone. First deploy may sit for minutes or time out.
+**This AWS account is shared with Pottle, and the suppression list is per-account, not per-domain.**
+`SuppressedReasons` is `[BOUNCE, COMPLAINT, OPTIMIZED]` at account level, so an address that
+complains about *any* mail from this account — including another product's — is suppressed for
+Rasika Classes too. Sending from our own subdomain separates reputation at the mailbox providers
+but does **not** separate this list. If that becomes a real problem, the lever is per-configuration-set
+suppression options, and each `sst.aws.Email` component already gets its own configuration set.
+
+**One thing the first deploy still has to confirm:** `ses.DomainIdentityVerification` blocks the
+deploy until SES verifies the domain from the DKIM records SST creates in the same zone. First
+deploy may sit for minutes or time out.
 
 (A third risk is now gone: verifying the subdomain puts DMARC at `_dmarc.classes.rasika.life`, so
 it can no longer collide with a record on the root domain that already serves the live site.)
