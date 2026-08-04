@@ -178,14 +178,23 @@ export const meta: MetaFunction = ({ data }) => {
     .filter(Boolean)
     .join(', ');
 
+  // "<name> lyrics" is how this page is searched for — 106 such queries in 28
+  // days — and the word appeared nowhere in the title. It is only claimed when
+  // the lyrics are actually stored; the description used to promise them
+  // unconditionally, including on the records that have none.
+  const hasLyrics = (composition.lyricsV1?.length ?? 0) > 0;
+  const lyricsSuffix = hasLyrics ? ' Lyrics' : '';
+
   const title = ragaTalaSuffix
-    ? `${composition.title} – ${composition.composer.name} | ${ragaTalaSuffix}`
-    : `${composition.title} – ${composition.composer.name} | Carnatic Composition`;
+    ? `${composition.title}${lyricsSuffix} – ${composition.composer.name} | ${ragaTalaSuffix}`
+    : `${composition.title}${lyricsSuffix} – ${composition.composer.name} | Carnatic Composition`;
 
   const descParts = [`"${composition.title}" by ${composition.composer.name}`];
   if (primaryRaga) descParts.push(`in ${primaryRaga} raga`);
   if (primaryTala) descParts.push(`${primaryTala} tala`);
-  const description = `${descParts.join(', ')}. ${composition.language} Carnatic composition with lyrics.`;
+  const description = `${descParts.join(', ')}. ${composition.language} Carnatic composition${
+    hasLyrics ? ' with full lyrics' : ''
+  }.`;
 
   const canonicalUrl = `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`;
 
