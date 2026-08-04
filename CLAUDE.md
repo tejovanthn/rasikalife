@@ -113,6 +113,8 @@ The core package uses a domain-driven design with:
 - `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives. `readRepeatedRows(formData, {required, strings, numbers})` reads a variable-length list submitted as parallel repeated field names — rows correlate **by index**, so a row that renders must always emit every one of its inputs even when blank, and a row whose required field is empty is dropped.
 - `affiliation-display.ts` — `affiliationPeriod({startYear, endYear, isCurrent})` renders "2017–present", "1998–2015", "since 2017" or `''`. Used by both the artist profile and the organiser page. `isCurrent` is stored apart from `endYear` because a blank end year alone cannot say whether a role is current or merely undated.
 - `json-ld.ts` — `serializeJsonLd(data)` for anything going into `<script type="application/ld+json">`. Escapes `<` as `<`, because a `</script>` inside an entity-supplied URL would otherwise end the element and turn the rest of the payload into markup. Never use a bare `JSON.stringify` with `dangerouslySetInnerHTML`.
+- `listing-description.ts` — `eventListingDescription({name, events, preposition, fallback, location})` builds the meta description for a page that is really a listing (a venue, an organiser). It names the count and the next event rather than restating what kind of page it is: "Events and performances at X. Indian classical arts venue." took 196 impressions at position 9.8 for "chowdiah memorial hall events" and no clicks at all. Falls back to past events before the generic line, because a hall with only past concerts is still the right answer for that query.
+- `artist-display.ts` — `artistMetaDescription(artist)` builds an artist's description from instrument, city, lineage and upcoming concerts. It replaced one sentence shared by all 1,111 artists that called every one of them "renowned" — the inflation `GURU_RELATIONSHIPS` exists to prevent, applied site-wide. The lineage clause counts only `primary`, `advanced` and unclassified gurus; a workshop teacher must never be rendered as "disciple of".
 - `utils.ts` — `titleCaseName(name)` capitalizes every word of an **entity name** for display. Stored names are lowercase ITRANS, so a raga arrives as `darbari kanada` once transliterated and `capitalize` alone leaves the second word bare. Names only; never run it over lyrics or prose.
 - `analytics.ts` — `AnalyticsEvent` and `trackEvent(name, params)`. Every GA4 event name lives in that constant rather than as a string literal at the call site. Adding one means adding it there, wiring the call, and then **marking it a key event in the GA4 console** — the SDK cannot do that, and an unmarked event is collected but not counted as a conversion. Event *parameters* likewise need registering as custom dimensions before they can be reported on; the property has none today.
 
@@ -136,6 +138,13 @@ Names are stored as ITRANS and converted for display by `fromItrans(text, script
   in **both** `script-selector.tsx` and `header.tsx`, or the picker mislabels the current script.
 - **The source scheme is `itrans_dravidian`, not `itrans`.** Plain ITRANS has no long `E`/`O`, so
   it left those capitals untouched and shipped `husEni` and `vEgavAhini` as display names.
+
+**A meta description must name what is on the page, not what kind of page it is.** Every
+generic template found so far was measurably costing clicks: the raga arohanam, the venue's
+event list, the artist's instrument and lineage, the composition's lyrics. When adding a
+detail page, put the fact the searcher came for into the description, and claim nothing the
+record does not hold — the composition description promised "with lyrics" on records storing
+none.
 
 A janya raga carries its **parent's** mela number. Reporting `raga.melaNumber` bare said
 "Melakarta 20" on a page whose own title read "Janya Raga" — two claims in one search result, the

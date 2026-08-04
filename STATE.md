@@ -137,6 +137,31 @@ Then, when there is an appetite for it: `pnpm prod-cli dedup-ragas`, review the 
 Roughly 312 of 1,869 raga pages are a duplicate of one already on the site. Nothing merges without
 a decision written into the file. Reindex search afterwards.
 
+**A second pass over Search Console (2026-08-04) found the same fault in three more places**, all
+now fixed: venue, organiser, artist and composition pages all described *what kind of page they
+were* instead of what was on them. Classified all 892 queries that clear Google's privacy
+threshold (6,467 of 25,792 impressions):
+
+| class | queries | impressions | CTR | avg pos |
+|---|---|---|---|---|
+| artist names | 446 | 2,469 | 0.97% | 10.5 |
+| raga arohanam/avarohanam | 121 | 1,358 | 0.44% | 9.9 |
+| raga name lookup | 141 | 1,051 | 3.90% | 8.7 |
+| venue / organiser | 45 | 877 | 1.25% | 9.1 |
+| composition lyrics | 106 | 444 | 0.68% | 11.2 |
+
+The arohanam and name-lookup rows are the same pages on different queries — 0.44% against 3.90%
+— which is the clearest measurement of what the IAST default was costing. 551 queries sit on page
+one or two with zero clicks, worth 4,521 impressions.
+
+**Still open, and it needs a person's judgment rather than a script: 9 of 75 tala records are
+junk.** They came from an import that turned a composition's free-text tala field into a record
+each, so the corpus now holds talas named `.`, `m`, `or`, `/jhampa`, and compound values like
+`adi/rupaka`, `k./triputa`, `roopakam/aadi`, `tala/adi`. All nine are live, indexable pages;
+talas are the worst-converting section on the site (131 impressions, 0.76%, position 13.7). The
+compound ones probably mean the composition has two talas, so they cannot simply be deleted. No
+other section has this problem — ragas, artists, compositions, venues and festivals are clean.
+
 Not attempted: the 5 sitemap warnings in Search Console, and the ~17 raga slugs carrying `?`, `&`
 or `®` (canonical tags already point them at clean URLs, so this is cosmetic).
 
