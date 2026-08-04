@@ -95,6 +95,44 @@ Known gaps, all deliberate: PWA icons are placeholders (`pnpm icons` regenerates
 session cookie secret is still a literal in the repo (limited impact, own decision — plan §14); and
 `packages/web` has not adopted `packages/ui`, which the plan says should stay opportunistic.
 
+## Done in code, waiting on a console: search and analytics fixes (2026-08-04)
+
+From reading GA4 and Search Console. Impressions are growing ~45% month on month (25,792 over
+28 days) but CTR is 2.28% at average position 8.5, and four fifths of recorded sessions were a bot.
+
+Landed in `8cd07a4e1` and `9d9d6319d`:
+
+- **Swara notation is no longer transliterated.** `S R2 G2 M1 P D1 N2 S` collides with ITRANS
+  consonant codes, so every arohanam rendered as `ṣ ṟ2 ġ2 ṃ1 P ḍ1 ṇ2 ṣ` in the title, the meta
+  description and on the page. New `formatSwaras` in core. The pages ranking for
+  "&lt;name&gt; arohanam avarohanam" — the site's largest impression class — were clicking at
+  under 1% against 8.5% for the same pages on name queries.
+- **The default display script is `roman`, not `iast`.** Googlebot carries no cookie, so IAST was
+  what every indexed page was rendered in. Names now read `Huseni`, not `husEni`.
+- **Janya raga descriptions no longer claim to be melakartas.**
+- **GA4 has key events** (`app/lib/analytics.ts`): event submission and publication, the Classes
+  CTA, wiki edits, search, sign-in. Analytics also stays uninitialised when `navigator.webdriver`
+  is set.
+- **`pnpm cli dedup-ragas` rewritten.** It matched only exact lowercased names and then *deleted*,
+  orphaning linked compositions. It now matches spelling variants, reports to CSV for review, and
+  merges what a person marks — `mergeRaga` re-points junctions and the route already redirects.
+
+**Next step, and none of it can be done from the repo — all three are GA4 console tasks:**
+
+1. **Mark the key events**, or they are collected and never counted: `classes_cta_click`,
+   `event_published`, `edit_submitted`, `sign_in_started`.
+2. **Register the event parameters as custom dimensions** (`placement`, `entity`, `moderated`) and
+   metrics (`posters`, `events`, `length`, `hits`). The property has none today, so the parameters
+   are collected but cannot be reported on.
+3. **Add a data filter for the remaining bot traffic.** The `navigator.webdriver` guard is partial.
+
+Then, when there is an appetite for it: `pnpm prod-cli dedup-ragas`, review the CSV, and apply.
+Roughly 312 of 1,869 raga pages are a duplicate of one already on the site. Nothing merges without
+a decision written into the file. Reindex search afterwards.
+
+Not attempted: the 5 sitemap warnings in Search Console, and the ~17 raga slugs carrying `?`, `&`
+or `®` (canonical tags already point them at clean URLs, so this is cosmetic).
+
 ## Done: artist bio structuring (2026-07-30, verified 2026-08-02)
 
 The three-step corpus pipeline (`extract-artist-bios` → `import-bio-extractions` →

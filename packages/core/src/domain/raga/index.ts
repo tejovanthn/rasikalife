@@ -135,4 +135,7 @@ export async function adjustPerformanceCount(ragaId: string, delta: number): Pro
 }
 
 export type { Raga } from './entity';
+// Matching keys for the dedup CLI in packages/scripts, which cannot host its own
+// tests — keeping them here is what makes the matching testable.
+export { ragaExactKey, ragaVariantKey } from './dedup';
 export { CreateRagaSchema, UpdateRagaSchema } from './schema';

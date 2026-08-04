@@ -74,12 +74,19 @@ program
 
 program
   .command('dedup-ragas')
-  .description('Delete duplicate ragas (same name + same data), keeping the oldest')
-  .option('-n, --dry-run', 'Preview deletions without writing to the database')
-  .action(async (opts: { dryRun?: boolean }) => {
+  .description('Find duplicate ragas for review, then merge the pairs marked in the CSV')
+  .option('--apply', 'Merge the rows marked "merge" in --file, instead of reporting')
+  .option('--file <path>', 'Reviewed CSV to apply', 'raga-duplicates.csv')
+  .option('--out <path>', 'Where to write the report', 'raga-duplicates.csv')
+  .option('-n, --dry-run', 'With --apply, list the merges without writing')
+  .action(async (opts: { apply?: boolean; file: string; out: string; dryRun?: boolean }) => {
     setup();
-    const { dedupRagas } = await import('./dedupRagas.js');
-    await dedupRagas({ dryRun: opts.dryRun });
+    const mod = await import('./dedupRagas.js');
+    if (opts.apply) {
+      await mod.applyDuplicateRagaMerges({ file: opts.file, dryRun: opts.dryRun });
+    } else {
+      await mod.reportDuplicateRagas({ out: opts.out });
+    }
   });
 
 program

@@ -113,6 +113,33 @@ The core package uses a domain-driven design with:
 - `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives. `readRepeatedRows(formData, {required, strings, numbers})` reads a variable-length list submitted as parallel repeated field names — rows correlate **by index**, so a row that renders must always emit every one of its inputs even when blank, and a row whose required field is empty is dropped.
 - `affiliation-display.ts` — `affiliationPeriod({startYear, endYear, isCurrent})` renders "2017–present", "1998–2015", "since 2017" or `''`. Used by both the artist profile and the organiser page. `isCurrent` is stored apart from `endYear` because a blank end year alone cannot say whether a role is current or merely undated.
 - `json-ld.ts` — `serializeJsonLd(data)` for anything going into `<script type="application/ld+json">`. Escapes `<` as `<`, because a `</script>` inside an entity-supplied URL would otherwise end the element and turn the rest of the payload into markup. Never use a bare `JSON.stringify` with `dangerouslySetInnerHTML`.
+- `utils.ts` — `titleCaseName(name)` capitalizes every word of an **entity name** for display. Stored names are lowercase ITRANS, so a raga arrives as `darbari kanada` once transliterated and `capitalize` alone leaves the second word bare. Names only; never run it over lyrics or prose.
+- `analytics.ts` — `AnalyticsEvent` and `trackEvent(name, params)`. Every GA4 event name lives in that constant rather than as a string literal at the call site. Adding one means adding it there, wiring the call, and then **marking it a key event in the GA4 console** — the SDK cannot do that, and an unmarked event is collected but not counted as a conversion. Event *parameters* likewise need registering as custom dimensions before they can be reported on; the property has none today.
+
+### Scripts, swaras, and what Googlebot sees
+
+Names are stored as ITRANS and converted for display by `fromItrans(text, script)`
+(`@rasika/core/utils`). Three rules, each of which cost real traffic before it was found:
+
+- **Swara notation must never be transliterated.** `S R2 G2 M1 P D1 N2 S` is notation, not a
+  word, and its letters collide with ITRANS consonant codes — `S` is the retroflex `ṣ`, `D` is
+  `ḍ`. Running an arohanam through `fromItrans` rendered every raga's defining feature as
+  `ṣ ṟ2 ġ2 ṃ1 P ḍ1 ṇ2 ṣ`. Use **`formatSwaras`**, which normalizes case and spacing and converts
+  nothing. Raga pages ranking for "&lt;name&gt; arohanam avarohanam" were clicking at under 1%
+  against 8.5% for the same pages on name queries.
+- **The default display script is `roman`, and it has to stay that way.** Anonymous visitors and
+  Googlebot carry no `script_preference` cookie, so `DEFAULT_DISPLAY_SCRIPT`
+  (`sessions.server.ts`) is the script every indexed page is rendered in. IAST puts scholarly
+  diacritics in every title and meta description. `roman` is IAST with the combining marks
+  stripped, which is both how people spell these names when they search and what the URL slugs
+  already contain. A new script added to `DISPLAY_SCRIPTS` must also be added to `SCRIPT_OPTIONS`
+  in **both** `script-selector.tsx` and `header.tsx`, or the picker mislabels the current script.
+- **The source scheme is `itrans_dravidian`, not `itrans`.** Plain ITRANS has no long `E`/`O`, so
+  it left those capitals untouched and shipped `husEni` and `vEgavAhini` as display names.
+
+A janya raga carries its **parent's** mela number. Reporting `raga.melaNumber` bare said
+"Melakarta 20" on a page whose own title read "Janya Raga" — two claims in one search result, the
+wrong one being what an arohanam search is there to check. Branch on `parentRaga` first.
 
 ### Colour tokens and contrast
 
@@ -284,6 +311,34 @@ Two precision rules the prompt and the code both enforce:
   *different* records tying means duplicates — pre-filling the first sweep hit would bind the
   edge to an arbitrary one at a confident-looking score. `matchName` is always reported: a
   reviewer cannot judge a match from a KSUID and a number.
+
+### Deduplicating ragas (`pnpm cli dedup-ragas`, two steps)
+
+The corpus holds two import generations and the same raga appears in both under different
+spellings — `aabheri`/`abheri`, `hamirkalyani`/`hamir-kalyani`, `kalyANi` beside
+`kalyani (meca kalyani, shantakalyani)`. Roughly 312 of 1,869 raga pages are a second copy,
+splitting search signals across two indexable URLs.
+
+1. `dedup-ragas [--out raga-duplicates.csv]` — reads the database, writes only the CSV.
+2. `dedup-ragas --apply --file <path> [--dry-run]` — merges the rows whose `decision` is `merge`.
+
+Three rules here:
+
+- **Merge, never delete.** `mergeRaga` re-points every `CompositionRaga` junction and soft-deletes
+  the loser with `mergedIntoId`, which the raga route already turns into a redirect. The earlier
+  version of this script called `deleteRaga`, which orphaned every linked composition and left the
+  indexed URL dead. Nothing in this pipeline may delete a raga.
+- **Nothing merges without a person marking it.** Matching is two-tier:
+  `ragaExactKey` (case, diacritics, punctuation and the alias bracket removed) is safe enough that
+  a collision is real; `ragaVariantKey` guesses transliteration spellings and *will* collide
+  distinct ragas — `ranjani` is not `rasikaranjani`. Both are reported; neither self-applies.
+- **The keys live in `domain/raga/dedup.ts`, not in the script.** `packages/scripts` has no vitest
+  setup, so matching logic kept there cannot be tested. Same reason `domain/artist/dedup.ts`
+  exists.
+
+Canonical is chosen by evidence: most compositions attached first (that is the record the rest of
+the database already points at), then most fields filled, then oldest. Reindex search after a
+merge run.
 
 ### Rasika Classes: the credit ledger (`class-*` domains)
 
@@ -587,6 +642,8 @@ Always use a subpath export instead:
 | Pure utilities (completion score, `missingFields`) | `@rasika/core/shared/completion` (or relevant subpath) |
 | Class schemas, enums, `programDisplayTitle`, `creditBalanceLabel`, `expectedCredits`, `checkRevokeLearnerAccess`, `normalizeInviteEmail` | `@rasika/core/domain/class-[name]/client` |
 | `todayInTimeZone`, `dateInTimeZone`, `startOfDayInstant` | `@rasika/core/shared/timezone` |
+| `fromItrans`, `transliterate`, `formatSwaras`, `TransliterationScheme` | `@rasika/core/utils` |
+| `ragaExactKey`, `ragaVariantKey` | `@rasika/core/domain/raga/dedup` |
 
 All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.
 

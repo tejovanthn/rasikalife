@@ -76,6 +76,11 @@
       "import": "./src/domain/raga/client.ts",
       "default": "./src/domain/raga/client.ts"
     },
+    "./domain/raga/dedup": {
+      "types": "./src/domain/raga/dedup.ts",
+      "import": "./src/domain/raga/dedup.ts",
+      "default": "./src/domain/raga/dedup.ts"
+    },
     "./domain/tala/client": {
       "types": "./src/domain/tala/client.ts",
       "import": "./src/domain/tala/client.ts",
