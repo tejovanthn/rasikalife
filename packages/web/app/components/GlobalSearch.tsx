@@ -2,6 +2,7 @@ import { useDebounce } from '@uidotdev/usehooks';
 import { Clock, Search as SearchIcon, X } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from 'react-router';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { useHydrated } from '~/lib/progressive-enhancement';
 import {
   generateArtistUrl,
@@ -291,6 +292,13 @@ export function GlobalSearch() {
     if (fetcher.state === 'idle' && fetcher.data) {
       if (latestQueryRef.current === debouncedQuery) {
         dispatch({ type: 'SET_RESULTS', results: fetcher.data });
+        // Counted on the settled result rather than per keystroke — the query is
+        // debounced, so this is one search as a person would count it. The term
+        // itself is not sent.
+        trackEvent(AnalyticsEvent.SEARCH_PERFORMED, {
+          length: debouncedQuery.length,
+          hits: Object.values(fetcher.data).reduce((total, group) => total + group.length, 0),
+        });
       }
     }
   }, [fetcher.state, fetcher.data, debouncedQuery]);

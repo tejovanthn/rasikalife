@@ -16,9 +16,26 @@ const firebaseConfig = {
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 
+/**
+ * A driven browser is not a visitor.
+ *
+ * Something walked 2,882 distinct pages in a month as desktop Chrome, one visit
+ * each, averaging 1.2 seconds — four fifths of all recorded sessions, which made
+ * every engagement number on the property meaningless. GA4's own bot exclusion
+ * did not catch it because it renders and runs scripts like a real browser.
+ *
+ * `navigator.webdriver` is set by Puppeteer, Playwright and Selenium, so this
+ * catches the automated-Chrome case without touching real traffic. It is not a
+ * complete defence — a crawler that spoofs the flag still counts — so the GA4
+ * data filter stays worth having.
+ */
+function isAutomatedBrowser(): boolean {
+  return typeof navigator !== 'undefined' && navigator.webdriver === true;
+}
+
 // Initialize Analytics conditionally
 export const analytics = isSupported().then(yes => {
-  if (yes && import.meta.env.VITE_STAGE === 'prod') {
+  if (yes && import.meta.env.VITE_STAGE === 'prod' && !isAutomatedBrowser()) {
     const analyticsInstance = getAnalytics(app);
 
     // Track Core Web Vitals

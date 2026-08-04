@@ -5,6 +5,7 @@ import { Link, data, useLoaderData, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { useAuth } from '~/components/auth-context';
 import { Button } from '~/components/ui/button';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { requireUser } from '~/lib/auth.server';
 import { generateFestivalUrl } from '~/lib/url-slug';
 
@@ -161,6 +162,7 @@ export default function NewEvent() {
       setStep('uploading');
       setError(null);
       setDuplicateInfo(null);
+      trackEvent(AnalyticsEvent.EVENT_SUBMIT_STARTED, { posters: entries.length });
 
       const isSingle = entries.length === 1;
       const allEventIds: string[] = [];
@@ -297,6 +299,7 @@ export default function NewEvent() {
       for (const id of allEventIds) params.append('eventId', id);
       if (lastPosterUrl) params.set('posterUrl', lastPosterUrl);
       if (festivalId) params.set('existingFestival', '1');
+      trackEvent(AnalyticsEvent.EVENT_SUBMITTED, { events: allEventIds.length });
       navigate(`/events/new/verify?${params.toString()}`);
     } catch (err) {
       if (messageTimerRef.current) clearTimeout(messageTimerRef.current);

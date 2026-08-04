@@ -12,6 +12,7 @@ import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { getUser } from '~/lib/auth.server';
 import { generateCompositionUrl, parseSlug } from '~/lib/url-slug';
 
@@ -245,6 +246,7 @@ export default function EditComposition() {
       actionData.success &&
       'redirectUrl' in actionData
     ) {
+      trackEvent(AnalyticsEvent.EDIT_SUBMITTED, { entity: 'composition' });
       toast.success('Edit submitted for review');
       window.location.href = actionData.redirectUrl;
     }

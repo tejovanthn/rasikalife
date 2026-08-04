@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { getUser } from '~/lib/auth.server';
 import { generateVenueUrl, parseSlug } from '~/lib/url-slug';
 
@@ -285,6 +286,7 @@ export default function EditVenue() {
       actionData.success &&
       'redirectUrl' in actionData
     ) {
+      trackEvent(AnalyticsEvent.EDIT_SUBMITTED, { entity: 'venue' });
       toast.success('Edit submitted for review');
       window.location.href = actionData.redirectUrl as string;
     }

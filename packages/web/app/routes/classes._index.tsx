@@ -10,6 +10,7 @@ import {
 import type { MetaFunction } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { serializeJsonLd } from '~/lib/json-ld';
 
 /**
@@ -252,7 +253,12 @@ export default function ClassesLandingPage() {
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button asChild size="lg">
-            <a href={CLASSES_SIGNUP_URL}>Set Up Your Class List</a>
+            <a
+              href={CLASSES_SIGNUP_URL}
+              onClick={() => trackEvent(AnalyticsEvent.CLASSES_CTA_CLICK, { placement: 'hero' })}
+            >
+              Set Up Your Class List
+            </a>
           </Button>
           <Button asChild variant="outline" size="lg">
             <a href="#how-it-works">See how it works</a>
@@ -318,7 +324,12 @@ export default function ClassesLandingPage() {
           Sign in with Google and add your first student in under five minutes.
         </p>
         <Button asChild size="lg">
-          <a href={CLASSES_SIGNUP_URL}>Set Up Your Class List</a>
+          <a
+            href={CLASSES_SIGNUP_URL}
+            onClick={() => trackEvent(AnalyticsEvent.CLASSES_CTA_CLICK, { placement: 'footer' })}
+          >
+            Set Up Your Class List
+          </a>
         </Button>
       </section>
 

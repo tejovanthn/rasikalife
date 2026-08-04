@@ -39,11 +39,13 @@ import {
 } from '~/components/ui/sheet';
 import type { DisplayScript } from '~/sessions.server';
 
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { GlobalSearch } from './GlobalSearch';
 import { ModeToggle } from './mode-toggle';
 import { ScriptSelector } from './script-selector';
 
 const SCRIPT_OPTIONS: { value: DisplayScript; label: string }[] = [
+  { value: 'roman', label: 'Roman' },
   { value: 'iast', label: 'IAST' },
   { value: 'devanagari', label: 'देवनागरी' },
   { value: 'tamil', label: 'தமிழ்' },
@@ -243,7 +245,14 @@ export const Header = () => {
               </DropdownMenu>
             ) : (
               <Button asChild variant="outline" size="sm">
-                <Link to="/auth/login">Login</Link>
+                <Link
+                  to="/auth/login"
+                  onClick={() =>
+                    trackEvent(AnalyticsEvent.SIGN_IN_STARTED, { placement: 'header' })
+                  }
+                >
+                  Login
+                </Link>
               </Button>
             )}
           </div>
@@ -466,7 +475,13 @@ export const Header = () => {
                       </div>
                     ) : (
                       <Button asChild variant="outline" className="w-full">
-                        <Link to="/auth/login" onClick={() => setIsSidebarOpen(false)}>
+                        <Link
+                          to="/auth/login"
+                          onClick={() => {
+                            trackEvent(AnalyticsEvent.SIGN_IN_STARTED, { placement: 'sidebar' });
+                            setIsSidebarOpen(false);
+                          }}
+                        >
                           Login with Google
                         </Link>
                       </Button>

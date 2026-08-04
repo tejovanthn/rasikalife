@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { getUser } from '~/lib/auth.server';
 import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
 
@@ -246,6 +247,7 @@ export default function EditRaga() {
       actionData.success &&
       'redirectUrl' in actionData
     ) {
+      trackEvent(AnalyticsEvent.EDIT_SUBMITTED, { entity: 'raga' });
       toast.success('Edit submitted for review');
       window.location.href = actionData.redirectUrl;
     }

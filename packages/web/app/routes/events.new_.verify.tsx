@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { Textarea } from '~/components/ui/textarea';
+import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { requireUser } from '~/lib/auth.server';
 import { generateFestivalUrl } from '~/lib/url-slug';
 
@@ -1179,6 +1180,7 @@ export default function VerifyEvents() {
       } catch {
         // ignore
       }
+      trackEvent(AnalyticsEvent.EVENT_PUBLISHED, { moderated: isModerator });
       toast.success(isModerator ? 'Events published!' : 'Events submitted for review!');
       navigate(isExistingFestival && festivalUrl ? festivalUrl : '/events');
     } catch (err) {
