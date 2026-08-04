@@ -117,14 +117,21 @@ Landed in `8cd07a4e1` and `9d9d6319d`:
   orphaning linked compositions. It now matches spelling variants, reports to CSV for review, and
   merges what a person marks — `mergeRaga` re-points junctions and the route already redirects.
 
-**Next step, and none of it can be done from the repo — all three are GA4 console tasks:**
+**The GA4 property is now configured** (done 2026-08-04 via the Admin API, script in that
+session's scratchpad as `ga-admin-setup.sh`). Four key events marked — `classes_cta_click`,
+`event_published`, `edit_submitted`, `sign_in_started`; three custom dimensions — `placement`,
+`entity`, `moderated`; four custom metrics — `posters`, `events`, `length`, `hits`. Registering
+before the deploy is the right order: GA4 backfills a dimension only from its creation date.
 
-1. **Mark the key events**, or they are collected and never counted: `classes_cta_click`,
-   `event_published`, `edit_submitted`, `sign_in_started`.
-2. **Register the event parameters as custom dimensions** (`placement`, `entity`, `moderated`) and
-   metrics (`posters`, `events`, `length`, `hits`). The property has none today, so the parameters
-   are collected but cannot be reported on.
-3. **Add a data filter for the remaining bot traffic.** The `navigator.webdriver` guard is partial.
+`event_submitted` and `event_submit_started` are deliberately ordinary events, not key events:
+they are mid-funnel, and marking them would double-count a contributor who finishes.
+
+**Still to do, and only in the GA4 UI:** exclude the remaining bot traffic. GA4's data filters
+cover internal and developer traffic only and are **not** in the Admin API — `GET
+properties/519579810/dataFilters` returns 404, so this cannot be scripted. The
+`navigator.webdriver` guard in the code catches driven Chrome, which is the likely source; watch
+whether Direct sessions at ~1s durations persist after the next deploy before building anything
+more elaborate.
 
 Then, when there is an appetite for it: `pnpm prod-cli dedup-ragas`, review the CSV, and apply.
 Roughly 312 of 1,869 raga pages are a duplicate of one already on the site. Nothing merges without
