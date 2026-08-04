@@ -23,6 +23,7 @@ import {
   generateTalaUrl,
   parseSlug,
 } from '~/lib/url-slug';
+import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
@@ -118,13 +119,19 @@ export async function loader({
     const script = await scriptSessionResolver.getScript(request);
     const displayComposition = {
       ...composition,
-      title: fromItrans(composition.title, script),
-      ragas: composition.ragas.map(r => ({ ...r, name: fromItrans(r.name, script) })),
-      talas: composition.talas.map(t => ({ ...t, name: fromItrans(t.name, script) })),
+      title: titleCaseName(fromItrans(composition.title, script)),
+      ragas: composition.ragas.map(r => ({
+        ...r,
+        name: titleCaseName(fromItrans(r.name, script)),
+      })),
+      talas: composition.talas.map(t => ({
+        ...t,
+        name: titleCaseName(fromItrans(t.name, script)),
+      })),
       lyricsV1: composition.lyricsV1.map(l => ({
         ...l,
         text: fromItrans(l.text, script),
-        ragaName: l.ragaName ? fromItrans(l.ragaName, script) : l.ragaName,
+        ragaName: l.ragaName ? titleCaseName(fromItrans(l.ragaName, script)) : l.ragaName,
       })),
     };
 

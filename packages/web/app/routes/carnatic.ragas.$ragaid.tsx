@@ -1,6 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
-import { fromItrans } from '@rasika/core/utils';
+import { formatSwaras, fromItrans } from '@rasika/core/utils';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
@@ -13,7 +13,7 @@ import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ragaOgImageUrl } from '~/lib/og';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
-import { capitalize } from '~/lib/utils';
+import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
@@ -66,14 +66,15 @@ export async function loader({
 
     const displayRaga = {
       ...raga,
-      name: fromItrans(raga.name, script),
-      arohanam: raga.arohanam ? fromItrans(raga.arohanam, script) : raga.arohanam,
-      avarohanam: raga.avarohanam ? fromItrans(raga.avarohanam, script) : raga.avarohanam,
+      name: titleCaseName(fromItrans(raga.name, script)),
+      // Swaras are notation, not words — see formatSwaras.
+      arohanam: raga.arohanam ? formatSwaras(raga.arohanam) : raga.arohanam,
+      avarohanam: raga.avarohanam ? formatSwaras(raga.avarohanam) : raga.avarohanam,
       alternateScales: raga.alternateScales
-        ? raga.alternateScales.map(s => fromItrans(s, script))
+        ? raga.alternateScales.map(s => formatSwaras(s))
         : raga.alternateScales,
       parentRaga: raga.parentRaga
-        ? { ...raga.parentRaga, name: fromItrans(raga.parentRaga.name, script) }
+        ? { ...raga.parentRaga, name: titleCaseName(fromItrans(raga.parentRaga.name, script)) }
         : raga.parentRaga,
     };
 
@@ -86,9 +87,9 @@ export async function loader({
       hasMoreCompositions: compositions.hasMore,
       similarRagas: similarRagas.slice(0, 6).map(r => ({
         ...r,
-        name: fromItrans(r.name, script),
-        arohanam: r.arohanam ? fromItrans(r.arohanam, script) : r.arohanam,
-        avarohanam: r.avarohanam ? fromItrans(r.avarohanam, script) : r.avarohanam,
+        name: titleCaseName(fromItrans(r.name, script)),
+        arohanam: r.arohanam ? formatSwaras(r.arohanam) : r.arohanam,
+        avarohanam: r.avarohanam ? formatSwaras(r.avarohanam) : r.avarohanam,
       })),
       performanceCount: repertoireStats.performanceCount,
       topCompositions: repertoireStats.topCompositions.slice(0, 5),
@@ -128,8 +129,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const descParts = [`${raga.name} raga in Carnatic music.`];
   if (raga.arohanam) descParts.push(`Arohanam: ${raga.arohanam}.`);
   if (raga.avarohanam) descParts.push(`Avarohanam: ${raga.avarohanam}.`);
-  if (raga.melaNumber) descParts.push(`Melakarta ${raga.melaNumber}.`);
-  else if (raga.parentRaga) descParts.push(`Janya raga from ${raga.parentRaga.name}.`);
+  // A janya raga carries its parent's mela number. Reporting that bare said
+  // "Melakarta 20" on a page whose own title read "Janya Raga" — two claims in one
+  // result, and the wrong one is the claim an arohanam search is there to check.
+  if (isJanya) {
+    const parentName = raga.parentRaga?.name ?? '';
+    const mela = raga.melaNumber ? ` (melakarta ${raga.melaNumber})` : '';
+    descParts.push(`Janya raga derived from ${parentName}${mela}.`);
+  } else if (raga.melaNumber) {
+    descParts.push(`Melakarta ${raga.melaNumber}.`);
+  }
   const description = descParts.join(' ');
 
   const canonicalUrl = `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`;
@@ -187,8 +196,6 @@ export default function RagaDetails() {
   const {
     raga,
     rawName,
-    rawArohanam,
-    rawAvarohanam,
     compositions,
     hasMoreCompositions,
     similarRagas,
@@ -200,8 +207,6 @@ export default function RagaDetails() {
   } = useLoaderData<{
     raga: RagaType;
     rawName: string;
-    rawArohanam: string | null | undefined;
-    rawAvarohanam: string | null | undefined;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
     similarRagas: RagaType[];
@@ -418,8 +423,8 @@ export default function RagaDetails() {
       />
       <RagaFaqStructuredData
         name={raga.name}
-        arohanam={rawArohanam}
-        avarohanam={rawAvarohanam}
+        arohanam={raga.arohanam}
+        avarohanam={raga.avarohanam}
         melaNumber={raga.melaNumber}
         parentRagaName={raga.parentRaga?.name}
       />

@@ -1,14 +1,23 @@
 import { createCookieSessionStorage } from 'react-router';
 import { Resource } from 'sst/resource';
 
-export type DisplayScript = 'iast' | 'devanagari' | 'tamil' | 'telugu' | 'kannada';
+export type DisplayScript = 'roman' | 'iast' | 'devanagari' | 'tamil' | 'telugu' | 'kannada';
 export const DISPLAY_SCRIPTS: DisplayScript[] = [
+  'roman',
   'iast',
   'devanagari',
   'tamil',
   'telugu',
   'kannada',
 ];
+
+/**
+ * Anonymous visitors and Googlebot carry no script cookie, so this is the script
+ * every indexed page is rendered in. It must be `roman`: IAST put scholarly
+ * diacritics into every title and meta description, and the raga pages that rank
+ * for "<name> arohanam avarohanam" were clicking at under 1%.
+ */
+export const DEFAULT_DISPLAY_SCRIPT: DisplayScript = 'roman';
 
 // You can default to 'development' if process.env.NODE_ENV is not set
 const isProduction = process.env.NODE_ENV === 'production';
@@ -40,7 +49,7 @@ export const scriptSessionResolver = {
   async getScript(request: Request): Promise<DisplayScript> {
     const session = await scriptSessionStorage.getSession(request.headers.get('Cookie'));
     const value = session.get('script');
-    return (DISPLAY_SCRIPTS.includes(value) ? value : 'iast') as DisplayScript;
+    return (DISPLAY_SCRIPTS.includes(value) ? value : DEFAULT_DISPLAY_SCRIPT) as DisplayScript;
   },
   async setScript(script: DisplayScript) {
     const session = await scriptSessionStorage.getSession();

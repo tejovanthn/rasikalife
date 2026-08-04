@@ -12,7 +12,7 @@ import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateSlug, generateTalaUrl, parseSlug } from '~/lib/url-slug';
-import { formatDate } from '~/lib/utils';
+import { formatDate, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export async function loader({
@@ -67,7 +67,7 @@ export async function loader({
     const script = await scriptSessionResolver.getScript(request);
     const displayTala = {
       ...tala,
-      name: fromItrans(tala.name, script),
+      name: titleCaseName(fromItrans(tala.name, script)),
     };
 
     return data({

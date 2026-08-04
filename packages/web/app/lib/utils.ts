@@ -58,6 +58,21 @@ export const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
+/**
+ * Capitalize every word of an entity name for display.
+ *
+ * Stored names are lowercase ITRANS, so a raga reaches the page as `darbari kanada`
+ * once transliterated. A proper noun in a page title and a meta description has to
+ * read as one — `capitalize` alone leaves the second word bare. Words after an
+ * opening bracket count, so alias lists read `Navaroj (Navroj)`.
+ *
+ * Names only. Never run this over lyrics or prose.
+ */
+export const titleCaseName = (str: string): string =>
+  str.replace(/(^|[\s([{/–—-])([a-z])/g, (_, before: string, letter: string) => {
+    return before + letter.toUpperCase();
+  });
+
 // Utility for formatting text
 export const truncateText = (text: string, maxLength: number): string => {
   return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;

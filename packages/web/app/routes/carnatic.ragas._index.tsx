@@ -8,6 +8,7 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -30,7 +31,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'raga')
           .map(item => ({
             id: item.id,
-            name: fromItrans(item.name, script),
+            name: titleCaseName(fromItrans(item.name, script)),
             melakarta: 0,
             parentId: null,
             arkarkams: [],
@@ -55,7 +56,10 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      ragas: (results.items || []).map(r => ({ ...r, name: fromItrans(r.name, script) })),
+      ragas: (results.items || []).map(r => ({
+        ...r,
+        name: titleCaseName(fromItrans(r.name, script)),
+      })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

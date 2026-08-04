@@ -8,6 +8,7 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { TalaCard } from '~/components/TalaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -30,7 +31,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           .filter(item => item.type === 'tala')
           .map(item => ({
             id: item.id,
-            name: fromItrans(item.name, script),
+            name: titleCaseName(fromItrans(item.name, script)),
             aksharas: 0,
             description: '',
             viewCount: 0,
@@ -52,7 +53,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     return data({
       talas: (results.items || [])
         .slice(0, 12)
-        .map(t => ({ ...t, name: fromItrans(t.name, script) })),
+        .map(t => ({ ...t, name: titleCaseName(fromItrans(t.name, script)) })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

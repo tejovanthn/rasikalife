@@ -11,6 +11,7 @@ import {
   formatRelativeTime,
   handleApiError,
   slugify,
+  titleCaseName,
   truncateText,
 } from './utils';
 
@@ -73,6 +74,36 @@ describe('capitalize', () => {
 
   it('returns falsy input unchanged', () => {
     expect(capitalize('')).toBe('');
+  });
+});
+
+describe('titleCaseName', () => {
+  it('capitalizes every word of a two-word raga name', () => {
+    expect(titleCaseName('darbari kanada')).toBe('Darbari Kanada');
+  });
+
+  it('capitalizes a single word', () => {
+    expect(titleCaseName('huseni')).toBe('Huseni');
+  });
+
+  it('capitalizes inside an alias bracket', () => {
+    expect(titleCaseName('navaroj (navroj)')).toBe('Navaroj (Navroj)');
+  });
+
+  it('capitalizes across a hyphen', () => {
+    expect(titleCaseName('amrita-behag')).toBe('Amrita-Behag');
+  });
+
+  it('leaves words that already carry a capital alone', () => {
+    expect(titleCaseName('Kalyani')).toBe('Kalyani');
+  });
+
+  it('does not touch digits or variant markers', () => {
+    expect(titleCaseName('72 melaraagamaalika')).toBe('72 Melaraagamaalika');
+  });
+
+  it('handles empty string', () => {
+    expect(titleCaseName('')).toBe('');
   });
 });
 

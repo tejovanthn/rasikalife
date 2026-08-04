@@ -8,6 +8,7 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -30,7 +31,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       return data({
         compositions: searchResults.compositions.map(c => ({
           ...c,
-          title: fromItrans(c.title, script),
+          title: titleCaseName(fromItrans(c.title, script)),
         })),
         nextToken: null,
         hasMore: searchResults.compositions.length >= itemsPerPage,
@@ -47,7 +48,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     return data({
       compositions: (results.items || []).map(c => ({
         ...c,
-        title: fromItrans(c.title, script),
+        title: titleCaseName(fromItrans(c.title, script)),
       })),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
