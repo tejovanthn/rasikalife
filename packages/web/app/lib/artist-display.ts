@@ -47,3 +47,59 @@ export function artistTagline(artist: {
   );
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
+
+/**
+ * The meta description for an artist profile, built from the fields the record
+ * actually holds.
+ *
+ * What it replaces said: "Learn about X, a renowned artist in Indian classical
+ * music. Discover their musical journey and contributions to classical traditions."
+ * That is the same sentence for all 1,111 artists, carries no fact, and asserts
+ * "renowned" of everybody — the exact inflation the guru `relationship` field
+ * exists to prevent, applied site-wide. Search Console shows the cost: artist-name
+ * queries take 2,469 impressions at 0.97% CTR, the largest class on the site and
+ * nearly the worst-converting.
+ *
+ * So: instrument and city, the lineage that is the real credential here, and
+ * whether there is a concert coming up. Nothing evaluative — a page that says what
+ * an artist plays and who they studied under earns the click on its own.
+ */
+export function artistMetaDescription(artist: {
+  name: string;
+  isGroup?: boolean;
+  instrument?: string | null;
+  city?: string | null;
+  gurus?: Array<{ name: string; relationship?: string }> | null;
+  specialisations?: string[] | null;
+  upcomingEventCount?: number;
+}): string {
+  const sentences: string[] = [];
+
+  const tagline = artistTagline(artist);
+  const specialisation = artist.specialisations?.filter(Boolean)[0];
+  const lead = tagline ?? (specialisation ? capitalize(specialisation) : undefined);
+  sentences.push(lead ? `${artist.name} — ${lead}.` : `${artist.name}.`);
+
+  // Only lineage-grade relationships. A workshop teacher is not a guru, and
+  // "disciple of" is precisely the claim that must not be inflated.
+  const lineage = (artist.gurus ?? []).filter(
+    g =>
+      g.name && (!g.relationship || g.relationship === 'primary' || g.relationship === 'advanced')
+  );
+  if (lineage.length > 0) {
+    const names = lineage.slice(0, 2).map(g => g.name);
+    sentences.push(`${artist.isGroup ? 'Trained under' : 'Disciple of'} ${names.join(' and ')}.`);
+  }
+
+  const upcoming = artist.upcomingEventCount ?? 0;
+  if (upcoming > 0) {
+    sentences.push(`${upcoming} upcoming concert${upcoming === 1 ? '' : 's'}.`);
+  } else if (sentences.length === 1) {
+    // Nothing specific is known, so describe the page rather than the person.
+    sentences.push(
+      `Concerts, repertoire and recordings on Rasika.life, the Indian classical arts wiki.`
+    );
+  }
+
+  return sentences.join(' ');
+}

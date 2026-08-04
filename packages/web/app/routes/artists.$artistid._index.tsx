@@ -39,6 +39,7 @@ import {
 import { Input } from '~/components/ui/input';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { artistTagline, parseInstruments } from '~/lib/artist-display';
+import { artistMetaDescription } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { artistOgImageUrl } from '~/lib/og';
@@ -264,26 +265,29 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => ({
 });
 
 export const meta: MetaFunction = ({ data }) => {
-  const { artist } = (data as { artist?: Artist }) ?? {};
+  const { artist, upcomingEvents } =
+    (data as { artist?: Artist; upcomingEvents?: unknown[] } | undefined) ?? {};
   const canonicalName = artist?.name ?? '';
 
   if (artist) {
-    const noun = artist.isGroup ? 'performing group' : 'artist';
+    const description = artistMetaDescription({
+      name: artist.name,
+      isGroup: artist.isGroup,
+      instrument: artist.instrument,
+      city: artist.city,
+      gurus: artist.gurus,
+      specialisations: artist.specialisations,
+      upcomingEventCount: upcomingEvents?.length ?? 0,
+    });
     return [
       { title: `${artist.name} - Artist - Rasika.life` },
-      {
-        name: 'description',
-        content: `Learn about ${artist.name}, a renowned ${noun} in Indian classical music. Discover their musical journey and contributions to classical traditions.`,
-      },
+      { name: 'description', content: description },
       {
         name: 'keywords',
         content: `${artist.name}, Indian classical music artist, Carnatic musician, Hindustani artist, classical music`,
       },
       { property: 'og:title', content: `${artist.name} - Indian Classical Music Artist` },
-      {
-        property: 'og:description',
-        content: `Learn about ${artist.name} and their contributions to Indian classical music`,
-      },
+      { property: 'og:description', content: description },
       { property: 'og:type', content: 'profile' },
       {
         property: 'og:url',

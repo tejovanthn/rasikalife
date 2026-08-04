@@ -13,6 +13,7 @@ import { Badge } from '~/components/ui/badge';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { eventListingDescription } from '~/lib/listing-description';
 import {
   generateArtistUrl,
   generateOrganiserUrl,
@@ -132,19 +133,28 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export const meta: MetaFunction = ({ data: loaderData }) => {
-  const organiser = (loaderData as { organiser: OrganiserDetail } | undefined)?.organiser;
+  const loaded = loaderData as { organiser: OrganiserDetail; events: EventItem[] } | undefined;
+  const organiser = loaded?.organiser;
   if (!organiser) {
     return [{ title: 'Organiser Not Found - Rasika.life' }];
   }
 
   const canonicalUrl = `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`;
+  const location = organiser.city || organiser.address?.city || undefined;
+
+  // Organisers already convert far better than venues, so this is consistency
+  // rather than rescue - but naming the next concert can only help.
+  const description = eventListingDescription({
+    name: organiser.name,
+    events: loaded?.events ?? [],
+    preposition: 'by',
+    fallback: 'Indian classical arts performances and concerts.',
+    location,
+  });
 
   return [
     { title: `${organiser.name} - Organiser - Rasika.life` },
-    {
-      name: 'description',
-      content: `Events organised by ${organiser.name}. Indian classical arts performances and concerts.`,
-    },
+    { name: 'description', content: description },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
@@ -169,6 +179,16 @@ export default function OrganiserDetailPage() {
   const typeLabel = organiser.organisationType
     ? (ORGANISATION_TYPE_LABELS[organiser.organisationType] ?? organiser.organisationType)
     : null;
+  // Same split as the venue page: the list mixes past with future, and somebody
+  // arriving from a search for this organiser wants the next concert first.
+  const now = Date.now();
+  const upcomingEvents = events
+    .filter(e => new Date(e.startDateTime).getTime() >= now)
+    .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+  const pastEvents = events
+    .filter(e => new Date(e.startDateTime).getTime() < now)
+    .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
+
   const addressStr = formatAddress(organiser.address);
   const locationStr = organiser.city || organiser.address?.city || null;
 
@@ -367,15 +387,27 @@ export default function OrganiserDetailPage() {
         {events.length === 0 ? (
           <EmptyState message="No events by this organiser yet." />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {events
-              .sort(
-                (a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
-              )
-              .map(event => (
-                <EventCard key={event.id} event={event} />
-              ))}
-          </div>
+          <>
+            {upcomingEvents.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {upcomingEvents.map(event => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            )}
+            {pastEvents.length > 0 && (
+              <>
+                <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">
+                  Past events
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {pastEvents.map(event => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </section>
 

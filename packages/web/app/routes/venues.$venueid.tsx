@@ -11,6 +11,7 @@ import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { eventListingDescription } from '~/lib/listing-description';
 import { generateVenueUrl, parseSlug } from '~/lib/url-slug';
 
 interface VenueDetail {
@@ -113,21 +114,28 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 };
 
 export const meta: MetaFunction = ({ data: loaderData }) => {
-  const venue = (loaderData as { venue: VenueDetail } | undefined)?.venue;
+  const loaded = loaderData as { venue: VenueDetail; events: EventItem[] } | undefined;
+  const venue = loaded?.venue;
   if (!venue) {
     return [{ title: 'Venue Not Found - Rasika.life' }];
   }
 
-  const locationParts = [venue.address?.city, venue.address?.state].filter(Boolean);
-  const locationStr = locationParts.length > 0 ? ` in ${locationParts.join(', ')}` : '';
+  const location = [venue.address?.city, venue.address?.state].filter(Boolean).join(', ');
   const canonicalUrl = `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`;
 
+  // "<hall> events" is the query this page wins and then loses on the click, so
+  // the description names what is on rather than restating the page's own kind.
+  const description = eventListingDescription({
+    name: venue.name,
+    events: loaded?.events ?? [],
+    preposition: 'at',
+    fallback: 'Indian classical arts venue.',
+    location: location || undefined,
+  });
+
   return [
-    { title: `${venue.name} - Venue - Rasika.life` },
-    {
-      name: 'description',
-      content: `Events and performances at ${venue.name}${locationStr}. Indian classical arts venue.`,
-    },
+    { title: `${venue.name} events - Rasika.life` },
+    { name: 'description', content: description },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
@@ -146,6 +154,17 @@ export default function VenueDetailPage() {
     user: { id: string } | null;
     isModerator: boolean;
   }>();
+
+  // The list arrives unsorted and mixes past with future, so an "events at this
+  // hall" visitor was landing on concerts from years ago. Upcoming first, soonest
+  // at the top; past below it, most recent first.
+  const now = Date.now();
+  const upcomingEvents = events
+    .filter(e => new Date(e.startDateTime).getTime() >= now)
+    .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
+  const pastEvents = events
+    .filter(e => new Date(e.startDateTime).getTime() < now)
+    .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
 
   const addressStr = formatAddress(venue.address);
   const shareUrl = `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`;
@@ -327,17 +346,29 @@ export default function VenueDetailPage() {
         <h2 className="text-2xl font-bold mb-6">Events at this venue</h2>
 
         {events.length === 0 ? (
-          <EmptyState message="No upcoming events at this venue." />
+          <EmptyState message="No events listed at this venue yet." />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {events
-              .sort(
-                (a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
-              )
-              .map(event => (
-                <EventCard key={event.id} event={event} />
-              ))}
-          </div>
+          <>
+            {upcomingEvents.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {upcomingEvents.map(event => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            )}
+            {pastEvents.length > 0 && (
+              <>
+                <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">
+                  {upcomingEvents.length > 0 ? 'Past events' : 'Past events at this venue'}
+                </h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {pastEvents.map(event => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
         )}
       </section>
 
