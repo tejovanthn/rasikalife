@@ -349,6 +349,58 @@ Canonical is chosen by evidence: most compositions attached first (that is the r
 the database already points at), then most fields filled, then oldest. Reindex search after a
 merge run.
 
+### Filling venues and organisers (`pnpm cli enrich-venues-organisers`)
+
+Both lists arrived name-only: 8 of 132 venues and 1 of 109 organisers carried anything besides a
+name. The command fills what the database can already prove and nothing else. Dry run by default,
+`--apply` to write, and **a re-run is a no-op** — an empty field is filled, a filled one is never
+touched, because what is stored was put there by a person and a derivation is weaker evidence.
+
+| Field | Source |
+|---|---|
+| `organiser.website` / `phone` / `email` | `contactInfo` on that organiser's own events |
+| `organiser.tags` | `artForm`, `tags` and `entryType` across their events |
+| `organiser.organisationType` | an explicit word in the name |
+| `venue.venueType` | an explicit word in the name |
+
+**Event `contactInfo` is the organiser's, never the venue's.** Aggregated by organiser it is
+self-consistent and the domain matches the name (Trikala → trikalaarts.com, Vanamala →
+vanamalaarts.org). Aggregated by venue it is nonsense: "Zoom" collects Trikala's website, the
+J.N. Tata Auditorium collects SPIC MACAY's, Chowdaiah Memorial Hall collects rkhegde.com, and the
+Indian Institute of World Culture collects three phone numbers from three different organisers.
+Writing it to a venue would put one body's contact details on another's page. Do not extend this.
+
+Three precision rules, each of which produced a wrong claim before it was found:
+
+- **A name-derived type is only ever read from an explicit word, and never falls back to
+  `'other'`.** `other` asserts the kind was determined and is none of the listed ones — a stronger
+  claim than a string supports. "Hamsadhwani", "Arohy" and "Bhoomiverse" are real venues whose kind
+  simply is not in the name, and they stay blank.
+- **Match whole words, and watch the metaphors.** ` mandali ` is a service association, not a
+  temple; `vedike` is a "forum" and says nothing ("Rashtriya Nava Nirmana Vedike" is not a sabha);
+  a bare `academy` swept in the Karnataka Engineers Academy, whose hall hosts concerts but which
+  teaches nobody to sing; and "Samskruthi - The Temple of Art" is not a shrine.
+- **Do not promote a school to a `university`, and leave "Foundation" undecided.** `ORGANISATION_TYPES`
+  has no entry for a school, and a foundation is registered as a trust or an NGO with the name never
+  saying which. Inventing either is inventing a legal fact about a real organisation.
+
+A tag needs two events behind it or a third of the organiser's programme; the second clause is what
+makes it usable, since most organisers here have one to three events. `year-round` needs five
+distinct months, which separates a continuous concert series from a body that wakes up for
+Ramanavami.
+
+Deliberately out of scope: city, capacity, founded year, street address, description. None is
+derivable and all four would have to be looked up. They already have a path — export from
+`/admin/data/<domain>/export`, edit the sheet, upload it back. Reindex search after a run.
+
+Both lists still carry duplicates the ragas taught us to expect — one venue split six ways
+(`The Bangalore Gayana Samaja (R)`, `Gayana Samaja`, `Gayana Samaaja`, `Bangalore Gayana Samaja`,
+`The Bangalore Gayana Samaja Hall`, `Bengaluru Gayana Samaaja`), which splits its events across six
+indexable URLs. `mergeVenue` and `mergeOrganiser` exist and both re-point the junctions and
+soft-delete with `mergedIntoId`; there is no report-and-apply script over them yet. When one is
+written, follow `dedup-ragas`: two-tier matching, keys in the domain rather than in
+`packages/scripts`, and nothing merges without a person marking it.
+
 ### Rasika Classes: the credit ledger (`class-*` domains)
 
 A class-tracking product for gurus, served at `classes.rasika.life` from its own

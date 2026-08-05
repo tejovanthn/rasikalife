@@ -203,6 +203,22 @@ program
   });
 
 program
+  .command('enrich-venues-organisers')
+  .description('Fill venue and organiser fields derivable from the events already stored')
+  .option('--apply', 'Write the fills (default is a dry run)')
+  .option('--venues-only', 'Only touch venues')
+  .option('--organisers-only', 'Only touch organisers')
+  .action(async (opts: { apply?: boolean; venuesOnly?: boolean; organisersOnly?: boolean }) => {
+    setup();
+    const { enrichVenuesOrganisers } = await import('./enrichVenuesOrganisers.js');
+    await enrichVenuesOrganisers({
+      apply: opts.apply,
+      venuesOnly: opts.venuesOnly,
+      organisersOnly: opts.organisersOnly,
+    });
+  });
+
+program
   .command('sync:instagram')
   .description(
     'Scrape Instagram profiles linked to artists, venues, and organisers for event posts'

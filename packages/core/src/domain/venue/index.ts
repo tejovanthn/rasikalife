@@ -159,3 +159,4 @@ export async function getVenueMergeScore(id: string): Promise<number> {
 
 export type { Venue } from './entity';
 export { CreateVenueSchema, UpdateVenueSchema } from './schema';
+export { isNonPlaceVenueName, venueTypeFromName } from './enrich';

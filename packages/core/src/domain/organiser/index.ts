@@ -156,3 +156,9 @@ export async function getOrganiserMergeScore(id: string): Promise<number> {
 
 export type { Organiser } from './entity';
 export { CreateOrganiserSchema, UpdateOrganiserSchema } from './schema';
+export {
+  organisationTypeFromName,
+  organiserContactFromEvents,
+  organiserTagsFromEvents,
+} from './enrich';
+export type { DerivedContact, EnrichmentEvent } from './enrich';
