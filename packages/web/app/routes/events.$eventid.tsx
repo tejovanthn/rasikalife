@@ -28,6 +28,11 @@ import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import {
+  type ContactDetails,
+  type ResolvedEventContact,
+  resolveEventContact,
+} from '~/lib/event-contact';
+import {
   generateArtistUrl,
   generateEventUrl,
   generateFestivalUrl,
@@ -165,6 +170,26 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
+    // Most posters print no contact details at all, so the section used to be missing from the
+    // majority of event pages. The organiser record usually knows. Only fetched when the event
+    // itself states nothing — `resolveEventContact` would ignore the result otherwise, and this
+    // is a public read path.
+    let organiserContact: ContactDetails | undefined;
+    if (event.organiserId && !resolveEventContact(event.contactInfo, undefined)) {
+      try {
+        const organiser = await serverClient.organiser.get.query({ id: event.organiserId });
+        if (organiser) {
+          organiserContact = {
+            phone: organiser.phone,
+            email: organiser.email,
+            website: organiser.website,
+          };
+        }
+      } catch {
+        // Non-fatal, same as the venue lookup above.
+      }
+    }
+
     const eventEndTime = event.endDateTime
       ? new Date(event.endDateTime)
       : new Date(new Date(event.startDateTime).getTime() + 4 * 60 * 60 * 1000);
@@ -202,6 +227,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       nextEvent,
       venueMapLink,
       venueAddress,
+      contact: resolveEventContact(event.contactInfo, organiserContact),
       relatedVenueEvents,
       relatedOrganiserEvents,
       rsvpCount: rsvpInfo.count,
@@ -615,6 +641,7 @@ export default function EventDetail() {
     nextEvent,
     venueMapLink,
     venueAddress,
+    contact,
     relatedVenueEvents,
     relatedOrganiserEvents,
     rsvpCount,
@@ -634,6 +661,7 @@ export default function EventDetail() {
     nextEvent: FestivalEventItem | null;
     venueMapLink?: string;
     venueAddress?: string;
+    contact?: ResolvedEventContact;
     relatedVenueEvents: RelatedEventItem[];
     relatedOrganiserEvents: RelatedEventItem[];
     rsvpCount: number;
@@ -930,39 +958,41 @@ export default function EventDetail() {
         </section>
       )}
 
-      {/* Contact Info */}
-      {event.contactInfo && (
+      {/* Contact. Falls back to the organiser's own details when this poster printed none —
+          see ~/lib/event-contact. Borrowed details say whose they are, because "call this
+          number about this concert" and "this is the sabha's office line" are different
+          promises and the reader is entitled to know which one is being made. */}
+      {contact && (
         <section className="mt-6">
           <h2 className="text-base font-semibold mb-2">Contact</h2>
           <Card>
             <CardContent className="py-4 space-y-2">
-              {event.contactInfo.phone && (
-                <a
-                  href={`tel:${event.contactInfo.phone}`}
-                  className="flex items-center gap-2 text-sm"
-                >
+              {contact.source === 'organiser' && event.organiserName && (
+                <p className="text-sm text-muted-foreground">
+                  General enquiries for {event.organiserName}, not this event.
+                </p>
+              )}
+              {contact.phone && (
+                <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-sm">
                   <Phone className="h-4 w-4" />
-                  {event.contactInfo.phone}
+                  {contact.phone}
                 </a>
               )}
-              {event.contactInfo.email && (
-                <a
-                  href={`mailto:${event.contactInfo.email}`}
-                  className="flex items-center gap-2 text-sm"
-                >
+              {contact.email && (
+                <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-sm">
                   <Mail className="h-4 w-4" />
-                  {event.contactInfo.email}
+                  {contact.email}
                 </a>
               )}
-              {event.contactInfo.website && (
+              {contact.website && (
                 <a
-                  href={event.contactInfo.website}
+                  href={contact.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="no-ext-arrow flex items-center gap-2 text-sm"
                 >
                   <Globe className="h-4 w-4" />
-                  {event.contactInfo.website}
+                  {contact.website}
                 </a>
               )}
             </CardContent>

@@ -10,3 +10,4 @@ export * from './search';
 export * from './auth';
 export * from './instagram';
 export * from './artist-denorm';
+export * from './venue-organiser-enrich';
