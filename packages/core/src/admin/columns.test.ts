@@ -107,6 +107,26 @@ describe('parseDomainCsv — venue round-trip', () => {
     expect(errors).toEqual([]);
     expect(rows[0]).toEqual(venue);
   });
+
+  it('lowercases a social platform so a legacy row survives its own round-trip', () => {
+    // Prod holds rows written before the enum was enforced — the Indian Institute of World
+    // Culture carried `Instagram` and `Facebook` — and passing the case through meant
+    // exporting and re-importing that venue failed validation on its own stored data.
+    const venue = {
+      id: 'v2',
+      name: 'World Culture',
+      socialLinks: [
+        { platform: 'Instagram', url: 'https://instagram.com/x' },
+        { platform: 'Facebook', url: 'https://facebook.com/x' },
+      ],
+    };
+    const { rows, errors } = parseDomainCsv('venue', domainToCsv('venue', [venue]));
+    expect(errors).toEqual([]);
+    expect(rows[0].socialLinks).toEqual([
+      { platform: 'instagram', url: 'https://instagram.com/x' },
+      { platform: 'facebook', url: 'https://facebook.com/x' },
+    ]);
+  });
 });
 
 describe('parseDomainCsv — artist gurus round-trip', () => {

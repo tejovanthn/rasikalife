@@ -156,7 +156,15 @@ function socialLinks(field: string): Column {
       row[field] = splitList(raw)
         .map(pair => {
           const colon = pair.indexOf(':');
-          return { platform: pair.slice(0, colon).trim(), url: pair.slice(colon + 1).trim() };
+          return {
+            // Lowercased, like every other lenient cell in this registry. The platform is a
+            // Zod enum of lowercase slugs, and prod holds rows written before that was
+            // enforced — `Instagram:https://…` on the Indian Institute of World Culture — so
+            // passing the case through meant a row could not survive its own export and
+            // re-import. A spreadsheet editor typing "Instagram" hits the same wall.
+            platform: pair.slice(0, colon).trim().toLowerCase(),
+            url: pair.slice(colon + 1).trim(),
+          };
         })
         .filter(link => link.platform && link.url);
       return undefined;

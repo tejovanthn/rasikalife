@@ -12,8 +12,12 @@ import { domainToCsv, parseDomainCsv } from '@rasika/core/admin/columns';
  * reports without writing, every row error printed rather than the first few, and a file on
  * disk that a script can build. The venue and organiser enrichment was landed this way.
  *
- * Blank cells mean "leave alone", which is the registry's rule and the reason a re-import of
- * an untouched export is a no-op.
+ * Blank cells mean "leave alone", which is the registry's rule. **A re-import of an untouched
+ * export is still not quite a no-op**, and it is worth knowing before running one against
+ * prod: a linked-entity column holds a *name*, and `prepare` get-or-creates it. An organiser
+ * carrying `venueName` with no matching venue therefore creates the venue — which is how the
+ * enrichment run turned 106 venues into 107, duplicating a temple the table already held
+ * under another spelling. Check the created count, and reconcile with `dedup-places`.
  */
 
 export async function exportDomainCsv(opts: { domain: string; out: string }): Promise<void> {
