@@ -8,7 +8,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, DefinedTermStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateSlug, generateTalaUrl, parseSlug } from '~/lib/url-slug';
@@ -130,36 +130,10 @@ export const meta: MetaFunction = ({ data }) => {
         rel: 'canonical',
         href: `https://rasika.life${generateTalaUrl(canonicalName, tala.id)}`,
       },
-      // Breadcrumb structured data
-      {
-        tagName: 'script',
-        type: 'application/ld+json',
-        innerHTML: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://rasika.life' },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Carnatic',
-              item: 'https://rasika.life/carnatic',
-            },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: 'Talas',
-              item: 'https://rasika.life/carnatic/talas',
-            },
-            {
-              '@type': 'ListItem',
-              position: 4,
-              name: `${tala.name} Tala`,
-              item: `https://rasika.life${generateTalaUrl(canonicalName, tala.id)}`,
-            },
-          ],
-        }),
-      },
+      // The breadcrumb is emitted once, by <BreadcrumbStructuredData> in the component below.
+      // A second copy used to be built here with a bare JSON.stringify, which put two
+      // BreadcrumbLists on the page and skipped the `<` escaping every other payload gets —
+      // and it interpolated a tala name, which is entity data like any other.
     ];
   }
 
@@ -271,6 +245,17 @@ export default function TalaDetails() {
             item: `https://rasika.life${generateTalaUrl(rawName, tala.id)}`,
           },
         ]}
+      />
+      {/* A tala is a named term in a rhythmic vocabulary, the same shape as a raga. Nothing
+          authored Adi tala, so it must not be typed as a work with a composer and a date. */}
+      <DefinedTermStructuredData
+        term={{
+          name: tala.name,
+          url: shareUrl,
+          description: tala.description,
+          setName: tala.tradition === 'hindustani' ? 'Hindustani talas' : 'Carnatic talas',
+          setUrl: 'https://rasika.life/carnatic/talas',
+        }}
       />
     </main>
   );

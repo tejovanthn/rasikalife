@@ -7,7 +7,11 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import { BreadcrumbStructuredData, RagaFaqStructuredData } from '~/components/structured-data';
+import {
+  BreadcrumbStructuredData,
+  DefinedTermStructuredData,
+  RagaFaqStructuredData,
+} from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -427,6 +431,19 @@ export default function RagaDetails() {
         avarohanam={raga.avarohanam}
         melaNumber={raga.melaNumber}
         parentRagaName={raga.parentRaga?.name}
+      />
+      {/* `termCode` is the melakarta number, and a janya raga does not get one: it stores its
+          *parent's* mela number, so publishing it here would number this raga among the 72 —
+          the same wrong claim the meta description had to be fixed for. */}
+      <DefinedTermStructuredData
+        term={{
+          name: raga.name,
+          url: shareUrl,
+          description: raga.description,
+          termCode: raga.parentRaga ? undefined : raga.melaNumber,
+          setName: raga.tradition === 'hindustani' ? 'Hindustani ragas' : 'Carnatic ragas',
+          setUrl: 'https://rasika.life/carnatic/ragas',
+        }}
       />
     </main>
   );

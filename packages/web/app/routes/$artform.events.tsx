@@ -5,7 +5,9 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
+import { eventListItems } from '~/lib/structured-data';
+import { generateEventUrl } from '~/lib/url-slug';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const artForm = params.artform;
@@ -111,6 +113,7 @@ export default function ArtFormEvents() {
           { name: `${label} Events`, item: `https://rasika.life/${artForm}/events` },
         ]}
       />
+      <ItemListStructuredData items={eventListItems(events, generateEventUrl)} />
     </main>
   );
 }

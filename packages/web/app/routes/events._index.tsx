@@ -5,7 +5,7 @@ import { client } from '~/api.server';
 import { EventDayGroup } from '~/components/EventDayGroup';
 import { useAuth } from '~/components/auth-context';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
 import { Button } from '~/components/ui/button';
 import {
   Select,
@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { isGenericTitle } from '~/lib/generic-title';
+import { eventListItems } from '~/lib/structured-data';
+import { generateEventUrl } from '~/lib/url-slug';
 
 interface EventItem {
   id: string;
@@ -165,6 +167,14 @@ export default function EventsIndex() {
           { name: 'Home', item: 'https://rasika.life' },
           { name: 'Events', item: 'https://rasika.life/events' },
         ]}
+      />
+      {/* The concerts on show, flattened back out of their day groups. `ItemList` is the shape
+          Google documents for a page that is a set of events rather than one event. */}
+      <ItemListStructuredData
+        items={eventListItems(
+          groups.flatMap(group => group.events),
+          generateEventUrl
+        )}
       />
     </main>
   );

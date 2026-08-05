@@ -22,11 +22,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { SocialIconLink } from '~/components/SocialIconLink';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
-import {
-  BreadcrumbStructuredData,
-  MusicGroupStructuredData,
-  PersonStructuredData,
-} from '~/components/structured-data';
+import { ArtistStructuredData, BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import {
@@ -1417,47 +1413,59 @@ export default function ArtistDetails() {
           { name: artist.name, item: shareUrl },
         ]}
       />
-      {isGroup ? (
-        <MusicGroupStructuredData
-          group={{
+      {/* The same description the meta tag carries, from the same function — built out of the
+          instrument, city, lineage and upcoming concerts the record holds. What it replaced
+          was the sentence "Renowned classical musician in Indian classical music", published
+          in the JSON-LD of all 1,111 artists. */}
+      <ArtistStructuredData
+        isGroup={isGroup}
+        artist={{
+          name: artist.name,
+          url: shareUrl,
+          description: artistMetaDescription({
             name: artist.name,
-            url: shareUrl,
-            image: artist.photoUrl,
-            sameAs,
-            awards: awardNames,
-            members: membership.map(m => ({
-              name: m.memberName,
-              url: `https://rasika.life${generateArtistUrl(m.memberName, m.memberId)}`,
-            })),
-          }}
-        />
-      ) : (
-        <PersonStructuredData
-          person={{
-            name: artist.name,
-            url: shareUrl,
-            image: artist.photoUrl,
-            sameAs,
-            awards: awardNames,
-            memberOf: membership.map(m => ({
-              name: m.groupName,
-              url: `https://rasika.life${generateArtistUrl(m.groupName, m.groupId)}`,
-            })),
-            affiliations: affiliations.map(a => ({
-              name: a.organisationName,
-              // The canonical slugged form, like every other organiser link. A bare id
-              // resolves, but publishing the non-canonical URL in JSON-LD invites a crawler
-              // to index a second address for the same page.
-              url: `https://rasika.life${generateOrganiserUrl(a.organisationName, a.organiserId)}`,
-            })),
-            // Only the ones that name an institution — a qualification with no awarding body
-            // is still worth showing on the page but is not an alumniOf claim.
-            alumniOf: credentials
-              .map(c => c.institution)
-              .filter((name): name is string => Boolean(name)),
-          }}
-        />
-      )}
+            isGroup: artist.isGroup,
+            instrument: artist.instrument,
+            city: artist.city,
+            gurus: artist.gurus,
+            specialisations: artist.specialisations,
+            upcomingEventCount: upcomingEvents.length,
+          }),
+          image: artist.photoUrl,
+          city: artist.city,
+          instruments,
+          specialisations: artist.specialisations,
+          sameAs,
+          awards: awardNames,
+          // One junction read two ways: a group's rows name its members, an individual's name
+          // the groups they perform in, and only one side of each row is populated. Building
+          // both would hand `generateArtistUrl` an undefined name.
+          members: isGroup
+            ? membership.map(m => ({
+                name: m.memberName,
+                url: `https://rasika.life${generateArtistUrl(m.memberName, m.memberId)}`,
+              }))
+            : undefined,
+          memberOf: isGroup
+            ? undefined
+            : membership.map(m => ({
+                name: m.groupName,
+                url: `https://rasika.life${generateArtistUrl(m.groupName, m.groupId)}`,
+              })),
+          affiliations: affiliations.map(a => ({
+            name: a.organisationName,
+            // The canonical slugged form, like every other organiser link. A bare id
+            // resolves, but publishing the non-canonical URL in JSON-LD invites a crawler
+            // to index a second address for the same page.
+            url: `https://rasika.life${generateOrganiserUrl(a.organisationName, a.organiserId)}`,
+          })),
+          // Only the ones that name an institution — a qualification with no awarding body
+          // is still worth showing on the page but is not an alumniOf claim.
+          alumniOf: credentials
+            .map(c => c.institution)
+            .filter((name): name is string => Boolean(name)),
+        }}
+      />
     </main>
   );
 }

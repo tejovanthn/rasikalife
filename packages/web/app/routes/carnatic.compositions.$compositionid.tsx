@@ -456,15 +456,29 @@ export default function CompositionDetails() {
           },
         ]}
       />
+      {/* `about` links out to the raga and tala pages, which turns "this kriti is in Kalyani"
+          from a keyword into an edge between two pages the crawler has already seen. What used
+          to be here instead: an `inAlbum` naming a "<raga> Raga Collection" that exists nowhere,
+          and a `datePublished` set to `createdAt` — the day this row was written, which dated a
+          nineteenth-century kriti to this year. */}
       <MusicCompositionStructuredData
         composition={{
           title: composition.title,
-          composer: composition.composer,
-          ragas: composition.ragas,
-          talas: composition.talas,
-          language: composition.language,
           url: `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`,
-          datePublished: composition.createdAt,
+          composer: {
+            name: composition.composer.name,
+            url: `https://rasika.life${generateArtistUrl(composition.composer.name, composition.composer.id)}`,
+          },
+          ragas: composition.ragas.map(raga => ({
+            name: raga.name,
+            url: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}`,
+          })),
+          talas: composition.talas.map(tala => ({
+            name: tala.name,
+            url: `https://rasika.life${generateTalaUrl(tala.name, tala.id)}`,
+          })),
+          language: composition.language,
+          hasLyrics: (composition.lyricsV1?.length ?? 0) > 0,
         }}
       />
     </div>

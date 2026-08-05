@@ -3,7 +3,9 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
+import { eventListItems } from '~/lib/structured-data';
+import { generateEventUrl } from '~/lib/url-slug';
 
 export const loader: LoaderFunction = async ({ params }) => {
   const tag = params.tag;
@@ -82,6 +84,7 @@ export default function EventsByTag() {
           { name: `"${tag}"`, item: `https://rasika.life/events/tags/${encodeURIComponent(tag)}` },
         ]}
       />
+      <ItemListStructuredData items={eventListItems(events, generateEventUrl)} />
     </main>
   );
 }

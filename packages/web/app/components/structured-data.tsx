@@ -1,323 +1,148 @@
 import { serializeJsonLd } from '~/lib/json-ld';
+import {
+  artistJsonLd,
+  breadcrumbJsonLd,
+  definedTermJsonLd,
+  eventJsonLd,
+  faqJsonLd,
+  festivalJsonLd,
+  itemListJsonLd,
+  musicCompositionJsonLd,
+  organiserJsonLd,
+  organizationJsonLd,
+  venueJsonLd,
+  websiteJsonLd,
+} from '~/lib/structured-data';
+import type {
+  ArtistJsonLdInput,
+  EventJsonLdInput,
+  JsonLdObject,
+  NestedEventInput,
+} from '~/lib/structured-data';
 
-interface StructuredDataProps {
-  type:
-    | 'organization'
-    | 'website'
-    | 'breadcrumb'
-    | 'person'
-    | 'musicgroup'
-    | 'music'
-    | 'event'
-    | 'festival';
-  data: Record<string, unknown>;
-}
-
-export function StructuredData({ type, data }: StructuredDataProps) {
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@type':
-      type === 'organization'
-        ? 'Organization'
-        : type === 'website'
-          ? 'WebSite'
-          : type === 'breadcrumb'
-            ? 'BreadcrumbList'
-            : type === 'person'
-              ? 'Person'
-              : type === 'musicgroup'
-                ? 'MusicGroup'
-                : type === 'music'
-                  ? 'MusicComposition'
-                  : type === 'event'
-                    ? 'MusicEvent'
-                    : type === 'festival'
-                      ? 'Festival'
-                      : 'Thing',
-    ...data,
-  };
+/**
+ * The one place a JSON-LD payload becomes markup.
+ *
+ * Everything above it is a plain function in `~/lib/structured-data`, where it can be tested;
+ * this file only serialises. Nothing here should build a payload inline — vitest runs
+ * `app/**\/*.test.ts` in a node environment and cannot reach into a component.
+ */
+function JsonLdScript({ payload }: { payload: JsonLdObject | undefined }) {
+  if (!payload) return null;
 
   return (
     <script
       type="application/ld+json"
       // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
       dangerouslySetInnerHTML={{
-        // serializeJsonLd, not JSON.stringify — several callers pass editor-supplied URLs
-        // (sameAs, memberOf), and an unescaped `</script>` in one of them ends this element
-        // and turns the rest into markup.
-        __html: serializeJsonLd(structuredData),
+        // serializeJsonLd, not JSON.stringify — much of what lands here is editor-supplied
+        // (sameAs, a venue's website, an entity's own name), and an unescaped `</script>` in
+        // any of it ends this element and turns the rest of the payload into markup.
+        __html: serializeJsonLd(payload),
       }}
     />
   );
 }
 
-// Specific components for different types
+// ---------------------------------------------------------------------------
+// Site-wide
+// ---------------------------------------------------------------------------
+
 export function OrganizationStructuredData() {
-  return (
-    <StructuredData
-      type="organization"
-      data={{
-        name: 'Rasika.life',
-        url: 'https://rasika.life',
-        description: 'Indian Classical Music Database',
-        sameAs: [
-          // Add social media URLs when available
-        ],
-      }}
-    />
-  );
+  return <JsonLdScript payload={organizationJsonLd()} />;
 }
 
 export function WebsiteStructuredData() {
-  return (
-    <StructuredData
-      type="website"
-      data={{
-        name: 'Rasika.life',
-        url: 'https://rasika.life',
-        description: 'Explore the world of Indian classical music',
-      }}
-    />
-  );
+  return <JsonLdScript payload={websiteJsonLd()} />;
 }
 
 export function BreadcrumbStructuredData({
   items,
-}: { items: Array<{ name: string; item: string }> }) {
-  return (
-    <StructuredData
-      type="breadcrumb"
-      data={{
-        itemListElement: items.map((item, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          name: item.name,
-          item: item.item,
-        })),
-      }}
-    />
-  );
+}: {
+  items: Array<{ name: string; item: string }>;
+}) {
+  return <JsonLdScript payload={breadcrumbJsonLd(items)} />;
 }
 
-// A single artist. `image`, `sameAs`, `award`, `memberOf`, `affiliation` and `alumniOf` are
-// all optional — JSON.stringify drops undefined keys, so an unenriched artist simply omits
-// them rather than emitting empty arrays. `memberOf` links to the groups this artist
-// performs in, the inverse of MusicGroup's `member`.
-//
-// `affiliation` and `alumniOf` are kept apart deliberately, matching the split the page makes:
-// an affiliation is a role held at an institution, an alumniOf is where a qualification came
-// from. Collapsing both into `affiliation` would tell a crawler that every artist with a
-// diploma works for the awarding university.
-export function PersonStructuredData({
-  person,
-}: {
-  person: {
-    name: string;
-    url: string;
-    image?: string;
-    sameAs?: string[];
-    awards?: string[];
-    memberOf?: Array<{ name: string; url: string }>;
-    affiliations?: Array<{ name: string; url?: string }>;
-    alumniOf?: string[];
-  };
-}) {
-  return (
-    <StructuredData
-      type="person"
-      data={{
-        name: person.name,
-        description: 'Renowned classical musician in Indian classical music',
-        url: person.url,
-        image: person.image,
-        sameAs: person.sameAs?.length ? person.sameAs : undefined,
-        award: person.awards?.length ? person.awards : undefined,
-        memberOf: person.memberOf?.length
-          ? person.memberOf.map(g => ({ '@type': 'MusicGroup', name: g.name, url: g.url }))
-          : undefined,
-        affiliation: person.affiliations?.length
-          ? person.affiliations.map(a => ({
-              '@type': 'Organization',
-              name: a.name,
-              url: a.url,
-            }))
-          : undefined,
-        alumniOf: person.alumniOf?.length
-          ? person.alumniOf.map(name => ({ '@type': 'EducationalOrganization', name }))
-          : undefined,
-        knowsAbout: ['Carnatic Music', 'Indian Classical Music'],
-        hasOccupation: {
-          '@type': 'Occupation',
-          name: 'Classical Musician',
-          occupationalCategory: 'Arts and Entertainment',
-        },
-      }}
-    />
-  );
+/** A listing page's entries. Build the items with the helpers below. */
+export function ItemListStructuredData({ items }: { items: JsonLdObject[] }) {
+  return <JsonLdScript payload={itemListJsonLd(items)} />;
 }
 
-// A performing group (isGroup). `member` links to each member's Person profile —
-// the band-and-its-members relationship Google understands for a knowledge panel.
-export function MusicGroupStructuredData({
-  group,
+// ---------------------------------------------------------------------------
+// Entities
+// ---------------------------------------------------------------------------
+
+/** A single artist. Pass `isGroup` straight through from the record. */
+export function ArtistStructuredData({
+  artist,
+  isGroup,
 }: {
-  group: {
-    name: string;
-    url: string;
-    image?: string;
-    sameAs?: string[];
-    awards?: string[];
-    members?: Array<{ name: string; url: string }>;
-  };
+  artist: ArtistJsonLdInput;
+  isGroup: boolean;
 }) {
-  return (
-    <StructuredData
-      type="musicgroup"
-      data={{
-        name: group.name,
-        description: 'Indian classical music performing group',
-        url: group.url,
-        genre: 'Carnatic Music',
-        image: group.image,
-        sameAs: group.sameAs?.length ? group.sameAs : undefined,
-        award: group.awards?.length ? group.awards : undefined,
-        member: group.members?.length
-          ? group.members.map(m => ({ '@type': 'Person', name: m.name, url: m.url }))
-          : undefined,
-      }}
-    />
-  );
+  return <JsonLdScript payload={artistJsonLd(artist, isGroup)} />;
 }
 
 export function MusicCompositionStructuredData({
   composition,
 }: {
-  composition: {
-    title: string;
-    composer: { name: string };
-    ragas: Array<{ name: string }>;
-    talas: Array<{ name: string }>;
-    language: string;
-    url: string;
-    datePublished?: string;
-  };
+  composition: Parameters<typeof musicCompositionJsonLd>[0];
 }) {
-  return (
-    <StructuredData
-      type="music"
-      data={{
-        name: composition.title,
-        composer: {
-          '@type': 'Person',
-          name: composition.composer.name,
-        },
-        inAlbum:
-          composition.ragas.length > 0
-            ? {
-                '@type': 'MusicAlbum',
-                name: `${composition.ragas[0].name} Raga Collection`,
-              }
-            : undefined,
-        genre: 'Carnatic Music',
-        inLanguage: composition.language,
-        url: composition.url,
-        datePublished: composition.datePublished,
-        description: `A ${composition.language} composition in ${composition.ragas.map(r => r.name).join(', ')} raga(s) composed by ${composition.composer.name}`,
-        keywords: [
-          ...composition.ragas.map(r => r.name),
-          ...composition.talas.map(t => t.name),
-          composition.language,
-          'Carnatic Music',
-          composition.composer.name,
-        ].filter(Boolean),
-      }}
-    />
-  );
+  return <JsonLdScript payload={musicCompositionJsonLd(composition)} />;
 }
 
-export function EventStructuredData({
-  event,
+/** A raga or a tala: a named term in a controlled vocabulary, not a work anybody authored. */
+export function DefinedTermStructuredData({
+  term,
 }: {
-  event: {
-    title: string;
-    description?: string;
-    startDateTime: string;
-    endDateTime?: string;
-    venueName?: string;
-    organiserName?: string;
-    organiserUrl?: string;
-    posterUrl?: string;
-    entryType?: string;
-    artists?: Array<{ name: string }>;
-    url: string;
-    ticketing?: {
-      url?: string;
-      prices?: Record<string, number>;
-    };
-  };
+  term: Parameters<typeof definedTermJsonLd>[0];
 }) {
-  const offers = (() => {
-    if (event.entryType === 'free') {
-      return [
-        {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'INR',
-          availability: 'https://schema.org/InStock',
-        },
-      ];
-    }
-    if (event.ticketing?.prices && Object.keys(event.ticketing.prices).length > 0) {
-      return Object.entries(event.ticketing.prices).map(([, price]) => ({
-        '@type': 'Offer',
-        price: String(price),
-        priceCurrency: 'INR',
-        ...(event.ticketing?.url ? { url: event.ticketing.url } : {}),
-        availability: 'https://schema.org/InStock',
-      }));
-    }
-    if (event.ticketing?.url) {
-      return [
-        { '@type': 'Offer', url: event.ticketing.url, availability: 'https://schema.org/InStock' },
-      ];
-    }
-    return undefined;
-  })();
-
-  return (
-    <StructuredData
-      type="event"
-      data={{
-        name: event.title,
-        description: event.description || `${event.title} - Indian classical arts event`,
-        startDate: event.startDateTime,
-        endDate: event.endDateTime,
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        eventStatus: 'https://schema.org/EventScheduled',
-        image: event.posterUrl,
-        url: event.url,
-        location: {
-          '@type': 'Place',
-          name: event.venueName || 'India',
-        },
-        organizer: event.organiserName
-          ? {
-              '@type': 'Organization',
-              name: event.organiserName,
-              ...(event.organiserUrl ? { url: event.organiserUrl } : {}),
-            }
-          : undefined,
-        performer: event.artists?.map(a => ({
-          '@type': 'Person',
-          name: a.name,
-        })),
-        offers,
-        isAccessibleForFree: event.entryType === 'free',
-      }}
-    />
-  );
+  return <JsonLdScript payload={definedTermJsonLd(term)} />;
 }
 
+export function EventStructuredData({ event }: { event: EventJsonLdInput }) {
+  return <JsonLdScript payload={eventJsonLd(event)} />;
+}
+
+export function FestivalStructuredData({
+  festival,
+}: {
+  festival: Parameters<typeof festivalJsonLd>[0];
+}) {
+  return <JsonLdScript payload={festivalJsonLd(festival)} />;
+}
+
+export function VenueStructuredData({ venue }: { venue: Parameters<typeof venueJsonLd>[0] }) {
+  return <JsonLdScript payload={venueJsonLd(venue)} />;
+}
+
+export function OrganiserStructuredData({
+  organiser,
+}: {
+  organiser: Parameters<typeof organiserJsonLd>[0];
+}) {
+  return <JsonLdScript payload={organiserJsonLd(organiser)} />;
+}
+
+// ---------------------------------------------------------------------------
+// FAQ
+// ---------------------------------------------------------------------------
+
+export function FaqStructuredData({
+  faqs,
+}: {
+  faqs: Array<{ question: string; answer: string }>;
+}) {
+  return <JsonLdScript payload={faqJsonLd(faqs)} />;
+}
+
+/**
+ * The questions a raga page is searched with. Each one is asked only when the record can
+ * answer it, and the janya branch comes first for the reason the meta description does: a
+ * janya raga stores its *parent's* mela number, so "which melakarta is X" must never be
+ * answered for one.
+ */
 export function RagaFaqStructuredData({
   name,
   arohanam,
@@ -331,94 +156,25 @@ export function RagaFaqStructuredData({
   melaNumber?: number | null;
   parentRagaName?: string | null;
 }) {
-  const faqs: Array<{
-    '@type': string;
-    name: string;
-    acceptedAnswer: { '@type': string; text: string };
-  }> = [];
+  const faqs: Array<{ question: string; answer: string }> = [];
 
-  if (arohanam)
-    faqs.push({
-      '@type': 'Question',
-      name: `What is the arohanam of ${name} raga?`,
-      acceptedAnswer: { '@type': 'Answer', text: arohanam },
-    });
+  if (arohanam) faqs.push({ question: `What is the arohanam of ${name} raga?`, answer: arohanam });
 
   if (avarohanam)
-    faqs.push({
-      '@type': 'Question',
-      name: `What is the avarohanam of ${name} raga?`,
-      acceptedAnswer: { '@type': 'Answer', text: avarohanam },
-    });
+    faqs.push({ question: `What is the avarohanam of ${name} raga?`, answer: avarohanam });
 
   if (parentRagaName)
     faqs.push({
-      '@type': 'Question',
-      name: `Is ${name} a janya raga?`,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: `Yes, ${name} is a janya raga derived from ${parentRagaName}.`,
-      },
+      question: `Is ${name} a janya raga?`,
+      answer: `Yes, ${name} is a janya raga derived from ${parentRagaName}.`,
     });
   else if (melaNumber)
     faqs.push({
-      '@type': 'Question',
-      name: `Which melakarta is ${name}?`,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: `${name} is melakarta number ${melaNumber} in the Carnatic system.`,
-      },
+      question: `Which melakarta is ${name}?`,
+      answer: `${name} is melakarta number ${melaNumber} in the Carnatic system.`,
     });
 
-  if (faqs.length === 0) return null;
-
-  return (
-    <script
-      type="application/ld+json"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
-      dangerouslySetInnerHTML={{
-        // Same escaping as StructuredData above: this one interpolates a raga name, which
-        // is entity data like any other, so it must not be the one place that skips it.
-        __html: serializeJsonLd({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faqs,
-        }),
-      }}
-    />
-  );
+  return <FaqStructuredData faqs={faqs} />;
 }
 
-export function FestivalStructuredData({
-  festival,
-}: {
-  festival: {
-    name: string;
-    description?: string;
-    startDate: string;
-    endDate: string;
-    organiserName?: string;
-    posterUrl?: string;
-    url: string;
-  };
-}) {
-  return (
-    <StructuredData
-      type="festival"
-      data={{
-        name: festival.name,
-        description: festival.description || `${festival.name} - Indian classical arts festival`,
-        startDate: festival.startDate,
-        endDate: festival.endDate,
-        image: festival.posterUrl,
-        url: festival.url,
-        organizer: festival.organiserName
-          ? {
-              '@type': 'Organization',
-              name: festival.organiserName,
-            }
-          : undefined,
-      }}
-    />
-  );
-}
+export type { JsonLdObject, NestedEventInput };

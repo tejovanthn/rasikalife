@@ -7,12 +7,12 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { eventListingDescription } from '~/lib/listing-description';
-import { generateVenueUrl, parseSlug } from '~/lib/url-slug';
+import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
 
 interface VenueDetail {
   id: string;
@@ -381,6 +381,21 @@ export default function VenueDetailPage() {
             item: `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`,
           },
         ]}
+      />
+      {/* Only the upcoming concerts. `Place.event` accepts past ones too, but publishing a
+          finished concert as an event invites a search result for something nobody can attend,
+          and the page already shows them below for the reader who wants them. */}
+      <VenueStructuredData
+        venue={{
+          ...venue,
+          url: shareUrl,
+          events: upcomingEvents.slice(0, 20).map(event => ({
+            title: event.title,
+            url: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
+            startDateTime: event.startDateTime,
+            endDateTime: event.endDateTime,
+          })),
+        }}
       />
     </main>
   );

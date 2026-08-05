@@ -113,11 +113,64 @@ The core package uses a domain-driven design with:
 - `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives. `readRepeatedRows(formData, {required, strings, numbers})` reads a variable-length list submitted as parallel repeated field names — rows correlate **by index**, so a row that renders must always emit every one of its inputs even when blank, and a row whose required field is empty is dropped.
 - `affiliation-display.ts` — `affiliationPeriod({startYear, endYear, isCurrent})` renders "2017–present", "1998–2015", "since 2017" or `''`. Used by both the artist profile and the organiser page. `isCurrent` is stored apart from `endYear` because a blank end year alone cannot say whether a role is current or merely undated.
 - `json-ld.ts` — `serializeJsonLd(data)` for anything going into `<script type="application/ld+json">`. Escapes `<` as `<`, because a `</script>` inside an entity-supplied URL would otherwise end the element and turn the rest of the payload into markup. Never use a bare `JSON.stringify` with `dangerouslySetInnerHTML`.
+- `structured-data.ts` — every JSON-LD payload the site emits, as plain functions. See the section below.
 - `event-contact.ts` — `resolveEventContact(eventContact, organiserContact)` decides whose contact details an event page shows. 515 of 739 events store no `contactInfo` at all, so the section simply did not render; the organiser record usually knows, having been seeded on approval. The fallback is **whole-block, not per-field** — a phone off this poster beside a website off the organiser's record is one list the reader cannot take apart, and they are entitled to know whether a number is "ring this about this concert" or "this is the sabha's office line". It returns a `source`, and the page says so. Nothing is copied onto the event record: the organiser is the canonical home, and a copy taken at approval goes stale the moment they change a number. The loader only fetches the organiser when the event states nothing, since otherwise the result is discarded.
 - `listing-description.ts` — `eventListingDescription({name, events, preposition, fallback, location})` builds the meta description for a page that is really a listing (a venue, an organiser). It names the count and the next event rather than restating what kind of page it is: "Events and performances at X. Indian classical arts venue." took 196 impressions at position 9.8 for "chowdiah memorial hall events" and no clicks at all. Falls back to past events before the generic line, because a hall with only past concerts is still the right answer for that query.
 - `artist-display.ts` — `artistMetaDescription(artist)` builds an artist's description from instrument, city, lineage and upcoming concerts. It replaced one sentence shared by all 1,111 artists that called every one of them "renowned" — the inflation `GURU_RELATIONSHIPS` exists to prevent, applied site-wide. The lineage clause counts only `primary`, `advanced` and unclassified gurus; a workshop teacher must never be rendered as "disciple of".
 - `utils.ts` — `titleCaseName(name)` capitalizes every word of an **entity name** for display. Stored names are lowercase ITRANS, so a raga arrives as `darbari kanada` once transliterated and `capitalize` alone leaves the second word bare. Names only; never run it over lyrics or prose.
 - `analytics.ts` — `AnalyticsEvent` and `trackEvent(name, params)`. Every GA4 event name lives in that constant rather than as a string literal at the call site. Adding one means adding it there, wiring the call, and then **marking it a key event in the GA4 console** — the SDK cannot do that, and an unmarked event is collected but not counted as a conversion. Event *parameters* likewise need registering as custom dimensions before they can be reported on; the property has none today.
+
+### Structured data (JSON-LD)
+
+Every payload is built by a plain function in `app/lib/structured-data.ts`;
+`components/structured-data.tsx` only serialises them. Nothing builds a payload inline — vitest
+runs `app/**/*.test.ts` in a node environment, so a payload assembled inside a component cannot
+be asserted on, and what these emit is a public claim about a real person, hall or organisation.
+`structured-data.test.ts` round-trips every assertion through `serializeJsonLd`, which is what
+catches an `undefined` inside an array (it survives in memory and arrives as `null`).
+
+| Page | Type |
+|---|---|
+| Artist | `Person`, or `MusicGroup` when `isGroup` |
+| Composition | `MusicComposition`, `about` → the raga and tala pages |
+| Raga, tala | `DefinedTerm` in a `DefinedTermSet` — nobody authored Kalyani |
+| Event | `MusicEvent` + `BreadcrumbList` |
+| Festival | `Festival`, with its programme as `subEvent` |
+| Venue | `PerformingArtsTheater` or `Place`, with `Place.event` |
+| Organiser | `Organization`, `NGO` or `CollegeOrUniversity` |
+| Event listings | `ItemList` of `MusicEvent` |
+
+Rules that are load-bearing, each written after finding the opposite shipped:
+
+- **Claim nothing the record does not hold.** The same rule as the meta descriptions, and it had
+  already been broken here: every artist's JSON-LD carried "Renowned classical musician in Indian
+  classical music" — the inflation `GURU_RELATIONSHIPS` exists to prevent, asserted of all 1,111
+  of them — plus a constant `knowsAbout` naming Carnatic music on Bharatanatyam dancers. Both now
+  read from the record or are absent. Likewise gone: a composition's `inAlbum` naming a
+  "&lt;raga&gt; Raga Collection" that exists nowhere, and its `datePublished` set to `createdAt`,
+  which dated a nineteenth-century kriti to this year.
+- **An absent field is `undefined`, and an empty list is absent too.** `JSON.stringify` drops
+  `undefined` keys, but an `undefined` *inside an array* becomes `null` — so every list goes
+  through `list()`. `award: []` is not "no award", it reads as "we checked and there are none".
+- **A type is read from an explicit stored word, never defaulted.** `PerformingArtsTheater` is a
+  `LocalBusiness` and says this address and phone belong to something trading as a theatre: true
+  of an auditorium and a sabha hall, false of a temple hall, a terrace or a university building,
+  which all stay `Place`. Same for organisers: only `ngo` and `university` have exact
+  counterparts; `HinduTemple` is a *building*, and this record is the body that programmes the
+  concerts. One consequence — `email` is an `Organization` property, so a plain `Place` may not
+  carry one (`venueTakesEmail`).
+- **A location needs an address.** Google's Event rich result requires `location.address`, and
+  the event page shipped a `Place` carrying only a name, so every concert was ineligible. The
+  event loader therefore returns the venue address twice: joined for the calendar links, and in
+  parts for here. A venue page states its address once and every nested event points back at it
+  by `@id`.
+- **A janya raga gets no `termCode`.** It stores its *parent's* mela number, so publishing it
+  would number the raga among the 72 — the same wrong claim the meta description was fixed for.
+- **A festival's `location` is claimed only when every concert agrees on it**
+  (`festivalLocationName`). A city-wide festival has no one hall, and naming the first would put
+  the wrong one in a search result.
+- **Offers never fall through to zero.** A ticketed event with no prices filled in gets no
+  `offers` at all; a zero offer would print "Free" beside it in a search result.
 
 ### Scripts, swaras, and what Googlebot sees
 

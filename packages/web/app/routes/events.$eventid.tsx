@@ -32,6 +32,7 @@ import {
   type ResolvedEventContact,
   resolveEventContact,
 } from '~/lib/event-contact';
+import type { StructuredAddress } from '~/lib/structured-data';
 import {
   generateArtistUrl,
   generateEventUrl,
@@ -152,11 +153,16 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     let venueMapLink: string | undefined;
     let venueAddress: string | undefined;
+    // The same address unjoined. Google's Event rich result wants `location.address` broken
+    // into its parts, and the joined string above is for the calendar links and the map query,
+    // which want one line. Neither can be derived from the other, so both are returned.
+    let venueAddressParts: StructuredAddress | undefined;
     if (event.venueId) {
       try {
         const venue = await serverClient.venue.get.query({ id: event.venueId });
         venueMapLink = venue?.mapLink;
         if (venue?.address) {
+          venueAddressParts = venue.address;
           const parts = [
             venue.address.street,
             venue.address.city,
@@ -227,6 +233,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       nextEvent,
       venueMapLink,
       venueAddress,
+      venueAddressParts,
       contact: resolveEventContact(event.contactInfo, organiserContact),
       relatedVenueEvents,
       relatedOrganiserEvents,
@@ -641,6 +648,7 @@ export default function EventDetail() {
     nextEvent,
     venueMapLink,
     venueAddress,
+    venueAddressParts,
     contact,
     relatedVenueEvents,
     relatedOrganiserEvents,
@@ -661,6 +669,7 @@ export default function EventDetail() {
     nextEvent: FestivalEventItem | null;
     venueMapLink?: string;
     venueAddress?: string;
+    venueAddressParts?: StructuredAddress;
     contact?: ResolvedEventContact;
     relatedVenueEvents: RelatedEventItem[];
     relatedOrganiserEvents: RelatedEventItem[];
@@ -1219,7 +1228,18 @@ export default function EventDetail() {
           description: event.description,
           startDateTime: event.startDateTime,
           endDateTime: event.endDateTime,
-          venueName: event.venueName,
+          // Google's Event rich result requires an address on the location, and this used to
+          // pass a Place carrying nothing but a name — so every concert on the site was
+          // ineligible for one.
+          location: {
+            name: event.venueName,
+            url:
+              event.venueName && event.venueId
+                ? `https://rasika.life${generateVenueUrl(event.venueName, event.venueId)}`
+                : undefined,
+            address: venueAddressParts,
+            addressText: venueAddress,
+          },
           organiserName: event.organiserName,
           organiserUrl:
             event.organiserName && event.organiserId
@@ -1227,7 +1247,21 @@ export default function EventDetail() {
               : undefined,
           posterUrl: event.posterUrl,
           entryType: event.entryType,
-          artists: event.artists,
+          artists: event.artists?.map(artist => ({
+            name: artist.name,
+            // Only the artists resolved to a record. A name off a poster that never matched
+            // one has no page to point at, and a link to a search result is not the performer.
+            url: artist.id
+              ? `https://rasika.life${generateArtistUrl(artist.name, artist.id)}`
+              : undefined,
+          })),
+          partOf:
+            event.festivalName && event.festivalId
+              ? {
+                  name: event.festivalName,
+                  url: `https://rasika.life${generateFestivalUrl(event.festivalName, event.festivalId)}`,
+                }
+              : null,
           url: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
           ticketing: event.ticketing
             ? { url: event.ticketing.url, prices: event.ticketing.prices }

@@ -8,7 +8,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
-import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { BreadcrumbStructuredData, OrganiserStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { getUser } from '~/lib/auth.server';
@@ -16,6 +16,7 @@ import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { eventListingDescription } from '~/lib/listing-description';
 import {
   generateArtistUrl,
+  generateEventUrl,
   generateOrganiserUrl,
   generateVenueUrl,
   parseSlug,
@@ -420,6 +421,28 @@ export default function OrganiserDetailPage() {
             item: `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`,
           },
         ]}
+      />
+      <OrganiserStructuredData
+        organiser={{
+          ...organiser,
+          url: shareUrl,
+          venue: organiser.venueName
+            ? {
+                name: organiser.venueName,
+                url: organiser.venueId
+                  ? `https://rasika.life${generateVenueUrl(organiser.venueName, organiser.venueId)}`
+                  : undefined,
+              }
+            : null,
+          // Upcoming only, for the same reason as the venue page.
+          events: upcomingEvents.slice(0, 20).map(event => ({
+            title: event.title,
+            url: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
+            startDateTime: event.startDateTime,
+            endDateTime: event.endDateTime,
+            venueName: event.venueName,
+          })),
+        }}
       />
     </main>
   );

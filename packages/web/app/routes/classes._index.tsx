@@ -8,10 +8,10 @@ import {
   Users,
 } from 'lucide-react';
 import type { MetaFunction } from 'react-router';
+import { FaqStructuredData } from '~/components/structured-data';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
-import { serializeJsonLd } from '~/lib/json-ld';
 
 /**
  * Straight to guru onboarding, not to the app root.
@@ -217,26 +217,6 @@ const FAQS = [
   },
 ];
 
-function ClassesFaqStructuredData() {
-  return (
-    <script
-      type="application/ld+json"
-      // biome-ignore lint/security/noDangerouslySetInnerHtml: Required for JSON-LD structured data
-      dangerouslySetInnerHTML={{
-        __html: serializeJsonLd({
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: FAQS.map(faq => ({
-            '@type': 'Question',
-            name: faq.question,
-            acceptedAnswer: { '@type': 'Answer', text: faq.answer },
-          })),
-        }),
-      }}
-    />
-  );
-}
-
 export default function ClassesLandingPage() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -333,7 +313,7 @@ export default function ClassesLandingPage() {
         </Button>
       </section>
 
-      <ClassesFaqStructuredData />
+      <FaqStructuredData faqs={FAQS} />
     </main>
   );
 }

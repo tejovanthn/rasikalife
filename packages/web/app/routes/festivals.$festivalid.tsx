@@ -474,6 +474,9 @@ export default function FestivalDetail() {
           },
         ]}
       />
+      {/* The programme rides along as `subEvent`, which is what makes this a festival rather
+          than a date range with a name. `location` is derived inside the builder and is
+          claimed only when every concert is at the same hall — see `festivalLocationName`. */}
       <FestivalStructuredData
         festival={{
           name: festival.name,
@@ -481,8 +484,19 @@ export default function FestivalDetail() {
           startDate: festival.startDate,
           endDate: festival.endDate,
           organiserName: festival.organiserName,
+          organiserUrl:
+            festival.organiserName && festival.organiserId
+              ? `https://rasika.life${generateOrganiserUrl(festival.organiserName, festival.organiserId)}`
+              : undefined,
           posterUrl: festival.posterUrl,
           url: `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`,
+          events: events.map(event => ({
+            title: event.title,
+            url: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
+            startDateTime: event.startDateTime,
+            endDateTime: event.endDateTime,
+            venueName: event.venueName,
+          })),
         }}
       />
     </main>
