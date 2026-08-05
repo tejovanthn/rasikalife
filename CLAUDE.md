@@ -812,6 +812,13 @@ An admin-only tool to export any domain to CSV, edit it in a spreadsheet, and re
 - **tRPC** `adminData.export` / `adminData.import` (`adminProcedure`, in `routers/admin-data.ts`).
 - **Web** `routes/admin.data._index.tsx` (domain list) and `routes/admin.data.$domain.tsx` (`/admin/data/<domain>`, `requireAdmin`): the page shows the count and an upload form whose action parses the CSV and calls `adminData.import`. The CSV download is a separate **resource route** `routes/admin.data.$domain_.export.tsx` (`/admin/data/<domain>/export`, no component) — a UI route can't return a raw file Response for a document request (the browser saves the rendered HTML instead), so the download link points here. Nav link "Manage Data" → `/admin/data`.
 
+- **CLI** `pnpm cli admin-csv-export --domain <name> --out <path>` and
+  `admin-csv-import --domain <name> --file <path> --user <id> [--dry-run]`, over the same registry
+  functions the route uses so the two cannot validate differently. The route stays the ordinary
+  path; these exist for a bulk pass against prod, where a dry run, every row error printed rather
+  than the first few, and a file a script can build all matter. **A parse error stops the run** —
+  landing the readable rows would write a partial edit and report success.
+
 To add a domain: add its column list to `ADMIN_CSV_DOMAINS` and a registry entry (with a `prepare` hook if it has linked names) to `bulk-data.ts`.
 
 ### Importing from `@rasika/core` in web routes

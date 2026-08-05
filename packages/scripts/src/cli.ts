@@ -90,6 +90,35 @@ program
   });
 
 program
+  .command('admin-csv-export')
+  .description('Export a domain to the admin CSV, the same shape /admin/data/<domain> downloads')
+  .requiredOption('--domain <name>', 'artist, raga, tala, composition, venue, organiser, ...')
+  .requiredOption('--out <path>', 'Where to write the CSV')
+  .action(async (opts: { domain: string; out: string }) => {
+    setup();
+    const { exportDomainCsv } = await import('./adminCsv.js');
+    await exportDomainCsv(opts);
+  });
+
+program
+  .command('admin-csv-import')
+  .description('Land an edited admin CSV, blank cells meaning "leave alone"')
+  .requiredOption('--domain <name>', 'artist, raga, tala, composition, venue, organiser, ...')
+  .requiredOption('--file <path>', 'The edited CSV')
+  .requiredOption('--user <id>', 'User id to attribute the writes to')
+  .option('-n, --dry-run', 'Parse and report without writing')
+  .action(async (opts: { domain: string; file: string; user: string; dryRun?: boolean }) => {
+    setup();
+    const { importDomainCsv } = await import('./adminCsv.js');
+    await importDomainCsv({
+      domain: opts.domain,
+      file: opts.file,
+      userId: opts.user,
+      dryRun: opts.dryRun,
+    });
+  });
+
+program
   .command('dedup-places')
   .description('Find duplicate venues and organisers for review, then merge the pairs marked')
   .option('--apply', 'Merge the rows marked "merge" in --file, instead of reporting')
