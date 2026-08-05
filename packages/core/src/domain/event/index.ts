@@ -197,6 +197,22 @@ export async function approveEvent(id: string, moderatorId: string): Promise<Eve
     await approveFestival(approved.festivalId, moderatorId).catch(() => {});
   }
 
+  // Seed the organiser's empty contact fields from the poster. Approval is the earliest point
+  // this is safe: submission is open to any editor, so seeding there would let anyone set an
+  // organisation's website. Swallowed like the festival approval above — the event is approved
+  // either way, and a failure here costs a field, not the moderator's action.
+  if (approved.organiserId && approved.contactInfo) {
+    const { cascadeEventContactToOrganiser } = await import('../cascade');
+    await cascadeEventContactToOrganiser(approved.organiserId, approved.contactInfo).catch(
+      error => {
+        console.error(
+          `[approveEvent] contact seed failed for organiser ${approved.organiserId}`,
+          error
+        );
+      }
+    );
+  }
+
   return approved;
 }
 

@@ -285,6 +285,46 @@ export async function cascadeEventMetadataToArtists(
   } while (cursor);
 }
 
+/**
+ * Seed an organiser's empty contact fields from an event that has just been approved.
+ *
+ * The poster extractor pulls a website, a phone number and an email off most posters and stores
+ * them on the event. Nothing carried them to the organiser, which is why 108 of 109 organisers
+ * were name-only while 224 events held their contact details — see `organiser/enrich.ts`.
+ *
+ * **This runs on approval, never on submission.** `submitVerified` is an `editorProcedure`, so
+ * any signed-in user reaches it; letting that path write to an organiser would mean anyone could
+ * set a sabha's website by submitting an event about them. A moderator approving the event is
+ * the point at which a person has vouched for what the poster said.
+ *
+ * Only empty fields are filled (`missingOrganiserContact`), so a second event for the same
+ * organiser writes nothing and a moderator's correction is never undone.
+ */
+export async function cascadeEventContactToOrganiser(
+  organiserId: string,
+  contactInfo: unknown
+): Promise<void> {
+  if (!organiserId || !contactInfo) return;
+
+  const { missingOrganiserContact, organiserContactFromEvents } = await import(
+    './organiser/enrich'
+  );
+
+  const derived = organiserContactFromEvents([{ contactInfo }]);
+  if (!Object.keys(derived).length) return;
+
+  const { OrganiserEntity } = await import('./organiser/entity');
+  const existing = await OrganiserEntity.get({ id: organiserId }).go();
+  if (!existing.data || existing.data.deletedAt) return;
+
+  const missing = missingOrganiserContact(existing.data, derived);
+  if (!Object.keys(missing).length) return;
+
+  // `patch` rather than `update`: it carries an existence condition, so an organiser deleted
+  // between the read and the write fails loudly instead of being recreated as a phantom row.
+  await OrganiserEntity.patch({ id: organiserId }).set(missing).go();
+}
+
 export async function cascadeTalaNameUpdate(talaId: string, newName: string): Promise<void> {
   const { CompositionEntity } = await import('./composition/entity');
   const { CompositionTalaEntity } = await import('./composition_tala/entity');

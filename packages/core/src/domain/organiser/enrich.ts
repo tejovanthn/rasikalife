@@ -130,6 +130,26 @@ export function organiserContactFromEvents(events: EnrichmentEvent[]): DerivedCo
   return contact;
 }
 
+/**
+ * The subset of `derived` the organiser does not already hold.
+ *
+ * The rule the batch fill and the approval cascade share, so the two can never drift: an empty
+ * field is filled, a filled one is never touched. What is stored was put there by a person, and
+ * a value read off a poster is weaker evidence than that. It also makes the cascade idempotent
+ * — approving a second event for the same organiser writes nothing.
+ */
+export function missingOrganiserContact(
+  organiser: { website?: string; phone?: string; email?: string },
+  derived: DerivedContact
+): DerivedContact {
+  const missing: DerivedContact = {};
+  for (const field of ['website', 'phone', 'email'] as const) {
+    const value = derived[field];
+    if (value && !organiser[field]?.trim()) missing[field] = value;
+  }
+  return missing;
+}
+
 /** Event signals that imply a tag. An event may imply several. */
 const ART_FORM_TAGS: Record<string, OrganiserTag[]> = {
   carnatic: ['carnatic'],

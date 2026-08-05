@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   type EnrichmentEvent,
+  missingOrganiserContact,
   organisationTypeFromName,
   organiserContactFromEvents,
   organiserTagsFromEvents,
@@ -114,6 +115,41 @@ describe('organiserContactFromEvents', () => {
         event({ contactInfo: undefined }),
       ])
     ).toEqual({});
+  });
+});
+
+describe('missingOrganiserContact', () => {
+  const derived = {
+    website: 'https://vanamalaarts.org',
+    phone: '+919845514661',
+    email: 'info@vanamalaarts.org',
+  };
+
+  it('offers only the fields the organiser does not already hold', () => {
+    expect(missingOrganiserContact({ phone: '080-26506049' }, derived)).toEqual({
+      website: 'https://vanamalaarts.org',
+      email: 'info@vanamalaarts.org',
+    });
+  });
+
+  it('never overwrites what a person stored, even with a fuller value', () => {
+    expect(
+      missingOrganiserContact({ website: 'http://old.example' }, derived).website
+    ).toBeUndefined();
+  });
+
+  it('treats a whitespace-only stored value as empty', () => {
+    expect(missingOrganiserContact({ email: '   ' }, derived).email).toBe('info@vanamalaarts.org');
+  });
+
+  it('is empty when the organiser already holds everything, so the cascade is idempotent', () => {
+    expect(
+      missingOrganiserContact({ website: 'https://x.org', phone: '123', email: 'a@b.c' }, derived)
+    ).toEqual({});
+  });
+
+  it('offers nothing when the event carried nothing', () => {
+    expect(missingOrganiserContact({}, {})).toEqual({});
   });
 });
 

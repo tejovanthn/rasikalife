@@ -356,9 +356,13 @@ function SuggestionChips({
 function PhonesInput({
   value,
   onChange,
+  // Two of these can sit on one step — the ticketing desk's numbers and the organiser's own.
+  // Without a distinct prefix a screen reader announces both sets as "Contact phone 1".
+  label = 'Contact phone',
 }: {
   value?: string;
   onChange: (value: string | undefined) => void;
+  label?: string;
 }) {
   const [phones, setPhones] = useState<string[]>(() => {
     const parts = (value || '').split('\n').filter(Boolean);
@@ -378,10 +382,10 @@ function PhonesInput({
     <div className="space-y-2">
       {phones.map((phone, i) => (
         <div key={`phone-${i}`} className="flex gap-2">
-          {/* Repeated row under the section's own "Contact Phone(s)" Label; numbered so the
+          {/* Repeated row under the section's own "Phone(s)" Label; numbered so the
               rows are distinguishable when read out one after another. */}
           <Input
-            aria-label={`Contact phone ${i + 1}`}
+            aria-label={`${label} ${i + 1}`}
             value={phone}
             onChange={e => commit(phones.map((p, j) => (j === i ? e.target.value : p)))}
             placeholder="+91 98765 43210"
@@ -729,6 +733,7 @@ function EventStep({
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Contact Phone(s)</Label>
                 <PhonesInput
+                  label="Ticketing phone"
                   value={event.ticketing?.contactPhone}
                   onChange={contactPhone =>
                     onChange({
@@ -780,6 +785,66 @@ function EventStep({
           </div>
         </div>
       )}
+
+      {/* The extractor pulls these off most posters and they render on the public event page,
+          but until now nothing showed them here — so a wrong number went out uncorrected. They
+          are editable because approving the event seeds the organiser's empty contact fields
+          from them (`cascadeEventContactToOrganiser`), and nothing should reach an organiser
+          record that a person has not had the chance to read. */}
+      <div className="space-y-2">
+        <Label>Contact Details</Label>
+        <p className="text-xs text-muted-foreground">
+          The organiser's own contact details, as printed on the poster — not the ticketing desk's.
+          Approving the event adds these to the organiser's page if it has none.
+        </p>
+        <div className="border rounded-lg p-3 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Phone(s)</Label>
+              <PhonesInput
+                label="Organiser phone"
+                value={event.contactInfo?.phone}
+                onChange={phone =>
+                  onChange({ ...event, contactInfo: { ...event.contactInfo, phone } })
+                }
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground" htmlFor="contact-email">
+                Email
+              </Label>
+              <Input
+                id="contact-email"
+                type="email"
+                value={event.contactInfo?.email || ''}
+                onChange={e =>
+                  onChange({
+                    ...event,
+                    contactInfo: { ...event.contactInfo, email: e.target.value || undefined },
+                  })
+                }
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground" htmlFor="contact-website">
+              Website
+            </Label>
+            <Input
+              id="contact-website"
+              type="url"
+              value={event.contactInfo?.website || ''}
+              onChange={e =>
+                onChange({
+                  ...event,
+                  contactInfo: { ...event.contactInfo, website: e.target.value || undefined },
+                })
+              }
+              placeholder="https://..."
+            />
+          </div>
+        </div>
+      </div>
 
       <div className="space-y-2">
         <Label>Venue</Label>

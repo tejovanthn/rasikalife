@@ -393,6 +393,33 @@ Deliberately out of scope: city, capacity, founded year, street address, descrip
 derivable and all four would have to be looked up. They already have a path — export from
 `/admin/data/<domain>/export`, edit the sheet, upload it back. Reindex search after a run.
 
+**The same fill runs continuously, and it hangs off approval — never submission.**
+`cascadeEventContactToOrganiser` seeds an organiser's empty contact fields from an approved
+event, so the batch above is a backfill rather than something to re-run by hand. Three things
+about where it is wired:
+
+- **`Event.approveEvent` is the hook**, because all three approval paths go through it — the
+  moderator publishing straight out of `submitVerified`, the explicit `approveEvent`, and the
+  bulk draft approve. It is awaited but its failure is swallowed and logged, like the festival
+  auto-approve beside it: the event is approved either way, and a failure costs a field rather
+  than the moderator's action.
+- **Not `submitVerified`.** That is an `editorProcedure`, so any signed-in user reaches it.
+  Seeding there would let anyone set a sabha's website by submitting an event about them.
+  Approval is the point at which a person has vouched for what the poster said. (`resolveOrganiser`
+  in that procedure does auto-*create* organisers for editors, but a name-only row is a far
+  weaker claim than a contact detail on an existing organisation's page.)
+- **`missingOrganiserContact` is shared with the batch fill**, so the two cannot drift, and it
+  makes the cascade idempotent — approving a second event for the same organiser writes nothing,
+  and a moderator's correction is never undone.
+
+The verify step now shows **Contact Details** (phone, email, website) as an editable block.
+It had been extracted, stored, and rendered on the public event page without ever being shown to
+the person verifying it, so a wrong number went out uncorrected. Making it visible is what makes
+seeding an organiser from it honest: nothing reaches an organiser record that a person has not
+had the chance to read. Note this is separate from **Ticketing → Contact Phone(s)**, which is the
+booking desk; `PhonesInput` therefore takes a `label` so the two sets of repeated rows are not
+both announced as "Contact phone 1".
+
 Both lists still carry duplicates the ragas taught us to expect — one venue split six ways
 (`The Bangalore Gayana Samaja (R)`, `Gayana Samaja`, `Gayana Samaaja`, `Bangalore Gayana Samaja`,
 `The Bangalore Gayana Samaja Hall`, `Bengaluru Gayana Samaaja`), which splits its events across six

@@ -57,6 +57,11 @@ vi.mock('./event/entity', async importOriginal => {
   };
 });
 
+// Only `cascadeEventContactToOrganiser` reaches this entity, so a bare mock is enough.
+vi.mock('./organiser/entity', () => ({
+  OrganiserEntity: { get: vi.fn(), patch: vi.fn() },
+}));
+
 vi.mock('./award/entity', async importOriginal => {
   const actual = await importOriginal<typeof import('./award/entity')>();
   return {
@@ -253,6 +258,7 @@ import { EventArtistEntity } from './event-artist/entity';
 import { deleteAllEventSetlistRows, getEventSetlist, recomputeEventSetlist } from './event-setlist';
 import { EventSetlistEntity } from './event-setlist/entity';
 import { EventEntity } from './event/entity';
+import { OrganiserEntity } from './organiser/entity';
 import { adjustPerformanceCount as adjustRagaCount } from './raga';
 
 /** Builds a `.query.xxx(args)` mock that yields the given pages in sequence, one per `.go()` call. */
@@ -523,6 +529,84 @@ describe('cascade', () => {
       });
       expect(keys.gsi1sk).toBe('$eventartist_1#eventstartdatetime_2026-02-01t00:00:00.000z');
       expect(keys.gsi1sk).not.toBe('2026-02-01T00:00:00.000Z');
+    });
+  });
+
+  describe('cascadeEventContactToOrganiser', () => {
+    const contactInfo = {
+      website: 'vanamalaarts.org',
+      phone: '+919845514661',
+      email: 'INFO@vanamalaarts.org',
+    };
+
+    /** Returns the `set` spy so a test can assert what was written. */
+    function mockOrganiser(stored: Record<string, unknown> | null) {
+      vi.mocked(OrganiserEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: stored }),
+      } as never);
+      const setSpy = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+      vi.mocked(OrganiserEntity.patch).mockReturnValue({ set: setSpy } as never);
+      return setSpy;
+    }
+
+    it('fills the organiser’s empty contact fields from the event', async () => {
+      const setSpy = mockOrganiser({ id: 'org1', name: 'Vanamala' });
+
+      await cascade.cascadeEventContactToOrganiser('org1', contactInfo);
+
+      expect(OrganiserEntity.patch).toHaveBeenCalledWith({ id: 'org1' });
+      // Normalized on the way in: the URL gains a scheme, the address is lowercased.
+      expect(setSpy).toHaveBeenCalledWith({
+        website: 'https://vanamalaarts.org',
+        phone: '+919845514661',
+        email: 'info@vanamalaarts.org',
+      });
+    });
+
+    it('writes only what is missing, leaving a stored value alone', async () => {
+      const setSpy = mockOrganiser({ id: 'org1', phone: '080-26506049' });
+
+      await cascade.cascadeEventContactToOrganiser('org1', contactInfo);
+
+      expect(setSpy).toHaveBeenCalledWith({
+        website: 'https://vanamalaarts.org',
+        email: 'info@vanamalaarts.org',
+      });
+    });
+
+    it('writes nothing when the organiser already holds every field', async () => {
+      mockOrganiser({
+        id: 'org1',
+        website: 'https://x.org',
+        phone: '123',
+        email: 'a@b.c',
+      });
+
+      await cascade.cascadeEventContactToOrganiser('org1', contactInfo);
+
+      // Idempotent: approving a second event for the same organiser is a no-op.
+      expect(OrganiserEntity.patch).not.toHaveBeenCalled();
+    });
+
+    it('does nothing without an organiser id or a contact block', async () => {
+      mockOrganiser({ id: 'org1' });
+
+      await cascade.cascadeEventContactToOrganiser('', contactInfo);
+      await cascade.cascadeEventContactToOrganiser('org1', undefined);
+      await cascade.cascadeEventContactToOrganiser('org1', {});
+
+      expect(OrganiserEntity.get).not.toHaveBeenCalled();
+      expect(OrganiserEntity.patch).not.toHaveBeenCalled();
+    });
+
+    it('skips an organiser that is missing or soft-deleted', async () => {
+      mockOrganiser(null);
+      await cascade.cascadeEventContactToOrganiser('org1', contactInfo);
+      expect(OrganiserEntity.patch).not.toHaveBeenCalled();
+
+      mockOrganiser({ id: 'org1', deletedAt: '2026-01-01T00:00:00.000Z' });
+      await cascade.cascadeEventContactToOrganiser('org1', contactInfo);
+      expect(OrganiserEntity.patch).not.toHaveBeenCalled();
     });
   });
 
