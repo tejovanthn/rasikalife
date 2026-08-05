@@ -436,7 +436,11 @@ Three precision rules, each of which produced a wrong claim before it was found:
   teaches nobody to sing; and "Samskruthi - The Temple of Art" is not a shrine.
 - **Do not promote a school to a `university`, and leave "Foundation" undecided.** `ORGANISATION_TYPES`
   has no entry for a school, and a foundation is registered as a trust or an NGO with the name never
-  saying which. Inventing either is inventing a legal fact about a real organisation.
+  saying which. Inventing either is inventing a legal fact about a real organisation. This rule was
+  written about `vidyalaya` and the code broke it anyway on the next word: a bare `college` match
+  stored `Suswaralaya College of Music (R)` — a public charitable trust by its own account — as a
+  university. **A college of an art is a music school under a grander word**, so the subject decides,
+  not the noun; a general degree college still reads as one.
 
 A tag needs two events behind it or a third of the organiser's programme; the second clause is what
 makes it usable, since most organisers here have one to three events. `year-round` needs five

@@ -67,7 +67,12 @@ export function organisationTypeFromName(name: string): OrganisationType | undef
   if (/ (sabha|samaja|samaaja|sangha|samithi|mandali) /.test(n)) return 'sabha';
   // Only `college` and `university`. A `vidyalaya` is a school, and the enum has no entry for
   // one — reading it as a university would promote every neighbourhood music class.
-  if (/ (college|university) /.test(n)) return 'university';
+  //
+  // A college *of an art* is that same music class under a grander word, and this rule had
+  // already promoted one: `Suswaralaya College of Music (R)`, which its own site calls a
+  // public charitable trust, was stored as a university. Read the subject, not the noun.
+  const artsCollege = / college of (music|dance|fine arts|performing arts|indian) /.test(n);
+  if (!artsCollege && / (college|university) /.test(n)) return 'university';
   return undefined;
 }
 

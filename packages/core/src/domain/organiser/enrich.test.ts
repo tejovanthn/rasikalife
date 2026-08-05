@@ -21,7 +21,7 @@ describe('organisationTypeFromName', () => {
     expect(organisationTypeFromName('Kailas Sangeet Trust')).toBe('trust');
     expect(organisationTypeFromName('Arulmigu Sri Kapaleeswarar Temple')).toBe('temple');
     expect(organisationTypeFromName('Girinagara Sangeetha Sabha - Bangalore')).toBe('sabha');
-    expect(organisationTypeFromName('Suswaralaya College of Music (R)')).toBe('university');
+    expect(organisationTypeFromName('Bangalore University')).toBe('university');
   });
 
   it('leaves "Foundation" undecided rather than inventing a legal fact', () => {
@@ -53,6 +53,16 @@ describe('organisationTypeFromName', () => {
     expect(
       organisationTypeFromName('SAPTHAK, Bangalore & Nataraj Sangeeta Vidyalaya and Kalasangha')
     ).toBeUndefined();
+  });
+
+  it('does not promote a college of an art either', () => {
+    // This assertion used to read `university`, and prod stored that: Suswaralaya calls
+    // itself a public charitable trust on its own site. A college *of an art* is the same
+    // music school under a grander word, so the subject decides, not the noun.
+    expect(organisationTypeFromName('Suswaralaya College of Music (R)')).toBeUndefined();
+    expect(organisationTypeFromName('Government College of Fine Arts')).toBeUndefined();
+    // A general degree college still reads as one.
+    expect(organisationTypeFromName('MES College of Arts, Commerce & Science')).toBe('university');
   });
 });
 
