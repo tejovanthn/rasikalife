@@ -90,6 +90,23 @@ program
   });
 
 program
+  .command('dedup-places')
+  .description('Find duplicate venues and organisers for review, then merge the pairs marked')
+  .option('--apply', 'Merge the rows marked "merge" in --file, instead of reporting')
+  .option('--file <path>', 'Reviewed CSV to apply', 'place-duplicates.csv')
+  .option('--out <path>', 'Where to write the report', 'place-duplicates.csv')
+  .option('-n, --dry-run', 'With --apply, list the merges without writing')
+  .action(async (opts: { apply?: boolean; file: string; out: string; dryRun?: boolean }) => {
+    setup();
+    const mod = await import('./dedupPlaces.js');
+    if (opts.apply) {
+      await mod.applyDuplicatePlaceMerges({ file: opts.file, dryRun: opts.dryRun });
+    } else {
+      await mod.reportDuplicatePlaces({ out: opts.out });
+    }
+  });
+
+program
   .command('rebuild-collaborators')
   .description('Rebuild artist collaborator lists from the approved event history')
   .option('-n, --dry-run', 'Preview changes without writing to the database')

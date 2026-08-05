@@ -206,6 +206,11 @@
       "import": "./src/shared/completion.ts",
       "default": "./src/shared/completion.ts"
     },
+    "./shared/place-dedup": {
+      "types": "./src/shared/place-dedup.ts",
+      "import": "./src/shared/place-dedup.ts",
+      "default": "./src/shared/place-dedup.ts"
+    },
     "./shared/roles": {
       "types": "./src/shared/roles.ts",
       "import": "./src/shared/roles.ts",

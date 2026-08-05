@@ -491,13 +491,43 @@ had the chance to read. Note this is separate from **Ticketing → Contact Phone
 booking desk; `PhonesInput` therefore takes a `label` so the two sets of repeated rows are not
 both announced as "Contact phone 1".
 
-Both lists still carry duplicates the ragas taught us to expect — one venue split six ways
-(`The Bangalore Gayana Samaja (R)`, `Gayana Samaja`, `Gayana Samaaja`, `Bangalore Gayana Samaja`,
-`The Bangalore Gayana Samaja Hall`, `Bengaluru Gayana Samaaja`), which splits its events across six
-indexable URLs. `mergeVenue` and `mergeOrganiser` exist and both re-point the junctions and
-soft-delete with `mergedIntoId`; there is no report-and-apply script over them yet. When one is
-written, follow `dedup-ragas`: two-tier matching, keys in the domain rather than in
-`packages/scripts`, and nothing merges without a person marking it.
+### Deduplicating venues and organisers (`pnpm cli dedup-places`, two steps)
+
+Both lists carried the duplicates the ragas taught us to expect, for a sharper reason: an event
+naming an unknown venue or organiser creates one, so the same body is stored under every spelling
+a poster used. One hall was split six ways — `The Bangalore Gayana Samaja (R)`, `Gayana Samaja`,
+`Gayana Samaaja`, `Bangalore Gayana Samaja`, `The Bangalore Gayana Samaja Hall`,
+`Bengaluru Gayana Samaaja` — splitting its events across six indexable URLs.
+
+1. `dedup-places [--out place-duplicates.csv]` — reads the database, writes only the CSV. Covers
+   **both** domains in one file, keyed by a `domain` column, because it is one review pass.
+2. `dedup-places --apply --file <path> [--dry-run]` — merges the rows whose `decision` is `merge`.
+
+Same rules as `dedup-ragas` — merge never delete, nothing merges without a person marking it,
+keys in the domain rather than in `packages/scripts` — plus three of its own:
+
+- **The keys are in `shared/place-dedup.ts`, shared by both domains**, because it is one naming
+  problem: an honorific (`Sri`, `Shree`), a registration marker (`(R)`, `(Regd.)`, `®`), an
+  optional city, an optional generic building word, and whichever transliteration was typed.
+- **Four tiers, and they are not a filter each row falls through once.** `placeExactKey` removes
+  only certain noise, so a collision is real; `placeVariantKey` also drops honorifics, city and
+  generic words and collapses spelling; `isNearMatch` catches what no rule predicts
+  (`Chowdaiah` beside `Chowdiah`); `wordsSubsetOf` finds a hall named inside its building. A row
+  already gathered by a shared key must stay reachable by the weaker tiers, or the report misses
+  the best pairs — claiming rows tier by tier stranded `Chowdaiah Memorial Hall` and reported
+  *zero* near matches. Relations therefore accumulate into one connected group per place, each row
+  keeping the strongest tier that reached it.
+- **`contains` is a relation, not a duplicate.** A hall inside a building is sometimes a real
+  second venue. It is reported last and is the tier to read most sceptically: on the first run it
+  proposed `Bhairavi Sabha` → `Indiranagar Sangeetha Sabha` and `Rama Mandira` → a concert hall,
+  which are different places. It also ranked a parent below its own room, so check the direction
+  before marking — the canonical is picked by merge score, and a studio can out-score its venue.
+
+Canonical is the row the rest of the database already points at (`getVenueMergeScore` /
+`getOrganiserMergeScore`: events attached plus filled fields), age breaking a tie. Both merges
+re-point the junctions, soft-delete with `mergedIntoId` — which both routes already turn into a
+redirect — and keep the loser's name in `alternateNames`. Renaming afterwards is safe: venue and
+organiser routes key on the id, not a slug. Reindex search after a merge run.
 
 ### Rasika Classes: the credit ledger (`class-*` domains)
 
