@@ -375,6 +375,30 @@ Two precision rules the prompt and the code both enforce:
   edge to an arbitrary one at a confident-looking score. `matchName` is always reported: a
   reviewer cannot judge a match from a KSUID and a number.
 
+### Handing bulk research to an outside agent (`research-batches` → `research-ingest`)
+
+For a corpus too large to research on an expensive model. The fetching is cheap and delegable;
+the *checking* is not, so only the middle step leaves the repo and nothing it produces reaches
+the database unvalidated. Full runbook and the orchestrator/worker prompts:
+`docs/research/raga-enrichment.md`.
+
+- `research-batches --domain <d> --out-dir <dir> [--size 25]` writes self-contained packets —
+  each carries the field list, the rules, and per record its id, name, what is missing and what
+  is already stored. **The packet is the contract**; a worker gets no prompt restating the rules,
+  because a prompt and a validator that disagree is how a rule quietly stops applying.
+- `research-ingest --domain <d> --dir <dir> --out <csv> [--report <csv>]` validates every value
+  and writes an ordinary admin CSV plus a refusal report. A truncated result file is skipped with
+  a warning rather than taking the run down. Read the refusals before importing — a rate that
+  jumps, or clusters on one field, means the batch is worth re-running rather than accepting.
+- Rules live in `core/src/admin/research.ts` (browser-safe, unit-tested — `packages/scripts` has
+  no vitest). **`melaNumber` is never accepted from research**: a janya stores its *parent's*
+  number, exactly the fact a model gets subtly wrong, and `deriveMelaNumbers` computes it from
+  the parent afterwards for free. `validateSwaras` refuses anything that is not swara notation,
+  because a wrong arohanam is worse than a blank on the field people search for.
+- Order matters: **dedup first**, then the 72 melakartas (canonical, and filling them unlocks
+  mela derivation for their janyas), then the rest. Researching before merging spends the budget
+  twice and writes onto a page about to become a redirect.
+
 ### Deduplicating ragas (`pnpm cli dedup-ragas`, two steps)
 
 The corpus holds two import generations and the same raga appears in both under different

@@ -119,6 +119,47 @@ program
   });
 
 program
+  .command('research-batches')
+  .description('Write self-contained research packets for another agent to fill')
+  .requiredOption('--domain <name>', 'raga (the only domain with a field list so far)')
+  .requiredOption('--out-dir <dir>', 'Where to write the batch files')
+  .option('--size <n>', 'Records per batch', (v: string) => Number.parseInt(v, 10), 25)
+  .option('--all', 'Include records that already have every researched field')
+  .option('--limit <n>', 'Only the first n records', (v: string) => Number.parseInt(v, 10))
+  .action(
+    async (opts: {
+      domain: string;
+      outDir: string;
+      size: number;
+      all?: boolean;
+      limit?: number;
+    }) => {
+      setup();
+      const { writeResearchBatches } = await import('./research.js');
+      await writeResearchBatches({
+        domain: opts.domain,
+        outDir: opts.outDir,
+        size: opts.size,
+        onlyMissing: !opts.all,
+        limit: opts.limit,
+      });
+    }
+  );
+
+program
+  .command('research-ingest')
+  .description('Validate returned research packets into an admin CSV, refusing what fails')
+  .requiredOption('--domain <name>', 'The domain the batches were cut from')
+  .requiredOption('--dir <dir>', 'Directory holding the *.result.json files')
+  .requiredOption('--out <path>', 'Where to write the merged admin CSV')
+  .option('--report <path>', 'Where to write the refusals as CSV')
+  .action(async (opts: { domain: string; dir: string; out: string; report?: string }) => {
+    setup();
+    const { ingestResearch } = await import('./research.js');
+    await ingestResearch(opts);
+  });
+
+program
   .command('admin-clear-fields')
   .description('Remove attributes outright, which a blank CSV cell cannot do')
   .requiredOption('--domain <name>', 'venue or organiser')

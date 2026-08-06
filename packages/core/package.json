@@ -21,6 +21,11 @@
       "import": "./src/admin/columns.ts",
       "default": "./src/admin/columns.ts"
     },
+    "./admin/research": {
+      "types": "./src/admin/research.ts",
+      "import": "./src/admin/research.ts",
+      "default": "./src/admin/research.ts"
+    },
     "./admin/csv": {
       "types": "./src/admin/csv.ts",
       "import": "./src/admin/csv.ts",
