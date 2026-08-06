@@ -149,7 +149,7 @@ and the batch is worth re-running rather than accepting.
 > ragasurabhi.com, and Sangeetapriya. Prefer a source that names the raga's parent and scale
 > explicitly.
 >
-> **Working method.** Do the records in order. Write your result file after **every 5 records**,
+> **Working method.** Do the records in order. Write your result file after **every 3 records**,
 > overwriting it each time with everything accumulated so far — if you are stopped, only the
 > unwritten tail is lost. Budget 1–3 lookups per raga and move on when one is not yielding; a
 > large fraction of this corpus is obscure and will yield nothing, which is expected.
@@ -163,6 +163,14 @@ and the batch is worth re-running rather than accepting.
 > - `description` is 2–5 plain factual sentences: what the raga is, whether it is a melakarta or a
 >   janya and of what, its mood, when it is sung. No praise, no ranking, no hedging. If you only
 >   know one true sentence, write one true sentence.
+> - **The validator throws out a description containing any of these**, so a lookup spent on one
+>   is a lookup wasted: renowned, premier, iconic, prestigious, leading, legendary, famous,
+>   acclaimed, eminent, illustrious, foremost, world-class, unparalleled, vibrant, majestic,
+>   soul-stirring, hauntingly, mesmerising; "one of the oldest/most/largest/finest/greatest" and
+>   "the oldest/largest/greatest/finest/most popular"; implying, presumably, apparently,
+>   seemingly, likely, appears to, seems to, possibly, probably, may have been, might be,
+>   reportedly, is believed to, thought to be, unclear, "not sure". These bind `description`
+>   alone — `rasa` is free text, so `rasa: "majestic"` is fine.
 > - A fact about the parent raga is not a fact about this raga.
 >
 > **Output** — a JSON array at `<batch-path-without-.json>.result.json`, one object per record you
