@@ -20,6 +20,30 @@ import { domainToCsv, parseDomainCsv } from '@rasika/core/admin/columns';
  * under another spelling. Check the created count, and reconcile with `dedup-places`.
  */
 
+/**
+ * Take back a value that should never have been written. The CSV cannot: a blank cell means
+ * "leave alone", which is what makes a partial sheet safe to upload.
+ */
+export async function clearDomainFields(opts: {
+  domain: string;
+  id: string;
+  fields: string[];
+  dryRun?: boolean;
+}): Promise<void> {
+  const { domain, id, fields, dryRun = false } = opts;
+  if (dryRun) {
+    const existing = (await AdminData.listAllForDomain(domain)).find(row => row.id === id);
+    if (!existing) throw new Error(`${domain} with id "${id}" not found`);
+    const present = fields.filter(field => existing[field] != null);
+    console.log(
+      `[dry-run] would clear on "${existing.name}": ${present.join(', ') || '(nothing set)'}`
+    );
+    return;
+  }
+  const { cleared } = await AdminData.clearFieldsForDomain(domain, id, fields);
+  console.log(cleared.length > 0 ? `🧹 cleared ${cleared.join(', ')}` : '· nothing was set');
+}
+
 export async function exportDomainCsv(opts: { domain: string; out: string }): Promise<void> {
   const rows = await AdminData.listAllForDomain(opts.domain);
   writeFileSync(opts.out, domainToCsv(opts.domain, rows as Record<string, unknown>[]), 'utf-8');

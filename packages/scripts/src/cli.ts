@@ -119,6 +119,19 @@ program
   });
 
 program
+  .command('admin-clear-fields')
+  .description('Remove attributes outright, which a blank CSV cell cannot do')
+  .requiredOption('--domain <name>', 'venue or organiser')
+  .requiredOption('--id <id>', 'The record to correct')
+  .requiredOption('--fields <list>', 'Comma-separated attribute names', (v: string) => v.split(','))
+  .option('-n, --dry-run', 'Report what is set without removing it')
+  .action(async (opts: { domain: string; id: string; fields: string[]; dryRun?: boolean }) => {
+    setup();
+    const { clearDomainFields } = await import('./adminCsv.js');
+    await clearDomainFields(opts);
+  });
+
+program
   .command('dedup-places')
   .description('Find duplicate venues and organisers for review, then merge the pairs marked')
   .option('--apply', 'Merge the rows marked "merge" in --file, instead of reporting')

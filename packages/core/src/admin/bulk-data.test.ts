@@ -25,7 +25,60 @@ vi.mock('../domain/composition', () => ({
   updateComposition: vi.fn(),
 }));
 
-import { BULK_DOMAIN_KEYS, bulkUpsertForDomain } from './bulk-data';
+const venueRemove = vi.fn(() => ({ go: vi.fn().mockResolvedValue({}) }));
+vi.mock('../domain/venue', () => ({
+  getVenue: vi.fn(),
+  getVenueByName: vi.fn(),
+  createVenue: vi.fn(),
+  updateVenue: vi.fn(),
+}));
+vi.mock('../domain/venue/entity', () => ({
+  VenueEntity: { update: () => ({ remove: venueRemove }), scan: { go: vi.fn() } },
+}));
+
+import * as Venue from '../domain/venue';
+import { BULK_DOMAIN_KEYS, bulkUpsertForDomain, clearFieldsForDomain } from './bulk-data';
+
+describe('clearFieldsForDomain', () => {
+  // The CSV cannot clear a field — a blank cell means "leave alone" — so this is the only way
+  // to take back a value that should never have been written. Enrichment produces exactly
+  // that: a venue given the website of a same-named society in another city.
+  beforeEach(() => venueRemove.mockClear());
+
+  it('removes only the attributes actually set, and reports them', async () => {
+    vi.mocked(Venue.getVenue).mockResolvedValue({
+      id: 'v1',
+      name: 'Seva Sadan',
+      website: 'https://wrong.example',
+    } as never);
+
+    const result = await clearFieldsForDomain('venue', 'v1', ['website', 'capacity']);
+
+    expect(result.cleared).toEqual(['website']);
+    expect(venueRemove).toHaveBeenCalledWith(['website']);
+  });
+
+  it('writes nothing when none of the fields are set', async () => {
+    vi.mocked(Venue.getVenue).mockResolvedValue({ id: 'v1', name: 'Seva Sadan' } as never);
+
+    const result = await clearFieldsForDomain('venue', 'v1', ['website']);
+
+    expect(result.cleared).toEqual([]);
+    expect(venueRemove).not.toHaveBeenCalled();
+  });
+
+  it('refuses to clear identity fields, which would break the record rather than fix it', async () => {
+    await expect(clearFieldsForDomain('venue', 'v1', ['name'])).rejects.toThrow(
+      'Refusing to clear'
+    );
+    expect(venueRemove).not.toHaveBeenCalled();
+  });
+
+  it('throws when the record does not exist', async () => {
+    vi.mocked(Venue.getVenue).mockResolvedValue(null as never);
+    await expect(clearFieldsForDomain('venue', 'nope', ['website'])).rejects.toThrow('not found');
+  });
+});
 
 describe('BULK_DOMAIN_KEYS', () => {
   it('matches the CSV column registry so every domain can round-trip', () => {

@@ -64,6 +64,8 @@ interface DomainConfig {
   update: (id: string, input: Row, ctx: BulkContext) => Promise<unknown>;
   scanAll: () => Promise<Row[]>;
   prepare?: PrepareFn;
+  /** Removes attributes outright; see `clearFieldsForDomain`. */
+  clear?: (id: string, fields: string[]) => Promise<unknown>;
 }
 
 async function getOrCreateRef(
@@ -248,6 +250,10 @@ const REGISTRY: Record<string, DomainConfig> = {
     create: input => Venue.createVenue(input as Parameters<typeof Venue.createVenue>[0]),
     update: (id, input) => Venue.updateVenue(id, input as Parameters<typeof Venue.updateVenue>[1]),
     scanAll: () => scanEntity(opts => VenueEntity.scan.go(opts)),
+    clear: (id, fields) =>
+      VenueEntity.update({ id })
+        .remove(fields as never[])
+        .go(),
   },
   organiser: {
     createSchema: CreateOrganiserSchema,
@@ -258,6 +264,10 @@ const REGISTRY: Record<string, DomainConfig> = {
     update: (id, input) =>
       Organiser.updateOrganiser(id, input as Parameters<typeof Organiser.updateOrganiser>[1]),
     scanAll: () => scanEntity(opts => OrganiserEntity.scan.go(opts)),
+    clear: (id, fields) =>
+      OrganiserEntity.update({ id })
+        .remove(fields as never[])
+        .go(),
     prepare: prepareOrganiser,
   },
   festival: {
@@ -315,6 +325,44 @@ export async function listAllForDomain(domain: string): Promise<Row[]> {
   const config = REGISTRY[domain];
   if (!config) throw new Error(`Unknown bulk domain: ${domain}`);
   return config.scanAll();
+}
+
+/**
+ * Identity and bookkeeping. Clearing any of these does not correct a record, it breaks one.
+ */
+const UNCLEARABLE = new Set(['id', 'name', 'title', 'createdAt', 'updatedAt', 'pk', 'sk']);
+
+/**
+ * Remove attributes outright.
+ *
+ * The CSV cannot express this and deliberately so — a blank cell means "leave alone", which is
+ * what makes a partial sheet safe to upload. But that leaves no way to take back a value that
+ * should never have been written, and enrichment produces exactly that: a venue was given a
+ * website belonging to a same-named society in another city, sourced, plausible and wrong.
+ *
+ * Per rule 8, `.set({ x: undefined })` does not clear an attribute — ElectroDB drops undefined
+ * out of the UpdateExpression entirely — so this goes through `.remove()`.
+ */
+export async function clearFieldsForDomain(
+  domain: string,
+  id: string,
+  fields: string[]
+): Promise<{ cleared: string[] }> {
+  const config = REGISTRY[domain];
+  if (!config) throw new Error(`Unknown bulk domain: ${domain}`);
+  if (!config.clear) throw new Error(`${domain} does not support clearing fields`);
+
+  const refused = fields.filter(field => UNCLEARABLE.has(field));
+  if (refused.length > 0) throw new Error(`Refusing to clear ${refused.join(', ')}`);
+
+  const existing = (await config.getById(id)) as Record<string, unknown> | null;
+  if (!existing) throw new Error(`${domain} with id "${id}" not found`);
+
+  // Only what is actually set, so the caller is told what really changed rather than what
+  // was asked for.
+  const present = fields.filter(field => existing[field] != null);
+  if (present.length > 0) await config.clear(id, present);
+  return { cleared: present };
 }
 
 export async function bulkUpsertForDomain(

@@ -822,6 +822,14 @@ An admin-only tool to export any domain to CSV, edit it in a spreadsheet, and re
   path; these exist for a bulk pass against prod, where a dry run, every row error printed rather
   than the first few, and a file a script can build all matter. **A parse error stops the run** —
   landing the readable rows would write a partial edit and report success.
+- **`AdminData.clearFieldsForDomain(domain, id, fields)`**, via
+  `pnpm cli admin-clear-fields --domain <name> --id <id> --fields a,b`. The CSV cannot express
+  this and should not: a blank cell means "leave alone", which is what makes a partial sheet safe
+  to upload. But that leaves no way to take back a value that should never have been written, and
+  enrichment produces exactly that — a venue was given the website of a same-named society in
+  another city, sourced, plausible and wrong. Uses `.remove()` per rule 8, removes only what is
+  actually set, and refuses `id`/`name`/`title`/timestamps. Wired for venue and organiser; add a
+  `clear` to the registry entry to extend it.
 
 To add a domain: add its column list to `ADMIN_CSV_DOMAINS` and a registry entry (with a `prepare` hook if it has linked names) to `bulk-data.ts`.
 
