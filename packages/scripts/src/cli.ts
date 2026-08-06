@@ -139,6 +139,8 @@ program
   .option('--size <n>', 'Records per batch', (v: string) => Number.parseInt(v, 10), 25)
   .option('--all', 'Include records that already have every researched field')
   .option('--limit <n>', 'Only the first n records', (v: string) => Number.parseInt(v, 10))
+  .option('--ids <file>', 'Only these ids, one per line, in this order')
+  .option('--exclude-ids <file>', 'Skip these ids, one per line')
   .action(
     async (opts: {
       domain: string;
@@ -146,6 +148,8 @@ program
       size: number;
       all?: boolean;
       limit?: number;
+      ids?: string;
+      excludeIds?: string;
     }) => {
       setup();
       const { writeResearchBatches } = await import('./research.js');
@@ -155,6 +159,8 @@ program
         size: opts.size,
         onlyMissing: !opts.all,
         limit: opts.limit,
+        idsFile: opts.ids,
+        excludeFile: opts.excludeIds,
       });
     }
   );

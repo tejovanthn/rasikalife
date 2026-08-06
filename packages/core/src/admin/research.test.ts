@@ -4,6 +4,7 @@ import {
   checkProse,
   deriveMelaNumbers,
   mergeResearch,
+  selectRecords,
   validateResearchField,
   validateSocialLinks,
   validateSwaras,
@@ -227,5 +228,48 @@ describe('deriveMelaNumbers', () => {
     ];
     deriveMelaNumbers(rows);
     expect(rows[1].melaNumber).toBe('20');
+  });
+});
+
+describe('selectRecords', () => {
+  const rows = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+
+  it('returns everything when no list is given', () => {
+    expect(selectRecords(rows).records.map(r => r.id)).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('selects and reorders to the list, not the scan order', () => {
+    const { records } = selectRecords(rows, { wanted: ['c', 'a'] });
+    expect(records.map(r => r.id)).toEqual(['c', 'a']);
+  });
+
+  it('counts ids that name nothing rather than throwing', () => {
+    // The list is generated from an older export, so a merged-away raga is ordinary.
+    const { records, unmatched } = selectRecords(rows, { wanted: ['a', 'gone', 'b'] });
+    expect(records.map(r => r.id)).toEqual(['a', 'b']);
+    expect(unmatched).toBe(1);
+  });
+
+  it('researches a repeated id once', () => {
+    expect(selectRecords(rows, { wanted: ['a', 'b', 'a'] }).records.map(r => r.id)).toEqual([
+      'a',
+      'b',
+    ]);
+  });
+
+  it('drops what an earlier pass covered, with or without a list', () => {
+    expect(selectRecords(rows, { wanted: ['a', 'b'], excluded: ['b'] }).records).toEqual([
+      { id: 'a' },
+    ]);
+    expect(selectRecords(rows, { excluded: ['a', 'd'] }).records.map(r => r.id)).toEqual([
+      'b',
+      'c',
+    ]);
+  });
+
+  it('does not count an excluded id as unmatched', () => {
+    const { records, unmatched } = selectRecords(rows, { wanted: ['a', 'b'], excluded: ['b'] });
+    expect(records.map(r => r.id)).toEqual(['a']);
+    expect(unmatched).toBe(0);
   });
 });

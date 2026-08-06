@@ -148,6 +148,46 @@ export const RESEARCH_FIELDS: Record<string, readonly string[]> = {
   ],
 };
 
+// ── choosing what to research, and in what order ────────────────────────────────────────
+
+/**
+ * Picks the records a pass covers, in the order the pass wants them.
+ *
+ * A corpus this size is researched in passes — the canonical records first, then everything
+ * else busiest-first — so the order records reach a worker in has to be something the caller
+ * can state rather than whatever the table scan returned. `wanted` both selects and orders;
+ * `excluded` drops what an earlier pass already covered.
+ *
+ * An id that names nothing is dropped rather than throwing: the list is usually generated
+ * from an older export, and one merged-away raga should not take the run down with it. The
+ * count of those is returned so the caller can say so.
+ */
+export function selectRecords<T extends { id: string }>(
+  rows: T[],
+  opts: { wanted?: string[]; excluded?: string[] } = {}
+): { records: T[]; unmatched: number } {
+  const byId = new Map(rows.map(row => [row.id, row]));
+  const excluded = new Set(opts.excluded ?? []);
+  if (!opts.wanted) return { records: rows.filter(row => !excluded.has(row.id)), unmatched: 0 };
+
+  const records: T[] = [];
+  const seen = new Set<string>();
+  let unmatched = 0;
+  for (const id of opts.wanted) {
+    const row = byId.get(id);
+    if (!row) {
+      unmatched += 1;
+      continue;
+    }
+    // A list built by concatenating passes can name the same id twice; researching it twice
+    // would spend the budget twice for one page.
+    if (seen.has(id) || excluded.has(id)) continue;
+    seen.add(id);
+    records.push(row);
+  }
+  return { records, unmatched };
+}
+
 /** Validates one researched cell. Returns the value to store, or the reason it was refused. */
 export function validateResearchField(domain: string, field: string, raw: unknown): Checked {
   if (raw == null) return reject('null');

@@ -22,13 +22,31 @@ prompt and a validator that disagree is how a rule quietly stops applying.
 1. **`pnpm cli dedup-ragas` first.** Around 312 of the 1,869 are a second copy of a raga already
    in the corpus — `kharaharapriyA` sits beside `kharaharapriyA (shrIrAgam)` today. Researching
    before merging spends the budget twice and writes the answer onto a page that is about to
-   become a redirect.
-2. **Then the 72 melakartas, as their own batch.** They are canonical, uncontested and
-   well-documented, so they are the cheapest records to get right — and `melaNumber` on every
-   janya is *derived* from its parent, so filling the parents first unlocks hundreds of children
-   for free. Today even `kharaharapriyA` has no mela number stored, which is why derivation
-   currently fires for almost nobody.
-3. **Then everything else**, busiest-first if you have a signal for it.
+   become a redirect. (Done: the corpus is 1,526 records now.)
+2. **Then the 72 melakartas' own numbers and scales — computed, not researched.** A melakarta's
+   scale *is* its number: M1 below 37 and M2 above, the (Ra, Ga) pair from the chakra and the
+   (Da, Ni) pair from the position inside it. So the whole of `melaNumber`, `arohanam` and
+   `avarohanam` for all 72 falls out of `MELAKARTA_LINKS` (`packages/web/app/lib/melakarta-links.ts`)
+   with no lookup and no chance of a wrong scale. Do not spend an agent on it. Three of the 72
+   already stored a scale and all three matched the derivation, which is the check that the
+   number-to-record map is right.
+3. **Then the 72 melakartas as their own research batch**, for the fields that are not derivable
+   — description, tradition, rasa, timeOfDay, season. They are canonical and well-documented, so
+   they are the cheapest records to get right, and every raga page that names a parent links here.
+4. **Then everything else, busiest-first.** The signal is compositions attached: scan the
+   `composition_raga` junction and rank by it. Of 1,526 ragas, 667 carry a composition and the
+   head is steep — `shankarAbharaNa` has 322, the 143rd-busiest has 10. Feed that order in with
+   `--ids`, so the batches that get researched first are the pages people already reach.
+
+Two flags exist for step 3 and 4: `--ids <file>` takes one id per line (`#` starts a comment) and
+both selects and orders, and `--exclude-ids <file>` drops what an earlier pass covered. A run is
+cut in passes, so the order records appear in has to be something the caller can state.
+
+**Watch the melakartas stored under asampurna names.** Ten or so of the 72 records are named for
+the Dikshitar-school raga rather than the Kanakangi-Ratnangi one — mela 17 is stored `chAyAvati`,
+51 `kAshIrAmakriya`, 69 `dhautapancamam`. The ids are right; the names are the other tradition's.
+An asampurna raga need not be sampurna, so a researcher should check the source scale against
+what is stored and say so rather than assume.
 
 ## Cutting the batches
 
@@ -40,6 +58,16 @@ Writes `raga-001.json … raga-075.json` plus a `manifest.json`. Each packet is 
 carries the field list, the rules, and for every record its `id`, `name`, what is `missing` and
 what is already `current`. A worker needs no other context, and should not be given a prompt that
 restates the rules — the packet is the contract.
+
+Put the run under `data/`, which is gitignored, so a result file survives a session ending
+without being committed. This run used `data/raga-research/melakarta/` and
+`data/raga-research/main/`, with the id lists beside them.
+
+A worker prompt may still carry a **fact about its batch** that the cutter could not know —
+"every record here is one of the 72 melakartas, so leave `parentRaga` blank". That is context,
+not a rule, and the distinction is worth keeping: a rule restated in a prompt can drift from the
+validator, a fact cannot. It is also worth telling a worker the validator's refused vocabulary
+outright, since a description thrown out for the word "renowned" is a whole lookup wasted.
 
 ## Ingesting what comes back
 

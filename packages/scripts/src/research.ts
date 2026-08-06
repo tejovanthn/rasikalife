@@ -3,7 +3,12 @@ import { join } from 'node:path';
 import { AdminData } from '@rasika/core';
 import { ADMIN_CSV_DOMAINS, domainToCsv } from '@rasika/core/admin/columns';
 import { parseCsv, toCsv } from '@rasika/core/admin/csv';
-import { RESEARCH_FIELDS, type ResearchRecord, mergeResearch } from '@rasika/core/admin/research';
+import {
+  RESEARCH_FIELDS,
+  type ResearchRecord,
+  mergeResearch,
+  selectRecords,
+} from '@rasika/core/admin/research';
 
 /**
  * Two halves of a research run that a *different* agent — on a different model, in a
@@ -56,14 +61,24 @@ async function flatRows(
   return { header, rows };
 }
 
+/** One id per line; blank lines and `#` comments ignored. Order is the batching order. */
+function readIdList(path: string): string[] {
+  return readFileSync(path, 'utf-8')
+    .split('\n')
+    .map(line => line.replace(/#.*/, '').trim())
+    .filter(Boolean);
+}
+
 export async function writeResearchBatches(opts: {
   domain: string;
   outDir: string;
   size: number;
   onlyMissing?: boolean;
   limit?: number;
+  idsFile?: string;
+  excludeFile?: string;
 }): Promise<void> {
-  const { domain, outDir, size, onlyMissing = true, limit } = opts;
+  const { domain, outDir, size, onlyMissing = true, limit, idsFile, excludeFile } = opts;
   const fields = RESEARCH_FIELDS[domain];
   if (!fields) throw new Error(`No research field list for "${domain}"`);
   if (!ADMIN_CSV_DOMAINS[domain]) throw new Error(`Unknown CSV domain "${domain}"`);
@@ -71,7 +86,14 @@ export async function writeResearchBatches(opts: {
   const { rows } = await flatRows(domain);
   mkdirSync(outDir, { recursive: true });
 
-  const candidates = rows
+  // The selection itself is in core, where it is unit-tested; this reads the files.
+  const { records: ordered, unmatched } = selectRecords(rows, {
+    wanted: idsFile ? readIdList(idsFile) : undefined,
+    excluded: excludeFile ? readIdList(excludeFile) : undefined,
+  });
+  if (unmatched > 0) console.warn(`⚠️  ${unmatched} of the listed ids are not in ${domain}`);
+
+  const candidates = ordered
     .map(row => ({
       id: row.id,
       name: row.name,
