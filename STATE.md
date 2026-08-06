@@ -2,6 +2,31 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
+## Active: filling the raga corpus (2026-08-06)
+
+Runbook: `docs/research/raga-enrichment.md`. The dedup has run — 1,526 records, down from 1,869.
+
+**Landed already: all 72 melakarta numbers and scales, computed rather than researched.** A
+melakarta's scale is its number, so the whole of `melaNumber`, `arohanam` and `avarohanam` came
+out of `MELAKARTA_LINKS` with no lookup. 210 blank cells filled, imported to prod. The three that
+already stored a scale all matched the derivation, which is what checks the number-to-record map.
+
+**Next step: `pnpm prod-cli research-ingest --domain raga --dir data/raga-research/melakarta
+--out raga-mela-filled.csv --report raga-mela-refused.csv`, read the refusals, then import with
+`--user 39WZZXug7V6PdinExzhhp6zDuKD` and reindex.** Three workers filled description, tradition,
+rasa, timeOfDay and season for the 72; their results are in that directory.
+
+Then the long pass: `data/raga-research/main/` holds 59 batches covering the other 1,453 records,
+ordered busiest-first by compositions attached. Dispatch workers a few at a time; a batch with a
+`.result.json` beside it is done and must not be re-dispatched, partial or not. The worker prompt
+is in the runbook, plus two batch facts worth repeating: the validator's refused vocabulary, and
+for the melakarta batches only, that `parentRaga` stays blank.
+
+**Read the notes on mela 17, 51 and 69 before importing.** Ten of the 72 are stored under their
+asampurna names (`chAyAvati`, `kAshIrAmakriya`, `dhautapancamam`), and an asampurna raga need not
+be sampurna — so the scale computed for them is the one worth checking a source against. The
+workers were told to report any disagreement rather than resolve it.
+
 ## Active: Rasika Classes (2026-08-02)
 
 Plan: `docs/plans/260802-01-rasika-classes.md`. **All nine phases are built and green. Nothing is
