@@ -1,5 +1,5 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { fromItrans } from '@rasika/core/utils';
+import { fromItrans } from '@rasika/core/utils/transliteration';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';

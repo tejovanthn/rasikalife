@@ -1,6 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { fromItrans } from '@rasika/core/utils';
+import { fromItrans } from '@rasika/core/utils/transliteration';
 import { Pencil } from 'lucide-react';
 import { type LinksFunction, type MetaFunction, data, redirect } from 'react-router';
 import { Link, useLoaderData } from 'react-router';

@@ -1,5 +1,5 @@
 import { CHAKRA_NAMES, chakraOfMela, melakartaScale } from '@rasika/core/domain/raga/melakarta';
-import { fromItrans } from '@rasika/core/utils';
+import { fromItrans } from '@rasika/core/utils/transliteration';
 import { ChevronDown } from 'lucide-react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';

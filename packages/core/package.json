@@ -16,6 +16,11 @@
       "import": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
     },
+    "./utils/transliteration": {
+      "types": "./src/utils/transliteration.ts",
+      "import": "./src/utils/transliteration.ts",
+      "default": "./src/utils/transliteration.ts"
+    },
     "./admin/columns": {
       "types": "./src/admin/columns.ts",
       "import": "./src/admin/columns.ts",

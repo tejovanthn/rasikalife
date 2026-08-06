@@ -1,6 +1,6 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
-import { formatSwaras, fromItrans } from '@rasika/core/utils';
+import { formatSwaras, fromItrans } from '@rasika/core/utils/transliteration';
 import { type MetaFunction, data, redirect } from 'react-router';
 import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
