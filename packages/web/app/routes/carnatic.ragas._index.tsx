@@ -5,6 +5,7 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
+import { MelakartaWheel } from '~/components/MelakartaWheel';
 import { RagaCard } from '~/components/RagaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
@@ -111,6 +112,8 @@ export default function RagasIndex() {
           </p>
         )}
       </header>
+
+      <MelakartaWheel />
 
       {ragas.length === 0 ? (
         <EmptyState message="No ragas available at the moment." />

@@ -138,4 +138,14 @@ export type { Raga } from './entity';
 // Matching keys for the dedup CLI in packages/scripts, which cannot host its own
 // tests — keeping them here is what makes the matching testable.
 export { ragaExactKey, ragaVariantKey } from './dedup';
+// The 72-melakarta generating rules, shared by the chakra widget and the script
+// that resolves the canonical melakarta records in the database.
+export {
+  CHAKRA_NAMES,
+  chakraNameOfMela,
+  chakraOfMela,
+  melakartaScale,
+  positionOfMela,
+} from './melakarta';
+export type { ChakraName } from './melakarta';
 export { CreateRagaSchema, UpdateRagaSchema } from './schema';

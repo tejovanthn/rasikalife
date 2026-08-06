@@ -86,6 +86,11 @@
       "import": "./src/domain/raga/dedup.ts",
       "default": "./src/domain/raga/dedup.ts"
     },
+    "./domain/raga/melakarta": {
+      "types": "./src/domain/raga/melakarta.ts",
+      "import": "./src/domain/raga/melakarta.ts",
+      "default": "./src/domain/raga/melakarta.ts"
+    },
     "./domain/tala/client": {
       "types": "./src/domain/tala/client.ts",
       "import": "./src/domain/tala/client.ts",

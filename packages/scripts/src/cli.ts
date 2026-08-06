@@ -101,6 +101,19 @@ program
   });
 
 program
+  .command('generate-melakarta-links')
+  .description('Write the melakarta-links.ts map from the resolved source of truth')
+  .option(
+    '--out <path>',
+    'Where to write the map (default: packages/web/app/lib/melakarta-links.ts)'
+  )
+  .action(async (opts: { out?: string }) => {
+    setup();
+    const { generateMelakartaLinks } = await import('./generateMelakartaLinks.js');
+    await generateMelakartaLinks({ out: opts.out });
+  });
+
+program
   .command('admin-csv-import')
   .description('Land an edited admin CSV, blank cells meaning "leave alone"')
   .requiredOption('--domain <name>', 'artist, raga, tala, composition, venue, organiser, ...')
