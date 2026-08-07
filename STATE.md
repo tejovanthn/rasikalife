@@ -2,30 +2,38 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Active: filling the raga corpus (2026-08-06)
+## Active: filling the raga corpus (2026-08-07)
 
 Runbook: `docs/research/raga-enrichment.md`. The dedup has run — 1,526 records, down from 1,869.
+Admin user for imports: `39WZZXug7V6PdinExzhhp6zDuKD`.
 
-**Landed already: all 72 melakarta numbers and scales, computed rather than researched.** A
-melakarta's scale is its number, so the whole of `melaNumber`, `arohanam` and `avarohanam` came
-out of `MELAKARTA_LINKS` with no lookup. 210 blank cells filled, imported to prod. The three that
-already stored a scale all matched the derivation, which is what checks the number-to-record map.
+**Landed in prod.** All 72 melakarta numbers and scales, *computed* rather than researched — a
+melakarta's scale is its number, so `melakartaScale` derives all 72 with no lookup (210 cells).
+The three that already stored a scale all matched, which is what verifies the number-to-record
+map in `MELAKARTA_LINKS`. Then the research pass over those 72 plus the 75 busiest janyas: 271
+cells of description, tradition, rasa, timeOfDay, season and parent, and 16 mela numbers derived
+from newly-named parents.
 
-**Next step: `pnpm prod-cli research-ingest --domain raga --dir data/raga-research/melakarta
---out raga-mela-filled.csv --report raga-mela-refused.csv`, read the refusals, then import with
-`--user 39WZZXug7V6PdinExzhhp6zDuKD` and reindex.** Three workers filled description, tradition,
-rasa, timeOfDay and season for the 72; their results are in that directory.
+**Next step: `pnpm prod-cli reindex`.** Nothing has been reindexed since any of this landed.
 
-Then the long pass: `data/raga-research/main/` holds 59 batches covering the other 1,453 records,
-ordered busiest-first by compositions attached. Dispatch workers a few at a time; a batch with a
-`.result.json` beside it is done and must not be re-dispatched, partial or not. The worker prompt
-is in the runbook, plus two batch facts worth repeating: the validator's refused vocabulary, and
-for the melakarta batches only, that `parentRaga` stays blank.
+Then keep the long pass going: `data/raga-research/main/` holds 59 batches covering the corpus
+busiest-first by compositions attached; 001–003 have results (001 complete, 002 at 18/25, 003 at
+15/25 — both cut short by a session limit). **A batch with a `.result.json` beside it must never
+be re-dispatched, partial or not**; to finish a partial one, cut the outstanding records into a
+new numbered batch the way `melakarta/raga-004.json` was. Worker prompt is in the runbook.
 
-**Read the notes on mela 17, 51 and 69 before importing.** Ten of the 72 are stored under their
-asampurna names (`chAyAvati`, `kAshIrAmakriya`, `dhautapancamam`), and an asampurna raga need not
-be sampurna — so the scale computed for them is the one worth checking a source against. The
-workers were told to report any disagreement rather than resolve it.
+**Two melakartas are stored twice and `dedup-ragas` cannot see it** — `tODi` (207 compositions)
+beside `hanumatODi` (5, mela 8), and `kAmavardhani` (131) beside `kAshIrAmakriya` (6, mela 51).
+Different *words* for one raga, not different spellings, so both dedup keys miss them. The chakra
+widget therefore links mela 8 and 51 at the near-empty record, and both copies now carry a
+description. A merge fixes it, but the canonical has to become the busy record and
+**`MELAKARTA_LINKS` must be regenerated after** — it is a hand-resolved map. Not yet done; it is
+the biggest outstanding decision here.
+
+**`foreignNotes` found real pre-existing damage in the scale fields**, separate from this run:
+`varies` and `uses all notes of mela` stored as scales, a stray `M3` (no such swara), a trailing
+semicolon, a `PN3` missing its space, and `aandOLikaa` written in Unicode subscript digits.
+`research-ingest` prints these now. Worth a cleanup pass of its own.
 
 ## Active: Rasika Classes (2026-08-02)
 
