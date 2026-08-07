@@ -347,3 +347,95 @@ describe('foreignNotes', () => {
     expect(foreignNotes("S R2 G3 P D2 S'", 28)).toEqual([]);
   });
 });
+
+describe('mergeResearch — a parent name must already exist', () => {
+  /**
+   * The importer resolves a linked name by *exact* match and creates a record when it misses.
+   * A worker reports "Shankarabharanam" and the corpus stores "shankarAbharaNa", so a run that
+   * passed the reported spelling through wrote seven blank ragas and pointed sixteen janyas at
+   * them. These are the tests for not doing that again.
+   */
+  const corpus = () => [
+    { id: 'm29', name: 'shankarAbharaNa', melaNumber: '29', parentRaga: '', description: '' },
+    { id: 'm15', name: 'mAyAmALavagauLa', melaNumber: '15', parentRaga: '', description: '' },
+    { id: 'j1', name: 'bilahari', melaNumber: '', parentRaga: '', description: '' },
+    { id: 'j2', name: 'gauLa', melaNumber: '', parentRaga: '', description: '' },
+  ];
+
+  it('matches across the alias bracket and diacritics', () => {
+    const rows = corpus();
+    const report = mergeResearch('raga', rows, [
+      { id: 'j2', fields: { parentRaga: 'Māyāmāḷavagauḷa (raga)' } },
+    ]);
+    expect(rows[3].parentRaga).toBe('mAyAmALavagauLa');
+    expect(report.rejections).toEqual([]);
+  });
+
+  it('bridges a transliteration variant when exactly one record answers to it', () => {
+    // The case that caused the incident: worker writes Sankarabharanam, corpus stores
+    // shankarAbharaNa. The exact key cannot reach it; the variant key can.
+    const rows = corpus();
+    mergeResearch('raga', rows, [{ id: 'j1', fields: { parentRaga: 'Sankarabharanam' } }]);
+    expect(rows[2].parentRaga).toBe('shankarAbharaNa');
+  });
+
+  it('refuses a variant two records answer to, rather than picking one', () => {
+    const rows = [
+      { id: 'x', name: 'sankarabharana', melaNumber: '', parentRaga: 'k', description: '' },
+      ...corpus(),
+    ];
+    const report = mergeResearch('raga', rows, [
+      { id: 'j1', fields: { parentRaga: 'Shankarabharanam' } },
+    ]);
+    expect(rows.find(r => r.id === 'j1')?.parentRaga).toBe('');
+    expect(report.rejections[0].field).toBe('parentRaga');
+  });
+
+  it('refuses a parent no record answers to, rather than inventing one', () => {
+    const rows = corpus();
+    const report = mergeResearch('raga', rows, [
+      { id: 'j1', fields: { parentRaga: 'Nowhereambari' } },
+    ]);
+    expect(rows[2].parentRaga).toBe('');
+    expect(report.filled).toBe(0);
+    expect(report.rejections[0].reason).toContain('would create one');
+  });
+
+  it('refuses the names no string rule reaches, which is most of them', () => {
+    // Real pairs from the incident. Mela 17 is stored under its asampurna name, so the
+    // reported name shares no letters with it; `Vachaspati` and `vAcaspati` diverge on c/ch.
+    const rows = [
+      { id: 'm17', name: 'chAyAvati', melaNumber: '17', parentRaga: '', description: '' },
+      { id: 'm64', name: 'vAcaspati', melaNumber: '64', parentRaga: '', description: '' },
+      { id: 'a', name: 'saurASTra', melaNumber: '', parentRaga: '', description: '' },
+      { id: 'b', name: 'sarasvati', melaNumber: '', parentRaga: '', description: '' },
+    ];
+    const report = mergeResearch('raga', rows, [
+      { id: 'a', fields: { parentRaga: 'Suryakantam' } },
+      { id: 'b', fields: { parentRaga: 'Vachaspati' } },
+    ]);
+    expect(rows[2].parentRaga).toBe('');
+    expect(rows[3].parentRaga).toBe('');
+    expect(report.rejections).toHaveLength(2);
+  });
+
+  it('prefers the melakarta when two records share an exact key', () => {
+    const rows = [
+      { id: 'dup', name: 'Shankarabharana', melaNumber: '', parentRaga: 'x', description: '' },
+      ...corpus(),
+      { id: 'j3', name: 'someJanya', melaNumber: '', parentRaga: '', description: '' },
+    ];
+    mergeResearch('raga', rows, [{ id: 'j3', fields: { parentRaga: 'shankarabharana' } }]);
+    expect(rows.find(r => r.id === 'j3')?.parentRaga).toBe('shankarAbharaNa');
+  });
+
+  it('still leaves a stored parent alone', () => {
+    const rows = corpus();
+    rows[2].parentRaga = 'kept';
+    const report = mergeResearch('raga', rows, [
+      { id: 'j1', fields: { parentRaga: 'Sankarabharanam' } },
+    ]);
+    expect(rows[2].parentRaga).toBe('kept');
+    expect(report.keptExisting).toBe(1);
+  });
+});

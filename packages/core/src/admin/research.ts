@@ -20,7 +20,13 @@
  *      agent at all; see `deriveMelaNumbers`.
  *   3. **Inflation and hedging.** Prose that ranks, praises, or reasons out loud is not a
  *      fact, and this codebase has paid for that lesson repeatedly.
+ *   4. **A name that would become a record.** The admin importer resolves a linked name by
+ *      exact match and creates one when it misses, so a parent reported in ordinary spelling
+ *      against a corpus stored in ITRANS writes a blank raga rather than a reference. See
+ *      `corpusNames`.
  */
+
+import { ragaVariantKey } from '../domain/raga/dedup';
 
 // ── notation ────────────────────────────────────────────────────────────────────────────
 
@@ -351,6 +357,7 @@ type Row = Record<string, string>;
 export function mergeResearch(domain: string, rows: Row[], results: ResearchRecord[]): MergeReport {
   const byId = new Map(rows.map(row => [row.id, row]));
   const report: MergeReport = { filled: 0, keptExisting: 0, rejections: [], derivedMela: 0 };
+  const byName = corpusNames(rows);
 
   for (const record of results) {
     const row = record.id ? byId.get(record.id) : undefined;
@@ -382,6 +389,29 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
         report.keptExisting += 1;
         continue;
       }
+
+      // A name-referencing column must arrive spelled the way the corpus spells it, because
+      // the importer resolves it by exact name and *creates* a record when it misses. A
+      // worker reports "Shankarabharanam"; the corpus stores "shankarAbharaNa"; the import
+      // then wrote seven blank ragas and pointed sixteen janyas at them. Rewrite to the
+      // stored spelling or refuse — never hand the importer a name it will silently invent.
+      if (column === 'parentRaga') {
+        const resolved = byName.resolve(checked.value as string);
+        if (!resolved) {
+          report.rejections.push({
+            id: row.id,
+            name: row.name,
+            field,
+            reason: 'no raga in the corpus answers to that name; importing it would create one',
+            value: String(raw).slice(0, 80),
+          });
+          continue;
+        }
+        row[column] = resolved;
+        report.filled += 1;
+        continue;
+      }
+
       row[column] = checked.value as string;
       report.filled += 1;
     }
@@ -418,6 +448,51 @@ export function deriveMelaNumbers(rows: Row[]): number {
     derived += 1;
   }
   return derived;
+}
+
+/**
+ * Resolves a reported raga name to the spelling the corpus actually stores.
+ *
+ * Two tiers, and the second is deliberately timid. The exact key (case, diacritics,
+ * punctuation and the alias bracket removed) is safe enough that a hit is a hit. The variant
+ * key also guesses transliteration, which is what bridges `Sankarabharanam` to
+ * `shankarAbharaNa` — but it is known to collide distinct ragas, so a variant hit counts only
+ * when exactly one record answers to it.
+ *
+ * Everything else is refused rather than guessed. Of the seven names that caused the incident
+ * this exists to prevent, the variant key bridges one; the rest — `Vachaspati`/`vAcaspati`,
+ * `Suryakantam`/`chAyAvati` — no string rule reaches, and a reviewer reading a refusal is the
+ * only honest answer. This is the same discipline `bestArtistMatch` follows: report a
+ * candidate, never bind to it.
+ *
+ * A melakarta wins a collision on the exact key, since a parent reference is nearly always
+ * reaching for one and the corpus holds several spellings of some.
+ */
+function corpusNames(rows: Row[]): { resolve: (name: string) => string | undefined } {
+  const exact = new Map<string, string>();
+  const variants = new Map<string, string[]>();
+  for (const row of rows) {
+    const key = normaliseRagaName(row.name);
+    if (!key) continue;
+    const held = exact.get(key);
+    const isMelakarta = Boolean(row.melaNumber?.trim()) && !row.parentRaga?.trim();
+    if (!held || isMelakarta) exact.set(key, row.name);
+
+    const variant = ragaVariantKey(row.name);
+    if (!variant) continue;
+    const names = variants.get(variant) ?? [];
+    if (!names.includes(row.name)) names.push(row.name);
+    variants.set(variant, names);
+  }
+
+  return {
+    resolve(name: string) {
+      const hit = exact.get(normaliseRagaName(name));
+      if (hit) return hit;
+      const near = variants.get(ragaVariantKey(name) ?? '');
+      return near?.length === 1 ? near[0] : undefined;
+    },
+  };
 }
 
 /** Case, diacritics, punctuation and the alias bracket removed — the raga dedup exact key. */
