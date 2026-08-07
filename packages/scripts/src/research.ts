@@ -6,6 +6,7 @@ import { parseCsv, toCsv } from '@rasika/core/admin/csv';
 import {
   RESEARCH_FIELDS,
   type ResearchRecord,
+  foreignNotes,
   mergeResearch,
   selectRecords,
 } from '@rasika/core/admin/research';
@@ -149,6 +150,36 @@ export async function writeResearchBatches(opts: {
   console.log(`   pnpm cli research-ingest --domain ${domain} --dir ${outDir} --out filled.csv`);
 }
 
+/**
+ * Prints janya scales carrying a note their parent melakarta does not have.
+ *
+ * Advisory, never a refusal — an *anya swara* is a real thing and defines some of the
+ * best-known ragas (Yamunakalyani is Kalyani with M1). What it is for is the other cause: a
+ * scale paired with the wrong parent, and the junk that reached the field before any of this
+ * existed. It reads the merged sheet, so it covers what was already stored as well as what
+ * this run adds, and the second is where the reviewer should look first.
+ */
+function reportForeignNotes(rows: Record<string, string>[]): void {
+  const flagged: string[] = [];
+  for (const row of rows) {
+    const mela = Number(row.melaNumber);
+    if (!Number.isInteger(mela) || mela < 1 || mela > 72 || !row.parentRaga?.trim()) continue;
+    for (const field of ['arohanam', 'avarohanam']) {
+      const scale = row[field]?.trim();
+      if (!scale) continue;
+      const foreign = foreignNotes(scale, mela);
+      if (foreign.length > 0) {
+        flagged.push(`     ${row.name} (mela ${mela}) ${field}: ${scale} → ${foreign.join(' ')}`);
+      }
+    }
+  }
+  if (flagged.length === 0) return;
+  console.log(`\n🔍 ${flagged.length} scale(s) use a note outside their parent melakarta.`);
+  console.log('   An anya swara is legitimate; a wrong parent or a junk value is not.');
+  for (const line of flagged.slice(0, 20)) console.log(line);
+  if (flagged.length > 20) console.log(`     … and ${flagged.length - 20} more`);
+}
+
 export async function ingestResearch(opts: {
   domain: string;
   dir: string;
@@ -200,6 +231,8 @@ export async function ingestResearch(opts: {
   for (const [reason, count] of [...byReason].sort((a, b) => b[1] - a[1]).slice(0, 12)) {
     console.log(`     ${String(count).padStart(4)}  ${reason}`);
   }
+
+  if (domain === 'raga') reportForeignNotes(rows);
 
   if (report) {
     writeFileSync(

@@ -63,6 +63,72 @@ export function validateSwaras(raw: string): Checked {
   return accept(tokens.join(' '));
 }
 
+// ── the 72-melakarta scheme ─────────────────────────────────────────────────────────────
+
+/**
+ * The (Ra, Ga) pair by chakra and the (Da, Ni) pair by position inside it.
+ *
+ * A melakarta's scale *is* its number: madhyamam is M1 for 1–36 and M2 for 37–72, the first
+ * tetrachord comes from the chakra, the second from the position within it. So the 72 canonical
+ * scales are computed rather than researched — no lookup, and no chance of a wrong one on the
+ * pages every janya links up to.
+ */
+const RA_GA = [
+  ['R1', 'G1'],
+  ['R1', 'G2'],
+  ['R1', 'G3'],
+  ['R2', 'G2'],
+  ['R2', 'G3'],
+  ['R3', 'G3'],
+] as const;
+const DA_NI = [
+  ['D1', 'N1'],
+  ['D1', 'N2'],
+  ['D1', 'N3'],
+  ['D2', 'N2'],
+  ['D2', 'N3'],
+  ['D3', 'N3'],
+] as const;
+
+/** The ascending scale of melakarta `n`, as stored. Descending is its reverse. */
+export function melakartaScale(n: number): { arohanam: string; avarohanam: string } {
+  if (!Number.isInteger(n) || n < 1 || n > 72) throw new Error(`no melakarta ${n}`);
+  const half = n <= 36 ? n : n - 36;
+  const [ra, ga] = RA_GA[Math.floor((half - 1) / 6)];
+  const [da, ni] = DA_NI[(half - 1) % 6];
+  const up = ['S', ra, ga, n <= 36 ? 'M1' : 'M2', 'P', da, ni, 'S'];
+  return { arohanam: up.join(' '), avarohanam: [...up].reverse().join(' ') };
+}
+
+/** The seven distinct swaras of melakarta `n`. */
+export function melakartaSwaras(n: number): Set<string> {
+  return new Set(melakartaScale(n).arohanam.split(' '));
+}
+
+/**
+ * Notes in a janya's scale that its parent melakarta does not contain.
+ *
+ * **A hit is not automatically an error.** A janya may borrow a foreign note deliberately — an
+ * *anya swara* — and some of the best-known ragas are defined by it: Yamunakalyani is Kalyani
+ * with M1, Bhairavi takes D2 against Natabhairavi's D1, Kambhoji takes N3. So this reports
+ * rather than refuses; it is a question to ask of a scale, not a verdict on one.
+ *
+ * What it does catch outright is a scale paired with the wrong parent, and prose or junk that
+ * reached the field before this pipeline existed — the corpus holds `varies`, `uses all notes
+ * of mela`, a stray `M3`, and one scale written with Unicode subscript digits.
+ */
+export function foreignNotes(scale: string, melaNumber: number): string[] {
+  const allowed = melakartaSwaras(melaNumber);
+  const seen = new Set(
+    scale
+      .toUpperCase()
+      .split(/\s+/)
+      .map(token => token.replace(/['`,]/g, ''))
+      .filter(Boolean)
+  );
+  return [...seen].filter(token => !allowed.has(token));
+}
+
 // ── prose ───────────────────────────────────────────────────────────────────────────────
 
 /**

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   checkProse,
   deriveMelaNumbers,
+  foreignNotes,
+  melakartaScale,
   mergeResearch,
   selectRecords,
   validateResearchField,
@@ -289,5 +291,59 @@ describe('selectRecords', () => {
     const { records, unmatched } = selectRecords(rows, { wanted: ['a', 'b'], excluded: ['b'] });
     expect(records.map(r => r.id)).toEqual(['a']);
     expect(unmatched).toBe(0);
+  });
+});
+
+describe('melakartaScale', () => {
+  it('computes the four corners of the scheme', () => {
+    expect(melakartaScale(1).arohanam).toBe('S R1 G1 M1 P D1 N1 S');
+    expect(melakartaScale(36).arohanam).toBe('S R3 G3 M1 P D3 N3 S');
+    expect(melakartaScale(37).arohanam).toBe('S R1 G1 M2 P D1 N1 S');
+    expect(melakartaScale(72).arohanam).toBe('S R3 G3 M2 P D3 N3 S');
+  });
+
+  it('agrees with the scales the corpus already stored', () => {
+    // These three were the only melakartas carrying a scale before the run, and matching
+    // them is what verifies the mela-number-to-record map in MELAKARTA_LINKS.
+    expect(melakartaScale(15).arohanam).toBe('S R1 G3 M1 P D1 N3 S');
+    expect(melakartaScale(29).arohanam).toBe('S R2 G3 M1 P D2 N3 S');
+    expect(melakartaScale(65).arohanam).toBe('S R2 G3 M2 P D2 N3 S');
+  });
+
+  it('descends by reversing the ascent', () => {
+    expect(melakartaScale(22).avarohanam).toBe('S N2 D2 P M1 G2 R2 S');
+  });
+
+  it('refuses a number outside the 72', () => {
+    expect(() => melakartaScale(0)).toThrow();
+    expect(() => melakartaScale(73)).toThrow();
+  });
+});
+
+describe('foreignNotes', () => {
+  it('is silent when the janya stays inside its parent', () => {
+    // Mohanam, the audava janya of Harikambhoji (28).
+    expect(foreignNotes('S R2 G3 P D2 S', 28)).toEqual([]);
+  });
+
+  it('names the anya swara that defines a raga rather than refusing it', () => {
+    // Yamunakalyani is Kalyani with M1; the borrowed note is the point of the raga.
+    expect(foreignNotes('S N3 D2 P M2 G3 M1 R2 S', 65)).toEqual(['M1']);
+    // Bhairavi takes D2 against Natabhairavi's D1.
+    expect(foreignNotes('S R2 G2 M1 P D2 N2 S', 20)).toEqual(['D2']);
+  });
+
+  it('catches a scale paired with the wrong parent', () => {
+    // Kalyani's own scale read against Kharaharapriya: two notes cannot be there.
+    expect(foreignNotes('S R2 G3 M2 P D2 N3 S', 22).sort()).toEqual(['G3', 'M2', 'N3']);
+  });
+
+  it('catches the junk that reached the field before this pipeline existed', () => {
+    expect(foreignNotes('varies', 22)).toEqual(['VARIES']);
+    expect(foreignNotes('S R₂ M₁ P N₂ S', 28)).not.toEqual([]);
+  });
+
+  it('ignores an octave mark, which is not a different note', () => {
+    expect(foreignNotes("S R2 G3 P D2 S'", 28)).toEqual([]);
   });
 });
