@@ -90,6 +90,20 @@ pnpm cli reindex
 refusal rate that is suddenly high, or clustered on one field, means the workers misread the brief
 and the batch is worth re-running rather than accepting.
 
+**And read the filled CSV itself, not only the refusals.** The first melakarta run refused
+*nothing* across 151 cells, which read as a clean run and was not one: Shankarabharanam, the
+busiest raga page on the site, had become "a mellifluous raga offering wide scope for
+composition", and Kamavardhani was "popular with musicians". A refusal count of zero measures the
+pattern, not the prose. Both words are in `PUFFERY` now — but the general point survives the
+specific fix, which is that the validator is a floor and the review is a person reading output.
+
+**An asampurna scale is not an `alternateScales` entry.** The same run offered Kanakangi
+`S R1 M1 P D1 S`, correctly sourced and correctly explained in its `notes` — as the scale of
+*Kanakambari*, the differently-named raga occupying that mela position in Venkatamakhin's original
+scheme. `alternateScales` is a bare list of strings with nowhere to say whose scale it is, so
+publishing it puts an unlabelled foreign scale under a raga's own. The worker's note is what made
+this visible; the notes column is worth reading for exactly this.
+
 ## What the validator refuses, and why
 
 - **`melaNumber` from a worker — always.** A janya stores its *parent's* mela number, which is
@@ -158,6 +172,10 @@ and the batch is worth re-running rather than accepting.
 > - Never report `melaNumber`. It is derived from the parent raga afterwards and yours is discarded.
 > - `arohanam`, `avarohanam` and `alternateScales` must be swara notation only, e.g.
 >   `S R2 G3 M1 P D2 N3 S`. Never words, never prose, never diacritics.
+> - **Never report an asampurna or Venkatamakhin-era scale as an `alternateScales` entry.** It
+>   belongs to a differently-named raga (Kanakambari, Phenadhyuti, Ganasamavarali), the field
+>   cannot say whose scale it is, and an unlabelled foreign scale under a raga's own is a wrong
+>   claim. Put it in `notes` instead.
 > - `tradition` is exactly `carnatic`, `hindustani` or `both`. `timeOfDay` is exactly `morning`,
 >   `afternoon`, `evening`, `night` or `universal`.
 > - `description` is 2–5 plain factual sentences: what the raga is, whether it is a melakarta or a
