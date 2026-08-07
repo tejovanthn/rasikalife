@@ -14,13 +14,24 @@ map in `MELAKARTA_LINKS`. Then the research pass over those 72 plus the 75 busie
 cells of description, tradition, rasa, timeOfDay, season and parent, and 16 mela numbers derived
 from newly-named parents.
 
-**Next step: `pnpm prod-cli reindex`.** Nothing has been reindexed since any of this landed.
+Imported and reindexed. Verified against a fresh export: 1,526 rows, all 72 melakartas carrying
+the right number, a scale and a description.
 
-Then keep the long pass going: `data/raga-research/main/` holds 59 batches covering the corpus
-busiest-first by compositions attached; 001–003 have results (001 complete, 002 at 18/25, 003 at
-15/25 — both cut short by a session limit). **A batch with a `.result.json` beside it must never
-be re-dispatched, partial or not**; to finish a partial one, cut the outstanding records into a
-new numbered batch the way `melakarta/raga-004.json` was. Worker prompt is in the runbook.
+| field | before | after |
+|---|---|---|
+| description | 1 | 131 |
+| tradition | 1,066 | 1,168 |
+| arohanam / avarohanam | 993 | 1,094 |
+| rasa | 1 | 57 |
+| timeOfDay | 1 | 32 |
+| melaNumber | 987 | 1,075 |
+| parentRaga | 758 | 790 |
+
+**Next step: keep the long pass going.** `data/raga-research/main/` holds 59 batches covering the
+corpus busiest-first by compositions attached; 001–003 have results (001 complete, 002 at 18/25,
+003 at 15/25 — both cut short by a session limit). **A batch with a `.result.json` beside it must
+never be re-dispatched, partial or not**; to finish a partial one, cut the outstanding records
+into a new numbered batch the way `melakarta/raga-004.json` was. Worker prompt is in the runbook.
 
 **Two melakartas are stored twice and `dedup-ragas` cannot see it** — `tODi` (207 compositions)
 beside `hanumatODi` (5, mela 8), and `kAmavardhani` (131) beside `kAshIrAmakriya` (6, mela 51).
@@ -34,6 +45,18 @@ the biggest outstanding decision here.
 `varies` and `uses all notes of mela` stored as scales, a stray `M3` (no such swara), a trailing
 semicolon, a `PN3` missing its space, and `aandOLikaa` written in Unicode subscript digits.
 `research-ingest` prints these now. Worth a cleanup pass of its own.
+
+**`getRagaByName` returns soft-deleted records, and 184 janyas point at a merged-away parent.**
+The dedup soft-deletes a loser with `mergedIntoId`, but the name lookup does not filter those
+out, so `getRagaByName('calanATTai')` still answers with the tombstone. Two consequences: the
+admin importer will happily link a *new* reference to a merged-away raga (which is why the
+seven-stub incident created only seven records and not twenty-seven), and 184 janya rows carry a
+`parentRaga` naming a record that redirects. Not corruption — the ids resolve and the pages
+redirect — but the fix interacts with the duplicate-melakarta decision above, because several
+merge targets are themselves the *non*-canonical copy: `mAyamALava gowLa` merged into
+`maayamaaLava gowLa`, which carries no mela number, while `MELAKARTA_LINKS[15]` points at
+`mAyAmALavagauLa`, which does. Re-pointing the 184 without settling that first would attach them
+to the copy mela derivation cannot use. Deliberately left alone.
 
 ## Active: Rasika Classes (2026-08-02)
 

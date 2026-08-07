@@ -116,6 +116,15 @@ composition", and Kamavardhani was "popular with musicians". A refusal count of 
 pattern, not the prose. Both words are in `PUFFERY` now — but the general point survives the
 specific fix, which is that the validator is a floor and the review is a person reading output.
 
+**A researched `parentRaga` is resolved against the corpus before it can reach the sheet.** The
+admin importer resolves a linked name by *exact* match and creates a record when it misses, so
+the first run wrote seven blank ragas — a worker reports "Shankarabharanam", the corpus stores
+"shankarAbharaNa". `mergeResearch` now tries the exact key, then the variant key but only when
+exactly one record answers to it, and refuses anything else into the report. It is timid because
+it has to be: of the seven names that caused it, the variant key bridges three, and
+`Suryakantam` against a mela 17 stored as `chAyAvati` is not a spelling problem at all. **Read
+the parent refusals** — each is a janya whose parent a person needs to name.
+
 **An asampurna scale is not an `alternateScales` entry.** The same run offered Kanakangi
 `S R1 M1 P D1 S`, correctly sourced and correctly explained in its `notes` — as the scale of
 *Kanakambari*, the differently-named raga occupying that mela position in Venkatamakhin's original
