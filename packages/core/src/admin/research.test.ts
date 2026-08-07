@@ -71,9 +71,27 @@ describe('checkProse', () => {
     expect(checkProse('Sources are unclear on its origin')).toBe('unclear');
   });
 
+  it('catches the praise the first melakarta run got past the pattern', () => {
+    // Both shipped from a run that refused nothing at all, on real raga pages.
+    expect(checkProse('It is a mellifluous raga offering wide scope for composition.')).toBe(
+      'mellifluous'
+    );
+    expect(checkProse('It is popular with musicians, who sing it early in a concert.')).toBe(
+      'popular'
+    );
+  });
+
+  it('lets a name translation through, since it is a fact about the word', () => {
+    // `beautiful` is deliberately not puffery: this sentence is true and worth keeping.
+    expect(checkProse('Rupavati is a raga whose name means the beautiful one.')).toBeUndefined();
+  });
+
   it('passes plain factual prose', () => {
     expect(
       checkProse('A janya of Kharaharapriya, sung in the evening and associated with karuna rasa.')
+    ).toBeUndefined();
+    expect(
+      checkProse('Charukesi is widely used in Tamil, Hindi and Telugu film music.')
     ).toBeUndefined();
   });
 });

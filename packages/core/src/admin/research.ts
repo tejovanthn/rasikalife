@@ -65,9 +65,18 @@ export function validateSwaras(raw: string): Checked {
 
 // ── prose ───────────────────────────────────────────────────────────────────────────────
 
-/** Ranking and praise. Neither is a fact, and both read as authority. */
+/**
+ * Ranking and praise. Neither is a fact, and both read as authority.
+ *
+ * The second line was added after the first melakarta run came back with **zero** refusals
+ * across 151 cells and two descriptions that still praised: Shankarabharanam, the busiest raga
+ * page on the site, was "a mellifluous raga offering wide scope for composition", and
+ * Kamavardhani was "popular with musicians". A refusal count of zero measures the pattern, not
+ * the prose. When widening this, prefer a word that is *only* ever praise — `beautiful` is
+ * deliberately absent, because "its name means the beautiful one" is a translation and true.
+ */
 const PUFFERY =
-  /\b(renowned|premier|iconic|prestigious|leading|legendary|famous|acclaimed|eminent|illustrious|foremost|world-class|unparalleled|vibrant|majestic|soul-stirring|hauntingly|mesmeri[sz]ing|one of the (oldest|most|largest|finest|greatest)|(?:[a-z]+'s|the)\s+(oldest|largest|greatest|finest|most popular))\b/i;
+  /\b(renowned|premier|iconic|prestigious|leading|legendary|famous|acclaimed|eminent|illustrious|foremost|world-class|unparalleled|vibrant|majestic|soul-stirring|hauntingly|mesmeri[sz]ing|one of the (oldest|most|largest|finest|greatest)|(?:[a-z]+'s|the)\s+(oldest|largest|greatest|finest|most popular)|mellifluous|popular|sublime|enchanting|captivating|exquisite|magnificent|breathtaking|spellbinding|scintillating|timeless|beloved|revered|quintessential|masterpiece|wide scope)\b/i;
 
 /** The agent reasoning out loud. Whatever follows is not what a source said. */
 const SPECULATION =
