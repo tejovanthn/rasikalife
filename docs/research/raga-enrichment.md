@@ -48,6 +48,25 @@ the Dikshitar-school raga rather than the Kanakangi-Ratnangi one — mela 17 is 
 An asampurna raga need not be sampurna, so a researcher should check the source scale against
 what is stored and say so rather than assume.
 
+**Two melakartas are stored twice, under both schools' names, and `dedup-ragas` cannot see it.**
+
+| mela | canonical in `MELAKARTA_LINKS` | the other record |
+|---|---|---|
+| 8 | `hanumatODi`, 5 compositions | **`tODi`, 207 compositions** |
+| 51 | `kAshIrAmakriya`, 6 compositions | **`kAmavardhani`, 131 compositions** |
+
+Both keys in `domain/raga/dedup.ts` work on spelling — case, diacritics, punctuation, the alias
+bracket — and these pairs share no letters, because they are different *words* for one raga.
+Nothing short of a synonym list finds them, which is why the composition-count ranking is worth
+reading down: a raga appearing twice near the top of it is the tell.
+
+Two consequences, neither yet acted on. The chakra widget links mela 8 and 51 at the record with
+**5 and 6** compositions while the one people actually reach sits elsewhere; and a research pass
+will describe both, producing two indexable pages for one raga — the thing dedup exists to
+prevent. A merge fixes both at once (`mergeRaga` re-points the junctions and the route redirects),
+but the canonical must then be the busy record, so **`MELAKARTA_LINKS` has to be regenerated
+afterwards** — it is a hand-resolved map, not a query.
+
 ## Cutting the batches
 
 ```bash
