@@ -30,7 +30,7 @@ const BRIEF: Record<string, string[]> = {
     'Claim nothing your source does not state. A blank is a correct answer; a plausible guess is a wrong claim on a page people trust.',
     'NEVER report melaNumber. It is derived from the parent raga after you finish, and an agent-supplied one is discarded.',
     'arohanam / avarohanam / alternateScales must be swara notation and nothing else, e.g. "S R2 G3 M1 P D2 N3 S". Never words ("sa ri ga"), never prose, never diacritics.',
-    'A janya raga is named by its parent in parentRaga. Give the parent name as spelled in this corpus when you can.',
+    'A janya raga is named by its parent in parentRaga. Copy the parent name EXACTLY as it appears in parent_raga_must_be_one_of (the part after the number) — do not romanise it yourself. A parent that is not on that list is refused, so leave it blank and say why in notes.',
     'tradition is exactly carnatic, hindustani or both. timeOfDay is exactly morning, afternoon, evening, night or universal. Anything else is refused.',
     'description: 2-5 plain factual sentences. No praise (renowned, famous, one of the greatest), no ranking (the oldest, most popular), no hedging (likely, appears to, unclear). Say what the raga is, its parent or melakarta status, its mood and when it is sung — only what a source states.',
     'Do not invent an alias, a composer or a famous composition unless a source names it.',
@@ -42,12 +42,39 @@ interface Packet {
   batch: string;
   brief: string[];
   fields_to_research: readonly string[];
+  /** Only for raga: the parent names that will actually resolve. See `parentVocabulary`. */
+  parent_raga_must_be_one_of?: string[];
   records: Array<{
     id: string;
     name: string;
     missing: string[];
     current: Record<string, string>;
   }>;
+}
+
+/**
+ * The melakarta names spelled the way this corpus spells them.
+ *
+ * A `parentRaga` is resolved by name, so a worker guessing at romanisation gets refused: one
+ * run reported Dheerashankarabharanam in ten different spellings, none of which matched the
+ * stored `shankarAbharaNa`, and every one was thrown away. Guessing was never the worker's job
+ * — the corpus knows its own spellings, so the packet carries them and the worker copies one.
+ *
+ * Read from the rows rather than from a constant, so a rename cannot make the packet lie. A
+ * melakarta is a row with a mela number and no parent of its own.
+ */
+function parentVocabulary(rows: Record<string, string>[]): string[] {
+  const byMela = new Map<string, string>();
+  for (const row of rows) {
+    const mela = row.melaNumber?.trim();
+    if (!mela || row.parentRaga?.trim()) continue;
+    // Several spellings of one melakarta survive in the corpus; the fullest record wins.
+    const held = byMela.get(mela);
+    if (!held || (row.arohanam?.trim() && row.description?.trim())) byMela.set(mela, row.name);
+  }
+  return [...byMela.entries()]
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([mela, name]) => `${mela}. ${name}`);
 }
 
 /** The domain's rows, flattened through the CSV columns so a packet and the ingest agree. */
@@ -107,6 +134,8 @@ export async function writeResearchBatches(opts: {
     .filter(record => !onlyMissing || record.missing.length > 0)
     .slice(0, limit);
 
+  const vocabulary = domain === 'raga' ? parentVocabulary(rows) : [];
+
   const packets: Packet[] = [];
   for (let index = 0; index < candidates.length; index += size) {
     const batch = String(packets.length + 1).padStart(3, '0');
@@ -115,6 +144,7 @@ export async function writeResearchBatches(opts: {
       batch,
       brief: BRIEF[domain] ?? [],
       fields_to_research: fields,
+      ...(domain === 'raga' ? { parent_raga_must_be_one_of: vocabulary } : {}),
       records: candidates.slice(index, index + size),
     });
   }
