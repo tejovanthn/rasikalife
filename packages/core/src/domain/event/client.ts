@@ -7,7 +7,7 @@ import type { z } from 'zod';
 import type { CreateEventSchema, UpdateEventSchema } from './schema';
 
 // Re-export schemas (Zod is browser-safe)
-export { CreateEventSchema, UpdateEventSchema } from './schema';
+export { CreateEventSchema, DEFAULT_EVENT_TIMEZONE, UpdateEventSchema } from './schema';
 
 // Re-export extraction types (pure TypeScript interfaces, browser-safe)
 export type { ExtractionResult } from './extraction';

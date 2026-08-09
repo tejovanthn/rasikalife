@@ -2,6 +2,13 @@ import { z } from 'zod';
 
 import { SponsorSchema } from '../shared/schemas';
 
+/**
+ * Where the events are. Every form that has to attach an offset to a wall-clock time reads it
+ * from here rather than writing `+05:30` out again — that literal was in three places, and a
+ * hard-coded offset is also wrong the moment an event is held anywhere that observes DST.
+ */
+export const DEFAULT_EVENT_TIMEZONE = 'Asia/Kolkata';
+
 export const CreateEventSchema = z.object({
   festivalId: z.string().nullish(),
   posterUrl: z.string().url().nullish(),
@@ -11,7 +18,7 @@ export const CreateEventSchema = z.object({
   description: z.string().max(5000).nullish(),
   startDateTime: z.string().datetime({ offset: true }),
   endDateTime: z.string().datetime({ offset: true }).nullish(),
-  timezone: z.string().default('Asia/Kolkata'),
+  timezone: z.string().default(DEFAULT_EVENT_TIMEZONE),
   venueId: z.string().nullish(),
   venueName: z.string().nullish(),
   venueCity: z.string().optional(),

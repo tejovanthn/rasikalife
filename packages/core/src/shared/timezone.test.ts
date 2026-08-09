@@ -5,6 +5,8 @@ import {
   isDateOnly,
   startOfDayInstant,
   todayInTimeZone,
+  zonedDateTimeInputValue,
+  zonedDateTimeToIso,
 } from './timezone';
 
 describe('dateInTimeZone', () => {
@@ -102,5 +104,90 @@ describe('isDateOnly', () => {
     expect(isDateOnly('2026-8-4')).toBe(false);
     expect(isDateOnly('2026-08-04T00:00:00Z')).toBe(false);
     expect(isDateOnly('')).toBe(false);
+  });
+});
+
+describe('zonedDateTimeToIso', () => {
+  it('turns what a datetime-local input submits into a storable ISO string', () => {
+    // The exact value the event edit form sends, and the exact shape the schema demands.
+    expect(zonedDateTimeToIso('2026-08-14T17:45', 'Asia/Kolkata')).toBe(
+      '2026-08-14T17:45:00+05:30'
+    );
+  });
+
+  it('keeps the wall clock the person typed', () => {
+    // The whole point: 5:45 PM must still read 5:45 PM. Re-parsing through UTC is what
+    // silently moves a concert by five and a half hours.
+    for (const zone of ['Asia/Kolkata', 'America/New_York', 'Europe/London', 'Pacific/Auckland']) {
+      expect(zonedDateTimeToIso('2026-08-14T17:45', zone).slice(0, 16)).toBe('2026-08-14T17:45');
+    }
+  });
+
+  it('reads the offset at that date, not at some other time of year', () => {
+    expect(zonedDateTimeToIso('2026-01-15T12:00', 'America/New_York')).toBe(
+      '2026-01-15T12:00:00-05:00'
+    );
+    expect(zonedDateTimeToIso('2026-07-04T12:00', 'America/New_York')).toBe(
+      '2026-07-04T12:00:00-04:00'
+    );
+  });
+
+  it('accepts seconds when they are already there', () => {
+    expect(zonedDateTimeToIso('2026-08-14T17:45:30', 'Asia/Kolkata')).toBe(
+      '2026-08-14T17:45:30+05:30'
+    );
+  });
+
+  it('leaves a string that already names its zone alone', () => {
+    expect(zonedDateTimeToIso('2026-08-14T17:45:00+05:30', 'Asia/Kolkata')).toBe(
+      '2026-08-14T17:45:00+05:30'
+    );
+    expect(zonedDateTimeToIso('2026-08-14T12:15:00Z', 'Asia/Kolkata')).toBe(
+      '2026-08-14T12:15:00Z'
+    );
+  });
+
+  it('round-trips to the instant the zone actually means', () => {
+    // 5:45pm in Chennai is 12:15 UTC. If this drifts, every event page shows the wrong time.
+    expect(new Date(zonedDateTimeToIso('2026-08-14T17:45', 'Asia/Kolkata')).toISOString()).toBe(
+      '2026-08-14T12:15:00.000Z'
+    );
+  });
+
+  it('rejects anything that is not a local date-time', () => {
+    expect(() => zonedDateTimeToIso('2026-08-14', 'UTC')).toThrow();
+    expect(() => zonedDateTimeToIso('', 'UTC')).toThrow();
+    expect(() => zonedDateTimeToIso('2026-13-40T99:99', 'UTC')).toThrow();
+  });
+});
+
+describe('zonedDateTimeInputValue', () => {
+  it('shows the local wall clock for a value stored with an offset', () => {
+    expect(zonedDateTimeInputValue('2026-08-14T17:45:00+05:30', 'Asia/Kolkata')).toBe(
+      '2026-08-14T17:45'
+    );
+  });
+
+  it('shows the local wall clock for a value stored as UTC', () => {
+    // The case a bare `.slice(0, 16)` gets wrong: it would render `2026-08-14T12:15` and
+    // saving the untouched form would move the concert back five and a half hours.
+    expect(zonedDateTimeInputValue('2026-08-14T12:15:00Z', 'Asia/Kolkata')).toBe(
+      '2026-08-14T17:45'
+    );
+  });
+
+  it('round-trips with zonedDateTimeToIso whichever way the value was stored', () => {
+    for (const zone of ['Asia/Kolkata', 'America/New_York', 'Europe/London', 'Pacific/Auckland']) {
+      for (const stored of ['2026-08-14T12:15:00Z', '2026-01-15T06:30:00Z']) {
+        const shown = zonedDateTimeInputValue(stored, zone);
+        expect(new Date(zonedDateTimeToIso(shown, zone)).toISOString()).toBe(
+          new Date(stored).toISOString()
+        );
+      }
+    }
+  });
+
+  it('rejects anything that is not a date-time', () => {
+    expect(() => zonedDateTimeInputValue('not a date', 'UTC')).toThrow();
   });
 });

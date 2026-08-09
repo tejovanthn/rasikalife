@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { todayInTimeZone } from '../../shared/timezone';
 import { extractFromPoster } from './gemini';
+import { DEFAULT_EVENT_TIMEZONE } from './schema';
 
 const mockGenerateContent = vi.fn();
 
@@ -191,6 +193,59 @@ describe('extractFromPoster', () => {
 
     const extractPrompt = mockGenerateContent.mock.calls[1][0].contents[0].parts[0].text;
     expect(extractPrompt).toContain('MULTI-EVENT SPECIFIC INSTRUCTIONS');
+  });
+
+  it('tells the model what today is, so it cannot invent the year', async () => {
+    // A poster that prints "AUG 14 | 5:45 PM" and no year gave the model nothing to work from,
+    // and it dated a 2026 concert to 2024 — which then could not be corrected, because the
+    // edit form could not save a date either. The date has to be in the prompt.
+    mockImageFetch();
+    mockGenerateContent
+      .mockResolvedValueOnce({ text: JSON.stringify(singleEventClassification) })
+      .mockResolvedValueOnce({ text: JSON.stringify(singleEventExtraction) });
+
+    await extractFromPoster('https://example.com/poster.jpg');
+
+    const extractPrompt = mockGenerateContent.mock.calls[1][0].contents[0].parts[0].text;
+    const today = todayInTimeZone(DEFAULT_EVENT_TIMEZONE);
+    expect(extractPrompt).toContain(`TODAY'S DATE IS ${today}`);
+    expect(extractPrompt).toContain('next occurrence');
+  });
+
+  it('reads the date per call, not once when the module loaded', async () => {
+    // These prompts are built inside a Lambda container that can stay warm for days. A date
+    // captured at module load would quietly date every later poster to the day it booted.
+    // The suite pins the clock in `test/setup.ts`; move it and put it back.
+    try {
+      vi.setSystemTime(new Date('2027-03-05T12:00:00.000Z'));
+      mockImageFetch();
+      mockGenerateContent
+        .mockResolvedValueOnce({ text: JSON.stringify(singleEventClassification) })
+        .mockResolvedValueOnce({ text: JSON.stringify(singleEventExtraction) });
+
+      await extractFromPoster('https://example.com/poster.jpg');
+
+      const extractPrompt = mockGenerateContent.mock.calls[1][0].contents[0].parts[0].text;
+      expect(extractPrompt).toContain("TODAY'S DATE IS 2027-03-05");
+    } finally {
+      vi.setSystemTime(new Date('2025-01-15T12:00:00.000Z'));
+    }
+  });
+
+  it('does not tell the model to invent a time for a performance that has none', async () => {
+    // The old festival prompt said to "use reasonable defaults (e.g. evening concerts at
+    // 18:00)", and it duly staggered three dancers billed at one 5:45 PM start into 5:45,
+    // 7:00 and 8:00 — a running order that was on no poster.
+    mockImageFetch();
+    mockGenerateContent
+      .mockResolvedValueOnce({ text: JSON.stringify(festivalClassification) })
+      .mockResolvedValueOnce({ text: JSON.stringify(festivalExtraction) });
+
+    await extractFromPoster('https://example.com/poster.jpg');
+
+    const extractPrompt = mockGenerateContent.mock.calls[1][0].contents[0].parts[0].text;
+    expect(extractPrompt).not.toContain('reasonable defaults');
+    expect(extractPrompt).toContain('Do NOT invent a time');
   });
 
   it('should fetch the image only once for both calls', async () => {

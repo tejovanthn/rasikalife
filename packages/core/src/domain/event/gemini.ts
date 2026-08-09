@@ -1,7 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { todayInTimeZone } from '../../shared/timezone';
 import type { ClassificationResult, ExtractionResult, PosterType } from './extraction';
 import { ClassificationResultSchema, ExtractionResultSchema } from './extraction';
+import { DEFAULT_EVENT_TIMEZONE } from './schema';
 
 // --- JSON Schemas for prompts ---
 
@@ -42,7 +44,18 @@ Example summaries:
 Return a JSON object matching this JSON Schema:
 ${classificationJsonSchema}`;
 
-const SHARED_EXTRACTION_RULES = `IMPORTANT RULES:
+/**
+ * Today, in the zone the posters are printed in.
+ *
+ * Read per call, never at module load: these prompts are built inside a warm Lambda container
+ * that can live for days, so a date captured once would go stale and start dating every new
+ * poster to whenever the container booted.
+ */
+function extractionToday(): string {
+  return todayInTimeZone(DEFAULT_EVENT_TIMEZONE);
+}
+
+const sharedExtractionRules = (today: string) => `IMPORTANT RULES:
 1. If text is in any Indic language (Kannada, Tamil, Telugu, Hindi, Sanskrit, etc.),
    translate it to English while preserving proper nouns and names.
 2. Separate honorific titles from artist names:
@@ -63,14 +76,26 @@ const SHARED_EXTRACTION_RULES = `IMPORTANT RULES:
 7. Extract ticket prices as key-value pairs: { "general": 500, "vip": 1500 }
 8. Extract sponsor names and classify as "sponsor" or "co-sponsor".
 9. Extract all contact information (phone numbers, emails, social handles).
-10. All date/datetime values MUST be ISO 8601 strings (e.g. "2026-02-15T18:00:00+05:30").`;
+10. All date/datetime values MUST be ISO 8601 strings (e.g. "2026-02-15T18:00:00+05:30").
+11. TODAY'S DATE IS ${today}. Posters very often print a day and month with no year
+    ("AUG 14 | 5:45 PM"). Work the year out, do not guess it:
+    - Default to the next occurrence of that day and month on or after today's date.
+    - If a weekday is printed ("Sunday, 15 February"), pick the year in which that date
+      really falls on that weekday. This beats the rule above when the two disagree.
+    - Only date a poster to the past when it says so in words ("held on", "last year",
+      a report of a concert that has happened). An advertisement is for a future event.
+    - Never copy a year out of an example in these instructions.
+12. Do NOT invent a time that the poster does not give. If a performance has no time of its
+    own, use the single start time the poster does state; if it states none, omit the time
+    rather than inventing one. A made-up running order reads as fact on the published page.`;
 
-const SINGLE_EVENT_PROMPT = `You are an expert at reading Indian classical arts event posters.
+const singleEventPrompt = (today: string) =>
+  `You are an expert at reading Indian classical arts event posters.
 This poster advertises a SINGLE event (one concert, recital, or performance).
 
 Extract all details about this one event.
 
-${SHARED_EXTRACTION_RULES}
+${sharedExtractionRules(today)}
 
 SINGLE EVENT SPECIFIC INSTRUCTIONS:
 - There is exactly ONE event. Return it as the sole element of the "events" array.
@@ -85,12 +110,13 @@ SINGLE EVENT SPECIFIC INSTRUCTIONS:
 Return a JSON object matching this JSON Schema:
 ${extractionJsonSchema}`;
 
-const FESTIVAL_PROMPT = `You are an expert at reading Indian classical arts event posters.
+const festivalPrompt = (today: string) =>
+  `You are an expert at reading Indian classical arts event posters.
 This poster advertises a FESTIVAL — a multi-day event with multiple performances.
 
 Extract the festival metadata AND each individual performance as a separate event.
 
-${SHARED_EXTRACTION_RULES}
+${sharedExtractionRules(today)}
 
 FESTIVAL SPECIFIC INSTRUCTIONS:
 - Set "isFestival" to true.
@@ -101,17 +127,20 @@ FESTIVAL SPECIFIC INSTRUCTIONS:
 - For multi-day recurring NON-MUSIC/NON-ARTS items (daily puja, abhisheka, processions, bhojan),
   do NOT create separate events — mention them in the festival description instead.
 - Preserve the chronological order of events in the array.
-- If event times are not specified individually, use reasonable defaults (e.g. evening concerts at 18:00).
+- If a performance has no time of its own, repeat the festival's stated start time. Do not
+  stagger performances by inventing an hour each — a poster naming three dancers under one
+  5:45 PM heading is one bill at 5:45 PM, not three concerts an hour apart.
 
 Return a JSON object matching this JSON Schema:
 ${extractionJsonSchema}`;
 
-const MULTI_EVENT_PROMPT = `You are an expert at reading Indian classical arts event posters.
+const multiEventPrompt = (today: string) =>
+  `You are an expert at reading Indian classical arts event posters.
 This poster advertises MULTIPLE SEPARATE EVENTS that are not part of a named festival.
 
 Extract each event individually.
 
-${SHARED_EXTRACTION_RULES}
+${sharedExtractionRules(today)}
 
 MULTI-EVENT SPECIFIC INSTRUCTIONS:
 - Set "isFestival" to false and "festival" to null.
@@ -201,14 +230,14 @@ async function classifyPoster(
 
 // --- Step 2: Specialized extraction ---
 
-function getPromptForType(posterType: PosterType): string {
+function getPromptForType(posterType: PosterType, today: string): string {
   switch (posterType) {
     case 'single-event':
-      return SINGLE_EVENT_PROMPT;
+      return singleEventPrompt(today);
     case 'festival':
-      return FESTIVAL_PROMPT;
+      return festivalPrompt(today);
     case 'multi-event':
-      return MULTI_EVENT_PROMPT;
+      return multiEventPrompt(today);
   }
 }
 
@@ -218,7 +247,7 @@ async function extractByType(
   classification: ClassificationResult,
   hint?: string
 ): Promise<ExtractionResult> {
-  const prompt = getPromptForType(classification.posterType);
+  const prompt = getPromptForType(classification.posterType, extractionToday());
 
   const text = await callGemini(ai, prompt, imageData, hint);
   const raw = JSON.parse(text);
@@ -227,12 +256,13 @@ async function extractByType(
 
 // --- Social post extraction ---
 
-const SOCIAL_POST_PROMPT = `You are an expert at identifying Indian classical arts events from social media posts.
+const socialPostPrompt = (today: string) =>
+  `You are an expert at identifying Indian classical arts events from social media posts.
 
 Analyze this Instagram post (caption and optional image) and determine if it announces a concert,
 recital, performance, or festival.
 
-${SHARED_EXTRACTION_RULES}
+${sharedExtractionRules(today)}
 
 SOCIAL POST SPECIFIC INSTRUCTIONS:
 - Many posts are NOT event announcements (photos, news, tributes, general content). If no event is
@@ -265,7 +295,7 @@ export async function extractFromSocialPost(input: SocialPostInput): Promise<Ext
   const ai = getGeminiClient();
 
   const parts: Array<{ text: string } | { inlineData: { data: string; mimeType: string } }> = [];
-  parts.push({ text: SOCIAL_POST_PROMPT });
+  parts.push({ text: socialPostPrompt(extractionToday()) });
 
   if (input.postText) {
     parts.push({ text: `\n\nINSTAGRAM POST CAPTION:\n${input.postText}` });

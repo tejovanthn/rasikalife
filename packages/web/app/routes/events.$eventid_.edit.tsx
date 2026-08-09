@@ -1,4 +1,5 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
+import { zonedDateTimeInputValue, zonedDateTimeToIso } from '@rasika/core/shared/timezone';
 import { ArrowLeft, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
@@ -107,8 +108,23 @@ export async function action({
 
   const title = formData.get('title') as string;
   const description = formData.get('description') as string;
-  const startDateTime = formData.get('startDateTime') as string;
-  const endDateTime = formData.get('endDateTime') as string;
+
+  // `datetime-local` submits `2026-08-14T17:45` — no seconds and no offset — while the event
+  // schema demands `datetime({ offset: true })`. Handing the raw value to the validator is why
+  // a date change could not be saved at all, and comparing it against the stored ISO string
+  // separately meant every save proposed a date change whether or not one was made.
+  const eventZone = (event.timezone as string | undefined) || 'Asia/Kolkata';
+  const startDateTimeRaw = formData.get('startDateTime') as string;
+  const endDateTimeRaw = formData.get('endDateTime') as string;
+  let startDateTime: string;
+  let endDateTime: string;
+  try {
+    startDateTime = startDateTimeRaw ? zonedDateTimeToIso(startDateTimeRaw, eventZone) : '';
+    endDateTime = endDateTimeRaw ? zonedDateTimeToIso(endDateTimeRaw, eventZone) : '';
+  } catch {
+    return data({ error: 'Please enter a valid date and time.' }, { status: 400 });
+  }
+
   const venueName = formData.get('venueName') as string;
   const organiserName = formData.get('organiserName') as string;
   const entryType = formData.get('entryType') as string;
@@ -259,17 +275,30 @@ export default function EditEvent() {
     }))
   );
 
+  // A `datetime-local` input wants the wall clock in the event's own zone, which is not what
+  // slicing the stored ISO string gives when that string is stored as UTC.
+  const eventZone = (event.timezone as string | undefined) || 'Asia/Kolkata';
+  const toInputValue = (value?: string): string => {
+    if (!value) return '';
+    try {
+      return zonedDateTimeInputValue(value, eventZone);
+    } catch {
+      return '';
+    }
+  };
+
   const defaultValues = {
     title: (proposed.title as string | undefined) || event.title,
     description:
       (proposed.description as string | undefined) ??
       (event.description as string | undefined) ??
       '',
-    startDateTime: (proposed.startDateTime as string | undefined) || event.startDateTime,
-    endDateTime:
-      (proposed.endDateTime as string | undefined) ??
-      (event.endDateTime as string | undefined) ??
-      '',
+    startDateTime: toInputValue(
+      (proposed.startDateTime as string | undefined) || event.startDateTime
+    ),
+    endDateTime: toInputValue(
+      (proposed.endDateTime as string | undefined) ?? (event.endDateTime as string | undefined)
+    ),
     venueName:
       (proposed.venueName as string | undefined) ?? (event.venueName as string | undefined) ?? '',
     organiserName:
@@ -384,7 +413,7 @@ export default function EditEvent() {
                   id="startDateTime"
                   name="startDateTime"
                   type="datetime-local"
-                  defaultValue={defaultValues.startDateTime?.slice(0, 16)}
+                  defaultValue={defaultValues.startDateTime}
                   required
                 />
               </div>
@@ -394,7 +423,7 @@ export default function EditEvent() {
                   id="endDateTime"
                   name="endDateTime"
                   type="datetime-local"
-                  defaultValue={defaultValues.endDateTime?.slice(0, 16)}
+                  defaultValue={defaultValues.endDateTime}
                 />
               </div>
             </div>

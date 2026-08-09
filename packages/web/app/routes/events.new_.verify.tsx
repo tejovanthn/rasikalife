@@ -1,4 +1,6 @@
 import * as Auth from '@rasika/core/auth';
+import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
+import { zonedDateTimeToIso } from '@rasika/core/shared/timezone';
 import { ArrowLeft, ArrowRight, Check, Loader2, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { MetaFunction } from 'react-router';
@@ -1184,14 +1186,15 @@ export default function VerifyEvents() {
     return `Event ${eventIndex + 1} — ${events[eventIndex]?.title || 'Untitled'}`;
   };
 
+  // datetime-local gives "YYYY-MM-DDTHH:MM" — no offset, which the event schema rejects.
+  // Shared with the event edit form so the two paths cannot normalise differently.
   const normalizeDateTime = (dt?: string) => {
     if (!dt) return dt;
-    // datetime-local gives "YYYY-MM-DDTHH:MM", add seconds if missing
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dt)) return `${dt}:00+05:30`;
-    // Already has offset or Z — return as-is
-    if (/[Z+-]/.test(dt.slice(10))) return dt;
-    // Has seconds but no offset — add IST
-    return `${dt}+05:30`;
+    try {
+      return zonedDateTimeToIso(dt, DEFAULT_EVENT_TIMEZONE);
+    } catch {
+      return dt;
+    }
   };
 
   const handleSubmit = async () => {

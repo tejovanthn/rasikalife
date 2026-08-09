@@ -104,6 +104,89 @@ export function addDaysToDate(dateOnly: string, days: number): string {
   return new Date(parseDateOnly(dateOnly) + days * 86_400_000).toISOString().slice(0, 10);
 }
 
+/** `YYYY-MM-DDTHH:mm`, seconds optional — exactly what `<input type="datetime-local">` submits. */
+const LOCAL_DATE_TIME = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(:\d{2})?$/;
+
+/** Does this string already say which zone it is in? */
+function hasZoneSuffix(value: string): boolean {
+  return /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+}
+
+/** Milliseconds ahead of UTC, as the `+05:30` an ISO string carries. */
+function formatOffset(ms: number): string {
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  const minutes = Math.abs(Math.round(ms / 60_000));
+  return `${ms < 0 ? '-' : '+'}${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+}
+
+/**
+ * A wall-clock date and time, plus the zone it was read in, as a full ISO string.
+ *
+ * `<input type="datetime-local">` submits `2026-08-14T17:45` — no seconds and, more to the
+ * point, no offset. Every event schema wants `z.string().datetime({ offset: true })`, so that
+ * value is not storable, and the event edit form was handing it straight to the validator: a
+ * date change failed with "No changes detected" or an opaque validation error, which is why
+ * the only way to fix a wrong date looked like deleting the event.
+ *
+ * The wall clock is preserved exactly — 5:45 PM stays 5:45 PM — and only the offset is
+ * computed, so this cannot silently shift a time the way re-parsing through UTC would.
+ * A string that already names its zone is returned untouched.
+ */
+export function zonedDateTimeToIso(local: string, timeZone: string): string {
+  if (hasZoneSuffix(local)) return local;
+
+  const match = LOCAL_DATE_TIME.exec(local);
+  if (!match) {
+    throw new Error(`Not a local date-time: ${local}`);
+  }
+  const wallClock = `${match[1]}T${match[2]}${match[3] ?? ':00'}`;
+
+  const asUtc = Date.parse(`${wallClock}Z`);
+  if (Number.isNaN(asUtc)) {
+    throw new Error(`Not a real date-time: ${local}`);
+  }
+
+  // Corrected twice, for the reason `startOfDayInstant` gives: the first offset is read at the
+  // wrong instant, which lands in the wrong DST period roughly twice a year.
+  const firstPass = asUtc - offsetMs(asUtc, timeZone);
+  const instant = asUtc - offsetMs(firstPass, timeZone);
+
+  return `${wallClock}${formatOffset(offsetMs(instant, timeZone))}`;
+}
+
+/**
+ * The other half of the round trip: what to put in an `<input type="datetime-local">`.
+ *
+ * Slicing the first 16 characters off a stored string is only right when that string happens
+ * to be local-with-offset. On a value stored as UTC it shows the UTC wall clock, so an editor
+ * who saves the form without touching the field moves the concert by the whole offset — five
+ * and a half hours, here. Reading it through the zone makes the pair exact for both shapes.
+ */
+export function zonedDateTimeInputValue(iso: string, timeZone: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) {
+    throw new Error(`Not a real date-time: ${iso}`);
+  }
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(at);
+
+  const part = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find(p => p.type === type)?.value ?? '';
+
+  // As in `offsetMs`: `hour12: false` renders midnight as hour 24 in some ICU versions.
+  const hour = String(Number(part('hour')) % 24).padStart(2, '0');
+
+  return `${part('year')}-${part('month')}-${part('day')}T${hour}:${part('minute')}`;
+}
+
 /**
  * The instant at which this calendar date begins in this zone.
  *

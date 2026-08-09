@@ -1,6 +1,7 @@
 import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
+import { DEFAULT_EVENT_TIMEZONE } from './schema';
 
 export const EventEntity = new Entity(
   {
@@ -29,7 +30,7 @@ export const EventEntity = new Entity(
       description: { type: 'string', required: false },
       startDateTime: { type: 'string', required: true },
       endDateTime: { type: 'string', required: false },
-      timezone: { type: 'string', required: true, default: 'Asia/Kolkata' },
+      timezone: { type: 'string', required: true, default: DEFAULT_EVENT_TIMEZONE },
 
       // Venue (denormalized + linked)
       venueId: { type: 'string', required: false },
