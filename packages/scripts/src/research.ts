@@ -10,6 +10,7 @@ import {
   mergeResearch,
   selectRecords,
 } from '@rasika/core/admin/research';
+import { MELAKARTA_SOURCE } from './generateMelakartaLinks.js';
 
 /**
  * Two halves of a research run that a *different* agent — on a different model, in a
@@ -60,31 +61,45 @@ interface Packet {
  * stored `shankarAbharaNa`, and every one was thrown away. Guessing was never the worker's job
  * — the corpus knows its own spellings, so the packet carries them and the worker copies one.
  *
- * Read from the rows rather than from a constant, so a rename cannot make the packet lie. A
- * melakarta is a row with a mela number and no parent of its own.
+ * **Only the id map identifies the 72.** Two cheaper rules were tried and both put a janya in
+ * a melakarta's place. "Has a melaNumber and no parentRaga" matches about 300 records, because
+ * a janya stores its *parent's* number — that offered `shIlAngi` for mela 65 instead of
+ * `kalyANi`. Adding "and its scale is the melakarta's" still fails, because a sampurna janya
+ * can carry its parent's exact scale — that offered `mAyadravila` for mela 29. So the
+ * hand-resolved `MELAKARTA_SOURCE` decides which record, and the live rows supply its name,
+ * since several have been renamed since that map was written and its own `name` field is stale.
  */
-function parentVocabulary(rows: Record<string, string>[]): string[] {
-  const byMela = new Map<string, string>();
-  for (const row of rows) {
-    const mela = row.melaNumber?.trim();
-    if (!mela || row.parentRaga?.trim()) continue;
-    // Several spellings of one melakarta survive in the corpus; the fullest record wins.
-    const held = byMela.get(mela);
-    if (!held || (row.arohanam?.trim() && row.description?.trim())) byMela.set(mela, row.name);
+function parentVocabulary(rows: FlatRow[]): string[] {
+  const byId = new Map(rows.map(row => [row.id, row.name]));
+  const named: string[] = [];
+  const missing: number[] = [];
+  for (const [mela, link] of Object.entries(MELAKARTA_SOURCE)) {
+    const name = byId.get(link.id);
+    if (name) named.push(`${mela}. ${name}`);
+    else missing.push(Number(mela));
   }
-  return [...byMela.entries()]
-    .sort((a, b) => Number(a[0]) - Number(b[0]))
-    .map(([mela, name]) => `${mela}. ${name}`);
+  if (missing.length > 0) {
+    console.warn(`⚠️  no live record for melakarta ${missing.join(', ')}; omitted from packets`);
+  }
+  return named.sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10));
 }
 
+/**
+ * A flattened CSV row. `id` and `name` are spelled out because every domain's column list
+ * starts with them and callers key on both; a bare index signature does not satisfy a
+ * required-property constraint, so `selectRecords` cannot take one.
+ */
+type FlatRow = Record<string, string> & { id: string; name: string };
+
 /** The domain's rows, flattened through the CSV columns so a packet and the ingest agree. */
-async function flatRows(
-  domain: string
-): Promise<{ header: string[]; rows: Record<string, string>[] }> {
+async function flatRows(domain: string): Promise<{ header: string[]; rows: FlatRow[] }> {
   const entities = await AdminData.listAllForDomain(domain);
   const [header, ...data] = parseCsv(domainToCsv(domain, entities as Record<string, unknown>[]));
-  const rows = data.map(cells =>
-    Object.fromEntries(header.map((column, index) => [column, cells[index] ?? '']))
+  const rows = data.map(
+    cells =>
+      Object.fromEntries(
+        header.map((column, index) => [column, cells[index] ?? ''])
+      ) as unknown as FlatRow
   );
   return { header, rows };
 }
@@ -115,7 +130,7 @@ export async function writeResearchBatches(opts: {
   mkdirSync(outDir, { recursive: true });
 
   // The selection itself is in core, where it is unit-tested; this reads the files.
-  const { records: ordered, unmatched } = selectRecords(rows, {
+  const { records: ordered, unmatched } = selectRecords<FlatRow>(rows, {
     wanted: idsFile ? readIdList(idsFile) : undefined,
     excluded: excludeFile ? readIdList(excludeFile) : undefined,
   });
@@ -189,7 +204,7 @@ export async function writeResearchBatches(opts: {
  * existed. It reads the merged sheet, so it covers what was already stored as well as what
  * this run adds, and the second is where the reviewer should look first.
  */
-function reportForeignNotes(rows: Record<string, string>[]): void {
+function reportForeignNotes(rows: FlatRow[]): void {
   const flagged: string[] = [];
   for (const row of rows) {
     const mela = Number(row.melaNumber);

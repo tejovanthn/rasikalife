@@ -22,8 +22,16 @@ const DEFAULT_OUT = resolve(
   fileURLToPath(new URL('../../web/app/lib/melakarta-links.ts', import.meta.url))
 );
 
-/** Mela number → canonical raga record in the database, resolved from prod data. */
-const MELAKARTA_SOURCE: Record<number, MelakartaLink> = {
+/**
+ * Mela number → canonical raga record in the database, resolved from prod data.
+ *
+ * **The `id` is the authority; the `name` is documentation and goes stale.** Several of these
+ * records have been renamed or merged since this map was resolved, so anything needing a
+ * melakarta's current name must look the id up in live data — see `parentVocabulary`. Nothing
+ * else identifies the 72: a mela number is stored on janyas too, and a sampurna janya can
+ * carry its parent's exact scale (`mAyadravila` has Shankarabharanam's).
+ */
+export const MELAKARTA_SOURCE: Record<number, MelakartaLink> = {
   1: { id: '38bEs9GHonNHZ3SW05bjS10m7OY', name: 'kanakAngi' },
   2: { id: '38axss3waCraJyIRLL7oAkJ7jbI', name: 'ratnAngi' },
   3: { id: '38bIfl0896S84r70WDYhg2VuOnL', name: 'gAnamUrti' },
