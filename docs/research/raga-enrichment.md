@@ -116,6 +116,28 @@ composition", and Kamavardhani was "popular with musicians". A refusal count of 
 pattern, not the prose. Both words are in `PUFFERY` now — but the general point survives the
 specific fix, which is that the validator is a floor and the review is a person reading output.
 
+**Give the worker the corpus's own melakarta spellings; do not let it romanise.** Each raga
+packet carries `parent_raga_must_be_one_of`, and the brief says to copy from it. Before that
+existed, one round reported Dheerashankarabharanam in *ten* spellings and every one was thrown
+away — 25 of that round's 33 refusals were this, nearly all one raga. With the list in the
+packet the next round refused 12 of 1,511, of which 5 were blanks and 5 were near-miss typos.
+
+**Only the id map identifies the 72.** `parentVocabulary` reads `MELAKARTA_SOURCE` and looks
+each id up in the live rows. Two cheaper rules were tried and both seated a janya in a
+melakarta's place: "has a `melaNumber` and no `parentRaga`" matches about 300 records, because
+a janya stores its *parent's* number (it offered `shIlAngi` for mela 65 instead of `kalyANi`);
+adding "and its scale is the melakarta's" still fails, because a sampurna janya can carry its
+parent's exact scale (`mAyadravila` for mela 29). The map's own `name` field is stale — several
+of those records have been renamed or merged — so the **id** is the authority and the live row
+supplies the name.
+
+**`alternateScales` is one scale per entry.** A round came back packing an ascent and a descent
+into a single entry joined by a dash, some prefixed `(15 mAyAmALavagauLa janya)`, and lost the
+field on 17 ragas. The values were recoverable — splitting on the dash and dropping the
+P-initial phrases yielded 76 valid scales — and were still not taken: flattened into an
+unlabelled list a reader cannot tell an ascent from a descent, and one raga would have gained
+twelve entries. The brief now says so explicitly; the refusal was the right outcome.
+
 **A researched `parentRaga` is resolved against the corpus before it can reach the sheet.** The
 admin importer resolves a linked name by *exact* match and creates a record when it misses, so
 the first run wrote seven blank ragas — a worker reports "Shankarabharanam", the corpus stores
