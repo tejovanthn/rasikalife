@@ -213,6 +213,16 @@ export async function approveEvent(id: string, moderatorId: string): Promise<Eve
     );
   }
 
+  // Seed each cast member's empty `instrument` from the role on this poster, for the same
+  // reason and with the same swallow: an artist created by `findOrCreateArtist` holds nothing
+  // but a name, and the credit that names their instrument is right here.
+  if (approved.artists?.length) {
+    const { cascadeEventRolesToArtists } = await import('../cascade');
+    await cascadeEventRolesToArtists(approved.artists).catch(error => {
+      console.error(`[approveEvent] instrument seed failed for event ${id}`, error);
+    });
+  }
+
   return approved;
 }
 

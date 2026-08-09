@@ -519,6 +519,69 @@ had the chance to read. Note this is separate from **Ticketing → Contact Phone
 booking desk; `PhonesInput` therefore takes a `label` so the two sets of repeated rows are not
 both announced as "Contact phone 1".
 
+### Filling artists (`pnpm cli enrich-artists`)
+
+The artist corpus arrived barer than the ragas: of 1,159 artists, **503 hold nothing but a name**
+and 655 more hold nothing but an honorific (`Dr.`, `Vid.`, `Col.`). Exactly one has a biography,
+which is why `extract-artist-bios` has nothing to read — it reads stored prose, and there is
+none. So 1,158 of 1,159 pages fall through to the generic meta description on what
+`artist-display.ts` already records as the largest and worst-converting query class on the site.
+
+**The fix that needs no research is already in the table.** The `EventArtist` junction carries a
+free-text `role` per appearance — 1,378 credits across 133 distinct roles, headed by vocal (210),
+mridangam (153), violin (152) and ghatam (62). That is the same fact `instrument` holds, read off
+a poster and checked by whoever verified the event. A closed role→instrument vocabulary fills
+**703 of 1,169 artists** with no lookup and no model call, and `instrument` is what
+`artistTagline` and `artistMetaDescription` both lead with.
+
+Same shape as the venue and organiser fill: dry by default, `--apply` to write, an empty field
+filled and a filled one never touched, so a re-run is a no-op.
+
+- **The vocabulary is closed, explicit and alias-by-alias** (`domain/artist/enrich.ts`,
+  browser-safe and unit-tested for the reason `dedup.ts` gives). No stemming: `mrudanga`,
+  `khajira` and `morching` are how they were actually typed, and no stemmer reaches those from
+  the canonical spelling. An unrecognised role fills nothing and waits for a person — the same
+  rule as `venueTypeFromName`, which never falls back to `other`.
+- **A role is kept when it says what the person *did*, and dropped when it says what their
+  *standing* was.** `mridangam` and `bharatanatyam` are kept; `chief-guest` (18),
+  `guest-of-honour` (14), `disciple` (22), `awardee` and `convenor` are standing, and `performer`
+  (46), `artist` and `accompanist` are true of the whole corpus. That is what correctly leaves
+  276 artists with credits blank. `NON_INSTRUMENT_ROLES` lists the tempting ones so the decision
+  is reviewable, and a test asserts every one still refuses.
+- **Repeats are the ranking, and ties break on first appearance.** One entry per appearance goes
+  in, so a mridangist who sang once reads "Mridangam, Vocal" and not the reverse. `creditsByArtist`
+  sorts oldest-first *because* of the tie-break — without it the stored string would depend on
+  DynamoDB's scan order and a re-run would rewrite it for no reason. Capped at three.
+- **`cascadeEventRolesToArtists` is the immediate path, on `approveEvent`**, beside
+  `cascadeEventContactToOrganiser` and for the same reasons: approval not submission (any editor
+  reaches `submitVerified`, and this writes to a real person's page), failure swallowed and
+  logged, only-what-is-empty. The weekly sweep is the net for what it cannot see.
+- Consequence, the mirror of the one `tags` has: **`instrument` freezes once set.** An artist
+  filled as `mridangam` will not gain `vocal` after they start singing. Same trade, same reason —
+  the alternative re-adds an instrument a moderator deliberately removed, every week.
+
+**Three fields are deliberately not derived, each because the derivation would be a false
+claim.** `city` — a venue says where the concert was, not where the artist lives, and Chennai
+artists play Bengaluru constantly; this is the same error as writing an event's `contactInfo` to
+the venue. `activeYears` — the event corpus is too young, and would date Sudha Ragunathan's
+career to 2024. `isGroup` — flipping it strands existing membership edges, which is why
+`artist.update` is a `moderatorProcedure` at all.
+
+Everything else on an artist — biography, birth year, birthplace, gurus, website — has no source
+in the database and needs outside research. **Artists are a harder research subject than ragas**,
+and the reasons are not the raga ones: a raga's name *is* its subject and a person's is not, so a
+worker handed a bare name comes back with the namesake (`Hariharan` here is an instructor with
+eight events, not the playback singer); many are children performing an arangetram, so a birth
+year is a different class of claim from an arohanam; and every artist biography on the open web
+is promotional, which is the inflation `GURU_RELATIONSHIPS` and `PUFFERY` already exist to fight.
+Anything built there must carry disambiguating context in the packet — the artist's roles,
+venues and co-performers — and stay off biography, birth year and gurus.
+
+Duplicates are a smaller problem here than in the other corpora: about 20 exact-name groups and
+20 near pairs at `findArtistMatch`'s live 0.85 threshold, roughly 3% rather than the ragas' 20%.
+Worth a pass, but not the blocker it was there. Note the matcher misses `Phanindra Bhaskara`
+beside `Phanindra Bhaskar` — the surname must match outright, by design.
+
 ### Deduplicating venues and organisers (`pnpm cli dedup-places`, two steps)
 
 Both lists carried the duplicates the ragas taught us to expect, for a sharper reason: an event

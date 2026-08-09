@@ -325,6 +325,62 @@ export async function cascadeEventContactToOrganiser(
   await OrganiserEntity.patch({ id: organiserId }).set(missing).go();
 }
 
+/**
+ * Seed an artist's empty `instrument` from the role they were credited with on an event that
+ * has just been approved.
+ *
+ * The mirror of the organiser contact seed above, and it exists for the same drift:
+ * `findOrCreateArtist` makes an artist holding nothing but a name every time an event names an
+ * unknown one, which is what left 503 of 1,159 artists bare while the junction held a stage
+ * credit for 880 of them. This is the immediate path; `fillArtistInstruments` is the weekly net
+ * for what it cannot see — chiefly an artist whose first event was approved before this shipped,
+ * and one whose second concert finally names an instrument their first did not.
+ *
+ * **Approval, never submission**, for exactly the reason the organiser seed states: any signed-in
+ * editor reaches `submitVerified`, so seeding there would let anyone write a field onto a real
+ * person's page. Approval is where someone has vouched for the poster.
+ *
+ * Only artists holding no instrument are touched, and only when the role states one — a
+ * `chief-guest` or a `performer` fills nothing. Both decisions are `enrich.ts`'s, shared with the
+ * sweep so the two paths cannot disagree.
+ */
+export async function cascadeEventRolesToArtists(
+  artists: Array<{ id?: string | null; role?: string | null }>
+): Promise<void> {
+  const { instrumentFromRoles } = await import('./artist/enrich');
+
+  // The same artist can appear twice with different roles, so their credits are gathered before
+  // anything is derived — otherwise a mridangist who also sang would race two writes for one row
+  // and the loser's value would depend on timing.
+  const rolesById = new Map<string, string[]>();
+  for (const artist of artists) {
+    if (!artist?.id) continue;
+    const roles = rolesById.get(artist.id) ?? [];
+    if (artist.role) roles.push(artist.role);
+    rolesById.set(artist.id, roles);
+  }
+
+  const derived = [...rolesById.entries()]
+    .map(([id, roles]) => ({ id, instrument: instrumentFromRoles(roles) }))
+    .filter((entry): entry is { id: string; instrument: string } => Boolean(entry.instrument));
+  if (derived.length === 0) return;
+
+  const { ArtistEntity } = await import('./artist/entity');
+  const existing = await Promise.all(derived.map(entry => ArtistEntity.get({ id: entry.id }).go()));
+
+  await Promise.all(
+    derived.map((entry, index) => {
+      const artist = existing[index]?.data as
+        | { instrument?: string; deletedAt?: string; mergedIntoId?: string }
+        | undefined;
+      // Never overwrite. What is stored was put there by a person, and a role off one poster is
+      // weaker evidence than that.
+      if (!artist || artist.deletedAt || artist.mergedIntoId || artist.instrument?.trim()) return;
+      return ArtistEntity.patch({ id: entry.id }).set({ instrument: entry.instrument }).go();
+    })
+  );
+}
+
 export async function cascadeTalaNameUpdate(talaId: string, newName: string): Promise<void> {
   const { CompositionEntity } = await import('./composition/entity');
   const { CompositionTalaEntity } = await import('./composition_tala/entity');

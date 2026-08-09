@@ -338,6 +338,17 @@ program
   });
 
 program
+  .command('enrich-artists')
+  .description('Fill artist.instrument from the roles credited on the events they played')
+  .option('--apply', 'Write the fills (default is a dry run)')
+  .option('--limit <n>', 'How many fills to print', Number)
+  .action(async (opts: { apply?: boolean; limit?: number }) => {
+    setup();
+    const { enrichArtists } = await import('./enrichArtists.js');
+    await enrichArtists({ apply: opts.apply, limit: opts.limit });
+  });
+
+program
   .command('sync:instagram')
   .description(
     'Scrape Instagram profiles linked to artists, venues, and organisers for event posts'

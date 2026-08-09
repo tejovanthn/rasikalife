@@ -2,6 +2,44 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
+## Active: filling the artist corpus (2026-08-09)
+
+The artist corpus is barer than the raga one was. Of 1,159 artists, **503 hold nothing but a
+name** and 655 more hold nothing but an honorific; exactly one has a biography, so
+`extract-artist-bios` has nothing to read. 1,158 of 1,159 pages therefore carry the fallback meta
+description — on artist names, which Search Console shows as the site's largest query class
+(446 queries, 2,469 impressions) and nearly its worst-converting at 0.97%.
+
+**Built, not yet applied: `pnpm cli enrich-artists`.** Fills `artist.instrument` from the `role`
+credited on the events an artist actually played — a closed, alias-by-alias vocabulary over the
+133 role strings in the junction. This is the sweep phase 9 of the profile redesign considered
+and deliberately did not build (see "Phase 9 — polish" below); the half it was right to refuse is
+`city`, which is still refused, because a venue says where the concert was and not where the
+artist lives. Rules in `domain/artist/enrich.ts`, sweep in `instrument-sweep.ts`,
+`cascadeEventRolesToArtists` on `approveEvent`, and the weekly `VenueOrganiserEnrichCron` runs
+it. 22 new tests. CLAUDE.md § "Filling artists" has the reasoning.
+
+Prod dry run: **703 of 1,169 artists would gain an instrument** — vocal 201, mridangam 123,
+violin 104, ghatam 47, khanjira 33, tabla 32, bharatanatyam 30. 1 already holds one and is left
+alone, 276 have credits naming no instrument (`performer`, `chief-guest`, `disciple` — correctly
+refused), 189 have no live appearance at all.
+
+**Next step: `pnpm prod-cli enrich-artists --apply`, then `pnpm prod-cli reindex`.** Nothing is
+written until that runs.
+
+**Then phase 2, agreed but unstarted: research the head.** The ~200 artists with 2+ events, and
+only `website`, `socialLinks`, `city` and `specialisations`. **Not** biography, birth year or
+gurus. Artists are a harder research subject than ragas for reasons the raga runbook does not
+cover: a raga's name is its subject and a person's is not, so a bare name fetches the namesake
+(`Hariharan` here is an instructor with eight events, not the playback singer); many are children
+performing an arangetram; and every artist biography on the open web is promotional. A packet
+must carry the artist's roles, venues and co-performers as disambiguation.
+
+Duplicates are worth a pass but are not a blocker: ~20 exact-name groups and ~20 near pairs at
+`findArtistMatch`'s 0.85 threshold, about 3% against the ragas' 20%. There is no `dedup-artists`
+command; `domain/artist/dedup.ts` has the matcher. Note it misses `Phanindra Bhaskara` beside
+`Phanindra Bhaskar`, because the surname must match outright.
+
 ## Active: filling the raga corpus (2026-08-07)
 
 Runbook: `docs/research/raga-enrichment.md`. The dedup has run — 1,526 records, down from 1,869.
