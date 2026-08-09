@@ -142,9 +142,7 @@ describe('zonedDateTimeToIso', () => {
     expect(zonedDateTimeToIso('2026-08-14T17:45:00+05:30', 'Asia/Kolkata')).toBe(
       '2026-08-14T17:45:00+05:30'
     );
-    expect(zonedDateTimeToIso('2026-08-14T12:15:00Z', 'Asia/Kolkata')).toBe(
-      '2026-08-14T12:15:00Z'
-    );
+    expect(zonedDateTimeToIso('2026-08-14T12:15:00Z', 'Asia/Kolkata')).toBe('2026-08-14T12:15:00Z');
   });
 
   it('round-trips to the instant the zone actually means', () => {

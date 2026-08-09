@@ -10,6 +10,7 @@ import {
   listEventsByOrganiser,
   listEventsByVenue,
   listUpcomingEvents,
+  restoreEvent,
   updateEvent,
 } from '.';
 import type { CreateEventInput } from '.';
@@ -23,6 +24,7 @@ vi.mock('./entity', () => ({
     create: vi.fn(),
     get: vi.fn(),
     update: vi.fn(),
+    patch: vi.fn(),
     delete: vi.fn(),
     query: {
       byStatus: vi.fn(),
@@ -463,5 +465,73 @@ describe('getEventsByIds', () => {
     (EventEntity as any).get = vi.fn();
     expect(await getEventsByIds([])).toEqual([]);
     expect(EventEntity.get).not.toHaveBeenCalled();
+  });
+});
+
+describe('restoreEvent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('clears deletedAt with remove, not by setting it undefined', async () => {
+    const { EventEntity } = await import('./entity');
+    const remove = vi.fn().mockReturnValue({
+      go: vi.fn().mockResolvedValue({
+        data: { id: 'e1', title: 'Jvalanti', artists: [] },
+      }),
+    });
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).get = vi.fn().mockReturnValue({
+      go: vi.fn().mockResolvedValue({
+        data: { id: 'e1', title: 'Jvalanti', deletedAt: '2026-08-09T17:08:53.771Z' },
+      }),
+    });
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).patch = vi.fn().mockReturnValue({ remove });
+
+    const result = await restoreEvent('e1');
+
+    // Rule 8: `.set({ deletedAt: undefined })` writes no UpdateExpression at all, so the
+    // attribute survives and the event stays deleted while the call reports success.
+    expect(remove).toHaveBeenCalledWith(['deletedAt']);
+    expect(result.id).toBe('e1');
+  });
+
+  it('refuses an event that was merged rather than deleted', async () => {
+    const { EventEntity } = await import('./entity');
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).get = vi.fn().mockReturnValue({
+      go: vi.fn().mockResolvedValue({
+        data: { id: 'e1', deletedAt: '2026-08-09T17:08:53.771Z', mergedIntoId: 'e2' },
+      }),
+    });
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).patch = vi.fn();
+
+    await expect(restoreEvent('e1')).rejects.toThrow('merged into e2');
+    expect(EventEntity.patch).not.toHaveBeenCalled();
+  });
+
+  it('leaves an event that is not deleted alone', async () => {
+    const { EventEntity } = await import('./entity');
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).get = vi.fn().mockReturnValue({
+      go: vi.fn().mockResolvedValue({ data: { id: 'e1', title: 'Jvalanti' } }),
+    });
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).patch = vi.fn();
+
+    expect((await restoreEvent('e1')).id).toBe('e1');
+    expect(EventEntity.patch).not.toHaveBeenCalled();
+  });
+
+  it('throws when there is no such event', async () => {
+    const { EventEntity } = await import('./entity');
+    // biome-ignore lint/suspicious/noExplicitAny: entity mock
+    (EventEntity as any).get = vi.fn().mockReturnValue({
+      go: vi.fn().mockResolvedValue({ data: null }),
+    });
+
+    await expect(restoreEvent('nope')).rejects.toThrow();
   });
 });

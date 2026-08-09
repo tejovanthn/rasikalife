@@ -582,6 +582,55 @@ Duplicates are a smaller problem here than in the other corpora: about 20 exact-
 Worth a pass, but not the blocker it was there. Note the matcher misses `Phanindra Bhaskara`
 beside `Phanindra Bhaskar` — the surname must match outright, by design.
 
+### Event dates: the year a poster does not print, and the form that could not save one
+
+Three bugs met on one poster and are worth keeping apart, because each is a rule.
+
+**A `datetime-local` input does not submit a storable date.** It gives `2026-08-14T17:45` — no
+seconds, no offset — and every event schema wants `z.string().datetime({ offset: true })`. The
+event edit form handed that raw value to `edit.saveChanges`, which validates against
+`UpdateEventSchema` (`edit/service.ts`), so **the date was the one field on the form that could
+never be changed**, and the failure said "No changes detected". Comparing the raw value against
+the stored ISO string separately meant every save proposed a date change whether or not one was
+made. Both directions now go through `shared/timezone.ts`:
+
+| Direction | Function |
+|---|---|
+| form value → storable ISO | `zonedDateTimeToIso(local, zone)` |
+| stored ISO → form value | `zonedDateTimeInputValue(iso, zone)` |
+
+`zonedDateTimeToIso` preserves the wall clock exactly and computes only the offset, so it cannot
+shift a time the way re-parsing through UTC does. Never write `+05:30` at a call site — that
+literal was in three places and is wrong anywhere that observes DST; `DEFAULT_EVENT_TIMEZONE`
+(`domain/event/schema.ts`, re-exported from `client.ts`) is the one source. And never slice a
+stored string to 16 characters for an input: that is only right when the value happens to be
+stored local-with-offset, and on a UTC-stored event it silently moves the concert by the offset
+when the untouched form is saved.
+
+**The extractor must be told what today is.** Posters routinely print a day and month and no
+year at all ("AUG 14 | 5:45 PM"), so the model has to supply one, and with nothing to go on it
+supplies one from its training distribution — it dated a 2026 concert to 2024. The prompts in
+`domain/event/gemini.ts` are therefore **functions of `today`**, not module constants: they are
+built inside a Lambda container that can stay warm for days, so a date captured at module load
+would date every later poster to whenever the container booted. `gemini.test.ts` asserts both
+the date's presence and that it is read per call.
+
+**Never instruct a model to invent a value.** The festival prompt used to say "if event times
+are not specified individually, use reasonable defaults (e.g. evening concerts at 18:00)", and
+it duly turned three dancers billed under one 5:45 PM heading into three concerts at 5:45, 7:00
+and 8:00 — a running order printed on no poster, published as fact. This is the same rule as the
+meta descriptions and the JSON-LD: claim nothing the source does not hold. A missing time is
+omitted or inherited from the one the poster states.
+
+**A soft-deleted event can be brought back.** `Event.restoreEvent(id)` /
+`pnpm cli restore-event <id>` clears `deletedAt` through the entity, so all five GSI sort keys
+are recomputed (rule 7) and the cast's collaborators are rebuilt; it uses `.remove()` rather
+than `.set(undefined)` (rule 8) and refuses a row carrying `mergedIntoId`, since that was merged
+rather than deleted and restoring it would re-split the merge. Reading such a row needs
+`getEventIncludingDeleted` — plain `getEvent` returns null for exactly the rows the tool is for.
+Deleting an event to work around some *other* problem with it is an ordinary mistake and needs a
+way back.
+
 ### Deduplicating venues and organisers (`pnpm cli dedup-places`, two steps)
 
 Both lists carried the duplicates the ragas taught us to expect, for a sharper reason: an event

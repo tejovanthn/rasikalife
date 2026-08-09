@@ -300,6 +300,17 @@ export async function forceSubmitEvent(id: string): Promise<Event> {
   return result.data as Event;
 }
 
+/**
+ * The row as it actually is, soft delete and all.
+ *
+ * `getEvent` hides a deleted event, which is right for every reader — but a tool that has to
+ * *act* on the deletion needs to see it, and the alternative is a hand-built table key.
+ */
+export async function getEventIncludingDeleted(id: string): Promise<Event | null> {
+  const result = await EventEntity.get({ id }).go();
+  return (result.data as Event | null) ?? null;
+}
+
 export async function getEvent(id: string): Promise<Event | null> {
   const result = await EventEntity.get({ id }).go();
 
@@ -386,6 +397,42 @@ export async function softDeleteEvent(id: string): Promise<void> {
   if (existing?.artists?.length) {
     await recomputeCollaboratorsForCast(existing.artists);
   }
+}
+
+/**
+ * Take back a soft delete.
+ *
+ * There was no way back from the delete button. Deleting an event to get around some *other*
+ * problem with it — a date that would not save, say — is an ordinary mistake, and undoing it
+ * by hand would mean rewriting five GSI sort keys (rule 7) on a live table.
+ */
+export async function restoreEvent(id: string): Promise<Event> {
+  // Deliberately not `getEvent`: it returns null for a soft-deleted row, which is every row
+  // this function exists for.
+  const existing = await EventEntity.get({ id }).go();
+  if (!existing.data) {
+    throw notFoundError('event', id);
+  }
+  if (existing.data.mergedIntoId) {
+    throw createFailedError(
+      'event',
+      `Event ${id} was merged into ${existing.data.mergedIntoId} rather than deleted; restoring it would re-split the merge and republish a URL that now redirects`
+    );
+  }
+  if (!existing.data.deletedAt) {
+    return existing.data as Event;
+  }
+
+  const result = await EventEntity.patch({ id }).remove(['deletedAt']).go({ response: 'all_new' });
+
+  const restored = result.data as Event;
+  // The cast gains a shared event back. After the write, for the reason softDeleteEvent gives
+  // in reverse: rebuildArtistCollaborators reads deletedAt off the table.
+  if (restored.artists?.length) {
+    await recomputeCollaboratorsForCast(restored.artists);
+  }
+
+  return restored;
 }
 
 export async function listUpcomingEvents(params?: {

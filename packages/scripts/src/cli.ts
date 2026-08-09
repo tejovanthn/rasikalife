@@ -375,6 +375,17 @@ program
   });
 
 program
+  .command('restore-event')
+  .description('Undo a soft-deleted event: clear deletedAt, rebuild collaborators, reindex')
+  .argument('<id>', 'Event ID')
+  .option('--dry-run', 'Show what would be restored without writing')
+  .action(async (id: string, options: { dryRun?: boolean }) => {
+    setup();
+    const { restoreEvent } = await import('./restoreEvent.js');
+    await restoreEvent(id, { dryRun: options.dryRun });
+  });
+
+program
   .command('check:id')
   .description('Fetch raw entity data from the table by ID (tries all entity types)')
   .argument('<id>', 'Entity ID')
