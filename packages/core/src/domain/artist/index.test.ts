@@ -6,6 +6,10 @@ vi.mock('../../utils', () => ({
   generateId: vi.fn(() => 'test-id-123'),
 }));
 
+vi.mock('../cascade', () => ({
+  cascadeArtistNameUpdate: vi.fn(),
+}));
+
 vi.mock('./entity', () => ({
   ArtistEntity: {
     create: vi.fn(),
@@ -101,8 +105,23 @@ describe('Artist', () => {
   });
 
   describe('updateArtist', () => {
+    // `updateArtist` now reads the stored record first so it can tell a real rename from a
+    // payload that merely repeats the name it already had.
+    const mockStoredName = async (name: string | null) => {
+      const { ArtistEntity } = await import('./entity');
+      vi.mocked(ArtistEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: name === null ? null : { id: 'test-id-123', name } }),
+      } as any);
+    };
+
+    const mockUpdateResult = async (data: unknown) => {
+      const { ArtistEntity } = await import('./entity');
+      vi.mocked(ArtistEntity.update).mockReturnValue({
+        set: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data }) }),
+      } as any);
+    };
+
     it('should update artist successfully', async () => {
-      const updateInput = { name: 'Updated Name' };
       const mockUpdatedArtist = {
         id: 'test-id-123',
         name: 'Updated Name',
@@ -111,31 +130,56 @@ describe('Artist', () => {
         updatedAt: '2025-01-09T01:00:00.000Z',
       };
 
-      const { ArtistEntity } = await import('./entity');
-      vi.mocked(ArtistEntity.update).mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          go: vi.fn().mockResolvedValue({ data: mockUpdatedArtist }),
-        }),
-      } as any);
+      await mockStoredName('Old Name');
+      await mockUpdateResult(mockUpdatedArtist);
 
-      const artist = await updateArtist('test-id-123', updateInput);
+      const { ArtistEntity } = await import('./entity');
+      const artist = await updateArtist('test-id-123', { name: 'Updated Name' });
 
       expect(ArtistEntity.update).toHaveBeenCalledWith({ id: 'test-id-123' });
       expect(artist).toEqual(mockUpdatedArtist);
     });
 
-    it('should throw error when update fails', async () => {
-      const updateInput = { name: 'Updated Name' };
+    it('cascades the rename when the name actually changes', async () => {
+      await mockStoredName('Old Name');
+      await mockUpdateResult({ id: 'test-id-123', name: 'New Name' });
+
+      const { cascadeArtistNameUpdate } = await import('../cascade');
+      await updateArtist('test-id-123', { name: 'New Name' });
+
+      expect(cascadeArtistNameUpdate).toHaveBeenCalledWith('test-id-123', 'New Name');
+    });
+
+    it('does NOT cascade when the payload repeats the stored name', async () => {
+      // The whole admin CSV export carries `name` on every row, so without this a full-corpus
+      // import fires the five-entity rename fan-out 1,169 times and rewrites every denormalized
+      // copy with the value it already held.
+      await mockStoredName('Same Name');
+      await mockUpdateResult({ id: 'test-id-123', name: 'Same Name' });
+
+      const { cascadeArtistNameUpdate } = await import('../cascade');
+      await updateArtist('test-id-123', { name: 'Same Name', city: 'Chennai' });
+
+      expect(cascadeArtistNameUpdate).not.toHaveBeenCalled();
+    });
+
+    it('does not read or cascade at all when the payload carries no name', async () => {
+      await mockUpdateResult({ id: 'test-id-123', city: 'Chennai' });
 
       const { ArtistEntity } = await import('./entity');
-      vi.mocked(ArtistEntity.update).mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          go: vi.fn().mockResolvedValue({ data: null }),
-        }),
-      } as any);
+      const { cascadeArtistNameUpdate } = await import('../cascade');
+      await updateArtist('test-id-123', { city: 'Chennai' });
 
-      await expect(updateArtist('test-id-123', updateInput)).rejects.toThrow(
-        'Artist with ID test-id-123 not found'
+      expect(ArtistEntity.get).not.toHaveBeenCalled();
+      expect(cascadeArtistNameUpdate).not.toHaveBeenCalled();
+    });
+
+    it('should throw error when update fails', async () => {
+      await mockStoredName('Old Name');
+      await mockUpdateResult(null);
+
+      await expect(updateArtist('test-id-123', { name: 'Updated Name' })).rejects.toThrow(
+        'artist with ID test-id-123 not found'
       );
     });
   });

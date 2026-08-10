@@ -74,6 +74,11 @@ export async function updateArtist(
     field => allowed.has(field) && (input as Record<string, unknown>)[field] === undefined
   );
 
+  // Read the stored name *before* writing, so the cascade below can tell a real rename from a
+  // payload that merely carries the name it already had. One GetItem, and only when a name is
+  // present at all.
+  const previousName = input.name ? (await getArtist(id))?.name : undefined;
+
   const operation = ArtistEntity.update({ id }).set(input);
   const result = await (toClear.length > 0
     ? operation.remove([...toClear] as Parameters<typeof operation.remove>[0])
@@ -84,7 +89,13 @@ export async function updateArtist(
     throw notFoundError('artist', id);
   }
 
-  if (input.name) {
+  // **Only on an actual rename.** `cascadeArtistNameUpdate` walks five entities — compositions,
+  // EventArtist, awards, memberships, affiliations — and rewrites the denormalized name on every
+  // row it finds. Firing it when the name is unchanged rewrites each of those with the value it
+  // already held and bumps `updatedAt` across them, which is how a full-corpus admin CSV import
+  // became an eight-hour job: every exported row carries `name`, so all 1,169 of them ran the
+  // cascade, and a composer with 300 compositions paid 300 pointless writes.
+  if (input.name && input.name !== previousName) {
     await cascadeArtistNameUpdate(id, input.name);
   }
 

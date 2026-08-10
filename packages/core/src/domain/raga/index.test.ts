@@ -172,7 +172,9 @@ describe('Raga', () => {
         }),
       } as any);
 
-      await expect(updateRaga('raga-123', updateInput)).rejects.toThrow('Raga raga-123 not found');
+      await expect(updateRaga('raga-123', updateInput)).rejects.toThrow(
+        'raga with ID raga-123 not found'
+      );
     });
   });
 

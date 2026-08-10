@@ -159,7 +159,9 @@ describe('Tala', () => {
         }),
       } as any);
 
-      await expect(updateTala('tala-123', updateInput)).rejects.toThrow('Tala tala-123 not found');
+      await expect(updateTala('tala-123', updateInput)).rejects.toThrow(
+        'tala with ID tala-123 not found'
+      );
     });
   });
 
