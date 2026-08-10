@@ -10,6 +10,7 @@ import {
   validateResearchField,
   validateSocialLinks,
   validateSwaras,
+  withoutRedundantSpecialisations,
 } from './research';
 
 /**
@@ -587,5 +588,66 @@ describe('mergeResearch — artist', () => {
     const sheet = rows();
     const report = mergeResearch('artist', sheet, [{ id: 'a1', fields: { city: 'Pune' } }]);
     expect(report.derivedMela).toBe(0);
+  });
+});
+
+describe('withoutRedundantSpecialisations', () => {
+  it('drops an entry that only restates the stored instrument', () => {
+    expect(withoutRedundantSpecialisations('Mridangam', 'mridangam')).toBeUndefined();
+    expect(withoutRedundantSpecialisations('Carnatic violin', 'violin')).toBeUndefined();
+    expect(withoutRedundantSpecialisations('Carnatic vocal', 'vocal')).toBeUndefined();
+  });
+
+  it('keeps the entries that add something, and drops only the echo', () => {
+    // The real shape from the first run: an echo beside a genuine addition.
+    expect(withoutRedundantSpecialisations('Carnatic vocal|Playback singing', 'vocal')).toBe(
+      'Playback singing'
+    );
+    expect(withoutRedundantSpecialisations('Hindustani vocal|Khayal|Thumri', 'vocal')).toBe(
+      'Khayal|Thumri'
+    );
+  });
+
+  it('drops an entry that is nothing but tradition words', () => {
+    expect(withoutRedundantSpecialisations('Carnatic music', 'vocal')).toBeUndefined();
+  });
+
+  it('matches against every instrument on a multi-instrument record', () => {
+    expect(
+      withoutRedundantSpecialisations('Mridangam|Ghatam', 'mridangam, ghatam')
+    ).toBeUndefined();
+    expect(withoutRedundantSpecialisations('Mridangam|Konnakkol', 'mridangam, ghatam')).toBe(
+      'Konnakkol'
+    );
+  });
+
+  it('keeps everything when the record stores no instrument', () => {
+    expect(withoutRedundantSpecialisations('Mridangam', undefined)).toBe('Mridangam');
+    expect(withoutRedundantSpecialisations('Mridangam', '')).toBe('Mridangam');
+  });
+});
+
+describe('mergeResearch — an artist specialisation may not echo the instrument', () => {
+  const rows = () => [
+    { id: 'a1', name: 'A Mridangist', instrument: 'mridangam', specialisations: '' },
+    { id: 'a2', name: 'A Vocalist', instrument: 'vocal', specialisations: '' },
+    { id: 'a3', name: 'Unknown Player', instrument: '', specialisations: '' },
+  ];
+
+  it('refuses a pure echo, keeps a real addition, and leaves an instrument-less record alone', () => {
+    const sheet = rows();
+    const report = mergeResearch('artist', sheet, [
+      { id: 'a1', fields: { specialisations: ['Mridangam'] } },
+      { id: 'a2', fields: { specialisations: ['Carnatic vocal', 'Playback singing'] } },
+      { id: 'a3', fields: { specialisations: ['Mridangam'] } },
+    ]);
+
+    expect(sheet[0].specialisations).toBe('');
+    expect(sheet[1].specialisations).toBe('Playback singing');
+    expect(sheet[2].specialisations).toBe('Mridangam');
+    expect(report.rejections.map(r => r.reason)).toContain(
+      'only restates the instrument already stored'
+    );
+    expect(report.filled).toBe(2);
   });
 });

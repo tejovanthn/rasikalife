@@ -528,6 +528,25 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
         continue;
       }
 
+      // A cross-field check, so it cannot live in `validateResearchField` — that sees a value,
+      // not the row it is landing on.
+      if (domain === 'artist' && column === 'specialisations') {
+        const kept = withoutRedundantSpecialisations(checked.value as string, row.instrument);
+        if (!kept) {
+          report.rejections.push({
+            id: row.id,
+            name: row.name,
+            field,
+            reason: 'only restates the instrument already stored',
+            value: String(raw).slice(0, 80),
+          });
+          continue;
+        }
+        row[column] = kept;
+        report.filled += 1;
+        continue;
+      }
+
       row[column] = checked.value as string;
       report.filled += 1;
     }
@@ -535,6 +554,52 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
 
   if (domain === 'raga') report.derivedMela = deriveMelaNumbers(rows);
   return report;
+}
+
+/**
+ * Drops specialisations that only say again what `instrument` already holds.
+ *
+ * Written after the first artist run, where **130 of 177** returned specialisations were the
+ * `roles` list from the packet's own identity block handed back capitalised — `roles: ["violin"]`
+ * came home as `["Carnatic violin"]`, `["mridangam"]` as `["Mridangam"]`. That is not research,
+ * it is our own input echoed, and since `enrich-artists` had just filled `instrument` from those
+ * same credits, importing it would print the instrument twice on one page.
+ *
+ * It filters per entry rather than refusing the field, because the *same* run returned real
+ * additions alongside the echo — Sid Sriram's "Playback singing" beside "Carnatic vocal", Shubha
+ * Mudgal's "Khayal", "Thumri" and "Dadra". Throwing the field away would lose those.
+ *
+ * Tradition and genre words are stripped before comparing, so "Carnatic violin" is recognised as
+ * the stored `violin`. An artist with no stored instrument keeps everything — there is nothing
+ * for the entry to be redundant against.
+ */
+export function withoutRedundantSpecialisations(
+  value: string,
+  instrument: string | undefined
+): string | undefined {
+  const stored = (instrument ?? '')
+    .split(',')
+    .map(part => part.trim().toLowerCase())
+    .filter(Boolean);
+  if (stored.length === 0) return value;
+
+  const bare = (text: string) =>
+    text
+      .toLowerCase()
+      .replace(/\b(carnatic|karnatik|hindustani|classical|indian|music|performance)\b/g, '')
+      .replace(/[^a-z ]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const kept = value.split('|').filter(entry => {
+    const word = bare(entry);
+    // An empty remainder means the entry was nothing but tradition words ("Carnatic music"),
+    // which says no more than the page already does.
+    if (!word) return false;
+    return !stored.some(held => bare(held) === word);
+  });
+
+  return kept.length > 0 ? kept.join('|') : undefined;
 }
 
 /**

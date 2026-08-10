@@ -32,28 +32,53 @@ produced. The single exception is the proof rather than a fault — `Yagnika Iye
 sweep left it alone. That spelling appears on no `role`, so it is not worth adding as an alias;
 the aliases are the ones actually seen in the junction, never invented ones.
 
-**Phase 2 is built and the batches are cut. Nothing has been dispatched.** Runbook:
-`docs/research/artist-enrichment.md`, which carries the orchestrator and worker prompts.
+**Phase 2 has run. All 9 batches came back and are imported.** Runbook:
+`docs/research/artist-enrichment.md`, which now carries what the run taught along with the
+orchestrator and worker prompts.
 
-`data/artist-research/main/` holds **9 batches, 212 records**, ordered busiest-first, cut with
-`--min-events 2` (957 artists dropped). Six fields: `website`, `socialLinks`, `city`,
-`specialisations`, `birthPlace`, `activeYears`. `biography`, `photoUrl`, `birthYear` and `gurus`
-are refused *by the validator*, not merely discouraged in the brief — each for its own reason,
-written up in `RESEARCH_FIELDS`.
+212 records researched, 177 with at least one field, 35 refused on identity, and **no record
+claimed a field without a source**. What landed:
 
-Every artist record carries a `context` block — roles, venues, organisers, `performsWith`, date
-range — because a raga's name is its subject and a person's is not. `--min-events` is an identity
-control rather than a coverage one: with no appearances there is nothing to check a candidate
-against.
+| field | before | after |
+|---|---|---|
+| city | 1 | 135 |
+| specialisations | 1 | 49 |
+| socialLinks | 2 | 40 |
+| website | 0 | 39 |
+| birthPlace | 1 | 26 |
+| activeYears | 1 | 26 |
 
-**Next step: dispatch the 9 batches**, then `research-ingest`, read `artist-refused.csv` *and*
-the filled CSV, `admin-csv-import --dry-run`, import, `reindex`.
+309 cells, no pre-existing value changed. The only refusal class was 129 `specialisations` that
+merely restated the `instrument` — see below.
 
-The whole path was round-tripped against prod with a deliberately bad result file before any of
-it was handed out: a postal address, `over two decades`, an Instagram URL in `website`, a
-mismatched social host, plus a volunteered `biography` and `birthYear` — all six refused with
-reasons, five good cells landed, and an unknown id skipped. Worth repeating after any change to
-the validators.
+**The one systematic fault was ours, not the workers'.** The `context` block exists for identity,
+and a model asked to fill a field answers it from whatever is in front of it: 130 of 177
+specialisations were the packet's own `roles` handed back capitalised. Since `enrich-artists` had
+just filled `instrument` from those same credits, importing them would print the fact twice.
+`withoutRedundantSpecialisations` now drops them at merge time, per entry — the same run returned
+real additions ("Playback singing", "Khayal", "Konnakol") that a whole-field refusal would lose.
+**Ask of any new field: could a worker answer this from the context block alone?**
+
+**Three findings about our own data, worth more than the fields.** `Neyveli Venkatesh` stored
+`instrument: vocal` — he is a documented mridangist and the role was scraped from the event
+*title*; `Shashank` stored `flute, tabla`, where the tabla credit belongs to a different person
+sharing the record; `Dushyanth Sridhar`'s record is a keyboard player who shares a name with the
+harikatha exponent (identity correctly refused). The first two are corrected via
+`data/artist-research/instrument-corrections.csv`.
+
+**Note a wrong `instrument` cannot be cleared, only corrected.** `fillArtistInstruments` refills
+an empty field from the same role on the next weekly cron, so `admin-clear-fields` is not stable
+for anything a sweep derives.
+
+**Still open: the underlying event credits are still wrong.** Neyveli Venkatesh is credited
+`vocal` and Shashank `tabla` on the `EventArtist` rows themselves, so the *event* pages still say
+so, and there is no CLI for editing a cast role — it needs the event edit screen. Fixing the role
+is the real repair; correcting `instrument` only fixes the artist page.
+
+**Next step: the other 957.** They were cut out with `--min-events 2` because an artist with no
+appearances has no context block to check identity against. That needs a different method, not a
+laxer one — the likeliest is name plus city plus a known guru or sabha, and it should not reuse
+this brief unchanged.
 
 Duplicates are worth a pass but are not a blocker: ~20 exact-name groups and ~20 near pairs at
 `findArtistMatch`'s 0.85 threshold, about 3% against the ragas' 20%. There is no `dedup-artists`

@@ -101,6 +101,43 @@ validator cannot see that; only the `notes` column and a person can.
 **`notes` is the most useful column in an artist run.** A worker told to refuse when it cannot
 settle identity will say so there, and those rows are the ones worth a human lookup.
 
+## What the first run taught (2026-08-10, 212 records, 9 batches)
+
+All nine came back complete — 212 records, 177 with at least one field, 35 refused outright, and
+**zero records claiming a field without a source**. The identity rule worked exactly as intended:
+`Hariharan` came back empty with *"This is NOT the playback singer Hariharan"*, and `Team` with
+*"not an individual artist… a placeholder for an accompaniment ensemble"*.
+
+**The one systematic fault was `specialisations`, and it was our own fault.** 130 of 177 were the
+packet's own `roles` handed back capitalised — `roles: ["violin"]` returned as
+`["Carnatic violin"]`. The context block is supplied for *identity*, and a model asked to fill a
+field will fill it from whatever is in front of it. Since `enrich-artists` had just written
+`instrument` from those same credits, importing them would print the instrument twice on one
+page. `withoutRedundantSpecialisations` now drops them at merge time, per entry rather than per
+field — because the same run also returned real additions: Sid Sriram's "Playback singing", Shubha
+Mudgal's "Khayal", "Thumri", "Dadra", Giridhar Udupa's "Konnakol" and "Morsing".
+
+**A specialisation contradicting the derived `instrument` is usually not an error.** Six looked
+wrong and all six were right: Ranjani and Gayatri of the Ranjani-Gayatri duo both began as
+violinists; H M Smitha and Sindhu Suchethan are violinist-vocalist sisters; Vighnesh Bhagwat is a
+harmonium accompanist with a master's in Hindustani vocal. Read the note before removing one.
+
+**The workers found four faults in our own data, which is worth more than a field.** Read the
+`notes` for these — no validator can produce them:
+
+| record | what they found |
+|---|---|
+| `Neyveli Venkatesh` | stored `instrument: vocal`; he is a documented mridangist, and the role was scraped from the event *title* ("Carnatic Vocal Concert") rather than his credit |
+| `Shashank` | `flute, tabla` — the tabla credit "cannot belong to the same person"; two people share one record |
+| `Dushyanth Sridhar` | identity refused: the notable one is a harikatha exponent, so the keyboard record is somebody else of the same name |
+| `Padmini Ravi` | credited chief-guest, correctly filling no instrument |
+
+**A wrong `instrument` cannot be fixed by clearing it.** `fillArtistInstruments` refills an empty
+field from the same bad role on the next weekly cron, so `admin-clear-fields` is not stable here.
+Either correct the value — a filled field is never touched, and a two-column `id,instrument` CSV
+through `admin-csv-import` is enough, blank cells meaning "leave alone" — or fix the `role` on the
+event's cast, which is the actual source and also corrects the event page.
+
 ## What the validator refuses, and why
 
 - **`biography`, `photoUrl`, `birthYear`, `gurus`** — not researched fields; see above.

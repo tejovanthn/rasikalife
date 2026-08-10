@@ -619,6 +619,24 @@ When reading a returned run, the thing the validator cannot catch is **a cluster
 values on one artist that all belong to somebody else**. Only `notes` and a person find that,
 which is why the brief requires the worker to record how it settled identity every time.
 
+**The context block is for identity, and a model will answer fields out of it.** The first run
+returned 130 of 177 `specialisations` as the packet's own `roles` capitalised — `["violin"]` came
+home as `["Carnatic violin"]` — which, with `instrument` already filled from those same credits,
+would print the same fact twice on one page. `withoutRedundantSpecialisations` drops those at
+merge time, **per entry, not per field**, because the same run also returned real additions
+("Playback singing" beside "Carnatic vocal"). Any new field added here needs the same question
+asked of it: could a worker answer this from the context block alone?
+
+A specialisation that *contradicts* the derived `instrument` is usually correct, not an error —
+Ranjani and Gayatri both began as violinists, and a harmonium accompanist may hold a vocal degree.
+Read the note before removing one.
+
+**A wrong `instrument` cannot be repaired by clearing it**: `fillArtistInstruments` refills an
+empty field from the same role next Sunday, so `admin-clear-fields` is not stable for anything a
+sweep derives. Correct the value instead — a two-column `id,instrument` CSV through
+`admin-csv-import` is enough, since blank means "leave alone" — or fix the `role` on the event's
+cast, which is the real source and repairs the event page too.
+
 ### Event dates: the year a poster does not print, and the form that could not save one
 
 Three bugs met on one poster and are worth keeping apart, because each is a rule.
