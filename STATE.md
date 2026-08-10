@@ -32,7 +32,7 @@ produced. The single exception is the proof rather than a fault — `Yagnika Iye
 sweep left it alone. That spelling appears on no `role`, so it is not worth adding as an alias;
 the aliases are the ones actually seen in the junction, never invented ones.
 
-**Phase 2 has run. All 9 batches came back and are imported.** Runbook:
+**Phase 2 is done, imported, reindexed and verified against a fresh export.** Runbook:
 `docs/research/artist-enrichment.md`, which now carries what the run taught along with the
 orchestrator and worker prompts.
 
@@ -49,7 +49,17 @@ claimed a field without a source**. What landed:
 | activeYears | 1 | 26 |
 
 309 cells, no pre-existing value changed. The only refusal class was 129 `specialisations` that
-merely restated the `instrument` — see below.
+merely restated the `instrument` — see below. Verified against a fresh export: **every expected
+cell is stored**, and the only two values differing from the sheet are the deliberate instrument
+corrections.
+
+**The import itself carried a bug worth more than this run.** `updateArtist` fired
+`cascadeArtistNameUpdate` whenever the payload *carried* a name rather than when it *changed*,
+and every exported row carries `name` — so all 1,169 rows ran the five-entity rename fan-out,
+rewriting every composition and junction row with the value it already held. ~10 seconds a row,
+eight hours to write 309 cells. Fixed (`125b16e09`); the clean re-run took **14 minutes**. The
+first attempt also died around row 480 when the machine lost its network, and re-running the same
+CSV recovered it — the import is idempotent, one atomic update per row, blank meaning leave alone.
 
 **The one systematic fault was ours, not the workers'.** The `context` block exists for identity,
 and a model asked to fill a field answers it from whatever is in front of it: 130 of 177
@@ -63,8 +73,9 @@ real additions ("Playback singing", "Khayal", "Konnakol") that a whole-field ref
 `instrument: vocal` — he is a documented mridangist and the role was scraped from the event
 *title*; `Shashank` stored `flute, tabla`, where the tabla credit belongs to a different person
 sharing the record; `Dushyanth Sridhar`'s record is a keyboard player who shares a name with the
-harikatha exponent (identity correctly refused). The first two are corrected via
-`data/artist-research/instrument-corrections.csv`.
+harikatha exponent (identity correctly refused). The first two are corrected and live
+(`data/artist-research/instrument-corrections.csv` — Neyveli Venkatesh → `mridangam`, Shashank →
+`flute`).
 
 **Note a wrong `instrument` cannot be cleared, only corrected.** `fillArtistInstruments` refills
 an empty field from the same role on the next weekly cron, so `admin-clear-fields` is not stable
