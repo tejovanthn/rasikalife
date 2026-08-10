@@ -10,7 +10,7 @@ name** and 655 more hold nothing but an honorific; exactly one has a biography, 
 description — on artist names, which Search Console shows as the site's largest query class
 (446 queries, 2,469 impressions) and nearly its worst-converting at 0.97%.
 
-**Built, not yet applied: `pnpm cli enrich-artists`.** Fills `artist.instrument` from the `role`
+**Landed in prod (2026-08-09): `pnpm cli enrich-artists`.** Fills `artist.instrument` from the `role`
 credited on the events an artist actually played — a closed, alias-by-alias vocabulary over the
 133 role strings in the junction. This is the sweep phase 9 of the profile redesign considered
 and deliberately did not build (see "Phase 9 — polish" below); the half it was right to refuse is
@@ -19,15 +19,20 @@ artist lives. Rules in `domain/artist/enrich.ts`, sweep in `instrument-sweep.ts`
 `cascadeEventRolesToArtists` on `approveEvent`, and the weekly `VenueOrganiserEnrichCron` runs
 it. 22 new tests. CLAUDE.md § "Filling artists" has the reasoning.
 
-Prod dry run: **703 of 1,169 artists would gain an instrument** — vocal 201, mridangam 123,
-violin 104, ghatam 47, khanjira 33, tabla 32, bharatanatyam 30. 1 already holds one and is left
-alone, 276 have credits naming no instrument (`performer`, `chief-guest`, `disciple` — correctly
-refused), 189 have no live appearance at all.
+**703 artists written, reindexed, and verified against a fresh export**: 704 of 1,169 now carry
+an instrument, up from 1 — vocal 201, mridangam 123, violin 104, ghatam 47, khanjira 33, tabla
+32, bharatanatyam 30, 13 of them multi-instrument. 276 have credits naming no instrument
+(`performer`, `chief-guest`, `disciple` — correctly refused) and 189 have no live appearance at
+all; only research reaches those 465.
 
-**Next step: `pnpm prod-cli enrich-artists --apply`, then `pnpm prod-cli reindex`.** Nothing is
-written until that runs.
+The verification worth repeating after any change here: re-export and check that **no
+pre-existing value changed** and that every stored value is one the vocabulary could have
+produced. The single exception is the proof rather than a fault — `Yagnika Iyengar` reads
+`bharathanatyam, nattuvangam`, a hand-typed spelling the vocabulary does not contain, and the
+sweep left it alone. That spelling appears on no `role`, so it is not worth adding as an alias;
+the aliases are the ones actually seen in the junction, never invented ones.
 
-**Then phase 2, agreed but unstarted: research the head.** The ~200 artists with 2+ events, and
+**Next step, agreed but unstarted: phase 2, research the head.** The ~200 artists with 2+ events, and
 only `website`, `socialLinks`, `city` and `specialisations`. **Not** biography, birth year or
 gurus. Artists are a harder research subject than ragas for reasons the raga runbook does not
 cover: a raga's name is its subject and a person's is not, so a bare name fetches the namesake
