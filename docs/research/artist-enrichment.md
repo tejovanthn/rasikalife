@@ -132,6 +132,18 @@ harmonium accompanist with a master's in Hindustani vocal. Read the note before 
 | `Dushyanth Sridhar` | identity refused: the notable one is a harikatha exponent, so the keyboard record is somebody else of the same name |
 | `Padmini Ravi` | credited chief-guest, correctly filling no instrument |
 
+**Importing 1,169 rows took eight hours, and that was a bug.** `updateArtist` fired
+`cascadeArtistNameUpdate` whenever the payload carried a name rather than when the name changed,
+and every exported row carries `name`. Fixed; a full pass now runs in about ten minutes. If a
+future import crawls, suspect the same shape somewhere else — the CSV submits every column of
+every row, so no writer downstream may treat "field present" as "field changed".
+
+**The import is idempotent, so a broken run is resumed by re-running it.** This one died around
+row 480 when the machine lost its network (`ENOTFOUND dynamodb.us-east-1.amazonaws.com`,
+`EADDRNOTAVAIL`), taking ten rows with it. Nine had nothing to write; one, `Janardhan`, lost a
+specialisation. Re-running the same CSV picked it up — each row is a single atomic update and a
+blank cell means "leave alone", so nothing is double-applied.
+
 **A wrong `instrument` cannot be fixed by clearing it.** `fillArtistInstruments` refills an empty
 field from the same bad role on the next weekly cron, so `admin-clear-fields` is not stable here.
 Either correct the value — a filled field is never touched, and a two-column `id,instrument` CSV

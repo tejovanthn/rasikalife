@@ -1007,6 +1007,15 @@ An admin-only tool to export any domain to CSV, edit it in a spreadsheet, and re
 - **tRPC** `adminData.export` / `adminData.import` (`adminProcedure`, in `routers/admin-data.ts`).
 - **Web** `routes/admin.data._index.tsx` (domain list) and `routes/admin.data.$domain.tsx` (`/admin/data/<domain>`, `requireAdmin`): the page shows the count and an upload form whose action parses the CSV and calls `adminData.import`. The CSV download is a separate **resource route** `routes/admin.data.$domain_.export.tsx` (`/admin/data/<domain>/export`, no component) — a UI route can't return a raw file Response for a document request (the browser saves the rendered HTML instead), so the download link points here. Nav link "Manage Data" → `/admin/data`.
 
+**A cascade must fire on a real change, not on a field being present.** `updateArtist` ran
+`cascadeArtistNameUpdate` whenever the payload *carried* a name — and every exported row carries
+`name`, so a full-corpus import ran the five-entity rename fan-out 1,169 times, rewriting every
+composition, junction, award, membership and affiliation row with the value it already held and
+bumping their `updatedAt`. Measured at ~10 seconds a row against prod: an eight-hour job to write
+309 cells. It now reads the stored name first and compares. **Any cascade reachable from the bulk
+importer needs the same question asked of it** — the CSV round-trip submits every column of every
+row, so "the caller supplied this field" says nothing about whether it changed.
+
 - **CLI** `pnpm cli admin-csv-export --domain <name> --out <path>` and
   `admin-csv-import --domain <name> --file <path> --user <id> [--dry-run]`, over the same registry
   functions the route uses so the two cannot validate differently. The route stays the ordinary
