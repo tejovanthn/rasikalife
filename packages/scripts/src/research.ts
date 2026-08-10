@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { AdminData } from '@rasika/core';
+import { AdminData, Artist } from '@rasika/core';
 import { ADMIN_CSV_DOMAINS, domainToCsv } from '@rasika/core/admin/columns';
 import { parseCsv, toCsv } from '@rasika/core/admin/csv';
 import {
@@ -37,6 +37,18 @@ const BRIEF: Record<string, string[]> = {
     'description: 2-5 plain factual sentences. No praise (renowned, famous, one of the greatest), no ranking (the oldest, most popular), no hedging (likely, appears to, unclear). Say what the raga is, its parent or melakarta status, its mood and when it is sung — only what a source states.',
     'Do not invent an alias, a composer or a famous composition unless a source names it.',
   ],
+  artist: [
+    'You are filling reference data about performing artists in Indian classical music and dance. These are real, mostly living people, and a page about them is read by them.',
+    'Claim nothing your source does not state. A blank is a correct answer; a plausible guess is a wrong claim about a person.',
+    'IDENTITY FIRST. A name is not a subject here — many artists share one, and some names in this corpus belong to a famous namesake in another field entirely. Every record carries a `context` block: what they were credited playing, the venues and organisers they appeared for, who they share a stage with, and the dates. Confirm the person you found matches that before you record anything. If you cannot tell, return NO fields and say so in `notes`. A confidently sourced biography of the wrong person is the single worst outcome of this run.',
+    "Do NOT research a biography, a photograph, a birth year, or the artist's gurus. They are not fields here, anything you send for them is discarded, and a lookup spent on one is wasted.",
+    "website is the artist's own site, http(s), one URL. A Facebook, Instagram or YouTube page is NOT a website — it goes in socialLinks, and a social host sent as website is refused.",
+    "socialLinks is a list of {platform, url}. Platform is one of instagram, facebook, youtube, twitter, wikipedia, spotify, apple_music, soundcloud. The host must match the platform or the link is thrown away. NEVER guess a handle from the artist's name — a wrong handle points a reader at a stranger's account.",
+    'city is where the artist is based now, as a city name: "Chennai", "Bengaluru". Not a street address, not a postcode, no digits, at most one comma. birthPlace is where they were born, same format. If a source gives only a state or country, leave it blank.',
+    'specialisations are the forms or repertoire they are known for — "Carnatic vocal", "Ragam Tanam Pallavi", "Bharatanatyam". At most six, each a plain noun phrase with no praise in it.',
+    'activeYears must be real years: "1985", "1985-2010", "1985-present", or "since 1985". "Over four decades" and "since the early 1990s" are refused outright, so do not send them.',
+    'No praise and no hedging anywhere. renowned, famous, acclaimed, legendary, one of the greatest, likely, appears to, reportedly — all refused.',
+  ],
 };
 
 interface Packet {
@@ -51,6 +63,12 @@ interface Packet {
     name: string;
     missing: string[];
     current: Record<string, string>;
+    /**
+     * Only for artist: what the database already knows about *this* record, so a worker can
+     * settle identity before spending a lookup. See `domain/artist/research-context.ts` — a
+     * raga's name is its subject and a person's is not, which is the whole reason this exists.
+     */
+    context?: unknown;
   }>;
 }
 
@@ -121,8 +139,9 @@ export async function writeResearchBatches(opts: {
   limit?: number;
   idsFile?: string;
   excludeFile?: string;
+  minEvents?: number;
 }): Promise<void> {
-  const { domain, outDir, size, onlyMissing = true, limit, idsFile, excludeFile } = opts;
+  const { domain, outDir, size, onlyMissing = true, limit, idsFile, excludeFile, minEvents } = opts;
   const fields = RESEARCH_FIELDS[domain];
   if (!fields) throw new Error(`No research field list for "${domain}"`);
   if (!ADMIN_CSV_DOMAINS[domain]) throw new Error(`Unknown CSV domain "${domain}"`);
@@ -137,7 +156,10 @@ export async function writeResearchBatches(opts: {
   });
   if (unmatched > 0) console.warn(`⚠️  ${unmatched} of the listed ids are not in ${domain}`);
 
-  const candidates = ordered
+  // Two scans, and only for artists — every packet needs the identity block.
+  const context = domain === 'artist' ? await Artist.artistResearchContext() : undefined;
+
+  let candidates = ordered
     .map(row => ({
       id: row.id,
       name: row.name,
@@ -146,9 +168,35 @@ export async function writeResearchBatches(opts: {
       current: Object.fromEntries(
         fields.filter(field => (row[field] ?? '').trim()).map(field => [field, row[field]])
       ),
+      ...(context ? { context: context.get(row.id) } : {}),
     }))
-    .filter(record => !onlyMissing || record.missing.length > 0)
-    .slice(0, limit);
+    .filter(record => !onlyMissing || record.missing.length > 0);
+
+  if (context) {
+    const appearances = (id: string) => context.get(id)?.appearances ?? 0;
+
+    // An artist with no appearance has no identity block, so a worker has nothing to check the
+    // person against — exactly the case that produces a confident biography of a namesake. They
+    // are excluded by default rather than researched blind.
+    const floor = minEvents ?? 1;
+    const before = candidates.length;
+    candidates = candidates.filter(record => appearances(record.id) >= floor);
+    if (before > candidates.length) {
+      console.log(
+        `   ${before - candidates.length} artists dropped: fewer than ${floor} appearance(s) to identify them by`
+      );
+    }
+
+    // Busiest first, unless the caller stated an order. These are the pages people already
+    // reach, and the ones a worker has the most context to get right.
+    if (!idsFile) {
+      candidates.sort(
+        (a, b) => appearances(b.id) - appearances(a.id) || a.name.localeCompare(b.name)
+      );
+    }
+  }
+
+  candidates = candidates.slice(0, limit);
 
   const vocabulary = domain === 'raga' ? parentVocabulary(rows) : [];
 

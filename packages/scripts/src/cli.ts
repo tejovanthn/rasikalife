@@ -134,13 +134,18 @@ program
 program
   .command('research-batches')
   .description('Write self-contained research packets for another agent to fill')
-  .requiredOption('--domain <name>', 'raga (the only domain with a field list so far)')
+  .requiredOption('--domain <name>', 'raga or artist')
   .requiredOption('--out-dir <dir>', 'Where to write the batch files')
   .option('--size <n>', 'Records per batch', (v: string) => Number.parseInt(v, 10), 25)
   .option('--all', 'Include records that already have every researched field')
   .option('--limit <n>', 'Only the first n records', (v: string) => Number.parseInt(v, 10))
   .option('--ids <file>', 'Only these ids, one per line, in this order')
   .option('--exclude-ids <file>', 'Skip these ids, one per line')
+  .option(
+    '--min-events <n>',
+    'artist only: skip artists with fewer appearances than this (default 1)',
+    (v: string) => Number.parseInt(v, 10)
+  )
   .action(
     async (opts: {
       domain: string;
@@ -150,6 +155,7 @@ program
       limit?: number;
       ids?: string;
       excludeIds?: string;
+      minEvents?: number;
     }) => {
       setup();
       const { writeResearchBatches } = await import('./research.js');
@@ -161,6 +167,7 @@ program
         limit: opts.limit,
         idsFile: opts.ids,
         excludeFile: opts.excludeIds,
+        minEvents: opts.minEvents,
       });
     }
   );

@@ -567,20 +567,57 @@ the venue. `activeYears` — the event corpus is too young, and would date Sudha
 career to 2024. `isGroup` — flipping it strands existing membership edges, which is why
 `artist.update` is a `moderatorProcedure` at all.
 
-Everything else on an artist — biography, birth year, birthplace, gurus, website — has no source
-in the database and needs outside research. **Artists are a harder research subject than ragas**,
-and the reasons are not the raga ones: a raga's name *is* its subject and a person's is not, so a
-worker handed a bare name comes back with the namesake (`Hariharan` here is an instructor with
-eight events, not the playback singer); many are children performing an arangetram, so a birth
-year is a different class of claim from an arohanam; and every artist biography on the open web
-is promotional, which is the inflation `GURU_RELATIONSHIPS` and `PUFFERY` already exist to fight.
-Anything built there must carry disambiguating context in the packet — the artist's roles,
-venues and co-performers — and stay off biography, birth year and gurus.
+Everything else on an artist has no source in the database and needs outside research — see the
+next section, which is now built.
 
 Duplicates are a smaller problem here than in the other corpora: about 20 exact-name groups and
 20 near pairs at `findArtistMatch`'s live 0.85 threshold, roughly 3% rather than the ragas' 20%.
 Worth a pass, but not the blocker it was there. Note the matcher misses `Phanindra Bhaskara`
 beside `Phanindra Bhaskar` — the surname must match outright, by design.
+
+### Researching artists (`research-batches --domain artist`)
+
+The same pipeline as the ragas, with one difference that shapes everything. Runbook:
+`docs/research/artist-enrichment.md`.
+
+**A raga's name is its subject; a person's is not.** Handed `kalyANi` a worker can only be
+researching Kalyani. Handed `Hariharan` it returns the playback singer, correctly sourced and
+about the wrong man — this corpus's Hariharan is an instructor with eight events. So every artist
+record in a packet carries a **`context` block** (`domain/artist/research-context.ts`): what they
+were credited playing, the venues and organisers, `performsWith`, and the date range. The brief's
+first rule is to settle identity against it and to return **no fields** when it cannot be settled.
+`performsWith` is the strongest signal in it — an accompanist is identified by who they accompany
+far more reliably than by a surname.
+
+Six fields: `website`, `socialLinks`, `city`, `specialisations`, `birthPlace`, `activeYears`.
+**The four omissions are enforced in `RESEARCH_FIELDS`, not merely asked for in the brief**, so a
+worker that sends one anyway has it refused with a reason:
+
+- **`biography`** — `media-kit.ts` states the rule this codebase runs on: every artist platform
+  lets a press-kit paragraph *become* the record. Prose here is **derived from fields**, by
+  `artistMetaDescription` and the media kit, and never researched into them. Crawling bios in
+  refills the field `rewrite-artist-bios` exists to drain.
+- **`photoUrl`** — a scale is a fact, a photograph is someone's copyrighted work. It also cannot
+  travel this path: the column is absent from `ADMIN_CSV_DOMAINS` and `isAllowedPhotoUrl` pins
+  the OG fetch to the CDN host, so an external URL stores cleanly and silently degrades every
+  share card to text.
+- **`birthYear`** — a claim about a private individual, many of them children performing an
+  arangetram. The column *is* writable by CSV; this list is the only thing stopping it.
+- **`gurus`** — prose flattens exactly the distinction `GURU_RELATIONSHIPS` exists to keep.
+
+`--min-events <n>` is an **identity** control, not a coverage one: an artist with no appearances
+has no context block, so there is nothing to check a candidate against — the precise case that
+produces a confident profile of a namesake. The first run used `--min-events 2`, which cut 957
+of 1,169 and left 212 records over 9 batches, ordered busiest-first.
+
+Two rules the artist validators add: a social host in `website` is refused because both columns
+feed `sameAs` and the same account arriving twice publishes one profile as two claims; and
+`city`/`birthPlace` refuse a digit or a second comma, because a postcode is not a place name and
+`Mylapore, Chennai, Tamil Nadu, India` is an address where the profile wants a city.
+
+When reading a returned run, the thing the validator cannot catch is **a cluster of plausible
+values on one artist that all belong to somebody else**. Only `notes` and a person find that,
+which is why the brief requires the worker to record how it settled identity every time.
 
 ### Event dates: the year a poster does not print, and the form that could not save one
 

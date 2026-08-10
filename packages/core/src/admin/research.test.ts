@@ -439,3 +439,153 @@ describe('mergeResearch — a parent name must already exist', () => {
     expect(report.keptExisting).toBe(1);
   });
 });
+
+describe('validateResearchField — artist', () => {
+  const check = (field: string, value: unknown) => validateResearchField('artist', field, value);
+
+  it('refuses the three fields artists deliberately do not research', () => {
+    // Each has its own reason in RESEARCH_FIELDS' comment; what matters here is that none of
+    // them can reach a row even if a worker volunteers it.
+    for (const field of ['biography', 'photoUrl', 'birthYear', 'gurus']) {
+      expect(check(field, 'anything'), field).toMatchObject({ ok: false });
+    }
+  });
+
+  describe('website', () => {
+    it('takes an ordinary site', () => {
+      expect(check('website', 'https://sudharagunathan.com').value).toBe(
+        'https://sudharagunathan.com'
+      );
+    });
+
+    it('refuses anything that is not an http(s) URL', () => {
+      expect(check('website', 'sudharagunathan.com').ok).toBe(false);
+      expect(check('website', 'her official site').ok).toBe(false);
+    });
+
+    it('sends a social profile to socialLinks instead', () => {
+      // Both columns feed sameAs, so the same account arriving twice would publish one
+      // profile as two separate claims about the person.
+      const result = check('website', 'https://www.instagram.com/someartist');
+      expect(result.ok).toBe(false);
+      expect(result.reason).toContain('socialLinks');
+      expect(check('website', 'https://youtube.com/@someone').ok).toBe(false);
+    });
+  });
+
+  describe('socialLinks', () => {
+    it('keeps links whose host matches the platform', () => {
+      expect(
+        check('socialLinks', [
+          { platform: 'instagram', url: 'https://instagram.com/x' },
+          { platform: 'youtube', url: 'https://youtu.be/abc' },
+        ]).value
+      ).toBe('instagram:https://instagram.com/x|youtube:https://youtu.be/abc');
+    });
+
+    it('refuses a platform pointing at another host', () => {
+      const result = check('socialLinks', [
+        { platform: 'instagram', url: 'https://facebook.com/x' },
+      ]);
+      expect(result.ok).toBe(false);
+      expect(result.reason).toContain('instagram points at');
+    });
+  });
+
+  describe('city and birthPlace', () => {
+    it('takes a place name', () => {
+      expect(check('city', 'Chennai').value).toBe('Chennai');
+      expect(check('birthPlace', 'Thanjavur, Tamil Nadu').value).toBe('Thanjavur, Tamil Nadu');
+    });
+
+    it('refuses a postal address', () => {
+      expect(check('city', '12 Luz Church Road, Mylapore').ok).toBe(false);
+      expect(check('city', 'Chennai 600004').ok).toBe(false);
+    });
+
+    it('refuses an address stacked past the city', () => {
+      expect(check('city', 'Mylapore, Chennai, Tamil Nadu, India').ok).toBe(false);
+    });
+
+    it('refuses prose', () => {
+      expect(check('birthPlace', 'a renowned centre of Carnatic music').ok).toBe(false);
+      expect(check('city', 'apparently Bengaluru').ok).toBe(false);
+    });
+  });
+
+  describe('specialisations', () => {
+    it('takes a list, from an array or a pipe string', () => {
+      expect(check('specialisations', ['Carnatic vocal', 'Ragam Tanam Pallavi']).value).toBe(
+        'Carnatic vocal|Ragam Tanam Pallavi'
+      );
+      expect(check('specialisations', 'Carnatic vocal|Padam').value).toBe('Carnatic vocal|Padam');
+    });
+
+    it('refuses a list long enough to be a catalogue of every art form', () => {
+      expect(check('specialisations', ['a', 'b', 'c', 'd', 'e', 'f', 'g']).ok).toBe(false);
+    });
+
+    it('refuses praise inside an entry', () => {
+      expect(check('specialisations', ['renowned Carnatic vocalist']).ok).toBe(false);
+    });
+  });
+
+  describe('activeYears', () => {
+    it('takes the spans the column is meant to hold', () => {
+      expect(check('activeYears', '1985').value).toBe('1985');
+      expect(check('activeYears', '1985-2010').value).toBe('1985-2010');
+      expect(check('activeYears', '1985–present').value).toBe('1985-present');
+      expect(check('activeYears', 'since 1985').value).toBe('since 1985');
+    });
+
+    it('normalises an en dash and stray spacing, since a source will use both', () => {
+      expect(check('activeYears', '1985 – 2010').value).toBe('1985-2010');
+    });
+
+    it('refuses the phrase a worker reaches for first', () => {
+      expect(check('activeYears', 'over four decades').ok).toBe(false);
+      expect(check('activeYears', 'since the early 1990s').ok).toBe(false);
+      expect(check('activeYears', '1980s-present').ok).toBe(false);
+    });
+
+    it('refuses a span that runs backwards or leaves the record bounds', () => {
+      expect(check('activeYears', '2010-1985').ok).toBe(false);
+      expect(check('activeYears', '1650-1700').ok).toBe(false);
+    });
+  });
+});
+
+describe('mergeResearch — artist', () => {
+  const rows = () => [
+    { id: 'a1', name: 'Some Artist', city: '', website: '', activeYears: '', socialLinks: '' },
+    {
+      id: 'a2',
+      name: 'Other Artist',
+      city: 'Chennai',
+      website: '',
+      activeYears: '',
+      socialLinks: '',
+    },
+  ];
+
+  it('fills empty cells, keeps stored ones, and reports refusals', () => {
+    const sheet = rows();
+    const report = mergeResearch('artist', sheet, [
+      { id: 'a1', fields: { city: 'Bengaluru', activeYears: 'over four decades' } },
+      { id: 'a2', fields: { city: 'Madurai' } },
+    ]);
+
+    expect(sheet[0].city).toBe('Bengaluru');
+    expect(sheet[1].city).toBe('Chennai');
+    expect(report.filled).toBe(1);
+    expect(report.keptExisting).toBe(1);
+    expect(report.rejections).toHaveLength(1);
+    expect(report.rejections[0].field).toBe('activeYears');
+  });
+
+  it('derives no mela numbers, and needs no raga corpus to run', () => {
+    const sheet = rows();
+    const report = mergeResearch('artist', sheet, [{ id: 'a1', fields: { city: 'Pune' } }]);
+    expect(report.derivedMela).toBe(0);
+  });
+});

@@ -32,13 +32,28 @@ produced. The single exception is the proof rather than a fault — `Yagnika Iye
 sweep left it alone. That spelling appears on no `role`, so it is not worth adding as an alias;
 the aliases are the ones actually seen in the junction, never invented ones.
 
-**Next step, agreed but unstarted: phase 2, research the head.** The ~200 artists with 2+ events, and
-only `website`, `socialLinks`, `city` and `specialisations`. **Not** biography, birth year or
-gurus. Artists are a harder research subject than ragas for reasons the raga runbook does not
-cover: a raga's name is its subject and a person's is not, so a bare name fetches the namesake
-(`Hariharan` here is an instructor with eight events, not the playback singer); many are children
-performing an arangetram; and every artist biography on the open web is promotional. A packet
-must carry the artist's roles, venues and co-performers as disambiguation.
+**Phase 2 is built and the batches are cut. Nothing has been dispatched.** Runbook:
+`docs/research/artist-enrichment.md`, which carries the orchestrator and worker prompts.
+
+`data/artist-research/main/` holds **9 batches, 212 records**, ordered busiest-first, cut with
+`--min-events 2` (957 artists dropped). Six fields: `website`, `socialLinks`, `city`,
+`specialisations`, `birthPlace`, `activeYears`. `biography`, `photoUrl`, `birthYear` and `gurus`
+are refused *by the validator*, not merely discouraged in the brief — each for its own reason,
+written up in `RESEARCH_FIELDS`.
+
+Every artist record carries a `context` block — roles, venues, organisers, `performsWith`, date
+range — because a raga's name is its subject and a person's is not. `--min-events` is an identity
+control rather than a coverage one: with no appearances there is nothing to check a candidate
+against.
+
+**Next step: dispatch the 9 batches**, then `research-ingest`, read `artist-refused.csv` *and*
+the filled CSV, `admin-csv-import --dry-run`, import, `reindex`.
+
+The whole path was round-tripped against prod with a deliberately bad result file before any of
+it was handed out: a postal address, `over two decades`, an Instagram URL in `website`, a
+mismatched social host, plus a volunteered `biography` and `birthYear` — all six refused with
+reasons, five good cells landed, and an unknown id skipped. Worth repeating after any change to
+the validators.
 
 Duplicates are worth a pass but are not a blocker: ~20 exact-name groups and ~20 near pairs at
 `findArtistMatch`'s 0.85 threshold, about 3% against the ragas' 20%. There is no `dedup-artists`

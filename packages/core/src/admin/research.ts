@@ -214,6 +214,25 @@ const BLANKISH = new Set(['', 'n/a', 'na', 'unknown', 'none', 'null', '-', 'not 
 /**
  * The fields a research agent is asked for, per domain. `melaNumber` is deliberately absent
  * from every list — it is derived, never reported. See `deriveMelaNumbers`.
+ *
+ * **The artist list is short on purpose, and the omissions are the design.** A raga is a
+ * reference object whose name *is* its subject; an artist is a living person whose name is not,
+ * so the failure modes are different in kind and three fields are refused outright:
+ *
+ * - **`biography`.** `domain/artist/media-kit.ts` states the rule this codebase runs on — every
+ *   artist platform lets a press-kit paragraph *become* the record, which is how biographies
+ *   fill with claims nobody checked. `rewrite-artist-bios` exists to drain that field back to
+ *   narrative once the facts are in fields. Crawling promotional prose into it refills what the
+ *   pipeline was built to empty. Prose is *derived* from these fields, never researched into
+ *   them.
+ * - **`photoUrl`.** A raga's scale is a fact; a photograph is someone's copyrighted work. It
+ *   also cannot travel this path: the column is deliberately absent from `ADMIN_CSV_DOMAINS`,
+ *   and `packages/og-image` allowlists the photo fetch to the CDN host, so an external URL
+ *   would store cleanly and silently degrade every share card to text.
+ * - **`birthYear` and `gurus`.** A birth year is a claim about a private individual, and many
+ *   here are children performing an arangetram. A guru edge is *the* credential in this domain,
+ *   and prose flattens exactly the distinction `GURU_RELATIONSHIPS` exists to keep — a workshop
+ *   attendee and a senior disciple both read as "studied under".
  */
 export const RESEARCH_FIELDS: Record<string, readonly string[]> = {
   raga: [
@@ -227,7 +246,59 @@ export const RESEARCH_FIELDS: Record<string, readonly string[]> = {
     'season',
     'parentRaga',
   ],
+  artist: ['website', 'socialLinks', 'city', 'specialisations', 'birthPlace', 'activeYears'],
 };
+
+/**
+ * Hosts that belong in `socialLinks`, so `website` refuses them.
+ *
+ * An artist whose only web presence is an Instagram page will otherwise have it reported twice,
+ * and both columns feed `sameAs` in the JSON-LD — which would publish the same account as two
+ * separate claims about the same person.
+ */
+const SOCIAL_HOSTS = Object.values(PLATFORM_HOSTS).flat();
+
+/** A place name, not a postal address and not a sentence. */
+function validatePlace(text: string, limit: number): Checked {
+  if (text.length > limit) return reject(`longer than the ${limit}-character column`);
+  // A digit in a city is a house number, a postcode or a phone number that landed in the
+  // wrong cell. None of them is a place name.
+  if (/\d/.test(text)) return reject('contains a digit; a place name has none');
+  // "Chennai, Tamil Nadu" is a place. "Chennai, Tamil Nadu, India" is an address, and the
+  // field the profile renders wants the city.
+  if ((text.match(/,/g) ?? []).length > 1) return reject('more than one comma; name the city');
+  const phrase = checkProse(text);
+  if (phrase) return reject(`prose flagged on "${phrase}"`);
+  return accept(text);
+}
+
+/**
+ * `activeYears` is free text on the record, which is what makes it worth pinning here.
+ *
+ * The value a worker reaches for first is "over four decades" or "since the early 1990s", and
+ * neither is a span the profile can render beside a dated one. So it must state real years:
+ * `1985`, `1985-2010`, `1985-present`, or `since 1985`. Dashes are normalised because a source
+ * will use an en dash and the column is 50 characters of anything.
+ */
+function validateActiveYears(text: string): Checked {
+  if (text.length > 50) return reject('longer than the 50-character column');
+  const normalised = text
+    .replace(/[‐-―]/g, '-')
+    .replace(/\s*-\s*/g, '-')
+    .trim();
+
+  const match = /^(?:since\s+)?(\d{4})(?:-(\d{4}|present))?$/i.exec(normalised);
+  if (!match) return reject(`not a year span: "${text}"`);
+
+  // Bounds from YearSchema, so a span that parses is always one the record can hold.
+  const years = [match[1], match[2]].filter(y => y && y !== 'present').map(Number);
+  for (const year of years) {
+    if (year < 1800 || year > 2100) return reject(`${year} is outside 1800-2100`);
+  }
+  if (years.length === 2 && years[0] > years[1]) return reject(`${years[0]} is after ${years[1]}`);
+
+  return accept(normalised.toLowerCase().startsWith('since ') ? `since ${match[1]}` : normalised);
+}
 
 // ── choosing what to research, and in what order ────────────────────────────────────────
 
@@ -317,6 +388,49 @@ export function validateResearchField(domain: string, field: string, raw: unknow
         return reject(`${field} is not a researched field for ${domain}`);
     }
   }
+
+  if (domain === 'artist') {
+    switch (field) {
+      case 'website': {
+        if (text.length > 500) return reject('longer than the 500-character column');
+        if (!URL_RE.test(text)) return reject(`not an http(s) URL: "${text}"`);
+        const host = /^https?:\/\/([^/]+)/.exec(text.toLowerCase())?.[1] ?? '';
+        if (SOCIAL_HOSTS.some(social => host.endsWith(social))) {
+          return reject(`${host} belongs in socialLinks, not website`);
+        }
+        return accept(text);
+      }
+      case 'socialLinks': {
+        const { value, rejected } = validateSocialLinks(raw);
+        if (!value) return reject(rejected.length ? `bad links: ${rejected.join(', ')}` : 'none');
+        return accept(value);
+      }
+      case 'city':
+        return validatePlace(text, 200);
+      case 'birthPlace':
+        return validatePlace(text, 200);
+      case 'specialisations': {
+        const parts = (Array.isArray(raw) ? raw.map(String) : text.split('|'))
+          .map(s => s.trim())
+          .filter(Boolean);
+        if (parts.length === 0) return reject('empty');
+        // Six is already more than any real artist claims; a longer list is a model listing
+        // every art form it has heard of rather than the ones this person practises.
+        if (parts.length > 6) return reject(`${parts.length} specialisations; six is the cap`);
+        for (const part of parts) {
+          if (part.length > 100) return reject(`"${part.slice(0, 40)}…" is over 100 characters`);
+          const phrase = checkProse(part);
+          if (phrase) return reject(`prose flagged on "${phrase}"`);
+        }
+        return accept(parts.join('|'));
+      }
+      case 'activeYears':
+        return validateActiveYears(text);
+      default:
+        return reject(`${field} is not a researched field for ${domain}`);
+    }
+  }
+
   return reject(`no rules for domain ${domain}`);
 }
 
@@ -357,7 +471,9 @@ type Row = Record<string, string>;
 export function mergeResearch(domain: string, rows: Row[], results: ResearchRecord[]): MergeReport {
   const byId = new Map(rows.map(row => [row.id, row]));
   const report: MergeReport = { filled: 0, keptExisting: 0, rejections: [], derivedMela: 0 };
-  const byName = corpusNames(rows);
+  // Raga-only: it keys on `melaNumber` and the raga variant key, and building it over another
+  // domain's rows would cost a sweep to produce a map nothing reads.
+  const byName = domain === 'raga' ? corpusNames(rows) : undefined;
 
   for (const record of results) {
     const row = record.id ? byId.get(record.id) : undefined;
@@ -395,7 +511,7 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
       // worker reports "Shankarabharanam"; the corpus stores "shankarAbharaNa"; the import
       // then wrote seven blank ragas and pointed sixteen janyas at them. Rewrite to the
       // stored spelling or refuse — never hand the importer a name it will silently invent.
-      if (column === 'parentRaga') {
+      if (column === 'parentRaga' && byName) {
         const resolved = byName.resolve(checked.value as string);
         if (!resolved) {
           report.rejections.push({
