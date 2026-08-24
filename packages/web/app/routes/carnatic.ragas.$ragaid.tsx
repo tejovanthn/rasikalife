@@ -16,6 +16,7 @@ import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ragaOgImageUrl } from '~/lib/og';
+import { ragaMetaDescription } from '~/lib/raga-description';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -117,7 +118,7 @@ export async function loader({
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const { raga, rawName } = data ?? {};
+  const { raga, rawName, performanceCount, topCompositions } = data ?? {};
   if (!raga) return [{ title: 'Raga not found | Rasika.life' }];
 
   const canonicalName = rawName ?? raga.name;
@@ -130,20 +131,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
   const title = `${raga.name} ${subtitle} | Carnatic Music – Rasika.life`;
 
-  const descParts = [`${raga.name} raga in Carnatic music.`];
-  if (raga.arohanam) descParts.push(`Arohanam: ${raga.arohanam}.`);
-  if (raga.avarohanam) descParts.push(`Avarohanam: ${raga.avarohanam}.`);
-  // A janya raga carries its parent's mela number. Reporting that bare said
-  // "Melakarta 20" on a page whose own title read "Janya Raga" — two claims in one
-  // result, and the wrong one is the claim an arohanam search is there to check.
-  if (isJanya) {
-    const parentName = raga.parentRaga?.name ?? '';
-    const mela = raga.melaNumber ? ` (melakarta ${raga.melaNumber})` : '';
-    descParts.push(`Janya raga derived from ${parentName}${mela}.`);
-  } else if (raga.melaNumber) {
-    descParts.push(`Melakarta ${raga.melaNumber}.`);
-  }
-  const description = descParts.join(' ');
+  const description = ragaMetaDescription({
+    name: raga.name,
+    arohanam: raga.arohanam,
+    avarohanam: raga.avarohanam,
+    melaNumber: raga.melaNumber,
+    parentRaga: raga.parentRaga,
+    performanceCount,
+    topCompositions,
+  });
 
   const canonicalUrl = `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`;
 
