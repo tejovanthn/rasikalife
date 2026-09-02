@@ -2,6 +2,7 @@ import { auth } from './auth';
 import { classUploadsBucket } from './class-uploads';
 import { database } from './database';
 import { getCookieDomain, getDomain } from './domain';
+import { blockBadBots } from './edge-security';
 import { trpc } from './trpc';
 
 /**
@@ -21,6 +22,9 @@ const classesSite = new sst.aws.React('RasikaClasses', {
   link: [trpc, auth, classUploadsBucket],
   path: 'packages/classes/',
   domain: getDomain('classes'),
+  edge: {
+    viewerRequest: { injection: blockBadBots },
+  },
   environment: {
     STAGE: $app.stage,
     VITE_STAGE: $app.stage,

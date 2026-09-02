@@ -1,5 +1,6 @@
 import { auth } from './auth';
 import { getCookieDomain, getDomain } from './domain';
+import { blockBadBots } from './edge-security';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
 import { ogImageFunction } from './og-image';
 import { bucket } from './storage';
@@ -9,6 +10,9 @@ const site = new sst.aws.React('RasikaWeb', {
   link: [bucket, trpc, auth, eventPostersBucket],
   path: 'packages/web/',
   domain: getDomain(''),
+  edge: {
+    viewerRequest: { injection: blockBadBots },
+  },
   environment: {
     STAGE: $app.stage,
     VITE_STAGE: $app.stage,
