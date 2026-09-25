@@ -35,7 +35,7 @@ import {
 import { Input } from '~/components/ui/input';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { artistTagline, parseInstruments } from '~/lib/artist-display';
-import { artistMetaDescription } from '~/lib/artist-display';
+import { artistMetaDescription, artistMetaTitle } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { artistOgImageUrl } from '~/lib/og';
@@ -276,7 +276,7 @@ export const meta: MetaFunction = ({ data }) => {
       upcomingEventCount: upcomingEvents?.length ?? 0,
     });
     return [
-      { title: `${artist.name} - Artist - Rasika.life` },
+      { title: artistMetaTitle(artist) },
       { name: 'description', content: description },
       {
         name: 'keywords',

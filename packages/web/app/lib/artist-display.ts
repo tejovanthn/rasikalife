@@ -49,6 +49,19 @@ export function artistTagline(artist: {
 }
 
 /**
+ * The <title> for an artist profile. It used to read "X - Artist - Rasika.life": the page
+ * ranked #2 for "savita vasu" (139 impressions, 28 days) and got a 6% click rate, because
+ * the one word that tells a searcher they found the right person — what they play — was
+ * missing. Instrument only, not city: the title is the short form, the description carries
+ * the rest.
+ */
+export function artistMetaTitle(artist: { name: string; instrument?: string | null }): string {
+  const instruments = parseInstruments(artist.instrument);
+  const lead = instruments.length > 0 ? `${artist.name} – ${instruments.join(', ')}` : artist.name;
+  return `${lead} | Concerts & Repertoire – Rasika.life`;
+}
+
+/**
  * The meta description for an artist profile, built from the fields the record
  * actually holds.
  *

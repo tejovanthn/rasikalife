@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { artistMetaDescription, artistTagline, parseInstruments } from './artist-display';
+import {
+  artistMetaDescription,
+  artistMetaTitle,
+  artistTagline,
+  parseInstruments,
+} from './artist-display';
 
 describe('artistTagline', () => {
   it('joins instrument and city', () => {
@@ -128,5 +133,26 @@ describe('artistMetaDescription', () => {
     expect(d).toBe(
       'A. Concerts, repertoire and recordings on Rasika.life, the Indian classical arts wiki.'
     );
+  });
+});
+
+describe('artistMetaTitle', () => {
+  it('names what the artist plays, so a searcher knows it is the right person', () => {
+    expect(artistMetaTitle({ name: 'Savita Vasu', instrument: 'vocal' })).toBe(
+      'Savita Vasu – Vocal | Concerts & Repertoire – Rasika.life'
+    );
+  });
+
+  it('lists several instruments the way the tagline does', () => {
+    expect(artistMetaTitle({ name: 'A', instrument: 'mridangam, vocal' })).toBe(
+      'A – Mridangam, Vocal | Concerts & Repertoire – Rasika.life'
+    );
+  });
+
+  it('drops the dash when no instrument is known', () => {
+    expect(artistMetaTitle({ name: 'A', instrument: '  ' })).toBe(
+      'A | Concerts & Repertoire – Rasika.life'
+    );
+    expect(artistMetaTitle({ name: 'A' })).toBe('A | Concerts & Repertoire – Rasika.life');
   });
 });
