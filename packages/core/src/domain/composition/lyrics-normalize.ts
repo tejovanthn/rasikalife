@@ -61,6 +61,8 @@ function normalizeWord(word: string, opts: { tamil: boolean; sanskrit: boolean }
   w = w.replace(new RegExp(`(?<=[${CONSONANT}])r(?=[${AFTER_VOCALIC_R}])`, 'g'), 'R^i');
   w = w.replace(new RegExp(`^r(?=[${AFTER_VOCALIC_R}])`), 'R^i');
 
+  w = fixJnaa(w);
+
   // A nasal before a velar is ṅ and before a palatal is ñ, in every language here:
   // `mangaLam`, `shankara`, `nenjam`, `panca`.
   w = w.replace(/(?<![~N])n(?=[kg])/g, '~N');
@@ -81,6 +83,23 @@ function normalizeWord(word: string, opts: { tamil: boolean; sanskrit: boolean }
   return w;
 }
 
+/**
+ * `jn` is ज्ञ in every language here, and ITRANS spells it `j~n`. Added after the first packets
+ * were cut, when the Tamil ன rule was found turning `jnAnam` into `jn2Anam`; exported so the
+ * ingest can bring those packets' text up to the current rules before comparing.
+ */
+export function fixJnaa(text: string): string {
+  return text.replace(/jn2?/g, 'j~n');
+}
+
+/**
+ * `RRi` reads as vocalic ṛ, but this corpus never writes ṛ that way — it is a reader's ற்றி
+ * (`paRRi`), which renders as ரு unless the two R's are kept apart with ITRANS's `_`.
+ */
+export function fixTamilRRi(text: string): string {
+  return text.replace(/RR(?=[iI])/g, 'R_R');
+}
+
 const SANSKRIT_LIKE = /^(sanskrit|sankrit|hindi)/i;
 
 export interface NormalizeOptions {
@@ -96,7 +115,7 @@ export function normalizeLyricsText(text: string, opts: NormalizeOptions = {}): 
   return text
     .split('\n')
     .map(line =>
-      isSwaraLine(line)
+      isProtectedLine(line)
         ? line
         : line.replace(/\S+/g, word => normalizeWord(word, { tamil, sanskrit }))
     )
@@ -129,18 +148,31 @@ export function normalizeLyrics<T extends LyricLine>(lyrics: T[], language?: str
  * was split or joined still compares.
  */
 export function lyricsSkeleton(text: string): string {
-  return text
-    .replace(/R\^i|RRi|R\^I|RRI/g, 'r')
-    .toLowerCase()
-    .replace(/[^a-z]/g, '')
-    .replace(/h/g, '')
-    .replace(/w/g, 'v')
-    .replace(/z/g, 'l')
-    .replace(/(.)\1+/g, '$1');
+  return (
+    text
+      .replace(/R\^i|R\^I/g, 'r')
+      .toLowerCase()
+      // The looser second spelling the corpus also holds: `moortee`, `gowri`, `sheivAi`.
+      .replace(/ow/g, 'au')
+      .replace(/ee/g, 'i')
+      .replace(/oo/g, 'u')
+      .replace(/([ae])y(?![aeiou])/g, '$1i')
+      // ज्ञ is typed five ways: `jn`, `j~n`, `gn`, `gny`, `ny`.
+      .replace(/~/g, '')
+      .replace(/gny|jny|jn|gn|ny/g, 'n')
+      // Tamil ற்ற arrives as `Tr` and leaves as `RR`.
+      .replace(/tr/g, 'r')
+      .replace(/[^a-z]/g, '')
+      .replace(/h/g, '')
+      .replace(/w/g, 'v')
+      .replace(/z/g, 'l')
+      .replace(/(.)\1+/g, '$1')
+  );
 }
 
 function editDistance(a: string, b: string): number {
   if (a === b) return 0;
+  let prevPrev: number[] = [];
   let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
   for (let i = 1; i <= a.length; i++) {
     const cur = [i];
@@ -150,7 +182,12 @@ function editDistance(a: string, b: string): number {
         (cur[j - 1] ?? 0) + 1,
         (prev[j - 1] ?? 0) + (a[i - 1] === b[j - 1] ? 0 : 1)
       );
+      // Two adjacent letters swapped (`kapla` → `kalpa`) is one typo, not two.
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        cur[j] = Math.min(cur[j] ?? 0, (prevPrev[j - 2] ?? 0) + 1);
+      }
     }
+    prevPrev = prev;
     prev = cur;
   }
   return prev[b.length] ?? 0;
@@ -262,6 +299,38 @@ export function isSwaraLine(line: string): boolean {
   return tokens.filter(t => SWARA_TOKEN.test(t)).length / tokens.length >= 0.8;
 }
 
+const ENGLISH_WORD =
+  /\b(the|and|of|is|with|who|you|your|this|that|for|are|was|his|her|when|which|from|thrice|line|sing|meaning)\b/g;
+
+/**
+ * A line of English: a translation, a gist, a performance note. 96 such lines sit inside 26
+ * compositions' lyrics, and the nasal rule turned "hungry" into `hu~Ngry`. The words are chosen
+ * to collide with nothing in Hindi or Sanskrit — `to`, `me`, `in` and `hI` all would.
+ */
+export function isEnglishLine(line: string): boolean {
+  const hits = line.match(ENGLISH_WORD)?.length ?? 0;
+  return (
+    hits >= 2 ||
+    (hits >= 1 && line.trim().split(/\s+/).length <= 4 && /\b(the|and|of|is)\b/.test(line))
+  );
+}
+
+/** A line no rule and no reader may change: swara notation or English. */
+export function isProtectedLine(line: string): boolean {
+  return isSwaraLine(line) || isEnglishLine(line);
+}
+
+/**
+ * Put back every protected line of `original` into `text`, line for line. Repairs text that
+ * went through an older rule set, and holds a reader to the same promise as the rules.
+ */
+export function restoreProtectedLines(original: string, text: string): string {
+  const was = original.split('\n');
+  const now = text.split('\n');
+  if (was.length !== now.length) return text;
+  return now.map((line, i) => (isProtectedLine(was[i] ?? '') ? (was[i] ?? line) : line)).join('\n');
+}
+
 /**
  * The languages a composition may be labelled with. The stored values also carry
  * `KannaDa`, `MalayaaLam`, `Sankrit` and a `Tamil` with a pallavi pasted after it.
@@ -335,9 +404,18 @@ export function applyWordFixes(
       unmatched.push(fix);
       continue;
     }
-    const pattern = new RegExp(`(?<=^|\\s)${escapeRegExp(from)}(?=\\s|$)`, 'g');
+    // Punctuation stuck to a word (`pOi,`) and a hyphen (`varap-pOi`) are boundaries too.
+    // `.` is not: `.n` is ITRANS.
+    const pattern = new RegExp(
+      `(?<=^|[\\s,;!?()"|-])${escapeRegExp(from)}(?=[\\s,;!?()"|-]|$)`,
+      'g'
+    );
     if (!pattern.test(out)) {
-      unmatched.push(fix);
+      // A fix listed twice: the first replaced every occurrence, so `to` is already there.
+      const done = new RegExp(
+        `(?<=^|[\\s,;!?()"|-])${escapeRegExp(fix.to.trim())}(?=[\\s,;!?()"|-]|$)`
+      );
+      if (!done.test(out)) unmatched.push(fix);
       continue;
     }
     out = out.replace(pattern, fix.to.trim());

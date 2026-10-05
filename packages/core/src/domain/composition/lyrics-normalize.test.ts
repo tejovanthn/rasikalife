@@ -5,10 +5,13 @@ import {
   canonicalLanguage,
   checkRespelling,
   cleanCompositionTitle,
+  fixTamilRRi,
+  isEnglishLine,
   isSwaraLine,
   looksTamil,
   normalizeLyrics,
   normalizeLyricsText,
+  restoreProtectedLines,
   retargetTamil,
 } from './lyrics-normalize';
 
@@ -58,6 +61,11 @@ describe('normalizeLyricsText', () => {
     );
   });
 
+  it('writes ज्ञ as j~n, and keeps it out of the Tamil ன rule', () => {
+    expect(fromItrans(normalizeLyricsText('jnAna', { tamil: false }), 'devanagari')).toBe('ज्ञान');
+    expect(normalizeLyricsText('jnAnam', { tamil: true })).toBe('j~nAn2am');
+  });
+
   it('is idempotent', () => {
     const once = normalizeLyricsText(TAMIL_LINE);
     expect(normalizeLyricsText(once, { tamil: true })).toBe(once);
@@ -99,6 +107,14 @@ describe('checkRespelling', () => {
     expect(checkRespelling('uralil porAmai', 'uralil poRAmai').ok).toBe(true);
   });
 
+  it('accepts the looser spellings the corpus also holds', () => {
+    expect(checkRespelling('moolaa dhaara moortee', 'mUlAdhAra mUrti').ok).toBe(true);
+    expect(checkRespelling('gowri sheivAi', 'gauri sheyvAy').ok).toBe(true);
+    expect(checkRespelling('nyaana yagjna', 'j~nAn2a yaj~na').ok).toBe(true);
+    expect(checkRespelling('adaip-paTri', 'adaip-paR_Ri').ok).toBe(true);
+    expect(checkRespelling('kapla taru', 'kalpa taru').ok).toBe(true);
+  });
+
   it('refuses a changed word', () => {
     expect(checkRespelling('vAtApi gaNapatim bhajEham', 'vAtApi gaNapatim namAmi').ok).toBe(false);
   });
@@ -116,6 +132,28 @@ describe('checkRespelling', () => {
   it('accepts what the rules themselves produce', () => {
     const before = 'hrdaya mangaLam ennai bhuvanangaL';
     expect(checkRespelling(before, normalizeLyricsText(before, { tamil: true })).ok).toBe(true);
+  });
+});
+
+describe('English lines', () => {
+  const english = 'When you feel hungry and tired, the only way out of it is the chanting';
+
+  it('are found, without catching Hindi', () => {
+    expect(isEnglishLine(english)).toBe(true);
+    expect(isEnglishLine('(repeat line starting with tAhata dInuta in the anupallavi)')).toBe(true);
+    expect(isEnglishLine('ab tO jaisE hI banI AyI ab tO aisE hI banI AyI')).toBe(false);
+    expect(isEnglishLine('nAhi.n amIrI mE.n man lAgyo mErO yAr fakIrI mE.n')).toBe(false);
+  });
+
+  it('are left alone by the rules', () => {
+    expect(normalizeLyricsText(`krpa\n${english}`)).toBe(`kR^ipa\n${english}`);
+  });
+
+  it('are put back when an older rule set changed them', () => {
+    const damaged = english.replace('hungry', 'hu~Ngry');
+    expect(restoreProtectedLines(`krpa\n${english}`, `kR^ipa\n${damaged}`)).toBe(
+      `kR^ipa\n${english}`
+    );
   });
 });
 
@@ -166,6 +204,14 @@ describe('applyWordFixes', () => {
     expect(text).toBe('en2Ru sol en2Ru');
   });
 
+  it('does not report a fix listed twice', () => {
+    const fixes = [
+      { from: 'en2ru', to: 'en2Ru' },
+      { from: 'en2ru', to: 'en2Ru' },
+    ];
+    expect(applyWordFixes('en2ru sol', fixes).unmatched).toHaveLength(0);
+  });
+
   it('never reaches inside a word', () => {
     const { text, unmatched } = applyWordFixes('man2adil', [{ from: 'n2', to: 'n' }]);
     expect(text).toBe('man2adil');
@@ -180,6 +226,21 @@ describe('applyWordFixes', () => {
 
   it('keeps line breaks', () => {
     expect(applyWordFixes('a vAi\nvAi b', [{ from: 'vAi', to: 'vAy' }]).text).toBe('a vAy\nvAy b');
+  });
+});
+
+describe('fixTamilRRi', () => {
+  it('keeps ற்றி from reading as ṛ', () => {
+    expect(fixTamilRRi('paRRi veRRilai maRRa')).toBe('paR_Ri veR_Rilai maRRa');
+    expect(fromItrans(fixTamilRRi('paRRi'), 'tamil')).toBe('பற்றி');
+  });
+});
+
+describe('applyWordFixes at punctuation', () => {
+  it('treats an attached comma as a boundary, but not ITRANS dot', () => {
+    expect(applyWordFixes('pOi, vA', [{ from: 'pOi', to: 'pOy' }]).text).toBe('pOy, vA');
+    expect(applyWordFixes('mE.n', [{ from: 'mE', to: 'mI' }]).text).toBe('mE.n');
+    expect(applyWordFixes('varap-pOi nI', [{ from: 'pOi', to: 'pOy' }]).text).toBe('varap-pOy nI');
   });
 });
 

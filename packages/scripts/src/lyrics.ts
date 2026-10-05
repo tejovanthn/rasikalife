@@ -10,8 +10,11 @@ import {
   canonicalLanguage,
   checkRespelling,
   cleanCompositionTitle,
+  fixJnaa,
+  fixTamilRRi,
   looksTamil,
   normalizeLyricsText,
+  restoreProtectedLines,
   retargetTamil,
 } from '@rasika/core/domain/composition/lyrics-normalize';
 
@@ -187,9 +190,15 @@ export async function ingestLyrics(opts: {
       // reading. Packets cut before titles were cleaned carry the raw title, so the title is
       // compared only when the packet's is already clean.
       const rules = rulesVersion(current);
-      const lyricsMatch = current.lyricsV1.every(
-        (l, i) => record.lyrics.find(p => p.order === l.order)?.text === rules.lyrics[i]?.text
-      );
+      const lyricsMatch = current.lyricsV1.every((l, i) => {
+        const packetText = record.lyrics.find(p => p.order === l.order)?.text;
+        // Packets cut before the j~n rule carry `jn`/`jn2`, and before English lines were
+        // protected carry those lines rewritten; bring them up to date first.
+        return (
+          packetText !== undefined &&
+          restoreProtectedLines(l.text, fixJnaa(packetText)) === rules.lyrics[i]?.text
+        );
+      });
       const reading = lyricsMatch ? result : undefined;
       if (result && !lyricsMatch) refuse('*', 'stored lyrics changed since the packet was written');
 
@@ -220,15 +229,21 @@ export async function ingestLyrics(opts: {
         let proposed: string | undefined = reading?.sections?.find(s => s.order === l.order)?.text;
         const fixes = reading?.fixes?.filter(f => f.order === l.order) ?? [];
         if (proposed === undefined && fixes.length > 0) {
-          const applied = applyWordFixes(base, fixes);
+          // Fixes were written against the packet's text, which may predate a rule.
+          const seen = record.lyrics.find(p => p.order === l.order)?.text ?? base;
+          const applied = applyWordFixes(seen, fixes);
           for (const miss of applied.unmatched) {
             refuse(String(l.order), `fix matched no whole word: "${miss.from}" → "${miss.to}"`);
           }
           proposed = applied.text;
         }
-        const fallback = relabel(retarget(base));
-        if (proposed === undefined || proposed === base) return { ...l, text: fallback };
-        const final = relabel(retarget(proposed));
+        const fallback = restoreProtectedLines(l.text, relabel(retarget(base)));
+        if (proposed === undefined) return { ...l, text: fallback };
+        const final = restoreProtectedLines(
+          l.text,
+          relabel(retarget(fixTamilRRi(fixJnaa(proposed))))
+        );
+        if (final === fallback) return { ...l, text: fallback };
         const verdict = checkRespelling(l.text, final);
         if (!verdict.ok) {
           refuse(String(l.order), verdict.reason);
