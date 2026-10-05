@@ -36,6 +36,12 @@ describe('Tamil output', () => {
     expect(fromItrans('ne~njam', 'tamil')).toBe('நெஞ்சம்');
   });
 
+  it('writes ற்றி through the `_` separator, which never reaches the page', () => {
+    expect(fromItrans('muR_Rilum', 'tamil')).toBe('முற்றிலும்');
+    expect(fromItrans('muR_Rilum', 'devanagari')).toBe('मुऱ्ऱिलुम्');
+    expect(fromItrans('muR_Rilum')).toBe('murrilum');
+  });
+
   it('leaves a word-initial ஜ alone', () => {
     expect(fromItrans('jaya', 'tamil')).toBe('ஜய');
   });

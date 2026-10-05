@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { fromItrans } from '../../utils/transliteration';
 import {
+  applyWordFixes,
   canonicalLanguage,
   checkRespelling,
+  cleanCompositionTitle,
   isSwaraLine,
   looksTamil,
   normalizeLyrics,
   normalizeLyricsText,
+  retargetTamil,
 } from './lyrics-normalize';
 
 const TAMIL_LINE =
@@ -132,5 +135,60 @@ describe('canonicalLanguage', () => {
     expect(canonicalLanguage('Tamil\n\npallavi')).toBe('Tamil');
     expect(canonicalLanguage('maNipravALam')).toBe('Manipravalam');
     expect(canonicalLanguage('none')).toBeUndefined();
+  });
+});
+
+describe('cleanCompositionTitle', () => {
+  it('drops the scraped link text', () => {
+    expect(
+      cleanCompositionTitle('endarO mahaanubhaavu - Click to listen (Shivkumar Kalyanaraman)!')
+    ).toBe('endarO mahaanubhaavu');
+    expect(cleanCompositionTitle('x - Click to lisetn (y)!')).toBe('x');
+    expect(cleanCompositionTitle('x - Click to listen (y)! Also Kanyakumari')).toBe('x');
+    expect(cleanCompositionTitle('x - Click to listen!')).toBe('x');
+  });
+
+  it('keeps the qualifier that tells two pieces apart', () => {
+    expect(cleanCompositionTitle('ninnE kOri (varNa)')).toBe('ninnE kOri (varNa)');
+    expect(cleanCompositionTitle('saa saa ni (jatiswaram) - Click to listen (P)!')).toBe(
+      'saa saa ni (jatiswaram)'
+    );
+  });
+
+  it('tidies whitespace', () => {
+    expect(cleanCompositionTitle('  enna   tavam ')).toBe('enna tavam');
+  });
+});
+
+describe('applyWordFixes', () => {
+  it('replaces whole words, every occurrence', () => {
+    const { text } = applyWordFixes('en2ru sol en2ru', [{ from: 'en2ru', to: 'en2Ru' }]);
+    expect(text).toBe('en2Ru sol en2Ru');
+  });
+
+  it('never reaches inside a word', () => {
+    const { text, unmatched } = applyWordFixes('man2adil', [{ from: 'n2', to: 'n' }]);
+    expect(text).toBe('man2adil');
+    expect(unmatched).toHaveLength(1);
+  });
+
+  it('can join two words', () => {
+    expect(
+      applyWordFixes('caraNAm bhOja', [{ from: 'caraNAm bhOja', to: 'caraNAmbhOja' }]).text
+    ).toBe('caraNAmbhOja');
+  });
+
+  it('keeps line breaks', () => {
+    expect(applyWordFixes('a vAi\nvAi b', [{ from: 'vAi', to: 'vAy' }]).text).toBe('a vAy\nvAy b');
+  });
+});
+
+describe('retargetTamil', () => {
+  it('removes ன from a piece that turned out not to be Tamil', () => {
+    expect(retargetTamil('ADinaTTE yADarAdu harin2i', false)).toBe('ADinaTTE yADarAdu harini');
+  });
+
+  it('adds it to one that turned out to be', () => {
+    expect(retargetTamil('ennai', true)).toBe('en2n2ai');
   });
 });

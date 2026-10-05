@@ -293,3 +293,62 @@ export function canonicalLanguage(value: string): LyricsLanguage | undefined {
   };
   return aliases[key] ?? LYRICS_LANGUAGES.find(l => l.toLowerCase() === key);
 }
+
+/**
+ * A composition title with the scraped noise taken off. 290 titles carry the source's
+ * "- Click to listen (performer)!" link text, which also landed in their URL slugs. A
+ * bracketed qualifier — `(varNam)`, `(bhajan)`, `(jOnpuri)` — is kept: it is what tells two
+ * pieces with the same opening words apart.
+ */
+export function cleanCompositionTitle(title: string): string {
+  return title
+    .replace(/\s+[-–]\s+click to lis(?:ten|etn)\b.*$/is, '')
+    .replace(/!+\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** One correction from a reader: whole words, exactly as they stand in the text read. */
+export interface WordFix {
+  from: string;
+  to: string;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Apply word fixes to a text. `from` must stand as whole whitespace-delimited words, so a fix
+ * for `n2` cannot reach inside every Tamil word on the page; every occurrence is replaced.
+ * Returns the fixes that matched nothing, so the caller can report them.
+ */
+export function applyWordFixes(
+  text: string,
+  fixes: WordFix[]
+): { text: string; unmatched: WordFix[] } {
+  let out = text;
+  const unmatched: WordFix[] = [];
+  for (const fix of fixes) {
+    const from = fix.from.trim();
+    if (!from) {
+      unmatched.push(fix);
+      continue;
+    }
+    const pattern = new RegExp(`(?<=^|\\s)${escapeRegExp(from)}(?=\\s|$)`, 'g');
+    if (!pattern.test(out)) {
+      unmatched.push(fix);
+      continue;
+    }
+    out = out.replace(pattern, fix.to.trim());
+  }
+  return { text: out, unmatched };
+}
+
+/**
+ * Move text between Tamil and not-Tamil after a reader corrected the language: `n2` is
+ * Tamil-only, so it is removed, or the Tamil n rule is run over text that never had it.
+ */
+export function retargetTamil(text: string, tamil: boolean): string {
+  return tamil ? normalizeLyricsText(text, { tamil: true }) : text.replace(/n2/g, 'n');
+}

@@ -46,8 +46,10 @@ export function transliterate(
   to: TransliterationScheme
 ): string {
   if (from === to) return text;
-  if (to === 'roman') return toRoman(text);
-  const out = Sanscript.t(text, from === 'itrans' ? SOURCE_SCHEME : from, to);
+  // `_` is ITRANS's no-op separator, and the only way to write ற்றி: `RRi` reads as vocalic
+  // ṛ. Devanagari drops it; the other targets copy it through, so it is removed here.
+  if (to === 'roman') return toRoman(text).replace(/_/g, '');
+  const out = Sanscript.t(text, from === 'itrans' ? SOURCE_SCHEME : from, to).replace(/_/g, '');
   return to === 'tamil' ? tidyTamil(out) : out;
 }
 
