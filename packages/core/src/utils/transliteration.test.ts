@@ -27,6 +27,20 @@ describe('transliterate', () => {
   });
 });
 
+describe('Tamil output', () => {
+  it('prints vocalic ṛ without the apostrophe sanscript marks it with', () => {
+    expect(fromItrans('hR^idaya', 'tamil')).toBe('ஹ்ருதய');
+  });
+
+  it('writes ñj as ஞ்ச, the cluster Tamil uses', () => {
+    expect(fromItrans('ne~njam', 'tamil')).toBe('நெஞ்சம்');
+  });
+
+  it('leaves a word-initial ஜ alone', () => {
+    expect(fromItrans('jaya', 'tamil')).toBe('ஜய');
+  });
+});
+
 describe('fromItrans', () => {
   it('defaults to roman so anonymous visitors and crawlers get everyday spelling', () => {
     expect(fromItrans('bhairavI')).toBe('bhairavi');

@@ -30,6 +30,16 @@ function toRoman(text: string): string {
     .normalize('NFC');
 }
 
+/**
+ * Sanscript's Tamil output is Sanskrit-in-Tamil-script, and two of its habits are wrong in
+ * Tamil lyrics. It marks vocalic ṛ with an apostrophe (`ஹ்ரு'தய`), which Tamil never prints;
+ * and it writes ñj as ஞ்ஜ, a cluster Tamil does not use — `nenjam` is நெஞ்சம், `anjali`
+ * அஞ்சலி.
+ */
+function tidyTamil(text: string): string {
+  return text.replace(/(ரு|ரூ)'/g, '$1').replace(/ஞ்ஜ/g, 'ஞ்ச');
+}
+
 export function transliterate(
   text: string,
   from: TransliterationScheme,
@@ -37,7 +47,8 @@ export function transliterate(
 ): string {
   if (from === to) return text;
   if (to === 'roman') return toRoman(text);
-  return Sanscript.t(text, from === 'itrans' ? SOURCE_SCHEME : from, to);
+  const out = Sanscript.t(text, from === 'itrans' ? SOURCE_SCHEME : from, to);
+  return to === 'tamil' ? tidyTamil(out) : out;
 }
 
 /**

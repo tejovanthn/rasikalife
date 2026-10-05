@@ -186,6 +186,30 @@ program
   });
 
 program
+  .command('lyrics-batches')
+  .description('Write lyrics packets, rules already applied, for a reader to check')
+  .requiredOption('--out-dir <dir>', 'Where to write the batch files')
+  .option('--size <n>', 'Compositions per batch', (v: string) => Number.parseInt(v, 10), 50)
+  .option('--limit <n>', 'Only the first n compositions', (v: string) => Number.parseInt(v, 10))
+  .action(async (opts: { outDir: string; size: number; limit?: number }) => {
+    setup();
+    const { writeLyricsBatches } = await import('./lyrics.js');
+    await writeLyricsBatches(opts);
+  });
+
+program
+  .command('lyrics-ingest')
+  .description('Validate returned lyrics packets into an admin CSV, refusing what changed words')
+  .requiredOption('--dir <dir>', 'Directory holding the packets and *.result.json files')
+  .requiredOption('--out <path>', 'Where to write the admin CSV')
+  .option('--report <path>', 'Where to write the refusals as CSV')
+  .action(async (opts: { dir: string; out: string; report?: string }) => {
+    setup();
+    const { ingestLyrics } = await import('./lyrics.js');
+    await ingestLyrics(opts);
+  });
+
+program
   .command('admin-clear-fields')
   .description('Remove attributes outright, which a blank CSV cell cannot do')
   .requiredOption('--domain <name>', 'venue or organiser')

@@ -399,6 +399,41 @@ the database unvalidated. Full runbook and the orchestrator/worker prompts:
   mela derivation for their janyas), then the rest. Researching before merging spends the budget
   twice and writes onto a page about to become a redirect.
 
+### Respelling lyrics (`lyrics-batches` → reader → `lyrics-ingest`)
+
+Lyrics arrived in karnatik.com's romanisation, which is near ITRANS but is not it, and every
+composition page renders them through `fromItrans`. Where the two disagree, every other script
+shows the wrong letter: `hrdaya` rendered ह्र्दय, `mangaLam` மந்களம், and every Tamil `n` ந, so
+என்னை read எந்நை. The source also does not follow its own scheme consistently, so rules alone
+cannot repair it. Two halves, in `domain/composition/lyrics-normalize.ts`:
+
+- **`normalizeLyricsText` holds only rules that are true in every language here**: bare `r`
+  between consonants is ṛ (`R^i`); `n` before a velar or palatal is `~N`/`~n`; Sanskrit and Hindi
+  get long `E`/`O`; Tamil gets `n2` (ன) everywhere except word-initially and before த. Real
+  r-clusters (`dAridrya`, `tryambaka`) and swara lines are left alone. Every rule leaves the
+  `roman` view unchanged, which matters because that is what Googlebot indexes.
+- **Tamil is decided from the text (`looksTamil`), never the label.** Of 5,449 compositions
+  labelled Tamil, about 2,000 score near zero on Tamil-only features — Annamacharya in Telugu,
+  Swati Tirunal in Sanskrit. The label is a default. Applying ன to those would print ऩ in
+  Devanagari.
+- **`checkRespelling` is what lets a reader's corrections land unread.** It compares word skeletons
+  (case, `h`, doubled letters and ITRANS punctuation dropped), allows joins and splits, gives each
+  word its own small budget, and requires swara lines byte-for-byte. A per-*line* budget was tried
+  first and let 42% of one-word swaps through; per-word lets 0.3% through, all one-letter cases
+  (`kAma`→`rAma`) that no spelling check can tell from a typo fix.
+
+The reader works from packets (`lyrics-batches --out-dir <dir> [--size 50]`) carrying the text
+*after* the rules and a brief that is the whole contract. `lyrics-ingest --dir <dir> --out <csv>
+--report <csv>` re-reads the stored text, refuses any section that fails `checkRespelling` (the
+rules' version is used instead), refuses the whole reading if the stored text moved since the
+packet was cut, and skips a batch with no readable result rather than applying rules to it alone.
+Apply the CSV with `admin-csv-import`, then reindex search.
+
+**Tamil ச stays `s`/`sh`.** Only `c` renders ச, and `c` makes the roman view read `ceydanai`
+for a song searched as "seydanai". The Tamil script shows ஸ there; that is the trade.
+`transliterate` does tidy two sanscript habits in Tamil output: the apostrophe it puts after ṛ
+(`ஹ்ரு'தய`) and ஞ்ஜ, which Tamil writes ஞ்ச.
+
 ### Deduplicating ragas (`pnpm cli dedup-ragas`, two steps)
 
 The corpus holds two import generations and the same raga appears in both under different

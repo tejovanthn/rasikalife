@@ -101,6 +101,11 @@
       "import": "./src/domain/tala/client.ts",
       "default": "./src/domain/tala/client.ts"
     },
+    "./domain/composition/lyrics-normalize": {
+      "types": "./src/domain/composition/lyrics-normalize.ts",
+      "import": "./src/domain/composition/lyrics-normalize.ts",
+      "default": "./src/domain/composition/lyrics-normalize.ts"
+    },
     "./domain/composition/client": {
       "types": "./src/domain/composition/client.ts",
       "import": "./src/domain/composition/client.ts",
