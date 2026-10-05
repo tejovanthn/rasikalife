@@ -429,6 +429,18 @@ rules' version is used instead), refuses the whole reading if the stored text mo
 packet was cut, and skips a batch with no readable result rather than applying rules to it alone.
 Apply the CSV with `admin-csv-import`, then reindex search.
 
+Readers return **whole-word fixes**, not whole sections (`applyWordFixes`; `from` must stand as
+whole words so a fix for `n2` cannot reach inside every Tamil word). The pilot returned
+sections, at 105–195k tokens a batch, most of it copying out unchanged text. A reader also
+returns a corrected **title** and **language**. `cleanCompositionTitle` drops the scraped
+"- Click to listen (performer)!" from 290 titles, which also sat in their URL slugs, and keeps
+a qualifier like `(varNam)` that tells two pieces apart. Renaming is safe: the route keys on the
+id. A corrected language moves the Tamil `n2` and Sanskrit long vowels with it (`retargetTamil`)
+so the reader never has to.
+
+Tamil ற்றி is written `R_Ri`: `RRi` parses as vocalic ṛ. `_` is ITRANS's silent separator, and
+`transliterate` strips it from every output, since only Devanagari dropped it on its own.
+
 **Tamil ச stays `s`/`sh`.** Only `c` renders ச, and `c` makes the roman view read `ceydanai`
 for a song searched as "seydanai". The Tamil script shows ஸ there; that is the trade.
 `transliterate` does tidy two sanscript habits in Tamil output: the apostrophe it puts after ṛ

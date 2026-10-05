@@ -2,6 +2,17 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
+## Active: respelling composition lyrics, titles and languages (2026-10-06)
+
+Pipeline built (CLAUDE.md § "Respelling lyrics"). Packets and results are in `data/lyrics/` (gitignored; 172 batches × 50; regenerate with `lyrics-batches --out-dir <dir> --size 50` — the
+ids per batch are stable while no composition is added). Readers are Claude subagents, one batch
+each, writing `lyrics-NNN.result.json` beside the packet.
+
+**Next step:** run readers over every batch without a `.result.json`, then
+`lyrics-ingest --dir <dir> --out lyrics.csv --report refusals.csv`, read the refusals, and
+`admin-csv-import --domain composition --file lyrics.csv --user <admin id>` (dry run first),
+then reindex search. Still open after that: 33 compositions with `�` encoding damage.
+
 ## Active: filling the artist corpus (2026-08-09)
 
 The artist corpus is barer than the raga one was. Of 1,159 artists, **503 hold nothing but a
