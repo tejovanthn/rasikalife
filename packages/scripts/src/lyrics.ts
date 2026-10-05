@@ -42,7 +42,7 @@ const BRIEF = [
   'Sanskrit and Hindi have no short e or o: always E and O there. Telugu, Kannada, Tamil and Malayalam do have short e and o — keep them short where the word has them.',
   'Keep `s` and `sh` for Tamil ச; do NOT respell them as `c`. The default page view is plain roman text and that is what people search for — `seydanai` must not become `ceydanai`.',
   'NEVER change a word into a different word, never add or remove a word, never reorder, never translate. Leave swara notation (ga ga pa ri sa ..., S R2 G3 ...), bracketed notes like (madhyamakAla) or (endarO), and any English untouched. In the title, keep a bracketed qualifier such as (varNam) or (bhajan) — it tells two pieces apart — but you may respell the words inside it. A validator compares your result with the stored text word by word and throws away anything that changed more than spelling.',
-  `LANGUAGE: \`stored_language\` is often wrong — about 2,000 pieces are labelled Tamil by default, including Annamacharya (Telugu) and Swati Tirunal (mostly Sanskrit). Report the real language of the lyrics as one of: ${LYRICS_LANGUAGES.join(', ')}. Manipravalam is a mix of Sanskrit and Tamil or Malayalam. When you change the language, do NOT add or remove n2 yourself — that is redone automatically for the new language; write your fixes against the text exactly as you see it.`,
+  `LANGUAGE: \`stored_language\` is often wrong — about 2,000 pieces are labelled Tamil by default, including Annamacharya (Telugu) and Swati Tirunal (mostly Sanskrit). Report the real language of the lyrics as one of: ${LYRICS_LANGUAGES.join(', ')}. Manipravalam is a mix of Sanskrit and Tamil or Malayalam. When you change the language, do NOT add or remove n2 yourself — that is redone automatically for the new language; write your fixes against the text exactly as you see it. Likewise never add n2 by hand to a Tamil piece where rules_detected_tamil is false: it is added automatically once you confirm (or correct to) Tamil. A record that changes only its language or title carries an empty or absent fixes list. KannaDa and Kannada are the same; report Kannada.`,
   'OUTPUT: write `<batch>.result.json` as {"batch": "<batch>", "records": [...]}. Include a record ONLY if something must change. Each record: {"id": "...", "language": "<only if different from stored_language>", "title": "<the whole corrected title, only if it changes>", "fixes": [{"order": <section order>, "from": "<word(s)>", "to": "<word(s)>"}], "notes": "<optional, short>"}. `from` is one or more WHOLE words exactly as they stand in that section (split on spaces; a hyphenated word like OTTip-paghaiyai is one word, so give it whole), and every occurrence in the section is replaced. Do not copy out unchanged text. If you are unsure of a word, leave it and say so in notes — a correct but unfixed word costs nothing, a wrong fix is published in five scripts.',
 ];
 
@@ -201,8 +201,10 @@ export async function ingestLyrics(opts: {
         if (canonical) language = canonical;
         else refuse('*', `unknown language "${reading.language}"`);
       }
-      // A reader who corrected the language also decided Tamil, and n2 follows them.
-      const tamil = reading?.language
+      // Once a reader has been through the batch, the language is no longer a guess: readers
+      // relabel what is not Tamil, so a Tamil label that survives is a confirmed one — and a
+      // short or Sanskrit-heavy Tamil piece the text score missed gets its ன here.
+      const tamil = lyricsMatch
         ? language === 'Tamil' || (language === 'Manipravalam' && rules.tamil)
         : rules.tamil;
       const retarget = (text: string) =>
