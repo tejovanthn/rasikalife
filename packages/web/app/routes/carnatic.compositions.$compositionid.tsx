@@ -384,6 +384,14 @@ export default function CompositionDetails() {
           </div>
         </section>
       )}
+      {/* English, so never run through fromItrans — that is what garbled these lines while
+          they sat inside the lyrics. */}
+      {composition.meaning && (
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Meaning</h2>
+          <p className="whitespace-pre-line">{composition.meaning}</p>
+        </section>
+      )}
       {relatedCompositionsByComposer.length > 0 && (
         <EntityCompositions
           compositions={relatedCompositionsByComposer}

@@ -5,6 +5,7 @@ import {
   canonicalLanguage,
   checkRespelling,
   cleanCompositionTitle,
+  englishLineKind,
   fixTamilRRi,
   isEnglishLine,
   isSwaraLine,
@@ -143,6 +144,14 @@ describe('English lines', () => {
     expect(isEnglishLine('(repeat line starting with tAhata dInuta in the anupallavi)')).toBe(true);
     expect(isEnglishLine('ab tO jaisE hI banI AyI ab tO aisE hI banI AyI')).toBe(false);
     expect(isEnglishLine('nAhi.n amIrI mE.n man lAgyo mErO yAr fakIrI mE.n')).toBe(false);
+  });
+
+  it('tell a note to the singer from a translation', () => {
+    expect(englishLineKind('(repeat line starting with tAhata dInuta in the anupallavi)')).toBe(
+      'note'
+    );
+    expect(englishLineKind('(Note: caps indicates 2 aksharas)')).toBe('note');
+    expect(englishLineKind(english)).toBe('meaning');
   });
 
   it('are left alone by the rules', () => {

@@ -210,6 +210,25 @@ program
   });
 
 program
+  .command('lyrics-meanings')
+  .description('Flag English lines inside lyrics, then move the reviewed ones into meaning')
+  .option('--apply', 'Build an admin CSV from the reviewed --file, instead of reporting')
+  .option('--file <path>', 'Reviewed CSV to apply', 'lyrics-meanings.csv')
+  .option('--out <path>', 'Where to write the report, or the admin CSV with --apply')
+  .action(async (opts: { apply?: boolean; file: string; out?: string }) => {
+    setup();
+    const mod = await import('./lyrics.js');
+    if (opts.apply) {
+      await mod.applyLyricsMeanings({
+        file: opts.file,
+        out: opts.out ?? 'lyrics-meanings-import.csv',
+      });
+    } else {
+      await mod.reportLyricsMeanings({ out: opts.out ?? 'lyrics-meanings.csv' });
+    }
+  });
+
+program
   .command('admin-clear-fields')
   .description('Remove attributes outright, which a blank CSV cell cannot do')
   .requiredOption('--domain <name>', 'venue or organiser')

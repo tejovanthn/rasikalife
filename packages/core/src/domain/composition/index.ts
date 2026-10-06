@@ -50,6 +50,8 @@ export interface CompositionWithRelations {
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
   sourceAttribution?: string;
+  /** An English translation or gist. Kept apart from `lyricsV1`, which is transliterated. */
+  meaning?: string;
   createdAt: string;
   updatedAt: string;
   version: number;

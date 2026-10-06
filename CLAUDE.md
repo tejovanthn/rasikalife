@@ -438,6 +438,16 @@ a qualifier like `(varNam)` that tells two pieces apart. Renaming is safe: the r
 id. A corrected language moves the Tamil `n2` and Sanskrit long vowels with it (`retargetTamil`)
 so the reader never has to.
 
+**English inside the lyrics is a separate step** (`lyrics-meanings`, flag then `--apply --file`).
+96 English lines sit in 26 compositions — translations, gists, and a few compositions holding
+*only* a translation. Inside `lyricsV1` they went through `fromItrans` and came out garbled in
+every script. The report suggests `meaning` for a translation and `keep` for a note to the singer
+("(repeat the ciTTasvara)", `englishLineKind`); `--apply` moves the marked lines into
+`meaning`, drops a section left empty, and writes an admin CSV. Run it **after** the respelling
+import, because the CSV replaces `lyricsV1` whole. The composition page renders `meaning` as
+plain English and had never rendered it before. Until then, `isEnglishLine` keeps both the rules
+and the readers off those lines.
+
 Tamil ற்றி is written `R_Ri`: `RRi` parses as vocalic ṛ. `_` is ITRANS's silent separator, and
 `transliterate` strips it from every output, since only Devanagari dropped it on its own.
 

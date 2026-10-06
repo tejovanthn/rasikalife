@@ -315,6 +315,17 @@ export function isEnglishLine(line: string): boolean {
   );
 }
 
+/**
+ * What an English line inside the lyrics is. A `note` is an instruction to the singer —
+ * "(repeat line starting with tAhata dInuta in the anupallavi)" — and belongs with the lyrics.
+ * Everything else is a translation or gist, which belongs in `meaning`, not in the lyrics.
+ */
+export function englishLineKind(line: string): 'note' | 'meaning' {
+  const t = line.trim();
+  if (/^\(.*\)$/.test(t) || /^\(?\s*(note|repeat|sing)\b/i.test(t)) return 'note';
+  return 'meaning';
+}
+
 /** A line no rule and no reader may change: swara notation or English. */
 export function isProtectedLine(line: string): boolean {
   return isSwaraLine(line) || isEnglishLine(line);

@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AdminData } from '@rasika/core';
-import { toCsv } from '@rasika/core/admin/csv';
+import { parseCsv, toCsv } from '@rasika/core/admin/csv';
 import {
   LYRICS_LANGUAGES,
   type LyricLine,
@@ -10,8 +10,10 @@ import {
   canonicalLanguage,
   checkRespelling,
   cleanCompositionTitle,
+  englishLineKind,
   fixJnaa,
   fixTamilRRi,
+  isEnglishLine,
   looksTamil,
   normalizeLyricsText,
   restoreProtectedLines,
@@ -289,4 +291,99 @@ export async function ingestLyrics(opts: {
     );
     console.log(`   refusals → ${opts.report}`);
   }
+}
+
+/**
+ * English inside the lyrics, in two steps: flag, then apply a reviewed file. Translations and
+ * gists belong in `meaning`, which the page renders as English; inside `lyricsV1` they went
+ * through `fromItrans` and came out garbled in every script. A note to the singer — "(repeat
+ * line ...)" — is suggested `keep`, since it is about the lyrics. Run this **after** the
+ * respelling import: it reads the stored lyrics and the CSV it writes replaces them whole.
+ */
+const MEANING_HEADER = ['decision', 'id', 'title', 'order', 'type', 'kind', 'line'];
+const MEANING_DECISIONS = new Set(['meaning', 'keep', 'delete']);
+
+export async function reportLyricsMeanings(opts: { out: string }): Promise<void> {
+  const rows: string[][] = [];
+  const compositions = await loadCompositions();
+  for (const c of compositions) {
+    for (const l of c.lyricsV1 ?? []) {
+      for (const line of l.text.split('\n')) {
+        if (!isEnglishLine(line)) continue;
+        const kind = englishLineKind(line);
+        rows.push([
+          kind === 'meaning' ? 'meaning' : 'keep',
+          c.id,
+          c.title,
+          String(l.order),
+          l.type,
+          kind,
+          line,
+        ]);
+      }
+    }
+  }
+  writeFileSync(opts.out, toCsv([MEANING_HEADER, ...rows]));
+  const ids = new Set(rows.map(r => r[1]));
+  console.log(`🔎 ${rows.length} English lines in ${ids.size} compositions → ${opts.out}`);
+  console.log('   decision: meaning (move to the meaning field), keep, or delete');
+}
+
+export async function applyLyricsMeanings(opts: { file: string; out: string }): Promise<void> {
+  const [header, ...body] = parseCsv(readFileSync(opts.file, 'utf-8'));
+  const col = (name: string) => header?.indexOf(name) ?? -1;
+  const stored = new Map((await loadCompositions()).map(c => [c.id, c]));
+
+  const byId = new Map<string, Array<{ decision: string; order: number; line: string }>>();
+  for (const r of body) {
+    const decision = (r[col('decision')] ?? '').trim().toLowerCase();
+    if (!MEANING_DECISIONS.has(decision)) {
+      console.warn(`⚠️  unknown decision "${decision}" for ${r[col('id')]}, skipped`);
+      continue;
+    }
+    const id = r[col('id')] ?? '';
+    const list = byId.get(id) ?? [];
+    list.push({ decision, order: Number(r[col('order')]), line: r[col('line')] ?? '' });
+    byId.set(id, list);
+  }
+
+  const out: string[][] = [];
+  let moved = 0;
+  let missing = 0;
+  for (const [id, decisions] of byId) {
+    const c = stored.get(id);
+    if (!c?.lyricsV1) continue;
+    const meaning: string[] = [];
+    const lyrics = c.lyricsV1
+      .map(l => {
+        const lines = l.text.split('\n');
+        for (const d of decisions.filter(x => x.order === l.order && x.decision !== 'keep')) {
+          const at = lines.indexOf(d.line);
+          if (at === -1) {
+            missing++;
+            continue;
+          }
+          lines.splice(at, 1);
+          if (d.decision === 'meaning') meaning.push(d.line.trim());
+          moved++;
+        }
+        return { ...l, text: lines.join('\n').trim() };
+      })
+      .filter(l => l.text.length > 0);
+    if (
+      meaning.length === 0 &&
+      lyrics.length === c.lyricsV1.length &&
+      lyrics.every((l, i) => l.text === c.lyricsV1?.[i]?.text)
+    )
+      continue;
+    const existing = (c as StoredComposition & { meaning?: string }).meaning?.trim();
+    out.push([
+      id,
+      meaning.length ? [existing, meaning.join('\n')].filter(Boolean).join('\n\n') : '',
+      JSON.stringify(lyrics),
+    ]);
+  }
+  writeFileSync(opts.out, toCsv([['id', 'meaning', 'lyricsV1'], ...out]));
+  console.log(`✍️  ${out.length} compositions, ${moved} lines moved or deleted → ${opts.out}`);
+  if (missing) console.log(`   ${missing} lines no longer in the stored lyrics, skipped`);
 }
