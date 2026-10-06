@@ -12,8 +12,8 @@ each, writing `lyrics-NNN.result.json` beside the packet.
 `lyrics-ingest --dir <dir> --out lyrics.csv --report refusals.csv`, read the refusals, and
 `admin-csv-import --domain composition --file lyrics.csv --user <admin id>` (dry run first),
 then `lyrics-meanings --out data/lyrics-meanings.csv`, review, `--apply`, import, and reindex
-search. Still open after that: 33 compositions with `�` encoding damage. Batches 001–031 are
-read as of 2026-10-07.
+search. Still open after that: 33 compositions with `�` encoding damage. Batches 001–051 and 090 are read
+as of 2026-10-07; 052–061 in flight. Re-run any batch with no `.result.json`.
 
 ## Active: filling the artist corpus (2026-08-09)
 
