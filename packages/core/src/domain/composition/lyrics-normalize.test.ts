@@ -142,6 +142,7 @@ describe('English lines', () => {
   it('are found, without catching Hindi', () => {
     expect(isEnglishLine(english)).toBe(true);
     expect(isEnglishLine('(repeat line starting with tAhata dInuta in the anupallavi)')).toBe(true);
+    expect(isEnglishLine('(alternate line)')).toBe(true);
     expect(isEnglishLine('ab tO jaisE hI banI AyI ab tO aisE hI banI AyI')).toBe(false);
     expect(isEnglishLine('nAhi.n amIrI mE.n man lAgyo mErO yAr fakIrI mE.n')).toBe(false);
   });

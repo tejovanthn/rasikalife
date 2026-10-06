@@ -300,7 +300,7 @@ export function isSwaraLine(line: string): boolean {
 }
 
 const ENGLISH_WORD =
-  /\b(the|and|of|is|with|who|you|your|this|that|for|are|was|his|her|when|which|from|thrice|line|sing|meaning)\b/g;
+  /\b(the|and|of|is|with|who|you|your|this|that|for|are|was|his|her|when|which|from|thrice|line|lines|sing|meaning|alternate|repeat|end)\b/g;
 
 /**
  * A line of English: a translation, a gist, a performance note. 96 such lines sit inside 26
@@ -309,6 +309,8 @@ const ENGLISH_WORD =
  */
 export function isEnglishLine(line: string): boolean {
   const hits = line.match(ENGLISH_WORD)?.length ?? 0;
+  // A bracketed note needs only one English word: "(alternate line)".
+  if (hits >= 1 && /^\s*\(.*\)\s*$/.test(line)) return true;
   return (
     hits >= 2 ||
     (hits >= 1 && line.trim().split(/\s+/).length <= 4 && /\b(the|and|of|is)\b/.test(line))
