@@ -27,6 +27,30 @@ describe('transliterate', () => {
   });
 });
 
+describe('Telugu and Kannada anusvara', () => {
+  it('writes a nasal before a stop or sibilant as the anusvara', () => {
+    expect(fromItrans('endarO vandanamu', 'kannada')).toBe('ಎಂದರೋ ವಂದನಮು');
+    expect(fromItrans('endarO vandanamu', 'telugu')).toBe('ఎందరో వందనము');
+    expect(fromItrans('sa~ncAramu neri~Ngi samsAra', 'kannada')).toBe('ಸಂಚಾರಮು ನೆರಿಂಗಿ ಸಂಸಾರ');
+  });
+
+  it('keeps the conjunct before a nasal, y, r, l or v', () => {
+    expect(fromItrans('anna janma kanya sammati', 'kannada')).toBe('ಅನ್ನ ಜನ್ಮ ಕನ್ಯ ಸಮ್ಮತಿ');
+    expect(fromItrans('anna janma kanya sammati', 'telugu')).toBe('అన్న జన్మ కన్య సమ్మతి');
+  });
+
+  it('joins a word split by a hyphen, but not one that ends a line', () => {
+    expect(fromItrans('mahAnubhAvu-landariki', 'kannada')).toBe('ಮಹಾನುಭಾವುಲಂದರಿಕಿ');
+    expect(fromItrans('tEDit-tEDi', 'tamil')).toBe('தேடித்தேடி');
+    expect(fromItrans('hR^idayAra-\nvinda', 'kannada')).toBe('ಹೃದಯಾರ-\nವಿಂದ');
+    expect(fromItrans('mahAnubhAvu-landariki')).toBe('mahanubhavu-landariki');
+  });
+
+  it('leaves Devanagari and Tamil as they were', () => {
+    expect(fromItrans('vandanamu', 'devanagari')).toBe('वन्दनमु');
+  });
+});
+
 describe('Tamil ன in other scripts', () => {
   it('is plain n where the script has no letter for it', () => {
     expect(fromItrans('en2n2a', 'telugu')).toBe('ఎన్న');

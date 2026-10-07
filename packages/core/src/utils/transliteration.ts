@@ -40,6 +40,23 @@ function tidyTamil(text: string): string {
   return text.replace(/(ரு|ரூ)'/g, '$1').replace(/ஞ்ஜ/g, 'ஞ்ச');
 }
 
+/**
+ * Telugu and Kannada write a nasal before a stop or a sibilant as the anusvara — ఎందరో,
+ * ವಂದನ, ಸಂಸಾರ — and sanscript spells it out as a conjunct (ఎన్దరో, ವನ್ದನ, ಸಮ್ಸಾರ), which
+ * a reader of either script takes for a spelling mistake. Before another nasal, y, r, l or v
+ * the conjunct is the normal spelling (అన్న, జన్మ, కన్య) and stays.
+ */
+const ANUSVARA_RULES: Partial<Record<TransliterationScheme, RegExp>> = {
+  telugu:
+    /[\u0C19\u0C1E\u0C23\u0C28\u0C2E]\u0C4D(?=[\u0C15-\u0C18\u0C1A-\u0C1D\u0C1F-\u0C22\u0C24-\u0C27\u0C2A-\u0C2D\u0C36-\u0C39])/g,
+  kannada:
+    /[\u0C99\u0C9E\u0CA3\u0CA8\u0CAE]\u0CCD(?=[\u0C95-\u0C98\u0C9A-\u0C9D\u0C9F-\u0CA2\u0CA4-\u0CA7\u0CAA-\u0CAD\u0CB6-\u0CB9])/g,
+};
+const ANUSVARA: Partial<Record<TransliterationScheme, string>> = {
+  telugu: '\u0C02',
+  kannada: '\u0C82',
+};
+
 export function transliterate(
   text: string,
   from: TransliterationScheme,
@@ -51,9 +68,14 @@ export function transliterate(
   if (to === 'roman') return toRoman(text).replace(/_/g, '');
   // `n2` is Tamil ன. Tamil and Devanagari have a letter for it (ன, ऩ); Telugu and Kannada do
   // not, and sanscript copies the code through as a literal "n2". There it is plain n.
-  const source = to === 'telugu' || to === 'kannada' ? text.replace(/n2/g, 'n') : text;
+  // karnatik.com marks a sandhi split with a hyphen inside the line (`mahAnubhAvu-landariki`),
+  // which no Indic script prints. Joined here; a hyphen ending a line is a real line break.
+  const joined = text.replace(/(?<=[A-Za-z~^.])-(?=[A-Za-z~])/g, '');
+  const source = to === 'telugu' || to === 'kannada' ? joined.replace(/n2/g, 'n') : joined;
   const out = Sanscript.t(source, from === 'itrans' ? SOURCE_SCHEME : from, to).replace(/_/g, '');
-  return to === 'tamil' ? tidyTamil(out) : out;
+  if (to === 'tamil') return tidyTamil(out);
+  const rule = ANUSVARA_RULES[to];
+  return rule ? out.replace(rule, ANUSVARA[to] ?? '') : out;
 }
 
 /**
