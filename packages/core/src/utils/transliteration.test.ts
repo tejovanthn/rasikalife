@@ -27,6 +27,19 @@ describe('transliterate', () => {
   });
 });
 
+describe('Tamil ன in other scripts', () => {
+  it('is plain n where the script has no letter for it', () => {
+    expect(fromItrans('en2n2a', 'telugu')).toBe('ఎన్న');
+    expect(fromItrans('en2n2a', 'kannada')).toBe('ಎನ್ನ');
+  });
+
+  it('keeps its own letter where there is one', () => {
+    expect(fromItrans('en2n2a', 'tamil')).toBe('என்ன');
+    expect(fromItrans('en2n2a', 'devanagari')).toBe('ऎऩ्ऩ');
+    expect(fromItrans('en2n2a')).toBe('enna');
+  });
+});
+
 describe('Tamil output', () => {
   it('prints vocalic ṛ without the apostrophe sanscript marks it with', () => {
     expect(fromItrans('hR^idaya', 'tamil')).toBe('ஹ்ருதய');

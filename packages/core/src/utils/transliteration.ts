@@ -49,7 +49,10 @@ export function transliterate(
   // `_` is ITRANS's no-op separator, and the only way to write ற்றி: `RRi` reads as vocalic
   // ṛ. Devanagari drops it; the other targets copy it through, so it is removed here.
   if (to === 'roman') return toRoman(text).replace(/_/g, '');
-  const out = Sanscript.t(text, from === 'itrans' ? SOURCE_SCHEME : from, to).replace(/_/g, '');
+  // `n2` is Tamil ன. Tamil and Devanagari have a letter for it (ன, ऩ); Telugu and Kannada do
+  // not, and sanscript copies the code through as a literal "n2". There it is plain n.
+  const source = to === 'telugu' || to === 'kannada' ? text.replace(/n2/g, 'n') : text;
+  const out = Sanscript.t(source, from === 'itrans' ? SOURCE_SCHEME : from, to).replace(/_/g, '');
   return to === 'tamil' ? tidyTamil(out) : out;
 }
 
