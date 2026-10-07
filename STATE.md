@@ -8,7 +8,7 @@ Pipeline built (CLAUDE.md § "Respelling lyrics"). Packets and results are in `d
 ids per batch are stable while no composition is added). Readers are Claude subagents, one batch
 each, writing `lyrics-NNN.result.json` beside the packet.
 
-**Next step:** deploy (`pnpm run deploy:prod`) — batches 001–081 and 090 (4,041 compositions) were imported to prod on 2026-10-07 and need this code's display fixes (`n2` in Telugu/Kannada, `_` separator, Meaning section). Then run readers over every batch without a `.result.json`, then
+**Next step:** batches 001–081 and 090 (4,041 compositions) were imported to prod and deployed on 2026-10-07; their packets and results moved to `data/lyrics/imported/` so a later ingest does not re-read them against the changed text. Run readers over every batch without a `.result.json`, then
 `lyrics-ingest --dir <dir> --out lyrics.csv --report refusals.csv`, read the refusals, and
 `admin-csv-import --domain composition --file lyrics.csv --user <admin id>` (dry run first),
 then `lyrics-meanings --out data/lyrics-meanings.csv`, review, `--apply`, import, and reindex
