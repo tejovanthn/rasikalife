@@ -1,13 +1,15 @@
 packages:
   - packages/*
 
-onlyBuiltDependencies:
-  - '@biomejs/biome'
-  - aws-sdk
-  - esbuild
-  - protobufjs
-  - sharp
-  - vite-plugin-node-externals
+# pnpm 12 replaced onlyBuiltDependencies with allowBuilds and now refuses to install until
+# every package with a build script is explicitly allowed or denied. Same list as before.
+allowBuilds:
+  '@biomejs/biome': true
+  aws-sdk: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  vite-plugin-node-externals: true
 
 supportedArchitectures:
   os:
