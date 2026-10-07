@@ -8,13 +8,13 @@ Pipeline built (CLAUDE.md § "Respelling lyrics"). Packets and results are in `d
 ids per batch are stable while no composition is added). Readers are Claude subagents, one batch
 each, writing `lyrics-NNN.result.json` beside the packet.
 
-**Next step:** batches 001–081 and 090 (4,041 compositions) were imported to prod and deployed on 2026-10-07; their packets and results moved to `data/lyrics/imported/` so a later ingest does not re-read them against the changed text. Paused 2026-10-07 by the user until Sunday (weekly limit reset). Batches 082–089, 091, 092 are read but **not yet ingested or imported**. Resume: run readers over every batch without a `.result.json`, then
+**Next step:** batches 001–081 and 090 (4,041 compositions) were imported to prod and deployed on 2026-10-07; their packets and results moved to `data/lyrics/imported/` so a later ingest does not re-read them against the changed text. Batches 082–089, 091 and 092 (475 more) were imported the same day, also set aside. Paused until Sunday (weekly limit reset). Resume: run readers over every batch without a `.result.json`, then
 `lyrics-ingest --dir <dir> --out lyrics.csv --report refusals.csv`, read the refusals, and
 `admin-csv-import --domain composition --file lyrics.csv --user <admin id>` (dry run first),
 then `lyrics-meanings --out data/lyrics-meanings.csv`, review, `--apply`, import, and reindex
 search. Still open after that: 33 compositions with `�` encoding damage; scraped `rAgA: … tALA. 1:` header text inside 66 lyric sections — regular enough for a rule-based strip, like `lyrics-meanings`, since readers may not remove words; a few records whose lyrics are a different song from the title (reader notes say which); languages outside `LYRICS_LANGUAGES` (Sourashtra, Gujarati, Braj) left as stored.
 
-Progress: 92 of 172 batches read (001–092); 001–081 and 090 imported. Re-run any batch with no
+Progress: 92 of 172 batches read and imported (001–092), 4,516 compositions. Re-run any batch with no
 `.result.json` — a reader cut off by a usage limit usually has already written its file.
 
 ## Active: filling the artist corpus (2026-08-09)
