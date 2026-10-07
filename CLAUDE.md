@@ -456,6 +456,14 @@ for a song searched as "seydanai". The Tamil script shows ஸ there; that is the
 `transliterate` does tidy two sanscript habits in Tamil output: the apostrophe it puts after ṛ
 (`ஹ்ரு'தய`) and ஞ்ஜ, which Tamil writes ஞ்ச.
 
+The same applies to Telugu and Kannada, and a Kannada reader caught it on endarO: both scripts
+write a nasal before a stop or sibilant as the **anusvara** (ಎಂದರೋ, ವಂದನ), where sanscript
+spells out the conjunct (ಎನ್ದರೋ). `transliterate` converts it for those two scripts only, and
+keeps the conjunct before a nasal, y, r, l or v (ಅನ್ನ, ಜನ್ಮ). It also joins karnatik.com's
+in-line hyphen splits (`mahAnubhAvu-landariki`) for every Indic script, and folds Tamil `n2`
+to `n` for Telugu and Kannada, which have no letter for ன. Store the ITRANS phonetically and
+fix a script's convention here, not in the data.
+
 ### Deduplicating ragas (`pnpm cli dedup-ragas`, two steps)
 
 The corpus holds two import generations and the same raga appears in both under different
