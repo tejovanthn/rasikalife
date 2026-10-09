@@ -1,0 +1,723 @@
+[
+  {
+    "loserId": "38b5ZJFvbf4EIA0Lg3TOdQKqDzP",
+    "canonicalId": "38awQAyfc0c72ujVv8UYrSJiIuR",
+    "loserName": "shrIranjani",
+    "canonicalName": "shree ranjani",
+    "compositionsMoved": [
+      "38b5ZJVf4sfMSGC1qmxE1dMEa2M",
+      "38b6FvIUU2BnkKoVkCUqM076cxi",
+      "38b8rMSNhzshKV5RtnKiEkDNkdo",
+      "38b8rWJvwfh1py3nzRd35wUEE1f",
+      "38b9Y5WdMUaXSK1tZvTUfT9R38r",
+      "38bDmrPc16KpooyVwiXC2lEnCxH",
+      "38bE9j5xPiV6LjjQo1ceOvpG7PD",
+      "38bEdz0YS0pUjYqjNMUCNonzUMZ",
+      "38bEhWZwN0e3ezagie4jqR6v6YF",
+      "38bEsK8V8uvII3yyzoii7fIs7rB",
+      "38bEyAmhurjoxrQPbCDIsKMo32f",
+      "38bFgTie49Am97lgzZOxdoSR3Ck",
+      "38bFlcsO49AGbbOuWKuQt8jUi3H",
+      "38bFtfHuCcUzmbOn3KFNRfO6BlK",
+      "38bFwfjE5y9i9Z8LW7IlU5gozsg",
+      "38bGbZd9Q4IaNgwnIqZCER0vTGo",
+      "38bGFEP37Fvo4PrqYvxs5e7ldHx",
+      "38bHc3KCsrQqXKBIKsgcRKhH6Dr",
+      "38bI2gtIaoxwKYAjGv5Tsn0Nf5z",
+      "38bI62sFsSvJqAgvoRYBSwGlau0",
+      "38bIWfxnVncgFPkMWBK1ZsIc7rg",
+      "38bJ4Z6ARFL1pWPXD3DOxWg7Zs5",
+      "38bJJ30NFYQQbjPLMMdwNcGH6Hb",
+      "38bJZW2bcVz9szza3GzcjnuOLEW",
+      "38bK5ytfsMRdodoTRHkAjf4u5Ai",
+      "38bKDNR6LWycp4xlz8CelKZRFLI",
+      "38bKgd2wW4UPGDKSbTAWvvMSH29",
+      "38bKGi4d2vOpcQaIizpz7WVdPp0",
+      "38bKK6q2hAQsVgYXy1JrffyqPnf",
+      "38bKLjviCf9hh3ohfC6l8wNsvp4",
+      "38bKlORzcUIDObs5SbNWhHgY2Qd",
+      "38bKomGM7uuc7EVuDLAP5tzzaMj",
+      "38bKpy5Wgkr6h6YYjaHkXXo0ZBv",
+      "38bKWjNpMZlDmxU5mARw8Lqfiqh",
+      "38bKy1PfhyazHJ1py55wFRPKyGj",
+      "38bLAov9XbYTee6ADk7H94okBq5",
+      "38bLIlSh7Y9Muu9qfof3ur30MPP",
+      "38bRVHgK8HpIY2cBjbRNzcnee5I"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "timeOfDay": "universal"
+    }
+  },
+  {
+    "loserId": "38b5SHUaqgMtV4PjQ1lD48BJaKZ",
+    "canonicalId": "38aw8dwx3cebOC9ExeWis0CnBM9",
+    "loserName": "shuddhadhanyAsi",
+    "canonicalName": "sudda dhanyaasi",
+    "compositionsMoved": [
+      "38b5SDHf0y92hCCEiBmuwVZtg3m",
+      "38b8eha5FRCGFQ1DRcOJEaTO0bA",
+      "38b8iH5J1XRx2SqXGhABU5KGYrc",
+      "38b8t0LLZlclZbWWU7S87Zme9CL",
+      "38b8XHM2rSYmc8Uxy74le9EZ24O",
+      "38b9IYFi93EiKM38Ks5w3tdOnlY",
+      "38bDKGoXKbAE09l2bri5ibXeeSF",
+      "38bExDQIb0rkuJMMnraiOMxiuAk",
+      "38bF4ZrnSVnix8ckEhtJ9h9ifq2",
+      "38bFhEhRLhO2nOix9wPoB78nBEu",
+      "38bFMdoyjHj77oKpEVut9iLgSdH",
+      "38bFSWWRS84fvWnCUfxiufW1ewW",
+      "38bGIJbUmYBnDW6tPwgD05aIOnA",
+      "38bK6sUDfJzpf3gK2GpB5UZoZNF",
+      "38bK9r8CTH81pu4pbKtlrNHMKtt",
+      "38bKGDkETjhZ5B1yMRSwDAr6hKo",
+      "38bKHOwgl4FarGwTaDoy8v1eGQa",
+      "38bRd9R4ipJnSugXD2PJoZfh6p5",
+      "38bRhBazNsUv0R2XFNdEQGHBj2Y",
+      "38bRiAkTEXz8th66Is4FYbr5Mrm",
+      "38bRnriS7SW82NvO52PoVqpt4fS",
+      "38bRnS4jLWtnPmTZGkq0sVU69tR",
+      "38bRNtWrye9jcRXlPXU8v5MMtwH",
+      "38bRrn2iItJAJ4RzHabpjQlzrZK",
+      "38bRsrW8LdyaHsip0G1YKBnpHD2"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "timeOfDay": "morning"
+    }
+  },
+  {
+    "loserId": "38bCKKRw3X5AjneEGXTDAKUZeoE",
+    "canonicalId": "3A73AmZsGx2p7nisCXmVJiQXxW8",
+    "loserName": "hamsavinOdini",
+    "canonicalName": "hamsavinOdhini",
+    "compositionsMoved": [
+      "38bCKREvpbb1g0ayJk0d9HUNEKh",
+      "38bJs9mSTkhtxpHGpa4raxd1E7Q",
+      "38bR5U8OvCqSiQWkvUTHKOJ4FOM",
+      "38bRvTPa0jQjKwuso5jUA6o8pjT"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38b6P1LGkcMLp6Nubny0qR0QgcW",
+    "canonicalId": "38avI9lImYfOZf6LXoJvHcHpBAr",
+    "loserName": "simhEndra madyamam",
+    "canonicalName": "simhEndra madhyamam",
+    "compositionsMoved": [
+      "38b6P6T12zLjAp1Ioxq2ZnTx0pG"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38bR4QdneTbnInsWPtgEBUzPn0W",
+    "canonicalId": "38axy8OV4ghjeCc08MmC378Wgzc",
+    "loserName": "rAgavardani",
+    "canonicalName": "raagavardhani",
+    "compositionsMoved": [
+      "38bR4XKF2LLj1NGMZFDAm8d7xbv"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [
+      "sAmantajingaLa"
+    ],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38axypG1pD8nKZT4WT3MSGFWoxo",
+    "canonicalId": "38bHsecvjYQstK5xA8p1lmr7EXR",
+    "loserName": "shoolini",
+    "canonicalName": "shUlini",
+    "compositionsMoved": [
+      "38axyjt5vcP7SlNBaU0xJu47gs6",
+      "38b6hDVHTh81KdT5CDwDeitRtop"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38av8rrMqVYSyttJl2NxOhBUbWv",
+    "canonicalId": "3A73AcAJXB8PRRpe0utp4Lc3WGe",
+    "loserName": "hamsadhvani",
+    "canonicalName": "hamsadwani",
+    "compositionsMoved": [
+      "38av8uQzEm1jIzXhZRdRdYYO7Y7",
+      "38avpR7eASQmfzWnH8Cd1VXjLub",
+      "38aw52K4U64bJB6VRB0YLxi3TbZ",
+      "38awGY94ADPnzVqVeK6YgOsUSVg",
+      "38awJtg3txKb1mq2cr3ezYyVkJI",
+      "38awJUwtRmtDTe14UooJsWBtEE3",
+      "38awOR1yTXSAzAzy3FUaYRDFxJE",
+      "38awPZyZNE9tIQ80RsrevWN4EjL",
+      "38awr5x3hLi7Zm0E8W19oB7Jd7i",
+      "38awTYNDZiC20dgkgCy0eVUxnm4",
+      "38awzBFEwsUpczP3H0O2Ni9SQBf",
+      "38axaMSTEXleJ1ljLOlhVMqzoqX",
+      "38axECpoiP3nGetIZi7AlxkSwGU",
+      "38axMKbUFjClHO1NWmc5eGEK9r8",
+      "38axQBxLCKZFZNWAUdEBjLyxHqJ",
+      "38axSmZgQy1f7WokYRI3SGXa3V3",
+      "38ay3YUQApeKw6lRfn9YdOXxSJm",
+      "38aywoTWl951f9ORUbi2jwmrAEw",
+      "38az7C8TZFMAfZWddSEeQhwf3nI",
+      "38b60nlkzPC0tnyeskvEGXHcZxf",
+      "38b60ntLFKvpSRzP9R7DAAKd50E",
+      "38b68n9GQcskypvC9WlPjhApAUL",
+      "38b7aij3DTJ655Q32e2lkiyi8fU",
+      "38b7F9AsqyTFFRw1tTb1tTLRh3R",
+      "38b7KvouCQrXfFPwlndb2euZtdp",
+      "38b8bRqn1a6HwDMwMcQd62CYlWx",
+      "38b8fjU02dhI5PvcvqSSWDxMdv4",
+      "38b8HnW34iVOTQuxY2gCrBdRLSN",
+      "38b8QmzcobFqnXtaeoN4jmkFcmm",
+      "38b8T2SV3TP8fdFBGEhIH6Wq3XQ",
+      "38b8TNv7AqQn2TvMyqM9zoM0VQR",
+      "38b98grHGDkR9xJwA259o1q3ydk",
+      "38b98zjbZtTo8jwQ8zQZEiG6pGS",
+      "38b9cvSOPMywQlrWk7qDRFRmIYY",
+      "38b9PED99Wt3LqkiAKyrEUUBC3T",
+      "38b9PO4JVwynnXerUKidp1FuJ1q",
+      "38bEhloJlifCfoJmbHYjaJ9ZgiO",
+      "38bF9Tfhlos99flLC7tH0IQGw5i",
+      "38bFDBZsebcENlMmTJhuf90dfgJ",
+      "38bFdCP8UIv1ONHTmyPjTuPHues",
+      "38bFdiCIQScvDoxolIOXqsCpkOD",
+      "38bFDpvzRNzYdcEU2HX3x448xXc",
+      "38bFFT0hCNgNA1s2KHnkCikawer",
+      "38bFn6l1t6MKSYn0V27n9ccxDIt",
+      "38bFpDh0KiHyjUkbwD2Ja9cs6mo",
+      "38bFwZurSETysUOAl5l2PFZUkkf",
+      "38bG8cJq1OGnjl4WKNvgTh3N9nM",
+      "38bGJbqdey4Fgm6cnmSDAbIBSVE",
+      "38bGOiqhMrxOG3APT0gEKzXVa21",
+      "38bGPRn5eJV8sZ8uyaHPdUZODGq",
+      "38bHnrAHan007NTgrRNIKEm3YyH",
+      "38bHRN5aNymNIyovsHL3Hl1a5UQ",
+      "38bHrYMqXpyZTKW46qm0mTmmbcL",
+      "38bIiEJ506I825MfmkXJt1SwoYm",
+      "38bIPXQYjPSvrTNlFAUtOmObrzF",
+      "38bJiFzVsulprWlrsrxHxVUiE4h",
+      "38bJx0U2IuKi1xMSnLzEfcpwcWQ",
+      "38bKQlyAbl17b57fKqn70i0KNNG",
+      "38bQuNz9h6fHr9aeobVik9Ee1SF",
+      "38bRFPMmmHYAdA94ydYilA32h0K",
+      "38bRgJ4awngR3uICqIk61Lgec4m",
+      "38bRH6AfBs1VNjT8tUuN3akWM01",
+      "38bRYSnz4c9Ye8EGacKUWPPtYpk"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38b9KSCbdUrmDSM4ny34w1tRqS8",
+    "canonicalId": "38awCZNZtRUIZDEP1TXTszWf2w9",
+    "loserName": "udayaravicandrikA",
+    "canonicalName": "udhaya ravi candrikaa",
+    "compositionsMoved": [
+      "38b9KP9Y8xeXPxcFahoh1N5RFfx",
+      "38bEsngjVoj4DrPqnZgzMi4VrsD",
+      "38bGQqpj8oIu0C9cb3zEZlFmY8L",
+      "38bH8sKHGvyCpuRVEWzSGyMP0sv",
+      "38bKyoY7Pm1yyWJBN9d44DpJ8VW",
+      "38bPWJ6n2WFF8Fdd8xlRFsfV8fS",
+      "38bRbyOkTvZ46VzDyqIHqTFjHgz"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "arohanam": "S G2 M1 P N2 S",
+      "avarohanam": "S N2 P M1 G2 S",
+      "alternateScales": [
+        "S G1 M1 P N1 S"
+      ]
+    }
+  },
+  {
+    "loserId": "38awl7obFncsf3YtyQ3bHGiIIMa",
+    "canonicalId": "38b9OR643C6og3QvLWxVzh1NYRd",
+    "loserName": "jana sammOdhini",
+    "canonicalName": "janasammOdini",
+    "compositionsMoved": [
+      "38awlBElumYCinl42NfdKCujuqv"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38avwNK3KqHmAHVobN0PH2VAtwL",
+    "canonicalId": "3A73DlAGhqtO7CzhDPaOdfgNRpO",
+    "loserName": "katanakutoohalam",
+    "canonicalName": "katanakutUhalam (kadanakutuhalam)",
+    "compositionsMoved": [
+      "38avwMumgSBMugYyndJNWQCaLmG",
+      "38ayvQKnUL2E1CzUJE40GpDaYDi",
+      "38azKMxumSRo4gYwF5e8DEJOUKK",
+      "38b7P2JM4caJbrOYMoslRBo2OqR",
+      "38b7PtZGLuUYX5GoWxMXjp6kqJT"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38awPalKVTndMfLhjV6oeOVA0YX",
+    "canonicalId": "38b8hb2qmpUeJMscs12PG3H0XL4",
+    "loserName": "neetimati",
+    "canonicalName": "nItimati",
+    "compositionsMoved": [
+      "38awPnBTJF9a4L2XtxvbpJY3uzZ"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [
+      "hamsanAda"
+    ],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38axBbJ898ltgRkw9kHdq80ggim",
+    "canonicalId": "38b9M4qM27IIKv0VODUBiTu6DyQ",
+    "loserName": "jayantashree",
+    "canonicalName": "jayantashrI",
+    "compositionsMoved": [
+      "38axBiw1q2E5MA0GDto06xkSCds"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38axtY331LoBPep1FU30jaOdlXp",
+    "canonicalId": "38bJHFxk9YTImxnXmFMT3LMDFnx",
+    "loserName": "taanaroopi",
+    "canonicalName": "tAnarUpi",
+    "compositionsMoved": [
+      "38axteGD8BTr0YFMSP1y5Bj68st"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38bJTYGL5Me3F3DFjozbRGqWSig",
+    "canonicalId": "38axyTyuHOO1QWhCZeradMDQy1w",
+    "loserName": "vAgadIshvari",
+    "canonicalName": "vaagadeeshwari",
+    "compositionsMoved": [
+      "38bJTn0FTw575D18blkDZbvdECc",
+      "38bRHIFZQYln8xBHOdVsqkIvAAx"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [
+      "bhAnumanjari",
+      "bhOgachAyAnATa",
+      "caayanaaTTai",
+      "maghati",
+      "mOhanAngi",
+      "muraLI",
+      "sharadabharaNa",
+      "vikhavati"
+    ],
+    "fillPatch": {
+      "melaNumber": 34
+    }
+  },
+  {
+    "loserId": "38b71dLsZ0P1yoVGKCDfinKVsHE",
+    "canonicalId": "38aw7xV8Wph4mkgGKE8nkSJCGxF",
+    "loserName": "shuddhabangALA",
+    "canonicalName": "sudda bangaaLa",
+    "compositionsMoved": [
+      "38b71ZrZEkDnIopdDRtbtiHXk98",
+      "38b9V31ZFthsF1PnEZcWDLIcZDH",
+      "38bFPbdrvNqoFoqjjsrGWHHdfM8"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "arohanam": "S R2 G2 M1 P D2 N2 S",
+      "avarohanam": "S N2 D2 P M1 G2 R2 S",
+      "description": "Shuddhabangala is a janya raga of the Kharaharapriya melakarta in Carnatic music.",
+      "tradition": "carnatic"
+    }
+  },
+  {
+    "loserId": "38b8KQD3slUFkz5iKiqG7cxuT8z",
+    "canonicalId": "3A73IHqnRKtGWMOEEoD1gjbW8a5",
+    "loserName": "neelamaNi",
+    "canonicalName": "nIlamaNi",
+    "compositionsMoved": [
+      "38b8KPRjPnCDA07nu0sylgClcZ8"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "3A73JR5JzefRKmT5CStzTqgFCfx",
+    "canonicalId": "38b8KWhxcnUHGjrCg87xE9H5aA6",
+    "loserName": "paTadIp (paTdIp)",
+    "canonicalName": "paTadeep",
+    "compositionsMoved": [],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "melaNumber": 22
+    }
+  },
+  {
+    "loserId": "38b7JnmIU7dV5mzax8PN3hgLqX1",
+    "canonicalId": "38awZUEleWtVKMNvUT7SUXEq0KC",
+    "loserName": "dhanAshrI",
+    "canonicalName": "dhanashree",
+    "compositionsMoved": [
+      "38b7Jpu6Ydi7tpmb4Jq7DqnFqum",
+      "38bGgU8EH2CW3fS1UzEGCuykZ5N",
+      "38bHGL0sHe3AtcOQnQ3fmiere7W",
+      "38bHpPCgU5Xpp9uOBm8L90MBhOS"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "arohanam": "N2 S G2 M1 P N2 S",
+      "avarohanam": "S N2 D1 P M1 G2 R1 S"
+    }
+  },
+  {
+    "loserId": "3A73Lmxr8qmXc0AgaJfEKgxSGVe",
+    "canonicalId": "38aw9zibpTBEmO0FinGP1DyprLi",
+    "loserName": "rIti gowLa",
+    "canonicalName": "reeti gowLa",
+    "compositionsMoved": [],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38bHXkZVKRPsKybqMCCFT0CPyzG",
+    "canonicalId": "38axzcjojxkyM0zkUjYAzLRuazm",
+    "loserName": "navanIta",
+    "canonicalName": "navaneetam",
+    "compositionsMoved": [
+      "38bHXqG998WryJwj7VqJvQQ4EDC",
+      "38bR6KQ3apXctnVKgpPA2e7pJxl"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38bE82irDpZEfiFGJGndnWrPgGx",
+    "canonicalId": "38aw2zLDqFlcfEzZrrr8Yi6GZcu",
+    "loserName": "IshamanOhari",
+    "canonicalName": "eesamanOhari",
+    "compositionsMoved": [
+      "38bE8GNWPLPdX9zFJbbQ7Ujfjwi",
+      "38bEMjKuWLBEcSxYSyGYYnPsaFZ",
+      "38bEsPw76mrX5mobcQgViL55Ynz",
+      "38bFEg4iG52H0vr9qRokAlZLANn"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38b5WxnPVCd3sivaVAR8Cm5UkLW",
+    "canonicalId": "38ayr1iONjQwIpN8maJAmUBrEgk",
+    "loserName": "sindhumandAri",
+    "canonicalName": "sindu mandaari",
+    "compositionsMoved": [
+      "38b5X9B2EthM4l6q8ecHVsH9nEO",
+      "38b8SRxKW7vwYqyulmgEyLIVqaB",
+      "38bHSPSyVbMShqvID31MYseWp50"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "description": "Sindhumandari is a janya raga of the Mayamalavagowla melakarta in Carnatic music."
+    }
+  },
+  {
+    "loserId": "38bR9xyOUV9NaXIajGtZ9CXT6nV",
+    "canonicalId": "38ay9APoDCStS0NgOpFXbUiKCOz",
+    "loserName": "dAtuvardhani",
+    "canonicalName": "dhaatuvardhani",
+    "compositionsMoved": [
+      "38bRA31yPsPyupfhFWpUfbDhn5r"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38bIfl0896S84r70WDYhg2VuOnL",
+    "canonicalId": "38awGtRm66pX7jHxPmWJHvHM1jH",
+    "loserName": "gAnamUrti",
+    "canonicalName": "gaanamoorti",
+    "compositionsMoved": [
+      "38bIfmCrLqSzqTaYFo8iojXwmZf",
+      "38bRFL4dVezw4wxOVQP1dZHKSQS"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [
+      "bhinnapancamam",
+      "nAdaranjani",
+      "pUrvavarALi",
+      "sAmavarALi"
+    ],
+    "fillPatch": {
+      "alternateScales": [
+        "S R1 M1 P D1 N3 S"
+      ],
+      "melaNumber": 3
+    }
+  },
+  {
+    "loserId": "38avP16sze6x8fAyHVA95ubiiuc",
+    "canonicalId": "38awBmamRwCjVOagU9yyou24lr4",
+    "loserName": "nIlAmbari",
+    "canonicalName": "neelaambari",
+    "compositionsMoved": [
+      "38avkOKm4lis1sklXHYiBbZbXqA",
+      "38avPB98U51LyyAcKpXhBLB9I5I",
+      "38aw0xvPTjcjulOFsFe3UeTjbrV",
+      "38b8gR2cV2az2cpuxeqJSCno0TU",
+      "38b8lDiaGj7HJV02Hz5XLfpI6iB",
+      "38b8qxOE4sUc5FhhBMYYc6vZBw4",
+      "38b9xL4AjcRxTxKvc779VvzHWEl",
+      "38bA5oZXj6lo53PiVEimvORCbyU",
+      "38bACjQfuQUyWbevPtOwrnjuuDO",
+      "38bCoCYCkT0LSLyDalL2tVrENUE",
+      "38bDLZPa1HsFuAgrZhxjJB4Wk0C",
+      "38bDR6E5W7iumdCEmh4qSuXBSas",
+      "38bDudhQ9fwxq2DG0tK0PKEboLS",
+      "38bE7UwN2x7vhT7mDnEOohBJMAN",
+      "38bEcIc2qshMXrpUGizc4ZekTdb",
+      "38bF3gNH2gp0wP8FyGyWPVcic61",
+      "38bF76ySDmQ5eYr1L5ggJWiV1yp",
+      "38bFV8Yf0nyzrcbPdf91BbUdPh2",
+      "38bFz2LlqNHy4Ilbish0PTNSTaC",
+      "38bGhj4VRcZumW1Qwl7pzooIdyP",
+      "38bGhREiLgODTscM2uvhM4YtqsV",
+      "38bGn71yG8S6rsZekCJeb55gq5D",
+      "38bGokxFbERZ61uuJ9iPAo3tbvL",
+      "38bGptaL1L0ErKOeYlZKzeimrCL",
+      "38bGQPYjAQWh4rkGTvU5mUfOEFm",
+      "38bGWoNCYLcsfdG5ExT3X0qHC2u",
+      "38bH0MbmaKyHa6ZSk83S7R458Jx",
+      "38bHBMsJZEdyigv5TrWz3xDlyFi",
+      "38bHDTPkHnxN1ijuL4QdC0FMXLm",
+      "38bHLP8wsjhDrXl5t0iEzyAn9jy",
+      "38bHrTFBrY6CX4yNEmtUEKhuG7Q",
+      "38bHZCyaGIP3vEZ008hmv2NlaRu",
+      "38bIch5zmRvFfI47nCzzKMIMs2A",
+      "38bIMCGYAG3ZQ2d7FAYzuyM8LqV",
+      "38bINgQBQdL1IfsdQJt39O4rgsG",
+      "38bJmtmWJjtomxxrCZ6TZxyOnAC",
+      "38bKCWEhTrqaAwEde2DVjSEDhwQ",
+      "38bKDHUa3RjiYRINfnhWEwec9EW",
+      "38bKMUSn3UwadACr2KkLZhoEjDb",
+      "38bKOic4tyODzthmKHrctrn5xnc",
+      "38bL62yRZMz6EsbGojZjVEQ0nrI",
+      "38bLO8V5YmZPUXx7KkJUQZWJd0n"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38b8sRwRmDz0KjlKlJSGOlWi3j6",
+    "canonicalId": "38aw79t9YItLoAbWMKKc9RWm2HR",
+    "loserName": "shuddhasAvEri",
+    "canonicalName": "sudda saavEri",
+    "compositionsMoved": [
+      "38b8sfjLfigat2SaqWCam9hQKph",
+      "38b8zZ3zPcVoFndKxyCy6EYw1oF",
+      "38b9JuOfUJWa8QbHqjQXn2N8nBm",
+      "38bE74VP8qTstlg6G9OGxIWmDEz",
+      "38bEHAxrabYLfWaoN8EHngA17u5",
+      "38bFjo5o3PhB1e1OdUyW3DJqaXV",
+      "38bFM8u0gRlLAjZqqvNmdjUgUO5",
+      "38bFtmYF4Beq64yvb06DCobvkQg",
+      "38bFUc4yyqhPK9DugsMWpPEZxEy",
+      "38bFvVwDsVsqL5gePg6K0fp6LOv",
+      "38bFwqOUY2NRMCXupXSZu3PzKts",
+      "38bFX1wlVeLxB3FYWooxgUxb7NA",
+      "38bG73UFAIpy1wcRFzIK1YGekEt",
+      "38bG8sy4b072lxI6smHJVpJk2Y0",
+      "38bGkakc2DIncnLJxVWr3yOjglI",
+      "38bGlUtTTwLpFKdeVLSWScay5Tm",
+      "38bGLZA5MD34MmwlpSbFVIdSkeg",
+      "38bH7tkHRN0jXUbGH3VxDmgAlGZ",
+      "38bH8Emri3M1VsgVUGyN2noOAJq",
+      "38bHQOJNrAk38HTFLObAQsYqQvz",
+      "38bJjJPSECDKR3HjpGIFNw08LqW",
+      "38bJJvqQTW3AFD0XHMgDU4IgYIH",
+      "38bJkEgqsmH518577NI3cpeomqU",
+      "38bJtz1PyYTXh2xKH7sNk87AL32",
+      "38bK4KJH6bFujZGLywliz7aIMUP",
+      "38bKB5aQc35V91aWPJQjMzlJdB1",
+      "38bKdb2dlRkgzbl3CG2SLmc5dAR",
+      "38bKIdYsr69YIk0pYiVfPXmP8rD",
+      "38bKnKk90ecgBGqiyWyhLDigd8r",
+      "38bKz2sgEv5DXD4b4VF3LBYu2My",
+      "38bL1rHZLWDsDXav9g9YZpDEqLR",
+      "38bL7qP2k7nU80NGADS8fkZBYWN",
+      "38bLA2YlGdYC0B09BV8dReT92sW",
+      "38bLEYTmtyo2Fj447uFJdB9A9rW",
+      "38bRh1DsNX8ayJ7I7O3rtQLc0J4"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "rasa": "vira, adbhuta"
+    }
+  },
+  {
+    "loserId": "3A73Fk1M1ycJizMZW8a8ckTib13",
+    "canonicalId": "38avn7NduMybRIsD42tugSaiowY",
+    "loserName": "madyamAvati",
+    "canonicalName": "madhyamAvati",
+    "compositionsMoved": [],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38ayrD5ENhMQY5CoFcKFkErdfoD",
+    "canonicalId": "38bEmVRdW4s1HAXQQgyvI9hxphh",
+    "loserName": "sindu raamakriyaa",
+    "canonicalName": "sindhurAmakriya",
+    "compositionsMoved": [
+      "38ayrJNaPr59roJwYVf4YHsTSda",
+      "38b5Z9dT6PhfDBjrZjKyYMU6va8",
+      "38b6yETHdldeAawiTXdwK0xOqon"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {}
+  },
+  {
+    "loserId": "38b7Bf6cHoebzngsOIMXfh3YQ4W",
+    "canonicalId": "38b9udehAt68pPAOFeXj9IrGjEf",
+    "loserName": "piloo",
+    "canonicalName": "pIlu",
+    "compositionsMoved": [
+      "38b7BeeBLxymKChGbWV3Ahpn5aG"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [],
+    "fillPatch": {
+      "arohanam": "N2 S G3 M1 P N2 D2 P S",
+      "avarohanam": "S N2 D2 P D2 P M1 G2 R2 S N2 S",
+      "parentRaga": {
+        "id": "38avMmk0wVmOsfNCaSkx6hnjI4f",
+        "name": "kharaharapriyA"
+      }
+    }
+  },
+  {
+    "loserId": "38b8q85UP7FDQIv5fPFJQAyqr4x",
+    "canonicalId": "38ax82Q77NIiS5Q5uXd91EHGCgT",
+    "loserName": "kIravANi",
+    "canonicalName": "keeravaaNi",
+    "compositionsMoved": [
+      "38b8qBIQaOhFzhNJTqdZV7gsOJD",
+      "38b93PAJUIMcl82NtSZ7XrkTHXR",
+      "38b99I0XJJ7tT0kg8ZSB72S1hRA",
+      "38bFojRECIxtvSgjp2B1uTWt7yQ",
+      "38bFyYDnfZRD0K12V2rsfdQe9dS",
+      "38bFZ9cjngInOFrMPY5CTaSOu2k",
+      "38bG7cpC87z7AWbONsxdJX1yTNf",
+      "38bGbJzqiNZnEmdZ5ngQgomUPjK",
+      "38bI4kw3XKNULmrKSLVSTl6fPu0",
+      "38bIhJd0zHdoMInK89komxzvZY4",
+      "38bITUzBW71T6x7xqdIHOvsY1kp",
+      "38bIy5fudinExFWLU26ic6MtfX6",
+      "38bJdBLRI1W2n7oW2plwVad5qR3",
+      "38bJkvVcW99pd7MjcImIjAtiZj3",
+      "38bJniMyLEzpZh4yYF8DmpPsBai",
+      "38bJoAefnGHELlZZ7nqNSrYLwXy",
+      "38bJQ76L6R435l8kT1pSYOzHInn",
+      "38bJsfZbeU4OlMY6IEdaQC2QXTk",
+      "38bKc6Vn8ZNp6zOtKwPpNYeljz9",
+      "38bKcczXrnDExCw3Rd2zXeYLCEH",
+      "38bKM9kP72O4826asdZB1cRbvit",
+      "38bKmmag0KVA3vuO9mGEI9kk4m8",
+      "38bKmu4FqTUNqRJ5GBtfB5O7TZp",
+      "38bLOLlmjDFqsqM32544iRjFdNC",
+      "38bR63n4kZxmVU3gPmDiytkz3rU",
+      "38bRfpOfemmQgmgVbtrcbGnVUyv",
+      "38bRhO85Grc0uPIPBPDph45KfAb",
+      "38bRKMLbn5nstTp0U8j3HQvu5QP",
+      "38bRqpt1k5d730Em6IBs4DbUSgu",
+      "38bS6ymOtu7nkrJSup2H8F7TKlm",
+      "38bSEVY62pRrcoXFOJzA8BTbLte",
+      "38bSRlSK5R8LWOhzpQysA965juW"
+    ],
+    "compositionsAlreadyOnCanonical": [],
+    "loserPerformances": 0,
+    "children": [
+      "AbhEriNi",
+      "aymmukhan",
+      "bhAnupriya",
+      "candrakauns",
+      "candrakowns",
+      "candrikA",
+      "gaganabhUpALam",
+      "hamsapancama",
+      "hamsavAhini",
+      "jayashrI",
+      "kadaram (candra, candrakowns)",
+      "kalyANavasanta",
+      "kusumAvali",
+      "mAdhavi",
+      "rishipriyA",
+      "sAmapriyA",
+      "shrOtasvini",
+      "vasantamanOhari"
+    ],
+    "fillPatch": {
+      "arohanam": "S R2 G2 M1 P D1 N3 S",
+      "avarohanam": "S N3 D1 P M1 G2 R2 S",
+      "melaNumber": 21
+    }
+  }
+]

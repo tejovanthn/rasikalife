@@ -279,6 +279,14 @@ export async function applyDuplicateRagaMerges(opts: {
   let skipped = 0;
   const totals = { moved: 0, alreadyThere: 0, performances: 0, children: 0, filled: 0 };
   const log: unknown[] = [];
+  // The record of what moved. A merge has no automatic undo; this is what one
+  // would be rebuilt from: clear deletedAt/mergedIntoId on the loser, re-point
+  // these junctions and children back, and blank the filled survivor fields.
+  // Written after every merge, not once at the end: a run that dies midway
+  // (ECONNRESET on 2026-10-09, 30 of 67 in) must still leave the record of
+  // the merges it did make.
+  const logFile = `${file}.${dryRun ? 'dry-run' : 'applied'}.json`;
+  const saveLog = () => writeFileSync(logFile, `${JSON.stringify(log, null, 2)}\n`, 'utf-8');
 
   for (const row of approved) {
     const canonicalId = (row[canonicalAt] ?? '').trim();
@@ -291,7 +299,17 @@ export async function applyDuplicateRagaMerges(opts: {
       continue;
     }
 
-    const preview = await Raga.previewRagaMerge(loserId, canonicalId);
+    // A read can fail on a dropped connection (each preview scans for janya
+    // children). Skip the pair rather than end the run; nothing has been
+    // written for it yet, and a rerun picks it up.
+    let preview: Awaited<ReturnType<typeof Raga.previewRagaMerge>>;
+    try {
+      preview = await Raga.previewRagaMerge(loserId, canonicalId);
+    } catch (error) {
+      console.error(`❌ could not read ${label}, skipped: ${(error as Error).message}`);
+      skipped++;
+      continue;
+    }
     if (!preview.loser || !preview.canonical) {
       console.log(`⚠️  skipped ${label}: a record is missing`);
       skipped++;
@@ -319,7 +337,7 @@ export async function applyDuplicateRagaMerges(opts: {
       filled.length ? `survivor gains: ${filled.join(', ')}` : '',
     ].filter(Boolean);
 
-    log.push({
+    const entry = {
       loserId,
       canonicalId,
       loserName: preview.loser.name,
@@ -329,15 +347,19 @@ export async function applyDuplicateRagaMerges(opts: {
       loserPerformances: preview.loserPerformances,
       children,
       fillPatch,
-    });
+    };
 
     if (dryRun) {
       console.log(`[dry-run] would merge ${label}: ${notes.join('; ')}`);
+      log.push(entry);
+      saveLog();
       merged++;
       continue;
     }
     try {
       await Raga.mergeRaga(loserId, canonicalId);
+      log.push(entry);
+      saveLog();
       console.log(`🔗 merged ${label}: ${notes.join('; ')}`);
       merged++;
     } catch (error) {
@@ -346,11 +368,7 @@ export async function applyDuplicateRagaMerges(opts: {
     }
   }
 
-  // The record of what moved. A merge has no automatic undo; this is what one
-  // would be rebuilt from: clear deletedAt/mergedIntoId on the loser, re-point
-  // these junctions and children back, and blank the filled survivor fields.
-  const logFile = `${file}.${dryRun ? 'dry-run' : 'applied'}.json`;
-  writeFileSync(logFile, `${JSON.stringify(log, null, 2)}\n`, 'utf-8');
+  saveLog();
 
   console.log(`\n${dryRun ? '[dry-run] ' : ''}🎉 ${merged} merged, ${skipped} skipped`);
   console.log(
