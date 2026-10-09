@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import { isGenericTitle } from '~/lib/generic-title';
+import { eventsIndexMeta } from '~/lib/listing-description';
 import { eventListItems } from '~/lib/structured-data';
 import { generateEventUrl } from '~/lib/url-slug';
 
@@ -69,33 +70,43 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const uniqueCities = [...new Set(result.items.map(e => e.venueCity).filter(Boolean))].sort();
 
-  return data({ groups: groupByDate(filtered), uniqueCities, city });
+  // Busiest cities first, for the meta description.
+  const cityCounts = new Map<string, number>();
+  for (const e of result.items) {
+    if (e.venueCity) cityCounts.set(e.venueCity, (cityCounts.get(e.venueCity) ?? 0) + 1);
+  }
+  const topCities = [...cityCounts]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([name]) => name);
+
+  return data({
+    groups: groupByDate(filtered),
+    uniqueCities,
+    city,
+    topCities,
+    count: filtered.length,
+  });
 };
 
-export const meta: MetaFunction = () => {
+export const meta: MetaFunction = ({ data: loaderData }) => {
+  const d = loaderData as { count?: number; topCities?: string[]; city?: string } | undefined;
+  const { title, description } = eventsIndexMeta({
+    count: d?.count ?? 0,
+    cities: d?.topCities ?? [],
+    city: d?.city || undefined,
+  });
   return [
-    { title: 'Upcoming Events - Indian Classical Arts - Rasika.life' },
-    {
-      name: 'description',
-      content:
-        'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
-    },
-    { property: 'og:title', content: 'Upcoming Events - Indian Classical Arts - Rasika.life' },
-    {
-      property: 'og:description',
-      content:
-        'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
-    },
+    { title },
+    { name: 'description', content: description },
+    { property: 'og:title', content: title },
+    { property: 'og:description', content: description },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://rasika.life/events' },
     { property: 'og:image', content: 'https://rasika.life/og-image.png' },
     { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: 'Upcoming Events - Indian Classical Arts - Rasika.life' },
-    {
-      name: 'twitter:description',
-      content:
-        'Discover upcoming Indian classical music and dance events, concerts, festivals, and performances.',
-    },
+    { name: 'twitter:title', content: title },
+    { name: 'twitter:description', content: description },
     { name: 'twitter:image', content: 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/events' },
   ];
@@ -120,7 +131,7 @@ export default function EventsIndex() {
         <div>
           <h1 className="page-title">Events</h1>
           <p className="text-xl text-muted-foreground">
-            Upcoming Indian classical arts events and performances
+            Upcoming Carnatic concerts and classical arts events
           </p>
         </div>
         {user && (

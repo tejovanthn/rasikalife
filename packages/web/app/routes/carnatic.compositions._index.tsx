@@ -63,11 +63,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Compositions - Indian Classical Music - Rasika.life' },
+    { title: 'Carnatic Compositions and Kriti Lyrics | Rasika.life' },
     {
       name: 'description',
       content:
-        'Explore traditional Indian classical music compositions. Discover Carnatic and Hindustani musical works with lyrics and musical analysis.',
+        'Browse Carnatic compositions, from kritis to varnams, with lyrics, composer, raga and tala.',
     },
     {
       name: 'keywords',

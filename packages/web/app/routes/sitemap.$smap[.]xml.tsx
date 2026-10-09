@@ -127,13 +127,20 @@ export const loader: LoaderFunction = async ({ params }) => {
     const entries = documents
       .map(doc => {
         if (doc.entityType !== entityType) return '';
+        // A page that says noindex must not be offered here (see isThinRaga).
+        if (doc.noindex) return '';
         const url = `${baseUrl}${urlGenerators[doc.entityType](doc.name, doc.id)}`;
         return buildUrlEntry(url, doc.indexedAt, 'monthly', entityPriorities[doc.entityType]);
       })
       .filter(Boolean)
       .join('\n');
 
-    if (!entries) throw new Response('Not Found', { status: 404 });
+    if (!entries) {
+      // The sitemap index still lists this letter; an empty set is honest,
+      // a 404 there reads as a broken sitemap.
+      if (documents.length > 0) return buildSitemapXml('');
+      throw new Response('Not Found', { status: 404 });
+    }
     return buildSitemapXml(entries);
   } catch (error) {
     if (error instanceof Response) throw error;

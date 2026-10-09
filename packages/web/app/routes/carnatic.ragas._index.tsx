@@ -74,11 +74,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Ragas - Indian Classical Music - Rasika.life' },
+    { title: 'All Carnatic Ragas: Melakarta and Janya Ragas | Rasika.life' },
     {
       name: 'description',
       content:
-        'Explore traditional Indian classical ragas. Discover the melodic foundations of Carnatic and Hindustani music traditions.',
+        'Browse all Carnatic ragas: the 72 melakarta ragas on one wheel, and their janya ragas. Each raga page gives its scale and compositions where known.',
     },
     {
       name: 'keywords',
@@ -103,12 +103,12 @@ export default function RagasIndex() {
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
       <header className="mb-8">
-        <h1 className="page-title">Ragas</h1>
+        <h1 className="page-title">Carnatic Ragas</h1>
         {searchQuery ? (
           <p className="text-xl text-muted-foreground">Search results for "{searchQuery}"</p>
         ) : (
           <p className="text-xl text-muted-foreground">
-            Explore traditional Indian classical ragas
+            The 72 melakarta ragas and their janya ragas
           </p>
         )}
       </header>

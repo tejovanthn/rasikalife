@@ -1,4 +1,5 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
+import { isThinRaga } from '@rasika/core/domain/raga/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
 import { formatSwaras, fromItrans } from '@rasika/core/utils/transliteration';
 import { type MetaFunction, data, redirect } from 'react-router';
@@ -16,7 +17,7 @@ import { getUser } from '~/lib/auth.server';
 import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ragaOgImageUrl } from '~/lib/og';
-import { ragaMetaDescription } from '~/lib/raga-description';
+import { ragaMetaDescription, ragaMetaTitle } from '~/lib/raga-description';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -98,6 +99,23 @@ export async function loader({
       })),
       performanceCount: repertoireStats.performanceCount,
       topCompositions: repertoireStats.topCompositions.slice(0, 5),
+      // Titles are stored as ITRANS. The page cards link by the raw title, so
+      // only the meta copies are converted for display.
+      metaTopCompositions: (repertoireStats?.topCompositions ?? [])
+        .slice(0, 2)
+        .map(c => ({ title: titleCaseName(fromItrans(c.title, script)) })),
+      metaCompositions: compositions.items
+        .slice(0, 2)
+        .map(c => ({ title: titleCaseName(fromItrans(c.title, script)) })),
+      // Decided from the record on every request; the sitemap applies the same rule.
+      noindex: isThinRaga({
+        arohanam: raga.arohanam,
+        avarohanam: raga.avarohanam,
+        alternateScales: raga.alternateScales,
+        description: raga.description,
+        performanceCount: repertoireStats?.performanceCount ?? raga.performanceCount,
+        compositionCount: compositions.items.length,
+      }),
       activeEdit,
       isLoggedIn: !!user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
@@ -118,18 +136,20 @@ export async function loader({
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const { raga, rawName, performanceCount, topCompositions } = data ?? {};
+  const { raga, rawName, performanceCount, metaTopCompositions, metaCompositions, noindex } =
+    data ?? {};
   if (!raga) return [{ title: 'Raga not found | Rasika.life' }];
 
   const canonicalName = rawName ?? raga.name;
-  const isJanya = !!raga.parentRaga;
-  const subtitle = isJanya
-    ? 'Janya Raga: Arohana, Avarohana'
-    : raga.melaNumber
-      ? `Melakarta ${raga.melaNumber}: Arohana, Avarohana`
-      : 'Raga: Arohana, Avarohana';
 
-  const title = `${raga.name} ${subtitle} | Carnatic Music – Rasika.life`;
+  const title = ragaMetaTitle({
+    name: raga.name,
+    arohanam: raga.arohanam,
+    avarohanam: raga.avarohanam,
+    melaNumber: raga.melaNumber,
+    parentRaga: raga.parentRaga,
+    hasCompositions: (metaCompositions?.length ?? 0) > 0,
+  });
 
   const description = ragaMetaDescription({
     name: raga.name,
@@ -138,7 +158,8 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     melaNumber: raga.melaNumber,
     parentRaga: raga.parentRaga,
     performanceCount,
-    topCompositions,
+    topCompositions: metaTopCompositions,
+    compositions: metaCompositions,
   });
 
   const canonicalUrl = `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`;
@@ -146,11 +167,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
     { title },
     { name: 'description', content: description },
+    // Thin pages stay reachable and pass link value; they just stay out of results.
+    ...(noindex ? [{ name: 'robots', content: 'noindex, follow' }] : []),
     { property: 'og:title', content: `${raga.name} Raga | Rasika.life` },
-    {
-      property: 'og:description',
-      content: `Arohanam, avarohanam and compositions in ${raga.name}.`,
-    },
+    { property: 'og:description', content: description },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: canonicalUrl },
     { property: 'og:image', content: ragaOgImageUrl(raga.id) },
@@ -159,10 +179,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: 'og:image:type', content: 'image/jpeg' },
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: `${raga.name} Raga` },
-    {
-      name: 'twitter:description',
-      content: `Arohanam, avarohanam and compositions in ${raga.name}.`,
-    },
+    { name: 'twitter:description', content: description },
     { name: 'twitter:image', content: ragaOgImageUrl(raga.id) },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];

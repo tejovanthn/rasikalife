@@ -20,3 +20,6 @@ export interface Raga {
   createdAt: string;
   updatedAt: string;
 }
+
+// Pure rule shared by the raga page and the sitemap.
+export { isThinRaga } from './thin';

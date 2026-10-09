@@ -17,22 +17,22 @@ type LoaderData = {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Carnatic Music - Rasika.life' },
+    { title: 'Carnatic Music: Ragas, Talas and Compositions | Rasika.life' },
     {
       name: 'description',
       content:
-        'Explore the rich tradition of Carnatic music. Discover compositions, ragas, talas, and the great artists who shaped this classical form.',
+        'A Carnatic music reference: ragas with arohanam and avarohanam, talas, and compositions with lyrics, composer, raga and tala.',
     },
     {
       name: 'keywords',
       content:
         'Carnatic music, South Indian classical music, ragas, talas, compositions, krithis, varnams',
     },
-    { property: 'og:title', content: 'Carnatic Music - Indian Classical Music Database' },
+    { property: 'og:title', content: 'Carnatic Music: Ragas, Talas and Compositions' },
     {
       property: 'og:description',
       content:
-        'Explore the rich tradition of Carnatic music with detailed information about compositions, ragas, talas, and artists.',
+        'A Carnatic music reference: ragas with arohanam and avarohanam, talas, and compositions with lyrics, composer, raga and tala.',
     },
     { property: 'og:type', content: 'website' },
     { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/carnatic' },

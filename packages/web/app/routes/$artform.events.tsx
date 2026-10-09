@@ -45,10 +45,18 @@ export const meta: MetaFunction<typeof loader> = ({ data: loaderData }) => {
   const artForm = loaderData?.artForm;
   const canonicalUrl = artForm ? `https://rasika.life/${artForm}/events` : undefined;
   return [
-    { title: `${label} Events - Rasika.life` },
+    {
+      title:
+        artForm === 'carnatic'
+          ? 'Carnatic Music Concerts | Rasika.life'
+          : `${label} Events | Rasika.life`,
+    },
     {
       name: 'description',
-      content: `Discover upcoming ${label} events, concerts, festivals, and performances.`,
+      content:
+        artForm === 'carnatic'
+          ? 'Upcoming Carnatic music concerts, with the date, venue and artists for each.'
+          : `Upcoming ${label} events, with the date, venue and artists for each.`,
     },
     ...(canonicalUrl ? [{ tagName: 'link', rel: 'canonical', href: canonicalUrl }] : []),
   ];

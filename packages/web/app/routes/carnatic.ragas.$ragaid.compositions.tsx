@@ -1,4 +1,5 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
+import { fromItrans } from '@rasika/core/utils/transliteration';
 import { type LoaderFunction, type MetaFunction, data } from 'react-router';
 import {
   Link,
@@ -15,17 +16,29 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
+import { titleCaseName } from '~/lib/utils';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const meta: MetaFunction = ({ data }) => {
-  const loaderData = data as { raga: { id: string; name: string } } | undefined;
-  if (!loaderData) return [{ title: 'Compositions - Rasika.life' }];
-  const { raga } = loaderData;
+  const loaderData = data as
+    | {
+        raga: { id: string; name: string };
+        displayName: string;
+        compositions: unknown[];
+        hasMore: boolean;
+        prevToken: string | null;
+      }
+    | undefined;
+  if (!loaderData) return [{ title: 'Compositions | Rasika.life' }];
+  const { raga, displayName, compositions, hasMore, prevToken } = loaderData;
   const canonicalUrl = `https://rasika.life${generateRagaUrl(raga.name, raga.id)}/compositions`;
+  // Name the count only when this page holds the whole list.
+  const count = !prevToken && !hasMore && compositions.length > 0 ? `${compositions.length} ` : '';
   return [
-    { title: `Compositions in ${raga.name} Raga - Rasika.life` },
+    { title: `${displayName} Raga Compositions | Rasika.life` },
     {
       name: 'description',
-      content: `Browse all Carnatic compositions performed in the ${raga.name} raga.`,
+      content: `${count}Carnatic compositions in ${displayName} raga, with composer and tala.`,
     },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
@@ -63,8 +76,12 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
+    const script = await scriptSessionResolver.getScript(request);
+
     return data({
       raga,
+      // The stored name is ITRANS ("kAmbhOji"). URLs keep using it; text shows this.
+      displayName: titleCaseName(fromItrans(raga.name, script)),
       compositions: result.items,
       hasMore: result.hasMore,
       nextToken: result.nextToken,
@@ -86,8 +103,9 @@ export default function RagaCompositions() {
   const location = useLocation();
   const { ragaid } = useParams();
 
-  const { raga, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
+  const { raga, displayName, compositions, hasMore, nextToken, prevToken } = useLoaderData<{
     raga: { id: string; name: string };
+    displayName: string;
     compositions: CompositionWithRelations[];
     hasMore: boolean;
     nextToken: string | null;
@@ -104,17 +122,17 @@ export default function RagaCompositions() {
           to={generateRagaUrl(raga.name, raga.id)}
           className="text-primary hover:underline mb-2 inline-block"
         >
-          ← Back to {raga.name}
+          ← Back to {displayName}
         </Link>
-        <h1 className="text-3xl font-bold">Compositions in {raga.name}</h1>
+        <h1 className="text-3xl font-bold">{displayName} Raga Compositions</h1>
         <p className="text-muted-foreground mt-2">
-          All compositions performed in the {raga.name} raga
+          All compositions performed in the {displayName} raga
         </p>
       </div>
       {!compositions.length ? (
         <EmptyState
           message="No compositions found"
-          description={`There are no compositions in the ${raga.name} raga in our database yet.`}
+          description={`There are no compositions in the ${displayName} raga in our database yet.`}
         />
       ) : (
         <>
@@ -137,7 +155,7 @@ export default function RagaCompositions() {
           { name: 'Home', item: 'https://rasika.life' },
           { name: 'Carnatic', item: 'https://rasika.life/carnatic' },
           { name: 'Ragas', item: 'https://rasika.life/carnatic/ragas' },
-          { name: raga.name, item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}` },
+          { name: displayName, item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}` },
           {
             name: 'Compositions',
             item: `https://rasika.life${generateRagaUrl(raga.name, raga.id)}/compositions`,

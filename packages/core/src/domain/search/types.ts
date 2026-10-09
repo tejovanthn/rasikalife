@@ -19,6 +19,11 @@ export interface SearchDocument {
   description: string;
   displayName: string;
   indexedAt: string;
+  /**
+   * The page carries `noindex`, so the sitemap must leave it out. Set only
+   * for ragas today (see `isThinRaga`); absent means indexable.
+   */
+  noindex?: boolean;
 }
 
 export interface SearchIndex {

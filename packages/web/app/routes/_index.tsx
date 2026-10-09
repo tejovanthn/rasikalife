@@ -29,30 +29,30 @@ type LoaderData = {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'Rasika.life - Indian Classical Music & Performances' },
+    { title: 'Indian Classical Music and Dance Events | Rasika.life' },
     {
       name: 'description',
       content:
-        'Discover upcoming Indian classical music concerts and performances. Explore compositions, ragas, artists, and their rich musical heritage.',
+        'Find upcoming Indian classical music and dance events, from Carnatic and Hindustani concerts to Bharatanatyam. Look up ragas, lyrics and artists.',
     },
     {
       name: 'keywords',
       content:
         'Indian classical music, Carnatic concerts, Hindustani performances, ragas, artists, classical events',
     },
-    { property: 'og:title', content: 'Rasika.life - Indian Classical Music & Performances' },
+    { property: 'og:title', content: 'Rasika.life: Indian Classical Music and Dance Events' },
     {
       property: 'og:description',
-      content: 'Find upcoming Indian classical music concerts, artists, and compositions.',
+      content: 'Upcoming Indian classical music and dance events, ragas, lyrics and artists.',
     },
     { property: 'og:type', content: 'website' },
     { property: 'og:url', content: 'https://rasika.life' },
     { property: 'og:image', content: 'https://rasika.life/og-image.png' },
     { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: 'Rasika.life - Indian Classical Music & Performances' },
+    { name: 'twitter:title', content: 'Rasika.life: Indian Classical Music and Dance Events' },
     {
       name: 'twitter:description',
-      content: 'Find upcoming Indian classical music concerts, artists, and compositions.',
+      content: 'Upcoming Indian classical music and dance events, ragas, lyrics and artists.',
     },
     { name: 'twitter:image', content: 'https://rasika.life/og-image.png' },
     { tagName: 'link', rel: 'canonical', href: 'https://rasika.life' },

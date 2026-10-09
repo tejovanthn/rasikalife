@@ -116,6 +116,8 @@ The core package uses a domain-driven design with:
 - `structured-data.ts` — every JSON-LD payload the site emits, as plain functions. See the section below.
 - `event-contact.ts` — `resolveEventContact(eventContact, organiserContact)` decides whose contact details an event page shows. 515 of 739 events store no `contactInfo` at all, so the section simply did not render; the organiser record usually knows, having been seeded on approval. The fallback is **whole-block, not per-field** — a phone off this poster beside a website off the organiser's record is one list the reader cannot take apart, and they are entitled to know whether a number is "ring this about this concert" or "this is the sabha's office line". It returns a `source`, and the page says so. Nothing is copied onto the event record: the organiser is the canonical home, and a copy taken at approval goes stale the moment they change a number. The loader only fetches the organiser when the event states nothing, since otherwise the result is discarded.
 - `listing-description.ts` — `eventListingDescription({name, events, preposition, fallback, location})` builds the meta description for a page that is really a listing (a venue, an organiser). It names the count and the next event rather than restating what kind of page it is: "Events and performances at X. Indian classical arts venue." took 196 impressions at position 9.8 for "chowdiah memorial hall events" and no clicks at all. Falls back to past events before the generic line, because a hall with only past concerts is still the right answer for that query.
+- `listing-description.ts` also has `eventsIndexMeta({count, cities, city})` for `/events`: "Carnatic Concerts and Classical Music Events" plus the upcoming count and the three busiest cities. The old title, "Upcoming Events - Indian Classical Arts", held none of the searched words ("carnatic music" 22,200/month, "classical music concerts near me" 1,300) and the page sat at position 20. A `?city=` filter changes the title; the canonical stays `/events`.
+- `raga-description.ts` — `ragaMetaDescription` and `ragaMetaTitle`. The title leads with "<Name> Raga", the form these pages are found by ("bindumalini raga", "rasika ranjani ragam"), then names only what the page shows: "Arohanam, Avarohanam" when the scale is stored, "Compositions" when any are listed, and the melakarta number for a melakarta only. It must fit 60 characters, so detail and the brand are dropped first, never the name. The description drops whole trailing sentences past 155 characters, and when no performance is logged it names two listed compositions. Composition titles reach it converted with `fromItrans`; the page cards still use the raw title for their links.
 - `artist-display.ts` — `artistMetaDescription(artist)` builds an artist's description from instrument, city, lineage and upcoming concerts. It replaced one sentence shared by all 1,111 artists that called every one of them "renowned" — the inflation `GURU_RELATIONSHIPS` exists to prevent, applied site-wide. The lineage clause counts only `primary`, `advanced` and unclassified gurus; a workshop teacher must never be rendered as "disciple of". `artistMetaTitle(artist)` is the matching `<title>`: name plus instrument ("Savita Vasu – Vocal | Concerts & Repertoire – Rasika.life"), because "X - Artist" ranked #2 for the name and still took only 6% of clicks — the instrument is what tells a searcher it is the right person.
 - `utils.ts` — `titleCaseName(name)` capitalizes every word of an **entity name** for display. Stored names are lowercase ITRANS, so a raga arrives as `darbari kanada` once transliterated and `capitalize` alone leaves the second word bare. Names only; never run it over lyrics or prose.
 - `analytics.ts` — `AnalyticsEvent` and `trackEvent(name, params)`. Every GA4 event name lives in that constant rather than as a string literal at the call site. Adding one means adding it there, wiring the call, and then **marking it a key event in the GA4 console** — the SDK cannot do that, and an unmarked event is collected but not counted as a conversion. Event *parameters* likewise need registering as custom dimensions before they can be reported on; the property has none today.
@@ -203,6 +205,22 @@ none.
 A janya raga carries its **parent's** mela number. Reporting `raga.melaNumber` bare said
 "Melakarta 20" on a page whose own title read "Janya Raga" — two claims in one search result, the
 wrong one being what an arohanam search is there to check. Branch on `parentRaga` first.
+
+### Thin raga pages: `noindex`, decided from the record
+
+`isThinRaga` (`@rasika/core/domain/raga/client`, pure) marks a raga page thin when it has no
+scale (arohanam, avarohanam or an alternate scale), no description, no composition and no logged
+performance. The raga page emits `robots: noindex, follow` for it at request time, and the search
+indexer sets `SearchDocument.noindex`, which the sitemap skips, so the two cannot disagree for
+longer than one reindex. A page leaves the rule the moment any of those fields is filled.
+
+The rule came from Search Console (90 days to 2026-10-09), not from a guess. "No scale and no
+composition" caught 60 of 1,526 pages, but 17 of them carry a description and those are the
+ones that rank (Mishra Yaman: 400 impressions, 15 clicks). With the description excluded, 43
+pages remain, and together they took 48 impressions and 1 click. A parent raga alone does not
+save a page: it is one line the parent's own page already shows. `transformRagaToDocument`
+only marks `noindex` when given a composition count, so a caller without the whole corpus
+cannot drop a page from the sitemap by accident.
 
 ### Colour tokens and contrast
 

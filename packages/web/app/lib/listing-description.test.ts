@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventListingDescription } from './listing-description';
+import { eventListingDescription, eventsIndexMeta } from './listing-description';
 
 const NOW = new Date('2026-08-04T00:00:00Z');
 
@@ -98,5 +98,39 @@ describe('eventListingDescription', () => {
       events: [{ title: 'Starting now', startDateTime: NOW.toISOString() }],
     });
     expect(result).toContain('1 upcoming event');
+  });
+});
+
+describe('eventsIndexMeta', () => {
+  it('names the count and up to three cities', () => {
+    const { title, description } = eventsIndexMeta({
+      count: 42,
+      cities: ['Bengaluru', 'Chennai', 'Mysuru', 'Hyderabad'],
+    });
+    expect(title).toBe('Carnatic Concerts and Classical Music Events | Rasika.life');
+    expect(description).toContain('42 upcoming Carnatic concerts');
+    expect(description).toContain('in Bengaluru, Chennai and Mysuru.');
+    expect(description).not.toContain('Hyderabad');
+  });
+
+  it('does not print a count of one as a plural', () => {
+    const { description } = eventsIndexMeta({ count: 1, cities: ['Bengaluru'] });
+    expect(description).not.toContain('1 upcoming');
+    expect(description).toContain('in Bengaluru.');
+  });
+
+  it('names the city when the listing is filtered', () => {
+    const { title, description } = eventsIndexMeta({ count: 5, cities: [], city: 'Chennai' });
+    expect(title).toBe('Carnatic Concerts in Chennai | Rasika.life');
+    expect(description).toContain('5 upcoming events in Chennai');
+  });
+
+  it('keeps title and description within search-result limits', () => {
+    const { title, description } = eventsIndexMeta({
+      count: 100,
+      cities: ['Thiruvananthapuram', 'Visakhapatnam', 'Bengaluru'],
+    });
+    expect(title.length).toBeLessThanOrEqual(60);
+    expect(description.length).toBeLessThanOrEqual(156);
   });
 });

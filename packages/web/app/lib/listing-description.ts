@@ -86,3 +86,49 @@ export function eventListingDescription({
 
   return clamp(`Events and performances ${preposition} ${where}. ${fallback}`);
 }
+
+/** Join names as "A", "A and B", or "A, B and C". */
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
+/**
+ * Title and description for `/events`, the upcoming-events listing.
+ *
+ * The old title, "Upcoming Events - Indian Classical Arts", held none of the
+ * words people search with. Keyword Planner (IN + US) shows "carnatic music"
+ * at 22,200 a month and "classical music concerts near me" at 1,300, and the
+ * page sat at position 20 for 825 impressions. So the title says "Carnatic
+ * concerts", and the description names the count and the cities that are
+ * actually listed, which also makes it change as the listing changes.
+ */
+export function eventsIndexMeta({
+  count,
+  cities,
+  city,
+}: {
+  /** Upcoming events on the page, after any city filter. */
+  count: number;
+  /** Cities with the most upcoming events, busiest first. */
+  cities: string[];
+  /** The `?city=` filter, when set. */
+  city?: string;
+}): { title: string; description: string } {
+  if (city) {
+    const title = `Carnatic Concerts in ${city} | Rasika.life`;
+    const lead =
+      count > 0
+        ? `${plural(count, 'upcoming event')} in ${city}: Carnatic concerts and other classical arts.`
+        : `Carnatic concerts and classical arts events in ${city}.`;
+    return { title, description: clamp(`${lead} See the date, venue and artists for each.`) };
+  }
+
+  const title = 'Carnatic Concerts and Classical Music Events | Rasika.life';
+  const where = cities.length > 0 ? ` in ${joinNames(cities.slice(0, 3))}` : '';
+  const lead =
+    count > 1
+      ? `${count} upcoming Carnatic concerts and classical music and dance events${where}.`
+      : `Upcoming Carnatic concerts and classical music and dance events${where}.`;
+  return { title, description: clamp(`${lead} See the date, venue and artists for each.`) };
+}

@@ -6,6 +6,7 @@ import type { Event } from '../event';
 import type { Festival } from '../festival';
 import type { Organiser } from '../organiser';
 import type { Raga } from '../raga';
+import { isThinRaga } from '../raga/thin';
 import type { Tala } from '../tala';
 import type { Venue } from '../venue';
 import type { EntityType, SearchDocument } from './types';
@@ -30,8 +31,17 @@ export function transformArtistToDocument(artist: Artist): SearchDocument {
   return createDocument(artist.id, 'artist', artist.name, (artist.alternateNames || []).join(' '));
 }
 
-export function transformRagaToDocument(raga: Raga): SearchDocument {
-  return createDocument(raga.id, 'raga', raga.name, '');
+/**
+ * `compositionCount` is known only when the whole corpus is being indexed.
+ * Without it the raga is never marked `noindex`, so a partial update cannot
+ * drop a page from the sitemap by mistake.
+ */
+export function transformRagaToDocument(raga: Raga, compositionCount?: number): SearchDocument {
+  const doc = createDocument(raga.id, 'raga', raga.name, '');
+  if (compositionCount !== undefined && isThinRaga({ ...raga, compositionCount })) {
+    doc.noindex = true;
+  }
+  return doc;
 }
 
 export function transformTalaToDocument(tala: Tala): SearchDocument {
@@ -96,9 +106,16 @@ export function transformToSearchDocuments(
   events: Event[],
   festivals: Festival[]
 ): SearchDocument[] {
+  const compositionsPerRaga = new Map<string, number>();
+  for (const composition of compositions) {
+    for (const r of composition.ragas || []) {
+      compositionsPerRaga.set(r.id, (compositionsPerRaga.get(r.id) ?? 0) + 1);
+    }
+  }
+
   return [
     ...artists.map(transformArtistToDocument),
-    ...ragas.map(transformRagaToDocument),
+    ...ragas.map(r => transformRagaToDocument(r, compositionsPerRaga.get(r.id) ?? 0)),
     ...talas.map(transformTalaToDocument),
     ...compositions.map(transformCompositionToDocument),
     ...venues.map(transformVenueToDocument),

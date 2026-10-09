@@ -32,6 +32,40 @@ describe('transformRagaToDocument', () => {
   });
 });
 
+describe('transformRagaToDocument noindex', () => {
+  it('never marks noindex when the composition count is unknown', () => {
+    const doc = transformRagaToDocument({ id: 'r', name: 'Bare' } as Raga);
+    expect(doc.noindex).toBeUndefined();
+  });
+
+  it('marks a bare raga with no compositions noindex', () => {
+    const doc = transformRagaToDocument({ id: 'r', name: 'Bare' } as Raga, 0);
+    expect(doc.noindex).toBe(true);
+  });
+
+  it('leaves a raga with a scale or a composition indexable', () => {
+    const withScale = { id: 'r', name: 'Mohanam', arohanam: 'S R2 G3 P D2 S' } as Raga;
+    expect(transformRagaToDocument(withScale, 0).noindex).toBeUndefined();
+    expect(transformRagaToDocument({ id: 'r', name: 'Bare' } as Raga, 1).noindex).toBeUndefined();
+  });
+
+  it('counts compositions per raga across the corpus', () => {
+    const docs = transformToSearchDocuments(
+      [],
+      [{ id: 'sung', name: 'Sung' } as Raga, { id: 'bare', name: 'Bare' } as Raga],
+      [],
+      [{ id: 'c1', title: 'Kriti', ragas: [{ id: 'sung', name: 'Sung' }] } as never],
+      [],
+      [],
+      [],
+      []
+    );
+    const byId = Object.fromEntries(docs.map(d => [d.id, d]));
+    expect(byId.sung.noindex).toBeUndefined();
+    expect(byId.bare.noindex).toBe(true);
+  });
+});
+
 describe('transformTalaToDocument', () => {
   it('transforms a tala into a search document with an empty description', () => {
     const tala = { id: 'tala-1', name: 'Adi' } as Tala;
