@@ -5,9 +5,15 @@ import {
   deleteRaga,
   getRaga,
   getRagaByName,
+  mergeRaga,
   updateRaga,
 } from './index';
 import type { CreateRagaInput, UpdateRagaInput } from './index';
+
+vi.mock('../cascade', () => ({
+  cascadeRagaMerge: vi.fn(),
+  cascadeRagaNameUpdate: vi.fn(),
+}));
 
 vi.mock('../../utils', () => ({
   generateId: vi.fn(() => 'test-raga-id'),
@@ -24,6 +30,7 @@ vi.mock('./entity', async importOriginal => {
       scan: vi.fn(),
       query: {
         byName: vi.fn(),
+        list: vi.fn(),
       },
       update: vi.fn(),
       delete: vi.fn(),
@@ -209,6 +216,61 @@ describe('Raga', () => {
       expect(command.Key).toEqual({ pk: 'raga#raga-123', sk: '#metadata' });
 
       sendSpy.mockRestore();
+    });
+  });
+
+  describe('mergeRaga', () => {
+    it('fills survivor blanks from the loser, re-parents janyas, then soft-deletes', async () => {
+      const { RagaEntity } = await import('./entity');
+      const records: Record<string, unknown> = {
+        keep: { id: 'keep', name: 'keeravaaNi', arohanam: 'S R2 G2 M1 P D1 N3 S' },
+        lose: {
+          id: 'lose',
+          name: 'kIravANi',
+          arohanam: 'other',
+          avarohanam: 'S N3 D1 P M1 G2 R2 S',
+          melaNumber: 21,
+        },
+      };
+      vi.mocked(RagaEntity.get).mockImplementation(
+        (key: { id: string }) =>
+          ({ go: vi.fn().mockResolvedValue({ data: records[key.id] }) }) as never
+      );
+      vi.mocked(RagaEntity.query.list).mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          go: vi.fn().mockResolvedValue({
+            data: [
+              { id: 'child', name: 'hamsapancama', parentRaga: { id: 'lose', name: 'kIravANi' } },
+              { id: 'other', name: 'todi' },
+            ],
+            cursor: null,
+          }),
+        }),
+      } as never);
+      const sets: Array<{ id: string; values: unknown }> = [];
+      vi.mocked(RagaEntity.update).mockImplementation(
+        (key: { id: string }) =>
+          ({
+            set: (values: unknown) => {
+              sets.push({ id: key.id, values });
+              return { go: vi.fn().mockResolvedValue({ data: {} }) };
+            },
+          }) as never
+      );
+
+      await mergeRaga('lose', 'keep');
+
+      expect(sets[0]).toEqual({
+        id: 'keep',
+        values: { avarohanam: 'S N3 D1 P M1 G2 R2 S', melaNumber: 21 },
+      });
+      expect(sets[1]).toEqual({
+        id: 'child',
+        values: { parentRaga: { id: 'keep', name: 'keeravaaNi' } },
+      });
+      expect(sets[2].id).toBe('lose');
+      expect(sets[2].values).toMatchObject({ mergedIntoId: 'keep' });
+      expect(sets).toHaveLength(3);
     });
   });
 });

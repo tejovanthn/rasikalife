@@ -109,6 +109,7 @@ export async function loader({
         .map(c => ({ title: titleCaseName(fromItrans(c.title, script)) })),
       // Decided from the record on every request; the sitemap applies the same rule.
       noindex: isThinRaga({
+        id: raga.id,
         arohanam: raga.arohanam,
         avarohanam: raga.avarohanam,
         alternateScales: raga.alternateScales,

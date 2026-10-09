@@ -5,6 +5,7 @@ import { keyOfEntity } from '../../db/keys';
 import { generateId } from '../../utils';
 import { cascadeRagaMerge, cascadeRagaNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
+import { mergeFillPatch } from './dedup';
 import { RagaEntity } from './entity';
 import type { Raga } from './entity';
 import type { CreateRagaSchema, UpdateRagaSchema } from './schema';
@@ -99,6 +100,21 @@ export async function getRagasByMelaNumber(
   return (result.data || []).filter(r => !r.deletedAt && r.id !== excludeId) as Raga[];
 }
 
+/**
+ * Live ragas whose parent is `parentId`. There is no index on the parent, so
+ * this pages through every raga; it runs only on a merge, about 1,500 rows.
+ */
+export async function listJanyaOf(parentId: string): Promise<Raga[]> {
+  const children: Raga[] = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await listRagas({ limit: 500, nextToken });
+    children.push(...page.items.filter(r => r.parentRaga?.id === parentId));
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return children;
+}
+
 export async function mergeRaga(loserId: string, canonicalId: string): Promise<void> {
   const canonical = await getRaga(canonicalId);
   if (!canonical) throw notFoundError('raga', canonicalId);
@@ -106,9 +122,88 @@ export async function mergeRaga(loserId: string, canonicalId: string): Promise<v
   if (!loser.data) throw notFoundError('raga', loserId);
 
   await cascadeRagaMerge(loserId, canonicalId, canonical.name);
+
+  // The survivor can be the barer record; keep the loser's facts visible.
+  const patch = mergeFillPatch(canonical, loser.data);
+  if (Object.keys(patch).length > 0) {
+    await RagaEntity.update({ id: canonicalId })
+      .set(patch as never)
+      .go();
+  }
+
+  // Janya ragas name their parent by id; point them at the survivor.
+  for (const child of await listJanyaOf(loserId)) {
+    await RagaEntity.update({ id: child.id })
+      .set({ parentRaga: { id: canonicalId, name: canonical.name } })
+      .go();
+  }
+
   await RagaEntity.update({ id: loserId })
     .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
     .go();
+}
+
+/** Composition ids linked to a raga through the junction, every page. */
+export async function listRagaCompositionIds(id: string): Promise<string[]> {
+  const { CompositionRagaEntity } = await import('../composition_raga/entity');
+  const ids: string[] = [];
+  let cursor: string | null = null;
+  do {
+    const result = (await CompositionRagaEntity.query
+      .byRaga({ ragaId: id })
+      .go({ cursor, attributes: ['compositionId'] as never[] })) as {
+      data: Array<{ compositionId: string }>;
+      cursor: string | null;
+    };
+    ids.push(...(result.data ?? []).map(r => r.compositionId));
+    cursor = result.cursor;
+  } while (cursor);
+  return ids;
+}
+
+/** Concert-log performances logged against a raga. */
+export async function countRagaPerformances(id: string): Promise<number> {
+  const { listPerformancesByRaga } = await import('../concert-log-item');
+  let count = 0;
+  let nextToken: string | undefined;
+  do {
+    const page = await listPerformancesByRaga(id, { limit: 100, nextToken });
+    count += page.items.length;
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return count;
+}
+
+/**
+ * Everything `mergeRaga(loserId, canonicalId)` would touch, read without
+ * writing. The dedup CLI prints this for `--dry-run` and saves it beside a real
+ * run, which is the only record from which a merge could be undone by hand.
+ */
+export async function previewRagaMerge(loserId: string, canonicalId: string) {
+  const [loser, canonical, loserCompositions, canonicalCompositions, loserPerformances] =
+    await Promise.all([
+      RagaEntity.get({ id: loserId }).go(),
+      RagaEntity.get({ id: canonicalId }).go(),
+      listRagaCompositionIds(loserId),
+      listRagaCompositionIds(canonicalId),
+      countRagaPerformances(loserId),
+    ]);
+  const onCanonical = new Set(canonicalCompositions);
+  const children = await listJanyaOf(loserId);
+  return {
+    loser: loser.data ?? null,
+    canonical: canonical.data ?? null,
+    /** Blank survivor fields filled from the loser. */
+    fillPatch: loser.data && canonical.data ? mergeFillPatch(canonical.data, loser.data) : {},
+    /** Janya ragas re-pointed from the loser to the survivor. */
+    children: children.map(c => c.name),
+    /** Junctions re-pointed from the loser to the canonical raga. */
+    compositionsMoved: loserCompositions.filter(c => !onCanonical.has(c)),
+    /** Compositions already linked to both; the loser junction is only deleted. */
+    compositionsAlreadyOnCanonical: loserCompositions.filter(c => onCanonical.has(c)),
+    /** `mergeRaga` does not move these; they keep pointing at the loser. */
+    loserPerformances,
+  };
 }
 
 export async function getRagaMergeScore(id: string): Promise<number> {

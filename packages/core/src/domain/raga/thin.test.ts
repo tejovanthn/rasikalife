@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isThinRaga } from './thin';
+import { KEEP_INDEXED_RAGA_IDS, isThinRaga } from './thin';
 
 describe('isThinRaga', () => {
   it('is thin when the record holds nothing but a name', () => {
@@ -29,5 +29,15 @@ describe('isThinRaga', () => {
   it('is not thin with a composition or a logged performance', () => {
     expect(isThinRaga({ compositionCount: 1 })).toBe(false);
     expect(isThinRaga({ performanceCount: 2, compositionCount: 0 })).toBe(false);
+  });
+
+  it('never marks an allowlisted raga thin, however bare', () => {
+    // rajalahari: no scale, no description, no composition, but 5 impressions.
+    expect(isThinRaga({ id: '3A73KrTU0EgXIV0W20AGmQSDsZw', compositionCount: 0 })).toBe(false);
+    expect(isThinRaga({ id: 'some-other-bare-raga', compositionCount: 0 })).toBe(true);
+  });
+
+  it('allowlists exactly the 20 thin pages that earned impressions', () => {
+    expect(KEEP_INDEXED_RAGA_IDS.size).toBe(20);
   });
 });

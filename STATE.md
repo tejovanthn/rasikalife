@@ -2,6 +2,13 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
+## Waiting: raga dedupe approval (2026-10-09)
+
+**Next step:** owner reviews `docs/research/raga-dedupe-2026-10.csv` (67 suggested merges, 6 to
+review, 2 skips; summary in `docs/research/raga-dedupe-2026-10.md`), writes `merge` in `decision`
+for approved rows, then run the commands in that doc: dry run, apply, reindex,
+`generate-melakarta-links`, commit the regenerated map, deploy. Nothing has been merged yet.
+
 ## Active: respelling composition lyrics, titles and languages (2026-10-06)
 
 Pipeline built (CLAUDE.md § "Respelling lyrics"). Packets and results are in `data/lyrics/` (gitignored; 172 batches × 50; regenerate with `lyrics-batches --out-dir <dir> --size 50` — the

@@ -49,6 +49,11 @@ describe('transformRagaToDocument noindex', () => {
     expect(transformRagaToDocument({ id: 'r', name: 'Bare' } as Raga, 1).noindex).toBeUndefined();
   });
 
+  it('keeps an allowlisted raga in the sitemap', () => {
+    const raga = { id: '3A73KrTU0EgXIV0W20AGmQSDsZw', name: 'Rajalahari' } as Raga;
+    expect(transformRagaToDocument(raga, 0).noindex).toBeUndefined();
+  });
+
   it('counts compositions per raga across the corpus', () => {
     const docs = transformToSearchDocuments(
       [],

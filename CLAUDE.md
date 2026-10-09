@@ -217,7 +217,11 @@ longer than one reindex. A page leaves the rule the moment any of those fields i
 The rule came from Search Console (90 days to 2026-10-09), not from a guess. "No scale and no
 composition" caught 60 of 1,526 pages, but 17 of them carry a description and those are the
 ones that rank (Mishra Yaman: 400 impressions, 15 clicks). With the description excluded, 43
-pages remain, and together they took 48 impressions and 1 click. A parent raga alone does not
+pages remain, and together they took 48 impressions and 1 click. The owner chose to keep any
+page that is shown in results, so the 20 of those 43 with any impression sit in
+`KEEP_INDEXED_RAGA_IDS` (`packages/core/src/domain/raga/thin.ts`), which `isThinRaga` checks
+first. Only the 23 with no impressions get `noindex`. Refresh that list from Search Console; do
+not hand-pick entries. A parent raga alone does not
 save a page: it is one line the parent's own page already shows. `transformRagaToDocument`
 only marks `noindex` when given a composition count, so a caller without the whole corpus
 cannot drop a page from the sitemap by accident.
@@ -506,9 +510,28 @@ Three rules here:
   setup, so matching logic kept there cannot be tested. Same reason `domain/artist/dedup.ts`
   exists.
 
-Canonical is chosen by evidence: most compositions attached first (that is the record the rest of
-the database already points at), then most fields filled, then oldest. Reindex search after a
-merge run.
+The survivor is chosen by `compareSurvivors`: Search Console impressions first (pass
+`--impressions <page export JSON>`; that URL is the one Google already shows, and a 301 into it
+loses nothing), then compositions plus logged performances, then fields filled, then age. Each
+pair also gets a `confidence` from `assessRagaDuplicate`: `low` when the records contradict each
+other (scale, mela, parent, or melakarta against janya), `high` when both scales agree or the
+names differ only by noise, `medium` otherwise. The report pre-fills `suggestion`; only a person
+writes `decision`.
+
+Picking by impressions sometimes keeps the barer record (`keeravaaNi` beat `kIravANi`, which held
+the scale, the mela number and 18 janya children). So `mergeRaga` does more than re-point
+compositions: it copies every field the survivor lacks from the loser (`mergeFillPatch`, blanks
+only, nothing overwritten) and re-points janya ragas whose `parentRaga` is the loser
+(`listJanyaOf`, a full scan, since there is no parent index). The moderator merge page calls the
+same function. It still does **not** move concert-log performances; `--dry-run` counts them, and
+`cascadeRagaMergeToSetlistItems` exists if a run ever has some.
+
+There is no automatic undo. Every apply run (and every dry run) writes `<file>.applied.json` or
+`<file>.dry-run.json` beside the CSV, listing each pair's moved composition ids, re-parented
+children and filled fields: the record from which a merge could be reversed by hand. Use
+`pnpm prod-cli` for production; `pnpm cli` runs against your personal stage. After a real run,
+reindex search and rerun `generate-melakarta-links`, since a merged id may be in that map. The
+2026-10 review lives in `docs/research/raga-dedupe-2026-10.md`.
 
 ### Filling venues and organisers (`pnpm cli enrich-venues-organisers`)
 

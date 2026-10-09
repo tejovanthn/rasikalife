@@ -79,15 +79,27 @@ program
   .option('--file <path>', 'Reviewed CSV to apply', 'raga-duplicates.csv')
   .option('--out <path>', 'Where to write the report', 'raga-duplicates.csv')
   .option('-n, --dry-run', 'With --apply, list the merges without writing')
-  .action(async (opts: { apply?: boolean; file: string; out: string; dryRun?: boolean }) => {
-    setup();
-    const mod = await import('./dedupRagas.js');
-    if (opts.apply) {
-      await mod.applyDuplicateRagaMerges({ file: opts.file, dryRun: opts.dryRun });
-    } else {
-      await mod.reportDuplicateRagas({ out: opts.out });
+  .option(
+    '--impressions <path>',
+    'Search Console page export (JSON [{page, impressions}]); the page with more impressions survives'
+  )
+  .action(
+    async (opts: {
+      apply?: boolean;
+      file: string;
+      out: string;
+      dryRun?: boolean;
+      impressions?: string;
+    }) => {
+      setup();
+      const mod = await import('./dedupRagas.js');
+      if (opts.apply) {
+        await mod.applyDuplicateRagaMerges({ file: opts.file, dryRun: opts.dryRun });
+      } else {
+        await mod.reportDuplicateRagas({ out: opts.out, impressions: opts.impressions });
+      }
     }
-  });
+  );
 
 program
   .command('admin-csv-export')
