@@ -13,7 +13,8 @@ import { fileURLToPath } from 'node:url';
  * and are now the source of truth.
  *
  * Output is a plain map written to the web app so page loads make no extra
- * queries. Regenerate whenever the canonical records change.
+ * queries. Regenerate after any raga merge: generation follows `mergedIntoId`
+ * against live data, so it must run through `prod-cli`.
  */
 
 type MelakartaLink = { id: string; name: string };
@@ -34,7 +35,7 @@ const DEFAULT_OUT = resolve(
 export const MELAKARTA_SOURCE: Record<number, MelakartaLink> = {
   1: { id: '38bEs9GHonNHZ3SW05bjS10m7OY', name: 'kanakAngi' },
   2: { id: '38axss3waCraJyIRLL7oAkJ7jbI', name: 'ratnAngi' },
-  3: { id: '38bIfl0896S84r70WDYhg2VuOnL', name: 'gAnamUrti' },
+  3: { id: '38awGtRm66pX7jHxPmWJHvHM1jH', name: 'gaanamoorti' },
   4: { id: '38axt8ColAZwzccnpPGukiLuFZm', name: 'vanaspati' },
   5: { id: '38axtLRlADKRPMpUmoCjH2UrwMA', name: 'mAnavati' },
   6: { id: '38bJHFxk9YTImxnXmFMT3LMDFnx', name: 'tAnarUpi' },
@@ -52,7 +53,7 @@ export const MELAKARTA_SOURCE: Record<number, MelakartaLink> = {
   18: { id: '38bI6Be3JM4uO6bZ0At7RpWSOFP', name: 'hATakAmbari' },
   19: { id: '38bELkP8X3J8GFQTzRebtg7OSmG', name: 'jhankAradhwani' },
   20: { id: '38axw6knWdj4PBSco71delKs7Ts', name: 'naTabhairavi' },
-  21: { id: '38b8q85UP7FDQIv5fPFJQAyqr4x', name: 'kIravANi' },
+  21: { id: '38ax82Q77NIiS5Q5uXd91EHGCgT', name: 'keeravaaNi' },
   22: { id: '38avMmk0wVmOsfNCaSkx6hnjI4f', name: 'kharaharapriyA' },
   23: { id: '38axi9fpSGhKwgxBwH2lpNLSBQh', name: 'gowri manOhari' },
   24: { id: '38b9Xj9tt2iMhq2QVsBJqlbII1A', name: 'varuNapriyA' },
@@ -65,7 +66,7 @@ export const MELAKARTA_SOURCE: Record<number, MelakartaLink> = {
   31: { id: '38bJLYrZVDmcwL1bIFif5XMsSeA', name: 'yAgapriyA' },
   32: { id: '38axy8OV4ghjeCc08MmC378Wgzc', name: 'rAgavardhani' },
   33: { id: '38bF8eLhcigaXwcVhrwtfDA9VuC', name: 'gangayabhUshhani' },
-  34: { id: '38bJTYGL5Me3F3DFjozbRGqWSig', name: 'vAgadIshwari' },
+  34: { id: '38axyTyuHOO1QWhCZeradMDQy1w', name: 'vaagadeeshwari' },
   35: { id: '38bHsecvjYQstK5xA8p1lmr7EXR', name: 'shUlini' },
   36: { id: '38bEiKsNfOdz70ohudJSr48qALq', name: 'calanATTai' },
   37: { id: '38bJPatGy66HxIelLZXxWFiBpxL', name: 'sAlagam' },
@@ -106,10 +107,46 @@ export const MELAKARTA_SOURCE: Record<number, MelakartaLink> = {
   72: { id: '38bHVqiobwcEtJTb6J7DmwOnBy9', name: 'rasikapriyA' },
 };
 
+/**
+ * Follow `mergedIntoId` from each source id to the record that survives.
+ *
+ * Without this, regenerating after a raga merge rewrote the same file: the 2026-10 dedupe merged
+ * three of these records (melas 3, 21 and 34) and the map kept linking the redirects. A merged
+ * row is still readable (`getRaga` returns it with `mergedIntoId`), so a chain resolves; a
+ * missing or plainly deleted record stops the run rather than writing a dead link.
+ */
+async function resolveSurvivors(
+  source: Record<number, MelakartaLink>
+): Promise<Record<number, MelakartaLink>> {
+  const Raga = await import('@rasika/core/domain/raga');
+  const resolved: Record<number, MelakartaLink> = {};
+  for (const [mela, link] of Object.entries(source)) {
+    let id = link.id;
+    let raga = await Raga.getRaga(id);
+    for (let hops = 0; raga?.mergedIntoId && hops < 5; hops++) {
+      id = raga.mergedIntoId;
+      raga = await Raga.getRaga(id);
+    }
+    if (!raga || raga.mergedIntoId) {
+      throw new Error(
+        `Melakarta ${mela} (${link.name}, ${link.id}) does not resolve to a live raga`
+      );
+    }
+    if (id !== link.id) {
+      console.log(
+        `↪️  ${mela}: ${link.name} was merged into ${raga.name} (${id}); update MELAKARTA_SOURCE`
+      );
+    }
+    resolved[Number(mela)] = { id, name: id === link.id ? link.name : raga.name };
+  }
+  return resolved;
+}
+
 export async function generateMelakartaLinks(opts?: { out?: string }): Promise<void> {
   const out = opts?.out ?? DEFAULT_OUT;
 
-  const entries = Object.entries(MELAKARTA_SOURCE).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const resolved = await resolveSurvivors(MELAKARTA_SOURCE);
+  const entries = Object.entries(resolved).sort((a, b) => Number(a[0]) - Number(b[0]));
   if (entries.length !== 72) {
     throw new Error(`Expected 72 melakartas, found ${entries.length}`);
   }
