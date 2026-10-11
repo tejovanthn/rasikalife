@@ -64,11 +64,10 @@ export async function destroySession(session: Awaited<ReturnType<typeof getSessi
  * layout — and the root loader puts the signed-in viewer's name and email into every
  * document it produces.
  *
- * This matters because SST's generated CloudFront server cache policy sets
- * `cookieBehavior: "none"`, so `rasika_session` is not part of the cache key. A `public,
- * s-maxage` document produced for a signed-in viewer is therefore stored once and handed to
- * everybody, their email included. Anything public must decide this per request, not
- * declare it statically.
+ * `rasika_session` is part of the CloudFront cache key (infra/site.ts), but a signed-in
+ * document must still never be stored: it holds the viewer's email. So anything public decides
+ * per request, not statically. Routes that set nothing get `applyDefaultCacheControl`
+ * (`~/lib/page-cache.ts`); this helper is for routes that want a shorter TTL than its hour.
  *
  * The decision reads the session cookie rather than calling `getUser`, which verifies the
  * token and then fetches the user over tRPC — far too expensive to put on an anonymous read

@@ -7,10 +7,18 @@ import { PassThrough } from 'node:stream';
 import { createReadableStreamFromReadable } from '@react-router/node';
 import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
-import type { EntryContext } from 'react-router';
+import type { EntryContext, HandleDataRequestFunction } from 'react-router';
 import { ServerRouter } from 'react-router';
+import { applyDefaultCacheControl } from '~/lib/page-cache';
 
 const ABORT_DELAY = 5_000;
+
+// Client-side navigations fetch `<path>.data`, which never reaches handleRequest. Without this
+// a crawler that follows links in a hydrated page would bypass the cache that documents get.
+export const handleDataRequest: HandleDataRequestFunction = (response, { request }) => {
+  applyDefaultCacheControl(request, response.status, response.headers);
+  return response;
+};
 
 export default async function handleRequest(
   request: Request,
@@ -45,6 +53,7 @@ function handleBotRequest(
           const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set('Content-Type', 'text/html');
+          applyDefaultCacheControl(request, currentStatusCode, responseHeaders);
 
           resolve(
             new Response(stream, {
@@ -92,6 +101,7 @@ function handleBrowserRequest(
           const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set('Content-Type', 'text/html');
+          applyDefaultCacheControl(request, currentStatusCode, responseHeaders);
 
           resolve(
             new Response(stream, {

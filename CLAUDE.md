@@ -1090,14 +1090,24 @@ because the integration setup imports `@rasika/core` before any test file's `vi.
 
 ### Caching a public page (`Cache-Control`)
 
-SST's generated CloudFront server cache policy sets `cookieBehavior: "none"`, so **the session cookie is not part of the cache key**. The root loader puts the signed-in viewer's name and email into every document, so a route that declares a static `public, s-maxage=…` header will have one signed-in viewer's document cached and served to everyone else.
+**Every signed-out page is cached at CloudFront by default.** `applyDefaultCacheControl`
+(`~/lib/page-cache.ts`) runs in `entry.server.tsx` for documents and for `.data` navigations, and
+gives any GET 200 whose route set no `Cache-Control` and no cookie
+`public, max-age=0, s-maxage=3600, stale-while-revalidate=86400`, or `private, no-cache` when the
+request carries `rasika_session`. Before it, nothing outside the artist routes was cacheable, and
+crawlers ran ~850k Lambda invocations in ten days of Oct 2026 (web plus 2–3 tRPC calls a page).
 
-Any public page therefore decides per request, not statically:
+It is safe only because of the cache policy in `infra/site.ts`. SST's own policy keys on no
+cookie at all, which would serve one cached copy to signed-in readers and to every script and
+theme choice. Ours keys on `rasika_session`, `theme` and `script_preference`, the only cookies
+that change a page. **A new cookie that changes what a page renders must be added to that
+whitelist**, or one reader's version is served to everyone. A request header is the same: no
+loader may read `user-agent`, geo or language headers into the page.
 
-- Routes with the user already loaded pick `PRIVATE_PAGE_CACHE_CONTROL` / `PUBLIC_PAGE_CACHE_CONTROL` directly (both in `~/lib/auth.server`).
-- Routes without one call `await publicPageCacheControl(request)`, which reads the session cookie rather than calling `getUser` — that verifies a token and fetches the user over tRPC, far too costly for an anonymous read path. An expired cookie costs a cache miss, never a leak.
-
-Either way the loader returns the header via `data(payload, { headers })` and the route's `headers` export forwards `loaderHeaders`, defaulting to private.
+The cost is an hour of staleness for signed-out readers after an edit. Editors are signed in and
+always see fresh pages. A route that must be fresher sets its own header, which is kept: the
+artist routes use `publicPageCacheControl(request)` (`~/lib/auth.server`, 2 minutes), returned
+via `data(payload, { headers })` and forwarded by the route's `headers` export.
 
 ### Admin: bulk CSV export/import (all domains)
 
