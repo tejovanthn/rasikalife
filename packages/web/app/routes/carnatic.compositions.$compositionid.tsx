@@ -57,7 +57,11 @@ export async function loader({
         .catch(() => ({ items: [], hasMore: false, nextToken: undefined })),
     ]);
 
-    if (composition?.mergedIntoId) {
+    // `get` returns null for a missing record rather than throwing, so without this the
+    // first property read below threw a TypeError and every unknown id answered 500.
+    if (!composition) throw new Response('Composition not found', { status: 404 });
+
+    if (composition.mergedIntoId) {
       const canonical = await client.composition.get.query({ id: composition.mergedIntoId });
       if (canonical && !canonical.mergedIntoId) {
         throw redirect(generateCompositionUrl(canonical.title, canonical.id), 301);

@@ -8,7 +8,9 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 lessons: 330 suggested attach, 59 to review, 29 create), then runs the commands in
 `docs/research/shivkumar-import-2026-10.md`. Code (not deployed yet): `sources` list, `notation`
 field, generic `source-*` CLI with undo. Deploy before the import so pages show the notation.
-Nothing has been written to prod yet; apply and undo have not yet run against a real database.
+Deployed 2026-10-12. A one-song prod round trip passed: apply (Ada Modi attached, Dheem Dheem
+created), pages checked live, undo, pages back as before, a second undo a no-op. Nothing else
+written. Polish later: several MP3 links on one song share the label "Class recording (MP3)".
 
 ## Waiting: raga dedupe approval (2026-10-09)
 
