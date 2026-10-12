@@ -1107,14 +1107,51 @@ Thank you for your support. Your generosity helps keep the tradition of Carnatic
   },
 ];
 
-export async function seedContent() {
+/**
+ * Writes the pages above to the database, matched by path. A page that exists is updated in
+ * place (every record holding that path, since earlier runs created one per run: prod held
+ * two of each by 2026-10); a missing page is created. `--dry-run` lists what would change.
+ */
+export async function seedContent(opts: { dryRun?: boolean } = {}) {
   const Content = await import('@rasika/core/domain/content');
+  const { ContentEntity } = await import('../../core/src/domain/content/entity.js');
+  const fields = ['content', 'category', 'status', 'visibility', 'meta', 'navigation'] as const;
 
-  await Promise.all(
-    data.map(async item => {
-      await Content.createContent(item);
-    })
-  );
-
-  console.log('Content seeded successfully!');
+  let created = 0;
+  let updated = 0;
+  let unchanged = 0;
+  for (const item of data) {
+    const existing = (await ContentEntity.query.byPath({ path: item.path }).go({ pages: 'all' }))
+      .data;
+    if (existing.length === 0) {
+      console.log(`${opts.dryRun ? '[dry-run] ' : ''}create ${item.path}`);
+      if (!opts.dryRun) await Content.createContent(item);
+      created++;
+      continue;
+    }
+    for (const record of existing) {
+      const record_ = record as Record<string, unknown>;
+      const item_ = item as Record<string, unknown>;
+      const changed = fields.filter(
+        field =>
+          item_[field] !== undefined &&
+          JSON.stringify(record_[field]) !== JSON.stringify(item_[field])
+      );
+      if (changed.length === 0) {
+        unchanged++;
+        continue;
+      }
+      console.log(
+        `${opts.dryRun ? '[dry-run] ' : ''}update ${item.path} (${record.id}): ${changed.join(', ')}`
+      );
+      if (!opts.dryRun) {
+        await Content.updateContent(
+          record.id,
+          Object.fromEntries(changed.map(field => [field, item_[field]]))
+        );
+      }
+      updated++;
+    }
+  }
+  console.log(`✅ ${created} created, ${updated} updated, ${unchanged} unchanged`);
 }

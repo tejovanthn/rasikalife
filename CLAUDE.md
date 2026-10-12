@@ -486,13 +486,23 @@ in-line hyphen splits (`mahAnubhAvu-landariki`) for every Indic script, and fold
 to `n` for Telugu and Kannada, which have no letter for ன. Store the ITRANS phonetically and
 fix a script's convention here, not in the data.
 
+### Static content pages (`seed:content`)
+
+The pages in `packages/scripts/src/addContent.ts` (about, attribution, FAQ…) are written by
+`seed:content [--dry-run]`, matched by path: a page that exists is updated in place, a missing
+one is created. It used to create every page on every run, so prod holds two records of each
+(January and March 2026). The update covers every record with the path, because
+`getContentByPath` returns whichever the index lists first.
+
 ### Composition sources, and importing an outside source (`source-*`)
 
 A composition credits every site it draws on in **`sources`, a list of URLs**. It replaced the
 single `sourceAttribution`, which could only name karnatik.com. `describeSource`
 (`@rasika/core/domain/composition/client`) reads what a link is from the URL itself: a page, a
 notation (shivkumar.org PDF or HTML), a class recording (MP3), a video. So the list stays one
-pipe-joined admin CSV column. `sourcesOf` falls back to `sourceAttribution` on rows that
+pipe-joined admin CSV column. A recording's label comes from its file name (`-class`,
+`-detailed`, `_Part2`), and `describeSources` numbers labels that still repeat on one song.
+`sourcesOf` falls back to `sourceAttribution` on rows that
 `migrate-composition-sources` has not moved yet. Source links keep `rel="nofollow"`, as the
 karnatik link always had.
 

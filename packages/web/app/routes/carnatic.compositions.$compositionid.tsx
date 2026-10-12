@@ -1,4 +1,4 @@
-import { describeSource } from '@rasika/core/domain/composition/client';
+import { describeSource, describeSources } from '@rasika/core/domain/composition/client';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { fromItrans } from '@rasika/core/utils/transliteration';
@@ -363,7 +363,7 @@ export default function CompositionDetails() {
             <div>
               <strong>Sources:</strong>
               <ul className="mt-1 space-y-1">
-                {composition.sources.map(describeSource).map(source => (
+                {describeSources(composition.sources).map(source => (
                   <li key={source.url}>
                     {source.kind === 'page' ? null : `${source.site}: `}
                     <a

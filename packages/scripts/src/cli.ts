@@ -21,11 +21,12 @@ program
 
 program
   .command('seed:content')
-  .description('Seed static content pages (about, privacy, etc.)')
-  .action(async () => {
+  .description('Write static content pages (about, privacy, etc.), updating them by path')
+  .option('-n, --dry-run', 'List what would be created or updated')
+  .action(async (opts: { dryRun?: boolean }) => {
     setup();
     const { seedContent } = await import('./addContent.js');
-    await seedContent();
+    await seedContent(opts);
   });
 
 program

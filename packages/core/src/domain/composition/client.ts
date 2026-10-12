@@ -8,7 +8,7 @@ import type { CreateCompositionSchema, UpdateCompositionSchema } from './schema'
 
 // Re-export schemas (Zod is browser-safe)
 export { CreateCompositionSchema, UpdateCompositionSchema } from './schema';
-export { describeSource, mergeSources, sourcesOf } from './sources';
+export { describeSource, describeSources, mergeSources, sourcesOf } from './sources';
 export type { SourceDescription, SourceKind } from './sources';
 
 // Export input types derived from schemas

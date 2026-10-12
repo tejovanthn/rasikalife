@@ -38,12 +38,49 @@ export function describeSource(url: string): SourceDescription {
     return { url, site, kind: 'video', label: 'Video' };
   }
   if (/\.(mp3|m4a|mp4|ram)$/.test(path)) {
-    return { url, site, kind: 'audio', label: `Class recording (${extensionOf(path)})` };
+    return { url, site, kind: 'audio', label: `${audioLabel(path)} (${extensionOf(path)})` };
   }
   if (host === 'shivkumar.org' && /\.(pdf|html?|docx?)$/.test(path)) {
     return { url, site, kind: 'notation', label: `Notation (${extensionOf(path)})` };
   }
   return { url, site, kind: 'page', label: site };
+}
+
+/**
+ * What a recording is, read from its file name: shivkumar.org names a class `-class`, a
+ * slower walk-through `-detailed`, and splits long ones `_Part1`. Anything else is a
+ * performance or reading.
+ */
+function audioLabel(path: string): string {
+  const file = path.slice(path.lastIndexOf('/') + 1);
+  const base = /class/.test(file)
+    ? 'Class recording'
+    : /detailed/.test(file)
+      ? 'Detailed lesson'
+      : 'Recording';
+  const part = file.match(/part[\s_-]?(\d+)/)?.[1];
+  return part ? `${base}, part ${part}` : base;
+}
+
+/**
+ * `describeSource` for a whole list, with repeated labels numbered ("Recording (MP3) 2"):
+ * one song can hold several recordings that its file names cannot tell apart.
+ */
+export function describeSources(urls: readonly string[]): SourceDescription[] {
+  const described = urls.map(describeSource);
+  const totals = new Map<string, number>();
+  for (const source of described) {
+    const key = `${source.site}|${source.label}`;
+    totals.set(key, (totals.get(key) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+  return described.map(source => {
+    const key = `${source.site}|${source.label}`;
+    if ((totals.get(key) ?? 0) < 2) return source;
+    const n = (seen.get(key) ?? 0) + 1;
+    seen.set(key, n);
+    return { ...source, label: `${source.label} ${n}` };
+  });
 }
 
 function extensionOf(path: string): string {

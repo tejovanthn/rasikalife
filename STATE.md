@@ -10,8 +10,10 @@ songs we do not hold; each needs `new_language`, a composer check (some would cr
 artist), then `decision` = `create`. Then `source-csv`, `source-apply`, `reindex`, and the
 respelling readers over the new lyrics. The 391 confident matches are live in prod (applied
 2026-10-12, reindexed); undo record: `docs/research/shivkumar-import-2026-10.applied.json`
-(`source-undo --manifest <it> [--only <id>]`). `seed:content` (attribution page) not yet run.
-Polish later: several MP3 links on one song share the label "Class recording (MP3)".
+(`source-undo --manifest <it> [--only <id>]`). The attribution page credits shivkumar.org
+(`seed:content`, 2026-10-12). Distinct recording labels are committed; they need a deploy.
+Prod holds two records of every content page from the January and March seeds; both are kept
+in step now, and one copy of each could be deleted.
 
 ## Waiting: raga dedupe approval (2026-10-09)
 
