@@ -41,6 +41,13 @@ import { CreateVenueSchema, UpdateVenueSchema } from '../domain/venue/schema';
 type Row = Record<string, unknown>;
 type Ref = { id: string; name: string };
 
+/** A linked entity that a row's name did not find, so the import created it. */
+export interface CreatedLink {
+  domain: keyof Resolvers;
+  id: string;
+  name: string;
+}
+
 interface Resolvers {
   artist: (name: string) => Promise<Ref>;
   raga: (name: string) => Promise<Ref>;
@@ -72,7 +79,8 @@ async function getOrCreateRef(
   cache: Map<string, Ref>,
   getByName: (name: string) => Promise<{ id: string; name: string } | null>,
   create: (name: string) => Promise<{ id: string; name: string }>,
-  rawName: string
+  rawName: string,
+  onCreate: (ref: Ref) => void
 ): Promise<Ref> {
   const name = rawName.trim();
   const cached = cache.get(name);
@@ -80,11 +88,14 @@ async function getOrCreateRef(
   const existing = await getByName(name);
   const entity = existing ?? (await create(name));
   const ref: Ref = { id: entity.id, name: entity.name };
+  if (!existing) onCreate(ref);
   cache.set(name, ref);
   return ref;
 }
 
-function createResolvers(): Resolvers {
+/** `created` collects every linked entity a name had to create, so an import can be undone. */
+function createResolvers(created: CreatedLink[] = []): Resolvers {
+  const note = (domain: keyof Resolvers) => (ref: Ref) => created.push({ domain, ...ref });
   const caches = {
     artist: new Map<string, Ref>(),
     raga: new Map<string, Ref>(),
@@ -98,20 +109,40 @@ function createResolvers(): Resolvers {
         caches.artist,
         Artist.getArtistByName,
         n => Artist.createArtist({ name: n, gurus: [] }),
-        name
+        name,
+        note('artist')
       ),
     raga: name =>
-      getOrCreateRef(caches.raga, Raga.getRagaByName, n => Raga.createRaga({ name: n }), name),
+      getOrCreateRef(
+        caches.raga,
+        Raga.getRagaByName,
+        n => Raga.createRaga({ name: n }),
+        name,
+        note('raga')
+      ),
     tala: name =>
-      getOrCreateRef(caches.tala, Tala.getTalaByName, n => Tala.createTala({ name: n }), name),
+      getOrCreateRef(
+        caches.tala,
+        Tala.getTalaByName,
+        n => Tala.createTala({ name: n }),
+        name,
+        note('tala')
+      ),
     venue: name =>
-      getOrCreateRef(caches.venue, Venue.getVenueByName, n => Venue.createVenue({ name: n }), name),
+      getOrCreateRef(
+        caches.venue,
+        Venue.getVenueByName,
+        n => Venue.createVenue({ name: n }),
+        name,
+        note('venue')
+      ),
     organiser: name =>
       getOrCreateRef(
         caches.organiser,
         Organiser.getOrganiserByName,
         n => Organiser.createOrganiser({ name: n }),
-        name
+        name,
+        note('organiser')
       ),
   };
 }
@@ -242,6 +273,10 @@ const REGISTRY: Record<string, DomainConfig> = {
       ),
     scanAll: () => scanEntity(opts => CompositionEntity.scan.go(opts)),
     prepare: prepareComposition,
+    clear: (id, fields) =>
+      CompositionEntity.update({ id })
+        .remove(fields as never[])
+        .go(),
   },
   venue: {
     createSchema: CreateVenueSchema,
@@ -313,6 +348,10 @@ export interface BulkUpsertResult {
   created: number;
   updated: number;
   errors: Array<{ index: number; name?: string; message: string }>;
+  /** The id each created row received, by its index in `rows`. */
+  createdIds: Array<{ index: number; id: string }>;
+  /** Artists, ragas, talas and the rest that a linked name created along the way. */
+  createdLinks: CreatedLink[];
 }
 
 function formatZodError(error: ZodError): string {
@@ -373,8 +412,15 @@ export async function bulkUpsertForDomain(
   const config = REGISTRY[domain];
   if (!config) throw new Error(`Unknown bulk domain: ${domain}`);
 
-  const ctx: BulkContext = { userId, resolve: createResolvers() };
-  const result: BulkUpsertResult = { created: 0, updated: 0, errors: [] };
+  const createdLinks: CreatedLink[] = [];
+  const ctx: BulkContext = { userId, resolve: createResolvers(createdLinks) };
+  const result: BulkUpsertResult = {
+    created: 0,
+    updated: 0,
+    errors: [],
+    createdIds: [],
+    createdLinks,
+  };
 
   for (let index = 0; index < rows.length; index++) {
     const { id: rawId, ...fields } = rows[index];
@@ -408,7 +454,8 @@ export async function bulkUpsertForDomain(
           result.errors.push({ index, name, message: formatZodError(parsed.error) });
           continue;
         }
-        await config.create(parsed.data, ctx);
+        const entity = (await config.create(parsed.data, ctx)) as { id?: unknown } | undefined;
+        if (typeof entity?.id === 'string') result.createdIds.push({ index, id: entity.id });
         result.created++;
       }
     } catch (error) {

@@ -65,7 +65,11 @@ const FIELD_RULES: Record<CompletionEntityType, FieldRule[]> = {
     { weight: 40, check: e => isNonEmptyArray(e.lyricsV1), label: 'lyrics' },
     { weight: 30, check: e => isNonEmptyArray(e.ragas), label: 'ragas' },
     { weight: 20, check: e => isNonEmptyArray(e.talas), label: 'talas' },
-    { weight: 10, check: e => isNonEmptyString(e.sourceAttribution), label: 'a source' },
+    {
+      weight: 10,
+      check: e => isNonEmptyArray(e.sources) || isNonEmptyString(e.sourceAttribution),
+      label: 'a source',
+    },
   ],
   venue: [
     { weight: 20, check: e => isNonEmptyString(e.description), label: 'a description' },

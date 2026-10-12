@@ -255,9 +255,57 @@ describe('Composition', () => {
         lyricsV1: [],
         ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
         talas: [{ id: 'tala-789', name: 'Adi' }],
+        sources: [],
         createdAt: '2025-01-09T00:00:00.000Z',
         updatedAt: '2025-01-09T00:00:00.000Z',
       });
+    });
+
+    // Every reader dropped these once, so no page showed a meaning and a merged
+    // composition never redirected.
+    it('returns meaning, notation and mergedIntoId', async () => {
+      const { CompositionEntity } = await import('./entity');
+      vi.mocked(CompositionEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({
+          data: {
+            id: 'comp-1',
+            title: 't',
+            composer: { id: 'a', name: 'A' },
+            language: 'Telugu',
+            meaning: 'O Rama!',
+            notation: 'S R G M ||',
+            mergedIntoId: 'comp-2',
+            deletedAt: '2025-01-09T00:00:00.000Z',
+          },
+        }),
+      } as any);
+
+      const result = await getComposition('comp-1');
+
+      expect(result).toMatchObject({
+        meaning: 'O Rama!',
+        notation: 'S R G M ||',
+        mergedIntoId: 'comp-2',
+      });
+    });
+
+    it('reads a legacy sourceAttribution as a one-item sources list', async () => {
+      const { CompositionEntity } = await import('./entity');
+      vi.mocked(CompositionEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({
+          data: {
+            id: 'comp-1',
+            title: 't',
+            composer: { id: 'a', name: 'A' },
+            language: 'Telugu',
+            sourceAttribution: 'https://karnatik.com/c1.shtml',
+          },
+        }),
+      } as any);
+
+      const result = await getComposition('comp-1');
+
+      expect(result?.sources).toEqual(['https://karnatik.com/c1.shtml']);
     });
 
     it('should return null when composition not found', async () => {
@@ -308,7 +356,7 @@ describe('Composition', () => {
             lyricsV1: [],
             ragas: [],
             talas: [],
-            sourceAttribution: undefined,
+            sources: [],
             createdAt: '2025-01-09T00:00:00.000Z',
             updatedAt: '2025-01-09T00:00:00.000Z',
           },
@@ -351,7 +399,7 @@ describe('Composition', () => {
           lyricsV1: [],
           ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
           talas: [],
-          sourceAttribution: undefined,
+          sources: [],
           createdAt: '2025-01-09T00:00:00.000Z',
           updatedAt: '2025-01-09T00:00:00.000Z',
         },
@@ -382,7 +430,7 @@ describe('Composition', () => {
             lyricsV1: [],
             ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
             talas: [],
-            sourceAttribution: undefined,
+            sources: [],
             createdAt: '2025-01-09T00:00:00.000Z',
             updatedAt: '2025-01-09T00:00:00.000Z',
           },
@@ -426,7 +474,7 @@ describe('Composition', () => {
           lyricsV1: [],
           ragas: [],
           talas: [{ id: 'tala-789', name: 'Adi' }],
-          sourceAttribution: undefined,
+          sources: [],
           createdAt: '2025-01-09T00:00:00.000Z',
           updatedAt: '2025-01-09T00:00:00.000Z',
         },
@@ -457,7 +505,7 @@ describe('Composition', () => {
             lyricsV1: [],
             ragas: [],
             talas: [{ id: 'tala-789', name: 'Adi' }],
-            sourceAttribution: undefined,
+            sources: [],
             createdAt: '2025-01-09T00:00:00.000Z',
             updatedAt: '2025-01-09T00:00:00.000Z',
           },
@@ -521,7 +569,7 @@ describe('Composition', () => {
             lyricsV1: [],
             ragas: [],
             talas: [],
-            sourceAttribution: undefined,
+            sources: [],
             createdAt: '2025-01-09T00:00:00.000Z',
             updatedAt: '2025-01-09T00:00:00.000Z',
           },
@@ -560,7 +608,7 @@ describe('Composition', () => {
           lyricsV1: [],
           ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
           talas: [],
-          sourceAttribution: undefined,
+          sources: [],
           createdAt: '2025-01-09T00:00:00.000Z',
           updatedAt: '2025-01-09T00:00:00.000Z',
         },
@@ -584,7 +632,7 @@ describe('Composition', () => {
           lyricsV1: [],
           ragas: [{ id: 'raga-456', name: 'Bhairavi' }],
           talas: [],
-          sourceAttribution: undefined,
+          sources: [],
           createdAt: '2025-01-09T00:00:00.000Z',
           updatedAt: '2025-01-09T00:00:00.000Z',
         },
@@ -616,7 +664,7 @@ describe('Composition', () => {
           lyricsV1: [],
           ragas: [],
           talas: [],
-          sourceAttribution: undefined,
+          sources: [],
           createdAt: '2025-01-09T00:00:00.000Z',
           updatedAt: '2025-01-09T00:00:00.000Z',
         },
@@ -641,7 +689,7 @@ describe('Composition', () => {
             lyricsV1: [],
             ragas: [],
             talas: [],
-            sourceAttribution: undefined,
+            sources: [],
             createdAt: '2025-01-09T00:00:00.000Z',
             updatedAt: '2025-01-09T00:00:00.000Z',
           },

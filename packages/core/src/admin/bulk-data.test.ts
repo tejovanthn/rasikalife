@@ -101,7 +101,13 @@ describe('bulkUpsertForDomain', () => {
       'user-1'
     );
 
-    expect(result).toEqual({ created: 1, updated: 0, errors: [] });
+    expect(result).toEqual({
+      created: 1,
+      updated: 0,
+      errors: [],
+      createdIds: [{ index: 0, id: 'r-new' }],
+      createdLinks: [],
+    });
     expect(Raga.createRaga).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Kalyani', melaNumber: 65 })
     );
@@ -114,7 +120,7 @@ describe('bulkUpsertForDomain', () => {
 
     const result = await bulkUpsertForDomain('raga', [{ id: 'r1', name: 'New' }], 'user-1');
 
-    expect(result).toEqual({ created: 0, updated: 1, errors: [] });
+    expect(result).toMatchObject({ created: 0, updated: 1, errors: [], createdIds: [] });
     expect(Raga.updateRaga).toHaveBeenCalledWith('r1', expect.objectContaining({ name: 'New' }));
   });
 
@@ -171,7 +177,15 @@ describe('bulkUpsertForDomain', () => {
       'user-1'
     );
 
-    expect(result).toEqual({ created: 1, updated: 0, errors: [] });
+    // The new artist is reported, so an import that made it can be undone; the raga it
+    // found is not.
+    expect(result).toEqual({
+      created: 1,
+      updated: 0,
+      errors: [],
+      createdIds: [{ index: 0, id: 'c1' }],
+      createdLinks: [{ domain: 'artist', id: 'a1', name: 'Dikshitar' }],
+    });
     expect(Artist.createArtist).toHaveBeenCalledWith({ name: 'Dikshitar', gurus: [] });
     expect(Composition.createComposition).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -22,6 +22,7 @@ import { TalaEntity } from '../tala/entity';
 import { CompositionEntity } from './entity';
 import type { Composition } from './entity';
 import type { CreateCompositionSchema, UpdateCompositionSchema } from './schema';
+import { sourcesOf } from './sources';
 
 export type CreateCompositionInput = z.infer<typeof CreateCompositionSchema>;
 export type UpdateCompositionInput = z.infer<typeof UpdateCompositionSchema>;
@@ -49,14 +50,45 @@ export interface CompositionWithRelations {
   }>;
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
-  sourceAttribution?: string;
+  sources: string[];
+  /** Swara notation, preformatted. Only on a single-record read; lists leave it out. */
+  notation?: string;
   /** An English translation or gist. Kept apart from `lyricsV1`, which is transliterated. */
   meaning?: string;
+  description?: string;
+  compositionType?: string;
   createdAt: string;
   updatedAt: string;
   version: number;
   lastEditedBy?: string;
   mergedIntoId?: string;
+}
+
+/**
+ * The one shape every reader returns. It once lived as seven copies, and the copies had
+ * all dropped `meaning` and `mergedIntoId`: no page ever showed a meaning, and a merged
+ * composition never redirected. `notation` is left to single-record reads, since it runs
+ * to tens of kilobytes and list pages never show it.
+ */
+export function toCompositionWithRelations(comp: Composition): CompositionWithRelations {
+  return {
+    id: comp.id,
+    title: comp.title,
+    composer: comp.composer,
+    language: comp.language,
+    lyricsV1: comp.lyricsV1 || [],
+    ragas: comp.ragas || [],
+    talas: comp.talas || [],
+    sources: sourcesOf(comp),
+    meaning: comp.meaning,
+    description: comp.description,
+    compositionType: comp.compositionType,
+    createdAt: comp.createdAt,
+    updatedAt: comp.updatedAt,
+    version: comp.version,
+    lastEditedBy: comp.lastEditedBy,
+    mergedIntoId: comp.mergedIntoId,
+  };
 }
 
 // Generic junction creation helper (addresses DHH duplication feedback)
@@ -93,7 +125,7 @@ async function createNameMaps(
 }
 
 export async function createComposition(input: CreateCompositionInput): Promise<Composition> {
-  const { ragaIds = [], talaIds = [], sourceAttribution, ...data } = input;
+  const { ragaIds = [], talaIds = [], ...data } = input;
 
   // Fetch related entities for denormalization
   const nameMaps = await createNameMaps(ragaIds, talaIds);
@@ -107,7 +139,11 @@ export async function createComposition(input: CreateCompositionInput): Promise<
     lyricsV1: data.lyricsV1 || [],
     ragas: nameMaps.ragas,
     talas: nameMaps.talas,
-    sourceAttribution,
+    sources: data.sources,
+    notation: data.notation,
+    meaning: data.meaning,
+    description: data.description,
+    compositionType: data.compositionType,
   }).go();
 
   if (!result.data) throw new Error('Failed to create composition');
@@ -136,21 +172,7 @@ export async function getComposition(id: string): Promise<CompositionWithRelatio
     return null;
   }
 
-  const comp = result.data;
-  return {
-    id: comp.id,
-    title: comp.title,
-    composer: comp.composer,
-    language: comp.language,
-    lyricsV1: comp.lyricsV1 || [],
-    ragas: comp.ragas || [],
-    talas: comp.talas || [],
-    sourceAttribution: comp.sourceAttribution,
-    createdAt: comp.createdAt,
-    updatedAt: comp.updatedAt,
-    version: comp.version,
-    lastEditedBy: comp.lastEditedBy,
-  };
+  return { ...toCompositionWithRelations(result.data), notation: result.data.notation };
 }
 
 export async function getCompositionsByComposer(
@@ -173,20 +195,7 @@ export async function getCompositionsByComposer(
   const compositions = result.data || [];
 
   // Transform to CompositionWithRelations
-  const items = compositions.map(composition => ({
-    id: composition.id,
-    title: composition.title,
-    composer: composition.composer,
-    language: composition.language,
-    lyricsV1: composition.lyricsV1 || [],
-    ragas: composition.ragas || [],
-    talas: composition.talas || [],
-    sourceAttribution: composition.sourceAttribution,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt,
-    version: composition.version,
-    lastEditedBy: composition.lastEditedBy,
-  }));
+  const items = compositions.map(toCompositionWithRelations);
 
   return {
     items,
@@ -221,20 +230,7 @@ export async function getCompositionsByRaga(
   // Transform to CompositionWithRelations, filtering out soft-deleted
   const items = (compositions.data || [])
     .filter(composition => !composition.deletedAt)
-    .map(composition => ({
-      id: composition.id,
-      title: composition.title,
-      composer: composition.composer,
-      language: composition.language,
-      lyricsV1: composition.lyricsV1 || [],
-      ragas: composition.ragas || [],
-      talas: composition.talas || [],
-      sourceAttribution: composition.sourceAttribution,
-      createdAt: composition.createdAt,
-      updatedAt: composition.updatedAt,
-      version: composition.version,
-      lastEditedBy: composition.lastEditedBy,
-    }));
+    .map(toCompositionWithRelations);
 
   return {
     items,
@@ -269,20 +265,7 @@ export async function getCompositionsByTala(
   // Transform to CompositionWithRelations, filtering out soft-deleted
   const items = (compositions.data || [])
     .filter(composition => !composition.deletedAt)
-    .map(composition => ({
-      id: composition.id,
-      title: composition.title,
-      composer: composition.composer,
-      language: composition.language,
-      lyricsV1: composition.lyricsV1 || [],
-      ragas: composition.ragas || [],
-      talas: composition.talas || [],
-      sourceAttribution: composition.sourceAttribution,
-      createdAt: composition.createdAt,
-      updatedAt: composition.updatedAt,
-      version: composition.version,
-      lastEditedBy: composition.lastEditedBy,
-    }));
+    .map(toCompositionWithRelations);
 
   return {
     items,
@@ -312,20 +295,7 @@ export async function getCompositionsByLanguage(
   const compositions = result.data || [];
 
   // Transform to CompositionWithRelations
-  const items = compositions.map(composition => ({
-    id: composition.id,
-    title: composition.title,
-    composer: composition.composer,
-    language: composition.language,
-    lyricsV1: composition.lyricsV1 || [],
-    ragas: composition.ragas || [],
-    talas: composition.talas || [],
-    sourceAttribution: composition.sourceAttribution,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt,
-    version: composition.version,
-    lastEditedBy: composition.lastEditedBy,
-  }));
+  const items = compositions.map(toCompositionWithRelations);
 
   return {
     items,
@@ -424,20 +394,7 @@ export async function getCompositionsByName(name: string): Promise<CompositionWi
     });
   const compositions = result.data || [];
 
-  const compositionsWithRelations = compositions.map(composition => ({
-    id: composition.id,
-    title: composition.title,
-    composer: composition.composer,
-    language: composition.language,
-    lyricsV1: composition.lyricsV1 || [],
-    ragas: composition.ragas || [],
-    talas: composition.talas || [],
-    sourceAttribution: composition.sourceAttribution,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt,
-    version: composition.version,
-    lastEditedBy: composition.lastEditedBy,
-  }));
+  const compositionsWithRelations = compositions.map(toCompositionWithRelations);
 
   return compositionsWithRelations;
 }
@@ -459,20 +416,7 @@ export async function listCompositions(params?: { limit?: number; nextToken?: st
     });
 
   // For each composition, we need to enrich it with relations
-  const enrichedCompositions = (result.data || []).map(composition => ({
-    id: composition.id,
-    title: composition.title,
-    composer: composition.composer,
-    language: composition.language,
-    lyricsV1: composition.lyricsV1 || [],
-    ragas: composition.ragas || [],
-    talas: composition.talas || [],
-    sourceAttribution: composition.sourceAttribution,
-    createdAt: composition.createdAt,
-    updatedAt: composition.updatedAt,
-    version: composition.version,
-    lastEditedBy: composition.lastEditedBy,
-  }));
+  const enrichedCompositions = (result.data || []).map(toCompositionWithRelations);
 
   return {
     items: enrichedCompositions,
@@ -501,7 +445,7 @@ export async function getCompositionMergeScore(id: string): Promise<number> {
   if (result.data.lyricsV1 && result.data.lyricsV1.length > 0) score += 2;
   if (result.data.ragas && result.data.ragas.length > 0) score += 1;
   if (result.data.talas && result.data.talas.length > 0) score += 1;
-  if (result.data.sourceAttribution) score += 1;
+  if (sourcesOf(result.data).length > 0) score += 1;
   return score;
 }
 

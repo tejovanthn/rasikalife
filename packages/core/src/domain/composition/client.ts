@@ -8,6 +8,8 @@ import type { CreateCompositionSchema, UpdateCompositionSchema } from './schema'
 
 // Re-export schemas (Zod is browser-safe)
 export { CreateCompositionSchema, UpdateCompositionSchema } from './schema';
+export { describeSource, mergeSources, sourcesOf } from './sources';
+export type { SourceDescription, SourceKind } from './sources';
 
 // Export input types derived from schemas
 export type CreateCompositionInput = z.infer<typeof CreateCompositionSchema>;
@@ -32,7 +34,8 @@ export interface Composition {
   lyricsV1: Lyrics;
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
-  sourceAttribution?: string;
+  sources?: string[];
+  notation?: string;
   createdAt: string;
   updatedAt: string;
   version: number;
@@ -48,7 +51,12 @@ export interface CompositionWithRelations {
   lyricsV1: Lyrics;
   ragas: Array<{ id: string; name: string }>;
   talas: Array<{ id: string; name: string }>;
-  sourceAttribution?: string;
+  sources: string[];
+  /** Only on a single-record read; list endpoints leave it out. */
+  notation?: string;
+  meaning?: string;
+  description?: string;
+  compositionType?: string;
   createdAt: string;
   updatedAt: string;
   version: number;

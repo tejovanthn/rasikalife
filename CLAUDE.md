@@ -486,6 +486,67 @@ in-line hyphen splits (`mahAnubhAvu-landariki`) for every Indic script, and fold
 to `n` for Telugu and Kannada, which have no letter for ன. Store the ITRANS phonetically and
 fix a script's convention here, not in the data.
 
+### Composition sources, and importing an outside source (`source-*`)
+
+A composition credits every site it draws on in **`sources`, a list of URLs**. It replaced the
+single `sourceAttribution`, which could only name karnatik.com. `describeSource`
+(`@rasika/core/domain/composition/client`) reads what a link is from the URL itself: a page, a
+notation (shivkumar.org PDF or HTML), a class recording (MP3), a video. So the list stays one
+pipe-joined admin CSV column. `sourcesOf` falls back to `sourceAttribution` on rows that
+`migrate-composition-sources` has not moved yet. Source links keep `rel="nofollow"`, as the
+karnatik link always had.
+
+**`notation`** is a lesson document as preformatted text: lyrics, meanings and swara lines,
+laid out by its author. Like any swara text it is never transliterated, and the page shows it
+in a `<pre>` that scrolls sideways. The columns are what put a note under its syllable, so the
+text comes from `pdftotext -layout` (poppler, needed on the machine that runs the fetch).
+Word's HTML export breaks the columns, so HTML is only the fallback for the few lessons whose
+PDF link is dead.
+
+`toCompositionWithRelations` is the one mapper every composition reader returns. There were
+seven copies, and all of them dropped `meaning` and `mergedIntoId`. So no page ever showed a
+meaning, and a merged composition never redirected. `notation` is added only by
+`getComposition`, because list pages would carry tens of kilobytes for nothing.
+
+An outside archive of compositions comes in through one pipeline, whatever the source. Only an
+**adapter** (`packages/scripts/src/sources/<name>.ts`, registered in `sources/index.ts`) knows
+the source: it downloads the archive and reads it into `SourceRecord`s
+(`domain/composition/source-import.ts`). Matching, review, apply and undo are shared
+(`packages/scripts/src/sourceImport.ts`). Downloads live in `data/sources/<name>/`
+(gitignored). The first adapter is `shivkumar`: Shivkumar Kalyanaraman's lesson archive,
+about 380 krithis and 38 varnams, geethams and swarajatis, parsed in
+`domain/composition/shivkumar.ts`.
+
+1. `source-fetch --source <name>`: the adapter downloads, cached, so a rerun fetches only
+   what is missing. No AWS needed.
+2. `source-match --source <name> [--out …]`: one review row per record, with the record of
+   ours it matches and a `suggestion` (`match.ts`). Titles differ by spelling
+   (`Abhayambikaya` against `abhayAmbikAyAha anyam`), so `foldKey`/`looseKey` fold the usual
+   romanisation differences, and one title may be a prefix of the other. One raga carries
+   several names (Panthuvarali is `kAmavardhani`), so a source's printed arohanam *and*
+   avarohanam agreeing with ours also counts as the same raga (Sri and Madhyamavati share an
+   arohanam). When our corpus holds the same song twice, the copy with more lyrics is chosen.
+   A composer that differs goes to review. The `new_*` columns hold our existing raga, tala
+   and composer spellings; a name with the same key beats a commoner looser match (`Varali`
+   is `varALi`, not `punnAgavarALi`).
+3. A person writes `decision`: `attach` (edit `match_id` to pick another record), `create` or
+   `skip`. `source-csv --source <name> --file <reviewed>` writes the admin CSV. An adapter
+   whose romanisation is `plain` gets its new titles and lyrics lowercased, since capitals
+   mean retroflex letters in ITRANS. Run the respelling readers over new compositions after.
+4. `source-apply --source <name> --file <csv> --user <id> [--dry-run]`. Use this, not
+   `admin-csv-import`: it plans each attach against the record **as it stands when it runs**
+   (`planAttach`): links merged into the current list, notation written only where none
+   exists. It also writes `<csv>.applied-<time>.json`, the manifest: per attached song the
+   exact links added and a fingerprint of the notation written, the ids of created songs,
+   and any artist, raga or tala a new name created. `bulkUpsertForDomain` now returns
+   `createdIds` and `createdLinks` for this.
+5. `source-undo --manifest <file> [--only id,id] [--dry-run]` takes it back, wholly or per
+   song (`planAttachUndo`). It removes only the links the import added, and the notation only
+   while its fingerprint still matches, so an edit made since is kept and reported. It deletes
+   a created song unless a concert has logged it since, and a created artist, raga or tala
+   only once nothing uses it. It marks what it undid in the manifest, so a rerun is a no-op.
+   Reindex after apply and after undo.
+
 ### Deduplicating ragas (`pnpm cli dedup-ragas`, two steps)
 
 The corpus holds two import generations and the same raga appears in both under different

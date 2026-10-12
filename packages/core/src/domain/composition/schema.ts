@@ -19,7 +19,8 @@ export const CreateCompositionSchema = z.object({
     .optional(),
   ragaIds: z.array(z.string()).optional(),
   talaIds: z.array(z.string()).optional(),
-  sourceAttribution: z.string().optional(),
+  sources: z.array(z.string().url()).optional(),
+  notation: z.string().max(100_000).optional(),
   compositionType: z
     .enum(['kriti', 'varnam', 'tillana', 'javali', 'padam', 'keertanam', 'other'])
     .optional(),

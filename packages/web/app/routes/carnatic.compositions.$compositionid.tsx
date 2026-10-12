@@ -1,3 +1,4 @@
+import { describeSource } from '@rasika/core/domain/composition/client';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { fromItrans } from '@rasika/core/utils/transliteration';
@@ -259,6 +260,9 @@ export default function CompositionDetails() {
   }>();
 
   const shareUrl = `https://rasika.life${generateCompositionUrl(rawTitle, composition.id)}`;
+  const notationCredit = composition.sources
+    .map(describeSource)
+    .find(source => source.kind === 'notation');
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -351,18 +355,25 @@ export default function CompositionDetails() {
               <span className="text-muted-foreground">unknown</span>
             )}
           </p>
-          {composition.sourceAttribution && (
-            <p>
-              <strong>Source:</strong>{' '}
-              <a
-                href={composition.sourceAttribution}
-                target="_blank"
-                rel="nofollow noreferrer"
-                className="text-primary hover:underline"
-              >
-                {composition.sourceAttribution}
-              </a>
-            </p>
+          {composition.sources.length > 0 && (
+            <div>
+              <strong>Sources:</strong>
+              <ul className="mt-1 space-y-1">
+                {composition.sources.map(describeSource).map(source => (
+                  <li key={source.url}>
+                    {source.kind === 'page' ? null : `${source.site}: `}
+                    <a
+                      href={source.url}
+                      target="_blank"
+                      rel="nofollow noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {source.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </section>
@@ -382,6 +393,29 @@ export default function CompositionDetails() {
               </div>
             ))}
           </div>
+        </section>
+      )}
+      {/* Swara notation: never transliterated (see CLAUDE.md, "Scripts, swaras"). The
+          columns line swaras up under syllables, so it keeps its spacing and scrolls sideways. */}
+      {composition.notation && (
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Notation</h2>
+          {notationCredit && (
+            <p className="text-sm text-muted-foreground mb-2">
+              From{' '}
+              <a
+                href={notationCredit.url}
+                target="_blank"
+                rel="nofollow noreferrer"
+                className="text-primary hover:underline"
+              >
+                {notationCredit.site}
+              </a>
+            </p>
+          )}
+          <pre className="p-4 bg-muted rounded-lg overflow-x-auto text-sm font-mono whitespace-pre">
+            {composition.notation}
+          </pre>
         </section>
       )}
       {/* English, so never run through fromItrans — that is what garbled these lines while

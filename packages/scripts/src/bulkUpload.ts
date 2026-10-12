@@ -209,7 +209,7 @@ export async function bulkUpload(opts: { drop?: boolean; limit?: number } = {}) 
         lyricsV1: comp.lyrics ?? undefined,
         ragaIds,
         talaIds,
-        sourceAttribution: comp.sourceAttribution,
+        sources: [comp.sourceAttribution],
       });
 
       console.log(`✅ Created composition: ${comp.title}`);

@@ -25,7 +25,7 @@ At Rasika.life, we:
 
 ## Our Commitment to Ethical Data Collection
 
-We believe in the power of shared knowledge and the importance of giving credit where it's due. Our database has been carefully compiled from various reputable sources across the web, including karnatik.com and other respected Carnatic music resources. We're committed to transparent attribution - you'll find source credits for every piece of information in our database.
+We believe in the power of shared knowledge and the importance of giving credit where it's due. Our database has been carefully compiled from various reputable sources across the web, including karnatik.com, Shivkumar Kalyanaraman's lesson archive at shivkumar.org, and other respected Carnatic music resources. We're committed to transparent attribution - you'll find source credits for every piece of information in our database.
 
 ## Our Vision
 
@@ -418,6 +418,7 @@ At Rasika.life, we believe in the power of shared knowledge and the importance o
 We have collected data from the following reputable websites:
 
 - [karnatik.com](https://www.karnatik.com)
+- [shivkumar.org](https://www.shivkumar.org/music/), Shivkumar Kalyanaraman's archive of Carnatic music lessons: notation, class recordings and lyrics
 
 We are immensely grateful to these sources for their contributions to the Carnatic music community and for making this information accessible.
 

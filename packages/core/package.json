@@ -106,6 +106,21 @@
       "import": "./src/domain/composition/lyrics-normalize.ts",
       "default": "./src/domain/composition/lyrics-normalize.ts"
     },
+    "./domain/composition/shivkumar": {
+      "types": "./src/domain/composition/shivkumar.ts",
+      "import": "./src/domain/composition/shivkumar.ts",
+      "default": "./src/domain/composition/shivkumar.ts"
+    },
+    "./domain/composition/match": {
+      "types": "./src/domain/composition/match.ts",
+      "import": "./src/domain/composition/match.ts",
+      "default": "./src/domain/composition/match.ts"
+    },
+    "./domain/composition/source-import": {
+      "types": "./src/domain/composition/source-import.ts",
+      "import": "./src/domain/composition/source-import.ts",
+      "default": "./src/domain/composition/source-import.ts"
+    },
     "./domain/composition/client": {
       "types": "./src/domain/composition/client.ts",
       "import": "./src/domain/composition/client.ts",

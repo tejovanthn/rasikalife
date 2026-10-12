@@ -7,6 +7,7 @@ import Fuse, { type FuseResult, type FuseResultMatch } from 'fuse.js';
 import { ArtistEntity } from '../artist/entity';
 import type { Artist } from '../artist/entity';
 import { CompositionEntity } from '../composition/entity';
+import { toCompositionWithRelations } from '../composition/index';
 import type { CompositionWithRelations } from '../composition/index';
 import { EventEntity } from '../event/entity';
 import type { Event } from '../event/entity';
@@ -249,20 +250,9 @@ export async function searchWithFullData(
   ]);
 
   // Transform compositions to CompositionWithRelations format
-  const compositions: CompositionWithRelations[] = (compositionsResult.data || []).map(comp => ({
-    id: comp.id,
-    title: comp.title,
-    composer: comp.composer,
-    language: comp.language,
-    lyricsV1: comp.lyricsV1 || [],
-    ragas: comp.ragas || [],
-    talas: comp.talas || [],
-    sourceAttribution: comp.sourceAttribution,
-    createdAt: comp.createdAt,
-    updatedAt: comp.updatedAt,
-    version: comp.version,
-    lastEditedBy: comp.lastEditedBy,
-  }));
+  const compositions: CompositionWithRelations[] = (compositionsResult.data || []).map(
+    toCompositionWithRelations
+  );
 
   return {
     compositions,

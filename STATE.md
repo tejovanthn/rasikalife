@@ -2,6 +2,14 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
+## Waiting: shivkumar.org import review (2026-10-12)
+
+**Next step:** owner writes `decision` in `docs/research/shivkumar-matches-2026-10.csv` (418
+lessons: 330 suggested attach, 59 to review, 29 create), then runs the commands in
+`docs/research/shivkumar-import-2026-10.md`. Code (not deployed yet): `sources` list, `notation`
+field, generic `source-*` CLI with undo. Deploy before the import so pages show the notation.
+Nothing has been written to prod yet; apply and undo have not yet run against a real database.
+
 ## Waiting: raga dedupe approval (2026-10-09)
 
 **Next step:** owner reviews `docs/research/raga-dedupe-2026-10.csv` (67 suggested merges, 6 to

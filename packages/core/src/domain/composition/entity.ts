@@ -73,7 +73,21 @@ export const CompositionEntity = new Entity(
         required: false,
         default: () => [],
       },
+      // Legacy single source URL. Read only as a fallback for `sources` until
+      // `migrate-composition-sources` has run; nothing writes it any more.
       sourceAttribution: {
+        type: 'string',
+        required: false,
+      },
+      // Every site this record draws on (karnatik.com lyrics, shivkumar.org notation and
+      // lessons), as URLs. `describeSource` names them for display.
+      sources: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
+      // Swara notation as preformatted plain text. Never transliterated.
+      notation: {
         type: 'string',
         required: false,
       },

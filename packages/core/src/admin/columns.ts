@@ -331,7 +331,8 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       str('compositionType'),
       str('description'),
       str('meaning'),
-      str('sourceAttribution'),
+      list('sources'),
+      str('notation'),
       json('lyricsV1')
     ),
   },

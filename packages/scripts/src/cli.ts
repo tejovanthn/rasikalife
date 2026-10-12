@@ -241,6 +241,75 @@ program
   });
 
 program
+  .command('source-fetch')
+  .description('Download an outside source of compositions (cached) and parse it')
+  .requiredOption('--source <name>', 'e.g. shivkumar')
+  .action(async (opts: { source: string }) => {
+    const { fetchSource } = await import('./sourceImport.js');
+    await fetchSource(opts);
+  });
+
+program
+  .command('source-match')
+  .description('Match a fetched source against our compositions, for review')
+  .requiredOption('--source <name>', 'e.g. shivkumar')
+  .option('--out <path>', 'Review CSV to write', 'source-matches.csv')
+  .action(async (opts: { source: string; out: string }) => {
+    setup();
+    const { matchSource } = await import('./sourceImport.js');
+    await matchSource(opts);
+  });
+
+program
+  .command('source-csv')
+  .description('Build an admin CSV from the reviewed source-match file')
+  .requiredOption('--source <name>', 'e.g. shivkumar')
+  .option('--file <path>', 'Reviewed CSV', 'source-matches.csv')
+  .option('--out <path>', 'Admin CSV to write', 'source-import.csv')
+  .action(async (opts: { source: string; file: string; out: string }) => {
+    setup();
+    const { buildSourceCsv } = await import('./sourceImport.js');
+    await buildSourceCsv(opts);
+  });
+
+program
+  .command('source-apply')
+  .description('Write a source-csv file and record what changed in a manifest, for undo')
+  .requiredOption('--source <name>', 'e.g. shivkumar')
+  .requiredOption('--file <path>', 'Admin CSV from source-csv')
+  .requiredOption('--user <id>', 'Admin user id recorded on the writes')
+  .option('-n, --dry-run', 'Plan and report without writing')
+  .action(async (opts: { source: string; file: string; user: string; dryRun?: boolean }) => {
+    setup();
+    const { applySource } = await import('./sourceImport.js');
+    await applySource({ ...opts, userId: opts.user });
+  });
+
+program
+  .command('source-undo')
+  .description('Take back a source-apply run, wholly or for the ids given')
+  .requiredOption('--manifest <path>', 'The .applied-*.json that source-apply wrote')
+  .option('--only <ids>', 'Comma-separated composition, artist, raga or tala ids', (v: string) =>
+    v.split(',')
+  )
+  .option('-n, --dry-run', 'Report without writing')
+  .action(async (opts: { manifest: string; only?: string[]; dryRun?: boolean }) => {
+    setup();
+    const { undoSource } = await import('./sourceImport.js');
+    await undoSource(opts);
+  });
+
+program
+  .command('migrate-composition-sources')
+  .description('Move each legacy sourceAttribution into the sources list')
+  .option('-n, --dry-run', 'Count without writing')
+  .action(async (opts: { dryRun?: boolean }) => {
+    setup();
+    const { migrateCompositionSources } = await import('./sourceImport.js');
+    await migrateCompositionSources(opts);
+  });
+
+program
   .command('admin-clear-fields')
   .description('Remove attributes outright, which a blank CSV cell cannot do')
   .requiredOption('--domain <name>', 'venue or organiser')
