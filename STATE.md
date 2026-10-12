@@ -2,15 +2,16 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Waiting: shivkumar.org import review (2026-10-12)
+## Waiting: 24 new songs from shivkumar.org (2026-10-12)
 
-**Next step:** owner writes `decision` in `docs/research/shivkumar-matches-2026-10.csv` (418
-lessons: 330 suggested attach, 59 to review, 29 create), then runs the commands in
-`docs/research/shivkumar-import-2026-10.md`. Code (not deployed yet): `sources` list, `notation`
-field, generic `source-*` CLI with undo. Deploy before the import so pages show the notation.
-Deployed 2026-10-12. A one-song prod round trip passed: apply (Ada Modi attached, Dheem Dheem
-created), pages checked live, undo, pages back as before, a second undo a no-op. Nothing else
-written. Polish later: several MP3 links on one song share the label "Class recording (MP3)".
+**Next step:** owner decides the 24 rows with no `decision` in
+`docs/research/shivkumar-matches-2026-10.csv` (`review_note` says why each is held). They are
+songs we do not hold; each needs `new_language`, a composer check (some would create a new
+artist), then `decision` = `create`. Then `source-csv`, `source-apply`, `reindex`, and the
+respelling readers over the new lyrics. The 391 confident matches are live in prod (applied
+2026-10-12, reindexed); undo record: `docs/research/shivkumar-import-2026-10.applied.json`
+(`source-undo --manifest <it> [--only <id>]`). `seed:content` (attribution page) not yet run.
+Polish later: several MP3 links on one song share the label "Class recording (MP3)".
 
 ## Waiting: raga dedupe approval (2026-10-09)
 

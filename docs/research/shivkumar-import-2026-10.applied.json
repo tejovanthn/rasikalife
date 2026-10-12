@@ -1,0 +1,4578 @@
+{
+  "source": "shivkumar",
+  "file": "../../data/sources/shivkumar/import.csv",
+  "appliedAt": "2026-10-12T09:13:18.792Z",
+  "userId": "39WZZXug7V6PdinExzhhp6zDuKD",
+  "attached": [
+    {
+      "id": "38bRwudb2uDm3dwEPP9BmhcYHUI",
+      "title": "Azhi mazhai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-04-AazhiMazhaiKanna-Varali.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-04-AazhiMazhaiKanna-Varali.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai04-class.mp3",
+        "https://www.youtube.com/watch?v=oAVB3lbSvuQ",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse4.html",
+        "https://www.youtube.com/watch?v=DQWHgTjQ55I"
+      ],
+      "notationFingerprint": "2ba6cf24:16279"
+    },
+    {
+      "id": "38bE5w0E6SwGxjzqEt5QO0G26OT",
+      "title": "abhayAmbikAyAha anyam na jAnE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/abhayambikaya.htm",
+        "https://www.shivkumar.org/music/abhayambikaya.pdf",
+        "https://www.shivkumar.org/music/abhayambikaya-kedaragowla-class.mp3",
+        "http://www.youtube.com/watch?v=3ndF_fMIlrk",
+        "https://www.sangeetham.com",
+        "http://guru-guha.blogspot.com/2007/08/dikshitar-kriti-",
+        "https://www.youtube.com/watch?v=K-nMT3QFRuc"
+      ],
+      "notationFingerprint": "75dd928c:9023"
+    },
+    {
+      "id": "38awr8zgPD71xBL0h9GkNEDKH2s",
+      "title": "ADamODi galadE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/adamodi.htm",
+        "https://www.shivkumar.org/music/adamodi.pdf",
+        "https://www.shivkumar.org/music/adamodi.mp3",
+        "https://www.shivkumar.org/music/adamodi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/05a-adamodi-charukesi-krithi-ssi-c01.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.in/2007/11/thyagaraja-kriti-aada-modi-galadaa-raga.html",
+        "https://www.youtube.com/watch?v=AMppvfCS6vE"
+      ],
+      "notationFingerprint": "5266dba1:6095"
+    },
+    {
+      "id": "38awteV6gLj8zeKVGuH9dA3Ykxv",
+      "title": "aDigi sukhamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/adigi-sukhamu-madhyamavathi.htm",
+        "https://www.shivkumar.org/music/adigi-sukhamu-madhyamavathi.pdf",
+        "https://www.shivkumar.org/music/adigi-sukhamu-madhyamavathi-class.mp3",
+        "https://www.youtube.com/watch?v=mhUVulopbC0&ab_channel=RamKaushik",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/09/thyagaraja-kriti-adigi-sukhamu-",
+        "https://youtu.be/O6RlFRwbavU"
+      ],
+      "notationFingerprint": "674a8f07:11526"
+    },
+    {
+      "id": "38axADzvtaUbKcigaKxLSvBgD5v",
+      "title": "akhilANDEshvari",
+      "addedSources": [
+        "https://www.shivkumar.org/music/akhilandesvari.htm",
+        "https://www.shivkumar.org/music/akhilandesvari.pdf",
+        "https://www.shivkumar.org/music/akhilandesvari.mp3",
+        "https://www.shivkumar.org/music/akhilandesvari-class.mp3",
+        "https://www.youtube.com/watch?v=BX3R2gNVo5Q",
+        "https://www.youtube.com/watch?v=WJG5TMAjy04"
+      ],
+      "notationFingerprint": "c20ed5a3:13458"
+    },
+    {
+      "id": "38avQ9oY5kMuctye6djzuSiPEfE",
+      "title": "alai pAyudE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/alaipayudhe.htm",
+        "https://www.shivkumar.org/music/alaipayudhe.pdf",
+        "https://www.shivkumar.org/music/alaipayudhe-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/AlaiPayudhe-MaharajapuramSanthanam.mp3",
+        "https://www.karnatik.com",
+        "https://www.youtube.com/watch?v=qPeOjQGST8I"
+      ],
+      "notationFingerprint": "3bc3e00c:12774"
+    },
+    {
+      "id": "38awu0p6FeHZLWbOBt8i7mbgjFx",
+      "title": "alakalalla",
+      "addedSources": [
+        "https://www.shivkumar.org/music/alakalladaga.htm",
+        "https://www.shivkumar.org/music/alakalladaga.pdf",
+        "https://www.shivkumar.org/music/alakalladaga-class.mp4",
+        "https://www.shivkumar.org/music/alakalladaga-class.mp3"
+      ],
+      "notationFingerprint": "84392fe2:5606"
+    },
+    {
+      "id": "38avjo47uZRvQPQFgkytsn7cicP",
+      "title": "alamEluma~NgA nIvabhinava",
+      "addedSources": [
+        "https://www.shivkumar.org/music/AlameluMangaNee.pdf",
+        "https://www.shivkumar.org/music/originals/078-SGR-Alamelu.mp3"
+      ]
+    },
+    {
+      "id": "38bE7UwN2x7vhT7mDnEOohBJMAN",
+      "title": "ambA nIlAyatAkS karuNA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ambaneelayatakshi.htm",
+        "https://www.shivkumar.org/music/AmbaNeelayatakshi.pdf",
+        "https://www.shivkumar.org/music/ambaneelayatakshi.mp3",
+        "https://www.shivkumar.org/music/ambaneelayatakshi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/07b-amba-neelayatakshi-nilambari-krithi-ssi-c11.mp3"
+      ],
+      "notationFingerprint": "28d0eb90:10871"
+    },
+    {
+      "id": "38axseKxMyct82H2DI32JhZ8vcV",
+      "title": "ambA vANi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ambavani-keeravani.htm",
+        "https://www.shivkumar.org/music/ambavani-keeravani.pdf",
+        "https://www.shivkumar.org/music/ambavani-keeravani-class.mp4",
+        "https://www.shivkumar.org/music/ambavani-keeravani-class.mp3",
+        "https://www.shivkumar.org/music/originals/AmbaVani-Keeravani-RK.mp3",
+        "http://www.youtube.com/watch?v=XWVHfnYfFb0"
+      ],
+      "notationFingerprint": "b28866e8:10146"
+    },
+    {
+      "id": "38bRwfSSQnPuPyUwOehrev4QbgP",
+      "title": "ambaramE taNNIrE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-17-AmparamE-Kalyani.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-17-AmparamE-Kalyani.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai17-class.mp3",
+        "https://www.youtube.com/watch?v=VdhieK_9KlQ",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp17.html",
+        "https://www.youtube.com/watch?v=NQuJSs87pw0"
+      ],
+      "notationFingerprint": "3dcb392a:14215"
+    },
+    {
+      "id": "38ax1UnIXjpXQ0cnUYwi9UtlzDi",
+      "title": "Ananda naTana prakAsham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/anandanatana-kedaram.htm",
+        "https://www.shivkumar.org/music/anandanatana-kedaram.pdf",
+        "https://www.shivkumar.org/music/anandanatana-kedaram-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/007-anandanatanaprakasham-kedaram-krithi-dkj-panchalinga.mp3"
+      ],
+      "notationFingerprint": "3c192159:12143"
+    },
+    {
+      "id": "38bFSr5y1KLjAOmMj92cWQcn3Qv",
+      "title": "ANDavanE unai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/andavane.htm",
+        "https://www.shivkumar.org/music/andavane.pdf",
+        "https://www.shivkumar.org/music/andavane-class.mp4",
+        "https://www.shivkumar.org/music/andavane-class.mp3",
+        "https://www.shivkumar.org/music/originals/Andavane-Shanmukhapriya-RK.mp3",
+        "https://www.youtube.com/watch?v=RNs3-k2b09M"
+      ],
+      "notationFingerprint": "d0c0becf:6028"
+    },
+    {
+      "id": "38bE8KiEEmdGK4rzKR6r328aKDN",
+      "title": "angArakam AshrayAmyaham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/angaraka.htm",
+        "https://www.shivkumar.org/music/angaraka.pdf",
+        "https://www.shivkumar.org/music/angaraka.mp3",
+        "https://www.shivkumar.org/music/angaaraka-class.mp3",
+        "https://www.shivkumar.org/music/originals/8_angaraka_surutti.mp3",
+        "https://www.shivkumar.org/music/originals/AngarakamSurutti_Part1_RK.mp3",
+        "https://www.shivkumar.org/music/originals/AngarakamSurutti_Part2_RK.mp3"
+      ],
+      "notationFingerprint": "bbcbdb1a:7284"
+    },
+    {
+      "id": "38bRwZNGvDhMxhJO3NxzBcAy6BJ",
+      "title": "am kaN mA jnyAlattu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-22-AngkanMaa-YamunaKalyani.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-22-AngkanMaa-YamunaKalyani.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai22-class.mp3",
+        "https://www.youtube.com/watch?v=_JjogBKsG2I",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp22.html",
+        "https://www.youtube.com/watch?v=MNheWJ7Mbt8"
+      ],
+      "notationFingerprint": "c46cbb08:12959"
+    },
+    {
+      "id": "38bE8SSOcEdf7K9h7Um7CbTaEpq",
+      "title": "annapUrNE vishAlAkSi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/annapurne.htm",
+        "https://www.shivkumar.org/music/annapurne.pdf",
+        "https://www.shivkumar.org/music/annapurne-detailed.mp3"
+      ],
+      "notationFingerprint": "ad49d590:7732"
+    },
+    {
+      "id": "38bRwjE4ydG3F4MulYk6LDh8Ppd",
+      "title": "anru ivvulagam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-24-anru-Ivvulagam-SindhuBhairavi.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-24-anru-Ivvulagam-SindhuBhairavi.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai24-class.mp3",
+        "https://www.youtube.com/watch?v=HsAz-edn6dA&ab_channel=SouthIndianMusicAcademyLA",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp24.html",
+        "https://youtu.be/X8Oj9WW-uT8"
+      ],
+      "notationFingerprint": "7f7b504f:13112"
+    },
+    {
+      "id": "38ay4zMhrsehskRSkfCmFwGHrdS",
+      "title": "antara~Nga bhakti",
+      "addedSources": [
+        "https://www.shivkumar.org/music/antarangabhakti.htm",
+        "https://www.shivkumar.org/music/antarangabhakti.pdf",
+        "https://www.shivkumar.org/music/AntarangaBhaktiShadvidamargini.mp3",
+        "https://www.shivkumar.org/music/antarangabhakti-detailed.mp3"
+      ],
+      "notationFingerprint": "58e0e8e7:6568"
+    },
+    {
+      "id": "38awvEP6TtTq5zUIRgl3dOTSOKi",
+      "title": "anupama guNAmbudhi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/anupamagunambudhi.htm",
+        "https://www.shivkumar.org/music/anupamagunambudhi.pdf",
+        "https://www.shivkumar.org/music/anupamagunambudhi.mp3",
+        "https://www.shivkumar.org/music/anupamagunambudhi-detailed.mp3"
+      ],
+      "notationFingerprint": "7724b83e:5087"
+    },
+    {
+      "id": "38awvVmCOL9Dqfb5JpKVdhc7xDO",
+      "title": "aparAdhamula nOrva",
+      "addedSources": [
+        "https://www.shivkumar.org/music/aparadhamula-rasali.htm",
+        "https://www.shivkumar.org/music/aparadhamula-rasali.pdf",
+        "https://www.shivkumar.org/music/aparadhamula-rasali-class.mp3",
+        "https://www.youtube.com/watch?v=VILw2foRtSA",
+        "https://www.youtube.com/watch?v=NXiuEkHeayk"
+      ],
+      "notationFingerprint": "f7f80e27:12316"
+    },
+    {
+      "id": "38awveCqQzyBHnsKV3p2JrqFByT",
+      "title": "appa rAma bhakti",
+      "addedSources": [
+        "https://www.shivkumar.org/music/apparamabhakthi.htm",
+        "https://www.shivkumar.org/music/apparamabhakthi.pdf",
+        "https://www.shivkumar.org/music/apparamabhakthi.mp3",
+        "https://www.shivkumar.org/music/apparamabhakthi-detailed.mp3"
+      ],
+      "notationFingerprint": "1a4d6c80:3730"
+    },
+    {
+      "id": "38awvnCbmvvpg9DPxdIUC0MEmWx",
+      "title": "AragimpavE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/aragimpave.htm",
+        "https://www.shivkumar.org/music/aragimpave.pdf",
+        "https://www.shivkumar.org/music/aragimpave-class.mp3",
+        "https://www.youtube.com/watch?v=giqA6PKpMFE"
+      ],
+      "notationFingerprint": "5735ed80:4906"
+    },
+    {
+      "id": "38bE8jzEzXGpZAudf4skXZdCZjw",
+      "title": "ardhanArIshvaram",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ardhanaareeshwaram.htm",
+        "https://www.shivkumar.org/music/ardhanaareeshwaram.pdf",
+        "https://www.shivkumar.org/music/ardhanareeshwaram-class.mp4",
+        "https://www.shivkumar.org/music/ardhanareeshwaram-class.mp3",
+        "https://www.shivkumar.org/music/originals/8_ardhanaareeshwaram_guntakriya.mp3"
+      ],
+      "notationFingerprint": "e798fb9e:7941"
+    },
+    {
+      "id": "38awlL8uQoH9w0kVGyTxRP7Johr",
+      "title": "aruL seyya vENDum",
+      "addedSources": [
+        "https://www.shivkumar.org/music/arul-seyya-rasikapriya.htm",
+        "https://www.shivkumar.org/music/arul-seyya-rasikapriya.pdf",
+        "https://www.shivkumar.org/music/arul-seyya-class.mp4",
+        "https://www.shivkumar.org/music/arul-seyya-class.mp3",
+        "https://www.shivkumar.org/music/originals/ArulSeyya-Rasikapriya-RK.mp3",
+        "https://www.youtube.com/watch?v=PutqbeLwX7M"
+      ],
+      "notationFingerprint": "92a51fde:10728"
+    },
+    {
+      "id": "38bE8pH0TOFiNprhJyxphzHIHzk",
+      "title": "aruNAcala nAtham smarAmi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/arunaachala.htm",
+        "https://www.shivkumar.org/music/arunaachala.pdf",
+        "https://www.shivkumar.org/music/arunaachala.mp3",
+        "https://www.shivkumar.org/music/arunaachala-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/005-arunaachala-saranga-krithi-dkj-panchalinga.mp3"
+      ],
+      "notationFingerprint": "7a733d7c:5644"
+    },
+    {
+      "id": "38bE9NpgC4qFiABLaPpTlUg433m",
+      "title": "bAlagOpAla pAlayAshu mAm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/balagopala.htm",
+        "https://www.shivkumar.org/music/balagopala.pdf",
+        "https://www.shivkumar.org/music/balagopala.mp3",
+        "https://www.shivkumar.org/music/balagopala-class.mp3",
+        "http://www.youtube.com/watch?v=QeMB_JQksMA",
+        "https://www.youtube.com/watch?v=PavArGza5ek"
+      ],
+      "notationFingerprint": "56ce23e1:10981"
+    },
+    {
+      "id": "38bFV3kONb6lZiGxSi4Gkzsw5Y1",
+      "title": "bAlakrSNan",
+      "addedSources": [
+        "https://www.shivkumar.org/music/balakrishnan.htm",
+        "https://www.shivkumar.org/music/balakrishnan.pdf",
+        "https://www.shivkumar.org/music/balakrishnan.mp3",
+        "https://www.shivkumar.org/music/balakrishnan-detailed.mp3"
+      ],
+      "notationFingerprint": "c3809429:6938"
+    },
+    {
+      "id": "38bEAV4CZuFAs93HZMUr1tIBpCU",
+      "title": "bAlasubrahmanyam bhajEham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/balasubramanyam.htm",
+        "https://www.shivkumar.org/music/balasubramanyam.pdf",
+        "https://www.shivkumar.org/music/balasubramanyam-surutti-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/02-balasubramanyam-surutti.mp3"
+      ],
+      "notationFingerprint": "f06b685a:7160"
+    },
+    {
+      "id": "38avR7Y3HRImJ3tNUmljBkyj3C6",
+      "title": "banTu rIti kOlu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bantureethi.htm",
+        "https://www.shivkumar.org/music/bantureethi.pdf",
+        "https://www.shivkumar.org/music/bantureethi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/4-Bantureeti-TMK.mp3",
+        "https://www.shivkumar.org/music/originals/Bantureethi-MSS-1997.mp3"
+      ],
+      "notationFingerprint": "598ad6e3:10687"
+    },
+    {
+      "id": "38b9XUpoaVYuRGXgSSkbSWnHpEb",
+      "title": "bhajanasEya rAdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bhajanaseyarada.htm",
+        "https://www.shivkumar.org/music/bhajanaseyarada.pdf",
+        "https://www.shivkumar.org/music/bhajanaseyarada-dharmavathi-class.mp3",
+        "https://www.youtube.com/watch?v=IirQAwl0rwI",
+        "https://www.youtube.com/watch?v=lDRMTxxZ2SA"
+      ],
+      "notationFingerprint": "30a8d611:9907"
+    },
+    {
+      "id": "38awbx5qMuuwEWHUSCUs0X0bYcZ",
+      "title": "bhajarE rE mAnasa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bhajare-re-manasa.htm",
+        "https://www.shivkumar.org/music/bhajare-re-manasa.pdf",
+        "https://www.shivkumar.org/music/bhajare-re-manasa-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/9a_bhajare_abheri_full.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "7017403d:9851"
+    },
+    {
+      "id": "38aw5lOKhUM7xBJHeKnXHfgLF8j",
+      "title": "bhajarE gOpAlam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/BhajareGopalam.pdf",
+        "https://www.shivkumar.org/music/originals/bhajare-gopalam-sowmya.mp3"
+      ],
+      "notationFingerprint": "9a999614:2097"
+    },
+    {
+      "id": "38ay17gh2GGCJ6cPQ6XHeCcP89C",
+      "title": "bhakti biccamiyyavE bhAvukamagu sAttvika",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bhakthibiccha.htm",
+        "https://www.shivkumar.org/music/bhakthibiccha.pdf",
+        "https://www.shivkumar.org/music/bhakthibiccha.mp3",
+        "https://www.shivkumar.org/music/bhakthibiccha-detailed.mp3"
+      ],
+      "notationFingerprint": "09ce1939:4711"
+    },
+    {
+      "id": "38ax5Av4aw9zMegYyhltKKfKR5Q",
+      "title": "bhAvamulOna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bhavamulona.htm",
+        "https://www.shivkumar.org/music/bhavamulona.pdf",
+        "https://www.shivkumar.org/music/bhavamulona-class.mp3",
+        "https://www.shivkumar.org/music/originals/Bhavamulona-ShuddhaDhanyasi-Annamacharya-MSS.mp3",
+        "https://www.youtube.com/watch?v=7oTHxRolhj8"
+      ],
+      "notationFingerprint": "eb59f249:10382"
+    },
+    {
+      "id": "38awidF1A4KtteRgoRHr45pkMvD",
+      "title": "bhavanuta nA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bhavanuta.htm",
+        "https://www.shivkumar.org/music/bhavanuta.pdf",
+        "https://www.shivkumar.org/music/bhavanuta-class.mp3",
+        "https://www.youtube.com/watch?v=SU8-hjOlzQU"
+      ],
+      "notationFingerprint": "9e0d36df:8276"
+    },
+    {
+      "id": "38bGakwjcPWqkcoyzTcX6khm3Tl",
+      "title": "bhAvayAmi raghurAmam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/bhavayami.htm",
+        "https://www.shivkumar.org/music/bhavayami.pdf",
+        "https://www.shivkumar.org/music/bhavayami-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/14-bhavayami-saveri+ragamalika-krithi-ssi-c16.mp3"
+      ],
+      "notationFingerprint": "036fbd18:22752"
+    },
+    {
+      "id": "38axMmgeUKaasdtJUBWZzCfnDa8",
+      "title": "brahma kaDigina",
+      "addedSources": [
+        "https://www.shivkumar.org/music/brahmakadigina.htm",
+        "https://www.shivkumar.org/music/brahmakadigina.pdf",
+        "https://www.shivkumar.org/music/brahmakadigina.mp3",
+        "https://www.shivkumar.org/music/brahmakadigina-detailed.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "c5fac1ca:7997"
+    },
+    {
+      "id": "38awQFlvI68UioEqtiiuwKoazMT",
+      "title": "brOcEvArevarE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/brochevarevare.htm",
+        "https://www.shivkumar.org/music/brochevarevare.pdf",
+        "https://www.shivkumar.org/music/brochevarevare.mp3",
+        "https://www.shivkumar.org/music/brochevarevare-detailed.mp3"
+      ],
+      "notationFingerprint": "ae64bfdf:3814"
+    },
+    {
+      "id": "38awj8C9CiZLXXwf3ZEWRfmEJ84",
+      "title": "brOcEvArevarurA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/brochevarevarura-khamas.htm",
+        "https://www.shivkumar.org/music/brochevarevarura-khamas.pdf",
+        "https://www.shivkumar.org/music/brochevarevarura-khamas-class.mp4",
+        "https://www.shivkumar.org/music/brochevarevarura-khamas-class.mp3"
+      ],
+      "notationFingerprint": "79913bf1:14688"
+    },
+    {
+      "id": "38avQrbYfat6Ayc9oZlUUMN29XN",
+      "title": "brOva bhAramA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/brovabarama.htm",
+        "https://www.shivkumar.org/music/brovabarama.pdf",
+        "https://www.shivkumar.org/music/brovabarama.mp3",
+        "https://www.shivkumar.org/music/brovabarama-detailed.mp3"
+      ],
+      "notationFingerprint": "bc4d1a56:4228"
+    },
+    {
+      "id": "38bEDLOFGdC9WQ3L872OnQVwMJV",
+      "title": "budham AshrayAmi satatam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/budhamashrayami.htm",
+        "https://www.shivkumar.org/music/budhamashrayami.pdf",
+        "https://www.shivkumar.org/music/Budhamashrayaami-R.mp3",
+        "https://www.shivkumar.org/music/budhamashrayami-detailed.mp3"
+      ],
+      "notationFingerprint": "f7491a68:8474"
+    },
+    {
+      "id": "38b5S8WRu2F04mEV7gNCp95TE3L",
+      "title": "cEDE buddhi mAnurA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/cedebuddhi-atana.htm",
+        "https://www.shivkumar.org/music/cedebuddhi-atana.pdf",
+        "https://www.shivkumar.org/music/cedebuddhi-atana-class.mp3",
+        "https://www.shivkumar.org/music/originals/CedeBuddhi_Attana_RK.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/04/thyagaraja-kriti-chede-",
+        "https://www.youtube.com/watch?v=ufgTlRfdlPs"
+      ],
+      "notationFingerprint": "942d26ba:7596"
+    },
+    {
+      "id": "38b5R1Gm5oVz7GN6rcXwJoUD7wK",
+      "title": "cakkani rAja",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Chakkaniraja.htm",
+        "https://www.shivkumar.org/music/Chakkaniraja.pdf",
+        "https://www.shivkumar.org/music/chakkaniraja.mp3",
+        "https://www.shivkumar.org/music/chakkaniraja-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/08b-chakkaniraja-kharaharapriya-krithi-ssi-c11.mp3"
+      ],
+      "notationFingerprint": "ba6d0e58:11444"
+    },
+    {
+      "id": "38ax2CL6sA3IP5jSeDea6cBuOXX",
+      "title": "candram bhaja",
+      "addedSources": [
+        "https://www.shivkumar.org/music/chandrambhaja.htm",
+        "https://www.shivkumar.org/music/chandrambhaja.pdf",
+        "https://www.shivkumar.org/music/ChandramBhajaAsaveri-R.mp3",
+        "https://www.shivkumar.org/music/chandrambhaja-detailed.mp3"
+      ],
+      "notationFingerprint": "fd449967:10881"
+    },
+    {
+      "id": "38bEDlDcZHntrRPQZYMgIOaBtTW",
+      "title": "cEtah shrI bAlakrSNam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/chetashree.htm",
+        "https://www.shivkumar.org/music/chetashree.pdf",
+        "https://www.shivkumar.org/music/chetasri.mp3",
+        "https://www.shivkumar.org/music/chetasri-class.mp3",
+        "https://www.shivkumar.org/music/originals/05b-chetasri-dwijavanthi-krithi-ssi-c06.mp3",
+        "http://guru-guha.blogspot.com/2007/11/dikshitar-kriti-chetah-sri-bala.html",
+        "https://www.youtube.com/watch?v=Z9s1bN0b8v8",
+        "http://www.shivkumar.org/music/chetashree-class.mp3"
+      ],
+      "notationFingerprint": "3ee38b37:9110"
+    },
+    {
+      "id": "38bEEdMjUqNJk0IrJsRu8T7IQEh",
+      "title": "cintaya mA kanda mUlakandam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/chintayamaam.htm",
+        "https://www.shivkumar.org/music/chintayamaam.pdf",
+        "https://www.shivkumar.org/music/chintayamaam.mp3",
+        "https://www.shivkumar.org/music/chintayamaam-detailed.mp3"
+      ],
+      "notationFingerprint": "40275ada:8927"
+    },
+    {
+      "id": "38awCGl6PkmRG6tOKcUUI8huC4G",
+      "title": "dakSiNAmUrttE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dakshinamurthe.htm",
+        "https://www.shivkumar.org/music/dakshinamurthe.pdf",
+        "https://www.shivkumar.org/music/dakshinamurthe.mp3",
+        "https://www.shivkumar.org/music/dakshinamurthe-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/06a-dakshinamurthe-shankarabharanam-krithi-ssi-c04.mp3"
+      ],
+      "notationFingerprint": "781bb66a:6864"
+    },
+    {
+      "id": "38b5Uhq0wZoeFwUohECo0cYy7T6",
+      "title": "daridApulEka vEDitE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/darithapuleka.htm",
+        "https://www.shivkumar.org/music/darithapuleka.pdf",
+        "https://www.shivkumar.org/music/darithapuleka.mp3",
+        "https://www.shivkumar.org/music/darithapuleka-detailed.mp3"
+      ],
+      "notationFingerprint": "5fe198c0:4540"
+    },
+    {
+      "id": "38ax5cS3JxQ8nYtYCao0boeHfT8",
+      "title": "darini telusukoNTi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/darinitelusukonti.htm",
+        "https://www.shivkumar.org/music/darinitelusukonti.pdf",
+        "https://www.shivkumar.org/music/darinitelusukonti-class.mp3",
+        "https://www.youtube.com/watch?v=nK0tg4pLcng",
+        "https://thyagaraja-"
+      ],
+      "notationFingerprint": "a35cb68e:19685"
+    },
+    {
+      "id": "38b5VoISzaOJhfMT3wBoWxOMTKp",
+      "title": "dasharatha nandana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dasharatha-nandana.htm",
+        "https://www.shivkumar.org/music/dasharatha-nandana.pdf",
+        "https://www.shivkumar.org/music/dasharatha-nandana-detailed.mp3"
+      ],
+      "notationFingerprint": "631d9114:5509"
+    },
+    {
+      "id": "38b5WEbOQbnJGGAlTHCIoJmgQql",
+      "title": "dAsharathI",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dasarathi-thodi.htm",
+        "https://www.shivkumar.org/music/dasarathi-thodi.pdf",
+        "https://www.shivkumar.org/music/dasarathi-thodi-class.mp3",
+        "https://www.youtube.com/watch?v=wHR0_eMIIJc",
+        "https://youtu.be/rhM7d0YX04Q"
+      ],
+      "notationFingerprint": "5a48f241:16304"
+    },
+    {
+      "id": "38b5XSIfyJ3GwiD88doTBysAt2G",
+      "title": "dayalEni bratukEmi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dayaleni.htm",
+        "https://www.shivkumar.org/music/dayaleni.pdf",
+        "https://www.shivkumar.org/music/dayaleni.mp3",
+        "https://www.shivkumar.org/music/dayaleni-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/09/thyagaraja-kriti-daya-leni-",
+        "https://www.youtube.com/watch?v=8Q7ZliHinyU"
+      ],
+      "notationFingerprint": "a3e8b7b1:10914"
+    },
+    {
+      "id": "38b5YieAbQSN3pKWRYXPXJyVw7Z",
+      "title": "dEhi tava",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dehitavapada-sahana.htm",
+        "https://www.shivkumar.org/music/dehitavapada-sahana.pdf",
+        "https://www.shivkumar.org/music/dehitavapada-sahana-class.mp3",
+        "https://www.youtube.com/watch?v=3VCMQZj8dbY",
+        "http://thyagaraja-vaibhavam.blogspot.in/2007/12/thyagaraja-"
+      ],
+      "notationFingerprint": "4d25cedc:10810"
+    },
+    {
+      "id": "38awP2oUFrwDfDl4cOwY2j0V3T5",
+      "title": "dEva dEva kalayAmi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/devadeva.htm",
+        "https://www.shivkumar.org/music/devadeva.pdf",
+        "https://www.shivkumar.org/music/devadeva.mp3",
+        "https://www.shivkumar.org/music/devadeva-class.mp3",
+        "https://www.shivkumar.org/music/originals/01b-devadeva-mayamalavagowla-krithi-ssi-c11.mp3"
+      ],
+      "notationFingerprint": "f7306dfb:4809"
+    },
+    {
+      "id": "38bFZ9cjngInOFrMPY5CTaSOu2k",
+      "title": "dEvi nIyE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/devineeyethunai.htm",
+        "https://www.shivkumar.org/music/devineeyethunai.pdf",
+        "https://www.shivkumar.org/music/devineeyethunai.mp3",
+        "https://www.shivkumar.org/music/devineeyethunai-detailed.mp3"
+      ],
+      "notationFingerprint": "ee3f1c84:7639"
+    },
+    {
+      "id": "38awqJoiyHYBx0bLGHbgHWYwD6o",
+      "title": "dharma samvarddhani",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dharmasamvarddhani.htm",
+        "https://www.shivkumar.org/music/dharmasamvarddhani.pdf",
+        "https://www.shivkumar.org/music/dharmasamvarddhani-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/DharmasamvardhaniMadhyamavathi_RK.MP3"
+      ],
+      "notationFingerprint": "83487a19:7855"
+    },
+    {
+      "id": "38b5bVi87AAAITW8GDb4E3GrlOt",
+      "title": "dinamaNi vamsha",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dinamanivamsha.htm",
+        "https://www.shivkumar.org/music/dinamanivamsha.pdf",
+        "https://www.shivkumar.org/music/dinamanivamsha.mp3",
+        "https://www.shivkumar.org/music/dinamanivamsha-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/02a_dinamani_harikambodhi_krithi-ssi-c09.mp3"
+      ],
+      "notationFingerprint": "b42dacf3:7847"
+    },
+    {
+      "id": "38bEFt5YYDEDpzYrN9DWjXceQ5E",
+      "title": "divAkara tanujam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/divakarathanujam.htm",
+        "https://www.shivkumar.org/music/divakarathanujam.pdf",
+        "https://www.shivkumar.org/music/divakarathanujam.mp3",
+        "https://www.shivkumar.org/music/divakarathanujam-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/07b-divakaratanujam-yadukula-kambodhi-krithi-ssi-c05.mp3"
+      ],
+      "notationFingerprint": "507b15fe:8750"
+    },
+    {
+      "id": "38b5bq8DeslJvc7D5HYHhWsVpQy",
+      "title": "dorakunA iTuvaNTi sEva",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dorakuna.htm",
+        "https://www.shivkumar.org/music/dorakuna.pdf",
+        "https://www.shivkumar.org/music/dorakuna.mp3",
+        "https://www.shivkumar.org/music/dorakuna-detailed.mp3"
+      ],
+      "notationFingerprint": "3e9ca794:5823"
+    },
+    {
+      "id": "38avR7KWq0gSZuaJnDyGV7u3qAL",
+      "title": "duDuku gala nannE dora",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dudukugala-new.htm",
+        "https://www.shivkumar.org/music/dudukugala-new.pdf",
+        "https://www.shivkumar.org/music/dudukugala.mp3",
+        "https://www.shivkumar.org/music/dudukugala-detailed.mp3"
+      ],
+      "notationFingerprint": "a29b7454:13008"
+    },
+    {
+      "id": "38awQm6142W8PfgewRKec2CnkCZ",
+      "title": "durmArga carAdhamulanu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/durmargachara-new.htm",
+        "https://www.shivkumar.org/music/durmargachara-new.pdf",
+        "https://www.shivkumar.org/music/Durmargachara.mp3",
+        "https://www.shivkumar.org/music/durmargachara-detailed.mp3"
+      ],
+      "notationFingerprint": "dee08d81:4664"
+    },
+    {
+      "id": "38aw5M424UbvEQHOfBMy1JNmywY",
+      "title": "durusugA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/durusuga-saveri.htm",
+        "https://www.shivkumar.org/music/durusuga-saveri.pdf",
+        "https://www.shivkumar.org/music/durusuga-saveri-class.mp3",
+        "http://syamakrishnavaibhavam.blogspot.in/2011/04/syama-"
+      ],
+      "notationFingerprint": "55c5609e:14535"
+    },
+    {
+      "id": "38b5bzJttsCoRHDNoNruxvl6Trn",
+      "title": "dvaitamu sukhamA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/dwaitamu.htm",
+        "https://www.shivkumar.org/music/dwaitamu.pdf",
+        "https://www.shivkumar.org/music/dwaitamu.mp3",
+        "https://www.shivkumar.org/music/dwaitamu-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/07b-dwaitamu-reethigowlai-krithi-ssi-c04.mp3"
+      ],
+      "notationFingerprint": "459a10fb:6264"
+    },
+    {
+      "id": "38b5cT7XcLik449hGUCiMX4SW0p",
+      "title": "eduTa nilicitE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/edutanilachite.htm",
+        "https://www.shivkumar.org/music/edutanilachite.pdf",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/03/thyagaraja-kriti-eduta-"
+      ],
+      "notationFingerprint": "93ad7d5a:13290"
+    },
+    {
+      "id": "38b5qKrIQbEkv91fmoQqQgJpjFP",
+      "title": "I vasudha",
+      "addedSources": [
+        "https://www.shivkumar.org/music/eevasudha.htm",
+        "https://www.shivkumar.org/music/eevasudha.pdf",
+        "https://www.shivkumar.org/music/eevasudha-detailed.mp3",
+        "https://www.shivkumar.org/music/EeVasudha-CVShankar.mp3"
+      ],
+      "notationFingerprint": "bae305eb:11981"
+    },
+    {
+      "id": "38awT4USTtShvV4xj3ubm5bqEMS",
+      "title": "ekkAlattilum",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ekkalathilum-natakuranji.htm",
+        "https://www.shivkumar.org/music/ekkalathilum-natakuranji.pdf",
+        "https://www.shivkumar.org/music/ekkalathilum-natakuranji-class.mp3",
+        "https://www.shivkumar.org/music/originals/Ekkalathilum-NataKuranji-RK.mp3",
+        "https://www.youtube.com/watch?v=R-QkkK3O800",
+        "http://inikkumtamizhisai.blogspot.com/2016/07/thamizh-songs-"
+      ],
+      "notationFingerprint": "bca32850:8476"
+    },
+    {
+      "id": "38awxuCP9l77NULS21c1ENE0x1V",
+      "title": "Ela nI dayarAdu (bAla kanakamaya)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/elaneedayaradu.htm",
+        "https://www.shivkumar.org/music/elaneedayaradu.pdf",
+        "https://www.shivkumar.org/music/elaneedayaradu.mp3",
+        "https://www.shivkumar.org/music/elaneedayaradu-detailed.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "a7ccb5ad:6317"
+    },
+    {
+      "id": "38bRx5OgxVNMxdE6EzTHpP8y4ut",
+      "title": "ellE iLam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-15-ElleIlangKiliye-Begada.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-15-ElleIlangKiliye-Begada.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai15-class.mp3",
+        "https://www.youtube.com/watch?v=0uGFr2Mv4b4",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp15.html"
+      ],
+      "notationFingerprint": "5ad1036b:14189"
+    },
+    {
+      "id": "38b5cvv92oyoWuxqnz5lA6WksNR",
+      "title": "EmAnaticcEdivO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/emaanadicchevo.htm",
+        "https://www.shivkumar.org/music/emaanadicchevo.pdf",
+        "https://www.shivkumar.org/music/EmanaadichhevoSahaana-R.mp3",
+        "https://www.shivkumar.org/music/emaanadicchevo-detailed.mp3"
+      ],
+      "notationFingerprint": "a3837c5a:5483"
+    },
+    {
+      "id": "38bQxfonlQeHXOE99l6HsXe7tnL",
+      "title": "Emani nE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/emanine.htm",
+        "https://www.shivkumar.org/music/emanine.pdf",
+        "https://www.shivkumar.org/music/emanine.mp3",
+        "https://www.shivkumar.org/music/emanine-class.mp4",
+        "https://www.shivkumar.org/music/emanine-class.mp3"
+      ],
+      "notationFingerprint": "10c400f0:7646"
+    },
+    {
+      "id": "38b5dyziwaQK7VWOJsTAx6yZk9V",
+      "title": "Emi jEsitE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/emijesithe.htm",
+        "https://www.shivkumar.org/music/emijesithe.pdf",
+        "https://www.shivkumar.org/music/emijesithe-class.mp3",
+        "https://www.youtube.com/watch?v=N_V2IAJtM40&ab_channel=D.Seshachary-Topic",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/11/thyagaraja-kriti-emi-",
+        "https://youtu.be/HB88VIkcSh4"
+      ],
+      "notationFingerprint": "8cc4ecff:12510"
+    },
+    {
+      "id": "38bFcf5WyCFRRdl85i9NMIvFdl7",
+      "title": "enna tavam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ennathavam-kapi.htm",
+        "https://www.shivkumar.org/music/ennathavam-kapi.pdf",
+        "https://www.shivkumar.org/music/ennathavam-kapi-class.mp3",
+        "https://www.shivkumar.org/music/EnnaThavam-Kapi-Sikkil-Gurucharan.mp3",
+        "http://www.karnatik.com/c1007.shtml"
+      ],
+      "notationFingerprint": "4a5bd752:8937"
+    },
+    {
+      "id": "38axpi46yu3rCVCqpxgwkRe7Z2t",
+      "title": "EnaaTi nOmu phalamO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/enatinomu.htm",
+        "https://www.shivkumar.org/music/enatinomu.pdf",
+        "https://www.shivkumar.org/music/enatinomu-class.mp4",
+        "https://www.shivkumar.org/music/enatinomu-class.mp3"
+      ],
+      "notationFingerprint": "cfbbd024:6547"
+    },
+    {
+      "id": "38avRV3Vh5VQ7DmxegQIOsk0d4q",
+      "title": "endarO mahAnubhAvu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/endaromahanubhavulu-new.htm",
+        "https://www.shivkumar.org/music/endaromahanubhavulu-new.pdf",
+        "https://www.shivkumar.org/music/Endaro.mp3",
+        "https://www.shivkumar.org/music/endaro-detailed.mp3"
+      ],
+      "notationFingerprint": "86121d11:13003"
+    },
+    {
+      "id": "38b5fB9gdjzWZaO7yTUQdO21g1O",
+      "title": "enduku nirdaya evarunnArurA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/endukunirdaya.htm",
+        "https://www.shivkumar.org/music/endukunirdaya.pdf",
+        "https://www.shivkumar.org/music/endukunirdaya-detailed.mp3"
+      ],
+      "notationFingerprint": "249a43e8:6769"
+    },
+    {
+      "id": "38b5fGofcGsPzycjciJJENbVaV0",
+      "title": "enduku peddala",
+      "addedSources": [
+        "https://www.shivkumar.org/music/endukupeddala.htm",
+        "https://www.shivkumar.org/music/endukupeddala.pdf",
+        "https://www.shivkumar.org/music/endukupeddala.mp3",
+        "https://www.shivkumar.org/music/endukupeddala-class.mp3",
+        "https://www.youtube.com/watch?v=SdHeyI449yI"
+      ],
+      "notationFingerprint": "ea9211cb:10261"
+    },
+    {
+      "id": "38b5fTdpGnx8KgybztjcUpr8N3O",
+      "title": "enduNDi veDalitivO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/endundi.htm",
+        "https://www.shivkumar.org/music/endundi.pdf",
+        "https://www.shivkumar.org/music/endundi.mp3",
+        "https://www.shivkumar.org/music/endundi-class.mp3",
+        "https://thyagaraja-vaibhavam.blogspot.com/2007/08/thyagaraja-kriti-endundi-",
+        "https://www.youtube.com/watch?v=E3-Em6MOUOg"
+      ],
+      "notationFingerprint": "ab9ee2ed:11995"
+    },
+    {
+      "id": "38b5got6HjgNdz4RuLqB3kkXTbE",
+      "title": "entani nE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/entanine.htm",
+        "https://www.shivkumar.org/music/entanine.pdf",
+        "https://www.shivkumar.org/music/EntaniNeMukhari-R.mp3",
+        "https://www.shivkumar.org/music/entanine-detailed.mp3"
+      ],
+      "notationFingerprint": "16c34643:8052"
+    },
+    {
+      "id": "38b5hS8hNO08ziCAH8px84l2qkv",
+      "title": "enta rAni",
+      "addedSources": [
+        "https://www.shivkumar.org/music/entaranitana.htm",
+        "https://www.shivkumar.org/music/entaranitana.pdf",
+        "https://www.shivkumar.org/music/entaranitana-class.mp3",
+        "https://www.shivkumar.org/music/originals/01a_entara_hari_kambodhi.mp3",
+        "https://thyagaraja-vaibhavam.blogspot.com/2007/11/thyagaraja-kriti-entha-",
+        "https://youtu.be/_U2O67KWll4"
+      ],
+      "notationFingerprint": "4d0da494:15335"
+    },
+    {
+      "id": "38awm15PwNPiawEgvXnPp1zrthf",
+      "title": "eppOvaruvArO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/eppovaruvaro.htm",
+        "https://www.shivkumar.org/music/eppovaruvaro.pdf",
+        "https://www.shivkumar.org/music/eppovaruvaro-class.mp4",
+        "https://www.shivkumar.org/music/EppoVaruvarO-Jhonpuri-RK.mp3",
+        "https://www.youtube.com/watch?v=h88WBgbOrcs",
+        "http://www.rasikas.org/forums/viewtopic.php?t=2704"
+      ],
+      "notationFingerprint": "6478c5db:18622"
+    },
+    {
+      "id": "38b5iEH57jVuCnyH4xnjDQPt1Wu",
+      "title": "ETi janmamidi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/etijanmamidi.htm",
+        "https://www.shivkumar.org/music/etijanmamidi.pdf",
+        "https://www.shivkumar.org/music/etijanmamidi.mp3",
+        "https://www.shivkumar.org/music/etijanmamidi-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/07/thyagaraja-kriti-eti-janmamidi-",
+        "https://www.youtube.com/watch?v=VKUoPsyWJJ8"
+      ],
+      "notationFingerprint": "edab3416:9194"
+    },
+    {
+      "id": "38b5iQsyVHiZPOFMnKfltzf1Ot7",
+      "title": "ETi yOcanalu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/etiyochana.htm",
+        "https://www.shivkumar.org/music/etiyochana.pdf",
+        "https://www.shivkumar.org/music/etiyochana.mp3",
+        "https://www.shivkumar.org/music/etiyochana-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/06/thyagaraja-kriti-eti-",
+        "https://www.youtube.com/watch?v=OiYqeOFQB8E"
+      ],
+      "notationFingerprint": "530a77e5:7877"
+    },
+    {
+      "id": "38bRxBozuGa2Dmnnt17Fc77VUYL",
+      "title": "Etra kalangaL",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-21-EtrraKalangal-Nadanamakriya.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-21-EtrraKalangal-Nadanamakriya.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai21-class.mp3",
+        "https://www.youtube.com/watch?v=OzaLuWZ8baU",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp21.html",
+        "https://www.youtube.com/watch?v=lPWKqhA4CNY"
+      ],
+      "notationFingerprint": "f53d9d2b:12824"
+    },
+    {
+      "id": "38b5jo7cZZJBZjMUNTrdcEBMJKs",
+      "title": "evarimATa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/evarimaata.htm",
+        "https://www.shivkumar.org/music/evarimaata.pdf",
+        "https://www.shivkumar.org/music/evarimaata.mp3",
+        "https://www.shivkumar.org/music/evarimaata-class.mp4",
+        "https://www.shivkumar.org/music/evarimaata-class.mp3",
+        "https://www.shivkumar.org/music/originals/EvariMata-Adi-T-SSIMSS.mp3"
+      ],
+      "notationFingerprint": "ac10fcc8:10700"
+    },
+    {
+      "id": "38b5kVDKrKSNBgoqpRtw5rsUPAR",
+      "title": "evarUrA ninnu vinA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/evarura-mohanam.htm",
+        "https://www.shivkumar.org/music/evarura-mohanam.pdf",
+        "https://www.shivkumar.org/music/evarura-mohanam-class.mp3",
+        "https://www.youtube.com/watch?v=M0s62ns9ncc"
+      ],
+      "notationFingerprint": "2d400a7e:6089"
+    },
+    {
+      "id": "38b5kvKHzt8LR9mLxEB0LttyfgZ",
+      "title": "evvarE rAmayya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/evvareramaiah.htm",
+        "https://www.shivkumar.org/music/evvareramaiah.pdf",
+        "https://www.shivkumar.org/music/evvareramaiah.mp3",
+        "https://www.shivkumar.org/music/evvareramaiah-detailed.mp3"
+      ],
+      "notationFingerprint": "5d781e3a:6002"
+    },
+    {
+      "id": "38awGuf1QCeHenG2RKsPW6CHmGC",
+      "title": "gAnamUrtE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ganamurthe.htm",
+        "https://www.shivkumar.org/music/ganamurthe.pdf",
+        "https://www.shivkumar.org/music/ganamurthe-detailed.mp3"
+      ],
+      "notationFingerprint": "511096c7:7217"
+    },
+    {
+      "id": "38axnfKN3gxLE7yG5gJvpTipfcf",
+      "title": "gajaananayutam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/gajananayutham.htm",
+        "https://www.shivkumar.org/music/gajananayutham.pdf",
+        "https://www.shivkumar.org/music/gajananayutham-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/01a-gajananayutham-chakravakam-krithi-ssi-c12.mp3"
+      ],
+      "notationFingerprint": "bf1c52c2:2966"
+    },
+    {
+      "id": "38ay69d3v1dVRuRNVro2sMiCs8t",
+      "title": "gajavadan2a",
+      "addedSources": [
+        "https://www.shivkumar.org/music/gajavadana.htm",
+        "https://www.shivkumar.org/music/gajavadana.pdf",
+        "https://www.shivkumar.org/music/gajavadana.mp3",
+        "https://www.shivkumar.org/music/gajavadana-detailed.mp3"
+      ],
+      "notationFingerprint": "95dfea35:5122"
+    },
+    {
+      "id": "38bEIKlpNbwGGyR9AVOgUuAyBu4",
+      "title": "gaNarAjEna rakSitOham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ganarajena-rakshitoham.htm",
+        "https://www.shivkumar.org/music/ganarajena-rakshitoham.pdf",
+        "https://www.shivkumar.org/music/ganarajena-rakshitoham-class.mp3",
+        "https://www.youtube.com/watch?v=bhMvpz17NTM",
+        "https://www.youtube.com/watch?v=PDH5SsHfvRw"
+      ],
+      "notationFingerprint": "6d9077fd:9872"
+    },
+    {
+      "id": "38b79TJwna3cXLOZU6CrEhNwcU3",
+      "title": "gIta vAdya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/geethavadya.htm",
+        "https://www.shivkumar.org/music/geethavadya.pdf",
+        "https://www.shivkumar.org/music/geethavadya-detailed.mp3"
+      ],
+      "notationFingerprint": "9e29368e:6893"
+    },
+    {
+      "id": "38b5m9elh4fcrWWzFTIYZ8PJgtk",
+      "title": "gItArthamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/gitarthamu.htm",
+        "https://www.shivkumar.org/music/gitarthamu.pdf",
+        "https://www.shivkumar.org/music/gitarthamu.mp3",
+        "https://www.shivkumar.org/music/gitarthamu-detailed.mp3",
+        "http://www.youtube.com/watch?v=BXaW5f8-yzQ"
+      ],
+      "notationFingerprint": "78eda7c5:8018"
+    },
+    {
+      "id": "38bEJTxoRnmHCC86i72fpPYX5pr",
+      "title": "gOvardhana girIsham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/govardhana.htm",
+        "https://www.shivkumar.org/music/govardhana.pdf",
+        "https://www.shivkumar.org/music/govardhana.mp3",
+        "https://www.shivkumar.org/music/govardhana-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/06-Govardhana-krithi.mp3"
+      ],
+      "notationFingerprint": "1faf83a6:2841"
+    },
+    {
+      "id": "38bEK71UsahIJoGhzVlZpsjEXbZ",
+      "title": "guNijanAdinuta guruguhOdatE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/gunijanadi-gurjari.htm",
+        "https://www.shivkumar.org/music/gunijanadi-gurjari.pdf",
+        "https://www.shivkumar.org/music/gunijanadi-class.mp4",
+        "https://www.shivkumar.org/music/gunijanadi-class.mp3",
+        "https://www.shivkumar.org/music/originals/Gunijanaadi-Gurjari-RK.mp3"
+      ],
+      "notationFingerprint": "e101787f:6348"
+    },
+    {
+      "id": "38b5mSUrLYmtS8u6z38Rh1KJXXG",
+      "title": "gurulEka eTuvaNTi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/guruleka.htm",
+        "https://www.shivkumar.org/music/guruleka.pdf",
+        "https://www.shivkumar.org/music/guruleka.mp3",
+        "https://www.shivkumar.org/music/guruleka-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/02a-guruleka-gowrimanohari-krithi-ssi-c10.mp3"
+      ],
+      "notationFingerprint": "3b9df867:5439"
+    },
+    {
+      "id": "38awNsy7QvNR7sIKkxWMNwCcHvJ",
+      "title": "guruvAyUr appan2E",
+      "addedSources": [
+        "https://www.shivkumar.org/music/guruvayurappane.htm",
+        "https://www.shivkumar.org/music/guruvayurappane.pdf",
+        "https://www.shivkumar.org/music/guruvayurappane.mp3",
+        "https://www.shivkumar.org/music/guruvayurappane-detailed.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "7dacb6a3:7518"
+    },
+    {
+      "id": "38bELDbT1tkVWfne6ltIUG9BmM0",
+      "title": "hariharaputram shAstAram",
+      "addedSources": [
+        "https://www.shivkumar.org/music/hariharaputram.htm",
+        "https://www.shivkumar.org/music/hariharaputram.pdf",
+        "https://www.shivkumar.org/music/hariharaputram.mp3",
+        "https://www.shivkumar.org/music/hariharaputram-class.mp4",
+        "https://www.shivkumar.org/music/hariharaputram-class.mp3",
+        "https://www.shivkumar.org/music/originals/08b-hariharaputram-vasanta-krithi-ssi-c15.mp3",
+        "https://www.youtube.com/watch?v=jU6KqxsD1B4"
+      ],
+      "notationFingerprint": "58bb2ddf:9142"
+    },
+    {
+      "id": "38avS8XIR8WkiPmOEWZ8cRpUZdq",
+      "title": "himaadri sutE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/himadrisuthe.htm",
+        "https://www.shivkumar.org/music/himadrisuthe.pdf",
+        "https://www.shivkumar.org/music/himadrisuthe-class.mp3",
+        "https://www.youtube.com/watch?v=viqQpiHl6Yk"
+      ],
+      "notationFingerprint": "5c08cf6c:5501"
+    },
+    {
+      "id": "38bEMUTVMw5krjE74RWw0CzwoSE",
+      "title": "hiraNmayIm lakSmIm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/hiranmayeem.htm",
+        "https://www.shivkumar.org/music/hiranmayeem.pdf",
+        "https://www.shivkumar.org/music/hiranmayeem.mp3",
+        "https://www.shivkumar.org/music/hiranmayeem-class.mp3",
+        "https://www.shivkumar.org/music/originals/005b-hiranmayeem-lalitha-krithi-mss-party1.mp3"
+      ],
+      "notationFingerprint": "96891b7a:7175"
+    },
+    {
+      "id": "38bFfKcNraRiFVq7oURKOOsKTsK",
+      "title": "iDadu padam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/idadhu-padham-khamas.htm",
+        "https://www.shivkumar.org/music/idadhu-padham-khamas.pdf",
+        "https://www.shivkumar.org/music/idadhupadam-class.mp3",
+        "https://www.shivkumar.org/music/idadhupadam-class.mp4",
+        "https://www.shivkumar.org/music/originals/IdadhuPadam-Khamas-RK.mp3",
+        "http://www.youtube.com/watch?v=buALUYA9a-w"
+      ],
+      "notationFingerprint": "94e93597:8534"
+    },
+    {
+      "id": "38b5pH2dADmFaADcoJJUAY8459h",
+      "title": "intakannAnandam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/inthakannananda-bilahari.htm",
+        "https://www.shivkumar.org/music/inthakannananda-bilahari.pdf",
+        "https://www.shivkumar.org/music/inthakannananda-bilahari-class.mp3",
+        "https://www.youtube.com/watch?v=FIkWRnftgeU&ab_channel=RamKaushik",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/06/thyagaraja-kriti-intakanna-",
+        "https://youtu.be/ilv1mYLEMY0"
+      ],
+      "notationFingerprint": "38a00894:10101"
+    },
+    {
+      "id": "38axSSgSNbPCT5d90N3W5RVbiuM",
+      "title": "inta saukhyamani nE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/intasaukhyamani-kapi.htm",
+        "https://www.shivkumar.org/music/intasaukhyamani-kapi.pdf",
+        "https://www.shivkumar.org/music/intasaukhyamani-kapi-class.mp3",
+        "https://www.youtube.com/watch?v=-awy7vq4G5E&ab_channel=mccbala",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/07/thyagaraja-kriti-intha-",
+        "https://youtu.be/JVadVPRDAp0"
+      ],
+      "notationFingerprint": "ef4537dc:11785"
+    },
+    {
+      "id": "38awVuQNFXGkXcuhPR22kcqfq87",
+      "title": "ivan2 yArO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ivanyaaro.htm",
+        "https://www.shivkumar.org/music/ivanyaaro.pdf",
+        "https://www.shivkumar.org/music/ivanyaaro-class.mp3",
+        "https://www.youtube.com/watch?v=AOfjfFM1qyo",
+        "https://www.rasikas.org/forums/viewtopic.php?t=5353",
+        "https://www.youtube.com/watch?v=zv6OyFWsS2o"
+      ],
+      "notationFingerprint": "7263e4ee:12938"
+    },
+    {
+      "id": "38avTX3PDSFtX7jhxzyy4rY3dJu",
+      "title": "jagadAnanda kAraka",
+      "addedSources": [
+        "https://www.shivkumar.org/music/jagadananda-new.htm",
+        "https://www.shivkumar.org/music/jagadananda-new.pdf",
+        "https://www.shivkumar.org/music/jagadananda.mp3",
+        "https://www.shivkumar.org/music/jagadananda-detailed.mp3"
+      ],
+      "notationFingerprint": "3686273f:18895"
+    },
+    {
+      "id": "38avSI6QaWBYFXZ6WDmeMmb9leZ",
+      "title": "jAlandhara",
+      "addedSources": [
+        "https://www.shivkumar.org/music/jaalandara-valaji.htm",
+        "https://www.shivkumar.org/music/jaalandara-valaji.pdf",
+        "https://www.shivkumar.org/music/jaalandara-valaji-class.mp3",
+        "https://www.shivkumar.org/music/originals/HyderabadBrothers-Jalandhara-Valaji.mp3"
+      ],
+      "notationFingerprint": "29ad44ed:5521"
+    },
+    {
+      "id": "38awz5AdW4sPpMbsBVkoivJQ1w3",
+      "title": "jAnakI ramaNA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/janakiramana.htm",
+        "https://www.shivkumar.org/music/janakiramana.pdf",
+        "https://www.shivkumar.org/music/janakiramana.mp3",
+        "https://www.shivkumar.org/music/janakiramana-class.mp4",
+        "https://www.shivkumar.org/music/janakiramana-class.mp3"
+      ],
+      "notationFingerprint": "e3905c34:8395"
+    },
+    {
+      "id": "38bFh0XKyVWFM7WJ7xqc6Qjbmzr",
+      "title": "jAnakIpatE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/janakipathe.htm",
+        "https://www.shivkumar.org/music/janakipathe.pdf",
+        "https://www.shivkumar.org/music/janakipathe-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/jaanakipate_khar.mp3"
+      ],
+      "notationFingerprint": "78f9e730:13791"
+    },
+    {
+      "id": "38awBROVjSJ8p7n21IorMwPWVt8",
+      "title": "jananI ninnuvinA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/janani.htm",
+        "https://www.shivkumar.org/music/janani.pdf",
+        "https://www.shivkumar.org/music/janani.mp3",
+        "https://www.shivkumar.org/music/janani-detailed.mp3"
+      ],
+      "notationFingerprint": "ce4f209e:7646"
+    },
+    {
+      "id": "38bGlKd2SU7MkgRtr1nfnHziLwR",
+      "title": "janani mAmavamEye",
+      "addedSources": [
+        "https://www.shivkumar.org/music/jananimaamava.htm",
+        "https://www.shivkumar.org/music/jananimaamava.pdf",
+        "https://www.shivkumar.org/music/jananimaamava.mp3",
+        "https://www.shivkumar.org/music/jananimamava-detailed.mp3"
+      ],
+      "notationFingerprint": "585fc3ee:8459"
+    },
+    {
+      "id": "38b5rXqKhtNDCQRiGDOF3nTvzti",
+      "title": "j~nAna mosaga",
+      "addedSources": [
+        "https://www.shivkumar.org/music/jnanamosagarada.htm",
+        "https://www.shivkumar.org/music/jnanamosagarada.pdf",
+        "https://www.shivkumar.org/music/jnanamosagarada.mp3",
+        "https://www.shivkumar.org/music/jnanamosagarada-detailed.mp3"
+      ],
+      "notationFingerprint": "132f57a5:4999"
+    },
+    {
+      "id": "38awHRwDkwoqgsY4sLMX9XQWuOE",
+      "title": "kA vA vA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kaavaavaa.htm",
+        "https://www.shivkumar.org/music/kaavaavaa.pdf",
+        "https://www.shivkumar.org/music/kaavaavaa.mp3",
+        "https://www.shivkumar.org/music/kaavaavaa-detailed.mp3"
+      ],
+      "notationFingerprint": "c6513c29:8492"
+    },
+    {
+      "id": "38b5tibPvMBRbadFEe7iB1PKIWF",
+      "title": "kArubAru sEyuvAru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/karubaru.htm",
+        "https://www.shivkumar.org/music/karubaru.pdf",
+        "https://www.shivkumar.org/music/karubaru.mp3",
+        "https://www.shivkumar.org/music/karubaru-class.mp3",
+        "https://www.shivkumar.org/music/originals/007-kaarubaru-mukhari-krithi-mss.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/10/thyagaraja-kriti-",
+        "https://www.youtube.com/watch?v=Bs8uZaJdDo4"
+      ],
+      "notationFingerprint": "0f158584:8028"
+    },
+    {
+      "id": "38b5royk2HxWwIsnuGebs6VtT8e",
+      "title": "kaddanuvAriki",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kaddanuvariki.htm",
+        "https://www.shivkumar.org/music/kaddanuvariki.pdf",
+        "https://www.shivkumar.org/music/kaddanuvariki.mp3",
+        "https://www.shivkumar.org/music/kaddanuvariki-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/11/thyagaraja-kriti-kaddanu-",
+        "https://www.youtube.com/watch?v=xMwJ7cy9i6w"
+      ],
+      "notationFingerprint": "ebe89238:9905"
+    },
+    {
+      "id": "38aw7DmzOHUfhWGsH5AIGARWlKl",
+      "title": "kAlaharaNa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kalaharana.htm",
+        "https://www.shivkumar.org/music/kalaharana.pdf",
+        "https://www.shivkumar.org/music/kalaharana-detailed.mp3"
+      ],
+      "notationFingerprint": "67692dd0:3948"
+    },
+    {
+      "id": "38axEpNlblp6bRFVdJiGOto7IWr",
+      "title": "kaligiyuNTEgadA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kaligiyunte-new.htm",
+        "https://www.shivkumar.org/music/kaligiyunte-new.pdf",
+        "https://www.shivkumar.org/music/kaligiyunte-detailed.mp3"
+      ],
+      "notationFingerprint": "e9510c07:5375"
+    },
+    {
+      "id": "38awAbOx9qDn6SGFIjOThi4anCM",
+      "title": "kAmAkSI (svarajati)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kaamakshi.htm",
+        "https://www.shivkumar.org/music/kaamakshi.pdf",
+        "https://www.shivkumar.org/music/kamakshi-detailed.mp3"
+      ],
+      "notationFingerprint": "091e5025:9312"
+    },
+    {
+      "id": "38bEOr7CoKlsJcIM1QZtQxzBQs1",
+      "title": "kAmAkSi varalakSmi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamakshi-bilahari.htm",
+        "https://www.shivkumar.org/music/kamakshi-bilahari.pdf",
+        "https://www.shivkumar.org/music/KaamaakshiBilahari.mp3",
+        "https://www.shivkumar.org/music/kamakshi-bilahari-detailed.mp3"
+      ],
+      "notationFingerprint": "9e56c6b7:8339"
+    },
+    {
+      "id": "38bLQhtF2mT6ip0ecCTz52jx5UZ",
+      "title": "kAmAkSi nIdu padayugamu (svarajati)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamakshi-yk.htm",
+        "https://www.shivkumar.org/music/kamakshi-yk.pdf",
+        "https://www.shivkumar.org/music/kamakshi-yk.mp3",
+        "https://www.shivkumar.org/music/kamakshi-yk-class.mp3",
+        "https://www.shivkumar.org/music/originals/005-kamakshi-yadukula-kambodhi-swarajati-mss.mp3",
+        "http://syamakrishnavaibhavam.blogspot.com/2011/06/syama-sastry-kriti-kamakshi-ni-"
+      ],
+      "notationFingerprint": "ef938e95:17443"
+    },
+    {
+      "id": "38bEPfjpDQHffCxmDoxX5Oio74K",
+      "title": "kamalAmbikE AshritakalpalatikE caNDikE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambike.htm",
+        "https://www.shivkumar.org/music/kamalambike.pdf",
+        "https://www.shivkumar.org/music/kamalambike.mp3",
+        "https://www.shivkumar.org/music/kamalambike-thodi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/01-kamalambike-thodi-dkj.mp3"
+      ],
+      "notationFingerprint": "aa6a8211:22000"
+    },
+    {
+      "id": "38bEP9iCV2lqvaN56xNR49VXd6d",
+      "title": "kamalAmbA samrakSatu mAm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambasamrakshatu.htm",
+        "https://www.shivkumar.org/music/kamalambasamrakshatu.pdf",
+        "https://www.shivkumar.org/music/kamalambasamrakshatu.mp3",
+        "https://www.shivkumar.org/music/kamalambasamrakshatu-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/02-kamalambam-samrakshatu-anandabhairavi-dkj.mp3"
+      ],
+      "notationFingerprint": "41fc00cd:17680"
+    },
+    {
+      "id": "38bEP9FvLy2fTlAM4IrubJBNW6H",
+      "title": "kamalAmbAm bhajarE rE mAnasa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambambhajare.htm",
+        "https://www.shivkumar.org/music/kamalambambhajare.pdf",
+        "https://www.shivkumar.org/music/kamalambambhajare.mp3",
+        "https://www.shivkumar.org/music/kamalambambhajare-kalyani-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/03-kamalambam-bhajare-kalyani-dkj.mp3"
+      ],
+      "notationFingerprint": "d2f0fe6c:16563"
+    },
+    {
+      "id": "38bEtjggvZpAhNJPnPZatpZn28V",
+      "title": "shrI kamalAmbikayA kaTAkSitOham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikamalambikaya-shankarabharanam.htm",
+        "https://www.shivkumar.org/music/srikamalambikaya-shankarabharanam.pdf",
+        "https://www.shivkumar.org/music/srikamalambikaya-shankarabharanam-class.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/04-kamalambikaya-shankarabharanam-dkj.mp3",
+        "https://guru-guha.blogspot.com/2007/09/dikshitar-kriti-sri-",
+        "https://www.youtube.com/watch?v=36y4Xad83_M"
+      ],
+      "notationFingerprint": "bc8bdf30:28382"
+    },
+    {
+      "id": "38bEPSlIRH6bDXzkk4e7fN4ZOsO",
+      "title": "kamalAmbikAyai kanakAmshukAyai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambikayai-kambodhi.htm",
+        "https://www.shivkumar.org/music/kamalambikayai-kambodhi.pdf",
+        "https://www.shivkumar.org/music/kamalambikayai-kambodhi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/05-kamalambikayai-kambodhi-dkj.mp3"
+      ],
+      "notationFingerprint": "7fc415b2:21654"
+    },
+    {
+      "id": "38bEtwxt65VvRNWrB0caIPjXNGi",
+      "title": "shrI kamalAmbikAyAh param nahirE rE citta",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambikayah-bhairavi.htm",
+        "https://www.shivkumar.org/music/kamalambikayah-bhairavi.pdf",
+        "https://www.shivkumar.org/music/srikamalambikayah-bhairavi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/06-srikamalambikayahparam-bhairavi-dkj.mp3"
+      ],
+      "notationFingerprint": "bbba4191:22101"
+    },
+    {
+      "id": "38bEPciZhphQihiGl4kgXuM9v9w",
+      "title": "kamalAmbikAyAstava bhaktOham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambikayastava-punnaga.htm",
+        "https://www.shivkumar.org/music/kamalambikayastava-punnaga.pdf",
+        "https://www.shivkumar.org/music/kamalambikayastava-punnaga-class.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/07-srikamalambikayastava-punnagavarali-dkj.mp3",
+        "http://guru-guha.blogspot.com/2007/09/dikshitar-kriti-",
+        "https://www.youtube.com/watch?v=f9-WuwFqUZs",
+        "http://www.shivkumar.org/music/kamalambikayastava-punnagavarali-class.mp3"
+      ],
+      "notationFingerprint": "c991424c:30827"
+    },
+    {
+      "id": "38bEu4Xovx7K43pTO8vTXLFUKos",
+      "title": "shrI kamalAmbikAyAm bhaktim karOmi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambikayam-sahana.htm",
+        "https://www.shivkumar.org/music/kamalambikayam-sahana.pdf",
+        "https://www.shivkumar.org/music/srikamalambikayam-sahana.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/08-srikamalambikayam-sahana-dkj.mp3"
+      ],
+      "notationFingerprint": "cb354664:18288"
+    },
+    {
+      "id": "38bEuGAcxtny1e6g5zPrgCJPMi7",
+      "title": "shrI kamalAmbikE avAva",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikamalambike-avava-ghanta.htm",
+        "https://www.shivkumar.org/music/srikamalambike-avava-ghanta.pdf",
+        "https://www.shivkumar.org/music/srikamalambike-avava-ghanta-class.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/09-srikamalambikeavava-ghanta-dkj.mp3",
+        "https://guru-guha.blogspot.com/2007/09/dikshitar-kriti-sri-kamalaambikae.html",
+        "https://www.youtube.com/watch?v=wZOAruslb8o"
+      ],
+      "notationFingerprint": "358b4df2:28475"
+    },
+    {
+      "id": "38bEtbcWevn2DVIJAHzQbj6DEfh",
+      "title": "shrI kamalAmbA jayati ambA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalamba-jayati-ahiri.htm",
+        "https://www.shivkumar.org/music/kamalamba-jayati-ahiri.pdf",
+        "https://www.shivkumar.org/music/kamalamba-jayati-ahiri-class.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/10-srikamalambajayati-ahiri-dkj.mp3",
+        "https://www.youtube.com/watch?v=om5TFaT9aSw"
+      ],
+      "notationFingerprint": "cce96231:23369"
+    },
+    {
+      "id": "38bEuQDbLGCQKFnWICrrwNqAQXt",
+      "title": "shrI kamalAmbikE shivE pAhimAm lalitE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kamalambike-shive-sriragam.htm",
+        "https://www.shivkumar.org/music/kamalambike-shive-sriragam.pdf",
+        "https://www.shivkumar.org/music/srikamalambike-shive-sriragam.mp3",
+        "https://www.shivkumar.org/music/originals/navavarnams/11-srikamalambike-sriragam-dkj.mp3"
+      ],
+      "notationFingerprint": "a67e685a:4429"
+    },
+    {
+      "id": "38bRxEfrmJXX6AdwlaI0W1pwTnm",
+      "title": "kanaittu iLam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-12-KanaithiIlan-Kedaragowla.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-12-KanaithiIlan-Kedaragowla.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai12-class.mp3",
+        "https://www.youtube.com/watch?v=xm-Y31sWx74",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse12.html",
+        "https://www.youtube.com/watch?v=NlHC2ki8JC0"
+      ],
+      "notationFingerprint": "9f2a4bf3:15627"
+    },
+    {
+      "id": "38avdu4dCzb2WsjzwZc9uZLgGxj",
+      "title": "kana kana rucirA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kanakanaruchira-new.htm",
+        "https://www.shivkumar.org/music/kanakanaruchira-new.pdf",
+        "https://www.shivkumar.org/music/KanaKanaRuchira.mp3",
+        "https://www.shivkumar.org/music/kanakanaruchira-detailed.mp3"
+      ],
+      "notationFingerprint": "2d543a75:15872"
+    },
+    {
+      "id": "38aw6MIdFXOxShCtZaCdNte9B0P",
+      "title": "ka~njadaLAyatAkSi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kanchadalayatakshi.htm",
+        "https://www.shivkumar.org/music/kanchadalayatakshi.pdf",
+        "https://www.shivkumar.org/music/kanchadalayatakshi.mp3",
+        "https://www.shivkumar.org/music/kanchadalayatakshi-detailed.mp3"
+      ],
+      "notationFingerprint": "f7e5dc1d:6546"
+    },
+    {
+      "id": "38b5tXqKdwRXBVT6jf661aaB02g",
+      "title": "kanugonu saukhyamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kanugonu-nayaki.htm",
+        "https://www.shivkumar.org/music/kanugonu-nayaki.pdf",
+        "https://www.shivkumar.org/music/kanugonu-nayaki-class.mp3",
+        "https://www.shivkumar.org/music/originals/Kanukonu_Nayaki.mp3",
+        "https://www.youtube.com/watch?v=80rklzGXJ1w"
+      ],
+      "notationFingerprint": "9a30b3ef:7485"
+    },
+    {
+      "id": "38bFnKQKU9PR72mJyWPMchTyjrQ",
+      "title": "kApAli karuNai nilavu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kapali.htm",
+        "https://www.shivkumar.org/music/kapali.pdf",
+        "https://www.shivkumar.org/music/kapali.mp3",
+        "https://www.shivkumar.org/music/kapali-class.mp3",
+        "https://www.shivkumar.org/music/originals/PSivan-Pretaped/03_kapali_mohanam.mp3"
+      ],
+      "notationFingerprint": "e57fa6b0:12765"
+    },
+    {
+      "id": "38bRxOS6aJ1ETvltDeWQoHmd24n",
+      "title": "karavaigaL pin",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-28-KaravaigalPinSenru-Khamboji.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-28-KaravaigalPinSenru-Khamboji.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai28-class.mp3",
+        "https://www.youtube.com/watch?v=gAIjfnhnWzg&ab_channel=SouthIndianMusicAcademyLA",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp28.html",
+        "https://youtu.be/ZaqleUbn0Ds"
+      ],
+      "notationFingerprint": "b5b649b2:13577"
+    },
+    {
+      "id": "38bEQQDdWyacm93DGIThf8TMIAz",
+      "title": "karikaLabha mukham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/karikalabha.htm",
+        "https://www.shivkumar.org/music/karikalabha.pdf",
+        "https://www.shivkumar.org/music/karikalabha.mp3",
+        "https://www.shivkumar.org/music/karikalabha-detailed.mp3"
+      ],
+      "notationFingerprint": "680dbb35:8020"
+    },
+    {
+      "id": "38aw67wnDSdmFH779km6X8vfJqW",
+      "title": "kaRpagamE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/karpagame.htm",
+        "https://www.shivkumar.org/music/karpagame.pdf",
+        "https://www.shivkumar.org/music/karpagame-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/10-Karpagame-VijaySiva.mp3"
+      ],
+      "notationFingerprint": "628740db:9093"
+    },
+    {
+      "id": "38bRxdNsuPdk4IewvlkfHVYWPdv",
+      "title": "kATrukkaravai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-11-KatruKaravai-Huseni.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-11-KatruKaravai-Huseni.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai11-class.mp3",
+        "https://www.youtube.com/watch?v=4jXM3oX-ODE",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse11.html",
+        "https://www.youtube.com/watch?v=uB5KbDXCeMw"
+      ],
+      "notationFingerprint": "6d2d18ac:14644"
+    },
+    {
+      "id": "38bRxptMTk8dSVPWKBIMo6ysCdK",
+      "title": "kIchukI senru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-07-KisuKisuEnru-Bhairavi.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-07-KisuKisuEnru-Bhairavi.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai07-class.mp3",
+        "https://www.youtube.com/watch?v=_lbo85PTta4",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse7.html",
+        "https://www.youtube.com/watch?v=sOa4G6ApMqE"
+      ],
+      "notationFingerprint": "9d2a57ac:15235"
+    },
+    {
+      "id": "38bRxxjTe1VrWHuiY7USeOFOrpH",
+      "title": "kIzh vAnam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-08-KizhVanam-Dhanyasi.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-08-KizhVanam-Dhanyasi.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai08-class.mp3",
+        "https://www.youtube.com/watch?v=ccx0QF32ffs",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse8.html",
+        "https://www.youtube.com/watch?v=mCGJ0OqtIAs"
+      ],
+      "notationFingerprint": "53c6670a:15338"
+    },
+    {
+      "id": "38bERKFZK8J7qXl6HW7lVb01gZf",
+      "title": "kOdaNDarAmam anisham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kodandaramam.htm",
+        "https://www.shivkumar.org/music/kodandaramam.pdf",
+        "https://www.shivkumar.org/music/kodandaramam-detailed.mp3"
+      ],
+      "notationFingerprint": "e74730c5:3121"
+    },
+    {
+      "id": "38b5uuSB3M8MKXyLU374Qf6kmEu",
+      "title": "koluvaiyunnADE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/koluvaiyunnade.htm",
+        "https://www.shivkumar.org/music/koluvaiyunnade.pdf",
+        "https://www.shivkumar.org/music/koluvaiyunnade.mp3",
+        "https://www.shivkumar.org/music/koluvaiyunnade-detailed.mp3"
+      ],
+      "notationFingerprint": "31340431:4035"
+    },
+    {
+      "id": "38b5v4a8RSw5uOVegKRYoL5FUm7",
+      "title": "koluvamare gada",
+      "addedSources": [
+        "https://www.shivkumar.org/music/koluvamaregada.htm",
+        "https://www.shivkumar.org/music/koluvamaregada.pdf",
+        "https://www.shivkumar.org/music/koluvamaregada-class.mp3",
+        "https://www.shivkumar.org/music/originals/05-Koluvamaregada-MalladiBros.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/11/thyagaraja-kriti-",
+        "https://www.youtube.com/watch?v=vjbKNLlB3JY"
+      ],
+      "notationFingerprint": "8fc9ef0a:12556"
+    },
+    {
+      "id": "38b8SebT66ktV23BTzla6c5saNo",
+      "title": "kOrina varam-osagu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/korinavaramu.htm",
+        "https://www.shivkumar.org/music/korinavaramu.pdf",
+        "https://www.shivkumar.org/music/korinavaramu.mp3",
+        "https://www.shivkumar.org/music/korinavaramu-class.mp3",
+        "https://www.youtube.com/watch?v=e0MzJNTw1-c",
+        "http://www.shivkuma.org/music/korinavaramu-class.mp3"
+      ],
+      "notationFingerprint": "074abb5f:6426"
+    },
+    {
+      "id": "38awiCicTGhsRC22YQdvtJYoEF6",
+      "title": "kR^iSNA nI bEgane bArO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/krishnaneebegane.htm",
+        "https://www.shivkumar.org/music/krishnaneebegane.pdf",
+        "https://www.shivkumar.org/music/krishnaneebegane.mp3",
+        "https://www.shivkumar.org/music/krishnaneebegane-class.mp3",
+        "https://www.youtube.com/watch?v=qn-dT-dznmw",
+        "http://www.shivkumar.org/music/krishnaneebegane"
+      ],
+      "notationFingerprint": "a97ebc6b:12833"
+    },
+    {
+      "id": "38bGqzqpVKGpzPpwJcyCX8IHD07",
+      "title": "krpayA pAlaya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/krupayapalaya.htm",
+        "https://www.shivkumar.org/music/krupayapalaya.pdf",
+        "https://www.shivkumar.org/music/krupayapalaya.mp3",
+        "https://www.shivkumar.org/music/krupayapalaya-detailed.mp3"
+      ],
+      "notationFingerprint": "49bf7fb5:6159"
+    },
+    {
+      "id": "38ax2qM1qVNkFrbFm7B7nwFiczZ",
+      "title": "kSIrasAgara shayana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ksheerasagara.htm",
+        "https://www.shivkumar.org/music/ksheerasagara.pdf",
+        "https://www.shivkumar.org/music/ksheerasagara.mp3",
+        "https://www.shivkumar.org/music/ksheerasagara-class.mp3",
+        "http://thyagaraja-"
+      ],
+      "notationFingerprint": "f40b06da:9494"
+    },
+    {
+      "id": "38ax6erq7f8N1XlTfcP3xkXzZMn",
+      "title": "kSIrasAgara shayana vakSasthala",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ksheerasaagara-maya.htm",
+        "https://www.shivkumar.org/music/ksheerasaagara-maya.pdf",
+        "https://www.shivkumar.org/music/ksheerasagara-maya.mp3",
+        "https://www.shivkumar.org/music/originals/008a-ksheerasagara-mayamalavagowla-slokam-krithi-mss-party1.mp3"
+      ],
+      "notationFingerprint": "7c637d60:6569"
+    },
+    {
+      "id": "38b5vkfKuuW5DWUnmf5MYWZQBdB",
+      "title": "kSINamai tiruga",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ksheenamai.htm",
+        "https://www.shivkumar.org/music/ksheenamai.pdf",
+        "https://www.shivkumar.org/music/ksheenamai.mp3"
+      ],
+      "notationFingerprint": "ca5807f8:3925"
+    },
+    {
+      "id": "38bERfuG61dOG3Sb7SynhiMViN4",
+      "title": "kSitijAramaNam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kshitija-ramanam.htm",
+        "https://www.shivkumar.org/music/kshitija-ramanam.pdf",
+        "https://www.shivkumar.org/music/kshitija-ramanam-class.mp4",
+        "https://www.shivkumar.org/music/kshitija-ramanam-class.mp3"
+      ],
+      "notationFingerprint": "509d3c47:8988"
+    },
+    {
+      "id": "38bRxyx31n59dxpPoLA6LfnuuhI",
+      "title": "kUDArai vellum",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-27-KUdAraiVellam-PurviKalyani.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-27-KUdAraiVellam-PurviKalyani.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai27-class.mp3",
+        "https://www.youtube.com/watch?v=bXPHnWg2ado&ab_channel=SouthIndianMusicAcademyLA",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp27.html",
+        "https://www.youtube.com/watch?v=MthhPcE6DwY"
+      ],
+      "notationFingerprint": "7a7e1c2f:12404"
+    },
+    {
+      "id": "38axO3LeKbYX6UHVxlCAYomdFSb",
+      "title": "kumaran2 taaL",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kumaranthaal.htm",
+        "https://www.shivkumar.org/music/kumaranthaal.pdf",
+        "https://www.shivkumar.org/music/kumaranthaal-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/PSivan-Pretaped/01_kumanthal_yadukula_kambodhi.mp3"
+      ],
+      "notationFingerprint": "b3ed9228:4345"
+    },
+    {
+      "id": "38bRyBBbLyC2PRpntBObf8bDGhB",
+      "title": "kuttu viLakkeriya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-19-KuthuVilakkeriya-Sahana.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-19-KuthuVilakkeriya-Sahana.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai19-class.mp3",
+        "https://www.youtube.com/watch?v=Sa47ZoR77_Q",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp19.html",
+        "https://www.youtube.com/watch?v=mnwGzgZJ9S8"
+      ],
+      "notationFingerprint": "7dddd98b:14464"
+    },
+    {
+      "id": "38awi3UHcjfuTDKLguPRdqygaBE",
+      "title": "kuRai on2Rum illai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/kurai-onrum-illai.htm",
+        "https://www.shivkumar.org/music/kurai-onrum-illai.pdf",
+        "https://www.shivkumar.org/music/originals/kurai-onrum-illai.mp3"
+      ],
+      "notationFingerprint": "a1b2b985:14792"
+    },
+    {
+      "id": "38b69h5u66gGFavRpZrJxhtQzO0",
+      "title": "lAvaNya rAma",
+      "addedSources": [
+        "https://www.shivkumar.org/music/lavanyarama.htm",
+        "https://www.shivkumar.org/music/lavanyarama.pdf",
+        "https://www.shivkumar.org/music/lavanyarama.mp3",
+        "https://www.shivkumar.org/music/lavanyarama-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/09/thyagaraja-kriti-laavanya-",
+        "https://www.youtube.com/watch?v=bEwnPwucc6I"
+      ],
+      "notationFingerprint": "75363414:5953"
+    },
+    {
+      "id": "38b6ADb7ipumk5blOoRQy4nlYwC",
+      "title": "lOkAvana catura",
+      "addedSources": [
+        "https://www.shivkumar.org/music/lokavanachatura.htm",
+        "https://www.shivkumar.org/music/lokavanachatura.pdf",
+        "https://www.shivkumar.org/music/lokavanachatura.mp3",
+        "https://www.shivkumar.org/music/lokavanachatura-class.mp3",
+        "https://thyagaraja-vaibhavam.blogspot.com/2008/06/thyagaraja-kriti-lokavana-chatura-",
+        "https://www.youtube.com/watch?v=i6RPZyylShk"
+      ],
+      "notationFingerprint": "c92425c5:12613"
+    },
+    {
+      "id": "38b6AOKTnnoVnRCImZMZYckYnQC",
+      "title": "mA jAnaki",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maajanaki.htm",
+        "https://www.shivkumar.org/music/maajanaki2.pdf",
+        "https://www.shivkumar.org/music/maajanaki-class.mp3",
+        "https://www.youtube.com/watch?v=jAbGa5OJ4BI"
+      ],
+      "notationFingerprint": "e7454407:16203"
+    },
+    {
+      "id": "38b6B9UepAdXLr1qaYdsfXcQ7Jw",
+      "title": "mAkElarA vicAramu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maakelara1.htm",
+        "https://www.shivkumar.org/music/maakelara.pdf",
+        "https://www.shivkumar.org/music/maakelara.mp3",
+        "https://www.shivkumar.org/music/maakelara-detailed.mp3"
+      ],
+      "notationFingerprint": "c0200539:3172"
+    },
+    {
+      "id": "38b6VSVBk6GbcEDpIYXzEAmi8XN",
+      "title": "mAl marugA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maalmaruga.htm",
+        "https://www.shivkumar.org/music/maalmaruga.pdf",
+        "https://www.shivkumar.org/music/maalmaruga-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/MaalMaruga-Vasantha.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "0d3707d8:6559"
+    },
+    {
+      "id": "38bRyJci9JCxnipHKb9mbpTZkZC",
+      "title": "mAlE maNivaNNA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-26-mAlEmannivannA-Kunthalavarali.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-26-mAlEmannivannA-Kunthalavarali.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai26-class.mp3",
+        "https://www.youtube.com/watch?v=41KwKfXBU6U&ab_channel=SouthIndianMusicAcademyLA",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp26.html",
+        "https://youtu.be/rfF4NGDpR4k"
+      ],
+      "notationFingerprint": "eb207197:13196"
+    },
+    {
+      "id": "38awY9S5gTKwDsm6mx6nHGbkaxV",
+      "title": "mAravairi ramaNi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maravairi-ramani.htm",
+        "https://www.shivkumar.org/music/maravairi-ramani.pdf",
+        "https://www.shivkumar.org/music/maravairi-ramani-class.mp3",
+        "https://www.shivkumar.org/music/originals/Maravairi-Ramani-Nasikabhushani-RK.mp3",
+        "https://www.youtube.com/watch?v=BJX4cDUsh94"
+      ],
+      "notationFingerprint": "98bd4b20:8630"
+    },
+    {
+      "id": "38bRyZfuN8a9qjb3Zmrh6otucL3",
+      "title": "mAri malai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-23-mArimalai-Manirangu.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-23-mArimalai-Manirangu.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai23-class.mp3",
+        "https://www.youtube.com/watch?v=fLeNzUPQfz4",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp23.html",
+        "https://www.youtube.com/watch?v=wEKGAoJxYCQ"
+      ],
+      "notationFingerprint": "5778dc14:11897"
+    },
+    {
+      "id": "38ax8MLamrwY3mPWnR9Egau58zx",
+      "title": "mAtE malayadhvaja (dAru varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/matemalayadwaja-khamas.htm",
+        "https://www.shivkumar.org/music/matemalayadwaja-khamas-1.pdf",
+        "https://www.shivkumar.org/music/matemalayadwaja-khamas-class-96kbps.mp3",
+        "https://www.youtube.com/watch?v=CEb-AFf8hAc"
+      ],
+      "notationFingerprint": "9e1ac51b:18672"
+    },
+    {
+      "id": "38ax035yJoltyMTq7pi1XuJSEf6",
+      "title": "mAyA atIta",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mayatheetha-swaroopini.htm",
+        "https://www.shivkumar.org/music/mayatheetha-swaroopini.pdf",
+        "https://www.shivkumar.org/music/mayatheetha-swaroopini-class.mp3",
+        "https://www.shivkumar.org/music/originals/Mayatheetha-Mayamalavagowla-Rupakam-RK.mp3",
+        "https://www.youtube.com/watch?v=Hhf_ocMd280"
+      ],
+      "notationFingerprint": "cd9e375d:5931"
+    },
+    {
+      "id": "38bLRes8Wplx6oeQuHjc2u7FzMK",
+      "title": "mAyammA yaninE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mayamma-ahiri.htm",
+        "https://www.shivkumar.org/music/mayamma-ahiri.pdf",
+        "https://www.shivkumar.org/music/mayamma-ahiri-class.mp3",
+        "https://www.shivkumar.org/music/originals/Mayamma-Ahiri-Adi-Shyamashastry-MSS.mp3",
+        "http://syamakrishnavaibhavam.blogspot.com/2011/03/syama-sastry-kriti-",
+        "https://www.youtube.com/watch?v=Ly31HNeNxN4"
+      ],
+      "notationFingerprint": "5a6ebb8c:10880"
+    },
+    {
+      "id": "38bLRStyEtCYhdFf60Jc72G7F6a",
+      "title": "mAyammA nannu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maayamma-natakuranji.htm",
+        "https://www.shivkumar.org/music/maayamma-natakuranji.pdf",
+        "https://www.shivkumar.org/music/maayamma-natakuranji.mp3",
+        "https://www.shivkumar.org/music/originals/Mayamma-CVShankar.mp3"
+      ],
+      "notationFingerprint": "5fbeb47b:9727"
+    },
+    {
+      "id": "38awEJzld21OHfjFiGueyYYfZRv",
+      "title": "mAyan2ai man2n2u",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-05-MayanaiMannu-SriRagam.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-05-MayanaiMannu-SriRagam.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai05-class.mp3",
+        "https://www.youtube.com/watch?v=1zJFgvvNXp8",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse5.html",
+        "https://www.youtube.com/watch?v=hJFOePx1Bas"
+      ],
+      "notationFingerprint": "705da971:16176"
+    },
+    {
+      "id": "38ay0mebvNe1CEj36jeuSgvyG22",
+      "title": "mAnamu lEdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manamuleda.htm",
+        "https://www.shivkumar.org/music/manamuleda.pdf",
+        "https://www.shivkumar.org/music/manamuleda-detailed.mp3"
+      ],
+      "notationFingerprint": "82974e40:7679"
+    },
+    {
+      "id": "38b6CV4tGNx0LNu44KAKCfgQBwu",
+      "title": "mApAla velasi ika",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maapaala.htm",
+        "https://www.shivkumar.org/music/maapaala.pdf",
+        "https://www.shivkumar.org/music/maapaala.mp3",
+        "https://www.shivkumar.org/music/maapaala-class.mp3",
+        "https://thyagaraja-vaibhavam.blogspot.com/2008/12/thyagaraja-kriti-maapaala-",
+        "https://www.youtube.com/watch?v=uwC_fOSM_EY"
+      ],
+      "notationFingerprint": "b4455aac:11757"
+    },
+    {
+      "id": "38awowklRiPwcLQHkySEGL1f5Ay",
+      "title": "mA ramaNan2",
+      "addedSources": [
+        "https://www.shivkumar.org/music/maaramanan.htm",
+        "https://www.shivkumar.org/music/maaramanan.pdf",
+        "https://www.shivkumar.org/music/MaaRamanan-R.mp3",
+        "https://www.shivkumar.org/music/maaramanan-detailed.mp3"
+      ],
+      "notationFingerprint": "73b46b03:6011"
+    },
+    {
+      "id": "38bRyPz6JK6NUsHjJQngezZort6",
+      "title": "mArgazhi tingaL",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-01-MargazhiThingal-Nattai.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-01-MargazhiThingal-Nattai.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai01-class.mp3",
+        "https://www.youtube.com/watch?v=pmBfcjr1etw",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse1.html",
+        "https://www.youtube.com/watch?v=Wdx-6z_yxhI"
+      ],
+      "notationFingerprint": "71a12c93:12354"
+    },
+    {
+      "id": "38bETmxABwTEP0NvJfUpM6mJXyc",
+      "title": "madhurAmbikAyAm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/madhurambikayam.htm",
+        "https://www.shivkumar.org/music/madhurambikayam.pdf",
+        "https://www.shivkumar.org/music/madhurambikayam-class.mp3",
+        "https://www.shivkumar.org/music/originals/Madhurambikayam-Hemavathi-RK.mp3",
+        "https://www.youtube.com/watch?v=ZjUlOgA548c"
+      ],
+      "notationFingerprint": "53d64bf1:9996"
+    },
+    {
+      "id": "38bFrQJ8G8JM1rVlvT0TNTb4iDg",
+      "title": "mahAlakSmi jaganmAtA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mahalakshmi-jaganmata.htm",
+        "https://www.shivkumar.org/music/mahalakshmi-jaganmata.pdf",
+        "https://www.shivkumar.org/music/mahalakshmi-jaganmata-class.mp3",
+        "https://www.shivkumar.org/music/originals/04_mahalakshmi_sankarabharanam.mp3",
+        "https://www.youtube.com/watch?v=3LwsycqFldI"
+      ],
+      "notationFingerprint": "84381cab:8460"
+    },
+    {
+      "id": "38axKjvCRMKjvUo2CKjRJNRJu9p",
+      "title": "malariNai tuNaiyE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/malarinai.htm",
+        "https://www.shivkumar.org/music/malarinai.pdf",
+        "https://www.shivkumar.org/music/malarinai-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/Malarinai_Reethigowla.mp3"
+      ],
+      "notationFingerprint": "03d12ebb:9996"
+    },
+    {
+      "id": "38bEVspm15yi71ThhkP5y3tcOzP",
+      "title": "mAmava mInAkSI rAjamAtangi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mamavameenakshi.htm",
+        "https://www.shivkumar.org/music/mamavameenakshi.pdf",
+        "https://www.shivkumar.org/music/mamavameenakshi.mp3",
+        "https://www.shivkumar.org/music/mamavameenakshi-class.mp3",
+        "http://guru-guha.blogspot.com/2008/04/dikshitar-kriti-mamava-meenakshi-raga.html",
+        "https://www.youtube.com/watch?v=C5Lfj5o7It4"
+      ],
+      "notationFingerprint": "5be5d88a:10583"
+    },
+    {
+      "id": "38aw5TCJZ6O03krKHXYF8TV6jKv",
+      "title": "mAnasa guruguha",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manasaguruguha1.htm",
+        "https://www.shivkumar.org/music/manasaguruguha.pdf",
+        "https://www.shivkumar.org/music/manasaguruguha.mp3",
+        "https://www.shivkumar.org/music/manasaguruguha-detailed.mp3"
+      ],
+      "notationFingerprint": "74f82896:5425"
+    },
+    {
+      "id": "38aw6lmUjo8mglReGhYSlehkEyk",
+      "title": "mAnasa sa~ncararE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manasasancharare.htm",
+        "https://www.shivkumar.org/music/manasasancharare.pdf",
+        "https://www.shivkumar.org/music/manasasancharare.mp3",
+        "https://www.shivkumar.org/music/manasasancharare-detailed.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "0e210453:4635"
+    },
+    {
+      "id": "38axB9leCYY7hFqIbPo86741Wkg",
+      "title": "manasA eTulOrtunE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manasayetu.htm",
+        "https://www.shivkumar.org/music/manasayetu.pdf",
+        "https://www.shivkumar.org/music/manasayetu.mp3",
+        "https://www.shivkumar.org/music/manasayetu-detailed.mp3"
+      ],
+      "notationFingerprint": "7e23d077:4468"
+    },
+    {
+      "id": "38awGRWIZxNrDxvmUhL36XF5W0j",
+      "title": "manasulOni marmamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manasuloni.htm",
+        "https://www.shivkumar.org/music/manasuloni.pdf",
+        "https://www.shivkumar.org/music/manasuloni.mp3",
+        "https://www.shivkumar.org/music/manasuloni-class.mp3",
+        "https://www.youtube.com/watch?v=7UNEDndk230"
+      ],
+      "notationFingerprint": "7749902a:6841"
+    },
+    {
+      "id": "38b6C4LwkK58rtMHwfpR6fO8Q45",
+      "title": "manasu svAdhInamaina",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manasuswaddhina.htm",
+        "https://www.shivkumar.org/music/manasuswaddhina.pdf",
+        "https://www.shivkumar.org/music/manasuswaddhina-class.mp3",
+        "https://www.youtube.com/watch?v=982oTF1ne-c"
+      ],
+      "notationFingerprint": "14663727:9263"
+    },
+    {
+      "id": "38avgsnL4GjsUCDI0mqgQrC5VXl",
+      "title": "manavi nAlagi~nca",
+      "addedSources": [
+        "https://www.shivkumar.org/music/manavyala.htm",
+        "https://www.shivkumar.org/music/manavyala.pdf",
+        "https://www.shivkumar.org/music/manavyala-class.mp4",
+        "https://www.shivkumar.org/music/manavyala-class.mp3",
+        "http://sahityam.net/w/index.php/Manavyala_kincha",
+        "http://thyagaraja-vaibhavam.blogspot.in/2007/11/thyagaraja-"
+      ],
+      "notationFingerprint": "45c2d267:11215"
+    },
+    {
+      "id": "38b6CiBGopGDGjPbgbxtY0A5sLF",
+      "title": "marakata maNi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/marakatamani-varali.htm",
+        "https://www.shivkumar.org/music/marakatamani-varali.pdf",
+        "https://www.shivkumar.org/music/marakatha-mani-class.mp3",
+        "https://www.shivkumar.org/music/originals/MarakataMani-Varali-RK.mp3",
+        "https://www.youtube.com/watch?v=VWJbVWHHmy0"
+      ],
+      "notationFingerprint": "84c3b486:8720"
+    },
+    {
+      "id": "38bLRKPua0N49MI5QGaVY0vbyqo",
+      "title": "marivErE gati",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mariveregati-anandabhairavi.htm",
+        "https://www.shivkumar.org/music/mariveregati-anandabhairavi.pdf",
+        "https://www.shivkumar.org/music/mariveregati-anandabhairavi-class.mp3",
+        "https://www.youtube.com/watch?v=AuolvQLatCE"
+      ],
+      "notationFingerprint": "4a75edc0:12421"
+    },
+    {
+      "id": "38awfbrbKvypymQHubHSdLGh4Vn",
+      "title": "mArubalka kunna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/marubalka.htm",
+        "https://www.shivkumar.org/music/marubalka.pdf",
+        "https://www.shivkumar.org/music/marubalka.mp3",
+        "https://www.shivkumar.org/music/marubalka-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/10/thyagaraja-kriti-maaru-",
+        "https://www.youtube.com/watch?v=gH1fS8rq-BE"
+      ],
+      "notationFingerprint": "a069e26e:11324"
+    },
+    {
+      "id": "38avmSar2B4sJbM1sA7iqgWO16Y",
+      "title": "marugElarA O",
+      "addedSources": [
+        "https://www.shivkumar.org/music/marugelara.htm",
+        "https://www.shivkumar.org/music/marugelara.pdf",
+        "https://www.shivkumar.org/music/marugelara-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/06/thyagaraja-",
+        "https://www.youtube.com/watch?v=fKLmoTuo0AE"
+      ],
+      "notationFingerprint": "706125eb:8624"
+    },
+    {
+      "id": "38bEYqLGmgtIA7muYMZpJoobXty",
+      "title": "mInAkSi mEmudam dEhi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/meenakshi-memudam.htm",
+        "https://www.shivkumar.org/music/meenakshi-memudam.pdf",
+        "https://www.shivkumar.org/music/meenakshi-memudam-class.mp3",
+        "https://www.shivkumar.org/music/originals/MeenakshiPoorvik_RK.mp3"
+      ],
+      "notationFingerprint": "38b970fd:9262"
+    },
+    {
+      "id": "38b6FUh6r998yC4yIWUu42XaMcF",
+      "title": "mEru samAna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/merusamana.htm",
+        "https://www.shivkumar.org/music/merusamana.pdf",
+        "https://www.shivkumar.org/music/merusamana.mp3",
+        "https://www.shivkumar.org/music/merusamana-detailed.mp3"
+      ],
+      "notationFingerprint": "e7f72cd6:5609"
+    },
+    {
+      "id": "38b6G6sj1tEMFJOJmG72XlL5N5j",
+      "title": "mitri bhAgyamE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mitribhagyame.htm",
+        "https://www.shivkumar.org/music/mitribhagyame.pdf",
+        "https://www.shivkumar.org/music/mitribhagyame-class.mp3",
+        "https://www.youtube.com/watch?v=zP4SOj6lfAU",
+        "https://www.youtube.com/watch?v=bTGEl66GSSE"
+      ],
+      "notationFingerprint": "2d43638e:12255"
+    },
+    {
+      "id": "38awI91anjH8b6Uda2SGWvIoxZ4",
+      "title": "mOhana rAma",
+      "addedSources": [
+        "https://www.shivkumar.org/music/mOhanarAma.htm",
+        "https://www.shivkumar.org/music/mOhanarAma.pdf",
+        "https://www.shivkumar.org/music/mOhanarAma-class.mp3",
+        "https://www.youtube.com/watch?v=qjDhU1m6Z-g&ab_channel=RamKaushik",
+        "https://youtu.be/3SFMkIAnsEU"
+      ],
+      "notationFingerprint": "65031a4e:15686"
+    },
+    {
+      "id": "38b6IjgdhIkFhi3omrcXBgnnuTb",
+      "title": "mundu venuka",
+      "addedSources": [
+        "https://www.shivkumar.org/music/munduvenuka-durbar.htm",
+        "https://www.shivkumar.org/music/munduvenuka-durbar.pdf",
+        "https://www.shivkumar.org/music/munduvenuka-durbar-class.mp3"
+      ],
+      "notationFingerprint": "4f0fd2a9:12939"
+    },
+    {
+      "id": "38bRyptzSS1GNt4ZOxVdRoD6Wfi",
+      "title": "muppattu mUvar",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-20-MuppathiMuvar-Senchurutti.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-20-MuppathiMuvar-Senchurutti.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai20-class.mp3",
+        "https://www.youtube.com/watch?v=IzwyMRAugXY",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp20.html",
+        "https://www.youtube.com/watch?v=OlMHpAU1Q80"
+      ],
+      "notationFingerprint": "8aa4ad00:16103"
+    },
+    {
+      "id": "38awU76MMyZxGli9MYipFnAm4kj",
+      "title": "murugA murugA en2RAl",
+      "addedSources": [
+        "https://www.shivkumar.org/music/murugamuruga.htm",
+        "https://www.shivkumar.org/music/murugamuruga.pdf",
+        "https://www.shivkumar.org/music/murugamuruga-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/06_murugamuruga_saveri.mp3",
+        "http://rasikas.org/forum/viewtopic.php?f=11&t=9277"
+      ],
+      "notationFingerprint": "ea5a8eae:7198"
+    },
+    {
+      "id": "38b6NSpkm8ZcGHGxRjh2Jbdy3GN",
+      "title": "nAdupai balikEru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/naadupai.htm",
+        "https://www.shivkumar.org/music/naadupai.pdf",
+        "https://www.shivkumar.org/music/naadupai.mp3",
+        "https://www.shivkumar.org/music/naadupai-class.mp3",
+        "http://www.youtube.com/watch?v=av9_FthV9K8",
+        "https://thyagaraja-vaibhavam.blogspot.com/2007/09/thyagaraja-kriti-naadupai-",
+        "https://www.youtube.com/watch?v=VcRoCS4TNmE"
+      ],
+      "notationFingerprint": "59d95079:10258"
+    },
+    {
+      "id": "38b6MaMAt0JhAA6d5sKS7qpRE7L",
+      "title": "nAdasudhA rasambilanu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nadasudharasa.htm",
+        "https://www.shivkumar.org/music/nadasudharasa.pdf",
+        "https://www.shivkumar.org/music/nadasudharasa-class.mp3",
+        "https://www.youtube.com/watch?v=w93K6wbffvQ"
+      ],
+      "notationFingerprint": "321f7855:9703"
+    },
+    {
+      "id": "38awQLny7io9smTxnKAPpZm4ECB",
+      "title": "nAda tanumanisham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nadathanumanisham.htm",
+        "https://www.shivkumar.org/music/nadathanumanisham.pdf",
+        "https://www.shivkumar.org/music/nadathanumanisham.mp3",
+        "https://www.shivkumar.org/music/nadathanumanisham-detailed.mp3"
+      ],
+      "notationFingerprint": "bc39507e:4497"
+    },
+    {
+      "id": "38b6NHzvkXiHBDhcqNvkjUAoivM",
+      "title": "nAdOpAsanace",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nadopasana.htm",
+        "https://www.shivkumar.org/music/nadopasana.pdf",
+        "https://www.shivkumar.org/music/nadopasana.mp3",
+        "https://www.shivkumar.org/music/nadopasana-class.mp3",
+        "http://www.youtube.com/watch?v=9XhMvX5cjno",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/06/thyagaraja-",
+        "https://www.youtube.com/watch?v=0G3Kyp8Zfn0"
+      ],
+      "notationFingerprint": "8ecf75f0:10880"
+    },
+    {
+      "id": "38awn59inntfF3SdJE5se8Z7Cjq",
+      "title": "nagumOmu ganalEni",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nagumomu.htm",
+        "https://www.shivkumar.org/music/nagumomu.pdf",
+        "https://www.shivkumar.org/music/nagumomu.mp3",
+        "https://www.shivkumar.org/music/nagumomu-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/07/thyagaraja-kriti-nagu-",
+        "https://www.youtube.com/watch?v=bypQSwZSXzw"
+      ],
+      "notationFingerprint": "dc39425f:14469"
+    },
+    {
+      "id": "38awlbguMQXa5bqNChXusgVS1GX",
+      "title": "nambi keTTavar",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nambikettavar-hindolam.htm",
+        "https://www.shivkumar.org/music/nambikettavar-hindolam.pdf",
+        "https://www.shivkumar.org/music/nambikettavar-hindolam-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/NambiKettavar_Hindolam.mp3"
+      ],
+      "notationFingerprint": "991bdd80:10733"
+    },
+    {
+      "id": "38awG4Eg9JCAnFdNn4oUeiCUHZv",
+      "title": "namO namO raghukula nAyakA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/namo-namo-raghukula.htm",
+        "https://www.shivkumar.org/music/namo-namo-raghukula.pdf",
+        "https://www.shivkumar.org/music/namo-namo-raghukula-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/1-namo_namo_raghukula-nAttai-thalapakkam_annamAchAryA.mp3"
+      ],
+      "notationFingerprint": "aa013fce:8947"
+    },
+    {
+      "id": "38axDtwQvHCiivEy6pmvd8nEa4A",
+      "title": "nAnATi batuku",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nanatibaduku.htm",
+        "https://www.shivkumar.org/music/nanatibaduku.pdf",
+        "https://www.shivkumar.org/music/nanatibaduku-class.mp3",
+        "http://www.annamayyakeerthanalu.in/2011/09/lyrics-of-annamacharya-",
+        "https://www.youtube.com/watch?v=zFQQCAlGdBo"
+      ],
+      "notationFingerprint": "8f336877:11567"
+    },
+    {
+      "id": "38bLSUsb8sMmNJNuEDJDrugFVQe",
+      "title": "nannu brOva lalitA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nannubrovulalitha.htm",
+        "https://www.shivkumar.org/music/nannubrovulalitha.pdf",
+        "https://www.shivkumar.org/music/nannubrovulalitha-class.mp3",
+        "https://www.youtube.com/watch?v=YFtLKAyDGTA&ab_channel=RamKaushik",
+        "https://youtu.be/hVs7CXBD92g"
+      ],
+      "notationFingerprint": "45bf05b0:11892"
+    },
+    {
+      "id": "38b6OFauBMm6hRV5NWMNenHovjl",
+      "title": "nannu kanna talli",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Nannukannathalli.pdf",
+        "https://www.shivkumar.org/music/originals/02-NannuKannaTalli-DKP.mp3"
+      ],
+      "notationFingerprint": "7410e540:3071"
+    },
+    {
+      "id": "38ax2J05uQYsWM5CsgysBpAeUQI",
+      "title": "nanu pAlimpa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nannupAlimpa.htm",
+        "https://www.shivkumar.org/music/nannupAlimpa.pdf",
+        "https://www.shivkumar.org/music/nannupAlimpa-class.mp3",
+        "https://www.youtube.com/watch?v=Svco21uLDU0&t=1752s&ab_channel=SureshM",
+        "https://youtu.be/LndX3kmjWEE"
+      ],
+      "notationFingerprint": "cf55cb02:12068"
+    },
+    {
+      "id": "38b6Oau4yyOEWLyzplvP9ob57uU",
+      "title": "nArada gAnalOla",
+      "addedSources": [
+        "https://www.shivkumar.org/music/naradaganalola.htm",
+        "https://www.shivkumar.org/music/naradaganalola.pdf",
+        "https://www.shivkumar.org/music/naradaganalola-class.mp3",
+        "https://www.youtube.com/watch?v=BGLXdVK7uPM",
+        "http://www.shivkumar.org/music/naradaganalola"
+      ],
+      "notationFingerprint": "5dd2a0fd:6114"
+    },
+    {
+      "id": "38bGvs2MXzT4b416iKb3QvXpHoz",
+      "title": "narasimha mAmava",
+      "addedSources": [
+        "https://www.shivkumar.org/music/narasimha-mamava.htm",
+        "https://www.shivkumar.org/music/narasimha-mamava.pdf",
+        "https://www.shivkumar.org/music/narasimha-mamava.mp3",
+        "https://www.shivkumar.org/music/narasimha-mamava-class.mp3",
+        "https://www.youtube.com/watch?v=Uca9TOWQka4"
+      ],
+      "notationFingerprint": "9f04ceb1:7412"
+    },
+    {
+      "id": "38bDKGoXKbAE09l2bri5ibXeeSF",
+      "title": "nArAyaNA ninna nAmada",
+      "addedSources": [
+        "https://www.shivkumar.org/music/narayana-shuddha-dhanyasi.htm",
+        "https://www.shivkumar.org/music/narayana-shuddha-dhanyasi.pdf",
+        "https://www.shivkumar.org/music/narayana-shuddha-dhanyasi-class.mp3",
+        "https://www.shivkumar.org/music/originals/Narayana-ShuddhaDhanyasi-MSS-v2.mp3",
+        "https://youtu.be/88UnQyMVkZE"
+      ],
+      "notationFingerprint": "9fedbd01:9339"
+    },
+    {
+      "id": "38bRyt6kBF1V5CiX3eSBI98U8NG",
+      "title": "nAyakanAi ninra",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-16-NAyaganAiNinra-Durbar.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-16-NAyaganAiNinra-Durbar.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai16-class.mp3",
+        "https://www.youtube.com/watch?v=OWcacgnO0E0",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp16.html",
+        "https://www.youtube.com/watch?v=bF_oRtjDLjQ"
+      ],
+      "notationFingerprint": "197dcb68:17085"
+    },
+    {
+      "id": "38b6WN4MjYF7MeCp82IPErDhzqb",
+      "title": "nI bhajana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/neebhajana.htm",
+        "https://www.shivkumar.org/music/neebhajana.pdf",
+        "https://www.shivkumar.org/music/neebhajana-detailed.mp3"
+      ],
+      "notationFingerprint": "3dc58bfb:6272"
+    },
+    {
+      "id": "38b5zC5sXNa0zvZjMy0gbaAVsqw",
+      "title": "nI daya rAdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/needayarada.htm",
+        "https://www.shivkumar.org/music/needayarada.pdf",
+        "https://www.shivkumar.org/music/needayarada.mp3",
+        "https://www.shivkumar.org/music/needayarada-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/03/thyagaraja-"
+      ],
+      "notationFingerprint": "5490452a:4519"
+    },
+    {
+      "id": "38bEc2SsCGFJ9vvXkyl6xPzw8FZ",
+      "title": "nIlakaNTham bhajEham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/neelakantam.htm",
+        "https://www.shivkumar.org/music/neelakantam.pdf",
+        "https://www.shivkumar.org/music/neelakantam.mp3",
+        "https://www.shivkumar.org/music/neelakantam-class.mp3",
+        "https://www.youtube.com/watch?v=fjr4I_jRICw"
+      ],
+      "notationFingerprint": "20bd1e32:10040"
+    },
+    {
+      "id": "38b6Zh4bFyrxQwc0VTHkuxMkqOt",
+      "title": "nIvADa nE gAna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/neevadanegana.htm",
+        "https://www.shivkumar.org/music/neevadanegana.pdf",
+        "https://www.shivkumar.org/music/neevadanegana.mp3",
+        "https://www.shivkumar.org/music/neevadanegana-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/10/thyagaraja-kriti-neevaada-",
+        "https://www.youtube.com/watch?v=k9b0IVeUvgk"
+      ],
+      "notationFingerprint": "f9dba457:8695"
+    },
+    {
+      "id": "38bEdmo2e7R7avuicu2E3iSw0Uo",
+      "title": "nIrajAkSi kAmAkSi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nirajakshi-kamakshi-hindolam.htm",
+        "https://www.shivkumar.org/music/nirajakshi-kamakshi-hindolam.pdf",
+        "https://www.shivkumar.org/music/nirajakshi-kamakshi-hindolam-class.mp3",
+        "https://www.shivkumar.org/music/originals/NirajakshiKamakshi-Hindolam-RK.mp3",
+        "https://www.youtube.com/watch?v=FMVMBl0p1Uc"
+      ],
+      "notationFingerprint": "df152a25:6781"
+    },
+    {
+      "id": "38b6Zo90u8hgKHgZsZB2dbFEDoh",
+      "title": "nIvaNTi deivamunu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nivanti-thodi.htm",
+        "https://www.shivkumar.org/music/nivanti-thodi.pdf",
+        "https://www.shivkumar.org/music/nivanti-thodi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/nI-vantidaivamu-HydBros.mp3"
+      ],
+      "notationFingerprint": "89d5cf50:14595"
+    },
+    {
+      "id": "38b6PyL4gPUBAEN3A8PZKvYePe9",
+      "title": "nenaru~ncarA nApaini",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nenarunchera.htm",
+        "https://www.shivkumar.org/music/nenarunchera.pdf",
+        "https://www.shivkumar.org/music/nenarunchera.mp3",
+        "https://www.shivkumar.org/music/nenarunchera-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2007/11/thyagaraja-kriti-",
+        "https://www.youtube.com/watch?v=VdvVU2SAq9s"
+      ],
+      "notationFingerprint": "a81e8686:9160"
+    },
+    {
+      "id": "38ax9nobUskhcUKwp8RhfEKNHjy",
+      "title": "nidhicAla sukhamA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/nidhichala.htm",
+        "https://www.shivkumar.org/music/nidhichala.pdf",
+        "https://www.shivkumar.org/music/nidhichala-class.mp3",
+        "https://www.youtube.com/watch?v=QJtepl3hRQA"
+      ],
+      "notationFingerprint": "51f993bc:10361"
+    },
+    {
+      "id": "38b6Z6Lgn8tzDEcnzdRyXlSPXH6",
+      "title": "ninnE bhajana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ninnebhajana-new.htm",
+        "https://www.shivkumar.org/music/ninnebhajana-new.pdf",
+        "https://www.shivkumar.org/music/ninnebhajana.mp3",
+        "https://www.shivkumar.org/music/ninnebhajana-detailed.mp3"
+      ],
+      "notationFingerprint": "77d42962:5050"
+    },
+    {
+      "id": "38b5zrhmvsmVUqfdDXzVD8BNN8S",
+      "title": "ninnE nera",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ninnenera-panthu.htm",
+        "https://www.shivkumar.org/music/ninnenera-panthu.pdf",
+        "https://www.shivkumar.org/music/ninnenera-detailed.mp3"
+      ],
+      "notationFingerprint": "d32d150b:5822"
+    },
+    {
+      "id": "38b8UawtmE85bOqIjoYWy8prDlK",
+      "title": "ninnu jUci",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ninnujuchi.htm",
+        "https://www.shivkumar.org/music/ninnujuchi.pdf",
+        "https://www.shivkumar.org/music/ninnujuchi.mp3",
+        "https://www.shivkumar.org/music/originals/01_NinnuJoochi_Saurashtram.mp3",
+        "https://www.shivkumar.org/music/originals/NinnuJoochi_RK.mp3"
+      ],
+      "notationFingerprint": "7ea20941:5472"
+    },
+    {
+      "id": "38ax0XoqzcNqTxFMEorVW8T1vms",
+      "title": "ninnuvinA sukhamugAna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ninnuvina.htm",
+        "https://www.shivkumar.org/music/ninnuvina.pdf"
+      ],
+      "notationFingerprint": "7c557754:6108"
+    },
+    {
+      "id": "38bRz285AJkJ8nYqW4AXRcQ1fhD",
+      "title": "nOTru svargam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-10-NotruChuvarkkam-Thodi.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-10-NotruChuvarkkam-Thodi.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai10-class.mp3",
+        "https://www.youtube.com/watch?v=mWTWLKeLJZ4",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse10.html",
+        "https://www.youtube.com/watch?v=0tIanlXNzYQ"
+      ],
+      "notationFingerprint": "2ba07db1:15414"
+    },
+    {
+      "id": "38bLTEtTIzWWImCEWstXwcaeTJW",
+      "title": "O jagadamba nanu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ojagadamba.htm",
+        "https://www.shivkumar.org/music/ojagadamba.pdf",
+        "https://www.shivkumar.org/music/ojagadamba-class.mp3"
+      ],
+      "notationFingerprint": "49f51336:16719"
+    },
+    {
+      "id": "38bRzDt0FBKikjV7Nx3crNBnJNc",
+      "title": "Ongi ulagaLanda",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-03-OngiUlagalandha-Arabhi.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-03-OngiUlagalandha-Arabhi.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai03-class.mp3",
+        "https://www.youtube.com/watch?v=V9lRfc0VkXk",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse3.html",
+        "https://www.youtube.com/watch?v=9ubkzZrfbqA"
+      ],
+      "notationFingerprint": "81231c25:14121"
+    },
+    {
+      "id": "38b6bWwzB2bJ708Zngu2Eg91Y7i",
+      "title": "O ra~NgashAyi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/orangashaayi.htm",
+        "https://www.shivkumar.org/music/orangashaayi.pdf",
+        "https://www.shivkumar.org/music/orangashaayi.mp3",
+        "https://www.shivkumar.org/music/orangashaayi-class.mp4",
+        "https://www.shivkumar.org/music/orangashaayi-class.mp3",
+        "https://www.shivkumar.org/music/originals/004b-orangashayi-khamboji-krithi-mss-party1.mp3"
+      ],
+      "notationFingerprint": "964bc0a6:12590"
+    },
+    {
+      "id": "38bRzHq2GSzQCTJS3b1YAoGbmvw",
+      "title": "orutti maghanAi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-25-OruthiMaganai-Behag.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-25-OruthiMaganai-Behag.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai25-class.mp3",
+        "https://www.youtube.com/watch?v=9AV01yWq-So&ab_channel=SouthIndianMusicAcademyLA",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp25.html",
+        "https://www.youtube.com/watch?v=ddlhtthGemY"
+      ],
+      "notationFingerprint": "02b015d5:13181"
+    },
+    {
+      "id": "38axM8p7SE9v8qJMmsoKejeJPff",
+      "title": "okapari kokapari",
+      "addedSources": [
+        "https://www.shivkumar.org/music/okapari.htm",
+        "https://www.shivkumar.org/music/okapari.pdf",
+        "https://www.shivkumar.org/music/okapari-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/OkapariKokapari_Kharaharapriya.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "3d51a06f:31631"
+    },
+    {
+      "id": "38b6bwgc4p7KBrVBJbPmMwUoDYY",
+      "title": "padavi nI",
+      "addedSources": [
+        "https://www.shivkumar.org/music/padavini.htm",
+        "https://www.shivkumar.org/music/padavini.pdf",
+        "https://www.shivkumar.org/music/padavini-class.mp3",
+        "https://www.shivkumar.org/music/originals/004a-padavini-salaga-bhairavi-krithi-semmangudi.mp3",
+        "https://thyagaraja-vaibhavam.blogspot.com/2007/10/thyagaraja-kriti-padavi-nee-",
+        "https://www.youtube.com/watch?v=2V_bltlFmXQ"
+      ],
+      "notationFingerprint": "f0e9b640:8336"
+    },
+    {
+      "id": "38b6d9VKktg1ruGXVB3QmzcwGYt",
+      "title": "pAhi rAma dUta",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pahiramadoota.htm",
+        "https://www.shivkumar.org/music/pahiramadoota.pdf",
+        "https://www.shivkumar.org/music/pahiramadoota.mp3",
+        "https://www.shivkumar.org/music/pahiramadoota-class.mp3",
+        "http://thyagaraja-vaibhavam.blogspot.com/2008/08/thyagaraja-"
+      ],
+      "notationFingerprint": "12007244:6146"
+    },
+    {
+      "id": "38b5xU8W5PPhu8Te0euNiH8ytzO",
+      "title": "paahimaam shrI",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pahimaamsriraja.htm",
+        "https://www.shivkumar.org/music/pahimaamsriraja.pdf",
+        "https://www.shivkumar.org/music/pahimaamsriraja.mp3",
+        "https://www.shivkumar.org/music/pahimaamsriraja-detailed.mp3",
+        "http://www.youtube.com/watch?v=pV2pC7Kml_s",
+        "https://www.sangeetham.com"
+      ],
+      "notationFingerprint": "096ac97e:4889"
+    },
+    {
+      "id": "38b5zL7k1Bx2dw6Kz17Mv9vot14",
+      "title": "pAli~ncu kAmAkSi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/palinchu-kamakshi.htm",
+        "https://www.shivkumar.org/music/palinchu-kamakshi.pdf",
+        "https://www.shivkumar.org/music/palinchu-kamakshi-class.mp3"
+      ],
+      "notationFingerprint": "48f98cc5:13984"
+    },
+    {
+      "id": "38bEf0BIgojsQ1ZPQ6h9UOAJ0kn",
+      "title": "pAmarajana pAlinI",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pamarajanapalini.htm",
+        "https://www.shivkumar.org/music/pamarajanapalini.pdf",
+        "https://www.shivkumar.org/music/pamarajanapalini-detailed.mp3",
+        "https://www.sangeetham.com"
+      ],
+      "notationFingerprint": "af4d089c:3964"
+    },
+    {
+      "id": "38bEfSzuRXUrZNB2qsr2Q23ekJO",
+      "title": "pancamAtanga mukha",
+      "addedSources": [
+        "https://www.shivkumar.org/music/panchamatanga.htm",
+        "https://www.shivkumar.org/music/panchamatanga.pdf",
+        "https://www.shivkumar.org/music/panchamatanga.mp3",
+        "https://www.shivkumar.org/music/panchamatanga-detailed.mp3"
+      ],
+      "notationFingerprint": "8e294898:6054"
+    },
+    {
+      "id": "38b88DL2yC1fCwHsULI3zPRoIty",
+      "title": "pa~Nkaja lOcana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pankajalochana.htm",
+        "https://www.shivkumar.org/music/pankajalochana.pdf",
+        "https://www.shivkumar.org/music/pankajalochana.mp3",
+        "https://www.shivkumar.org/music/pankajalochana-class.mp3",
+        "http://www.swathithirunal.in/htmlfile/224.htm",
+        "https://www.youtube.com/watch?v=hOeJz26T6h4"
+      ],
+      "notationFingerprint": "28d13f97:10016"
+    },
+    {
+      "id": "38axKU64Kf8C854W4fUcNiCsvf4",
+      "title": "parAmukham En2aiyA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/paraamukham.htm",
+        "https://www.shivkumar.org/music/paraamukham.pdf",
+        "https://www.shivkumar.org/music/paraamukham.mp3",
+        "https://www.shivkumar.org/music/paraamukham-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/PSivan-Pretaped/10_paramukham_kharaharapriya.mp3"
+      ],
+      "notationFingerprint": "9712b7be:5032"
+    },
+    {
+      "id": "38b6eueeE05xQJuFa9KMzqlxvrq",
+      "title": "paralOka bhayamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/paraloka-bhaya.htm",
+        "https://www.shivkumar.org/music/paraloka-bhaya.pdf",
+        "https://www.shivkumar.org/music/parandhamaparaloka-bhaya-detailed.mp3"
+      ],
+      "notationFingerprint": "a9f6966d:8839"
+    },
+    {
+      "id": "38bEgcOo0FqqPxzVRXR6u2XGcsk",
+      "title": "parandhAmavatI",
+      "addedSources": [
+        "https://www.shivkumar.org/music/parandhamavathi-dharmavathi.htm",
+        "https://www.shivkumar.org/music/parandhamavathi-dharmavathi.pdf",
+        "https://www.shivkumar.org/music/parandhamavathi-dharmavathi-class.mp3",
+        "https://www.shivkumar.org/music/originals/ParandamavatiJayati-Dhamavati-Rupaka-HyderabadBros.mp3"
+      ],
+      "notationFingerprint": "936b3158:3990"
+    },
+    {
+      "id": "38bEfl3zWAk2yoNIQeKkdAHnxbz",
+      "title": "paradEvatA brhat kucAmbA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/paradevata.htm",
+        "https://www.shivkumar.org/music/paradevata.pdf",
+        "https://www.shivkumar.org/music/paradevata.mp3",
+        "https://www.shivkumar.org/music/paradevata-class.mp3",
+        "http://guru-guha.blogspot.com/2008/01/dikshitar-kriti-para-devataa-brhat.html",
+        "https://www.youtube.com/watch?v=r3GJPApdVHQ"
+      ],
+      "notationFingerprint": "a3474a36:17077"
+    },
+    {
+      "id": "38b7bkQRGe1ZtB5er5OLRudaPTB",
+      "title": "parama pAvani",
+      "addedSources": [
+        "https://www.shivkumar.org/music/paramapavani.htm",
+        "https://www.shivkumar.org/music/paramapavani.pdf",
+        "https://www.shivkumar.org/music/Paramapaavani-Attana-R.MP3",
+        "https://www.shivkumar.org/music/paramapavani-detailed.mp3"
+      ],
+      "notationFingerprint": "9c0ba5ba:9162"
+    },
+    {
+      "id": "38bEgG0WJGoj3JICVZioczglRha",
+      "title": "paramEshvara jagadIshvara",
+      "addedSources": [
+        "https://www.shivkumar.org/music/parameshwara-nattai.htm",
+        "https://www.shivkumar.org/music/parameshwara-nattai.pdf",
+        "https://www.shivkumar.org/music/parameshwara-nattai-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/01-Parameshwara-Nattai.mp3"
+      ],
+      "notationFingerprint": "4928c1d7:10882"
+    },
+    {
+      "id": "38ay3kP38JK9tH12cHsScU4oA70",
+      "title": "parAtpara",
+      "addedSources": [
+        "https://www.shivkumar.org/music/paratpara.htm",
+        "https://www.shivkumar.org/music/paratpara.pdf",
+        "https://www.shivkumar.org/music/paratpara-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/PSivan-Pretaped/04_paratpara_vachaspathi.mp3"
+      ],
+      "notationFingerprint": "09169826:5094"
+    },
+    {
+      "id": "38awKQ1lNs1lnjjPW2PwrVhRn4U",
+      "title": "paridAnamiccitE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/paridhana.htm",
+        "https://www.shivkumar.org/music/paridhana.pdf",
+        "https://www.shivkumar.org/music/paridhana.mp3",
+        "https://www.shivkumar.org/music/paridhana-detailed.mp3"
+      ],
+      "notationFingerprint": "79f89706:6861"
+    },
+    {
+      "id": "38bL1jhJ1jFl0cD0Jwl7OhO4AwQ",
+      "title": "pArvai onru pOdumE shankha paduma nidhi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/parvai-onre-podhume.htm",
+        "https://www.shivkumar.org/music/parvai-onre-podhume.pdf",
+        "https://www.shivkumar.org/music/parvai-onre-podhume-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/ParvaiOnrePodume-Surati.mp3",
+        "http://rasikas.org/forum/viewtopic.php?f=11&t=12585"
+      ],
+      "notationFingerprint": "5e0c05c3:12462"
+    },
+    {
+      "id": "38bEhloJlifCfoJmbHYjaJ9ZgiO",
+      "title": "pArvatIpatim praNaumi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/parvatipathim.htm",
+        "https://www.shivkumar.org/music/parvatipathim.pdf",
+        "https://www.shivkumar.org/music/parvatipathim-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/001-parvatipathim-hamsadhwani-krithi-dkj-panchalinga.mp3"
+      ],
+      "notationFingerprint": "e557c212:4421"
+    },
+    {
+      "id": "38awmb3SyjyI0Qv1DJXymdFeugQ",
+      "title": "pAvanaguru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pavanaguru-hamsanandi.htm",
+        "https://www.shivkumar.org/music/pavanaguru-hamsanandi.pdf",
+        "https://www.shivkumar.org/music/pavanaguru-hamsanandi-class.mp3",
+        "https://www.youtube.com/watch?v=Zn7dVpLB5zA",
+        "https://www.youtube.com/watch?v=a-N72nIWXUA"
+      ],
+      "notationFingerprint": "0a389746:14026"
+    },
+    {
+      "id": "38bEiGs9XcMV734SGKk782IbJop",
+      "title": "pavanAtmajAgaccha",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pavanatmaja-nata-dikshitar.htm",
+        "https://www.shivkumar.org/music/pavanatmaja-nata-dikshitar.pdf",
+        "https://www.shivkumar.org/music/pavanatmaja-nata-dikshitar-class.mp3",
+        "https://www.youtube.com/watch?v=zStASZKiMrg",
+        "https://www.youtube.com/watch?v=OvS7VzLajaA"
+      ],
+      "notationFingerprint": "6ce31258:9200"
+    },
+    {
+      "id": "38bKDNR6LWycp4xlz8CelKZRFLI",
+      "title": "peTriDalAm manamE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/petridalam-maname-sriranjani.htm",
+        "https://www.shivkumar.org/music/petridalam-maname-sriranjani.pdf",
+        "https://www.shivkumar.org/music/petridalam-maname-class.mp3",
+        "https://www.youtube.com/watch?v=sKapI3DMmi0",
+        "https://www.youtube.com/watch?v=GeWpBbuY5yY"
+      ],
+      "notationFingerprint": "a3968948:18164"
+    },
+    {
+      "id": "38ax3J8yDGyYWuwFuxTGxR3q6cE",
+      "title": "piRavA varam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/piravaavaram.htm",
+        "https://www.shivkumar.org/music/piravaavaram.pdf",
+        "https://www.shivkumar.org/music/piravaavaram.mp3",
+        "https://www.shivkumar.org/music/piravaavaram-detailed.mp3"
+      ],
+      "notationFingerprint": "3acc1020:4883"
+    },
+    {
+      "id": "38axkJeoNZ8XcKKA2WXPISDIL7K",
+      "title": "pakkala nilabaDi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/prakkala.htm",
+        "https://www.shivkumar.org/music/prakkala.pdf",
+        "https://www.shivkumar.org/music/prakkala.mp3",
+        "https://www.shivkumar.org/music/prakkala-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/08b-prakallanilabadi-kharaharapriya-krithi-ssi-c05.mp3",
+        "https://www.karnatik.com"
+      ],
+      "notationFingerprint": "5bee7c31:6534"
+    },
+    {
+      "id": "38b9daxRKhlxEIMLpIYsrQqJ8TO",
+      "title": "praNamAmyaham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/pranamaamyaham.htm",
+        "https://www.shivkumar.org/music/pranamaamyaham.pdf",
+        "https://www.shivkumar.org/music/pranamaamyaham.mp3",
+        "https://www.shivkumar.org/music/pranamaamyaham-detailed.mp3"
+      ],
+      "notationFingerprint": "bc376976:5633"
+    },
+    {
+      "id": "38bRzNU9TSmNy8qpImgBhWY8lMz",
+      "title": "puLLin vAi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-13-PullinVayKidanai-Atana.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-13-PullinVayKidanai-Atana.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai13-class.mp3",
+        "https://www.youtube.com/watch?v=dRuYocZ7lYM",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp13.html",
+        "https://www.youtube.com/watch?v=EJYEyYulQug"
+      ],
+      "notationFingerprint": "74952cb6:13251"
+    },
+    {
+      "id": "38bRza8JQqC7Ip4HvCDFlHE1T6Q",
+      "title": "puLLum silambina",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-06-PullumSilambinagan-Shankarabharanam.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-06-PullumSilambinagan-Shankarabharanam.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai06-class.mp3",
+        "https://www.youtube.com/watch?v=7xOhfZ_lwWk",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse6.html",
+        "https://www.youtube.com/watch?v=zk4MlDsCft4"
+      ],
+      "notationFingerprint": "49ffa721:17321"
+    },
+    {
+      "id": "38b6TnguPmXZ12ysbl1FMgM5EMn",
+      "title": "pun2n2agai on2rE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/punnagaionre.htm",
+        "https://www.shivkumar.org/music/punnagaionre-class.mp3",
+        "https://www.youtube.com/watch?v=UUpmuo4oRBs"
+      ],
+      "notationFingerprint": "08ef6f4c:9197"
+    },
+    {
+      "id": "38b60ntLFKvpSRzP9R7DAAKd50E",
+      "title": "raghunAyakA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/raghunayaka.htm",
+        "https://www.shivkumar.org/music/raghunayaka.pdf",
+        "https://www.shivkumar.org/music/raghunayaka.mp3",
+        "https://www.shivkumar.org/music/raghunayaka-detailed.mp3"
+      ],
+      "notationFingerprint": "fc9b6fac:5676"
+    },
+    {
+      "id": "38b8ROpYUIloE69w7xbP5tsVliE",
+      "title": "rAmacandram bhAvayAmi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramachandram-bhavayami.htm",
+        "https://www.shivkumar.org/music/ramachandram-bhavayami.pdf",
+        "https://www.shivkumar.org/music/ramachandram-bhavayami-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/Ramachandram_Vasantha_RK.mp3"
+      ],
+      "notationFingerprint": "ef273955:8308"
+    },
+    {
+      "id": "38bEkjIbaB6xPlzMgkqAjlEzw87",
+      "title": "rAmacandrENa samrakSitOham sItA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramachandrena-manji.htm",
+        "https://www.shivkumar.org/music/ramachandrena-manji.pdf",
+        "https://www.shivkumar.org/music/ramachandrena-class.mp4",
+        "https://www.shivkumar.org/music/ramachandrena-class.mp3"
+      ],
+      "notationFingerprint": "c2618038:10293"
+    },
+    {
+      "id": "38awMdxlpQDppGDVsLxPyJCQqH7",
+      "title": "rAmA dayajUDavE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramadayajudave.htm",
+        "https://www.shivkumar.org/music/ramadayajudave.pdf",
+        "https://www.shivkumar.org/music/ramadayajudave.mp3"
+      ],
+      "notationFingerprint": "7a8cf1ad:2712"
+    },
+    {
+      "id": "38b6kSnO4C0yU23RXrY2QR3JWhD",
+      "title": "rAma nannu brOvarA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramanannubrova.htm",
+        "https://www.shivkumar.org/music/ramanannubrova.pdf",
+        "https://www.shivkumar.org/music/ramanannubrova.mp3",
+        "https://www.shivkumar.org/music/ramanannu-detailed.mp3"
+      ],
+      "notationFingerprint": "1ec9cbf8:3011"
+    },
+    {
+      "id": "38bEkzlC3QGea8y1qevuhErwepG",
+      "title": "rAmanAtham bhajEham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramanatham.htm",
+        "https://www.shivkumar.org/music/ramanatham.pdf",
+        "https://www.shivkumar.org/music/ramanatham.mp3",
+        "https://www.shivkumar.org/music/ramanatham-class.mp3",
+        "http://guru-guha.blogspot.com/2008/05/dikshitar-kriti-ramanatham-bhajeham.html",
+        "https://www.youtube.com/watch?v=COf1lhAUwbc"
+      ],
+      "notationFingerprint": "ac541167:10335"
+    },
+    {
+      "id": "38axq4enZVyMC9ctFKw6rp0ucnd",
+      "title": "raamaa ika",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramaikanannu.htm",
+        "https://www.shivkumar.org/music/ramaikanannu.pdf",
+        "https://www.shivkumar.org/music/ramaikanannu-class.mp3",
+        "https://www.youtube.com/watch?v=DLufNhPsKiY"
+      ],
+      "notationFingerprint": "cb4e9da7:6818"
+    },
+    {
+      "id": "38b6jbqix9yWVLxTlKfEoaOojRI",
+      "title": "rAma kathA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramakathasudha.htm",
+        "https://www.shivkumar.org/music/ramakathasudha.pdf",
+        "https://www.shivkumar.org/music/ramakathasudha-class.mp3",
+        "https://www.shivkumar.org/music/ramakathasudha-class.mp4"
+      ],
+      "notationFingerprint": "c1bcf54f:12559"
+    },
+    {
+      "id": "38b6klq7zInJbnpCTxrvVct4G5s",
+      "title": "rAma nIpai tanaku",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramanipai2.htm",
+        "https://www.shivkumar.org/music/ramanipai2.pdf",
+        "https://www.shivkumar.org/music/ramanipai.mp3",
+        "https://www.shivkumar.org/music/ramanipai-detailed.mp3"
+      ],
+      "notationFingerprint": "67e7ceba:5035"
+    },
+    {
+      "id": "38awphj8UN6iy0bquU88CRMFUV9",
+      "title": "rAma nI samAnamevaru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramaneesamana.htm",
+        "https://www.shivkumar.org/music/ramaneesamana.pdf",
+        "https://www.shivkumar.org/music/ramaneesamana.mp3",
+        "https://www.shivkumar.org/music/ramaneesamana-class.mp3",
+        "https://www.shivkumar.org/music/originals/06b_ramaneesamana_kharaharapriya_krithi-ssi-c03.mp3",
+        "http://thyagaraja-",
+        "https://www.youtube.com/watch?v=XqAZU7M2Wc4"
+      ],
+      "notationFingerprint": "59a0caff:7862"
+    },
+    {
+      "id": "38b6kWZzKml8AmqPQINw7EBhGes",
+      "title": "rAma ninu nammina",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ramaninnunammina.htm",
+        "https://www.shivkumar.org/music/ramaninnunammina.pdf",
+        "https://www.shivkumar.org/music/ramaninnunammina-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/RamaNinnuMohanam_RK.mp3"
+      ],
+      "notationFingerprint": "b25f105e:7376"
+    },
+    {
+      "id": "38b5yS0tjWZOjOXk8n2dMxqLS3b",
+      "title": "ra~NganaathuDE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ranganathude.htm",
+        "https://www.shivkumar.org/music/ranganathude.pdf",
+        "https://www.shivkumar.org/music/ranganathude.mp3",
+        "https://www.shivkumar.org/music/ranganathude-detailed.mp3"
+      ],
+      "notationFingerprint": "26723fc0:7091"
+    },
+    {
+      "id": "38awWnHXJZZPMYWvoLjavBm704Q",
+      "title": "ra~NganAyakam bhAvayEham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ranganayakam.htm",
+        "https://www.shivkumar.org/music/ranganayakam.pdf",
+        "https://www.shivkumar.org/music/ranganayakam-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/11_FILLER_ranganayakam_nayaki.mp3",
+        "https://www.shivkumar.org/music/originals/6_ranganayakam_nayaki.mp3"
+      ],
+      "notationFingerprint": "d3580eec:11314"
+    },
+    {
+      "id": "38avRohd9dvXKDVD57BqUXZca36",
+      "title": "ra~Ngapura vihAra",
+      "addedSources": [
+        "https://www.shivkumar.org/music/rangapura.htm",
+        "https://www.shivkumar.org/music/rangapura.pdf",
+        "https://www.shivkumar.org/music/rangapura-detailed.mp3"
+      ],
+      "notationFingerprint": "fd54320d:8691"
+    },
+    {
+      "id": "38b97bFhfE7uWouPshohPcpvrn0",
+      "title": "ra~njani mR^idu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Ranjanimridupankaja.htm",
+        "https://www.shivkumar.org/music/Ranjanimridupankaja.pdf",
+        "https://www.shivkumar.org/music/Ranjanimridupankaja-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/ranjani-mala-dkj.mp3"
+      ],
+      "notationFingerprint": "137a541d:8757"
+    },
+    {
+      "id": "38az4fXY6bv004qxUwz89OmytkE",
+      "title": "ratna ka~ncuka dhAriNi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/rathnakanchuka.htm",
+        "https://www.shivkumar.org/music/rathnakanchuka.pdf",
+        "https://www.shivkumar.org/music/rathnakanchuka.mp3",
+        "https://www.shivkumar.org/music/rathnakanchuka-class.mp3"
+      ],
+      "notationFingerprint": "85c0f0a4:4124"
+    },
+    {
+      "id": "38bLUV15bmmPa4OX02BJzF06B4B",
+      "title": "rAvE himagiri kumArI (svarajati)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/ravehimagiri.htm",
+        "https://www.shivkumar.org/music/ravehimagiri.pdf",
+        "https://www.shivkumar.org/music/ravehimagiri.mp3",
+        "https://www.shivkumar.org/music/ravehimagiri-detailed.mp3"
+      ],
+      "notationFingerprint": "1005f8f3:5403"
+    },
+    {
+      "id": "38avz2oxBkUP4qqNEpLNzY68ZpR",
+      "title": "sAdhi~ncenE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sadhinchane-new.htm",
+        "https://www.shivkumar.org/music/sadhinchane-new.pdf",
+        "https://www.shivkumar.org/music/sadhinchane.mp3",
+        "https://www.shivkumar.org/music/sadhinchane-detailed.mp3"
+      ],
+      "notationFingerprint": "ed8c5567:14969"
+    },
+    {
+      "id": "38aw2nA6XTtl19glTUETrJ5GPzE",
+      "title": "sAmaja vara gamana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/samajavaragamana.htm",
+        "https://www.shivkumar.org/music/samajavaragamana.pdf",
+        "https://www.shivkumar.org/music/samajavaragamana.mp3",
+        "https://www.shivkumar.org/music/samajavaragamana-detailed.mp3"
+      ],
+      "notationFingerprint": "4a9f4108:5664"
+    },
+    {
+      "id": "38bEnwS2ZNsvkKeirVBdTyNKRB6",
+      "title": "santAna rAmasvAminam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/santana-ramaswaminam.htm",
+        "https://www.shivkumar.org/music/santana-ramaswaminam.pdf",
+        "https://www.shivkumar.org/music/santanarama-class.mp4",
+        "https://www.shivkumar.org/music/santanarama-class.mp3"
+      ],
+      "notationFingerprint": "e9a9cab4:8668"
+    },
+    {
+      "id": "38bEoG9rs4Govs7bxFEKJrYnFEz",
+      "title": "sArasa dala nayana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sarasadalanayana.htm",
+        "https://www.shivkumar.org/music/sarasadalanayana.pdf",
+        "https://www.shivkumar.org/music/sarasadalanayana.mp3",
+        "https://www.shivkumar.org/music/sarasadalanayana-detailed.mp3"
+      ],
+      "notationFingerprint": "3c8af2bd:4931"
+    },
+    {
+      "id": "38bHBp45QqvD6DjYrQXGrwF6Xov",
+      "title": "sArasAkSa paripAlaya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sarasaksha.htm",
+        "https://www.shivkumar.org/music/sarasaksha.pdf",
+        "https://www.shivkumar.org/music/sarasaksha.mp3",
+        "https://www.shivkumar.org/music/sarasaksha-class.mp3"
+      ],
+      "notationFingerprint": "a4973852:8113"
+    },
+    {
+      "id": "38aw1uGKf9UJ0Yzs8nmU4e7kFF8",
+      "title": "sabhA patikku",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sabaapathikku.htm",
+        "https://www.shivkumar.org/music/sabaapathikku.pdf",
+        "https://www.shivkumar.org/music/sabhapathikku.mp3",
+        "https://www.shivkumar.org/music/sabhapathikku-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/012a-sabhapathikku-abhogi-krithi-mss-party1.mp3"
+      ],
+      "notationFingerprint": "0c8ffc71:3841"
+    },
+    {
+      "id": "38awBNhzQtZ1N3UCiREjJqsHUij",
+      "title": "sadAcalEshvaram",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sadachaleshwaram.htm",
+        "https://www.shivkumar.org/music/sadachaleshwaram.pdf",
+        "https://www.shivkumar.org/music/sadachaleshwaram-detailed.mp3",
+        "https://www.sangeetham.com"
+      ],
+      "notationFingerprint": "793427f6:8824"
+    },
+    {
+      "id": "38axlnBV8MHaIDtbNp2aetsCxE0",
+      "title": "sakala graha bala",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sakalagraha.htm",
+        "https://www.shivkumar.org/music/sakalagraha.pdf",
+        "https://www.shivkumar.org/music/sakalagraha.mp3",
+        "https://www.shivkumar.org/music/sakalagraha-class.mp4",
+        "https://www.shivkumar.org/music/sakalagraha-class.mp3"
+      ],
+      "notationFingerprint": "7fcd2eac:5129"
+    },
+    {
+      "id": "38b5R8TwkwVRfPT4s0t1O2nw576",
+      "title": "cAla kallalADu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/salakalla.htm",
+        "https://www.shivkumar.org/music/salakalla.pdf",
+        "https://www.shivkumar.org/music/salakalla.mp3",
+        "https://www.shivkumar.org/music/salakalla-class.mp3",
+        "https://thyagaraja-vaibhavam.blogspot.com/2008/04/thyagaraja-kriti-chala-kalla-",
+        "https://www.youtube.com/watch?v=CTUfACjNhCc"
+      ],
+      "notationFingerprint": "d7e04078:12381"
+    },
+    {
+      "id": "38b6qZk1SLQgaBJ50IlnpZasFcc",
+      "title": "sa~NgIta j~nAnamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sangeethagnyanamu.htm",
+        "https://www.shivkumar.org/music/sangeethagnyanamu.pdf",
+        "https://www.shivkumar.org/music/sangeethagnyanamu.mp3",
+        "https://www.shivkumar.org/music/sangeethagnyanamu-class.mp4",
+        "https://www.shivkumar.org/music/sangeethagnyanamu-class.mp3"
+      ],
+      "notationFingerprint": "c16656be:9266"
+    },
+    {
+      "id": "38awBEKUXjI8Moon2Y2ERA9rbkS",
+      "title": "sarasa sAmadAna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sarasasamadana.htm",
+        "https://www.shivkumar.org/music/sarasasamadana.pdf",
+        "https://www.shivkumar.org/music/sarasasamadana.mp3",
+        "https://www.shivkumar.org/music/sarasasamadana-detailed.mp3"
+      ],
+      "notationFingerprint": "c2ca78c4:6403"
+    },
+    {
+      "id": "38awAjTamvcYdf09y17btQDeMFM",
+      "title": "sarasIruhAsana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/saraseeruhasana.htm",
+        "https://www.shivkumar.org/music/saraseeruhasana.pdf",
+        "https://www.shivkumar.org/music/saraseeruhasana.mp3",
+        "https://www.shivkumar.org/music/saraseeruhasana-detailed.mp3"
+      ],
+      "notationFingerprint": "0c4562c8:3380"
+    },
+    {
+      "id": "38b7q18j2o5DTmCNfIWhprAilum",
+      "title": "saraguna pAlimpa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/saragunapalimpa.htm",
+        "https://www.shivkumar.org/music/saragunapalimpa.pdf",
+        "https://www.shivkumar.org/music/saragunapalimpa-detailed.mp3"
+      ],
+      "notationFingerprint": "ac87317a:8477"
+    },
+    {
+      "id": "38awXwJzgPQrkaCJT8sZbkAtBe2",
+      "title": "sarasijanAbha sOdari",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sarasijanabha-sodhari-nagagandhari-rupakam.htm",
+        "https://www.shivkumar.org/music/sarasijanabha-sodhari-nagagandhari-rupakam.pdf",
+        "https://www.shivkumar.org/music/sarasijanabha-sodhari-nagagandhari-class.mp3",
+        "https://www.youtube.com/watch?v=D9N_D2EgcBo",
+        "https://guru-guha.blogspot.com/2008/10/dikshitar-kriti-",
+        "https://www.youtube.com/watch?v=kjzCVpqzsSg",
+        "http://www.shivkumar.org/music/sarasijanabha-sodhari-class.mp3"
+      ],
+      "notationFingerprint": "1e95a1d6:8962"
+    },
+    {
+      "id": "38aw2w0jaVR91sncKC2dw032Mii",
+      "title": "sItamma mAyamma",
+      "addedSources": [
+        "https://www.shivkumar.org/music/seethamma.htm",
+        "https://www.shivkumar.org/music/seethamma.pdf",
+        "https://www.shivkumar.org/music/seethamma-detailed.mp3"
+      ],
+      "notationFingerprint": "4030f8d5:4649"
+    },
+    {
+      "id": "38b6xlUFMXw0ILuJ1BnEGntn6bS",
+      "title": "sItApati nA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/seethapathe.htm",
+        "https://www.shivkumar.org/music/seethapathe.pdf",
+        "https://www.shivkumar.org/music/seethapathe-detailed.mp3"
+      ],
+      "notationFingerprint": "8f14a237:4866"
+    },
+    {
+      "id": "38bLVa3RspDPkauZDGpz20NjaeO",
+      "title": "shankari shamkuru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shankarishankuru.htm",
+        "https://www.shivkumar.org/music/shankarishankuru.pdf",
+        "https://www.shivkumar.org/music/shankarishankuru.mp3",
+        "https://www.shivkumar.org/music/shankarishankuru-class.mp3",
+        "http://syamakrishnavaibhavam.blogspot.com/2011/04/syama-sastry-kriti-sankari-",
+        "https://www.youtube.com/watch?v=nOdYRko6FRc"
+      ],
+      "notationFingerprint": "25a9699e:9889"
+    },
+    {
+      "id": "38bG9oA7MnYCq5ETQHBNsKTCLlT",
+      "title": "shAradE vINA vAdana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sharadhe.htm",
+        "https://www.shivkumar.org/music/sharadhe.pdf",
+        "https://www.shivkumar.org/music/sharadhe.mp3",
+        "https://www.shivkumar.org/music/sharadhe-class.mp3"
+      ],
+      "notationFingerprint": "e2d38cf4:8291"
+    },
+    {
+      "id": "38bGAIRUBsn0JtFya2YN8CgP8pZ",
+      "title": "shendil ANDavan",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shendil-andavan-kharaharapriya.htm",
+        "https://www.shivkumar.org/music/shendil-andavan-kharaharapriya.pdf",
+        "https://www.shivkumar.org/music/shendil-andavan-kharaharapriya-class.mp3",
+        "https://www.youtube.com/watch?v=erH6CtcLrko",
+        "https://www.youtube.com/watch?v=qpNcGhB1cOg",
+        "http://www.shivkumar.org/music/shendil-andavan-class.mp3"
+      ],
+      "notationFingerprint": "b3880869:14331"
+    },
+    {
+      "id": "38aw4Ppv8yMwIDLftnLJjGNm6WD",
+      "title": "shObhillu saptasvara",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shobillu.htm",
+        "https://www.shivkumar.org/music/shobillu.pdf",
+        "https://www.shivkumar.org/music/shobillu.mp3",
+        "https://www.shivkumar.org/music/shobillu-detailed.mp3"
+      ],
+      "notationFingerprint": "bc7c327c:5699"
+    },
+    {
+      "id": "38aw32fTMCYepbKSOWVnfK0QGgH",
+      "title": "shrI gaNanAtham bhajarE (nOtE)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shreegananatham.htm",
+        "https://www.shivkumar.org/music/shreegananatham.pdf",
+        "https://www.shivkumar.org/music/shreegananatham-class.mp3",
+        "https://www.youtube.com/watch?v=mijoaVrjvdY"
+      ],
+      "notationFingerprint": "2eb57468:5224"
+    },
+    {
+      "id": "38bF3mIunMqb3tpMaUMti7yUdgO",
+      "title": "siddhivinAyakam anisham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/siddhivinayakam.htm",
+        "https://www.shivkumar.org/music/siddhivinayakam.pdf",
+        "https://www.shivkumar.org/music/siddhivinayakam.mp3",
+        "https://www.shivkumar.org/music/siddhivinayakam-detailed.mp3"
+      ],
+      "notationFingerprint": "8a6a3acd:5028"
+    },
+    {
+      "id": "38bRzcOk4QeVr18z2sY7plz8611",
+      "title": "shiTram shiru (tiruppAvai)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-29-SitranSiruKale-Malayamarutham.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-29-SitranSiruKale-Malayamarutham.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai29-class.mp3",
+        "https://www.youtube.com/watch?v=gNAa1B7M5AU&ab_channel=SouthIndianMusicAcademyLA",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp29.html",
+        "https://youtu.be/cRjEs0ha58w"
+      ],
+      "notationFingerprint": "cf57b22a:13225"
+    },
+    {
+      "id": "38bErOyIdYpIir3PqmVvRTXlNxJ",
+      "title": "shivakAmEshvarIm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sivakameshwari.htm",
+        "https://www.shivkumar.org/music/sivakameshwari.pdf",
+        "https://www.shivkumar.org/music/sivakameshwari-detailed.mp3"
+      ],
+      "notationFingerprint": "979ef506:6203"
+    },
+    {
+      "id": "38ax4wrVdQvElqqNKqTMrBdY90o",
+      "title": "shiva shiva shiva enarAdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sivasivasiva.htm",
+        "https://www.shivkumar.org/music/sivasivasiva.pdf",
+        "https://www.shivkumar.org/music/sivasivasiva.mp3",
+        "https://www.shivkumar.org/music/sivasivasiva-detailed.mp3"
+      ],
+      "notationFingerprint": "91e6c4f4:4803"
+    },
+    {
+      "id": "38b6tA7Z39CtbCrH95MLkcrH725",
+      "title": "shivE pAhimAmbikE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sive-pahimam.htm",
+        "https://www.shivkumar.org/music/sive-pahimam.pdf",
+        "https://www.shivkumar.org/music/sive-pahimam-class.mp3",
+        "https://www.shivkumar.org/music/originals/ShivePahimaam-Kalyani-RK.mp3",
+        "http://thyagaraja-",
+        "https://www.youtube.com/watch?v=_rOrNZyxhBY"
+      ],
+      "notationFingerprint": "6f2da765:8210"
+    },
+    {
+      "id": "38b6y6KpMyxjCSJXBrUbBC7XKOj",
+      "title": "sogasugA mR^ida~Nga",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sogasuga.htm",
+        "https://www.shivkumar.org/music/sogasuga.pdf",
+        "https://www.shivkumar.org/music/sogasuga-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/03b-sogasuga-sriranjani-krithi-mss-misc02.mp3",
+        "https://www.sangeetham.com"
+      ],
+      "notationFingerprint": "5be1bad2:8266"
+    },
+    {
+      "id": "38bF4tiqyam6TKIfmLOI7FM5Q6D",
+      "title": "sundararAjam AshrayE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/soundararajam.htm",
+        "https://www.shivkumar.org/music/soundararajam.pdf",
+        "https://www.shivkumar.org/music/soundararajam-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/14_soundararajam_brindavana_saranga.mp3"
+      ],
+      "notationFingerprint": "ee72a66c:8754"
+    },
+    {
+      "id": "38b6taC44mdsXCv5j18y2Z1WXvP",
+      "title": "shrI gaNapatini",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sriganapathi.htm",
+        "https://www.shivkumar.org/music/sriganapathi.pdf",
+        "https://www.shivkumar.org/music/sriganapathi.mp3",
+        "https://www.shivkumar.org/music/sriganapathi-class.mp3"
+      ],
+      "notationFingerprint": "f511e37b:5057"
+    },
+    {
+      "id": "38bQtgm7SGtGmXNM8bnWFocCO2t",
+      "title": "shrI kAmakOTi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikamakoti.htm",
+        "https://www.shivkumar.org/music/srikamakoti.pdf",
+        "https://www.shivkumar.org/music/srikamakoti.mp3",
+        "https://www.shivkumar.org/music/srikamakoti-class.mp3",
+        "https://www.shivkumar.org/music/originals/009a-srikamakoti-saveri-slokam-krithi-mss-party1.mp3",
+        "https://www.youtube.com/watch?v=zUmOWcSqUac"
+      ],
+      "notationFingerprint": "ed89c063:9276"
+    },
+    {
+      "id": "38bQwxIb5aHAdMf2euenuncgVHa",
+      "title": "shrI kAmAkSi mAm pAhi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikamakshi.htm",
+        "https://www.shivkumar.org/music/srikamakshi.pdf",
+        "https://www.shivkumar.org/music/srikamakshi.mp3",
+        "https://www.shivkumar.org/music/srikamakshi-class.mp3",
+        "https://www.youtube.com/watch?v=k7-gwbVcpcQ"
+      ],
+      "notationFingerprint": "e7da6aab:8084"
+    },
+    {
+      "id": "38bEuRrSJGODSehbNHdNuex3Dnb",
+      "title": "shrI krSNam bhaja mAnasa satatam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikrishnam-thodi.htm",
+        "https://www.shivkumar.org/music/srikrishnam-thodi.pdf",
+        "https://www.shivkumar.org/music/srikrishnam-thodi-class.mp3",
+        "https://www.youtube.com/watch?v=ip7cYthLQ7Y",
+        "http://guru-guha.blogspot.com/2008/07/dikshitar-kriti-sri-",
+        "https://www.youtube.com/watch?v=sYIdiqa8uWg"
+      ],
+      "notationFingerprint": "c49c6186:12113"
+    },
+    {
+      "id": "38bEwHh267PEWbzPcxi9PDaAe70",
+      "title": "shrI mAtrubhUtam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srimatrubhootam.htm",
+        "https://www.shivkumar.org/music/srimatrubhootam.pdf",
+        "https://www.youtube.com/watch?v=BPjeR1aCnqc",
+        "https://guru-guha.blogspot.com/2008/08/dikshitar-kriti-sri-matrubhutam-"
+      ],
+      "notationFingerprint": "8625b0cd:24577"
+    },
+    {
+      "id": "38b6y1wPYNc2lVNsszQMsyex6Wc",
+      "title": "smaraNE sukhamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/smarane-sukhamu.htm",
+        "https://www.shivkumar.org/music/smarane-sukhamu.pdf",
+        "https://www.shivkumar.org/music/smarane-class.mp4",
+        "https://www.shivkumar.org/music/smarane-class.mp3",
+        "https://www.shivkumar.org/music/SmaraneSukhamu-Janaranjani-RK.mp3"
+      ],
+      "notationFingerprint": "17693f63:10420"
+    },
+    {
+      "id": "38bEswicxX72qE7eJZkcmUTx1oG",
+      "title": "shrI guruguha tArayashu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sriguruguha-shuddhasaveri.htm",
+        "https://www.shivkumar.org/music/sriguruguha-shuddhasaveri.pdf",
+        "https://www.shivkumar.org/music/sriguruguha-shuddhasaveri-class.mp3",
+        "https://www.youtube.com/watch?v=sEHYZ4zpNdU"
+      ],
+      "notationFingerprint": "f894107e:6077"
+    },
+    {
+      "id": "38bQxCWT17JiK5LqCadLD9hZCHL",
+      "title": "shrI kAncInAyikE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikanchinayike.htm",
+        "https://www.shivkumar.org/music/srikanchinayike.pdf",
+        "https://www.shivkumar.org/music/SriKaanchinayikeAsaveri-R.mp3",
+        "https://www.shivkumar.org/music/srikanchinayike-detailed.mp3"
+      ],
+      "notationFingerprint": "f0d3de33:4663"
+    },
+    {
+      "id": "38b6wkjVM2XYKUESbBzK2obxoBG",
+      "title": "shrIkAnta nIyeDa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikantha.htm",
+        "https://www.shivkumar.org/music/srikantha.pdf",
+        "https://www.shivkumar.org/music/srikantha.mp3",
+        "https://www.shivkumar.org/music/srikantha-class.mp3",
+        "https://thyagaraja-",
+        "https://www.youtube.com/watch?v=kHi_mNYsXk8"
+      ],
+      "notationFingerprint": "5a9df735:9714"
+    },
+    {
+      "id": "38awZ24r5e5UWTQKWdJshPNyNL4",
+      "title": "shrI kAntimatIm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikanthimathim.htm",
+        "https://www.shivkumar.org/music/srikanthimathim.pdf",
+        "https://www.shivkumar.org/music/srikanthimathim.mp3",
+        "https://www.shivkumar.org/music/srikanthimathim-detailed.mp3"
+      ],
+      "notationFingerprint": "3831ee39:5059"
+    },
+    {
+      "id": "38bHFg41gdd5cZnm59IdxoAXU4x",
+      "title": "shrI kumAra nagarAlayE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srikumara.htm",
+        "https://www.shivkumar.org/music/srikumara.pdf",
+        "https://www.shivkumar.org/music/srikumara.mp3",
+        "https://www.shivkumar.org/music/srikumara-class.mp4",
+        "https://www.shivkumar.org/music/srikumara-class.mp3",
+        "https://www.shivkumar.org/music/originals/006-srikumara-atana-krithi-mss.mp3"
+      ],
+      "notationFingerprint": "8a6ade06:12563"
+    },
+    {
+      "id": "38ax174APKpSig3Lgyp9d4CC22A",
+      "title": "shrI lakSmI varAham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srilakshmivaraham.htm",
+        "https://www.shivkumar.org/music/srilakshmivaraham.pdf",
+        "https://www.shivkumar.org/music/srilakshmivaraham.mp3",
+        "https://www.shivkumar.org/music/srilakshmivaraham-detailed.mp3"
+      ],
+      "notationFingerprint": "1b27b001:6189"
+    },
+    {
+      "id": "38bQxMWtGUNabSQDYwuxWJnBV2a",
+      "title": "shrI lalitE kAnci nagara",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srilalithe.htm",
+        "https://www.shivkumar.org/music/srilalithe.pdf",
+        "https://www.shivkumar.org/music/srilalithe.mp3",
+        "https://www.shivkumar.org/music/srikumara-class.mp3",
+        "https://www.youtube.com/watch?v=5wFquTpmPlA",
+        "http://www.shivkumar.org/music/srilalithe-class.mp3"
+      ],
+      "notationFingerprint": "b955c16e:9363"
+    },
+    {
+      "id": "38b5wzSXTpFQTKvyoe4nlyy7H4n",
+      "title": "shrI mahaagaNapatim bhajEham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shri-mahaganapathim-atana.htm",
+        "https://www.shivkumar.org/music/shri-mahaganapathim-atana.pdf",
+        "https://www.shivkumar.org/music/shri-mahaganapathim-atana.mp4",
+        "https://www.shivkumar.org/music/shri-mahaganapathim-atana.mp3",
+        "https://www.shivkumar.org/music/originals/SriMahaganapathim-Atana-RadhaJayalakshmi.mp3"
+      ],
+      "notationFingerprint": "9e7f82b8:12567"
+    },
+    {
+      "id": "38b8RaTBF8qlrtywZD7Q1ZSuSWv",
+      "title": "shrI mahA gaNapati ravatu mAm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srimahaganapathi.htm",
+        "https://www.shivkumar.org/music/srimahaganapathi.pdf",
+        "https://www.shivkumar.org/music/srimahaganapathi-gowla.mp3"
+      ],
+      "notationFingerprint": "60dd56a9:11403"
+    },
+    {
+      "id": "38aw3Tf7b4dpeMS2xI5m0C2pbG9",
+      "title": "shrIman nArAyaNa",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sriman-narayana.htm",
+        "https://www.shivkumar.org/music/sriman-narayana.pdf",
+        "https://www.shivkumar.org/music/sriman-narayana-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/smn-mss.mp3"
+      ],
+      "notationFingerprint": "6df0bdf6:8650"
+    },
+    {
+      "id": "38bEwxnQCc3mEPeLb7kE3FjASvL",
+      "title": "shrI nAthAdi guruguhO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srinadadi.htm",
+        "https://www.shivkumar.org/music/srinadadi.pdf",
+        "https://www.shivkumar.org/music/srinadadi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/003a-srinadadi-mayamalavagowla-krithi-dkp.mp3"
+      ],
+      "notationFingerprint": "ffac98b5:10829"
+    },
+    {
+      "id": "38bExDQIb0rkuJMMnraiOMxiuAk",
+      "title": "shrI pArthasArathinA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sriparthasarathina.htm",
+        "https://www.shivkumar.org/music/sriparthasarathina.pdf",
+        "https://www.shivkumar.org/music/sriparthasarathina-class.mp3",
+        "https://www.youtube.com/watch?v=wV5m4DxycWY",
+        "https://www.youtube.com/watch?v=jwdAIbnilvg"
+      ],
+      "notationFingerprint": "da9847ab:8631"
+    },
+    {
+      "id": "38b6uEI5U9o83OY1l5iPU7j3FhL",
+      "title": "shrI nArada nAda",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sreenarada.htm",
+        "https://www.shivkumar.org/music/sreenarada.pdf",
+        "https://www.shivkumar.org/music/sreenarada.mp3",
+        "https://www.shivkumar.org/music/sreenarada-class.mp3"
+      ],
+      "notationFingerprint": "ddc6c47c:5915"
+    },
+    {
+      "id": "38bExWyqmgT1H8lioROrHXLN0xV",
+      "title": "shrI rAjagOpAla",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srirajagopala.htm",
+        "https://www.shivkumar.org/music/srirajagopala.pdf",
+        "https://www.shivkumar.org/music/srirajagopala-mannargudi-class.mp3",
+        "https://www.youtube.com/watch?v=iaQD1NghafI",
+        "https://www.youtube.com/watch?v=KLrm8kLF9CE"
+      ],
+      "notationFingerprint": "d699ee48:18954"
+    },
+    {
+      "id": "38bEyAmhurjoxrQPbCDIsKMo32f",
+      "title": "shrI rAmacandrO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shri-ramachandro.htm",
+        "https://www.shivkumar.org/music/shri-ramachandro.pdf",
+        "https://www.shivkumar.org/music/shriramachandro-class.mp4",
+        "https://www.shivkumar.org/music/shriramachandro-class.mp3"
+      ],
+      "notationFingerprint": "1eb70def:10020"
+    },
+    {
+      "id": "38ax1MF3IkJtEMuCw4ESszbz2ow",
+      "title": "shrI rAmam ravi kulAbdhi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sriramam.htm",
+        "https://www.shivkumar.org/music/sriramam.pdf",
+        "https://www.shivkumar.org/music/sriramam-class.mp4",
+        "https://www.shivkumar.org/music/sriramam-class.mp3"
+      ],
+      "notationFingerprint": "eaabb4c6:12999"
+    },
+    {
+      "id": "38bEys2zXXxQlTxsVT1afPfqupE",
+      "title": "shrI sarasvati namOstutE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srisaraswati-arabhi.htm",
+        "https://www.shivkumar.org/music/srisaraswati-arabhi.pdf",
+        "https://www.shivkumar.org/music/srisaraswati-arabhi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/SriSarasvati-Aarabhi-RK.mp3"
+      ],
+      "notationFingerprint": "696313d5:7621"
+    },
+    {
+      "id": "38bEyz5ab6CUsRp4aUJCu1gIE4l",
+      "title": "shrI satyanArAyaNam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/shrisatyanarayanam.htm",
+        "https://www.shivkumar.org/music/shrisatyanarayanam.pdf",
+        "https://www.shivkumar.org/music/shrisatyanarayanam-class.mp3",
+        "https://www.youtube.com/watch?v=70sUxf7kFBk"
+      ],
+      "notationFingerprint": "51115960:10865"
+    },
+    {
+      "id": "38bEzK8HpGnRse3fkafCdLVwOeD",
+      "title": "shrI subrahmaNyAya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srisubramanyaaya.htm",
+        "https://www.shivkumar.org/music/srisubramanyaaya.pdf",
+        "https://www.shivkumar.org/music/srisubramanyaaya-class.mp3",
+        "https://www.youtube.com/watch?v=DWczGrWgPuI&ab_channel=SangeethaRasika",
+        "https://youtu.be/a-GrcHytcCs"
+      ],
+      "notationFingerprint": "9b55cd2d:44539"
+    },
+    {
+      "id": "38bEzzBftWVEQdp8uoW65hUpt01",
+      "title": "shrI svAminAthAya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sriswaminaathaya.htm",
+        "https://www.shivkumar.org/music/sriswaminaathaya.pdf",
+        "https://www.shivkumar.org/music/sriswaminaathaaya.mp3",
+        "https://www.shivkumar.org/music/sriswaminaathaaya-detailed.mp3"
+      ],
+      "notationFingerprint": "06d6c59f:2852"
+    },
+    {
+      "id": "38ay4A24G0FC0N6EwGdkc0vRzkh",
+      "title": "shrI varalakSmi namastubhyam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srivaralakshmi.htm",
+        "https://www.shivkumar.org/music/srivaralakshmi.pdf",
+        "https://www.shivkumar.org/music/srivaralakshmi.mp3",
+        "https://www.shivkumar.org/music/srivaralakshmi-class.mp3",
+        "http://guru-guha.blogspot.com/2007/09/dikshitar-kriti-sri-vara-lakshmi-sri.html",
+        "https://www.youtube.com/watch?v=-_yYx2wdyq0"
+      ],
+      "notationFingerprint": "32a30b30:10345"
+    },
+    {
+      "id": "38bF17fm5rjjgCZy3rqoJoPzQnQ",
+      "title": "shrI vEnkaTagirIsham",
+      "addedSources": [
+        "https://www.shivkumar.org/music/srivenkatagirisham.htm",
+        "https://www.shivkumar.org/music/srivenkatagirisham.pdf",
+        "https://www.shivkumar.org/music/srivenkatagirisham-detailed.mp3"
+      ],
+      "notationFingerprint": "31be0eb1:7146"
+    },
+    {
+      "id": "38bF4ZrnSVnix8ckEhtJ9h9ifq2",
+      "title": "subrahmaNyEna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/subramanyena.htm",
+        "https://www.shivkumar.org/music/subramanyena.pdf",
+        "https://www.shivkumar.org/music/subramanyena.mp3",
+        "https://www.shivkumar.org/music/subramanyena-class.mp3",
+        "https://guru-guha.blogspot.com/2008/10/dikshitar-kriti-subrahmanyena-",
+        "https://www.youtube.com/watch?v=yqUIK2yhhWk"
+      ],
+      "notationFingerprint": "752c16cd:11066"
+    },
+    {
+      "id": "38aw4XJ1jOmfpzHkjYREflSHfY8",
+      "title": "sudhAmayi sudhAnidhi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sudhamayi.htm",
+        "https://www.shivkumar.org/music/sudhamayi.pdf",
+        "https://www.shivkumar.org/music/sudhamayi-class.mp3",
+        "https://www.youtube.com/watch?v=Wp0uukbbAwQ"
+      ],
+      "notationFingerprint": "5539ff78:8208"
+    },
+    {
+      "id": "38b6yKWu8VghPfeZPDWOalYzSqq",
+      "title": "suguNamulE jeppukoNTi",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sugunamule.htm",
+        "https://www.shivkumar.org/music/sugunamule.pdf",
+        "https://www.shivkumar.org/music/sugunamule.mp3",
+        "https://www.shivkumar.org/music/sugunamule-detailed.mp3"
+      ],
+      "notationFingerprint": "ff0c0d01:2382"
+    },
+    {
+      "id": "38b6yXVuRV7vQKXUeF6IrtMY3V4",
+      "title": "sujana jIvana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/sujanajeevana.htm",
+        "https://www.shivkumar.org/music/sujanajeevana.pdf",
+        "https://www.shivkumar.org/music/sujanajeevana-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/2_sujana_jeevana_khamas.mp3"
+      ],
+      "notationFingerprint": "28090a9d:6298"
+    },
+    {
+      "id": "38awRetvNyuNi6MucFwdqK8Zxpp",
+      "title": "sUryamUrtE namOstutE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/suryamurthe.htm",
+        "https://www.shivkumar.org/music/suryamurthe.pdf",
+        "https://www.shivkumar.org/music/suryamurthe-class.mp3",
+        "https://www.shivkumar.org/music/originals/Suryamurthe-Sowrastram-MSS.mp3",
+        "https://www.youtube.com/watch?v=Cg_DXjif-MY"
+      ],
+      "notationFingerprint": "34c49d6a:10203"
+    },
+    {
+      "id": "38aw4h9Vf5Y1sNMlk6K0Q9ihEj6",
+      "title": "svAminAtha",
+      "addedSources": [
+        "https://www.shivkumar.org/music/swaminatha-paripalaya.htm",
+        "https://www.shivkumar.org/music/swaminatha-paripalaya.pdf",
+        "https://www.shivkumar.org/music/swaminatha-paripalaya.mp3",
+        "https://www.shivkumar.org/music/swaminatha-detailed.mp3"
+      ],
+      "notationFingerprint": "c9fbe544:7510"
+    },
+    {
+      "id": "38axFGAVpWUK5uKBELHJmKcLa81",
+      "title": "svara rAga sudhA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/swararagasudha.htm",
+        "https://www.shivkumar.org/music/swararagasudha.pdf",
+        "https://www.shivkumar.org/music/swararagasudha-class.mp3",
+        "https://www.shivkumar.org/music/originals/Swararagasudha-Shankarabharanam-Semmangudi.mp3",
+        "https://www.youtube.com/watch?v=6uqeYUK6OLY"
+      ],
+      "notationFingerprint": "0460f3ca:13612"
+    },
+    {
+      "id": "38awRyXG0BIo71bBZteKxdINsDa",
+      "title": "taruNam Idamma",
+      "addedSources": [
+        "https://www.shivkumar.org/music/tharunamidamma.htm",
+        "https://www.shivkumar.org/music/tharunamidamma.pdf",
+        "https://www.shivkumar.org/music/TarunamidammaGowlipanthu-R.mp3",
+        "https://www.shivkumar.org/music/tharunamidamma-detailed.mp3"
+      ],
+      "notationFingerprint": "24bfcc7d:4051"
+    },
+    {
+      "id": "38awhlTj9pCTrpvqwEAxu1kcil7",
+      "title": "tattvamaRiya taramA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/tatvamariya.htm",
+        "https://www.shivkumar.org/music/tatvamariya.pdf",
+        "https://www.shivkumar.org/music/tatvamariyatarama.mp3",
+        "https://www.shivkumar.org/music/tatvamariya-detailed.mp3"
+      ],
+      "notationFingerprint": "57be8e63:6396"
+    },
+    {
+      "id": "38b71UyoHm09eO2ktQPON73UsE1",
+      "title": "teliyalEru rAma",
+      "addedSources": [
+        "https://www.shivkumar.org/music/theliyaleru.htm",
+        "https://www.shivkumar.org/music/theliyaleru1.pdf",
+        "https://www.shivkumar.org/music/theliyaleru.mp3",
+        "https://www.shivkumar.org/music/theliyaleru-detailed.mp3"
+      ],
+      "notationFingerprint": "279e49f2:6483"
+    },
+    {
+      "id": "38b71mdp1klK5VCibkavXbSd1eC",
+      "title": "tera tIyaga rAdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/TeraTeeyagarada.htm",
+        "https://www.shivkumar.org/music/TeraTeeyagarada.pdf",
+        "https://www.shivkumar.org/music/TeraTeeyagarada.mp3",
+        "https://www.shivkumar.org/music/TeraTeeyagarada-class.mp3",
+        "https://www.youtube.com/watch?v=ZLWP0OfzvxI"
+      ],
+      "notationFingerprint": "6f6a888d:8944"
+    },
+    {
+      "id": "38ax5N12DwEgCokSph3mQMX2jrw",
+      "title": "tAyE yashOdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/thaye-yashoda-thodi.htm",
+        "https://www.shivkumar.org/music/thaye-yashoda-thodi.pdf",
+        "https://www.shivkumar.org/music/thaye-yashoda-thodi-class.mp3",
+        "https://www.youtube.com/watch?v=Rr_cghH9IXY",
+        "https://www.youtube.com/watch?v=kHs1UKJu76c",
+        "http://www.shivkumar.org/music/thaye-yashoda-class.mp3"
+      ],
+      "notationFingerprint": "d0720a7e:28269"
+    },
+    {
+      "id": "38bF7FnQVQ1V83A6yjInuEZ1c5A",
+      "title": "tyAgarAjAya namastE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/thiagarajaya.htm",
+        "https://www.shivkumar.org/music/thiagarajaya.pdf",
+        "https://www.shivkumar.org/music/thiagarajaya.mp3",
+        "https://www.shivkumar.org/music/thiagarajaya-class.mp3",
+        "https://www.youtube.com/watch?v=Wdx-6z_yxhI&list=PLZQWzLWKJdLO8RbuzXdkEssTG6Y7mYCny",
+        "https://www.youtube.com/watch?v=iMIXJdzA568"
+      ],
+      "notationFingerprint": "2716ed15:13583"
+    },
+    {
+      "id": "38bS0G6ivrxQdfc2iYcwjJ6RYN9",
+      "title": "vaiyyattu vAzh",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-02-VaiyathuVaazveergal-Gowlai.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-02-VaiyathuVaazveergal-Gowlai.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai02-class.mp3",
+        "https://www.youtube.com/watch?v=RT0-fVlXPAw",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse2.html",
+        "https://www.youtube.com/watch?v=2nSO8NhI4rE"
+      ],
+      "notationFingerprint": "28d1cfcd:14426"
+    },
+    {
+      "id": "38bRzncZr6vOlUZCKZ88eOPTdBC",
+      "title": "tUmani mADattu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-09-ThumaniMadathu-HamirKalyani.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-09-ThumaniMadathu-HamirKalyani.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai09-class.mp3",
+        "https://www.youtube.com/watch?v=JfxOOQqg83g",
+        "https://ramanuja.org/sv/alvars/andal/tiruppavai/verse9.html",
+        "https://www.youtube.com/watch?v=Myhf_ReRiJ0"
+      ],
+      "notationFingerprint": "af06b524:17232"
+    },
+    {
+      "id": "38bS04Us9GmbcIR8YW0yLXjzEX5",
+      "title": "ungaL puzhakkaDai",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-14-UngakalPuzhai-AnandaBhairavi.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-14-UngakalPuzhai-AnandaBhairavi.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai14-class.mp3",
+        "https://www.youtube.com/watch?v=mzKd1HLOuqk",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp14.html",
+        "https://www.youtube.com/watch?v=BB2z4QiIZzs"
+      ],
+      "notationFingerprint": "ec651e6b:16175"
+    },
+    {
+      "id": "38bRzwsNzP9I2Qa3vS33ktY1Sqr",
+      "title": "undumada kaLiTran",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-18-UnthuMadakalitran-Saveri.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-18-UnthuMadakalitran-Saveri.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai18-class.mp3",
+        "https://www.youtube.com/watch?v=fGuGHkC1p7c",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp18.html",
+        "https://www.youtube.com/watch?v=sU4jVOvL0dY"
+      ],
+      "notationFingerprint": "2eec976e:17211"
+    },
+    {
+      "id": "38awAMIXRCAgdDHK4PKpeJa0zyl",
+      "title": "va~Ngak kaDal",
+      "addedSources": [
+        "https://www.shivkumar.org/music/Thiruppavai-30-VangaKadal-Surutti.htm",
+        "https://www.shivkumar.org/music/Thiruppavai-30-VangaKadal-Surutti.pdf",
+        "https://www.shivkumar.org/music/Thiruppavai30-class.mp3",
+        "https://www.youtube.com/watch?v=S8RKBcinusE&ab_channel=SouthIndianMusicAcademyLosAngeles",
+        "http://www.ibiblio.org/sripedia/ebooks/tpv/vstp30.html",
+        "https://youtu.be/F8u_lBXJgyI"
+      ],
+      "notationFingerprint": "c364dd2f:14172"
+    },
+    {
+      "id": "38b6Sqt74chGh7vM29NsnNhzpr2",
+      "title": "toli janmamuna",
+      "addedSources": [
+        "https://www.shivkumar.org/music/tolijanma.htm",
+        "https://www.shivkumar.org/music/tolijanma.pdf",
+        "https://www.shivkumar.org/music/tolijanma-class.mp3",
+        "https://www.shivkumar.org/music/originals/05b-tolijanma-bilahari-krithi-dkp-dkj.mp3",
+        "https://www.karnatik.com",
+        "https://www.youtube.com/watch?v=5hMGvS8ea6o"
+      ],
+      "notationFingerprint": "0c5d441a:9145"
+    },
+    {
+      "id": "38aw4u6FS9AMFwmLIInpVE4FW5f",
+      "title": "tuLasI daLamulacE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/tulasidalamulache.htm",
+        "https://www.shivkumar.org/music/tulasidalamulache.pdf",
+        "https://www.shivkumar.org/music/tulasidalamulache-detailed.mp3"
+      ],
+      "notationFingerprint": "68d19d4d:7143"
+    },
+    {
+      "id": "38b72pFqVrE5BPsQjkYGsAFDKPY",
+      "title": "tulasi jagajjanani",
+      "addedSources": [
+        "https://www.shivkumar.org/music/tulasijaga.htm",
+        "https://www.shivkumar.org/music/tulasijaga.pdf",
+        "https://www.shivkumar.org/music/tulasijaga.mp3",
+        "https://www.shivkumar.org/music/tulasijaga-class.mp3",
+        "https://www.youtube.com/watch?v=2bs1GzFh_GU",
+        "http://thyagaraja-"
+      ],
+      "notationFingerprint": "c082d983:7045"
+    },
+    {
+      "id": "38b72qDtFeEWsv9UqgnWM0GpOTQ",
+      "title": "upacAramu cEsE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/upacharamu.htm",
+        "https://www.shivkumar.org/music/upacharamu.pdf",
+        "https://www.shivkumar.org/music/upacharamu-class.mp4",
+        "https://www.shivkumar.org/music/upacharamu-class.mp3"
+      ],
+      "notationFingerprint": "e7a23923:7137"
+    },
+    {
+      "id": "38b73ZB4brFOKbgMkPHBAWOmRrt",
+      "title": "vAcAmagOcaramE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vaachama.htm",
+        "https://www.shivkumar.org/music/vaachama.pdf",
+        "https://www.shivkumar.org/music/vaachaama.mp3",
+        "https://www.shivkumar.org/music/vaachama-class.mp4",
+        "https://www.shivkumar.org/music/vaachama-class.mp3",
+        "https://www.shivkumar.org/music/originals/010-vaachamagocharame-kaikavaasi-krithi-mss.mp3"
+      ],
+      "notationFingerprint": "cbe2d068:11175"
+    },
+    {
+      "id": "38b73uKPXIKuZoSAwN4gyuDSuTw",
+      "title": "vADEra deivamu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vadera-daivamu.htm",
+        "https://www.shivkumar.org/music/vadera-daivamu.pdf",
+        "https://www.shivkumar.org/music/vadera-daivamu-class.mp3",
+        "https://www.youtube.com/watch?v=xU3D-Ch_Djg"
+      ],
+      "notationFingerprint": "97848964:9480"
+    },
+    {
+      "id": "38axLDFgfCHnkiud9D6aCSOacsI",
+      "title": "vaa~ncatOnu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vaanchathonu.htm",
+        "https://www.shivkumar.org/music/vaanchathonu.pdf",
+        "https://www.shivkumar.org/music/vanchathonu.mp3"
+      ],
+      "notationFingerprint": "a057f926:7372"
+    },
+    {
+      "id": "38awTYNDZiC20dgkgCy0eVUxnm4",
+      "title": "vAraNa mukhavA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vaaranamukha.htm",
+        "https://www.shivkumar.org/music/vaaranamukha.pdf",
+        "https://www.shivkumar.org/music/vaaranamukha-class.mp3",
+        "https://www.shivkumar.org/music/originals/vaaranamukhavaa_hamsadwani.mp3",
+        "https://www.rasikas.org/forums/viewtopic.php?t=8468",
+        "https://www.youtube.com/watch?v=BdtMOnY3osA"
+      ],
+      "notationFingerprint": "0ada43ba:7699"
+    },
+    {
+      "id": "38b7bNdkEzb27qgOMOki978itXK",
+      "title": "vallabhA nAyakasya",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vallabha.htm",
+        "https://www.shivkumar.org/music/vallabha.pdf",
+        "https://www.shivkumar.org/music/vallabhanayakasya.mp3",
+        "https://www.shivkumar.org/music/vallabhanayakasya-detailed.mp3"
+      ],
+      "notationFingerprint": "6a4f89ea:3593"
+    },
+    {
+      "id": "38b68n9GQcskypvC9WlPjhApAUL",
+      "title": "vandEham jagat",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vandehamjagat-hamsadhwani.htm",
+        "https://www.shivkumar.org/music/vandehamjagat-hamsadhwani.pdf",
+        "https://www.shivkumar.org/music/vandehamjagat-hamsadhwani-class.mp3",
+        "https://www.youtube.com/watch?v=-GV3EzZfOTc"
+      ],
+      "notationFingerprint": "64ac8ee5:6400"
+    },
+    {
+      "id": "38awLW61HPo1bIfsV799VyhGb3E",
+      "title": "vandE vAsudEvam",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vandevasudevam.htm",
+        "https://www.shivkumar.org/music/vandevasudevam.pdf",
+        "https://www.shivkumar.org/music/vandevasudevam-class.mp3",
+        "https://www.youtube.com/watch?v=1mV9wbGCoec"
+      ],
+      "notationFingerprint": "99c0b6df:9570"
+    },
+    {
+      "id": "38b74FBQzHMDg4HtC1RLMwbXEte",
+      "title": "vara nArada",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varanarada.htm",
+        "https://www.shivkumar.org/music/varanarada.pdf",
+        "https://www.shivkumar.org/music/varanarada-class.mp4",
+        "https://www.shivkumar.org/music/varanarada-class.mp3"
+      ],
+      "notationFingerprint": "0fab8372:9748"
+    },
+    {
+      "id": "38bF9Tfhlos99flLC7tH0IQGw5i",
+      "title": "vAtApi gaNapatim",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vatapi.htm",
+        "https://www.shivkumar.org/music/vatapi.pdf",
+        "https://www.shivkumar.org/music/vatapi.mp3",
+        "https://www.shivkumar.org/music/vatapi-detailed.mp3",
+        "https://www.shivkumar.org/music/originals/001b-vatapi-hamsadhwani-krithi-mss-party1.mp3"
+      ],
+      "notationFingerprint": "c567ab6b:8113"
+    },
+    {
+      "id": "38bFAOrYD70L8oWJFIlvbzulRe8",
+      "title": "vINA pustaka dhAriNImAshrayE",
+      "addedSources": [
+        "https://www.shivkumar.org/music/veenapustaka1.htm",
+        "https://www.shivkumar.org/music/veenapustaka.pdf",
+        "https://www.shivkumar.org/music/veenapustaka.mp3",
+        "https://www.shivkumar.org/music/veenapustaka-detailed.mp3"
+      ],
+      "notationFingerprint": "fece3da2:6364"
+    },
+    {
+      "id": "38bGNDaquwsWWYMXT976G7DXZSk",
+      "title": "vEnkaTaramaNA un tiru",
+      "addedSources": [
+        "https://www.shivkumar.org/music/venkataramana.htm",
+        "https://www.shivkumar.org/music/venkataramana.pdf",
+        "https://www.shivkumar.org/music/venkataramana.mp3",
+        "https://www.shivkumar.org/music/venkataramana-detailed.mp3"
+      ],
+      "notationFingerprint": "db9653d3:3864"
+    },
+    {
+      "id": "38b76CYP0PtTBmLEym6UWX9Q7yW",
+      "title": "vENugAna lOluni",
+      "addedSources": [
+        "https://www.shivkumar.org/music/venuganalola.htm",
+        "https://www.shivkumar.org/music/venuganalola.pdf",
+        "https://www.shivkumar.org/music/venuganalola-detailed.mp3"
+      ],
+      "notationFingerprint": "c0714793:6010"
+    },
+    {
+      "id": "38b76TOyLyGNcQFkUilY73MtULu",
+      "title": "viDajAladurA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vidajaladura.htm",
+        "https://www.shivkumar.org/music/vidajaladura.pdf",
+        "https://www.shivkumar.org/music/vidajaladura.mp3",
+        "https://www.shivkumar.org/music/vidajaladura-class.mp4",
+        "https://www.shivkumar.org/music/vidajaladura-class.mp3"
+      ],
+      "notationFingerprint": "beab26a1:7842"
+    },
+    {
+      "id": "38b76xnrjo0qWFLqD8bze9rSEQt",
+      "title": "vidulaku mrokkEda",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vidulaku.htm",
+        "https://www.shivkumar.org/music/vidulaku.pdf",
+        "https://www.shivkumar.org/music/vidulaku-class.mp3",
+        "https://www.shivkumar.org/music/originals/02a-vidulaku-mayamalagowla-krithi-mss-misc02.mp3",
+        "https://www.karnatik.com",
+        "https://thyagaraja-vaibhavam.blogspot.com/2007/03/thyagaraja-kriti-vidulaku-",
+        "https://www.youtube.com/watch?v=hWszTbKSkm0"
+      ],
+      "notationFingerprint": "e84357e7:14108"
+    },
+    {
+      "id": "38b77Lu20N1WH1FGJwISxYIiGmh",
+      "title": "vina rAdA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vinaradha.htm",
+        "https://www.shivkumar.org/music/vinaradha.pdf",
+        "https://www.shivkumar.org/music/vinaradha.mp3",
+        "https://www.shivkumar.org/music/vinaradha-class.mp4",
+        "https://www.shivkumar.org/music/vinaradha-class.mp3"
+      ],
+      "notationFingerprint": "05f5b61a:6208"
+    },
+    {
+      "id": "38b77a9WpDxN4V2QQRpnFO4vVMY",
+      "title": "vinatA suta vAhana",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vinatasuta.htm",
+        "https://www.shivkumar.org/music/vinatasuta.pdf",
+        "https://www.shivkumar.org/music/vinatasuta.mp3",
+        "https://www.shivkumar.org/music/vinatasuta-class.mp4",
+        "https://www.shivkumar.org/music/vinatasuta-class.mp3"
+      ],
+      "notationFingerprint": "ba1b349b:9397"
+    },
+    {
+      "id": "38b77kgnoc5CmJ9ZRYo4HaUOJQl",
+      "title": "vinavE O manasA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vinaveomanasa.htm",
+        "https://www.shivkumar.org/music/vinaveomanasa.pdf",
+        "https://www.shivkumar.org/music/vinaveomanasa-class.mp3",
+        "https://www.shivkumar.org/music/originals/02_vinave_o_manasa-vivardhini-dkp-c01.mp3",
+        "https://www.sangeetham.com",
+        "https://www.youtube.com/watch?v=WoCW_Vdkoqk"
+      ],
+      "notationFingerprint": "d927becc:6229"
+    },
+    {
+      "id": "38b6dY0TF0nXR89TwmEift84onQ",
+      "title": "vinAyakuni valEnu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vinayakuni-madhyamavathi.htm",
+        "https://www.shivkumar.org/music/vinayakuni-madhyamavathi.pdf",
+        "https://www.shivkumar.org/music/vinayakuni-madhyamavathi-class.mp3",
+        "https://www.shivkumar.org/music/originals/Vinayakuni-Madhyamavathi-RK.mp3",
+        "https://www.youtube.com/watch?v=3VCMQZj8dbY"
+      ],
+      "notationFingerprint": "046881fa:10484"
+    },
+    {
+      "id": "38bFB5nDziWR4qymBgRoMCCwfN5",
+      "title": "vishAlAkSIm vishvEshIm",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vishalakshim.htm",
+        "https://www.shivkumar.org/music/vishalakshim.pdf",
+        "https://www.shivkumar.org/music/vishalakshim-class.mp3",
+        "https://www.shivkumar.org/music/originals/vishalakshim-dkj-krithi.mp3",
+        "https://www.medieval.org"
+      ],
+      "notationFingerprint": "c19c193d:5901"
+    },
+    {
+      "id": "38bFBiupB39eEQHdRyMHhg0IXKY",
+      "title": "vishvEshvarO rakSatu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/vishweshwaro-kanada.htm",
+        "https://www.shivkumar.org/music/vishweshwaro-kanada.pdf",
+        "https://www.shivkumar.org/music/vishweshwaro-kanada-class.mp4",
+        "https://www.shivkumar.org/music/vishweshwaro-kanada-class.mp3",
+        "https://www.shivkumar.org/music/originals/Vishveshwaro-Kanada-RK.mp3",
+        "http://www.youtube.com/watch?v=6ec_kQDK7Hw"
+      ],
+      "notationFingerprint": "cd695bb9:4896"
+    },
+    {
+      "id": "38awMQ0OYUKlnysI6buRbrVgJoQ",
+      "title": "yArO ivar yArO",
+      "addedSources": [
+        "https://www.shivkumar.org/music/yArOIvaryArO.htm",
+        "https://www.shivkumar.org/music/yArOIvaryArO.pdf",
+        "https://www.shivkumar.org/music/yArOIvaryArO-class.mp3",
+        "https://www.youtube.com/watch?v=G7YvCzxAYwc&ab_channel=SangeethaRasika",
+        "https://youtu.be/2IZFAC8HcBI",
+        "http://www.shivkumar.org/music/yArOIvaryArO"
+      ],
+      "notationFingerprint": "6b3d8cac:10175"
+    },
+    {
+      "id": "38b8OM9itXIjGLWdB93DiiOxk6e",
+      "title": "kamalajAdaLa (gItam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/kamalajathala-kalyani-geetham.htm",
+        "https://www.shivkumar.org/music/varnams/kamalajathala-kalyani-geetham.pdf",
+        "https://www.shivkumar.org/music/varnams/kamalajathala-kalyani.mp3"
+      ],
+      "notationFingerprint": "b941b3d8:1989"
+    },
+    {
+      "id": "38ay1cosvpD1KsRFV016hT3D0lw",
+      "title": "kereya nIranu (gItam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/kerayaneeranu-geetham.htm",
+        "https://www.shivkumar.org/music/varnams/kerayaneeranu-geetham.pdf",
+        "https://www.shivkumar.org/music/varnams/kerayaneeranu-geetham.mp3"
+      ],
+      "notationFingerprint": "1647a20b:4168"
+    },
+    {
+      "id": "38ay1QtNgn6jMdwok4p0UoCZrlK",
+      "title": "shrI gaNanAtha, lambOdara (gItam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/lambodara-geetham.htm",
+        "https://www.shivkumar.org/music/varnams/lambodara-geetham.pdf",
+        "https://www.shivkumar.org/music/varnams/lambodara-geetham.mp3"
+      ],
+      "notationFingerprint": "665b25dd:4130"
+    },
+    {
+      "id": "38bDWSgeNRv7BGjSV0K2SfNQw3d",
+      "title": "padumanAbhA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/padumanabha-geetham.htm",
+        "https://www.shivkumar.org/music/varnams/padumanabha-geetham.pdf",
+        "https://www.shivkumar.org/music/varnams/padumanabha-geetham.mp3"
+      ],
+      "notationFingerprint": "f93ee46f:6741"
+    },
+    {
+      "id": "38b8OmLRREmQapkBeWHWwOJ9sa3",
+      "title": "rE rE shrI rAmacandra (gItam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/reresrirama-arabhi-geetham.htm",
+        "https://www.shivkumar.org/music/varnams/reresrirama-arabhi-geetham.pdf",
+        "https://www.shivkumar.org/music/varnams/reresrirama-arabhi-geetham.mp3"
+      ],
+      "notationFingerprint": "9d83a52c:3241"
+    },
+    {
+      "id": "38b5wupbwGVQKhvKo3itfoMwkax",
+      "title": "sAmba shivAyanavE (svarajati)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/sambasiva-swarajati.htm",
+        "https://www.shivkumar.org/music/varnams/sambasiva-swarajati.pdf",
+        "https://www.shivkumar.org/music/varnams/sambasiva-class.mp4",
+        "https://www.shivkumar.org/music/varnams/sambasiva-class.mp3",
+        "https://www.karnatic.com"
+      ],
+      "notationFingerprint": "ba9f9d2f:5028"
+    },
+    {
+      "id": "38axpdgO2WKARddYtxdthD5t72S",
+      "title": "vara vINaa (gItam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/varaveena-geetham.htm",
+        "https://www.shivkumar.org/music/varnams/varaveena-geetham.pdf",
+        "https://www.shivkumar.org/music/varnams/varaveena-geetham.mp3"
+      ],
+      "notationFingerprint": "0497a75a:3855"
+    },
+    {
+      "id": "38bGcEMeEM3B80aeAhmyYFRput7",
+      "title": "calamEla jEsEvurA",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/chalamela-ata-shankarabharanam.htm",
+        "https://www.shivkumar.org/music/varnams/chalamela-ata-shankarabharanam.pdf",
+        "https://www.shivkumar.org/music/varnams/originals/KVN-01-ChalamelaJesevuraaSarasakuRaaRaa.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/01-varnam-shankarabharanam-chalamela-ata-tkrangachari-c03.mp3"
+      ],
+      "notationFingerprint": "96d67211:3340"
+    },
+    {
+      "id": "38b7DiSNG5rZQlZNCN3LynDR7R1",
+      "title": "calamEla (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/chalamela-durbar.htm",
+        "https://www.shivkumar.org/music/varnams/chalamela-durbar.pdf",
+        "https://www.shivkumar.org/music/varnams/originals/chalamela_durbar_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "485dfdac:2684"
+    },
+    {
+      "id": "38b7Fv7FIVSMIZKf23P7tzEvhZZ",
+      "title": "entO prEmatO (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/enthoprema_varnam.htm",
+        "https://www.shivkumar.org/music/varnams/enthoprema_varnam.pdf",
+        "https://www.shivkumar.org/music/varnams/originals/01a-surutti-varnam-ssi-c18.mp3"
+      ],
+      "notationFingerprint": "0d0e26e6:5415"
+    },
+    {
+      "id": "38b8A9n4oyfVcr7LzefytDR2KcJ",
+      "title": "Era nApai (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/era-napai-thodi-adi-varnam.htm",
+        "https://www.shivkumar.org/music/varnams/era-napai-thodi-adi-varnam.pdf",
+        "https://www.shivkumar.org/music/varnams/Eranapai-Detailed.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/era_napai_thodi_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "e6f0eade:6300"
+    },
+    {
+      "id": "38b8AvYEaQh1PiGhIOrf3e95Lk9",
+      "title": "evari bOdhana (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/evvaribodhana.htm",
+        "https://www.shivkumar.org/music/varnams/evvaribodhana.pdf",
+        "https://www.shivkumar.org/music/varnams/EvvariBodhana-Detailed.mp3",
+        "https://www.shivkumar.org/music/varnams/EvvariBodhana-Detailed2.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/evvari_bodhana_abogi_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "aa7e0b26:5853"
+    },
+    {
+      "id": "38b99dSZCkin0O7rDdfkokAeCZO",
+      "title": "inta calamu (varNa)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/InthaChalamu.htm",
+        "https://www.shivkumar.org/music/varnams/InthaChalamu.pdf",
+        "https://www.shivkumar.org/music/varnams/inthachalamu-begada-varnam.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/intha_chalamu_begada_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "d0616c0f:6274"
+    },
+    {
+      "id": "38b99gL7Cd0qB88MBffwqivbKPh",
+      "title": "inta cauka (varNa)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/InthaChouka-Bilahari.htm",
+        "https://www.shivkumar.org/music/varnams/InthaChouka-Bilahari.pdf"
+      ],
+      "notationFingerprint": "dfd86f6f:4169"
+    },
+    {
+      "id": "38b7GZWvwa9sjFt86POre5lc42a",
+      "title": "intamODi sEya (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/InthaModi-Saranga.htm",
+        "https://www.shivkumar.org/music/varnams/InthaModi-Saranga.pdf",
+        "https://www.shivkumar.org/music/varnams/InthaModi-Saranga-class.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/01b-varnam-saranga-inthamodi-DSR-RN-TU.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/01c-varnam-saranga-swarakalpana-DSR-RN-TU.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/Varnam_Saranga_RK.mp3"
+      ],
+      "notationFingerprint": "024dd939:3399"
+    },
+    {
+      "id": "38b7HKTIWi5GdHVEOdAqL2nmnoO",
+      "title": "karuNimpa idi (varNa)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/karunimpa-sahana-adi-varnam.htm",
+        "https://www.shivkumar.org/music/varnams/karunimpa-sahana-adi-varnam.pdf",
+        "https://www.shivkumar.org/music/varnams/karunimpa-sahana-adi-varnam-detailed.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/Karunimpa-Sahana-Varnam-RaviKiran.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/1-KarunimpaIdi-TMK.mp3"
+      ],
+      "notationFingerprint": "a3c29d5e:4955"
+    },
+    {
+      "id": "38b7TLNBdoFW1rAlSluD7mdZxyi",
+      "title": "neranammiti (varNa)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/neranammithi-kanada-ata-varnam.htm",
+        "https://www.shivkumar.org/music/varnams/neranammithi-kanada-ata-varnam.pdf",
+        "https://www.shivkumar.org/music/varnams/neranammithi-kanada-ata-varnam-class.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/01-Neranammiti-kvn-kanada-ata-2.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/01-varnam-kanada-neranammithi-mdr-c02.mp3",
+        "https://www.youtube.com/watch?v=X_9dCjNYikc"
+      ],
+      "notationFingerprint": "6bd19284:6081"
+    },
+    {
+      "id": "38b7njajEZnFAQU40zvhEyaxgse",
+      "title": "ninnu kOriyunnAnurA (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/ninnukori.htm",
+        "https://www.shivkumar.org/music/varnams/ninnukori.pdf",
+        "https://www.shivkumar.org/music/varnams/Ninnukori-Detailed.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/ninnukori_mohanam_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "aa2a782e:6366"
+    },
+    {
+      "id": "38b7LubL3Za08bkADZNR1sYQjqv",
+      "title": "sAmi daya jUDa (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/KedaragowlaiVarnam.htm",
+        "https://www.shivkumar.org/music/varnams/KedaragowlaiVarnam.pdf",
+        "https://www.shivkumar.org/music/varnams/originals/KedaragowlaiVarnam-Vidya.mp3"
+      ],
+      "notationFingerprint": "d03cbe68:2177"
+    },
+    {
+      "id": "38ay3TMqBlJ9O1RYeYxs6Gah67j",
+      "title": "sAmi ninnE kOri (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/samininne.htm",
+        "https://www.shivkumar.org/music/varnams/samininne.pdf",
+        "https://www.shivkumar.org/music/varnams/Samininne-Detailed.mp3",
+        "https://www.shivkumar.org/music/varnams/Samininne-Detailed2.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/samininne_shankarabharanam_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "82d411c7:5635"
+    },
+    {
+      "id": "38bHCULeYLJFpU4lkNPD7FqbVl7",
+      "title": "sarasija nAbha ninnu",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/sarasijanabha-ata-kambhoji.htm",
+        "https://www.shivkumar.org/music/varnams/sarasijanabha-ata-kambhoji.pdf",
+        "https://www.shivkumar.org/music/varnams/originals/01-varnam-kambodhi-sarasijanabha-ata-tala-tkrangachari-c01.mp3"
+      ],
+      "notationFingerprint": "51ec810d:4264"
+    },
+    {
+      "id": "38b7aw1g6GrOvhIgVaH7tw8lmoG",
+      "title": "sarasUDA ninnEkOri (varNam)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/sarasuda.htm",
+        "https://www.shivkumar.org/music/varnams/sarasuda.pdf",
+        "https://www.shivkumar.org/music/varnams/sarasuda-saveri-varnam.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/sarasuda_saveri_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "64ce84ff:6344"
+    },
+    {
+      "id": "38bFPZ1EiRXGMt0DvmsfR39MFif",
+      "title": "valaci vacci (varNa)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/ValachiVacchi.htm",
+        "https://www.shivkumar.org/music/varnams/ValachiVacchi.pdf",
+        "https://www.shivkumar.org/music/varnams/valachivacchi-navaragamalika-varnam.mp3",
+        "https://www.shivkumar.org/music/varnams/originals/valachivacchi_navaragamalika_adi_varnam.mp3"
+      ],
+      "notationFingerprint": "eb96b04c:6132"
+    },
+    {
+      "id": "38b9GEF4BeDAbAs20mqNLkeroOX",
+      "title": "vanajAkSA (varNa)",
+      "addedSources": [
+        "https://www.shivkumar.org/music/varnams/vanajaksha-ata-reethigowla.htm",
+        "https://www.shivkumar.org/music/varnams/vanajaksha-ata-reethigowla.pdf",
+        "https://www.shivkumar.org/music/varnams/originals/01a-varnam-reethigowlai-vanajaksha-ata-mdr-c25.mp3"
+      ],
+      "notationFingerprint": "b78db129:3691"
+    }
+  ],
+  "created": [],
+  "createdLinks": []
+}

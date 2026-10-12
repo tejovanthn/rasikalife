@@ -1,5 +1,15 @@
 # shivkumar.org import review (2026-10-12)
 
+**Applied 2026-10-12:** 391 matches attached in prod (390 with notation, 1,832 links), 0
+errors, reindexed. Undo record: `shivkumar-import-2026-10.applied.json` beside this note. 24
+new songs are held for review; 3 rows skipped. Each row's `review_note` says why.
+
+How the decisions were made: every suggested attach was checked by comparing his lyrics with
+ours word by word (spelling folded). That caught one wrong match (Sri Ramachandra). The review
+rows were attached where the lyrics are the same and only the raga name, composer spelling or
+attribution differs. The proposed new songs were searched against all our lyrics: 20 of 29
+already existed under another title and were attached instead, so no duplicates were made.
+
 Shivkumar Kalyanaraman's lesson archive (https://www.shivkumar.org/music/) matched against
 prod. CLAUDE.md, "Composition sources, and importing an outside source", describes the
 pipeline. The review file is `shivkumar-matches-2026-10.csv` beside this note.
