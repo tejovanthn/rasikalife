@@ -159,6 +159,14 @@ pair, minus everyone the first run already researched. Packets in
 - **Read the note against the value.** One row said "Carnatic vocalist" in the note and sent
   `Carnatic veena`; another sent a city from a dated registry address. The validator passes both.
   Of 40 records with values, 3 were dropped by hand and one cell removed.
+- **Fetch every link before importing.** A composer worker said it built Wikipedia URLs rather
+  than copying them, and one 404'd. All 54 links across both runs were fetched; all resolve. Two
+  sites answered a plain `curl` with nothing or 406 and loaded with a browser user agent.
+- **Composers come back fuller than performers.** 40 of 48 got values, against 37 of 87
+  performers, because nearly all have a Wikipedia article. Identity was settled by name, language
+  and repertoire more than by exact titles, which Wikipedia rarely lists. Two values were dropped:
+  a city that was where the person died, and a specialisation the worker took from its own
+  knowledge.
 
 ## What the first run taught (2026-08-10, 212 records, 9 batches)
 
