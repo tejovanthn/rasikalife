@@ -121,7 +121,19 @@ for anything a sweep derives.
 so, and there is no CLI for editing a cast role — it needs the event edit screen. Fixing the role
 is the real repair; correcting `instrument` only fixes the artist page.
 
-**Next step: the other 957, in the order of `docs/research/artist-priority-2026-10.csv`**
+**Next step: owner OKs the prod import of the first demand cut (2026-10-14).** 87 performers
+(100+ searches a month) were researched; 37 rows, 85 cells passed validation and a read of every
+note. `data/artist-research/demand-01/import.csv` holds only those rows and columns; the prod dry
+run shows 37 updates, 0 creates, 0 errors. Run it without `--dry-run` from `packages/scripts`
+(`pnpm prod-cli admin-csv-import --domain artist --file ../../data/artist-research/demand-01/import.csv --user 39WZZXug7V6PdinExzhhp6zDuKD`),
+then reindex. Weaker matches kept, worth a glance first: Udayaloor Kalyanaraman, Malladi Brothers
+(active years), Kruthi Bhat (Houston). Duplicate pairs to merge, keeping `keep_id` because that copy
+holds the research: `data/artist-research/demand-01/duplicates-to-merge.csv`, plus Amritha Murali
+and Siddhartha/Siddartha Belmannu. The 48 composers with 100+ searches are cut into
+`data/artist-research/composers-01/` (2 packets); workers were running when this was written. A
+packet with a `.result.json` is done; one without needs a worker.
+
+**After that: the rest, in the order of `docs/research/artist-priority-2026-10.csv`**
 (2026-10-13). Every artist now has a search spelling, Google search volume (India + US) and 90 days
 of Search Console impressions; see "Ranking by search demand" in `docs/research/artist-enrichment.md`.
 Owner decides the first cut. The likely one: the 147 performers with 100+ searches a month (110 not
