@@ -275,7 +275,12 @@ export type { FeaturedSweepResult } from './featured-sweep';
 export { buildCollaboratorLists, rebuildAllCollaborators } from './collaborators-sweep';
 export type { CollaboratorSweepResult } from './collaborators-sweep';
 export { NON_INSTRUMENT_ROLES, instrumentFromRoles, isInstrumentRole } from './enrich';
-export { artistResearchContext, buildArtistContext } from './research-context';
-export type { ArtistResearchContext } from './research-context';
+export {
+  artistResearchContext,
+  buildArtistContext,
+  buildComposerContext,
+  withComposers,
+} from './research-context';
+export type { ArtistResearchContext, ComposerContext } from './research-context';
 export { creditsByArtist, fillArtistInstruments } from './instrument-sweep';
 export type { InstrumentFill, InstrumentSweepResult } from './instrument-sweep';

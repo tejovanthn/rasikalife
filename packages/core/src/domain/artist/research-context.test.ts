@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildArtistContext } from './research-context';
+import { buildArtistContext, buildComposerContext, withComposers } from './research-context';
 
 const credit = (
   over: Partial<{
@@ -144,5 +144,66 @@ describe('buildArtistContext', () => {
     );
 
     expect(context.has('a1')).toBe(false);
+  });
+});
+
+const song = (
+  over: Partial<{
+    composerId: string;
+    title: string;
+    language: string;
+    ragas: Array<{ name: string }>;
+    deletedAt: string;
+    mergedIntoId: string;
+  }>
+) => ({ composerId: 'c1', title: 'x', ...over });
+
+describe('buildComposerContext', () => {
+  it('lists what a composer is credited with, romanised', () => {
+    const context = buildComposerContext([
+      song({ title: 'endarO mahAnubhAvulu', language: 'Telugu', ragas: [{ name: 'shrI' }] }),
+      song({ title: 'nagumOmu', language: 'Telugu', ragas: [{ name: 'AbhEri' }] }),
+    ]);
+
+    expect(context.get('c1')).toEqual({
+      compositions: 2,
+      titles: ['endaro mahanubhavulu', 'nagumomu'],
+      ragas: ['sri', 'abheri'],
+      languages: ['Telugu'],
+    });
+  });
+
+  it('skips deleted and merged compositions', () => {
+    const context = buildComposerContext([
+      song({ deletedAt: '2026-01-01' }),
+      song({ mergedIntoId: 'other' }),
+    ]);
+
+    expect(context.has('c1')).toBe(false);
+  });
+});
+
+describe('withComposers', () => {
+  it('gives a composer with no events a context of their songs alone', () => {
+    const merged = withComposers(
+      new Map(),
+      buildComposerContext([song({ composerId: 'c1', title: 'nagumOmu' })])
+    );
+
+    expect(merged.get('c1')?.appearances).toBe(0);
+    expect(merged.get('c1')?.composes?.titles).toEqual(['nagumomu']);
+  });
+
+  it('adds the songs to a composer who also performs', () => {
+    const merged = withComposers(
+      buildArtistContext(
+        [credit({ eventId: 'e1', artistId: 'c1', role: 'vocal' })],
+        [event({ id: 'e1' })]
+      ),
+      buildComposerContext([song({ composerId: 'c1' })])
+    );
+
+    expect(merged.get('c1')?.roles).toEqual(['vocal']);
+    expect(merged.get('c1')?.composes?.compositions).toBe(1);
   });
 });

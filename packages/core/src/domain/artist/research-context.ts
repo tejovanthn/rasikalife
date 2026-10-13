@@ -18,6 +18,8 @@
  * fan-out.
  */
 
+import { fromItrans } from '../../utils';
+import { CompositionEntity } from '../composition/entity';
 import { EventArtistEntity } from '../event-artist/entity';
 import { EventEntity } from '../event/entity';
 
@@ -39,6 +41,28 @@ export interface ArtistResearchContext {
   lastSeen?: string;
   /** Who they share a stage with — usually the strongest identity signal of the lot. */
   performsWith: string[];
+  /**
+   * What we credit them with composing. A composer has no events, so without this a packet
+   * carries nothing to check a namesake against; a list of their songs and ragas does that job.
+   */
+  composes?: ComposerContext;
+}
+
+export interface ComposerContext {
+  compositions: number;
+  /** Romanised, as a reader would search for them. */
+  titles: string[];
+  ragas: string[];
+  languages: string[];
+}
+
+interface CompositionRow {
+  composerId: string;
+  title: string;
+  language?: string;
+  ragas?: Array<{ name: string }>;
+  deletedAt?: string;
+  mergedIntoId?: string;
 }
 
 interface JunctionRow {
@@ -133,11 +157,77 @@ export function buildArtistContext(
   return result;
 }
 
-/** Reads the junction and the events, and builds the map. Two scans, no per-artist query. */
+const MAX_TITLES = 6;
+
+/**
+ * What each composer is credited with, from rows already in memory. Pure, like
+ * `buildArtistContext`. Titles and ragas are stored as ITRANS, so they are romanised here: a
+ * worker matches them against what a source prints, and `abhayAmbikAyAha` matches nothing.
+ */
+export function buildComposerContext(rows: CompositionRow[]): Map<string, ComposerContext> {
+  const byComposer = new Map<string, CompositionRow[]>();
+  for (const row of rows) {
+    if (row.deletedAt || row.mergedIntoId || !row.composerId) continue;
+    const mine = byComposer.get(row.composerId) ?? [];
+    mine.push(row);
+    byComposer.set(row.composerId, mine);
+  }
+
+  const result = new Map<string, ComposerContext>();
+  for (const [composerId, mine] of byComposer) {
+    result.set(composerId, {
+      compositions: mine.length,
+      titles: top(
+        mine.map(row => fromItrans(row.title)),
+        MAX_TITLES
+      ),
+      ragas: top(
+        mine.flatMap(row => (row.ragas ?? []).map(raga => fromItrans(raga.name))),
+        MAX_TITLES
+      ),
+      languages: top(
+        mine.map(row => row.language),
+        3
+      ),
+    });
+  }
+  return result;
+}
+
+/** A composer with no events still gets a context, holding only what they composed. */
+export function withComposers(
+  context: Map<string, ArtistResearchContext>,
+  composers: Map<string, ComposerContext>
+): Map<string, ArtistResearchContext> {
+  for (const [artistId, composes] of composers) {
+    const known = context.get(artistId);
+    context.set(
+      artistId,
+      known
+        ? { ...known, composes }
+        : {
+            appearances: 0,
+            roles: [],
+            venues: [],
+            organisers: [],
+            artForms: [],
+            performsWith: [],
+            composes,
+          }
+    );
+  }
+  return context;
+}
+
+/** Reads the junction, the events and the compositions, and builds the map. Three scans. */
 export async function artistResearchContext(): Promise<Map<string, ArtistResearchContext>> {
-  const [junction, events] = await Promise.all([
+  const [junction, events, compositions] = await Promise.all([
     EventArtistEntity.scan.go({ pages: 'all' }),
     EventEntity.scan.go({ pages: 'all' }),
+    CompositionEntity.scan.go({ pages: 'all' }),
   ]);
-  return buildArtistContext(junction.data as JunctionRow[], events.data as EventRow[]);
+  return withComposers(
+    buildArtistContext(junction.data as JunctionRow[], events.data as EventRow[]),
+    buildComposerContext(compositions.data as CompositionRow[])
+  );
 }

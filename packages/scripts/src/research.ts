@@ -48,6 +48,8 @@ const BRIEF: Record<string, string[]> = {
     'specialisations are the forms or repertoire they are known for — "Carnatic vocal", "Ragam Tanam Pallavi", "Bharatanatyam". At most six, each a plain noun phrase with no praise in it.',
     'activeYears must be real years: "1985", "1985-2010", "1985-present", or "since 1985". "Over four decades" and "since the early 1990s" are refused outright, so do not send them.',
     'No praise and no hedging anywhere. renowned, famous, acclaimed, legendary, one of the greatest, likely, appears to, reportedly — all refused.',
+    'COMPOSERS. A record whose context has `composes` is credited with those compositions here, and many have no events at all. Settle identity by the songs: a source must name this person as the composer of titles in that list, in those ragas or languages. For a composer, city is where they lived and worked, and a wikipedia socialLink is usually the one link that applies; do not look for a personal website for someone who died before the web.',
+    'activeYears only holds years from 1800 to 2100. For a composer who worked before 1800, leave it blank rather than sending a span that will be refused.',
   ],
 };
 
@@ -177,10 +179,13 @@ export async function writeResearchBatches(opts: {
 
     // An artist with no appearance has no identity block, so a worker has nothing to check the
     // person against — exactly the case that produces a confident biography of a namesake. They
-    // are excluded by default rather than researched blind.
+    // are excluded by default rather than researched blind. A composer is the exception: the
+    // songs we credit them with identify them as well as a stage does.
     const floor = minEvents ?? 1;
     const before = candidates.length;
-    candidates = candidates.filter(record => appearances(record.id) >= floor);
+    candidates = candidates.filter(
+      record => appearances(record.id) >= floor || Boolean(context.get(record.id)?.composes)
+    );
     if (before > candidates.length) {
       console.log(
         `   ${before - candidates.length} artists dropped: fewer than ${floor} appearance(s) to identify them by`

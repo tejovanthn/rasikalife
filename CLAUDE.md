@@ -782,6 +782,13 @@ worker that sends one anyway has it refused with a reason:
   arangetram. The column *is* writable by CSV; this list is the only thing stopping it.
 - **`gurus`** — prose flattens exactly the distinction `GURU_RELATIONSHIPS` exists to keep.
 
+**A composer is identified by what they composed.** Most have no events, so the context block
+also carries `composes` (`buildComposerContext`): the count, six titles and ragas romanised with
+`fromItrans`, and the languages. A record holding it passes the `--min-events` floor, and the
+brief tells the worker to settle identity by a source naming this person as composer of those
+songs. `activeYears` still refuses anything before 1800 (`YearSchema`), so most composers get
+city, birthplace, specialisations and a Wikipedia link, and no years.
+
 `--min-events <n>` is an **identity** control, not a coverage one: an artist with no appearances
 has no context block, so there is nothing to check a candidate against — the precise case that
 produces a confident profile of a namesake. The first run used `--min-events 2`, which cut 957

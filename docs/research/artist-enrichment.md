@@ -139,6 +139,27 @@ Read the top rows before trusting them. A saint's volume (Raghavendra Swamy 135,
 74,000) is demand for the person, not for our one-composition page about them, and Wikipedia holds
 that query. The performers are where enrichment can move a ranking.
 
+## What the demand-ranked run taught (2026-10-13, 87 performers + 48 composers)
+
+The first cut from the ranking: performers with 100+ searches a month, one copy per duplicate
+pair, minus everyone the first run already researched. Packets in
+`data/artist-research/demand-01/`, composers in `composers-01/`.
+
+- **Workers skip records unless told why the records were chosen.** The worker prompt says
+  finding nothing is expected for much of the corpus, and three of four workers read that as
+  permission not to search: 16 of 21, 12 of 22 and 7 of 21 records came back "not searched".
+  Resumed with one line, "every record here gets 100+ searches a month", the same workers filled
+  8 more in one batch alone. For a demand-ranked cut, say so in the dispatch.
+- **Import only the rows researched.** `research-ingest` writes the whole corpus (1,357 rows by
+  then). Cut it to `id`, `name` and the researched columns of the researched rows; a blank cell
+  is "leave alone", so the import touches nothing else.
+- **Fill one copy of a duplicate.** `mergeArtist` does not copy fields from the record it merges
+  away, so research on the losing copy is lost at merge time. Keep the copy with more events
+  (performers) or compositions (composers), and list the pair for merging.
+- **Read the note against the value.** One row said "Carnatic vocalist" in the note and sent
+  `Carnatic veena`; another sent a city from a dated registry address. The validator passes both.
+  Of 40 records with values, 3 were dropped by hand and one cell removed.
+
 ## What the first run taught (2026-08-10, 212 records, 9 batches)
 
 All nine came back complete — 212 records, 177 with at least one field, 35 refused outright, and
