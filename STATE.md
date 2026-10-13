@@ -121,11 +121,21 @@ for anything a sweep derives.
 so, and there is no CLI for editing a cast role — it needs the event edit screen. Fixing the role
 is the real repair; correcting `instrument` only fixes the artist page.
 
-**Next step: the other 957.** They were cut out with `--min-events 2` because an artist with no
-appearances has no context block to check identity against. That needs a different method, not a
-laxer one — the likeliest is name plus city plus a known guru or sabha, and it should not reuse
-this brief unchanged.
+**Next step: the other 957, in the order of `docs/research/artist-priority-2026-10.csv`**
+(2026-10-13). Every artist now has a search spelling, Google search volume (India + US) and 90 days
+of Search Console impressions; see "Ranking by search demand" in `docs/research/artist-enrichment.md`.
+Owner decides the first cut. The likely one: the 147 performers with 100+ searches a month (110 not
+yet researched, 108 with fewer than 2 events, so phase 2 never reached them) and, as a separate
+brief, the 54 composers with 100+ (none researched; their compositions can settle identity where
+events cannot). They were cut out with `--min-events 2` because an artist with no appearances has
+no context block to check identity against. That still needs a different method, not a laxer one,
+and should not reuse this brief unchanged.
 
+The ranking also found 45 search spellings shared by two or more records (95 records, column
+`same_search_as`): Adi Shankaracharya, Subramania Bharati, Muthuswami Dikshitar, Swami Dayananda
+Saraswati and Abhishek Raghuram twice each, Omkar Music Academy four times. Most are one person
+stored twice, but not all (`s krishna`), so read each. Merge before researching, or the research
+lands twice.
 Duplicates are worth a pass but are not a blocker: ~20 exact-name groups and ~20 near pairs at
 `findArtistMatch`'s 0.85 threshold, about 3% against the ragas' 20%. There is no `dedup-artists`
 command; `domain/artist/dedup.ts` has the matcher. Note it misses `Phanindra Bhaskara` beside

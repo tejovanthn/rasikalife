@@ -101,6 +101,44 @@ validator cannot see that; only the `notes` column and a person can.
 **`notes` is the most useful column in an artist run.** A worker told to refuse when it cannot
 settle identity will say so there, and those rows are the ones worth a human lookup.
 
+## Ranking by search demand (2026-10-13)
+
+`docs/research/artist-priority-2026-10.csv` ranks all 1,169 artists by how often people search for
+them, so a batch can start with the pages that can earn traffic. `research-batches` orders by
+event count, which is a different thing: the most-searched names here are composers and touring
+stars with zero or one event.
+
+How it was built (scripts in `data/artist-priority/bin/`, gitignored with the inputs):
+
+1. **A search spelling per artist.** Stored names are scholarly romanisation, and Google gets
+   nothing for them: `Annamaacaarya` has 0 searches, `annamacharya` 5,400. Eight Sonnet agents
+   wrote one `search` spelling, an optional `alt`, and an `ambiguous` flag per record, from
+   packets holding the name, instrument, event roles and composition titles.
+2. **Volume** from Keyword Planner (the `rasika.life` preset: India + US, English), one exact
+   lookup per spelling.
+3. **Search Console** impressions and clicks per artist page, 2026-07-13 to 2026-10-12, with the
+   `/events` and other subpages added to their artist.
+
+The sort key is unambiguous `monthly_searches`, then impressions, then events. Ambiguous rows
+rank on impressions alone.
+
+Three traps, each of which put a wrong number at the top of the first draft:
+
+- **Close variants.** Keyword Planner folds similar keywords into one row and lists the others
+  as `close_variants`. Copying the row's volume to its variants gave `s kalyanaraman` 14,800;
+  asked alone it has 110. Use only a keyword's own row, and ask again for any keyword that was
+  folded away.
+- **`alt` spellings are not scored.** They often drop the initial (`rajam`, `kalyanaraman`,
+  `gnb`) or name someone else (`chinna jeeyar` for Yathiraja Jeeyar). Their volume is in
+  `alt_monthly_searches` for a person to read.
+- **The ambiguous flag misses some.** `anand vishwanathan` has 49,500 searches, nearly all for
+  the chess player. The overrides are a short list in `merge.py`; add to it rather than editing
+  the CSV.
+
+Read the top rows before trusting them. A saint's volume (Raghavendra Swamy 135,000, Tulsidas
+74,000) is demand for the person, not for our one-composition page about them, and Wikipedia holds
+that query. The performers are where enrichment can move a ranking.
+
 ## What the first run taught (2026-08-10, 212 records, 9 batches)
 
 All nine came back complete — 212 records, 177 with at least one field, 35 refused outright, and
