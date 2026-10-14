@@ -752,6 +752,12 @@ Duplicates are a smaller problem here than in the other corpora: about 20 exact-
 Worth a pass, but not the blocker it was there. Note the matcher misses `Phanindra Bhaskara`
 beside `Phanindra Bhaskar` — the surname must match outright, by design.
 
+Merge reviewed pairs with `pnpm cli merge-artists --file <csv> [--dry-run]` (`keep_id`,
+`merge_id`). **`mergeArtist` does not copy fields**, so the command first fills the kept record's
+blanks from the other copy (`artistMergeFillPatch`, `domain/artist/merge-fill.ts`; never
+`isGroup`), skips a pair already merged, and writes a manifest of what it copied. A merge of a
+busy artist exceeds the collaborator fan-out cap; run `rebuild-collaborators` after, then reindex.
+
 ### Researching artists (`research-batches --domain artist`)
 
 The same pipeline as the ragas, with one difference that shapes everything. Runbook:
@@ -798,6 +804,11 @@ Two rules the artist validators add: a social host in `website` is refused becau
 feed `sameAs` and the same account arriving twice publishes one profile as two claims; and
 `city`/`birthPlace` refuse a digit or a second comma, because a postcode is not a place name and
 `Mylapore, Chennai, Tamil Nadu, India` is an address where the profile wants a city.
+
+**`mergeResearch` refuses an artist result whose `name` is not the record's** (letters only,
+doubled letters collapsed, so a romanisation still agrees). A worker returned Amrutha Venkatesh's
+id under the name Amritha Murali, with Amritha Murali's city: every value valid, all about the
+wrong singer.
 
 When reading a returned run, the thing the validator cannot catch is **a cluster of plausible
 values on one artist that all belong to somebody else**. Only `notes` and a person find that,

@@ -173,6 +173,27 @@ describe('validateSocialLinks', () => {
   });
 });
 
+describe('mergeResearch: artist names', () => {
+  it('refuses a result that renames the record, since it is about someone else', () => {
+    const rows = [{ id: 'a1', name: 'Amrutha Venkatesh', city: '', instrument: 'vocal' }];
+    const report = mergeResearch('artist', rows, [
+      { id: 'a1', name: 'Amritha Murali', fields: { city: 'Chennai' } },
+    ]);
+
+    expect(rows[0].city).toBe('');
+    expect(report.rejections[0].reason).toContain('Amritha Murali');
+  });
+
+  it('accepts the same name spelled with a different romanisation', () => {
+    const rows = [{ id: 'a1', name: 'Tyaagaraaja', city: '', instrument: '' }];
+    mergeResearch('artist', rows, [
+      { id: 'a1', name: 'tyagaraja', fields: { city: 'Thiruvaiyaru' } },
+    ]);
+
+    expect(rows[0].city).toBe('Thiruvaiyaru');
+  });
+});
+
 describe('mergeResearch', () => {
   const rowsFor = () => [
     { id: 'r1', name: 'kalyANi', description: '', arohanam: '', melaNumber: '65', parentRaga: '' },

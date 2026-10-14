@@ -162,6 +162,10 @@ pair, minus everyone the first run already researched. Packets in
 - **Fetch every link before importing.** A composer worker said it built Wikipedia URLs rather
   than copying them, and one 404'd. All 54 links across both runs were fetched; all resolve. Two
   sites answered a plain `curl` with nothing or 406 and loaded with a browser user agent.
+- **A worker can rename the record it was given.** One returned Amrutha Venkatesh's id as
+  "Amritha Murali, a likely duplicate", with Amritha Murali's details. It was caught only because
+  the merge dry run printed both names. `research-ingest` now refuses a result whose name is not
+  the record's.
 - **Composers come back fuller than performers.** 40 of 48 got values, against 37 of 87
   performers, because nearly all have a Wikipedia article. Identity was settled by name, language
   and repertoire more than by exact titles, which Wikipedia rarely lists. Two values were dropped:

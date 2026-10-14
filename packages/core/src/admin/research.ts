@@ -461,6 +461,14 @@ export interface MergeReport {
 
 type Row = Record<string, string>;
 
+/** Letters only, lowercased, doubled letters collapsed: `Tyaagaraaja` and `tyagaraja` agree. */
+function nameKey(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z]/g, '')
+    .replace(/(.)\1+/g, '$1');
+}
+
 /**
  * Folds validated research into exported admin-CSV rows.
  *
@@ -478,6 +486,21 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
   for (const record of results) {
     const row = record.id ? byId.get(record.id) : undefined;
     if (!row) continue;
+    // A worker that renames the record has researched someone else. One returned Amrutha
+    // Venkatesh's id under the name Amritha Murali, with Amritha Murali's city — every value
+    // valid, every one about the wrong singer, and nothing below compares names.
+    if (domain === 'artist' && record.name && nameKey(record.name) !== nameKey(row.name)) {
+      for (const [field, raw] of Object.entries(record.fields ?? {})) {
+        report.rejections.push({
+          id: row.id,
+          name: row.name,
+          field,
+          reason: `the result is named "${record.name}", not this record`,
+          value: String(raw).slice(0, 80),
+        });
+      }
+      continue;
+    }
     for (const [field, raw] of Object.entries(record.fields ?? {})) {
       const column = field === 'parentRaga' ? 'parentRaga' : field;
       if (!(column in row)) {

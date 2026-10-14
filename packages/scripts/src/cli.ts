@@ -341,6 +341,17 @@ program
   });
 
 program
+  .command('merge-artists')
+  .description('Merge reviewed artist duplicates, copying blank fields onto the kept record first')
+  .requiredOption('--file <path>', 'CSV with keep_id and merge_id columns')
+  .option('-n, --dry-run', 'List the merges and copied fields without writing')
+  .action(async (opts: { file: string; dryRun?: boolean }) => {
+    setup();
+    const { mergeArtists } = await import('./mergeArtists.js');
+    await mergeArtists(opts);
+  });
+
+program
   .command('rebuild-collaborators')
   .description('Rebuild artist collaborator lists from the approved event history')
   .option('-n, --dry-run', 'Preview changes without writing to the database')

@@ -282,5 +282,6 @@ export {
   withComposers,
 } from './research-context';
 export type { ArtistResearchContext, ComposerContext } from './research-context';
+export { ARTIST_FILLABLE_FIELDS, artistMergeFillPatch } from './merge-fill';
 export { creditsByArtist, fillArtistInstruments } from './instrument-sweep';
 export type { InstrumentFill, InstrumentSweepResult } from './instrument-sweep';

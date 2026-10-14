@@ -127,21 +127,20 @@ and `composers-01/` (`import.csv` is what was written). Weaker matches kept, wor
 Udayaloor Kalyanaraman, Malladi Brothers (active years), Kruthi Bhat (Houston). Fix a wrong value
 with a two-column `id,<field>` CSV through `admin-csv-import`.
 
-**Next step: merge the duplicate pairs**, keeping `keep_id`, because that copy holds the research:
-`data/artist-research/demand-01/duplicates-to-merge.csv`, plus Amritha Murali, Siddhartha/Siddartha
-Belmannu, and the composer pairs (Adi Shankaracharya, Subramania Bharati, Muthuswami Dikshitar,
-Swami Dayananda Saraswati; the copy with more compositions was researched). The ranking CSV's
-`same_search_as` column lists them all.
+**Duplicates merged (2026-10-14).** 14 pairs via the new `merge-artists`, blanks filled onto the
+kept copy first (title, instrument, birthplace, specialisations), collaborators rebuilt, reindexed,
+redirects checked. Manifest: `data/artist-research/merge-2026-10-14.csv.applied-*.json`. Amrutha
+Venkatesh is a different singer from Amritha Murali and was not merged. 45 spellings in the ranking
+were shared; only the pairs in this cut were reviewed and merged.
 
-**After that: the rest, in the order of `docs/research/artist-priority-2026-10.csv`**
-(2026-10-13). Every artist now has a search spelling, Google search volume (India + US) and 90 days
-of Search Console impressions; see "Ranking by search demand" in `docs/research/artist-enrichment.md`.
-Owner decides the first cut. The likely one: the 147 performers with 100+ searches a month (110 not
-yet researched, 108 with fewer than 2 events, so phase 2 never reached them) and, as a separate
-brief, the 54 composers with 100+ (none researched; their compositions can settle identity where
-events cannot). They were cut out with `--min-events 2` because an artist with no appearances has
-no context block to check identity against. That still needs a different method, not a laxer one,
-and should not reuse this brief unchanged.
+**Next step: the next research cut**, in the order of `docs/research/artist-priority-2026-10.csv`.
+
+**Notes on the rest:** the first cut took every unambiguous performer and composer with 100+
+searches a month. Next in the ranking: 330 artists at 10–99 a month, then the 216 flagged
+ambiguous, which rank on Search Console impressions alone. Cut with `research-batches --ids`, tell
+workers why the records were chosen (or they skip them), import only the researched rows, and
+fetch every link first; see "What the demand-ranked run taught" in the runbook. Artists with no
+events and no compositions still have nothing to check identity against.
 
 The ranking also found 45 search spellings shared by two or more records (95 records, column
 `same_search_as`): Adi Shankaracharya, Subramania Bharati, Muthuswami Dikshitar, Swami Dayananda
