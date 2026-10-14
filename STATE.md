@@ -133,18 +133,16 @@ redirects checked. Manifest: `data/artist-research/merge-2026-10-14.csv.applied-
 Venkatesh is a different singer from Amritha Murali and was not merged. 45 spellings in the ranking
 were shared; only the pairs in this cut were reviewed and merged.
 
-**Waiting: owner OKs the prod import of the 10–99 searches cut (2026-10-14).** 184 performers and
-51 composers researched. After review: `data/artist-research/demand-02/import.csv` (31 rows, 57
-cells) and `composers-02/import.csv` (17 rows, 50 cells). Every link was fetched (one dead website
-dropped). Prod dry runs: 31 and 17 updates, 0 errors. Same command as before with each file, then
-reindex. What was dropped and why: `demand-02/review-notes.md`.
+**10–99 searches cut is live (2026-10-14).** 31 performers and 17 composers updated in prod (57 +
+50 cells), and 17 more duplicate pairs merged (kept copy chosen by Search Console impressions first,
+then compositions and events; manifest `data/artist-research/merge-2026-10-14b.csv.applied-*.json`).
+Collaborators rebuilt, search reindexed. What was dropped in review and why:
+`demand-02/review-notes.md`.
 
-Then: (1) 45 records were never searched because the session's web search budget ran out; their
-ids are in `data/artist-research/leftover-02/ids.txt`. Cut them with `research-batches --ids` and
-run at most 3–4 workers at once. (2) Duplicates to review and merge, listed in
-`demand-02/duplicates-to-review.csv` and `review-notes.md` (Trichur Mohan, Bhagyalakshmi Krishna,
-Rakshita Ramesh, Muthiah Bhagavatar, Vallalar's second record). (3) Two records are not people:
-"Karnataka Kalashri" (an award) and "Disciples of Mowna Ramachandra"; the owner decides.
+**Next step: research the 45 leftover records.** They were never searched because the session's
+web search budget ran out; ids in `data/artist-research/leftover-02/ids.txt`. Cut them with
+`research-batches --ids` and run at most 3–4 workers at once. Also open: two records are not
+people, "Karnataka Kalashri" (an award) and "Disciples of Mowna Ramachandra"; the owner decides.
 
 **Notes on the rest:** the first cut took every unambiguous performer and composer with 100+
 searches a month. Next in the ranking: 330 artists at 10–99 a month, then the 216 flagged
