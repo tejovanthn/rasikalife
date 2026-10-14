@@ -121,19 +121,17 @@ for anything a sweep derives.
 so, and there is no CLI for editing a cast role — it needs the event edit screen. Fixing the role
 is the real repair; correcting `instrument` only fixes the artist page.
 
-**Next step: owner OKs the prod imports of the first demand cut (2026-10-14).** 87 performers
-(100+ searches a month) were researched; 37 rows, 85 cells passed validation and a read of every
-note. `data/artist-research/demand-01/import.csv` holds only those rows and columns; the prod dry
-run shows 37 updates, 0 creates, 0 errors. Run it without `--dry-run` from `packages/scripts`
-(`pnpm prod-cli admin-csv-import --domain artist --file ../../data/artist-research/demand-01/import.csv --user 39WZZXug7V6PdinExzhhp6zDuKD`),
-then reindex. Weaker matches kept, worth a glance first: Udayaloor Kalyanaraman, Malladi Brothers
-(active years), Kruthi Bhat (Houston). Duplicate pairs to merge, keeping `keep_id` because that copy
-holds the research: `data/artist-research/demand-01/duplicates-to-merge.csv`, plus Amritha Murali
-and Siddhartha/Siddartha Belmannu. The 48 composers with 100+ searches are researched too:
-`data/artist-research/composers-01/import.csv`, 40 rows and 128 cells (Wikipedia link, birthplace,
-city, specialisations; `activeYears` only for Balamuralikrishna and Lalgudi, since the rest worked
-before 1800). Prod dry run: 40 updates, 0 errors. Same command with that file. Every website and
-Wikipedia link in both files was fetched and resolves.
+**First demand cut is live (2026-10-14).** 37 performers and 40 composers updated in prod (85 +
+128 cells), 0 errors, search reindexed, pages checked live. Files: `data/artist-research/demand-01/`
+and `composers-01/` (`import.csv` is what was written). Weaker matches kept, worth a glance:
+Udayaloor Kalyanaraman, Malladi Brothers (active years), Kruthi Bhat (Houston). Fix a wrong value
+with a two-column `id,<field>` CSV through `admin-csv-import`.
+
+**Next step: merge the duplicate pairs**, keeping `keep_id`, because that copy holds the research:
+`data/artist-research/demand-01/duplicates-to-merge.csv`, plus Amritha Murali, Siddhartha/Siddartha
+Belmannu, and the composer pairs (Adi Shankaracharya, Subramania Bharati, Muthuswami Dikshitar,
+Swami Dayananda Saraswati; the copy with more compositions was researched). The ranking CSV's
+`same_search_as` column lists them all.
 
 **After that: the rest, in the order of `docs/research/artist-priority-2026-10.csv`**
 (2026-10-13). Every artist now has a search spelling, Google search volume (India + US) and 90 days

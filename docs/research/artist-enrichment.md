@@ -139,7 +139,7 @@ Read the top rows before trusting them. A saint's volume (Raghavendra Swamy 135,
 74,000) is demand for the person, not for our one-composition page about them, and Wikipedia holds
 that query. The performers are where enrichment can move a ranking.
 
-## What the demand-ranked run taught (2026-10-13, 87 performers + 48 composers)
+## What the demand-ranked run taught (2026-10-13, 87 performers + 48 composers; imported 2026-10-14)
 
 The first cut from the ranking: performers with 100+ searches a month, one copy per duplicate
 pair, minus everyone the first run already researched. Packets in
