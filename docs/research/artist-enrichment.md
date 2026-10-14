@@ -166,6 +166,11 @@ pair, minus everyone the first run already researched. Packets in
   "Amritha Murali, a likely duplicate", with Amritha Murali's details. It was caught only because
   the merge dry run printed both names. `research-ingest` now refuses a result whose name is not
   the record's.
+- **Ten workers at once exhaust the web search budget.** The second cut (184 performers, 51
+  composers) ran ten in parallel; search rate-limited within minutes and the session budget,
+  shared by every agent, ran out with 45 records unsearched. Run 3–4 at a time.
+- **Yield falls with demand.** At 10–99 searches a month, 31 of 184 performers (17%) had anything
+  usable, against 37 of 87 (43%) at 100+. Composers held up better: 17 of 51.
 - **Composers come back fuller than performers.** 40 of 48 got values, against 37 of 87
   performers, because nearly all have a Wikipedia article. Identity was settled by name, language
   and repertoire more than by exact titles, which Wikipedia rarely lists. Two values were dropped:
