@@ -117,9 +117,16 @@ export async function writeLyricsBatches(opts: {
   outDir: string;
   size: number;
   limit?: number;
+  ids?: string;
 }): Promise<void> {
   mkdirSync(opts.outDir, { recursive: true });
   let compositions = await loadCompositions();
+  // Cutting packets for new songs only keeps the open batches' ids stable: a full re-cut would
+  // shift every later batch and re-read songs already imported.
+  if (opts.ids) {
+    const wanted = new Set(readIds(opts.ids));
+    compositions = compositions.filter(c => wanted.has(c.id));
+  }
   if (opts.limit) compositions = compositions.slice(0, opts.limit);
 
   let written = 0;
@@ -141,6 +148,14 @@ export async function writeLyricsBatches(opts: {
     written++;
   }
   console.log(`📦 ${written} packets, ${compositions.length} compositions, in ${opts.outDir}`);
+}
+
+/** Ids from a plain list (one per line) or a `source-apply` manifest (its `created` rows). */
+function readIds(path: string): string[] {
+  const text = readFileSync(path, 'utf-8');
+  if (!path.endsWith('.json')) return text.split(/\s+/).filter(Boolean);
+  const manifest = JSON.parse(text) as { created?: Array<{ id: string }> };
+  return (manifest.created ?? []).map(c => c.id);
 }
 
 type Refusal = { id: string; title: string; order: string; reason: string; notes: string };

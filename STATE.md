@@ -64,7 +64,7 @@ each, writing `lyrics-NNN.result.json` beside the packet.
 then `lyrics-meanings --out data/lyrics-meanings.csv`, review, `--apply`, import, and reindex
 search. Still open after that: 33 compositions with `�` encoding damage; scraped `rAgA: … tALA. 1:` header text inside 66 lyric sections — regular enough for a rule-based strip, like `lyrics-meanings`, since readers may not remove words; a few records whose lyrics are a different song from the title (reader notes say which); languages outside `LYRICS_LANGUAGES` (Sourashtra, Gujarati, Braj) left as stored.
 
-Progress: 92 of 172 batches read and imported (001–092), 4,516 compositions. Re-run any batch with no
+Progress: 92 of 172 batches read and imported (001–092), 4,516 compositions. Scheduled to resume 2026-10-16 01:45 IST: the 164 bhajans first (`data/lyrics-bhajans/`, 4 packets cut 2026-10-15 with `--ids`), then 093–172 (3,952 songs). The run stops at the import dry run; the prod import waits for the owner. Re-run any batch with no
 `.result.json` — a reader cut off by a usage limit usually has already written its file.
 
 ## Active: filling the artist corpus (2026-08-09)

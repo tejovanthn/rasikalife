@@ -445,7 +445,9 @@ cannot repair it. Two halves, in `domain/composition/lyrics-normalize.ts`:
   (`kAma`→`rAma`) that no spelling check can tell from a typo fix.
 
 The reader works from packets (`lyrics-batches --out-dir <dir> [--size 50]`) carrying the text
-*after* the rules and a brief that is the whole contract. `lyrics-ingest --dir <dir> --out <csv>
+*after* the rules and a brief that is the whole contract. Songs added after the packets were cut get their own
+directory (`--ids <file>`, a list or a `source-apply` manifest), since a full re-cut shifts
+every open batch and re-reads songs already imported. `lyrics-ingest --dir <dir> --out <csv>
 --report <csv>` re-reads the stored text, refuses any section that fails `checkRespelling` (the
 rules' version is used instead), refuses the whole reading if the stored text moved since the
 packet was cut, and skips a batch with no readable result rather than applying rules to it alone.

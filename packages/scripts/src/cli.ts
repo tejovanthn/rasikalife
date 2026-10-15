@@ -204,7 +204,8 @@ program
   .requiredOption('--out-dir <dir>', 'Where to write the batch files')
   .option('--size <n>', 'Compositions per batch', (v: string) => Number.parseInt(v, 10), 50)
   .option('--limit <n>', 'Only the first n compositions', (v: string) => Number.parseInt(v, 10))
-  .action(async (opts: { outDir: string; size: number; limit?: number }) => {
+  .option('--ids <file>', 'Only these ids: one per line, or a source-apply manifest')
+  .action(async (opts: { outDir: string; size: number; limit?: number; ids?: string }) => {
     setup();
     const { writeLyricsBatches } = await import('./lyrics.js');
     await writeLyricsBatches(opts);
