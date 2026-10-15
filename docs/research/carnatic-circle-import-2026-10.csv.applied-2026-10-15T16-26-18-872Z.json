@@ -1,0 +1,668 @@
+{
+  "source": "carnatic-circle",
+  "file": "../../docs/research/carnatic-circle-import-2026-10.csv",
+  "appliedAt": "2026-10-15T16:26:18.872Z",
+  "userId": "39WZZXug7V6PdinExzhhp6zDuKD",
+  "attached": [
+    {
+      "id": "38awn46OubG1ucH9fyVgsUoxRsy",
+      "title": "ma~NgalAlaya mAmava",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/narayana-theertha-tarangini/mangalalaya-kedaragowla-adi/"
+      ]
+    },
+    {
+      "id": "38b83zoVVoBtsVXI4UHlwi5ofad",
+      "title": "calO man ga~NgA (bhajan)",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/surdas/chalo-mana-ganga-jamuna-tira-mirabhai/"
+      ]
+    },
+    {
+      "id": "38awnHk44Gmunk4HoQ7tj6IQrqk",
+      "title": "kR^iSNam kalaya sakhi",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/narayana-theertha-tarangini/krishnam-kalaya-sakhi/"
+      ]
+    },
+    {
+      "id": "38awIw5RxQLkKLPtwJhY1bCfQ76",
+      "title": "pUraya mama kAmam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/narayana-theertha-tarangini/pooraya-mama-kaamam-bilahari/"
+      ]
+    },
+    {
+      "id": "38bDKGoXKbAE09l2bri5ibXeeSF",
+      "title": "nArAyaNA ninna nAmada",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/narayana-ninna-namada/"
+      ]
+    },
+    {
+      "id": "38bCsPBIFSDneeInaQA9L9TkEIl",
+      "title": "kELanO",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/kelano-hari-taalano/"
+      ]
+    },
+    {
+      "id": "38axB4EaRvUbQYqJHEv6OqOoF6O",
+      "title": "vE~NkaTAcala nilayam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/venkatachala-nilayam-2/"
+      ]
+    },
+    {
+      "id": "38b5zZyJWwpHAKELApxGwHknAi2",
+      "title": "hari smaraNe mADO",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/hari-smarane-mado/"
+      ]
+    },
+    {
+      "id": "38bDB4G1HFXvqRXguOza99zmXn7",
+      "title": "murahara nagadhara",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/murahara-nagadhara-neene-gati/"
+      ]
+    },
+    {
+      "id": "38bCoCYCkT0LSLyDalL2tVrENUE",
+      "title": "kaNDe nA uDupiya",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/kande-na-udupi-krishnane/"
+      ]
+    },
+    {
+      "id": "38awn5wJyVimjMeHnTseiNKRTFM",
+      "title": "Ehi mudam dEhi",
+      "addedSources": [
+        "https://carnatic-circle.com/yehi-mudam-dehi-sree/"
+      ]
+    },
+    {
+      "id": "38b8QVU3ihv27LVzVmDc6LD838C",
+      "title": "bEga bArO",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/divyanaamam-paddhati/divyanaamam/bega-baaro-bega-baaro/"
+      ]
+    },
+    {
+      "id": "38awPzlc1nUYiLTkHJX1Ggk1tdz",
+      "title": "muddugArE yashOdA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/annamacharya/muddu-gare-yashoda/"
+      ]
+    },
+    {
+      "id": "38awEzN3IWiHtwhJv7tKAJBLpnD",
+      "title": "tandanAnA Ahi",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/annamacharya/brahma-okate/"
+      ]
+    },
+    {
+      "id": "38awbUNQVSsNRmXed7mHAUxcdLE",
+      "title": "jagajjan2an2I",
+      "addedSources": [
+        "https://carnatic-circle.com/jagajjanani-sukhapani/"
+      ]
+    },
+    {
+      "id": "38b7aTpLDPFrIs80Kuxx5SEToge",
+      "title": "mErE tO giridhara gOpaala (bhajan)",
+      "addedSources": [
+        "https://carnatic-circle.com/mere-to-giridhara-gopala/"
+      ]
+    },
+    {
+      "id": "38awMdxlpQDppGDVsLxPyJCQqH7",
+      "title": "rAmA dayajUDavE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/rama-daya-judave/"
+      ]
+    },
+    {
+      "id": "38b6TRvODTmu8E01ACIAUxye35q",
+      "title": "shrI vighna rAjam bhajE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/sree-vignarajam-bhaje/"
+      ]
+    },
+    {
+      "id": "38b67PtvBYq97dXvJz060sNTDJO",
+      "title": "madan2aa~Nga mOhan2a",
+      "addedSources": [
+        "https://carnatic-circle.com/madananga-mohana/"
+      ]
+    },
+    {
+      "id": "38b603ADEKAn63iPuOGzA7NGyiK",
+      "title": "maNi nUpura dhAri",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/maninoopura-dhaari/"
+      ]
+    },
+    {
+      "id": "38bKjZcHvsnOUYbeQxohQqBTjlE",
+      "title": "gambhIra naDaiyODu vandAn",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/gambeera-nadaiyodu/"
+      ]
+    },
+    {
+      "id": "38bKtGEZKFUR60hqbgpT3XpM1hK",
+      "title": "madanAnga mOhana sukumAranE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/madananga-mohana-sukumarane/"
+      ]
+    },
+    {
+      "id": "38awlw7i8kuv2cDYVTLM3ld1GNd",
+      "title": "svAgatam kR^iSNA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/swagatham-krishna/"
+      ]
+    },
+    {
+      "id": "38bL3ifUqa59jt7Eb0ctAPDTUmf",
+      "title": "praNavAkAram siddhi vinAyakam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/pranavakaram-siddhi-vinayakam/"
+      ]
+    },
+    {
+      "id": "38bLHySHHmgVh0uWUCL5UlybojS",
+      "title": "vAnchasi yadi kushalam mAnasa",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/vanchasi-yadi-kushalam/"
+      ]
+    },
+    {
+      "id": "38b5xIsLU09mmEOJBaobmJRwZNI",
+      "title": "ashaindADum mayil",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/asaindhaadum-mayilonru/"
+      ]
+    },
+    {
+      "id": "38bL0xNK761AAQRU96tyx5E2tY4",
+      "title": "pAl vaDiyum mukham (version 2)",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/pal-vadiyum-mukham/"
+      ]
+    },
+    {
+      "id": "38bKt0RSreZ1MDTcq7BOlPLf4fs",
+      "title": "kuzhalUdi manamellAm koLLai koNDa pinnum",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/kuzhaludhi-manam/"
+      ]
+    },
+    {
+      "id": "38avQ9oY5kMuctye6djzuSiPEfE",
+      "title": "alai pAyudE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/alaipayuthey-kannaa/"
+      ]
+    },
+    {
+      "id": "38b60ntLFKvpSRzP9R7DAAKd50E",
+      "title": "raghunAyakA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/raghunayaka/"
+      ]
+    },
+    {
+      "id": "38axFnh3VqWRsDjnH436Jjk1sOu",
+      "title": "nindati candanam (ashTapadi 2-8)",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/jayadeva-ashtapadhi/nindati-chandanam-indu-kiranam-ashtapadhi-8/"
+      ]
+    },
+    {
+      "id": "38bF3mIunMqb3tpMaUMti7yUdgO",
+      "title": "siddhivinAyakam anisham",
+      "addedSources": [
+        "https://carnatic-circle.com/siddhi-vinayakam/"
+      ]
+    },
+    {
+      "id": "38b5xpZB7v3Y8GzR5dUpB0AAkLg",
+      "title": "bAlA gOpAla kR^iSNa",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/narayana-theertha-tarangini/bala-gopala-krishna-pahi-pahi/"
+      ]
+    },
+    {
+      "id": "38b5xBLxx8KH80CBdZYJpBffnm4",
+      "title": "rAmakR^iSNa gOvinda",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/ramakrsna-govinda-narayana/"
+      ]
+    },
+    {
+      "id": "38b6221iAHfqOm9GtwPKkqqdpvQ",
+      "title": "caraNamulE nammiti",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/charanamule-namiti/"
+      ]
+    },
+    {
+      "id": "38b7DAf2pUmeBj0dLx7DLOIuJka",
+      "title": "prativAram vAram",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sadhashiva-brahmendra/prativaaram-vaaram/"
+      ]
+    },
+    {
+      "id": "38awSHQvfQHC4JTtoPiFvIvHAcG",
+      "title": "gOvardhana giridhara gOvinda",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/narayana-theertha-tarangini/govardhana-giridhara-govinda/"
+      ]
+    },
+    {
+      "id": "38b85tnn6ivqLoMrzymkqM38Jwl",
+      "title": "gOpAla gOkula (bhajan)",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/surdas/gopala-gokula-vallabhi-priya/"
+      ]
+    },
+    {
+      "id": "38awiCicTGhsRC22YQdvtJYoEF6",
+      "title": "kR^iSNA nI bEgane bArO",
+      "addedSources": [
+        "https://carnatic-circle.com/krishna-nee-begane-baaro/"
+      ]
+    },
+    {
+      "id": "38ay3qQUQQNLkVOhUAiT6NTTDYF",
+      "title": "bhaja gOvindam (bhajan)",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/shankaracharya-guru-dhyanam/bhaja-govindam-ragamalika/"
+      ]
+    },
+    {
+      "id": "38b86fAXZAcN5Z61N74GnUARWMK",
+      "title": "dInan dukh haran (bhajan)",
+      "addedSources": [
+        "https://carnatic-circle.com/deenana-dukh-haran-dev/"
+      ]
+    },
+    {
+      "id": "38b6BFQ6aIpkT9OdoziQH1NgDNY",
+      "title": "mAmava raghurAma",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/mamava-raghurama/"
+      ]
+    },
+    {
+      "id": "38b5lvYoHVEwMlJ3om2rDR6R2RJ",
+      "title": "girirAja sutA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/giriraja-sudha-tanaya/"
+      ]
+    },
+    {
+      "id": "38bDoJ4BF7mSB1DoBpz3M9ADeYY",
+      "title": "smariso sarvada",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/smariso-sarvada-hariya/"
+      ]
+    },
+    {
+      "id": "38b5bPHH6wmaD6cLdaCHqFn9a1N",
+      "title": "dIna janAvana",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/dina-janavana-bowli/"
+      ]
+    },
+    {
+      "id": "38b6oUhD55aTq2fc21K5a0GOddb",
+      "title": "rArA raghuvIra",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/rara-raghuveera-athana/"
+      ]
+    },
+    {
+      "id": "38b6Oyf86yqVukYLGlJDiESUEEF",
+      "title": "nArAyaNa hari",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/naarayana-hari/"
+      ]
+    },
+    {
+      "id": "38axkwionezcVSqeQgotKxTzNsp",
+      "title": "nagumOmu galavAni",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/nagumomu-galavaani/"
+      ]
+    },
+    {
+      "id": "38aw5dwNqijmnjztBZqeN75826R",
+      "title": "telisi rAma",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/telisi-rama/"
+      ]
+    },
+    {
+      "id": "38bKhUHYw8WUOGK6lLNgAsvICvN",
+      "title": "enna puNNiyam seidEnO sadgurunAthA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/mahakavi-oothukadu-venkatasubbiar/enna-punniyam-seideno/"
+      ]
+    },
+    {
+      "id": "38aw4XJ1jOmfpzHkjYREflSHfY8",
+      "title": "sudhAmayi sudhAnidhi",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/dhyaanam/ambaal/sudhamayi-sudhanidhi/"
+      ]
+    },
+    {
+      "id": "38awm15PwNPiawEgvXnPp1zrthf",
+      "title": "eppOvaruvArO",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/gopalakrishna-bharathi/eppo-varuvaro/"
+      ]
+    },
+    {
+      "id": "38aw1uGKf9UJ0Yzs8nmU4e7kFF8",
+      "title": "sabhA patikku",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/gopalakrishna-bharathi/sabhapatikku-veru-deivam-abhogi/"
+      ]
+    },
+    {
+      "id": "38axSbFMKsjOVIgioISFl6CxzrZ",
+      "title": "irakkam varAmal",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/gopalakrishna-bharathi/irakkam-varamal-behaag/"
+      ]
+    },
+    {
+      "id": "38bLLrvWDoYAyxFOkBo38YqjfJ8",
+      "title": "viSamakkAra kaNNan pollAda",
+      "addedSources": [
+        "https://carnatic-circle.com/vishamakkara-kannan/"
+      ]
+    },
+    {
+      "id": "38awknLf646crRCnepXLcTu6bUw",
+      "title": "tuNai purindaruL",
+      "addedSources": [
+        "https://carnatic-circle.com/thunai-purindharul/"
+      ]
+    },
+    {
+      "id": "38awKwyWf3s5yT6IJml4x3Ki9y6",
+      "title": "bhAgyada lakShmI bArammA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/bhagyadha-lakshmi-baramma/"
+      ]
+    },
+    {
+      "id": "38ax1qlv17AkU0JC6rayEWwlDFB",
+      "title": "varalIla gAnalOla",
+      "addedSources": [
+        "https://carnatic-circle.com/carnatic-lessonsnotes/bhajanssongs-for-practice/vara-leela-lala-gola/"
+      ]
+    },
+    {
+      "id": "38avksoB3NVc4q6ehWIiIzHxKWZ",
+      "title": "mahA gaNapatim",
+      "addedSources": [
+        "https://carnatic-circle.com/maha-ganapathim/"
+      ]
+    },
+    {
+      "id": "38b61ZaQUpz9AQiSPNvJbQKSSqt",
+      "title": "AlOla tulasi",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/alola-thulasi/"
+      ]
+    },
+    {
+      "id": "38b5ye2ISlgOPNV6TBwMU3at0MV",
+      "title": "bhO shambhO",
+      "addedSources": [
+        "https://carnatic-circle.com/bho-shambho/"
+      ]
+    },
+    {
+      "id": "38awOWXOeJIpnAand8uZ9KYffQ0",
+      "title": "mAmavatu shrI",
+      "addedSources": [
+        "https://carnatic-circle.com/mamavatu-shri-sarasvati/"
+      ]
+    },
+    {
+      "id": "38bDdwd0a1WWbZvN0MQplZmdH24",
+      "title": "ra~Nga bArO pANDura~Nga",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/ranga-baaro-panduranga/"
+      ]
+    },
+    {
+      "id": "38b6MaMAt0JhAA6d5sKS7qpRE7L",
+      "title": "nAdasudhA rasambilanu",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/nadasudha-rasambilu/"
+      ]
+    },
+    {
+      "id": "38b6NHzvkXiHBDhcqNvkjUAoivM",
+      "title": "nAdOpAsanace",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/naadopasana-che/"
+      ]
+    },
+    {
+      "id": "38bGDq9aXYHXfaDlGj82cHS7YCy",
+      "title": "shrI vallI",
+      "addedSources": [
+        "https://carnatic-circle.com/shri-valli-devasena/"
+      ]
+    },
+    {
+      "id": "38b5RcKI3LCohx0Lg3JSB4LnblM",
+      "title": "callarE rAmacandru",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/challare-ramachandru/"
+      ]
+    },
+    {
+      "id": "38bLRes8Wplx6oeQuHjc2u7FzMK",
+      "title": "mAyammA yaninE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/shyama-sastri/mayamma-yanine/"
+      ]
+    },
+    {
+      "id": "38b977Z9LBPbKkRRqHNuXVIUfp1",
+      "title": "khElati mama hR^idayE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sadhashiva-brahmendra/khelati-mama-hrdaye/"
+      ]
+    },
+    {
+      "id": "38b7D3BkZbthNqm6qyn6UzzNfhc",
+      "title": "pibarE rAmarasam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sadhashiva-brahmendra/pibare-ramarasam/"
+      ]
+    },
+    {
+      "id": "38b67b1gJHJ1U0yxa2TuxF3GwSS",
+      "title": "sarvam brahmamayam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sadhashiva-brahmendra/sarvam-brahmamayam/"
+      ]
+    },
+    {
+      "id": "38axG7mF4Q6bBGsItSvqcsaiDQ6",
+      "title": "viLaiyADa idu nEramA murugA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/dhyaanam/murugan-songs/vilaiyaadu-idu-neramaa-murugaa/"
+      ]
+    },
+    {
+      "id": "38awHRwDkwoqgsY4sLMX9XQWuOE",
+      "title": "kA vA vA",
+      "addedSources": [
+        "https://carnatic-circle.com/kaa-vaa-vaa-varali/"
+      ]
+    },
+    {
+      "id": "38b66FQ7sqPsMmhISzQ5yO8R3I7",
+      "title": "rAma rAma sItArAma",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/ramarama-seetharama/"
+      ]
+    },
+    {
+      "id": "38b61yi6GZqteG60qbnEgmL4BFY",
+      "title": "bhajarE shrIrAmam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/bhajare-shriramam/"
+      ]
+    },
+    {
+      "id": "38awIJuhj4Jf0JXRymp7ticwKPp",
+      "title": "yAdava nI bA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/yadava-nee-baa/"
+      ]
+    },
+    {
+      "id": "38awFvQG1nhPXQLJjXV9sQ2EjPG",
+      "title": "narahari dEvA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/narahari-deva-janardhana/"
+      ]
+    },
+    {
+      "id": "38b869rq26JHO6X8zsDT8LPlZsx",
+      "title": "shrI rAmacandra kR^ipAlu (bhajan)",
+      "addedSources": [
+        "https://carnatic-circle.com/sri-ramachandra-kripalu/"
+      ]
+    },
+    {
+      "id": "38axlnBV8MHaIDtbNp2aetsCxE0",
+      "title": "sakala graha bala",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/purandaradasa-krithigalu/sakala-graha-bala-neene/"
+      ]
+    },
+    {
+      "id": "38b8VQTe4JZppm19QGL5bgywzMl",
+      "title": "raghuvamsha sudhAmbudhi",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/dhyaanam/raghuvamsa-sudha/"
+      ]
+    },
+    {
+      "id": "38bFcf5WyCFRRdl85i9NMIvFdl7",
+      "title": "enna tavam",
+      "addedSources": [
+        "https://carnatic-circle.com/ennathavam-seydanai/"
+      ]
+    },
+    {
+      "id": "38b64m1NOL6vLAfwRJbAMxD4Nyr",
+      "title": "O rAma nI",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/o-rama-nee-raam/"
+      ]
+    },
+    {
+      "id": "38ax3Qw9Gmy3xbcRNtmvyaax8ji",
+      "title": "palukE ba~NgAramAyenA",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/sri-bhadrachala-ramdas/paluke-bangaramaya/"
+      ]
+    },
+    {
+      "id": "38ay69d3v1dVRuRNVro2sMiCs8t",
+      "title": "gajavadan2a",
+      "addedSources": [
+        "https://carnatic-circle.com/gajavadana-karuna/"
+      ]
+    },
+    {
+      "id": "38ax60njKOsETa8drSVJgDzEMbf",
+      "title": "vandanamu raghunandana",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/vandanamu-raghunandana/"
+      ]
+    },
+    {
+      "id": "38aw4u6FS9AMFwmLIInpVE4FW5f",
+      "title": "tuLasI daLamulacE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/tulasi-dalamulache/"
+      ]
+    },
+    {
+      "id": "38b6qvL0BYFLO1WW5H5MrKNwT4B",
+      "title": "sArasa nEtra",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/sarasa-netra/"
+      ]
+    },
+    {
+      "id": "38awfDs0w7NCcKXqeRafkebCW1W",
+      "title": "sItA kalyANa vaibhOgamE",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/seetha-kalyana/"
+      ]
+    },
+    {
+      "id": "38b6OFauBMm6hRV5NWMNenHovjl",
+      "title": "nannu kanna talli",
+      "addedSources": [
+        "https://carnatic-circle.com/nannukalla-talli/"
+      ]
+    },
+    {
+      "id": "38b83RzuEMtybqkVXtMbHIspA1f",
+      "title": "varashiva bAlam (nOtE)",
+      "addedSources": [
+        "https://carnatic-circle.com/varashiva-balam/"
+      ]
+    },
+    {
+      "id": "38axR1CHBxj3QsMxwBR08Ur95BU",
+      "title": "bhaavayaami gOpaalabaalam",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/annamacharya/bhavayami-gopala/"
+      ]
+    },
+    {
+      "id": "38ax3vDy8V77bONNA71OxqaQ0Re",
+      "title": "maitrIm bhajata",
+      "addedSources": [
+        "https://carnatic-circle.com/maithreem-bhajatha/"
+      ]
+    },
+    {
+      "id": "38aw3Tf7b4dpeMS2xI5m0C2pbG9",
+      "title": "shrIman nArAyaNa",
+      "addedSources": [
+        "https://carnatic-circle.com/sreeman-narayana/"
+      ]
+    },
+    {
+      "id": "38b6wJWUQKo2tRP0jeOKS6EvxNy",
+      "title": "shrI rAma shrI rAma shrI",
+      "addedSources": [
+        "https://carnatic-circle.com/choral-singing-sampradaya-bhajanai/guru-dhyanam/thyagaraja-krithis/sree-rama-sree-rama/"
+      ]
+    }
+  ],
+  "created": [],
+  "createdLinks": []
+}

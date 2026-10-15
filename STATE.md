@@ -2,15 +2,13 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Waiting: carnatic-circle.com import approval (2026-10-15)
+## Waiting: 251 undecided carnatic-circle.com rows (2026-10-15)
 
-**Next step:** owner approves the prod write of 94 attaches (a Carnatic Circle link on each
-matched song; nothing else changes), then:
-`pnpm prod-cli source-apply --source carnatic-circle --file ../../docs/research/carnatic-circle-import-2026-10.csv --user 39WZZXug7V6PdinExzhhp6zDuKD`,
-`reindex`, and `seed:content` for the attribution line. Dry run passed: 94 to attach, 0 to
-create. The other 251 rows in `docs/research/carnatic-circle-matches-2026-10.csv` are
-undecided: about 190 bhajans we do not hold (most name no composer, which `create` needs) and
-about 60 held matches, each with a `review_note` and lyric scores.
+**Next step:** owner decides the blank rows in `docs/research/carnatic-circle-matches-2026-10.csv`:
+about 190 bhajans we do not hold (`create` needs `new_composer` and `new_language`) and about 60
+held matches (`review_note` and lyric scores say why). The 94 confident matches are live in prod
+(applied 2026-10-15, reindexed, attribution page seeded); undo record:
+`docs/research/carnatic-circle-import-2026-10.csv.applied-2026-10-15T16-26-18-872Z.json`.
 
 ## Waiting: 24 new songs from shivkumar.org (2026-10-12)
 
