@@ -2,13 +2,16 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Waiting: 251 undecided carnatic-circle.com rows (2026-10-15)
+## Waiting: 164 carnatic-circle.com bhajans to create (2026-10-15)
 
-**Next step:** owner decides the blank rows in `docs/research/carnatic-circle-matches-2026-10.csv`:
-about 190 bhajans we do not hold (`create` needs `new_composer` and `new_language`) and about 60
-held matches (`review_note` and lyric scores say why). The 94 confident matches are live in prod
-(applied 2026-10-15, reindexed, attribution page seeded); undo record:
-`docs/research/carnatic-circle-import-2026-10.csv.applied-2026-10-15T16-26-18-872Z.json`.
+**Next step:** run the reviewed import (the permission check blocked it from the session):
+`pnpm prod-cli source-apply --source carnatic-circle --file ../../docs/research/carnatic-circle-bhajans-2026-10.csv --user 39WZZXug7V6PdinExzhhp6zDuKD`
+from `packages/scripts`, then `reindex`. Dry run passed: 164 to create, tagged `bhajan`, 12 new
+composer artists (one named `Unknown`), no new ragas or talas. Language and composer of every row
+were set by hand from the lyrics. Then run the respelling readers over the new lyrics. 16 rows
+are still held in `docs/research/carnatic-circle-matches-2026-10.csv` (kritis, pages holding
+several songs, partial lyric matches), plus about 60 held title matches from the first pass.
+The 94 attaches are live (undo record beside the first import CSV).
 
 ## Waiting: 24 new songs from shivkumar.org (2026-10-12)
 

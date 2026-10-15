@@ -24,6 +24,8 @@ export const CreateCompositionSchema = z.object({
   compositionType: z
     .enum(['kriti', 'varnam', 'tillana', 'javali', 'padam', 'keertanam', 'other'])
     .optional(),
+  /** Free-text labels for a body of repertoire, e.g. `bhajan`; lowercase by convention. */
+  tags: z.array(z.string().trim().min(1).max(40)).optional(),
   description: z.string().max(5000).optional(),
   meaning: z.string().max(5000).optional(),
 });

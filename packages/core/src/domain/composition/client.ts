@@ -57,6 +57,7 @@ export interface CompositionWithRelations {
   meaning?: string;
   description?: string;
   compositionType?: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
   version: number;

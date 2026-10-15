@@ -329,6 +329,7 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       refList('ragas', 'ragas', 'ragaNames'),
       refList('talas', 'talas', 'talaNames'),
       str('compositionType'),
+      list('tags'),
       str('description'),
       str('meaning'),
       list('sources'),

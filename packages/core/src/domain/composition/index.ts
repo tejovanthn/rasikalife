@@ -57,6 +57,7 @@ export interface CompositionWithRelations {
   meaning?: string;
   description?: string;
   compositionType?: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
   version: number;
@@ -83,6 +84,7 @@ export function toCompositionWithRelations(comp: Composition): CompositionWithRe
     meaning: comp.meaning,
     description: comp.description,
     compositionType: comp.compositionType,
+    tags: comp.tags,
     createdAt: comp.createdAt,
     updatedAt: comp.updatedAt,
     version: comp.version,
@@ -144,6 +146,7 @@ export async function createComposition(input: CreateCompositionInput): Promise<
     meaning: data.meaning,
     description: data.description,
     compositionType: data.compositionType,
+    tags: data.tags,
   }).go();
 
   if (!result.data) throw new Error('Failed to create composition');

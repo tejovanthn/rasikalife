@@ -538,6 +538,11 @@ Titles here often differ from ours (`brahma okaTE` is our `tandanAnA Ahi`), so t
 review also compared lyrics; `docs/research/carnatic-circle-matches-2026-10.csv` holds the
 scores and a `review_note` per row.
 
+Compositions carry a free-text **`tags`** list (`bhajan` today; lowercase by convention), set on
+create through the review CSV's `new_tags` column and round-tripped by the admin CSV. It is not
+indexed and nothing on the site reads it yet. Bhajans that name no composer are linked to an
+artist named **`Unknown`**, since `composerId` keys an index and cannot be blank (rule 9).
+
 1. `source-fetch --source <name>`: the adapter downloads, cached, so a rerun fetches only
    what is missing. No AWS needed.
 2. `source-match --source <name> [--out …]`: one review row per record, with the record of

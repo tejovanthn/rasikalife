@@ -95,6 +95,12 @@ export const CompositionEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // Free-text labels for a body of repertoire, e.g. `bhajan`. Not indexed.
+      tags: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
       description: {
         type: 'string',
         required: false,

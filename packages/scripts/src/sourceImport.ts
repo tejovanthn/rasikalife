@@ -78,6 +78,7 @@ const MATCH_HEADER = [
   'new_tala',
   'new_composer',
   'new_language',
+  'new_tags',
   'note',
   'lyrics_preview',
 ] as const;
@@ -153,6 +154,7 @@ export async function matchSource(opts: { source: string; out: string }): Promis
       canonicalTala(record.tala) ?? '',
       newComposer || (record.composer ?? ''),
       usualLanguage(newComposer) ?? '',
+      '',
       record.note ?? '',
       record.lyrics
         .map(section => section.text)
@@ -187,6 +189,14 @@ export async function buildSourceCsv(opts: {
     return index;
   };
   const cell = (row: string[], name: string) => (row[col(name)] ?? '').trim();
+  // Added after the first review files were cut, so an older file may lack the column.
+  const tagsOf = (row: string[]) =>
+    header.includes('new_tags')
+      ? cell(row, 'new_tags')
+          .split('|')
+          .map(tag => tag.trim().toLowerCase())
+          .filter(Boolean)
+      : [];
 
   const out: Row[] = [];
   const attached = new Set<string>();
@@ -228,6 +238,7 @@ export async function buildSourceCsv(opts: {
         ragas: cell(row, 'new_raga') ? [{ name: cell(row, 'new_raga') }] : undefined,
         talas: cell(row, 'new_tala') ? [{ name: cell(row, 'new_tala') }] : undefined,
         compositionType: record.compositionType,
+        tags: tagsOf(row).length > 0 ? tagsOf(row) : undefined,
         sources: record.sources,
         notation: record.notation,
         lyricsV1: record.lyrics.map(section => ({

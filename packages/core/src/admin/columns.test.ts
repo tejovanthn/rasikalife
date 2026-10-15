@@ -179,6 +179,7 @@ describe('parseDomainCsv — linked entities render as names', () => {
       language: 'Sanskrit',
       ragas: [{ id: 'r1', name: 'Hamsadhwani' }],
       talas: [{ id: 't1', name: 'Adi' }],
+      tags: ['bhajan', 'ashtapadi'],
       lyricsV1: [{ type: 'pallavi', order: 1, text: 'Vatapi' }],
     };
     const csv = domainToCsv('composition', [composition]);
@@ -194,6 +195,7 @@ describe('parseDomainCsv — linked entities render as names', () => {
       language: 'Sanskrit',
       ragaNames: ['Hamsadhwani'],
       talaNames: ['Adi'],
+      tags: ['bhajan', 'ashtapadi'],
       lyricsV1: [{ type: 'pallavi', order: 1, text: 'Vatapi' }],
     });
   });
