@@ -1,0 +1,727 @@
+{
+  "source": "carnatic-circle",
+  "file": "../../docs/research/carnatic-circle-bhajans-2026-10.csv",
+  "appliedAt": "2026-10-15T17:14:49.602Z",
+  "userId": "39WZZXug7V6PdinExzhhp6zDuKD",
+  "attached": [],
+  "created": [
+    {
+      "id": "3KjwfC9RBFAdrIUY2TPhXtzswbY",
+      "title": "daasachi sampathi"
+    },
+    {
+      "id": "3KjwfReRUsNpQYsUi7MjpcCGqZr",
+      "title": "paramacharyam chintayeham"
+    },
+    {
+      "id": "3KjwfbjgxuCfYxiDqPlWj8KhGHF",
+      "title": "kankshe tava prasadam"
+    },
+    {
+      "id": "3KjwfkwClzKMJTKVJGKmyfTYlkC",
+      "title": "parama karunaya maam palaya"
+    },
+    {
+      "id": "3KjwfvCUYZSqc8hjZRf8V4oW1AN",
+      "title": "ni pada darsanamu"
+    },
+    {
+      "id": "3Kjwg3AUU8lK4QhAZZPSqUgbYQT",
+      "title": "bodendra jagatam"
+    },
+    {
+      "id": "3Kjwg72Vs5fbP8dNsg1xq3HOBhc",
+      "title": "swami meere gathiyani"
+    },
+    {
+      "id": "3KjwgGYoPqX5M0rNrXmyyuuw3qc",
+      "title": "bhakthe sridhara"
+    },
+    {
+      "id": "3KjwgO0KIBK43g6PE1gcO0OqcsQ",
+      "title": "gurumurthi padamule"
+    },
+    {
+      "id": "3KjwgaBGoqXq2o8g4MPr6eA3peV",
+      "title": "tanu ninnadu jeevana ninnadu"
+    },
+    {
+      "id": "3Kjwgdgu3XPBmOTNDpAsaKCdnGv",
+      "title": "bhodendra gurum bhajeham"
+    },
+    {
+      "id": "3KjwgpXXAh0LgqiJhlxvwojQaAw",
+      "title": "paahi paahi jagan mohana krishna"
+    },
+    {
+      "id": "3Kjwgu5jxVRaguW1Ns5Hd1H5Omg",
+      "title": "aalokaya sree baala krishnam"
+    },
+    {
+      "id": "3Kjwh2aMarPwPlGCzV81Ls0mCA4",
+      "title": "maamaka aparaadha shatham"
+    },
+    {
+      "id": "3Kjwh7SmdOkZ51XUAoojwGKOzsE",
+      "title": "dhanyoham krishnaa"
+    },
+    {
+      "id": "3KjwhHTKYctzB3BHVhDbtlRl54Y",
+      "title": "govinda krishna paahi"
+    },
+    {
+      "id": "3KjwhUQM6rCPvUSQUw3sndnFqx3",
+      "title": "paahi madhana gopaala mukunda"
+    },
+    {
+      "id": "3KjwhX43ChMgDszA1vPpo5irmie",
+      "title": "nanda vara kumaara navaneeta"
+    },
+    {
+      "id": "3KjwhWWsfYrBSnDyww2HbwCyYFI",
+      "title": "naarayanam bhajey narayanam"
+    },
+    {
+      "id": "3KjwhjMZTQdhqqAGQ7Hzgb3gIju",
+      "title": "amalaa shayanutha"
+    },
+    {
+      "id": "3Kjwhzv265qdivbh0QYGKZSpiXk",
+      "title": "nandaathmajaanandha"
+    },
+    {
+      "id": "3Kjwi0YDajfVcFqupHqNvhEdwl4",
+      "title": "naaraayana harey govinda"
+    },
+    {
+      "id": "3KjwiC5lzuFJIklJa3v7YD8fBfj",
+      "title": "gopika ramana gokulotsava"
+    },
+    {
+      "id": "3Kjwi9ERFUoNL4t1OwHlB9dIsW5",
+      "title": "krishna krishna govinda krishna"
+    },
+    {
+      "id": "3KjwiEBTozIbgwRWh4YI7169SCH",
+      "title": "kamala vallabha govindha maam"
+    },
+    {
+      "id": "3KjwiIB4s5KEeBcvd2gZqUi2d2o",
+      "title": "krishnaa raamaa govindaa harey"
+    },
+    {
+      "id": "3KjwiSnR5mjcRamndiTftvOhBWY",
+      "title": "paahi paahi gajaanana paarvathi"
+    },
+    {
+      "id": "3KjwiSwmwOpNGOEdM1BVbOsVNGl",
+      "title": "ambey gowri mayya jaya mangala"
+    },
+    {
+      "id": "3Kjwijd4gKohuJkW8yOAz8qPEH4",
+      "title": "beganey raaraa swaami"
+    },
+    {
+      "id": "3KjwihqVEiJJjQz2zcvhiLcfeQA",
+      "title": "bhakthanaai paada maatten"
+    },
+    {
+      "id": "3KjwijZlyaEJqnmHPn7x0mvY7Tw",
+      "title": "neerukkazhagu niraintha shenthaamarai"
+    },
+    {
+      "id": "3KjwipU4vrtN52jRgmFvojzKuio",
+      "title": "pazhani malai kanden"
+    },
+    {
+      "id": "3Kjwim4DbUnF7A8MxWN8K5Es8n5",
+      "title": "vaikunta pura vaasa vana maala"
+    },
+    {
+      "id": "3Kjwiz9AlMuQYw2QJMof82BOqMR",
+      "title": "krishna krishna mukundaa janaardhanaa"
+    },
+    {
+      "id": "3KjwiyWkUlj1wAF3M4nyGg61ByD",
+      "title": "ashtapadhi 24 – kuruyadu"
+    },
+    {
+      "id": "3Kjwj7XygeZAz20jGhm31TVZYQ5",
+      "title": "ashtapadhi 21 – manjutara"
+    },
+    {
+      "id": "3Kjwj5jpBmBAIyIXi17CMCRRh3z",
+      "title": "ashtapadhi 18 – harirabhi"
+    },
+    {
+      "id": "3Kjwj7sqH1XTPhYtyRzHUmTpZax",
+      "title": "ashtapadhi 16 – anilatarala"
+    },
+    {
+      "id": "3KjwjF5F8upJ1eRQ4SkIRoynSZR",
+      "title": "ashtapadhi 15 – samudhita"
+    },
+    {
+      "id": "3KjwjIpoYKWS4lgtQJ0cHZI45Qd",
+      "title": "ashtapadhi 13 – kathithasamaye"
+    },
+    {
+      "id": "3KjwjGkxcrdWYHkwRnV6B2W37PC",
+      "title": "jaya jaya narasimha"
+    },
+    {
+      "id": "3KjwjInmbMh6x3AaGDxmNjzGft1",
+      "title": "jaya jaya haarathi raama"
+    },
+    {
+      "id": "3KjwjU2tlIbUp8TIO0hD9yoogr5",
+      "title": "chey konu vidamu sree raamaa"
+    },
+    {
+      "id": "3KjwjcGpqaVqo0kpB2lipeKEtxj",
+      "title": "jaya jaya devaadi deva"
+    },
+    {
+      "id": "3KjwjdrTO681fQPpJGWqPwsZiXJ",
+      "title": "sharana gatha vatsala"
+    },
+    {
+      "id": "3KjwjoA9MoyTI7iZEOPeTD6Kr2q",
+      "title": "ehi thaa tha"
+    },
+    {
+      "id": "3Kjwjto4rFxzQ486qMqhsfIWKBI",
+      "title": "om muruga jaya om muruga"
+    },
+    {
+      "id": "3KjwjwtK5oTrARbChbVXafTfctu",
+      "title": "erumayil eri"
+    },
+    {
+      "id": "3Kjwk7S39QFXNofrEfMlWwoE0es",
+      "title": "rAmacandrAya Mangalam"
+    },
+    {
+      "id": "3KjwkEZ3cBG1HcjFxWrKfS6PaB3",
+      "title": "Unaith dhinam -thirupparangkundRam"
+    },
+    {
+      "id": "3KjwkBZquEPqUrefOcYeXnNw50j",
+      "title": "muttup pattu"
+    },
+    {
+      "id": "3KjwkK1xPNLFh38kKuxSqzXmvBB",
+      "title": "athade parabrahmam"
+    },
+    {
+      "id": "3KjwkMIg6k1zBUTWPTru5zb2Xn8",
+      "title": "bhaje sadgurum anisham, bhaje sadgurum"
+    },
+    {
+      "id": "3KjwkcWEVSSdqpHxTyf4IGHpD7J",
+      "title": "Guru mAtA guru pitA"
+    },
+    {
+      "id": "3KjwkgvUsL6wmdpzFGHNk6AXhTd",
+      "title": "viRalmAran aindhu"
+    },
+    {
+      "id": "3KjwkirorqB7PXuCMvwnL7W1Y3h",
+      "title": "Nimmathi adaithEn ulagam marainthEn"
+    },
+    {
+      "id": "3Kjwknc4OLuIfKl7VLSgrP53Sj8",
+      "title": "GhOra bhavArNava tAraka nAmadEya"
+    },
+    {
+      "id": "3Kjwkx5vZ0LJWedE6IYNgbvUkAB",
+      "title": "anthayu neeve"
+    },
+    {
+      "id": "3Kjwl54rKDNnUQSVCkpjMbQiuiU",
+      "title": "dehi mangalam, vaidehi mangalam"
+    },
+    {
+      "id": "3Kjwl77w43wQ9mORoJoHck5grNu",
+      "title": "nibhruta nikunja gruham"
+    },
+    {
+      "id": "3Kjwl8im9r98fkaY5IpkCvHbYNv",
+      "title": "ratisukhasaare gatamabhisaare madanamanoharavesham"
+    },
+    {
+      "id": "3KjwlGWNSLphAYttaG62AIqe4kb",
+      "title": "vahati malayasameere madanamupanidhaaya"
+    },
+    {
+      "id": "3KjwlIO4A9zTKYC1305ZvAHWW6i",
+      "title": "stana vinihitamapi haaramudaaram"
+    },
+    {
+      "id": "3KjwlJAu90FaIKvUnYyl2CQzbjm",
+      "title": "mamiyam chalitha"
+    },
+    {
+      "id": "3KjwlRk7N3ia1r8g3qXiBaZ1rmi",
+      "title": "mangalam rukmini ramanaaya"
+    },
+    {
+      "id": "3KjwlUG0m45m2folWzuyG5zpV5o",
+      "title": "neeraja dala nayana hare krishna"
+    },
+    {
+      "id": "3Kjwld93lo8kLIrsu89D27pIWQD",
+      "title": "vignesham bhajare"
+    },
+    {
+      "id": "3KjwlhjC3JQeXuGESTqlrGFDLbc",
+      "title": "gopala meva daivatam"
+    },
+    {
+      "id": "3KjwlmCR2JjjLUp1QUjS46RhTe4",
+      "title": "pAhimAm pAhimAm"
+    },
+    {
+      "id": "3KjwllQG35FgWuLQ8ZXfxukle5B",
+      "title": "maanikka mookuti alankari"
+    },
+    {
+      "id": "3Kjwm0WgKJaN6rkF3XhnbD4Q0cU",
+      "title": "hari mukhe mahna hari mukhe mahna"
+    },
+    {
+      "id": "3Kjwm3oeNYmf6qtfYFMCSkrR6G3",
+      "title": "mangala ganapathi karunanidhe"
+    },
+    {
+      "id": "3Kjwm5I7ZDvgtnQGjOK9z5t9r9S",
+      "title": "aadidum perumaan nadanam aadidum"
+    },
+    {
+      "id": "3KjwmD75xDHBv74RCuULD5rKN0S",
+      "title": "hanuman chalisa"
+    },
+    {
+      "id": "3KjwmF1syJn6Zuv9LskNMR6dEdQ",
+      "title": "prabho maaruthi paripoorana"
+    },
+    {
+      "id": "3KjwmIzTJZbmBhP7cJeHGJ6nFzc",
+      "title": "RAma parAku raGurAma parAku"
+    },
+    {
+      "id": "3KjwmQKARq3xpNZUdFAEJ3rhAZD",
+      "title": "karuna rasa poorna sudhabdhey"
+    },
+    {
+      "id": "3KjwmPYM285eplnowQyiifJvuJm",
+      "title": "Tandava nrityakarI"
+    },
+    {
+      "id": "3Kjwmcr8GtJjHzzIRTEtjibdc9j",
+      "title": "pazhani andavar bavani varugirar"
+    },
+    {
+      "id": "3Kjwma5mTZshIuew1NhhcBC9BTP",
+      "title": "bhagavaan saranam bhagavathi saranam"
+    },
+    {
+      "id": "3Kjwmd1ycnot1BO7ApLdInvuRzi",
+      "title": "pallikattu sabari malaikku"
+    },
+    {
+      "id": "3Kjwmg89wbHYw938sTyWLeptpS4",
+      "title": "gurumouli mane, bhaje bhavantham"
+    },
+    {
+      "id": "3Kjwmsymp0AS7k2VFiDVLTgqxHI",
+      "title": "namami gnana nantha gurum"
+    },
+    {
+      "id": "3KjwmuCGIOxdrAh3cbShgWl3P1e",
+      "title": "naane unnai nambinen"
+    },
+    {
+      "id": "3KjwmxCTQgnU832NrC4RZI05kZs",
+      "title": "kamakoti peeta guru"
+    },
+    {
+      "id": "3Kjwn5di0R1Qft4bdd2AeJf2wi9",
+      "title": "sree guru bhodendram"
+    },
+    {
+      "id": "3KjwnEo1RWFPEQQVOiCpb995aDG",
+      "title": "kshna bhara, ughad nayana devaa"
+    },
+    {
+      "id": "3KjwnEf6uUb20gHXGaYJ0tkRbEy",
+      "title": "KastooriChi Uti, Tilaka Lalati"
+    },
+    {
+      "id": "3KjwnNRSCbd93HKtxhdINQI69qQ",
+      "title": "kannoonjal aadi irundaal"
+    },
+    {
+      "id": "3KjwnVcSNIL08OlJkhRa2mROBMj",
+      "title": "LakshmI kalyANa vaibhOgamE"
+    },
+    {
+      "id": "3KjwnQZ7onnlKhQ4TScOQS2DB0q",
+      "title": "bolo naatha uma pathey"
+    },
+    {
+      "id": "3KjwncOtmIzoSt7BZIoxEJrQdGE",
+      "title": "dolayam chala dolayam"
+    },
+    {
+      "id": "3Kjwnl6uCFXTblPFZAvVTxOQSv3",
+      "title": "santancha dinding di gali, jalelo pandaripura"
+    },
+    {
+      "id": "3Kjwng6pLc8ERMZiqAEAAb0d8xQ",
+      "title": "naama he nagari, vaikunta pandhari"
+    },
+    {
+      "id": "3KjwnfFlO8V77qbSVRnBBQz3rxt",
+      "title": "Namacha bajAr, paNdarI"
+    },
+    {
+      "id": "3Kjwnr5utLvAsSI7GhwuLq9E7kE",
+      "title": "pandaricha vitevari rahila o deva"
+    },
+    {
+      "id": "3KjwnriDAU0HLhwlWpl6GfB94PV",
+      "title": "karunai pozhiyum kanngal"
+    },
+    {
+      "id": "3KjwnoKFLcIlmIJgPxczzgcccYU",
+      "title": "kaala vella naama abhang"
+    },
+    {
+      "id": "3KjwnqWdD48ZQaPDJnYhidYiY16",
+      "title": "vadhasiyathi kinchidhapi"
+    },
+    {
+      "id": "3KjwnzIDMbVjLxy8jZgMlVV7zb2",
+      "title": "Srutha kamalAkucha"
+    },
+    {
+      "id": "3Kjwo73fKjRgk5bVntwJ9MAJoXD",
+      "title": "rupa pahatam lochanim"
+    },
+    {
+      "id": "3Kjwo4eSuKCQoQQG1k8iGfud8hO",
+      "title": "ratna jatitha simhasana"
+    },
+    {
+      "id": "3Kjwo3KTLAQv8fMHRfLODyp175n",
+      "title": "AlOkayE rukmiNee"
+    },
+    {
+      "id": "3KjwoFBIixKCJINn6WeqdOApn1I",
+      "title": "jaya jaya swaamin jaya jaya"
+    },
+    {
+      "id": "3KjwoLHWeSjCR5MbNwqdjcbWe5B",
+      "title": "gopalasi khelathi, ananda dolathi"
+    },
+    {
+      "id": "3KjwoOnDBCzE8ZXoFDRQixwzR3v",
+      "title": "santha padaachi jod derehari"
+    },
+    {
+      "id": "3KjwoIJoGiezfkaXLvd7ALANA4x",
+      "title": "sundar te dyan ubhe vite vari"
+    },
+    {
+      "id": "3KjwoSRmXRqZ8BIYiThN8srlPYo",
+      "title": "yehi gopala sri vanamala radhalola aayahi"
+    },
+    {
+      "id": "3KjwoSPcRNYwJvGr0IfVUvBPdTN",
+      "title": "kshemam kuru gopala"
+    },
+    {
+      "id": "3KjwocbgUNfHkhAiM9Y7YLwENGH",
+      "title": "natwar naagar nanda"
+    },
+    {
+      "id": "3KjwoZpxFcUb9gi0Jn6E2YBP9xA",
+      "title": "kaanikkai kondu vanthen ayyappa"
+    },
+    {
+      "id": "3KjwohqQKBWZlr6kLyNwjJmQJJK",
+      "title": "muruganin marupeyar"
+    },
+    {
+      "id": "3KjwokmJvuRXr7oTElIQdiiFHkA",
+      "title": "azhagu deivamaga vandu"
+    },
+    {
+      "id": "3KjwonfipSncUnmMMu45yyicCLB",
+      "title": "aaj sakhi mere satguru"
+    },
+    {
+      "id": "3Kjwop9VMSjN9XfiTqD9CvYNB8p",
+      "title": "dhanya dhanya eey nagara"
+    },
+    {
+      "id": "3KjwopJGuiMmyotlzmsisxKR3VL",
+      "title": "baaro murare"
+    },
+    {
+      "id": "3KjwovNtllQI0R4wwfxII5Y9NYE",
+      "title": "nara janma bandhaaga"
+    },
+    {
+      "id": "3Kjwov23gIbnhvY7iq0SypZEhl6",
+      "title": "prabhu ramachandra ke dootha"
+    },
+    {
+      "id": "3Kjwp9dwWu6cdmKlgdKqAn3QvXR",
+      "title": "krishna rama govinda"
+    },
+    {
+      "id": "3Kjwp29Sy6EJ7TXj78ivK54oA7E",
+      "title": "Hey DayaaLuva rama"
+    },
+    {
+      "id": "3KjwpGciHbddLbKtfGiFH1Jwmpv",
+      "title": "narahari vesha narayanane"
+    },
+    {
+      "id": "3KjwpK5VXnHPLhibbF1R3MeOHL6",
+      "title": "maalai saarthinaal"
+    },
+    {
+      "id": "3KjwpVfbcXgDwNsD96Ot9zrSOcT",
+      "title": "panduranga yere"
+    },
+    {
+      "id": "3KjwpRllltxLxpBktGd9LCT2Zcw",
+      "title": "Satgurunem mAza"
+    },
+    {
+      "id": "3KjwpSGjA4SR6qumY6ysnjk1zSs",
+      "title": "halu halu thumi vate chala"
+    },
+    {
+      "id": "3KjwpUBySobo8tjUJsLnKSTp5Uv",
+      "title": "sadhulara meeru randi"
+    },
+    {
+      "id": "3KjwpZw70zFq1M6ahC3hk0O4AgH",
+      "title": "ashtapadhi 5 – sanCharad adhara"
+    },
+    {
+      "id": "3KjwpjcMuzUYcRxn0VoO0vPKbXU",
+      "title": "kolahala bhakta kolahala"
+    },
+    {
+      "id": "3KjwpjA4kbv7MbO6C9dYArfsPVF",
+      "title": "hari mana tumi govinda mana"
+    },
+    {
+      "id": "3Kjwpyfm9QhfIcqD0S94YlBsmvQ",
+      "title": "sharade karunanidhe"
+    },
+    {
+      "id": "3KjwpucC0MR122GQRn1J0Z2Pg9L",
+      "title": "vittala yere pandhari raya(shanka chakra dhara)"
+    },
+    {
+      "id": "3Kjwq4caYePIC0VNEvP3SYawW0Z",
+      "title": "majhe maher pandhari"
+    },
+    {
+      "id": "3Kjwq6bt2WsOaonnFgXWOAOC3Hd",
+      "title": "thumaji mavuli"
+    },
+    {
+      "id": "3KjwqDnc0ZlLqx8CLgbftkELS66",
+      "title": "bhare panduranga khemha bheta desi"
+    },
+    {
+      "id": "3KjwqKM9EMflrQKD8GooQS5pcAe",
+      "title": "jyachi vamshi kuladharma"
+    },
+    {
+      "id": "3KjwqP4OX0w47GybHQWEgF03yDd",
+      "title": "rangamma maaji rangamma"
+    },
+    {
+      "id": "3KjwqTHtKSB2vhDhYnvQjzus7jC",
+      "title": "gopi gopala bala (brij basha)"
+    },
+    {
+      "id": "3KjwqbTvOZj4gW8Ta7nNMShRsh6",
+      "title": "radha rasika vara rasa vihara"
+    },
+    {
+      "id": "3KjwqhBzzxsVD8H1Ax4B95M9guV",
+      "title": "prabo ganapathe"
+    },
+    {
+      "id": "3Kjwqq15mGGOg344nYRaHzAsPbg",
+      "title": "ati pati Ala~NkAram cheytiTa"
+    },
+    {
+      "id": "3KjwqrUGDsFz6OI47CKa2Y1YR0l",
+      "title": "pratham tula vandito"
+    },
+    {
+      "id": "3KjwqsP4VAZ6gezpFTYKysOLwsS",
+      "title": "jaya jagadeeshvari maata sarasvati"
+    },
+    {
+      "id": "3Kjwqv0k4NOOcPtLwVkXSyGZFkc",
+      "title": "kripa sarovar kamal manohar"
+    },
+    {
+      "id": "3KjwquuZRXmXUD64EYMk6ftHnLh",
+      "title": "hari bhakt santha"
+    },
+    {
+      "id": "3Kjwqzsm52hpAAyLWrhxIqtShUX",
+      "title": "thirtha vittala"
+    },
+    {
+      "id": "3Kjwr5qOE8g1fbYD2WMslx4ITeA",
+      "title": "saawale sunder roop manohar"
+    },
+    {
+      "id": "3KjwrBt64gkFcFuLjTsOhzqr7bn",
+      "title": "man ho ram rangi rangale"
+    },
+    {
+      "id": "3KjwrCB93UrPDyk0NFXNeOyw9zn",
+      "title": "pandaricha vaasa"
+    },
+    {
+      "id": "3KjwrM3bFcwlZxkEbgqC2LTWhyU",
+      "title": "namacha gajar"
+    },
+    {
+      "id": "3KjwrPKsZhNuw9jCQb9wgYBwX3a",
+      "title": "pandari nivasa sakhya"
+    },
+    {
+      "id": "3KjwrUky8A9TAR19fub6w9Ulbu5",
+      "title": "chala mandirat, vithoba"
+    },
+    {
+      "id": "3KjwrSs4ouBH1LPnpDN1eoyBKd5",
+      "title": "vadana suhasya rasala"
+    },
+    {
+      "id": "3KjwrWl5Fjc9ErNdufSpD5w6Euk",
+      "title": "raja rama ravikula soma"
+    },
+    {
+      "id": "3KjwrcXzAjxBt2lBWIVs90dbxQC",
+      "title": "enna paaliso karunakara"
+    },
+    {
+      "id": "3KjwrmqMhNwRjMak8FftROXclWu",
+      "title": "radhe govinda"
+    },
+    {
+      "id": "3KjwrfjdcZt4j5qkCMa5CWv7cFT",
+      "title": "narayanam bhaje"
+    },
+    {
+      "id": "3Kjwrpuw7K3jkWEzR6nDNhtXt9G",
+      "title": "parvathi nandana"
+    },
+    {
+      "id": "3KjwrqYXRERgZQhwVhjAty3Sa2f",
+      "title": "ashtapathi 3"
+    },
+    {
+      "id": "3KjwrzBs14zgEvEFaVucxQuEDtt",
+      "title": "jagatha janani jagdambha"
+    },
+    {
+      "id": "3Kjws04gkH4YYKEYLqg1VNgjM3P",
+      "title": "vaidyanatha ashtakam"
+    },
+    {
+      "id": "3KjwrwQQPRJNMrhBRMHXN89Z576",
+      "title": "ashtapadhi 23"
+    },
+    {
+      "id": "3KjwsAEzCEtca6cjbJVMWRNO4df",
+      "title": "krishnashtakam"
+    },
+    {
+      "id": "3Kjws9vBS8c2ynHCkHvze4JmgIG",
+      "title": "gajanana hey gajanana"
+    },
+    {
+      "id": "3KjwsAuFzlp261B0ENRVIBFIxsu",
+      "title": "mooshika vahana"
+    }
+  ],
+  "createdLinks": [
+    {
+      "domain": "artist",
+      "id": "3Kjwf2TZSdJLgBSeh701OtKLeD6",
+      "name": "Samarth Ramdas"
+    },
+    {
+      "domain": "artist",
+      "id": "3Kjwf9nyiNFZPnwAS8QXocffRg0",
+      "name": "Unknown"
+    },
+    {
+      "domain": "artist",
+      "id": "3KjwixhCLOgsDdWrnJd1bpwkLR4",
+      "name": "Poonthanam"
+    },
+    {
+      "domain": "artist",
+      "id": "3KjwkTjbh3BxgJkjvvmkH1wW6Tr",
+      "name": "Eknath"
+    },
+    {
+      "domain": "artist",
+      "id": "3KjwkiFS2f3OWHxyzZ9m6Qt2VkE",
+      "name": "Arana Meera Prabhu"
+    },
+    {
+      "domain": "artist",
+      "id": "3Kjwlwk0vIJEYGuwcI1spRvEmZa",
+      "name": "Dnyaneshwar"
+    },
+    {
+      "domain": "artist",
+      "id": "3Kjwp9008guZTGWMBWQ8fYKHpWC",
+      "name": "Rukmani Ramani"
+    },
+    {
+      "domain": "artist",
+      "id": "3Kjwppe8QVX0TUqUzkcX06TJgNr",
+      "name": "Chandrashekhara Bharati"
+    },
+    {
+      "domain": "artist",
+      "id": "3Kjwq32j4klJ0IgOstmI4zKnCBW",
+      "name": "Tukaram"
+    },
+    {
+      "domain": "artist",
+      "id": "3KjwqBWB4CnFgGmVK7YTAe8epDD",
+      "name": "Udhdhava Chithganar"
+    },
+    {
+      "domain": "artist",
+      "id": "3KjwqdkB567hBIxxvkaXxz1s07I",
+      "name": "Agathiyar"
+    },
+    {
+      "domain": "artist",
+      "id": "3KjwrLfad12cV46TfyZ4DPZm1iz",
+      "name": "Namdev"
+    }
+  ]
+}

@@ -2,16 +2,15 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Waiting: 164 carnatic-circle.com bhajans to create (2026-10-15)
+## Waiting: respell the 164 new carnatic-circle.com bhajans (2026-10-15)
 
-**Next step:** run the reviewed import (the permission check blocked it from the session):
-`pnpm prod-cli source-apply --source carnatic-circle --file ../../docs/research/carnatic-circle-bhajans-2026-10.csv --user 39WZZXug7V6PdinExzhhp6zDuKD`
-from `packages/scripts`, then `reindex`. Dry run passed: 164 to create, tagged `bhajan`, 12 new
-composer artists (one named `Unknown`), no new ragas or talas. Language and composer of every row
-were set by hand from the lyrics. Then run the respelling readers over the new lyrics. 16 rows
-are still held in `docs/research/carnatic-circle-matches-2026-10.csv` (kritis, pages holding
-several songs, partial lyric matches), plus about 60 held title matches from the first pass.
-The 94 attaches are live (undo record beside the first import CSV).
+**Next step:** run the respelling readers (`lyrics-batches` → reader → `lyrics-ingest`) over the
+164 bhajans created 2026-10-15 (tagged `bhajan`; ids in
+`docs/research/carnatic-circle-bhajans-2026-10.csv.applied-2026-10-15T17-14-49-602Z.json`). Their
+lyrics mix plain English romanisation and ITRANS. They are live and reindexed; 113 link to the
+new `Unknown` artist. Still held in `docs/research/carnatic-circle-matches-2026-10.csv`: 16 rows
+(kritis, multi-song pages, partial lyric matches) and about 60 title matches from the first pass.
+Undo: `source-undo --manifest <that file> [--only <id>]`.
 
 ## Waiting: 24 new songs from shivkumar.org (2026-10-12)
 
