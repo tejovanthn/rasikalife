@@ -139,11 +139,8 @@ then compositions and events; manifest `data/artist-research/merge-2026-10-14b.c
 Collaborators rebuilt, search reindexed. What was dropped in review and why:
 `demand-02/review-notes.md`.
 
-**Waiting: owner OKs the leftover import (2026-10-15).** The 45 records the search budget
-missed were researched: 6 rows, 10 cells in `data/artist-research/leftover-02/import.csv`; prod
-dry run 6 updates, 0 errors. Notes in `leftover-02/review-notes.md`, including two composition
-credits that may be wrong ("Bhaja bhaja manasa" is Swati Tirunal's in Music Academy records) and a
-likely duplicate (Bangalore Arjun Kumar / Arjun Kumar).
+**Leftover import is live (2026-10-15).** 6 rows, 10 cells, 0 errors, reindexed. Notes in
+`leftover-02/review-notes.md`.
 
 **Artist research is finished (owner's decision, 2026-10-15).** Every unambiguous artist with 10+
 searches a month is done. The 216 ambiguous names and the 406 with no measured demand are dropped,
