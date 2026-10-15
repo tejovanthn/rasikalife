@@ -22,6 +22,21 @@ export interface SourceRecord {
   scale?: { arohanam?: string; avarohanam?: string };
   /** Anything the reviewer should see, e.g. where the text came from. */
   note?: string;
+  /** How this record is spelled, where a source mixes spellings page by page. */
+  romanisation?: 'itrans' | 'plain';
+}
+
+/**
+ * A title or lyric as a new record stores it. Capitals mean retroflex letters in ITRANS, so
+ * plain English romanisation is lowercased; the respelling readers fix the rest afterwards.
+ * The record's own spelling wins over the source's default.
+ */
+export function forNewRecord(
+  text: string,
+  record: Pick<SourceRecord, 'romanisation'>,
+  sourceDefault: 'itrans' | 'plain'
+): string {
+  return (record.romanisation ?? sourceDefault) === 'plain' ? text.toLowerCase() : text;
 }
 
 /** What one apply changed, so that it can be taken back, wholly or one song at a time. */

@@ -16,6 +16,7 @@ export interface SourceDescription {
 const SITE_NAMES: Record<string, string> = {
   'karnatik.com': 'karnatik.com',
   'shivkumar.org': 'Shivkumar Kalyanaraman (shivkumar.org)',
+  'carnatic-circle.com': 'Carnatic Circle',
   'youtube.com': 'YouTube',
   'youtu.be': 'YouTube',
   'sangeetham.com': 'sangeetham.com',

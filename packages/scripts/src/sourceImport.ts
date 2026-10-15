@@ -14,6 +14,7 @@ import {
   type AttachedEntry,
   type ImportManifest,
   type SourceRecord,
+  forNewRecord,
   planAttach,
   planAttachUndo,
 } from '@rasika/core/domain/composition/source-import';
@@ -118,8 +119,6 @@ export async function matchSource(opts: { source: string; out: string }): Promis
     const counts = composer ? languageByComposer.get(composer) : undefined;
     return counts ? [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] : undefined;
   };
-  const forNew = (text: string) => (adapter.romanisation === 'plain' ? text.toLowerCase() : text);
-
   const rows: string[][] = [[...MATCH_HEADER]];
   const tally = new Map<string, number>();
   for (const record of records) {
@@ -133,6 +132,7 @@ export async function matchSource(opts: { source: string; out: string }): Promis
     tally.set(key, (tally.get(key) ?? 0) + 1);
 
     const newComposer = resolveName(record.composer, composerUses, composerAgrees) ?? '';
+    const forNew = (text: string) => forNewRecord(text, record, adapter.romanisation);
     rows.push([
       record.key,
       record.title,
@@ -187,7 +187,6 @@ export async function buildSourceCsv(opts: {
     return index;
   };
   const cell = (row: string[], name: string) => (row[col(name)] ?? '').trim();
-  const forNew = (text: string) => (adapter.romanisation === 'plain' ? text.toLowerCase() : text);
 
   const out: Row[] = [];
   const attached = new Set<string>();
@@ -231,7 +230,10 @@ export async function buildSourceCsv(opts: {
         compositionType: record.compositionType,
         sources: record.sources,
         notation: record.notation,
-        lyricsV1: record.lyrics.map(section => ({ ...section, text: forNew(section.text) })),
+        lyricsV1: record.lyrics.map(section => ({
+          ...section,
+          text: forNewRecord(section.text, record, adapter.romanisation),
+        })),
       });
     } else {
       problems.push(`${record.title}: unknown decision "${decision}"`);

@@ -87,15 +87,16 @@ export function composerAgrees(theirs: string, ours: string): boolean {
 }
 
 /** The archive's tala names, to the tala names our records already use. */
+// Long vowels doubled and aspirates written or not: `chaapu`, `aadi`, `Adhi`, `Jampa`.
 const TALA_NAMES: Array<[RegExp, string]> = [
-  [/chapu|capu/i, 'cApu'],
+  [/c(h)?a+pu/i, 'cApu'],
   [/desadi|deshadi/i, 'dEshaadi'],
   [/madhyadi/i, 'madhyaadi'],
-  [/\badi\b|^adi/i, 'Adi'],
-  [/rupak/i, 'rUpaka'],
-  [/\bata\b/i, 'aTa'],
-  [/jhampa/i, 'jhampa'],
-  [/triputa/i, 'tripuTa'],
+  [/\ba+dh?i\b|^adi/i, 'Adi'],
+  [/ro*u*pak/i, 'rUpaka'],
+  [/\ba+ta\b/i, 'aTa'],
+  [/jh?a[mn][pb]h?a/i, 'jhampa'],
+  [/th?riputa/i, 'tripuTa'],
   [/dhruva/i, 'dhruva'],
   [/matya|matya/i, 'maTya'],
   [/\beka/i, 'Eka'],

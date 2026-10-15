@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planAttach, planAttachUndo, textFingerprint } from './source-import';
+import { forNewRecord, planAttach, planAttachUndo, textFingerprint } from './source-import';
 
 const KARNATIK = 'https://karnatik.com/c1.shtml';
 const PDF = 'https://www.shivkumar.org/music/adamodi.pdf';
@@ -74,5 +74,15 @@ describe('planAttachUndo', () => {
       clearNotation: false,
       keptEditedNotation: false,
     });
+  });
+});
+
+describe('forNewRecord', () => {
+  it('lowercases plain romanisation and keeps ITRANS, the record overriding the source', () => {
+    expect(forNewRecord('Paahi Madhana', {}, 'plain')).toBe('paahi madhana');
+    expect(forNewRecord('rAma daya jUDavE', { romanisation: 'itrans' }, 'plain')).toBe(
+      'rAma daya jUDavE'
+    );
+    expect(forNewRecord('Dikshitar', { romanisation: 'plain' }, 'itrans')).toBe('dikshitar');
   });
 });

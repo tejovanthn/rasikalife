@@ -9,6 +9,16 @@ describe('describeSource', () => {
     });
   });
 
+  it('credits a carnatic-circle.com page as a page', () => {
+    const url = 'https://carnatic-circle.com/vignesham-bhajare/';
+    expect(describeSource(url)).toEqual({
+      url,
+      site: 'Carnatic Circle',
+      kind: 'page',
+      label: 'Carnatic Circle',
+    });
+  });
+
   it('reads a shivkumar.org PDF or page as notation', () => {
     expect(describeSource('https://www.shivkumar.org/music/adamodi.pdf')).toEqual({
       url: 'https://www.shivkumar.org/music/adamodi.pdf',

@@ -527,6 +527,17 @@ the source: it downloads the archive and reads it into `SourceRecord`s
 about 380 krithis and 38 varnams, geethams and swarajatis, parsed in
 `domain/composition/shivkumar.ts`.
 
+The second is `carnatic-circle`: a UK bhajan group's WordPress site, read whole from its REST
+API into `pages.json` and parsed on load (`domain/composition/carnatic-circle.ts`), so a parser
+change needs no refetch. Every page is typed by hand, so raga, tala and composer are readings
+for the reviewer, never facts: a page naming several ragas gets none and says so in `note`,
+and a collection's composer (`COLLECTION_COMPOSERS`) is used only for one composer's songs and
+only when the page names nobody. The site mixes spellings page by page, so a `SourceRecord`
+may carry its own `romanisation` (`forNewRecord`); ISO/IAST pages are converted to ITRANS.
+Titles here often differ from ours (`brahma okaTE` is our `tandanAnA Ahi`), so the 2026-10
+review also compared lyrics; `docs/research/carnatic-circle-matches-2026-10.csv` holds the
+scores and a `review_note` per row.
+
 1. `source-fetch --source <name>`: the adapter downloads, cached, so a rerun fetches only
    what is missing. No AWS needed.
 2. `source-match --source <name> [--out …]`: one review row per record, with the record of

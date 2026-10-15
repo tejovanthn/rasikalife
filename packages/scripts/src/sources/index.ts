@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { carnaticCircle } from './carnatic-circle.js';
 import { shivkumar } from './shivkumar.js';
 import type { SourceAdapter } from './types.js';
 
@@ -8,6 +9,7 @@ export type { SourceAdapter } from './types.js';
 /** Every source the `source-*` commands know. Add an adapter here to import a new one. */
 const ADAPTERS: Record<string, SourceAdapter> = {
   [shivkumar.name]: shivkumar,
+  [carnaticCircle.name]: carnaticCircle,
 };
 
 export function getAdapter(name: string): SourceAdapter {

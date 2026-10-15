@@ -56,6 +56,14 @@ describe('canonicalTala', () => {
     ['Rupakam', 'rUpaka'],
     ['Ata', 'aTa'],
     ['Desadi', 'dEshaadi'],
+    ['chaapu', 'cApu'],
+    ['khaNDa caapu', 'cApu'],
+    ['aadi', 'Adi'],
+    ['Adhi', 'Adi'],
+    ['Jampa', 'jhampa'],
+    ['Jambha', 'jhampa'],
+    ['Roopakam', 'rUpaka'],
+    ['Thriputa', 'tripuTa'],
   ])('%s → %s', (theirs, ours) => {
     expect(canonicalTala(theirs)).toBe(ours);
   });
