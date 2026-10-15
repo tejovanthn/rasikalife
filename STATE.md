@@ -139,10 +139,17 @@ then compositions and events; manifest `data/artist-research/merge-2026-10-14b.c
 Collaborators rebuilt, search reindexed. What was dropped in review and why:
 `demand-02/review-notes.md`.
 
-**Next step: research the 45 leftover records.** They were never searched because the session's
-web search budget ran out; ids in `data/artist-research/leftover-02/ids.txt`. Cut them with
-`research-batches --ids` and run at most 3–4 workers at once. Also open: two records are not
-people, "Karnataka Kalashri" (an award) and "Disciples of Mowna Ramachandra"; the owner decides.
+**Waiting: owner OKs the leftover import (2026-10-15).** The 45 records the search budget
+missed were researched: 6 rows, 10 cells in `data/artist-research/leftover-02/import.csv`; prod
+dry run 6 updates, 0 errors. Notes in `leftover-02/review-notes.md`, including two composition
+credits that may be wrong ("Bhaja bhaja manasa" is Swati Tirunal's in Music Academy records) and a
+likely duplicate (Bangalore Arjun Kumar / Arjun Kumar).
+
+**After that, the owner decides whether to go on.** Every unambiguous artist with 10+ searches a
+month is now researched, and the yield is falling: 43% at 100+, 17% at 10–99, 13% in the leftovers.
+What remains is the 216 ambiguous names (rank on Search Console impressions alone) and 406 with no
+measured demand. Also open: two records are not people, "Karnataka Kalashri" (an award) and
+"Disciples of Mowna Ramachandra".
 
 **Notes on the rest:** the first cut took every unambiguous performer and composer with 100+
 searches a month. Next in the ranking: 330 artists at 10–99 a month, then the 216 flagged
