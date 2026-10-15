@@ -145,11 +145,12 @@ dry run 6 updates, 0 errors. Notes in `leftover-02/review-notes.md`, including t
 credits that may be wrong ("Bhaja bhaja manasa" is Swati Tirunal's in Music Academy records) and a
 likely duplicate (Bangalore Arjun Kumar / Arjun Kumar).
 
-**After that, the owner decides whether to go on.** Every unambiguous artist with 10+ searches a
-month is now researched, and the yield is falling: 43% at 100+, 17% at 10–99, 13% in the leftovers.
-What remains is the 216 ambiguous names (rank on Search Console impressions alone) and 406 with no
-measured demand. Also open: two records are not people, "Karnataka Kalashri" (an award) and
-"Disciples of Mowna Ramachandra".
+**Artist research is finished (owner's decision, 2026-10-15).** Every unambiguous artist with 10+
+searches a month is done. The 216 ambiguous names and the 406 with no measured demand are dropped,
+not deferred: yield had fallen to 13%, and an ambiguous name is where a namesake gets researched.
+Still open: two records are not people, "Karnataka Kalashri" (an award) and "Disciples of Mowna
+Ramachandra"; the possible duplicate Bangalore Arjun Kumar / Arjun Kumar; and the composition
+credits listed in `leftover-02/review-notes.md`.
 
 **Notes on the rest:** the first cut took every unambiguous performer and composer with 100+
 searches a month. Next in the ranking: 330 artists at 10–99 a month, then the 216 flagged
