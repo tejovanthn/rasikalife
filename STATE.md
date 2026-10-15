@@ -8,9 +8,29 @@ Single next step, kept current. Everything else lives in `docs/plans/`.
 164 bhajans created 2026-10-15 (tagged `bhajan`; ids in
 `docs/research/carnatic-circle-bhajans-2026-10.csv.applied-2026-10-15T17-14-49-602Z.json`). Their
 lyrics mix plain English romanisation and ITRANS. They are live and reindexed; 113 link to the
-new `Unknown` artist. Still held in `docs/research/carnatic-circle-matches-2026-10.csv`: 16 rows
-(kritis, multi-song pages, partial lyric matches) and about 60 title matches from the first pass.
-Undo: `source-undo --manifest <that file> [--only <id>]`.
+new `Unknown` artist. Undo: `source-undo --manifest <that file> [--only <id>]`.
+
+## Waiting: carnatic-circle.com rows held for the owner (2026-10-15)
+
+**Next step:** owner decides the held rows in `docs/research/carnatic-circle-matches-2026-10.csv`
+(blank `decision`; `review_note` says why each is held):
+- 16 from the bhajan pass: 4 kritis (Oothukkadu, Dandapani: attach or create as kritis, not
+  bhajans), 6 pages holding several songs (Radha Kalyanam parts, Thodaya Mangalam, Thevaram;
+  each needs splitting by hand), 6 whose lyrics partly match a song we hold (attach or skip).
+- About 60 title matches from the first pass whose lyrics disagree (`lyric_score`,
+  `lyric_best`). Several are our own duplicate compositions.
+Then `source-csv`, `source-apply`, `reindex`.
+
+Also from this site, for review only: `docs/research/carnatic-circle-raga-report-2026-10.csv`
+lists 61 ragas whose stored scale differs from the site's janya table, and 26 names that match
+several of our raga records (duplicates for the dedupe pass). The site is wrong in some (Lalita
+is D1, not D2), so nothing there was written. The 16 scales we lacked were filled 2026-10-15.
+
+## Noted: the tala table is mostly junk (2026-10-15)
+
+Of 75 tala records, many are raga names or fragments from the karnatik.com import
+(`Bhairavi.`, `kalyANi`, `given`, `or`, `m`), and none holds aksharas, a structure or a tradition.
+Worth a dedupe-and-merge pass like the ragas' before adding any taals.
 
 ## Waiting: 24 new songs from shivkumar.org (2026-10-12)
 

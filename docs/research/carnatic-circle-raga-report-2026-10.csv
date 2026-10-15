@@ -1,0 +1,123 @@
+their_name,their_arohanam,their_avarohanam,their_parent,outcome,our_id,our_name,our_arohanam,our_avarohanam,detail
+punnAgavarALi,N2 S R1 G2 M1 P D1 N2,N2 D1 P M1 G2 R1 S N2,8 – HanumathOdi,differs,38av9I73XecmZPFFL5A37qp4r25,punnAgavarALi,"N2 , S R1 G2 M1 P D1 N2","N2 D1 P M1 G2 R1 S N2 ,",
+sindhu bhairavi,S R2 G2 M1 G2 P D1 N2 S,N2 D1 P M1 G2 R1 S N2 S,10 – nAtakapriya,ambiguous: several of ours,38avHb5V3w4ldRVzfG7SOysLyhV,sindhubhairavi,S R1 G2 M1 P D1 N2 S,S N2 D1 P M1 G2 R1 S,sindhubhairavi | sindu bhairavi
+kalagada,S R1 G3 P D1 N1 S,S N1 D1 P G3 R1 S,13 – gAyakapriya,not ours,,,,,
+vasanthabhairavi,S R1 G3 M1 D1 N2 S,S N2 D1 M1 P M1 G3 R1 S,14 – vakulAbharaNam,differs,38b5zDZChDrSN3UKlMyKF6UK4H4,vasantabhairavi,S R1 G3 M1 D1 N2 S,S N2 D1 M1 G3 R1 S,
+ardhradhesi,S R1 G3 M1 P D1 S N3 S,S D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,differs,3A732AqljTW0GikL40zz5jZnLdW,ardhradEsi,S R1 G3 M1 P D1 N3 S,S D1 P M1 G3 R1 S,
+bowLi,S R1 G3 P D1 S,S N3 D1 P G3 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,38aw3MWv18PVm6Y69wByxsAtq6h,bowLi,S R1 G3 P D1 S,S N3 D1 P G3 R1 S,bowLi | bauLi
+gowLa,S R1 M1 P N3 S,S N3 P M1 R1 G3 M1 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,3A73A1gDMYXGGivBBk7vnATWGJr,"gowLa (gauLa, gauDa, gowDa)",S R1 M1 P N3 S,S N3 P M1 R1 G3 M1 R1 S,"gowLa (gauLa, gauDa, gowDa) | gauLa"
+gowLipanthu,S R1 M1 P N3 S,S N3 D1 P M1 D1 M1 G3 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,38awRrBcWuGVBtIp4vL0LVI4x2U,gowLipantu,S R1 M1 P N3 S,S N3 D1 P M1 D1 M1 G3 R1 S,gowLipantu | gauLipantu
+gowri,S R1 M1 P N3 S,S N3 D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,38aynSISojkXYBSiCzTotdFqaQf,gowri,S R1 M1 P N3 S,S N3 D1 P M1 G3 R1 S,gowri | gauri
+gumma kAmbhoji,S R1 G3 P D1 N3 D1 S,S N3 D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,differs,3A73AKY9NwEXgzOsXb44UmBftRg,gummakAmbhOji,S R1 G3 P D1 N3 S,S N3 D1 P M1 G3 R1 S,
+kannadaban&#8217;gALa,S R1 M1 G3 M1 P D1 S,S D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,differs,38bElSzizd5tMF4MrBtK0xUXUL7,kannaDabangALa,S R1 M1 G3 M1 D1 P D1 S,S D1 P M1 G3 R1 S,
+kRushNaveNi,S R1 G3 M1 P N3 S,S N3 P M1 G3 R1 S,15 – mAyAmALava gowLA,not ours,,,,,
+lalithA,S R1 G3 M1 D2 N3 S,S N3 D2 M1 G3 R1 S,15 – mAyAmALava gowLA,differs,38avfDpbF5qIiftA1AR3UHFM40j,lalitA,S R1 G3 M1 D1 N3 S,S N3 D1 M1 G3 R1 S,notes outside mela 15: D2
+mangaLakaishiki,S M1 G3 M1 P M1 D1 N3 S,S N3 D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,differs,38avSmCO8Kj3xgchQCyz8maaeDZ,mangaLakaishiki,S R1 M1 G3 D1 P S,S N3 D1 P M1 G3 R1 S,
+mEchabowLi,S R1 G3 P D1 S,S D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,3A73GKM5n72mwCO2MAiZo5CggvI,mEcabowLi,S R1 G3 P D1 S,S N3 D1 P M1 G3 R1 S,mEcabowLi | mEcabauLi
+pAdi,S R1 M1 P N3 S,S N3 P D1 P M1 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,38avhD9vrylWTMypN7bPK98Iegd,pahADi,S R2 G3 P D2 P D2 S,N3 D2 P G3 M1 G3 R2 S N3 D2 P D2 S,pahADi | pADi
+pharaz,S G3 M1 P D1 N3 S,S N3 D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,not ours,,,,,
+pUrvi,S R1 G3 M1 P D1 N3 D1 S,S N3 D1 P M1 D1 M1 G3 R1 S,15 – mAyAmALava gowLA,differs,38b9AyyBRvil9Lko3mWP3uRKnl8,pUrvi,S R1 G3 M1 D1 N3 S,S N3 D1 P M1 G3 R1 S,
+sAran&#8217;ganAtha,S R1 M1 P D1 S,S N3 S D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,ambiguous: several of ours,3A73MOyoFJ6FA3PD7CL8DhpPpyR,sAranga nATTai,S R1 M1 P D1 S,S N3 S D1 P M1 G3 R1 S,sAranga nATTai | sAranganATa
+sindhu rAmakriya,S G3 M1 P D1 N3 S,S N3 P D1 P M1 G3 S,15 – mAyAmALava gowLA,differs,38bEmVRdW4s1HAXQQgyvI9hxphh,sindhurAmakriya,S G3 M1 P D1 N3 S,S N3 P M1 G3 R1 G3 S,
+thakka (a),S R1 S M1 G3 M1 D1 N3 S,S N3 P M1 G 3 M1 P R1 G3 S,15 – mAyAmALava gowLA,refused,38b6ij2vUMqrwG7vYb3p6ANFyap,takka,S R1 S G3 M1 G3 P M1 D1 N3 S,S N3 D1 P M1 G3 R1 S,not swara notation: 3
+thakka (b),S G3 M1 P M1 D1 N3 S,S N3 D1 P M1 G3 R1 S,15 – mAyAmALava gowLA,differs,38b6ij2vUMqrwG7vYb3p6ANFyap,takka,S R1 S G3 M1 G3 P M1 D1 N3 S,S N3 D1 P M1 G3 R1 S,
+kalAvathi,S R1 M1 P D2 S,S D2 P M1 G3 S R1 S,16 – chakravAkam,differs,38bEO7PwFaw5xWZmbba98dIMZDY,kalAvati,S R1 M1 P D2 S,S D2 P M1 G3 R1 S,
+vegavAHini,S R1 G3 M1 P D2 N2 D2 S,S N2 D2 P M1 G3 R1 S,16 – chakravAkam,differs,38bEHYINs9GfNKwpkX0MsItx0Ak,vEgavAhini,S R1 G3 M1 D2 N2 D2 S,S N2 D2 P M1 G3 R1 S,
+sowrAshtram,S R1 G3 M1 P M1 D2 N3 S,S N3 D2 N2 D2 P M1 G3 R1 S,17 – sUryakAntam,ambiguous: several of ours,38avlFFDgH4Lo9pMDq9RaQhjs4s,saurASTra,S R1 G3 M1 P M1 D2 N3 S,S N3 D2 N2 D2 P M1 G3 R1 S,saurASTra | sowrAshTram
+supradhIpam,S R1 M1 P D2 S,S N3 D2 P M1 G3 M1 R1 S,17 – sUryakAntam,fill,38b756hgpPBcQSsat2bmUAmPHJH,supradeepam,,,
+Anandhabhairavi,S G2 R2 G2 M1 P D2 P N2 S,S N2 D2 P M1 G2 R2 S,20 – naTabhairavi,differs,38avETB5qfNbzbypJrYXrYzyJlw,Anandabhairavi,S G2 R2 G2 M1 P D2 P S,S N2 D2 P M1 G2 R2 S,notes outside mela 20: D2
+Gantha,S G2 R2 G2 M1 P D2 P N2 D2 N2 S,S N2 D2 P M1 G2 R2 S,20 – naTabhairavi,differs,38b5io0X94UHR9W70Pb5u98IuN4,ghanTa,S G2 R2 M1 P N2 S,S N2 D1 P M1 G2 R1 S,"parent mela: ours 8, theirs 20; notes outside mela 8: R2 D2"
+gopikavasantham,S M1 P N2 D1 N2 D1 S,S N2 D1 P M1 G2 S,20 – naTabhairavi,differs,38aywbTgl7XM5oksBeBRSRYAxOr,gOpikavasantam,S R2 G2 M1 P D1 P N2,S N2 D1 P M1 G2 R2 S,
+jingla,S R2 G2 M1 P D1 N2 D1 P S,S N2 D1 P M1 G2 R2 S,20 – naTabhairavi,not ours,,,,,
+mAnji,S R2 G2 M1 P D2 N2 S,S N2 D1 P M1 G2 R2 S,20 – naTabhairavi,differs,38axiSRY7hYLsvFSav85I3JdCLV,mAnji,S R2 G2 M1 P D2 N2 S,S N2 D2 P M1 P M1 P G2 R2 S,notes outside mela 20: D2
+mArgaHindhoLam,S R2 G2 M1 P D2 N2 S,S N2 D2 M1 G2 S,20 – naTabhairavi,differs,38b8gexWO8ELmosmx7HXUtZPJhu,mArgahindOLa,S R2 G2 M1 P D2 N2 S,S N2 D2 P M1 G2 S,"parent mela: ours 22, theirs 20"
+pUrNashajja,S R2 G2 M1 N2 N2 S,S N2 P M1 G2 R2 S,20 – naTabhairavi,not ours,,,,,
+sAramathi,S R2 G2 M1 P D1 N2 S,S N2 D1 M1 G2 S,20 – naTabhairavi,differs,38b6KYtOA3E6gohh1GtZafa7xiH,sAramati,S R2 G2 M1 P D1 N2 S,S N2 D1 M G2 S,
+sudhdha dhesi,S R2 M1 P D1 N2 S,S N2 D1 P M1 G2 R2 S,20 – naTabhairavi,differs,38b5eUvUhTAtJRw46uwjgj3Plcq,sudda dEsi,S R2 G2 R2 M1 P D1 N2 S,S N2 D1 P M1 G2 R2 S,
+kiraNAvaLi,S R2 G2 M1 P D1 N3 S,S P M1 G2 R2 S,21 – kIravANi,fill,38b5iSI2sD3FlWPcf6rH8pqIkSp,keeraNaavaLi,,,
+AndhOLika,S R2 M1 P N2 S,S N2 D2 M1 R2 S,22 – KaraHarapriya,differs,38awkHmvY8s2cJKMgu9gucMJKOh,aandOLikaa,S R₂ M₁ P N₂ S,S N₂ D₂ M₁ R₂ S,"parent mela: ours 28, theirs 22"
+bAgEshrI,S G2 M1 D2 N2 S,S N2 D2 M1 P D2 G2 M1 R2 S,22 – KaraHarapriya,ambiguous: several of ours,38b8bqZNZXRNn0VMO70OPS3SDlh,bAgEshrI,S G2 M1 D2 N2 S,S N2 D2 N2 P M1 G2 R2 S,bAgEshrI | bhaagEshri
+brindhAvanasAran&#8217;ga,S R2 M1 P N3 S,S N2 P M1 R2 G2 S,22 – KaraHarapriya,differs,38avRf9GU5ejX1Ty2RAnb0R2uG7,brindaavana saaranga,S R2 M1 P N3 S,S N2 P M1 R2 S,notes outside mela 22: N3
+chiththaranjani,S R2 G2 M1 P D2 N2,N2 D2 P M1 G2 R2 S N2.,22 – KaraHarapriya,refused,38awQOmXVjc4IMczjc2aR0EhImE,citta ranjani,S R2 G2 M1 P D2 N2,N2 D2 P M1 G2 R2 S,not swara notation: N2.
+dharbAru,S R2 M1 P D2 N2 S,R2 S N2 S D2 P M1 R2 G2 G2 R2 S,22 – KaraHarapriya,not ours,,,,,
+dhEvAmRuthavarshiNi,S R2 G2 M1 N2 D2 N2 S,S N2 D2 P M1 G2 R2 S,22 – KaraHarapriya,not ours,,,,,
+dhEvakriya,S R2 M1 P N2 S,S N2 D2 N2 P M1 G2 R2 S,22 – KaraHarapriya,differs,38b6POYqp40jlm6RRKQG83NVm8B,dEvakriya,S R2 M1 P N2 S,S N2 D1 N P M1 G2 R2 S,"parent mela: ours 20, theirs 22; notes outside mela 20: D2"
+dhEvamanOHari,S R2 M1 P D2 N2 S,S N2 D2 N2 P M1 R2 S,22 – KaraHarapriya,ambiguous: several of ours,38b6Mj1ocEMbLEsNK18S0wgYRMT,dEvamanOari,S R2 M1 P D2 N2 S,S N2 D2 N2 P M1 R2 S,dEvamanOari | dEvamanOhari
+dhilipakam,S R2 G2 R2 M1 P N2 D2 N2 P D2 N2 S,S N2 D2 P M1 G2 R2 S,22 – KaraHarapriya,not ours,,,,,
+HindhoLavasantha,S G2 M1 P D2 N2 D2 S,S N2 D2 P M1 D2 M1 G2 S,22 – KaraHarapriya,differs,38avoodA2KMU4spUerA50VpIU6n,hindOLavasantA,S G2 M1 P D1 N2 D1 S,S N2 D1 P M1 D2 M1 G2 S,"parent mela: ours 20, theirs 22; notes outside mela 20: D2"
+HindhusthAni kApi,S R2 M1 P N3 S,S N2 D2 N2 P M1 G2 R2 S,22 – KaraHarapriya,fill held,38bCLzDQtHIwIbyXoXYPnFAZHr7,hindustAnikApi,,,notes outside mela 22: N3
+jayanthasEna,S G2 M1 P D2 S,S N2 D2 P M1 P M1 G2 S,22 – KaraHarapriya,differs,38avGFiDz4AHLwqnm4ybTfMWcbD,jayantasEna,S G2 M1 P D2 S,S N2 D2 P M1 G2 S,
+kannadagowLa,S R2 G2 M1 P N2 S,S N2 D2 P M1 G2 S,22 – KaraHarapriya,ambiguous: several of ours,38awq0CuOmUENgRmGHhWyXqKqVf,kannaDagowLa,S R2 G2 M1 P N2 S,S N2 D2 P M1 G2 S,kannaDagowLa | kannaDagauLa
+kApijingla,S N2 S R2 G2 M1,M1 G2 R2 S N2 D2 N2 S,22 – KaraHarapriya,not ours,,,,,
+karnAtaka kApi,S R2 G2 M1 R2 P M1 P D2 N2 S,S N2 D2 P M1 G2 M1 R2 S,22 – KaraHarapriya,fill,38b5VZVZS2A912LQrmoz2i4uyEP,karnATakakApi,,,
+mAlavashrI,S G2 M1 P N2 D2 N2 P D2 N2 S,S N2 D2 P M1 G2 S,22 – KaraHarapriya,differs,38b5g4TCSlWCx8VF9N0knoH1bN4,maaLavashree,S G2 M1 P N2 D2 N2 P D2 N2 S,S N2 D2 P M1 G2 R2 S,
+nAdhachinthAmaNi *,S G2 M1 P N2 D2 N2 S,S N2 D2 P M1 G2 R2 G2 S,22 – KaraHarapriya,differs,3A73HDbenmS28BlhXnE5Zfm3dTs,nAdacintAmaNi,S R2 G2 M1 N2 D2 N2 S,S N2 D2 P M1 G2 R2 S,
+nAdhatharan&#8217;gini,S P M1 R2 G2 R2 S,S P N2 D2 P M1 G2 R2 S,22 – KaraHarapriya,differs,3A73HMk0OEnUhG0R4hti80YhQhM,nAdatArangini,S P M1 R2 G2 S,S P N2 D2 P M1 G2 R2 G2 S,
+phalamanjari,S G2 M1 D2 S,S N2 D2 P M1 G2 M1 R2 S,22 – KaraHarapriya,fill,38ay2KX1MZmfOfm1aK1vLhUKJhk,phalamanjari,,,
+rIthigowLa,S G2 R2 G2 M1 N2 D2 M1 N2 N2 S,S N2 D2 M1 G2 M1 P M1 G2 R2 S,22 – KaraHarapriya,ambiguous: several of ours,38aw9zibpTBEmO0FinGP1DyprLi,reeti gowLa,S G2 R2 G2 M1 N2 D2 M1 N2 N2 S,S N2 D2 M1 G2 M1 P M1 G2 R2 S,reeti gowLa | rItigauLa
+rudhrapriya,S R2 G2 M1 P D2 N2 S,S N2 P M1 G2 R2 S,22 – KaraHarapriya,differs,38bEHxaHmgSOflEPAhkPI5kzFHx,rudrapriya,S R2 G2 M1 N2 S,S N2 P M1 G2 R2 S,
+sAlakabhairavi,S R2 M1 P D2 S,S N2 D2 P M1 G2 R2 S,22 – KaraHarapriya,not ours,,,,,
+shrIrAga,S R2 M1 P N2 S,S N2 P D2 N2 P M1 R2 G2 R2 S,22 – KaraHarapriya,differs,38avEoBSpYYp4h0XcLOqxlEf7Ts,shree,S R2 M1 P N2 S,S N2 P M1 R2 G2 R2 S,
+sudhdha ban&#8217;gALa,S R2 M1 P D2 S,S D2 P M1 R2 G2 R2 S,22 – KaraHarapriya,differs,38aw7xV8Wph4mkgGKE8nkSJCGxF,sudda bangaaLa,S R2 G2 M1 P D2 N2 S,S N2 D2 P M1 G2 R2 S,
+vasantha varALi 1,S R2 M1 P D3 N3,N3 D3 P G2 R2 S N3,24 – varuNapriya,differs,38b6cwoMSszTNHwDC8ClfxTN99S,vasantavaraaLi,S R2 M1 P D1 S,S N2 D1 P G2 R2 S,"parent mela: ours 20, theirs 24; notes outside mela 20: D3 N3"
+vasantha varALi 2,S R2 M1 P D3 N3,N3 D3 P M G1 R S N,24 – varuNapriya,differs,38b6cwoMSszTNHwDC8ClfxTN99S,vasantavaraaLi,S R2 M1 P D1 S,S N2 D1 P G2 R2 S,"parent mela: ours 20, theirs 24; notes outside mela 20: D3 N3 M G1 R N"
+vIravasantham,S G2 R2 M1 P S,S N3 D3 P M1 G2 R2 S,24 – varuNapriya,differs,38bEGaYRIzJQFLjlefqXhvsk2Tm,vIravasanta,S R2 M1 P N3 D3 N3 S,S N3 P M1 M1 R2 G2 S,
+kamalAmanOHari,S G3 M1 P N3 S,S N3 D1 P M1 G3 S,27 – sarasAn&#8217;gi,fill,38aw6JLWzInePCuX1idGjxci738,kamalaa manOhari,,,
+ChAyAtharan&#8217;giNi,S R2 M1 G3 M1 P N2 S,S N2 D2 P M1 G3 R2 S,28 – HarikAmbhOji,ambiguous: several of ours,38bEoZPr7gbs168epk4NaELViSf,chAyAtarangiNi,,,chAyAtarangiNi | caayataarangini
+dhvijAvanthi,S R2 M1 G3 M1 P D2 S,S N2 D2 P M1 G3 R2 G2 R2 S,28 – HarikAmbhOji,differs,38avHNLczuKgLD3eiQIguK0gkri,dvijAvanti,S R2 M1 G3 M1 P D2 S,S N2 D2 P M1 G3 M1 R2 G2 R2 S N2 D2 N2 S,notes outside mela 28: G2
+HaridhAsapriya *,S P M1 G3 M1 P D2 N2 S,S N2 D2 N2 P M1 G3 R2 S,28 – HarikAmbhOji,differs,3A73AzixcyKUwqyDNmNRXbjlujR,haridasapriya,S P M1 G3 M1 P N2 S,S N2 D2 N2 P M1 G2 R2 S,"parent mela: ours 22, theirs 28; notes outside mela 22: G3"
+janjUti,S R2 G3 M1 P D2 N2,N2 D2 P M1 G3 R2 S N2 D2 P D2 S,28 – HarikAmbhOji,ambiguous: several of ours,38bCNnYuR6ecfnKfeimpZcqJkcO,janjUTi,,,janjUTi | jhanjUTi
+kAmbhOji,S R2 G3 M1 P D2 S,S N2 D2 P M1 G3 R2 S N3 P D2 S,28 – HarikAmbhOji,differs,38av91cpt3JjT0yP6tTomzc0o1M,kAmbhOji,S R2 G3 M1 P D2 S,S N2 D2 P M1 G3 R2 S N3. P. D2. S,notes outside mela 28: N3
+kApinArAyaNi,S R2 M1 P D2 N2 S,S N2 D2 P M1 G3 R2 S,28 – HarikAmbhOji,fill,38awB2dN6JEjMvC7Y6NrMsnD0d3,kaapi naaraayaNi,,,
+karnAtaka bEHAg,S R2 G3 M1 P D2 N2 S,S N2 D2 N2 P D2 M1 G3 R2 G3 R2,28 – HarikAmbhOji,fill,38ayoqzUE3iTgFYFQecnpnyPoSK,karnaaTaka behaag,,,
+kedhAragowLa,S R2 M1 P N2 S,S N2 D2 P M1 G3 R2 S,28 – HarikAmbhOji,ambiguous: several of ours,38aveKl6cS7NvNjy4qrNqj5iOgZ,kEdAragauLa,S R2 M1 P N2 S,S N2 D2 P M1 G3 R2 S,kEdAragauLa | kEdaara gowLa
+kOkilaDhvani,S R2 G3 M1 D2 N2 D2 S,S N2 D2 N2 P M1 G3 R2 S,28 – HarikAmbhOji,differs,38ayvM15TY4ztqLKvFtSj12RTpF,kOkiladhwani,S R2 G3 M1 D2 N2 D2 S,S N2 D2 P M1 G3 R2 S,
+mAlavi,S R2 G3 M1 P N2 M1 D2 N2 S,S N2 D2 N2 P M1 G3 M1 R2 S,28 – HarikAmbhOji,differs,38avaTuGcBJoFHmAMGRGfi4gxbB,mALavi,S R2 G3 M1 P M1 D2 N2 S,S N2 D2 P M1 G3 M1 R2 S,
+nArAyaNagowLa,S R2 M1 P N2 D2 N2 S,S N2 P M1 G3 R2 G3 R2 S,28 – HarikAmbhOji,ambiguous: several of ours,38ax1AgL1atWXod5dDJ3G5Gk4Zv,naaraayaNa gowLa,S R2 M1 P N2 D2 N2 S,S N2 D2 P M1 G3 R2 G3 S,naaraayaNa gowLa | nArAyaNagauLa
+nArAyani,S R2 M1 P D2 S,S N2 D2 P M1 R2 S,28 – HarikAmbhOji,ambiguous: several of ours,38awxDSR6tZ3PVhNwbENKkF2o12,naaraayaNi,,,naaraayaNi | narani
+navarasa kalAnidhi,S R2 M1 P S N2 S,S D2 P M1 G3 R2 S,28 – HarikAmbhOji,differs,38bHQFFBs80Zc74yqhFduv0BX4W,navarasakalAnidhi,S R2 M1 P S N2 S,S N2 D2 P M1 G3 R2 S,
+pravAlajothi,S R2 M1 P D2 N2 S,S N2 D2 N2 P M1 G3 G3,28 – HarikAmbhOji,differs,3A73KZhsAhnEk38ye4iAV9BEvVn,pravaLajyOti,S R2 M1 P D2 N2 S,S N2 D2 P M1 G3 S,
+ravichandhrika,S R2 G3 M1 D2 N2 D2 S,S N2 D2 M1 G3 R2 S,28 – HarikAmbhOji,differs,38awBaCeYUw6ugNt2YBcJndRwjv,ravi candrikaa,S R2 G3 M1 D2 S,S N2 D2 M1 G3 R2 S,
+sAma,S R2 M1 P D2 S,S D2 P M1 G3 R2 S,28 – HarikAmbhOji,ambiguous: several of ours,38aw6iUbrQXuhbImJSmikidFEIz,shyaamaa,,,shyaamaa | sAmA
+saHAna,S R2 G3 M1 P M1 D2 N2 S,S N2 S D2 N2 D2 P M1 G3 M1 R2 G3 R2 S,28 – HarikAmbhOji,differs,38avM7MUFQJC5GyXMt67yrwG80W,shahAnA,S R2 G3 M1 P M1 D2 N2 S,S N2 D2 P M1 G3 M1 R2 G3 R2 S,
+sudhdha tharan&#8217;gini,S R2 G3 M1 R2 M1 P D2 N2 D2 S,S N2 D2 P M1 G3 R2 S,28 – HarikAmbhOji,differs,3A73QY1AAXsgbqI1cjOOmW3SR4u,sudhatarangini,S R2 M1 P D2 S,S N2 D2 P M1 G3 R2 S,
+supOshini,S R2 S M1 P N2 D2 S,S D2 N2 P M1 R2 M1 S,28 – HarikAmbhOji,differs,38axnoBUI86RTg6DBniO7dLhju2,supOshini,S R2 S M1 P N2 D2 S,S D2 P M1 R2 M1 S,
+surati,S R2 M1 P N2 S,S N2 D2 P M1 G3 P M1 R2 S,28 – HarikAmbhOji,differs,38avbOQ6h2v6rpAy3BjkyLf0et9,suraTi,S R2 M1 P N2 D2 N2 S,S N2 D2 P M1 G3 P M1 R2 S,
+svarAvaLi,S M1 G3 M1 P N2 D2 N2 S,S N2 P D2 M1 G3 R2 S,28 – HarikAmbhOji,fill,38b6h7WZUvvfP8hji9rOcliEwA0,swaraavaLi,,,
+svaravEdhi,S M1 G3 M1 P N2 D2 N2 S,S N2 D2 N2 P M1 G3,28 – HarikAmbhOji,differs,3A73RF4CoXcVzRZFmsifpgsaCOt,swaravEdi,S M1 G3 M1 P N2 D2 N2 S,S N2 D2 P M1 G3 S,
+umAbharaNam,S R2 G3 M1 P D2 N2 S,S N2 P M1 R2 G3 M1 R2 S,28 – HarikAmbhOji,fill,38az93JMQkvVA6RLyboglvTiHqC,umaabharaNam,,,
+vINA vAdhini,S R2 G3 P N2 S,S N2 P G3 R2 S,28 – HarikAmbhOji,differs,3A73SjJcgPU9t8CQ9HtkAXcR8bE,vInavadini,S R2 G3 P N2 S,S N2 P G2 R2 S,
+vivardhini,S R2 M1 P S,S N2 D2 P M1 G3 R2 S,28 – HarikAmbhOji,differs,38bHT7yUrqqgy5ZQDVWi1IyZTho,vivardhini,S R2 M1 P S,S N3 D2 P M1 G3 R2 S,"parent mela: ours 29, theirs 28; notes outside mela 29: N2"
+Arabhi,S R2 M1 P D2 S,S N3 D2 P M1 G3 R2 S,29 – DhIrashan&#8217;karAbharaNam,ambiguous: several of ours,38avFMe9pVRdNc2LJZxU6CWkGF1,Arabhi,S R2 M1 P D2 S,S N3 D2 P M1 G3 R2 S,Arabhi | Arabi
+atAna,S R2 M1 P N3 S,S N3 D2 P M1 P G3 R2 S,29 – DhIrashan&#8217;karAbharaNam,ambiguous: several of ours,3A733W3jSXsEU9IogrOtWPfB2kq,atan,S R2 G2 M2 P S,S N2 D2 P M2 G2 R2 S,atan | aThANA
+ban&#8217;gALa,S R2 G3 M1 P M1 R2 P S,S N3 P M1 R2 G3 R2 S,29 – DhIrashan&#8217;karAbharaNam,fill,38axViFn5F4mW0YoidJBhIsuAWj,bangaaLa,,,
+dhesAkshi,S R2 G3 P D2 S,S N3 D2 P M1 G3 R2 S,29 – DhIrashan&#8217;karAbharaNam,fill,38avmF7S1cj78K4NQuO9d52YtFM,dEshAkSi,,,
+HindhusthAni bEHAg,S G3 M1 P N3 D2 N3 S,S N3 D2 P M2 G3 M1 G3 R2 S,29 – DhIrashan&#8217;karAbharaNam,differs,38avNhoP3OhvBoGlX4HHdIDKZkl,hindustAni behAg,S G3 M1 P N3 S,S N3 D2 P M1 G3 R2 S,notes outside mela 29: M2
+janaranjani,S R2 G3 M1 P D2 P N3 S,S D2 P M1 R2 S,29 – DhIrashan&#8217;karAbharaNam,differs,38azE6ftVz5KYpMDcfJS0EGsv42,janaranjani,S R2 G3 M1 P D2 N3 S,S D2 P M1 R2 S,
+kannada,S G3 M1 P M1 D2 N3 S,S D2 P M1 G3 M1 R2 N3. S,29 – DhIrashan&#8217;karAbharaNam,refused,38aw2E5kSMPYdIaV8p0cRM3fdvU,kAnaDA,S R2 G2 M1 D N2 S,S N2 P M1 G2 M1 R2 S,not swara notation: N3.
+koiAHalam,S P M1 G3 M1 P D2 N3 S,S N3 D2 P M1 G3 R2 S,29 – DhIrashan&#8217;karAbharaNam,not ours,,,,,
+kuraN~ji,S N3 S R2 G3 M1 P D2,D2 P M1 G3 R2 S N3 S,29 – DhIrashan&#8217;karAbharaNam,not ours,,,,,
+sindhu mandhAri,S R2 G3 M1 P D2 P S,S N3 D2 P G3 M1 D2 P M1 R2 S,29 – DhIrashan&#8217;karAbharaNam,fill,38ayr1iONjQwIpN8maJAmUBrEgk,sindu mandaari,,,
+ChAyAnAta,S R3 G3 M1 P M1 P S,S N2 D2 N2 P M1 R3 S,34 – vAgaDhIsvari,ambiguous: several of ours,38aveldoipUUzInl5KBnk8o1EPF,chAyAnATa,S R G M P D N S,S N D P M G R S,chAyAnATa | caayanaaTTai
+gAnavAridhi,S M1 R3 G3 M1 P D2 N2 S,S D2 N2 P M1 R3 S,34 – vAgaDhIsvari,fill,38b5WgN1yyRoesDcWmh1h4o2nQf,gaanavaaridhi,,,
+gambhiranAta,S G3 M1 P N3 S,S N3 P M1 G3 S,36 – chalanAta,ambiguous: several of ours,3A739btwD3rq89uvtW3Kg2Kacb6,gambhIranATTai,S G3 M1 P N3 S,S N3 P M1 G3 S,gambhIranATTai | gambhIranATa
+nAta,S R3 G3 M1 P D3 N3 S,S N3 P M1 R3 S,36 – chalanAta,ambiguous: several of ours,38avYIjS6Z6bsgQARiMjvntAb1N,nATa,S R3 G3 M1 P D3 N3 S,S N3 P M1 R3 S,nATa | naaTTai
+JinAvaLi,S G1 R1 G1 M2 P D1 N3 D1 S,S N3 D1 P M2 G1 R1 S,39 – JAlavarALi,not ours,,,,,
+nabhOmaNi,S R1 G1 R1 M2 P S,S N2 D2 P M2 G1 R1 S,40 – navanItham,differs,38bEZQgbJCmbbJGFaRVFwpMwYxM,nabhOmaNi,S R1 G1 M2 P D2 N2 S,S N2 D2 P M2 G1 R1 S,
+vijayashrI,S G1 R1 G1 M2 P N3 S,S N3 P M2 G1 R1 S,41 – pAvani,ambiguous: several of ours,38bFHwDtzdMmNKu4TMXttc0k0Cs,vijayashrI,S R1 G2 M2 P N2 S,S N2 P M2 G2 R1 S,vijayashrI | vijayashree
+thivravAHini,S R1 G2 M2 P D2 N2 S,S N2 D2 P M2 G2 R1 G2 M2 R1 S,46 – shadhvidha mArgiNi,differs,38b6rUd12CExtGvrW42zuyMcgZ5,teevravaahini,S R1 G2 M2 P D2 P N2 S,S N2 D2 P M2 G2 R1 G2 M2 R1 S,
+dhipaka,S G3 M2 P D1 P S,S N3 D1 N3 P M2 G3 R1 S,51 – kAmavardhini,differs,38b5s1PfJSSpQXzjJEKwTKPPANn,deepakam,S R2 M2 P D1 P S,S N3 D1 N3 P M2 G3 R1 S,
+mandhAri,S R1 G3 M2 P N3 S,S N3 P M2 G3 R1 S,51 – kAmavardhini,differs,38b9UbVjAxBajosbJaFc8tUfVwM,mandAri,S R1 G3 M2 P N2 S,S N2 P M2 G3 R1 S,"parent mela: ours 50, theirs 51; notes outside mela 50: N3"
+rAma manOHari,S R1 G3 M2 P D2 N2 D2 S,S N2 D2 P M2 G3 R1 S,52 – rAmapriya,fill,38bEYAvlxkxo2acwwon7EpzAMCm,ramAmanOhari,,,
+gamakakriya,S R1 G3 M2 P D2 P S,S N3 D2 P M2 G3 R1 S,53 – gamanashrama,fill,38bEGI02ELbMjfq20MJxnzrPz0S,gamakakriyA,,,
+gamanakriya,S R1 M2 P D2 N3 S,S N3 D2 P M2 G3 M2 R1 S,53 – gamanashrama,not ours,,,,,
+mEchakAn&#8217;gi,S R1 G3 M2 P D2 N3 S,S N3 P D2 P M2 G3 R1 S,53 – gamanashrama,differs,3A73GPotiPEvO2wZS6alBDLDP9I,mEcakAngi,S R1 G3 M2 P D2 P N3 S,S N3 P D2 P M2 G3 R1 S,
+vijayavasantha,S M2 P D3 N3 S,S N3 P M2 G3 R1 S,54 – vishvAmbhari,differs,38b6Wiv2NHhxroyU2QNZvjrQxWO,vijayavasantam,S M2 P D3 N3 S,S N3 P M2 G3 S,
+chinthAmaNi,S R2 P M2 P D2 N2 S,S P D1 P M2 G2 R2 S,56 – shanmuKapriya,differs,38bLOkveMZI7JZOJoZ0kMTuVgql,cintAmaNI,S G2 R2 G2 M2 G2 R2 G2 P M2 P D2 N2 S,S N2 D2 P M2 G2 R2 S,notes outside mela 56: D2
+sudhdha rAga,S R2 G2 M2 P N3 S,S N3 P M2 G2 R2 S,57 – simHendra madhyamam,ambiguous: several of ours,3A73QRAzbQcihFS83N5x5K8CgSQ,sudhA,S R2 M1 P D2 S,S N2 D2 P M1 R2 S,sudhA | sudda (shuddha)
+amarasenapriya,S R2 M2 P N3 S,S N3 P M2 R2 G2 R2 S,60 – nIthimathi,differs,3A72ych2r6lEPwVCHAeMTlnQoDc,amarasEnapriyA,S R2 M2 P N2 S,S N3 P M2 G2 R2 S,
+shruthiranjani,S R2 G3 M2 P D1 N1,N1 D1 P M2 G3 S R2 S,61 – kAnthAmaNi,differs,3A73OVmyFhtmonDux4fw2xIaDT5,shrutiranjani,S R2 G3 M2 P D1 N1,N1 D1 P M2 G3 R2 S,
+gopriya,S R2 G3 M2 D1 N2 S,S N2 D1 M2 G3 R2 S,62 – rishabhapriya,differs,38avPRjzQT3NHGYqCmnc5tIPUi7,gOpriya,S R2 G3 M2 D1 N2 S,S N3 D1 M2 G3 R2 S,
+bhUshavaLi,S R2 G3 M2 P D2 S,S N2 D2 P M2 G3 R2 S,64 – vAchaspathi,fill,38b8wBWPTv2aAtqmXByuReXET8c,bhUSAvaLi,,,
+yamunAkalyANi,S R2 G3 P M2 P D2 S,S D2 P M2 P G3 R2 S,65 – mEchakalyANi,differs,38av9SEf5yOSIKqbFyHGepX4qYC,yamunAkalyANi,S R2 G3 P M2 G3 P D2 N3 D2 S,S N3 D2 P M2 G3 M1 R2 S,
+amRuthavarshiNi,S G3 M2 P N3 S,S N3 P M2 G3 S,66 – chithrAmbari,not ours,,,,,
