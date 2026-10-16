@@ -2,13 +2,13 @@
 
 Single next step, kept current. Everything else lives in `docs/plans/`.
 
-## Waiting: respell the 164 new carnatic-circle.com bhajans (2026-10-15)
+## Waiting: clean up the 164 carnatic-circle.com bhajans (2026-10-16)
 
-**Next step:** run the respelling readers (`lyrics-batches` → reader → `lyrics-ingest`) over the
-164 bhajans created 2026-10-15 (tagged `bhajan`; ids in
-`docs/research/carnatic-circle-bhajans-2026-10.csv.applied-2026-10-15T17-14-49-602Z.json`). Their
-lyrics mix plain English romanisation and ITRANS. They are live and reindexed; 113 link to the
-new `Unknown` artist. Undo: `source-undo --manifest <that file> [--only <id>]`.
+**Next step:** the readers' respelling went to prod 2026-10-16, but 34 sections were refused and
+still hold plain spelling with capitals (list: `data/lyrics-bhajans/imported/refusals.csv`), and
+some lyrics carry site junk ("click here", "Go back to…", an ashtapadi index). Strip the junk by
+rule (readers may not remove words), then fix the refused sections. Undo for the import itself:
+`source-undo --manifest docs/research/carnatic-circle-bhajans-2026-10.csv.applied-2026-10-15T17-14-49-602Z.json`.
 
 ## Waiting: carnatic-circle.com rows held for the owner (2026-10-15)
 
@@ -64,7 +64,7 @@ each, writing `lyrics-NNN.result.json` beside the packet.
 then `lyrics-meanings --out data/lyrics-meanings.csv`, review, `--apply`, import, and reindex
 search. Still open after that: 33 compositions with `�` encoding damage; scraped `rAgA: … tALA. 1:` header text inside 66 lyric sections — regular enough for a rule-based strip, like `lyrics-meanings`, since readers may not remove words; a few records whose lyrics are a different song from the title (reader notes say which); languages outside `LYRICS_LANGUAGES` (Sourashtra, Gujarati, Braj) left as stored.
 
-Progress: 92 of 172 batches read and imported (001–092), 4,516 compositions. Scheduled to resume 2026-10-16 01:45 IST: the 164 bhajans first (`data/lyrics-bhajans/`, 4 packets cut 2026-10-15 with `--ids`), then 093–172 (3,952 songs). The run stops at the import dry run; the prod import waits for the owner. 2026-10-16: a session limit at ~02:30 stopped the run; results so far: bhajans 002, 004 and batches 093–114 (110 pending); resumed 09:27. Re-run `status.sh`-style check: any packet with no `.result.json` still needs a reader. Re-run any batch with no
+Progress: 119 of 172 batches read and imported (001–119); 120–172 (53 packets, ~2,650 songs) are left in `data/lyrics/`. 093–119 went to prod 2026-10-16: 1,315 updated, 17 of 1,715 sections refused (multi-word joins; the rules' version was used). Same day, the 164 carnatic-circle bhajans (`data/lyrics-bhajans/imported/`): 164 updated, but 34 of 199 sections refused, because their plain spelling (`th` for t, `ee`, mid-word splits, capitals like `Premato`) costs more than the per-word budget allows. Those sections still carry the plain spelling and capitals, which render as wrong letters; they need either a hand pass or a plain-romanisation mode in `checkRespelling`. Readers also found site junk inside some bhajan lyrics ("click here", "Go back to…", an ashtapadi index). Search reindexed (12,476 documents). Resume: readers over every packet in `data/lyrics/` with no `.result.json`, then ingest, dry run, import, reindex, and move the batches to `imported/`.
 `.result.json` — a reader cut off by a usage limit usually has already written its file.
 
 ## Active: filling the artist corpus (2026-08-09)
