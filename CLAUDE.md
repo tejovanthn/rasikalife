@@ -472,6 +472,11 @@ import, because the CSV replaces `lyricsV1` whole. The composition page renders 
 plain English and had never rendered it before. Until then, `isEnglishLine` keeps both the rules
 and the readers off those lines.
 
+`isEnglishLine` protects whole lines only, and a title is one line, so the Tamil ன rule once
+printed `(an2other version2)`. The few English words that appear in a title's qualifier are
+listed in `ENGLISH_QUALIFIER_WORD`, which leaves them alone and undoes an `n2` a reader copied in.
+Extend that list when a new one turns up.
+
 Tamil ற்றி is written `R_Ri`: `RRi` parses as vocalic ṛ. `_` is ITRANS's silent separator, and
 `transliterate` strips it from every output, since only Devanagari dropped it on its own.
 

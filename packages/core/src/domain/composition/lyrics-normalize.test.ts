@@ -262,4 +262,13 @@ describe('retargetTamil', () => {
   it('adds it to one that turned out to be', () => {
     expect(retargetTamil('ennai', true)).toBe('en2n2ai');
   });
+
+  it('keeps ன out of an English qualifier in a Tamil title, and takes a copied one back out', () => {
+    expect(retargetTamil('pAl vaDiyum mukham (version 1)', true)).toBe(
+      'pAl vaDiyum mukham (version 1)'
+    );
+    expect(normalizeLyricsText('veTri tarum vaDivEl (an2other version2)', { tamil: true })).toBe(
+      'veTri tarum vaDivEl (another version)'
+    );
+  });
 });

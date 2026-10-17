@@ -50,7 +50,17 @@ function isWord(token: string): boolean {
   return VOWEL.test(token);
 }
 
+/**
+ * English words that sit inside a title's bracketed qualifier — `(version 1)`, `(another
+ * version)`. A title is one line, so `isEnglishLine` never protects the qualifier, and the
+ * Tamil rule printed `(an2other version2)`. A word here is returned with any `n2` taken back
+ * out, because readers copied the damaged form into their proposed titles.
+ */
+const ENGLISH_QUALIFIER_WORD = /^\(?(version|another|alternate|second|variant)\)?[,.]?$/i;
+
 function normalizeWord(word: string, opts: { tamil: boolean; sanskrit: boolean }): string {
+  const undamaged = word.replace(/n2/g, 'n');
+  if (ENGLISH_QUALIFIER_WORD.test(undamaged)) return undamaged;
   if (!isWord(word)) return word;
   let w = word;
 
