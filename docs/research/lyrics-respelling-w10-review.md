@@ -1,0 +1,46 @@
+# Respelling run w10: items for the owner
+
+- 121: tAvaka nAmAni has scraped raga/tala header in section 1 (rule-based strip).
+- 125: 38bHZpTgdsac8R3PaLetPUw4yRH broken characters near "dhIm taka" (encoding damage).
+- 125: title "aha~NkArat-timir varamE" -> "vArAmE" may be a word change; check ingest.
+- 128: iyarkkaiyuLLE garbled characters near "amaidi" (encoding damage).
+- 128: title nAlavar -> nAvalar (Arumuga Navalar) and caraNam nAlavan2 -> nAvalan2; word change, check.
+- 130: kanarAdA manasA (38bIKZCpfIDTxfmvz3KtPS7SKbv) language record was missing; asked reader to add.
+- 132: 38bItDovdyKH2eKVB82bwhcf8O4 (paLLikkUDam vaittu) is two songs in one record: orders 1-4 Tamil, 5-28 Telugu ragamalika (palukavE ba~NgAru cilaka). Labelled Telugu. Needs splitting.
+- 132: kR^iSNa kR^iSNa has stray "1caraNam 1" lines.
+- 133: "maTham" -> "maDam" in pallavi to match title; may be a word change; check.
+- 123: 4 records with rules_detected_tamil=false that the reader judges Tamil (label already Tamil). Check whether ingest adds n2 to them (looksTamil decides, not the label).
+- 123: kuzha -> kuzhal adds a letter; may be refused. Several garbled Abraham Panditar lines.
+- 131: "Om shrIm aim krIm" title says shrIm, lyrics say hrIm (left). Garbled chars (�uLLEn2�, I\jIva) - encoding damage.
+- 129: reader applied Tr->RR, ai->ay, gh->g by script across Tamil records; spot-check (e.g. nATrAi -> nARRAy unsure). Broken quotes around namah shivAya.
+- 135: shaktik-kan2al sec 3 broken chars (encoding). seyya vANDum has English note "no givan2 rAgA or tALA" in sec 3 (lyrics-meanings / strip).
+- 134: garbled tokens (pashu nia, iyalbiTriribarum), mojibake quote in pO pO pO. maNNen2badu mixes N/n2 (peNn2en2badu) - n2 rule may not fix.
+- 137: sUriyan2ukkuL stray "1caraNam 1" lines; sUryakAntattilE English note "no givan2 rAgA or tALA". Risky fixes: muugan2E->murugan2E, AdarttaruL->AdarittaruL.
+- 145: azhagAy dvArakaiyai has raga line "15 maayamaaLava gowLa jan2ya" in lyrics (strip). pon2n2n2aDi has triple n2.
+- 147: en2n2a tAn2 son2n2En2 caraNam holds a kummi plus scraped credit "Uttukadu Ve~Nkatasubbier." (strip).
+- 148: first Sonnet reading set aside in data/lyrics-sonnet-trial/ (no r->R fixes at all; 64 fixes vs ~250 typical).
+- 146: guessed-word fixes to check (na~njil->ne~njil, mayal->mayil, daishittu->darishittu, samatrraik->samarttaik); garbled chars in two records; title aruLin2En2 vs pallavi aruLin2An2.
+- 148 (Sonnet+checklist): urai -> uRai may be wrong (urai = speech takes r). Check r->R fixes in 148+ batches: validator ignores case, so a wrong R passes.
+- 152: janAmitE -> jAnAmitE (to match title) may be word change. 155: 38bLKhT02RKOmq5fFMJzvF2mBYd vE~NkaTaramaNA Marathi with one Tamil section; 38bLJxo5USVLGUmgBp2oCAUtmLp Sanskrit text under unrelated Tamil title; 38bLOJ0mMrySHHcAd1RiMePMSTO holds only an English translation (lyrics-meanings).
+- 153: 38bLAjVG9B34nAxE4jttqbdF8Cm title sUrya vs pallavi tUya. Sanskrit hrudaya/mrugamada/sukruta left unfixed in 153 (later prompts name it).
+- 156/157 Sonnet results set aside (under-fixed Telugu/Sanskrit); rerun on Opus. 153/155 non-Tamil records also under-fixed; rerun on Opus. 156: parAmukhamEnammA 38bLU4KEExXjmLhbWOVMX8b2Ozs Telugu pallavi + Tamil sections; junk lines in sAmini rammanavE, pAli~ncu kAmAkSi.
+
+## Run plan (2026-10-17)
+- Sonnet under-fixes non-Tamil records (0-0.6 fixes/rec vs Opus 2.1). Tamil fixes fine.
+- Opus: 156, 157 (running), 158-164, 172.
+- Sonnet: 165-171, then cut their non-Tamil records into more lyrics-nt packets for Opus.
+- data/lyrics-nontamil/lyrics-nt-1..3.json: 113 non-Tamil records from Sonnet batches 148,149,151-155 (source_batch field). Opus reads them; MERGE: for each id in an nt result, replace that id's record in data/lyrics/<source_batch>.result.json (nt record wins; id absent from nt result -> keep Sonnet record). Do this before ingest.
+- nt-1: 38bKw79mgiUzdgJFf9FtRULUwOd title "naDa naDa naDa kR^iSNA ivvazhakkai" (Tamil) but lyrics are Sanskrit "nAda murali" - wrong song/title. 38bKZ6hgx0cidOJGvibOMWnoZvv replacement chars in jati lines. Less-sure fixes: tArukA->dArukA, karNAsAgara->karuNAsAgara, vrajayuti->vrajayuvati.
+- 157 (Opus): garbled lines in dorakenu nEDu, mAnamu lEdA, rAma kathA sAgara; English meaning lines with heading "Meani~Ng" (lyrics-meanings).
+- 158 (Opus): many garbled words in Mysore Sadashiva Rao pieces (susyAtAbhduta, guLOpvAlpeDla, nApivedale) - encoding/source damage.
+- nt-3: 38bLJxo5 Tamil title varamonru tandaruLvAi on Sanskrit lyrics vAri vihAri; 38bLKhT0 Marathi song with a separate Tamil song appended to caraNam 5 (split). nt packets merged into 148,149,151-155 results (Sonnet originals in data/lyrics-sonnet-trial/pre-merge/).
+- 160: duplicates 38bRcazJRLXcHBPca0vddba7rgv and 38bRcCMzLyl14YNkTBOzPayQdS1 (second title "pAri paDarnda rAgA:"); 38bRb8H8lS7gQCiNPyqNHalBXG7 titled "ne~njam puNNAgavE" but lyrics "nartana gaNapatim"; titles with scrape junk "raagam:", "rAgA:".
+- 162: BUG? n2 rule turned English title qualifier "(another version)" into "(an2other version2)". Check title handling in lyrics-normalize/ingest before dry run. Garbled: kaNNAlE karuNai, varaguNa gambhIra, Hindi lalaji song.
+- 161: O paradEvi pAvanI caraNam holds a second song (okka navvE) and an English note; two ninu/ninnE neranammiti records messy in later caraNams; pApamupashami~ncitivi probably shApamu.
+- 163: title "niratavara" vs pallavi "nirata varada".
+- 164: guru sArvabhaumAya 38bRp8vaf71as6AQIpkDyD7Dnb1 has caraNams in four languages; owner decides label. isai nATakam 38bRpggnVtbM6k8omezUvAmCVaj and praNava nAdamen2um 38bRpZdHhlC1wFGEKmVLegOriQ9 hold many garbled words.
+- 165: gAndhiyai pOTruvOmE title on Murugan lyrics (wrong title).
+- RESOLVED: Tamil-labelled records with rules_detected_tamil=false get n2 at ingest (lyrics.ts: a surviving Tamil label after a reader is confirmed).
+- 168: 38bS2LiGf3mBvAFUx884MNO9fxP aRintavar yAruLar in aa/th plain spelling, respelled throughout (may be refused like bhajans). Andal vAraNam Ayiram 38bS0Qa6gsHMlSTMe6euIGMiChB garbled. 38bS2bFfau9yRuoMf3joSdUGPEb title AlavAyil vAzhum vs pallavi.
+- nt-4: samsAdi -> kamsAdi least certain (drop if in doubt). G.S.Mani pieces with garbled words.
+- 170: title bOdham vs pallavi bhOgam in "bOdham peRavE man2a".
