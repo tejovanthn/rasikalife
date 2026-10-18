@@ -32,18 +32,16 @@ Of 75 tala records, many are raga names or fragments from the karnatik.com impor
 (`Bhairavi.`, `kalyANi`, `given`, `or`, `m`), and none holds aksharas, a structure or a tradition.
 Worth a dedupe-and-merge pass like the ragas' before adding any taals.
 
-## Waiting: 24 new songs from shivkumar.org (2026-10-12)
+## Shivkumar.org: all 415 songs in prod (2026-10-18)
 
-**Next step:** owner decides the 24 rows with no `decision` in
-`docs/research/shivkumar-matches-2026-10.csv` (`review_note` says why each is held). They are
-songs we do not hold; each needs `new_language`, a composer check (some would create a new
-artist), then `decision` = `create`. Then `source-csv`, `source-apply`, `reindex`, and the
-respelling readers over the new lyrics. The 391 confident matches are live in prod (applied
-2026-10-12, reindexed); undo record: `docs/research/shivkumar-import-2026-10.applied.json`
-(`source-undo --manifest <it> [--only <id>]`). The attribution page credits shivkumar.org
-(`seed:content`, 2026-10-12). Distinct recording labels are committed; they need a deploy.
-Prod holds two records of every content page from the January and March seeds; both are kept
-in step now, and one copy of each could be deleted.
+The 24 held songs were created in prod 2026-10-18 (languages set by hand; 8 new composer
+artists; Viriboni's font-garbled lyrics decoded by hand and its notation dropped; Nive
+Gatiyani's English moved to `meaning`). Undo: `source-undo --manifest
+docs/research/shivkumar-new24-2026-10.applied.json`. **Next step:** respelling reader over the
+23 with lyrics (`data/lyrics-shivkumar24/`), then `lyrics-ingest`, dry run, import, reindex.
+The 391 earlier matches are live too (undo: `docs/research/shivkumar-import-2026-10.applied.json`).
+Distinct recording labels are committed; they need a deploy. Prod holds two records of every
+content page from the January and March seeds; one copy of each could be deleted.
 
 ## Waiting: raga dedupe approval (2026-10-09)
 

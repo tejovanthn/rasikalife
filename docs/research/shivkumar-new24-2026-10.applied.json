@@ -1,0 +1,147 @@
+{
+  "source": "shivkumar",
+  "file": "../../data/sources/shivkumar/import-new24.csv",
+  "appliedAt": "2026-10-18T16:39:23.448Z",
+  "userId": "39WZZXug7V6PdinExzhhp6zDuKD",
+  "attached": [],
+  "created": [
+    {
+      "id": "3KsLs8ImzM2hqoHwWDqq7GCTh6X",
+      "title": "balasubramanyam padame"
+    },
+    {
+      "id": "3KsLsH6vzQ1Oo6vf77CnK0U58uv",
+      "title": "dheem dheem"
+    },
+    {
+      "id": "3KsLsWzqs6c5lj7Wxvj9OrLgRgn",
+      "title": "eppadi manam"
+    },
+    {
+      "id": "3KsLsebZoYxNvXoNipjHorT6Phs",
+      "title": "gajavadana"
+    },
+    {
+      "id": "3KsLsnvd7xOrkIi6JPAxIxGuP91",
+      "title": "karuna cheivan entu"
+    },
+    {
+      "id": "3KsLsxyN9WJPHNl6kpJ158YW8X2",
+      "title": "kausaleya sri"
+    },
+    {
+      "id": "3KsLtC4XP6s5QLsug6nv6uZyfaw",
+      "title": "lalithe"
+    },
+    {
+      "id": "3KsLtSCpsIH66i5XTUyZSKgnycY",
+      "title": "neemathisalaka"
+    },
+    {
+      "id": "3KsLtUgZ2A0G4jGXwYAU5YTcPml",
+      "title": "parama pavana"
+    },
+    {
+      "id": "3KsLtdE6zgeMHDeEVh45gDzMQ34",
+      "title": "ramabhirama"
+    },
+    {
+      "id": "3KsLtjZWvII8WvrWNvcf9H1xW7R",
+      "title": "sevikka vendum ayya"
+    },
+    {
+      "id": "3KsLtzrHJx1VUFmR8hGjgYnrcWP",
+      "title": "sri ranganatham"
+    },
+    {
+      "id": "3KsLu9juJODhTUsJiD7oPSOIu13",
+      "title": "analekara"
+    },
+    {
+      "id": "3KsLuD5ML0B4k1SBiQdNlrR2ulI",
+      "title": "kunda goura"
+    },
+    {
+      "id": "3KsLuOgQX369pazwd4c0O3v27DO",
+      "title": "raara venugopa"
+    },
+    {
+      "id": "3KsLugHG0j6aRg8ogovXfcBInvY",
+      "title": "devar munivar"
+    },
+    {
+      "id": "3KsLuplRw9BKSa7ddl4F68HlMFo",
+      "title": "jalajakshi"
+    },
+    {
+      "id": "3KsLv3ETPDWXJvV5ZwOkf1TPHoa",
+      "title": "ninnukori"
+    },
+    {
+      "id": "3KsLvAt8CQ4YKuIkciXug3xM2Gv",
+      "title": "nive gatiyani"
+    },
+    {
+      "id": "3KsLvHqFVBNDVaK0C3rcMP99cuO",
+      "title": "sami ninne"
+    },
+    {
+      "id": "3KsLvRwTf5K1KmDFjzXCSKCT7y8",
+      "title": "tharuni ninnu"
+    },
+    {
+      "id": "3KsLvctenHwgzL2fEDokVigYjwz",
+      "title": "vanajakshiro"
+    },
+    {
+      "id": "3KsLvp2X3Ds6or18W84MrC9vfdm",
+      "title": "vanajaksha"
+    },
+    {
+      "id": "3KsLvrdTwBKznrrJPefCOUiGE3p",
+      "title": "viriboni"
+    }
+  ],
+  "createdLinks": [
+    {
+      "domain": "artist",
+      "id": "3KsLsS9pbDQZP2AX0zOlEvSIz2h",
+      "name": "Kumara Ettendra"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLstEb0hRP8oVpxXsfqtfpBRj",
+      "name": "V V Srivatsan"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLtIxeG5QzP3dNQeQ3zmabkkO",
+      "name": "Kavi Matrubhootayya"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLucfzOJWsbpqQPByvVd4ZBmt",
+      "name": "Manambuchavadi Venkatasubbaiyer"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLuxP9pVvVGiwO83E9VyMyaEw",
+      "name": "Tacchur Singarachari"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLvCvaQl5ysgraXUmUCNJD118",
+      "name": "Karur Devudu Iyer"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLvM0ZvvyKg7oMLzetNOn2GU3",
+      "name": "Violin Ponnuswamy"
+    },
+    {
+      "domain": "artist",
+      "id": "3KsLvxHk3YWjaXsFUbBq2YQmJ5k",
+      "name": "Pacchimiriam Adiyappayya"
+    }
+  ]
+}
