@@ -390,11 +390,15 @@ export function canonicalLanguage(value: string): LyricsLanguage | undefined {
  * A composition title with the scraped noise taken off. 290 titles carry the source's
  * "- Click to listen (performer)!" link text, which also landed in their URL slugs. A
  * bracketed qualifier — `(varNam)`, `(bhajan)`, `(jOnpuri)` — is kept: it is what tells two
- * pieces with the same opening words apart.
+ * pieces with the same opening words apart. A *version* note — `(version 1)`, `(another
+ * version)` — is dropped: it names a transcription, not a piece, and the owner wants it off
+ * the page. Two records left with one title are told apart by their ids, which the route keys on.
  */
 export function cleanCompositionTitle(title: string): string {
   return title
     .replace(/\s+[-–]\s+click to lis(?:ten|etn)\b.*$/is, '')
+    .replace(/\s*\([^)]*\bversion2?\b[^)]*\)/gi, '')
+    .replace(/\s+version2?\s*\d*\s*$/i, '')
     .replace(/!+\s*$/, '')
     .replace(/\s+/g, ' ')
     .trim();

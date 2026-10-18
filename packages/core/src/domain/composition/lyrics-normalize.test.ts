@@ -203,6 +203,19 @@ describe('cleanCompositionTitle', () => {
     );
   });
 
+  it('drops a version note, whatever its wording or damage', () => {
+    expect(cleanCompositionTitle('pAl vaDiyum mukham (version 2)')).toBe('pAl vaDiyum mukham');
+    expect(cleanCompositionTitle('veTri tarum vaDivEl (an2other version2)')).toBe(
+      'veTri tarum vaDivEl'
+    );
+    expect(cleanCompositionTitle('x (another last line version) (varNam)')).toBe('x (varNam)');
+    // The Sanskrit vowel rule had already lengthened the English word, and one lost its brackets.
+    expect(cleanCompositionTitle('mAdhava hR^idi (vErsiOn 1)')).toBe('mAdhava hR^idi');
+    expect(cleanCompositionTitle('kALi~Nga nartana tillAnA (taam dhIm tarana) vErsiOn 2')).toBe(
+      'kALi~Nga nartana tillAnA (taam dhIm tarana)'
+    );
+  });
+
   it('tidies whitespace', () => {
     expect(cleanCompositionTitle('  enna   tavam ')).toBe('enna tavam');
   });
