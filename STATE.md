@@ -37,8 +37,10 @@ Worth a dedupe-and-merge pass like the ragas' before adding any taals.
 The 24 held songs were created in prod 2026-10-18 (languages set by hand; 8 new composer
 artists; Viriboni's font-garbled lyrics decoded by hand and its notation dropped; Nive
 Gatiyani's English moved to `meaning`). Undo: `source-undo --manifest
-docs/research/shivkumar-new24-2026-10.applied.json`. **Next step:** respelling reader over the
-23 with lyrics (`data/lyrics-shivkumar24/`), then `lyrics-ingest`, dry run, import, reindex.
+docs/research/shivkumar-new24-2026-10.applied.json`. Respelled the same day: 23 updated, 1 of 59
+sections refused (a line in Lalithe; rules version used). Search reindexed (12,513 documents).
+Kunda Goura has no lyrics in the source. Reader notes worth a look: the karuNa ceyvAn entu
+caraNam is badly garbled, and vanajAkSa's title disagrees with its pallavi (vanajAkSi).
 The 391 earlier matches are live too (undo: `docs/research/shivkumar-import-2026-10.applied.json`).
 Distinct recording labels are committed; they need a deploy. Prod holds two records of every
 content page from the January and March seeds; one copy of each could be deleted.
