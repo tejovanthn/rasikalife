@@ -42,7 +42,8 @@ export function isNavigationLine(line: string): boolean {
   return NAVIGATION.some(re => re.test(plain));
 }
 
-const INDEX_LINE = /^\s*a[sS]h?Tapad[iI]\s*\d+\s*-/;
+// `aShTapadI 7 -`, `Ashtapadhi 7-`, `ashtapadhi 7 -`: the site typed it several ways.
+const INDEX_LINE = /^\s*ash?tapadh?i\s*\d+\s*-/i;
 const INDEX_MIN = 5;
 
 /** `Ashtapadi -24 (anyOnya anurraga sUchaka ala~Nkaaram) Shurutti / BEhag / Adi` */

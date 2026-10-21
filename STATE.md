@@ -3,20 +3,15 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
-## Next: run the prepared prod writes (2026-10-21)
+## Done 2026-10-21: tala, lyrics and content cleanup in prod
 
-Built, dry-run and reviewed; the session could not write to prod. Run from `packages/scripts`, in
-this order, then reindex once:
-
-1. `pnpm prod-cli tala-cleanup --apply --file ../../docs/research/tala-cleanup-2026-10.csv`
-   (75 talas: 10 merged, 5 split, 40 unlinked, 82 compositions; record written beside the CSV).
-2. `pnpm prod-cli admin-csv-import --domain composition --file ../../data/lyrics-junk/lyrics-cleanup-import.csv --user 39WZZXug7V6PdinExzhhp6zDuKD --dry-run`,
-   then without `--dry-run`. Scraped navigation, ashtapadi indexes and karnatik.com headers
-   (report: `data/lyrics-junk/report.csv`), plus the 34 refused bhajan sections respelled.
-3. Only after 2: `pnpm prod-cli lyrics-meanings --apply --file ../../data/lyrics-meanings.csv --out ../../data/lyrics-meanings-import.csv`,
-   then `admin-csv-import` that file (dry run first). 121 English lines; decisions reviewed.
-4. `pnpm prod-cli seed:content --prune` (deletes the 14 March copies of the static pages).
-5. `pnpm prod-cli reindex`.
+Talas 75 → 20 (record: `docs/research/tala-cleanup-2026-10.csv.applied.json`); 145 compositions
+cleaned of scraped navigation, ashtapadi indexes and karnatik.com headers, with the 34 refused
+bhajan sections respelled (`data/lyrics-junk/`); 74 English lines moved to `meaning` in 12
+compositions; 14 duplicate content pages deleted; search reindexed (12,494 documents). Reader notes
+worth a look (kept close to the source where unsure): Ambe Gauri aarti lines 2–4 follow the
+standard aarti text; `jaya jaya narasimha` line 1 is Malayalam and a Panini line was guessed;
+`nandAtmajAnanda`, `sAvaLE sundar` and `gurumUrti pAdamulE` hold guessed readings.
 
 ## Waiting on the owner's review
 

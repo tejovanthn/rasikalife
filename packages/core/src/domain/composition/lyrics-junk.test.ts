@@ -103,6 +103,8 @@ describe('removeLyricsJunk', () => {
   it('strips an ashtapadi index only when it is a list', () => {
     const index = Array.from({ length: 6 }, (_, i) => `aShTapadI ${i + 1} - x – y`).join('\n');
     expect(removeLyricsJunk([{ order: 1, text: `la\n${index}` }]).lyrics[0]?.text).toBe('la');
+    const typed = Array.from({ length: 6 }, (_, i) => `Ashtapadhi ${i + 1}- x – y`).join('\n');
+    expect(removeLyricsJunk([{ order: 1, text: `la\n${typed}` }]).lyrics[0]?.text).toBe('la');
     const one = 'aShTapadI 7 - maamiyam – bhupalam\nla';
     expect(removeLyricsJunk([{ order: 1, text: one }]).lyrics[0]?.text).toBe(one);
   });
