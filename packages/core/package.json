@@ -96,10 +96,20 @@
       "import": "./src/domain/raga/melakarta.ts",
       "default": "./src/domain/raga/melakarta.ts"
     },
+    "./domain/tala/cleanup": {
+      "types": "./src/domain/tala/cleanup.ts",
+      "import": "./src/domain/tala/cleanup.ts",
+      "default": "./src/domain/tala/cleanup.ts"
+    },
     "./domain/tala/client": {
       "types": "./src/domain/tala/client.ts",
       "import": "./src/domain/tala/client.ts",
       "default": "./src/domain/tala/client.ts"
+    },
+    "./domain/composition/lyrics-junk": {
+      "types": "./src/domain/composition/lyrics-junk.ts",
+      "import": "./src/domain/composition/lyrics-junk.ts",
+      "default": "./src/domain/composition/lyrics-junk.ts"
     },
     "./domain/composition/lyrics-normalize": {
       "types": "./src/domain/composition/lyrics-normalize.ts",

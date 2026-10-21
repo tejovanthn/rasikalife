@@ -496,13 +496,38 @@ in-line hyphen splits (`mahAnubhAvu-landariki`) for every Indic script, and fold
 to `n` for Telugu and Kannada, which have no letter for ன. Store the ITRANS phonetically and
 fix a script's convention here, not in the data.
 
+**Scraped text that is not the song is removed by rule** (`lyrics-junk --out <csv> --report
+<csv>`, rules in `domain/composition/lyrics-junk.ts`), since readers may not remove words. Three
+kinds: carnatic-circle.com navigation ("Go back to…", "click here"), an ashtapadi index (five or
+more `aShTapadI N -` lines), and the karnatik.com page header (`title.  rAgA: X.  Y tALA.`),
+keeping any pallavi that ran on after it. A header is stripped only when the record holds exactly
+one **and** it names the record's own title. Several headers mean several songs in one record,
+and a header naming another title is the only sign the lyrics are a different song, so both are
+left alone and listed in the report. A standalone `(rAgA: kAmbhOji)` is a ragamalika marker and
+stays. The CSV replaces `lyricsV1` whole, like `lyrics-meanings`: import one before cutting the
+other.
+
+### Cleaning the tala table (`pnpm cli tala-cleanup`, two steps)
+
+Of 75 talas, 13 carry nearly every composition. Most of the rest came from karnatik.com headers
+split on the wrong full stop: a raga name (`kAnaDA.`) or a fragment of "no given tALA" (`given`,
+`or`, `m`) in the tala column. `tala-cleanup [--out]` reports every tala with a suggestion;
+`--apply --file <csv> [--dry-run]` applies the `decision` column: `keep`, `merge:<name>`,
+`split:<name>|<name>` (alternatives such as `Adi/rUpaka`: each composition gets both) or
+`unlink` (not a tala: removed from its compositions and soft-deleted, with nothing put in its
+place, because a raga name in the tala column says nothing about the tala). Rules live in
+`domain/tala/cleanup.ts`. The apply writes `<file>.applied.json` with each composition's talas
+before, which is what an undo would restore. Reindex after. The 2026-10 decisions are in
+`docs/research/tala-cleanup-2026-10.csv`.
+
 ### Static content pages (`seed:content`)
 
 The pages in `packages/scripts/src/addContent.ts` (about, attribution, FAQ…) are written by
-`seed:content [--dry-run]`, matched by path: a page that exists is updated in place, a missing
-one is created. It used to create every page on every run, so prod holds two records of each
-(January and March 2026). The update covers every record with the path, because
-`getContentByPath` returns whichever the index lists first.
+`seed:content [--dry-run] [--prune]`, matched by path: a page that exists is updated in place, a
+missing one is created. It used to create every page on every run, so prod held two records of
+each (January and March 2026). The update covers every record with the path, because
+`getContentByPath` returns whichever the index lists first. `--prune` deletes every copy but the
+oldest; nothing refers to a content record by id.
 
 ### Composition sources, and importing an outside source (`source-*`)
 

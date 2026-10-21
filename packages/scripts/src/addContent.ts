@@ -1112,8 +1112,12 @@ Thank you for your support. Your generosity helps keep the tradition of Carnatic
  * Writes the pages above to the database, matched by path. A page that exists is updated in
  * place (every record holding that path, since earlier runs created one per run: prod held
  * two of each by 2026-10); a missing page is created. `--dry-run` lists what would change.
+ *
+ * `--prune` then deletes every copy but the oldest, so a path holds one record. Nothing refers to
+ * a content record by id, and after the update the copies hold the same text, so the delete
+ * loses nothing.
  */
-export async function seedContent(opts: { dryRun?: boolean } = {}) {
+export async function seedContent(opts: { dryRun?: boolean; prune?: boolean } = {}) {
   const Content = await import('@rasika/core/domain/content');
   const { ContentEntity } = await import('../../core/src/domain/content/entity.js');
   const fields = ['content', 'category', 'status', 'visibility', 'meta', 'navigation'] as const;
@@ -1121,6 +1125,7 @@ export async function seedContent(opts: { dryRun?: boolean } = {}) {
   let created = 0;
   let updated = 0;
   let unchanged = 0;
+  let pruned = 0;
   for (const item of data) {
     const existing = (await ContentEntity.query.byPath({ path: item.path }).go({ pages: 'all' }))
       .data;
@@ -1153,6 +1158,18 @@ export async function seedContent(opts: { dryRun?: boolean } = {}) {
       }
       updated++;
     }
+    if (opts.prune && existing.length > 1) {
+      const [, ...extra] = [...existing].sort((a, b) =>
+        String(a.createdAt).localeCompare(String(b.createdAt))
+      );
+      for (const record of extra) {
+        console.log(`${opts.dryRun ? '[dry-run] ' : ''}delete ${item.path} (${record.id})`);
+        if (!opts.dryRun) await Content.deleteContent(record.id);
+        pruned++;
+      }
+    }
   }
-  console.log(`✅ ${created} created, ${updated} updated, ${unchanged} unchanged`);
+  console.log(
+    `✅ ${created} created, ${updated} updated, ${unchanged} unchanged, ${pruned} duplicates deleted`
+  );
 }

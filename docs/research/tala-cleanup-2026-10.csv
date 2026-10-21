@@ -1,0 +1,76 @@
+decision,suggestion,id,name,compositions,sample_titles
+keep,keep,38av8dD72vMEPAD1Fy8qr98cMVb,Adi,4445,sha~NkaranArAyaNam | lOkAvana catura | mAnasa sa~ncararE
+keep,keep,38avBcoS9fav2x5Q9MfBJ8WDvx1,rUpaka,1036,yAtakke durAshi | daNDAyudhapANim daNDita | sarasvati dEvi
+keep,keep,38av96WVYuijwJOPTOSssarnBsq,cApu,808,vArijanAbhana | kIchukI sen2ru | pAli~ncu mInAkSi
+keep,keep,38awkpdnUcWsYJbkoZOtWbDD3JE,aTa,449,pApigaLoLagella | Ita mukhya prANa | kAshi vishvEshvara
+keep,keep,38aw3H4u3ixZvayc3D53eJA9duK,jhampa,338,sakala sampatpradE | saDeya samsAra | dayalEni bratukEmi
+keep,keep,38avyP1qNydCaMZRZFpNlQGu8t7,tripuTa,251,shrI madhvarAyara | kR^iSNamUrti kaNNa | eppaDi kUDuvEn2
+keep,keep,38avBoONv7HQ1mEnTuuCW16aYne,Eka,202,mADu sikkadallA | e~Ngum iyarkkai maNam kamazha | sakala suravinuta (nOtE)
+keep,keep,38avQm2L4bekk2uUjuMazFNSIqd,dEshaadi,142,enta bhAgyamu | ETi yOcanalu | bAgAyanayya
+keep,keep,38b7KCl5OatGvK8uBbvKd5VC5JU,aTanta,21,kaLamoLimma | sEvE nandanandanam | sArasa nAbha mE
+keep,keep,38awssVyTX7fu4HNqpUD3Pt3Fhn,cempat,19,sArasa sama mR^idu vacana | sArasa mukha | kamala nayana
+keep,keep,38b9egFaYfaIkO1J5oFIJMnfPbs,maTya,14,sadAnandamayi cinmayi (sixth AvaraNam) | nIvE gatiyani (varNa) | abhimAnavEke
+keep,keep,38b8OqShEicDkqdczlo5qlCTpbY,dhruva,8,vandE mAdhavamma (gItam) | muTTi muTTi muTTi | mInAkSi jayakAmAkSi (gItam)
+keep,keep,38awDtDRr41x3PGxFqte4LR21Ab,madhyaadi,8,rAma kathA | rAma nIyeDa | hari nArAyaNa
+unlink,unlink,38av9UJM4hchwvOewrLcQepKbzy,m,6,rAmabhadra rArA | pagaivan2ukku aruLvAy | bhaarata samudaayam
+keep,,38bGYilNe9vhWAcPKRHsAxpJLRl,bilandi,6,smarati nu mAm | bAjat murali | kuTilam asatImi
+unlink,unlink,38bHperAXzlU3XFUGPNlEX9ew4N,given,5,jaya jaya shuddha parAshakti | brahma tEja (ma~NgaLa shlOka) | kaNNE en2 kaNmaNiyE
+unlink,unlink,38bFfwt1JjDfp8GhvFSlblmjMxW,kAnaDA.,3,uLLam ira~Nguvadun2 | in2bamen2badu | kAntimati an2n2ai
+unlink,unlink,38bG59GH0mvju6meQBZ64jht0y5,suraTi.,3,shiva perumAn2 | piccaikku vandIrO | shrI rAma jayama~NgaLam
+unlink,unlink,38bFe8cwyl3bHYwOS4Fpu8WTzHK,RAgamAlika.,3,gati udavum | mAlai shUTTuvEn2 | karpaka vallI
+unlink,unlink,38bFZxaFht2gsXTdXRVQ55xAU9m,nATakuranji.,3,dharma samvardhan2i | svAmi nAn2 un2Ran2 (varNam) | naTan2a sabhApatiyE
+unlink,,38bFdphBG4RIs7Nj5YKl5MScFFy,sahAnA.,3,shrI vAtApi | iDaiyarAdun2 | gati nIyE
+unlink,unlink,38avmkmpShCFwC50T7I5Ykf2YdM,or,2,raagam: | allamu bellamaunA
+split:Adi|cApu,split:Adi|cApu,38bLMpDwj3qhiv9yEAPwEEM8abg,Adi/cApu,2,yArukku un2 dhyAn2am nErumO | kIzh vAn2am
+unlink,unlink,38bFakegkIqjOmOscHQYPhWw670,bhUpALa.,2,din2am IdE | nIvE nAkika
+unlink,unlink,38bFk9ULyAE3CzIqeGZ3liXNkDo,KalyANi.,2,kalyANi karuNAn2idhi | mayil vAhan2E
+keep,,38b9iZstooBWhISsqjn2ZE0ltHw,triviDi,2,satyam jagatidu | agali sairisalAradI
+merge:Adi,merge:Adi,38avqKlFg9SwrRVgcuvax98F6Yx,tALA/Adi,2,uNmai aRindavar | Ananda nilaya
+unlink,unlink,38b5NxYlD3O0Lwr8qfqU13pPDcr,none,2,shauri vidhinutE (nOtE) | vEdattin2 ucciyil (viruttam)
+unlink,unlink,38bFugN1evCKtF5PLdmQ97Ep56w,cenjuruTi.,2,un2n2ai nin2aindAlE | mOhan2a muraLIdharA
+merge:cApu,,38bDHzJgvKjpclkgkT9iTfmNybD,khaNDa caapu,2,nAnEke baDavanu | balumOsa mayyanurA (daru varNa)
+unlink,unlink,38bGDPAXIvJfMhX9ON6PhfUE93w,Bhairavi.,1,shrI SaNmukham
+unlink,unlink,38bFXMHn3Stn02tVM7CVk1rrbPy,kalyANi,1,cidambaram en2a
+split:cApu|Adi,split:cApu|Adi,38b5cZFu7cVebxkOgdRMLWfQDbU,caapu or aadi,1,Ehi trijagadIsha
+merge:jhampa,,38bGp5V4JOg38u7k2v4JuQ4QMO1,jhOmpata,1,kanatta shOka
+merge:Eka,,38b7yh8hKMEVtcSsK5dRx1xiyiw,catushra Eka,1,cintayEham sadA (nOtE)
+merge:cempat,,38bH8xAs0kVGGmJETpd6xT0HByy,cepmat,1,sAmOdam kalayAmi
+merge:jhampa,merge:jhampa,38b8m3mim4FNZleDvSIQ1qmMa9T,/jhampa,1,eNNiyE
+unlink,,38bFnYdZeaZvp7a4y09FywxbvUZ,kharharapriyA.,1,kAriruLokka
+keep,,38axNBYRXFhW6xJCu0XjzDNuccM,deepcaandi of Hindustaani,1,nandanandana vENunaada
+unlink,unlink,38bFYnYvi2rBJAf7Laq3Ngxqvdm,cenjuruTTi.,1,dEva dEvan2ai
+unlink,unlink,38bFvhp1weWKVIrfia5OVxVycEv,tODi,1,nAgarAjan2An2a
+unlink,unlink,38bDwISiTfPPPluu6lfswCGPW6D,hindustanikApi.,1,Urige bandare
+merge:tripuTa,merge:tripuTa,38bQttc7DR0Pmq7i3rLAvcMqoZy,k./tripuTa,1,shrI pArthasArathE
+split:rUpaka|Adi,split:rUpaka|Adi,38avN5gkpBkhRUkbOqZ8YHhQyRE,roopakam/aadi,1,uNmai aRindavar
+unlink,unlink,38bFUBYV8xtMIvqnhCAEQrzs4PM,dEvagAndhAri.,1,AraNa poruLE
+unlink,unlink,38bFzulcyfyQq2vNy7UC3IThKAX,hamsanAda.,1,nIyE parAmukhamAyin2
+unlink,unlink,38bG3x5yfNV4TF0hiYeRfSfzFEz,.,1,paRpala
+split:Adi|rUpaka,split:Adi|rUpaka,38avmXkcOZIzbtQacWJPxlGEKbd,Adi/rUpaka,1,alladekO vijaya
+unlink,unlink,38bHPaAyTNuJLnFIeX4mHLlYInA,garuDadhvani.,1,nAvirkkazhagu meyyE
+keep,,38bHHn4gnCYBMDiCbQPFJmiL6j6,kaharvaAdi,1,sumaran kar
+unlink,unlink,38bFSvtgAoMQbAUkIS2SiVM5Neu,SaNmukhapriya.,1,ANDavan2E un2ai
+unlink,unlink,38bFxJtl5WmEgTbAuYJKNGcvryp,mOhanam.,1,nArAyaNa divya
+split:aTa|cApu,,38b6zXgqBvk1hxfq7GWJ9NXZ9mV,aTa tALa caapu,1,kANa vENum lakSam kaNgaL
+unlink,unlink,38bFa7j4UdZVRzsW4XNB5h9s2Z4,behAg,1,dhIm tana udAra (tillAnA)
+merge:Adi,,38awhssHyiI2XC34QmiKyOAp7oV,usually aadi,1,kuRai on2Rum illai
+merge:dhruva,,38awRT5Xiieb816D4Mt0waGEHKa,jati dhruvam,1,sUryamUrtE namOstutE
+keep,merge:rUpaka,38awsT5Pb5WkDZhA51WYF9BjFsc,cowtaaL or roopakam,1,vishvEshvara darshana
+keep,,38bRIyarCZcFjl9xnOYCXtKxu5a,pancamukhi,1,sa~NgIta laya
+unlink,unlink,38bG2HhkPGJdcpQvC6AK3sWR5ss,darbAr.,1,pAlan2ai purivadOr
+unlink,unlink,38bG3eS22lVrCVNHSjIgu7fjDeF,vAcaspati.,1,parAtpara paramEshvara
+unlink,unlink,38bFpKH7RGn1vYFUhY1QF4oNTTb,cArukEsi.,1,karuNai varumO
+unlink,unlink,38bFr69HkJTBmzi8ceBWA1URo6d,hamsAnandi,1,mAdhava mAyA
+unlink,unlink,38avhUNreoFXbiRAsrQS484yA1D,cakravAka.,1,AkaTi vELala
+unlink,unlink,38bGDBTTEIxDwLPBFNKqkKhqpPu,nArAyaNagauLa.,1,shrI rAman2
+keep,,38b7qzc6eRcNYBcphGXeYyLlEyY,lakSmeesha,1,tArAdhipAnana (tAna tillAnA)
+unlink,unlink,38bFnwfToQOAurxqWtdNHpB6O6b,malayamAruta.,1,kaRpaka man2Ohara
+unlink,unlink,38bFXqnJcRmpf8UX39NEoGjCO1f,bilahari,1,cittam magizh
+merge:dhruva,,38ax6V7zvAbi4mtyNui1j2JbHJR,druvam,1,kSIrasAgara shayana vakSasthala
+unlink,unlink,38bGJCesBmPFFuKNfD7RtJ8QC3p,kAmavardhani.,1,un2adu dayai
+unlink,,38bG8fniJO6xkBpWtUxzwKsHlzF,hamsadhvani,1,sA sabhA
+unlink,unlink,38b7qfqwdYOM8gHCeUd0oozV7J6,raagavardhani,1,sumashara janaka (tAna tillAnA)
+unlink,unlink,38bGLFAqmqEFVToecwzfPGdXW5L,dEvamanOhari,1,un2n2ait-tudikka aruL tA
+unlink,unlink,38bG9HGmQ7WmyGT9f9EDCJS2HXe,bEgaDA.,1,sha~Nkari dayAkarI
+unlink,unlink,38bFjDjVhuuiuSJdkhQlIE2YQfs,hindOLA,1,kalpaka mAtA
+unlink,unlink,38bGA2Ns0ECmJdL5ckjrne9u1Y7,SaNmukhapriyA,1,sharavaNabhava en2um

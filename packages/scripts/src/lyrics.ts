@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AdminData } from '@rasika/core';
 import { parseCsv, toCsv } from '@rasika/core/admin/csv';
+import { removeLyricsJunk } from '@rasika/core/domain/composition/lyrics-junk';
 import {
   LYRICS_LANGUAGES,
   type LyricLine,
@@ -401,4 +402,37 @@ export async function applyLyricsMeanings(opts: { file: string; out: string }): 
   writeFileSync(opts.out, toCsv([['id', 'meaning', 'lyricsV1'], ...out]));
   console.log(`✍️  ${out.length} compositions, ${moved} lines moved or deleted → ${opts.out}`);
   if (missing) console.log(`   ${missing} lines no longer in the stored lyrics, skipped`);
+}
+
+/**
+ * Scraped text inside the lyrics — site navigation, an ashtapadi index, a karnatik.com page
+ * header — removed by rule (`lyrics-junk.ts`), since readers may not remove words. Writes an
+ * admin CSV of the changed lyrics and a report of every line removed, and of every record left
+ * alone because it holds several headers. Like `lyrics-meanings`, it reads the stored lyrics and
+ * the CSV replaces them whole, so import it before running anything else that rewrites lyrics.
+ */
+export async function reportLyricsJunk(opts: { out: string; report: string }): Promise<void> {
+  const out: string[][] = [];
+  const report: string[][] = [];
+  for (const c of await loadCompositions()) {
+    const { lyrics, removed, headers, otherSong } = removeLyricsJunk(c.lyricsV1 ?? [], {
+      composer: c.composer?.name,
+      title: c.title,
+    });
+    if (headers > 1) report.push([c.id, c.title, '', 'several-headers', `${headers} headers`, '']);
+    if (otherSong) report.push([c.id, c.title, '', 'other-song', otherSong, '']);
+    if (removed.length === 0) continue;
+    out.push([c.id, JSON.stringify(lyrics)]);
+    for (const r of removed) {
+      report.push([c.id, c.title, String(r.order), r.reason, r.line, r.kept ?? '']);
+    }
+  }
+  writeFileSync(opts.out, toCsv([['id', 'lyricsV1'], ...out]));
+  writeFileSync(
+    opts.report,
+    toCsv([['id', 'title', 'order', 'reason', 'line', 'kept'], ...report])
+  );
+  const lines = report.filter(r => r[3] !== 'several-headers' && r[3] !== 'other-song').length;
+  console.log(`🧹 ${out.length} compositions, ${lines} lines removed → ${opts.out}`);
+  console.log(`   report → ${opts.report}`);
 }

@@ -23,7 +23,8 @@ program
   .command('seed:content')
   .description('Write static content pages (about, privacy, etc.), updating them by path')
   .option('-n, --dry-run', 'List what would be created or updated')
-  .action(async (opts: { dryRun?: boolean }) => {
+  .option('--prune', 'Delete every copy of a page but the oldest')
+  .action(async (opts: { dryRun?: boolean; prune?: boolean }) => {
     setup();
     const { seedContent } = await import('./addContent.js');
     await seedContent(opts);
@@ -199,6 +200,20 @@ program
   });
 
 program
+  .command('tala-cleanup')
+  .description('Report the tala table with a suggested decision, then apply a reviewed CSV')
+  .option('--apply', 'Apply the decisions in --file, instead of reporting')
+  .option('--file <path>', 'Reviewed CSV to apply', 'tala-cleanup.csv')
+  .option('--out <path>', 'Where to write the report', 'tala-cleanup.csv')
+  .option('-n, --dry-run', 'With --apply, list the changes without writing')
+  .action(async (opts: { apply?: boolean; file: string; out: string; dryRun?: boolean }) => {
+    setup();
+    const mod = await import('./talaCleanup.js');
+    if (opts.apply) await mod.applyTalaCleanup({ file: opts.file, dryRun: opts.dryRun });
+    else await mod.reportTalaCleanup({ out: opts.out });
+  });
+
+program
   .command('lyrics-batches')
   .description('Write lyrics packets, rules already applied, for a reader to check')
   .requiredOption('--out-dir <dir>', 'Where to write the batch files')
@@ -221,6 +236,17 @@ program
     setup();
     const { ingestLyrics } = await import('./lyrics.js');
     await ingestLyrics(opts);
+  });
+
+program
+  .command('lyrics-junk')
+  .description('Remove scraped navigation, indexes and page headers from lyrics, into an admin CSV')
+  .requiredOption('--out <path>', 'Where to write the admin CSV')
+  .requiredOption('--report <path>', 'Where to write the list of removed lines')
+  .action(async (opts: { out: string; report: string }) => {
+    setup();
+    const { reportLyricsJunk } = await import('./lyrics.js');
+    await reportLyricsJunk(opts);
   });
 
 program

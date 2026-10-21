@@ -1,0 +1,759 @@
+# STATE archive (moved out of STATE.md on 2026-10-21)
+
+These sections were in STATE.md until 2026-10-21. They are history and deferred review notes, kept
+verbatim. Open items from them were carried into STATE.md.
+
+## Waiting: clean up the 164 carnatic-circle.com bhajans (2026-10-16)
+
+**Next step:** the readers' respelling went to prod 2026-10-16, but 34 sections were refused and
+still hold plain spelling with capitals (list: `data/lyrics-bhajans/imported/refusals.csv`), and
+some lyrics carry site junk ("click here", "Go back to…", an ashtapadi index). Strip the junk by
+rule (readers may not remove words), then fix the refused sections. Undo for the import itself:
+`source-undo --manifest docs/research/carnatic-circle-bhajans-2026-10.csv.applied-2026-10-15T17-14-49-602Z.json`.
+
+## Waiting: carnatic-circle.com rows held for the owner (2026-10-15)
+
+**Next step:** owner decides the held rows in `docs/research/carnatic-circle-matches-2026-10.csv`
+(blank `decision`; `review_note` says why each is held):
+- 16 from the bhajan pass: 4 kritis (Oothukkadu, Dandapani: attach or create as kritis, not
+  bhajans), 6 pages holding several songs (Radha Kalyanam parts, Thodaya Mangalam, Thevaram;
+  each needs splitting by hand), 6 whose lyrics partly match a song we hold (attach or skip).
+- About 60 title matches from the first pass whose lyrics disagree (`lyric_score`,
+  `lyric_best`). Several are our own duplicate compositions.
+Then `source-csv`, `source-apply`, `reindex`.
+
+Also from this site, for review only: `docs/research/carnatic-circle-raga-report-2026-10.csv`
+lists 61 ragas whose stored scale differs from the site's janya table, and 26 names that match
+several of our raga records (duplicates for the dedupe pass). The site is wrong in some (Lalita
+is D1, not D2), so nothing there was written. The 16 scales we lacked were filled 2026-10-15.
+
+## Noted: the tala table is mostly junk (2026-10-15)
+
+Of 75 tala records, many are raga names or fragments from the karnatik.com import
+(`Bhairavi.`, `kalyANi`, `given`, `or`, `m`), and none holds aksharas, a structure or a tradition.
+Worth a dedupe-and-merge pass like the ragas' before adding any taals.
+
+## Shivkumar.org: all 415 songs in prod (2026-10-18)
+
+The 24 held songs were created in prod 2026-10-18 (languages set by hand; 8 new composer
+artists; Viriboni's font-garbled lyrics decoded by hand and its notation dropped; Nive
+Gatiyani's English moved to `meaning`). Undo: `source-undo --manifest
+docs/research/shivkumar-new24-2026-10.applied.json`. Respelled the same day: 23 updated, 1 of 59
+sections refused (a line in Lalithe; rules version used). Search reindexed (12,513 documents).
+Kunda Goura has no lyrics in the source. Reader notes worth a look: the karuNa ceyvAn entu
+caraNam is badly garbled, and vanajAkSa's title disagrees with its pallavi (vanajAkSi).
+The 391 earlier matches are live too (undo: `docs/research/shivkumar-import-2026-10.applied.json`).
+Distinct recording labels are committed; they need a deploy. Prod holds two records of every
+content page from the January and March seeds; one copy of each could be deleted.
+
+## Waiting: raga dedupe approval (2026-10-09)
+
+**Next step:** owner reviews `docs/research/raga-dedupe-2026-10.csv` (67 suggested merges, 6 to
+review, 2 skips; summary in `docs/research/raga-dedupe-2026-10.md`), writes `merge` in `decision`
+for approved rows, then run the commands in that doc: dry run, apply, reindex,
+`generate-melakarta-links`, commit the regenerated map, deploy. Nothing has been merged yet.
+
+## Active: respelling composition lyrics, titles and languages (2026-10-06)
+
+Pipeline built (CLAUDE.md § "Respelling lyrics"). Packets and results are in `data/lyrics/` (gitignored; 172 batches × 50; regenerate with `lyrics-batches --out-dir <dir> --size 50` — the
+ids per batch are stable while no composition is added). Readers are Claude subagents, one batch
+each, writing `lyrics-NNN.result.json` beside the packet.
+
+**Next step:** batches 001–081 and 090 (4,041 compositions) were imported to prod and deployed on 2026-10-07; their packets and results moved to `data/lyrics/imported/` so a later ingest does not re-read them against the changed text. Batches 082–089, 091 and 092 (475 more) were imported the same day, also set aside. Paused until Sunday (weekly limit reset). Resume: run readers over every batch without a `.result.json`, then
+`lyrics-ingest --dir <dir> --out lyrics.csv --report refusals.csv`, read the refusals, and
+`admin-csv-import --domain composition --file lyrics.csv --user <admin id>` (dry run first),
+then `lyrics-meanings --out data/lyrics-meanings.csv`, review, `--apply`, import, and reindex
+search. Still open after that: 33 compositions with `�` encoding damage; scraped `rAgA: … tALA. 1:` header text inside 66 lyric sections — regular enough for a rule-based strip, like `lyrics-meanings`, since readers may not remove words; a few records whose lyrics are a different song from the title (reader notes say which); languages outside `LYRICS_LANGUAGES` (Sourashtra, Gujarati, Braj) left as stored.
+
+Progress: all 172 batches read (2026-10-18). 120–172 went to prod 2026-10-18: 2,597 updated from `data/lyrics-ingest-w10-import.csv` (2,601 proposed, 5,003 sections accepted, 33 refused, report `data/lyrics-refusals-w10.csv`), plus 4 songs from batch 171 (`data/lyrics-ingest-w10-171nt.csv`), imported after it. Readers: Opus for mostly non-Tamil batches; Sonnet with a fix checklist for Tamil-heavy ones, whose non-Tamil records Opus then re-read (`data/lyrics-nontamil/`, merged; Sonnet originals in `data/lyrics-sonnet-trial/`) because Sonnet barely touches Telugu and Sanskrit. `checkRespelling` ignores case, so a wrong r→R passes unread. Version notes are now dropped from titles (`cleanCompositionTitle`); 9 older titles fixed by `data/composition-version-titles.csv`. **Next step:** owner checks five word swaps the validator let through (`vArAmE`, `nAvalar`, `maDam`, `jAnAmitE`, `kamsAdi`) and the per-record list in `docs/research/lyrics-respelling-w10-review.md` (wrong titles, two songs in one record, duplicates, scraped raga lines, garbled characters, English-only records). Search reindexed (12,481 documents). Then `lyrics-meanings`, the header strip, and reindex.
+
+## Active: filling the artist corpus (2026-08-09)
+
+The artist corpus is barer than the raga one was. Of 1,159 artists, **503 hold nothing but a
+name** and 655 more hold nothing but an honorific; exactly one has a biography, so
+`extract-artist-bios` has nothing to read. 1,158 of 1,159 pages therefore carry the fallback meta
+description — on artist names, which Search Console shows as the site's largest query class
+(446 queries, 2,469 impressions) and nearly its worst-converting at 0.97%.
+
+**Landed in prod (2026-08-09): `pnpm cli enrich-artists`.** Fills `artist.instrument` from the `role`
+credited on the events an artist actually played — a closed, alias-by-alias vocabulary over the
+133 role strings in the junction. This is the sweep phase 9 of the profile redesign considered
+and deliberately did not build (see "Phase 9 — polish" below); the half it was right to refuse is
+`city`, which is still refused, because a venue says where the concert was and not where the
+artist lives. Rules in `domain/artist/enrich.ts`, sweep in `instrument-sweep.ts`,
+`cascadeEventRolesToArtists` on `approveEvent`, and the weekly `VenueOrganiserEnrichCron` runs
+it. 22 new tests. CLAUDE.md § "Filling artists" has the reasoning.
+
+**703 artists written, reindexed, and verified against a fresh export**: 704 of 1,169 now carry
+an instrument, up from 1 — vocal 201, mridangam 123, violin 104, ghatam 47, khanjira 33, tabla
+32, bharatanatyam 30, 13 of them multi-instrument. 276 have credits naming no instrument
+(`performer`, `chief-guest`, `disciple` — correctly refused) and 189 have no live appearance at
+all; only research reaches those 465.
+
+The verification worth repeating after any change here: re-export and check that **no
+pre-existing value changed** and that every stored value is one the vocabulary could have
+produced. The single exception is the proof rather than a fault — `Yagnika Iyengar` reads
+`bharathanatyam, nattuvangam`, a hand-typed spelling the vocabulary does not contain, and the
+sweep left it alone. That spelling appears on no `role`, so it is not worth adding as an alias;
+the aliases are the ones actually seen in the junction, never invented ones.
+
+**Phase 2 is done, imported, reindexed and verified against a fresh export.** Runbook:
+`docs/research/artist-enrichment.md`, which now carries what the run taught along with the
+orchestrator and worker prompts.
+
+212 records researched, 177 with at least one field, 35 refused on identity, and **no record
+claimed a field without a source**. What landed:
+
+| field | before | after |
+|---|---|---|
+| city | 1 | 135 |
+| specialisations | 1 | 49 |
+| socialLinks | 2 | 40 |
+| website | 0 | 39 |
+| birthPlace | 1 | 26 |
+| activeYears | 1 | 26 |
+
+309 cells, no pre-existing value changed. The only refusal class was 129 `specialisations` that
+merely restated the `instrument` — see below. Verified against a fresh export: **every expected
+cell is stored**, and the only two values differing from the sheet are the deliberate instrument
+corrections.
+
+**The import itself carried a bug worth more than this run.** `updateArtist` fired
+`cascadeArtistNameUpdate` whenever the payload *carried* a name rather than when it *changed*,
+and every exported row carries `name` — so all 1,169 rows ran the five-entity rename fan-out,
+rewriting every composition and junction row with the value it already held. ~10 seconds a row,
+eight hours to write 309 cells. Fixed (`125b16e09`); the clean re-run took **14 minutes**. The
+first attempt also died around row 480 when the machine lost its network, and re-running the same
+CSV recovered it — the import is idempotent, one atomic update per row, blank meaning leave alone.
+
+**The one systematic fault was ours, not the workers'.** The `context` block exists for identity,
+and a model asked to fill a field answers it from whatever is in front of it: 130 of 177
+specialisations were the packet's own `roles` handed back capitalised. Since `enrich-artists` had
+just filled `instrument` from those same credits, importing them would print the fact twice.
+`withoutRedundantSpecialisations` now drops them at merge time, per entry — the same run returned
+real additions ("Playback singing", "Khayal", "Konnakol") that a whole-field refusal would lose.
+**Ask of any new field: could a worker answer this from the context block alone?**
+
+**Three findings about our own data, worth more than the fields.** `Neyveli Venkatesh` stored
+`instrument: vocal` — he is a documented mridangist and the role was scraped from the event
+*title*; `Shashank` stored `flute, tabla`, where the tabla credit belongs to a different person
+sharing the record; `Dushyanth Sridhar`'s record is a keyboard player who shares a name with the
+harikatha exponent (identity correctly refused). The first two are corrected and live
+(`data/artist-research/instrument-corrections.csv` — Neyveli Venkatesh → `mridangam`, Shashank →
+`flute`).
+
+**Note a wrong `instrument` cannot be cleared, only corrected.** `fillArtistInstruments` refills
+an empty field from the same role on the next weekly cron, so `admin-clear-fields` is not stable
+for anything a sweep derives.
+
+**Still open: the underlying event credits are still wrong.** Neyveli Venkatesh is credited
+`vocal` and Shashank `tabla` on the `EventArtist` rows themselves, so the *event* pages still say
+so, and there is no CLI for editing a cast role — it needs the event edit screen. Fixing the role
+is the real repair; correcting `instrument` only fixes the artist page.
+
+**First demand cut is live (2026-10-14).** 37 performers and 40 composers updated in prod (85 +
+128 cells), 0 errors, search reindexed, pages checked live. Files: `data/artist-research/demand-01/`
+and `composers-01/` (`import.csv` is what was written). Weaker matches kept, worth a glance:
+Udayaloor Kalyanaraman, Malladi Brothers (active years), Kruthi Bhat (Houston). Fix a wrong value
+with a two-column `id,<field>` CSV through `admin-csv-import`.
+
+**Duplicates merged (2026-10-14).** 14 pairs via the new `merge-artists`, blanks filled onto the
+kept copy first (title, instrument, birthplace, specialisations), collaborators rebuilt, reindexed,
+redirects checked. Manifest: `data/artist-research/merge-2026-10-14.csv.applied-*.json`. Amrutha
+Venkatesh is a different singer from Amritha Murali and was not merged. 45 spellings in the ranking
+were shared; only the pairs in this cut were reviewed and merged.
+
+**10–99 searches cut is live (2026-10-14).** 31 performers and 17 composers updated in prod (57 +
+50 cells), and 17 more duplicate pairs merged (kept copy chosen by Search Console impressions first,
+then compositions and events; manifest `data/artist-research/merge-2026-10-14b.csv.applied-*.json`).
+Collaborators rebuilt, search reindexed. What was dropped in review and why:
+`demand-02/review-notes.md`.
+
+**Leftover import is live (2026-10-15).** 6 rows, 10 cells, 0 errors, reindexed. Notes in
+`leftover-02/review-notes.md`.
+
+**Artist research is finished (owner's decision, 2026-10-15).** Every unambiguous artist with 10+
+searches a month is done. The 216 ambiguous names and the 406 with no measured demand are dropped,
+not deferred: yield had fallen to 13%, and an ambiguous name is where a namesake gets researched.
+Still open: two records are not people, "Karnataka Kalashri" (an award) and "Disciples of Mowna
+Ramachandra"; the possible duplicate Bangalore Arjun Kumar / Arjun Kumar; and the composition
+credits listed in `leftover-02/review-notes.md`.
+
+**Notes on the rest:** the first cut took every unambiguous performer and composer with 100+
+searches a month. Next in the ranking: 330 artists at 10–99 a month, then the 216 flagged
+ambiguous, which rank on Search Console impressions alone. Cut with `research-batches --ids`, tell
+workers why the records were chosen (or they skip them), import only the researched rows, and
+fetch every link first; see "What the demand-ranked run taught" in the runbook. Artists with no
+events and no compositions still have nothing to check identity against.
+
+The ranking also found 45 search spellings shared by two or more records (95 records, column
+`same_search_as`): Adi Shankaracharya, Subramania Bharati, Muthuswami Dikshitar, Swami Dayananda
+Saraswati and Abhishek Raghuram twice each, Omkar Music Academy four times. Most are one person
+stored twice, but not all (`s krishna`), so read each. Merge before researching, or the research
+lands twice.
+Duplicates are worth a pass but are not a blocker: ~20 exact-name groups and ~20 near pairs at
+`findArtistMatch`'s 0.85 threshold, about 3% against the ragas' 20%. There is no `dedup-artists`
+command; `domain/artist/dedup.ts` has the matcher. Note it misses `Phanindra Bhaskara` beside
+`Phanindra Bhaskar`, because the surname must match outright.
+
+## Active: filling the raga corpus (2026-08-07)
+
+Runbook: `docs/research/raga-enrichment.md`. The dedup has run — 1,526 records, down from 1,869.
+Admin user for imports: `39WZZXug7V6PdinExzhhp6zDuKD`.
+
+**Landed in prod.** All 72 melakarta numbers and scales, *computed* rather than researched — a
+melakarta's scale is its number, so `melakartaScale` derives all 72 with no lookup (210 cells).
+The three that already stored a scale all matched, which is what verifies the number-to-record
+map in `MELAKARTA_LINKS`. Then the research pass over those 72 plus the 75 busiest janyas: 271
+cells of description, tradition, rasa, timeOfDay, season and parent, and 16 mela numbers derived
+from newly-named parents.
+
+Imported and reindexed. Verified against a fresh export: 1,526 rows, all 72 melakartas carrying
+the right number, a scale and a description.
+
+| field | before | after |
+|---|---|---|
+| description | 1 | 131 |
+| tradition | 1,066 | 1,168 |
+| arohanam / avarohanam | 993 | 1,094 |
+| rasa | 1 | 57 |
+| timeOfDay | 1 | 32 |
+| melaNumber | 987 | 1,075 |
+| parentRaga | 758 | 790 |
+
+**Next step: keep the long pass going.** `data/raga-research/main/` holds 59 batches covering the
+corpus busiest-first by compositions attached; 001–003 have results (001 complete, 002 at 18/25,
+003 at 15/25 — both cut short by a session limit). **A batch with a `.result.json` beside it must
+never be re-dispatched, partial or not**; to finish a partial one, cut the outstanding records
+into a new numbered batch the way `melakarta/raga-004.json` was. Worker prompt is in the runbook.
+
+**Two melakartas are stored twice and `dedup-ragas` cannot see it** — `tODi` (207 compositions)
+beside `hanumatODi` (5, mela 8), and `kAmavardhani` (131) beside `kAshIrAmakriya` (6, mela 51).
+Different *words* for one raga, not different spellings, so both dedup keys miss them. The chakra
+widget therefore links mela 8 and 51 at the near-empty record, and both copies now carry a
+description. A merge fixes it, but the canonical has to become the busy record and
+**`MELAKARTA_LINKS` must be regenerated after** — it is a hand-resolved map. Not yet done; it is
+the biggest outstanding decision here.
+
+**`foreignNotes` found real pre-existing damage in the scale fields**, separate from this run:
+`varies` and `uses all notes of mela` stored as scales, a stray `M3` (no such swara), a trailing
+semicolon, a `PN3` missing its space, and `aandOLikaa` written in Unicode subscript digits.
+`research-ingest` prints these now. Worth a cleanup pass of its own.
+
+**`getRagaByName` returns soft-deleted records, and 184 janyas point at a merged-away parent.**
+The dedup soft-deletes a loser with `mergedIntoId`, but the name lookup does not filter those
+out, so `getRagaByName('calanATTai')` still answers with the tombstone. Two consequences: the
+admin importer will happily link a *new* reference to a merged-away raga (which is why the
+seven-stub incident created only seven records and not twenty-seven), and 184 janya rows carry a
+`parentRaga` naming a record that redirects. Not corruption — the ids resolve and the pages
+redirect — but the fix interacts with the duplicate-melakarta decision above, because several
+merge targets are themselves the *non*-canonical copy: `mAyamALava gowLa` merged into
+`maayamaaLava gowLa`, which carries no mela number, while `MELAKARTA_LINKS[15]` points at
+`mAyAmALavagauLa`, which does. Re-pointing the 184 without settling that first would attach them
+to the copy mela derivation cannot use. Deliberately left alone.
+
+## Active: Rasika Classes (2026-08-02)
+
+Plan: `docs/plans/260802-01-rasika-classes.md`. **All nine phases are built and green. Nothing is
+deployed.**
+
+**Next step: add `https://classes.rasika.life/auth/callback` to the Google OAuth redirect
+allowlist, then `sst deploy --stage prod`.** That console change is the only thing standing between
+the code and a working sign-in, and it cannot be done from the repo. The full ordered list is §15
+of the plan.
+
+**Then, on a real iPhone, sign in from the installed icon** — not from Safari. An OAuth redirect
+out of standalone mode can land the session cookie in Safari's storage rather than the app's,
+leaving the user signed out on return. It is the one thing in this project that cannot be checked
+without a device and a deploy. Fallback if it breaks: complete auth in the browser and deep-link
+back.
+
+What landed: nine `class-*` domains and `shared/timezone.ts` in core; a private `ClassUploads`
+bucket with `PrivateImage` presigning; a `classes` tRPC router behind one `assertClassAccess`;
+invite claiming hooked into the sign-in issuer; `packages/ui` (shared Tailwind preset, tokens,
+primitives) and `packages/classes` (React Router v7 PWA); student and guru screens including the
+review queue; manifest, placeholder icons and a hand-written service worker; and a daily
+auto-confirm cron.
+
+**Addendum A** then added the piece the MVP plan had no path for: a guru with nothing set up. `/`
+is now a server-side **context resolver** — a person here may teach, learn, or both, and that is
+the ordinary case rather than an edge. `/welcome` chooses, `/welcome/teaching` is three resumable
+steps, `/students` moved to `/teaching` behind a permanent redirect, and a context switcher merges
+teaching and children into one control. Two departures from the addendum are written up in its own
+section of the plan: `teacherIds` became a `classTeacher` junction (a list attribute cannot be
+indexed, so a co-teacher could never have been resolved), and last-used context is a cookie rather
+than `localStorage` (the server cannot read `localStorage`, and the addendum forbids the bounce
+that would follow). 218 new tests.
+
+**One change touches the live main site.** `rasika_session` now carries an explicit `Domain`. The
+plan claimed this was already true and verified — it was not, the cookie was host-only, and shared
+auth could never have worked. Already-signed-in users hold both cookies until the old one expires;
+same session, so the change takes hold on their next sign-in.
+
+Read the CLAUDE.md sections "Rasika Classes: the credit ledger" and "Rasika Classes: the app" for
+the rules that hold it together, plan §4.9 for the three places the keys depart from the spec, and
+plan §14 for the six places the build does.
+
+**Transactional email landed (2026-08-03).** A guru adding a student to a program now triggers a
+"you've been added to a class" email — `addLearner` in `packages/trpc/src/routers/classes.ts`
+calls it best-effort (a send failure logs and does not fail the mutation) after the invite row is
+written. New: `packages/core/src/email` (`Email.sendTransactional`, SESv2), a new `@rasika/email`
+workspace package (React Email templates, modelled on the ShipPad project's `packages/email`), and
+`infra/email.ts` (`sst.aws.Email` verifying the whole stage domain, linked into `RasikaTRPC` with
+`EMAIL_SENDER` and `CLASSES_URL`). Only the one template exists (`studentAddedEmail`); the other
+two `ClassInvite.createClassInvite` call sites (`changeLearnerEmail`, `inviteToLearner`) do not
+send anything yet — same event, not yet asked for.
+
+Verified by bundling the tRPC handler with esbuild using SST's own `createRequire` banner and
+*running* it, not just by unit test: React Email renders CommonJS `react-dom/server`, which throws
+`Dynamic require of "stream" is not supported` in a plain ESM bundle. SST injects the banner (the
+committed `.sst/artifacts/RasikaTRPC-src/bundle.mjs` shows it), so it works — but vitest resolves
+natively and would never have caught it either way. Linking `email` into the function is what
+grants `ses:SendEmail`; the env vars alone would not.
+
+**The sender is `Rasika Classes <noreply@classes.rasika.life>`** — the subdomain, deliberately not
+the root. Reputation is tracked per domain, and this configuration set inherits the account-level
+suppression list, so a complaint against a future marketing email sent from the same domain would
+suppress that address account-wide and the next "you've been added to a class" to the same family
+would be dropped rather than refused, with no error to catch. **A marketing stream must get its own
+subdomain and therefore its own identity** (`news.`, say); nothing provisions one today because
+nothing sends marketing today. Port ShipPad's `sendMarketing` when it does — it already carries
+`List-Unsubscribe` and one-click, which Gmail and Yahoo require of bulk senders. `Reply-To` is the
+guru's own address, since `noreply@` is unattended and a parent will answer the message.
+
+**SES production access is already granted on this account** — checked 2026-08-03 with
+`aws sesv2 get-account --region us-east-1`: `ProductionAccessEnabled: true`, `EnforcementStatus:
+HEALTHY`, quota 50,000/day at 14/sec (sandbox is 200/day at 1/sec). So there is no sandbox step and
+nothing to request. Do **not** run `put-account-details` to "confirm" it: that call overwrites the
+account-level details, which currently name Pottle (`WebsiteURL: https://pottleapp.com`).
+
+**This AWS account is shared with Pottle, and the suppression list is per-account, not per-domain.**
+`SuppressedReasons` is `[BOUNCE, COMPLAINT, OPTIMIZED]` at account level, so an address that
+complains about *any* mail from this account — including another product's — is suppressed for
+Rasika Classes too. Sending from our own subdomain separates reputation at the mailbox providers
+but does **not** separate this list. If that becomes a real problem, the lever is per-configuration-set
+suppression options, and each `sst.aws.Email` component already gets its own configuration set.
+
+**One thing the first deploy still has to confirm:** `ses.DomainIdentityVerification` blocks the
+deploy until SES verifies the domain from the DKIM records SST creates in the same zone. First
+deploy may sit for minutes or time out.
+
+(A third risk is now gone: verifying the subdomain puts DMARC at `_dmarc.classes.rasika.life`, so
+it can no longer collide with a record on the root domain that already serves the live site.)
+
+Known gaps, all deliberate: PWA icons are placeholders (`pnpm icons` regenerates from one SVG); the
+session cookie secret is still a literal in the repo (limited impact, own decision — plan §14); and
+`packages/web` has not adopted `packages/ui`, which the plan says should stay opportunistic.
+
+## Done in code, waiting on a console: search and analytics fixes (2026-08-04)
+
+From reading GA4 and Search Console. Impressions are growing ~45% month on month (25,792 over
+28 days) but CTR is 2.28% at average position 8.5, and four fifths of recorded sessions were a bot.
+
+Landed in `8cd07a4e1` and `9d9d6319d`:
+
+- **Swara notation is no longer transliterated.** `S R2 G2 M1 P D1 N2 S` collides with ITRANS
+  consonant codes, so every arohanam rendered as `ṣ ṟ2 ġ2 ṃ1 P ḍ1 ṇ2 ṣ` in the title, the meta
+  description and on the page. New `formatSwaras` in core. The pages ranking for
+  "&lt;name&gt; arohanam avarohanam" — the site's largest impression class — were clicking at
+  under 1% against 8.5% for the same pages on name queries.
+- **The default display script is `roman`, not `iast`.** Googlebot carries no cookie, so IAST was
+  what every indexed page was rendered in. Names now read `Huseni`, not `husEni`.
+- **Janya raga descriptions no longer claim to be melakartas.**
+- **GA4 has key events** (`app/lib/analytics.ts`): event submission and publication, the Classes
+  CTA, wiki edits, search, sign-in. Analytics also stays uninitialised when `navigator.webdriver`
+  is set.
+- **`pnpm cli dedup-ragas` rewritten.** It matched only exact lowercased names and then *deleted*,
+  orphaning linked compositions. It now matches spelling variants, reports to CSV for review, and
+  merges what a person marks — `mergeRaga` re-points junctions and the route already redirects.
+
+**The GA4 property is now configured** (done 2026-08-04 via the Admin API, script in that
+session's scratchpad as `ga-admin-setup.sh`). Four key events marked — `classes_cta_click`,
+`event_published`, `edit_submitted`, `sign_in_started`; three custom dimensions — `placement`,
+`entity`, `moderated`; four custom metrics — `posters`, `events`, `length`, `hits`. Registering
+before the deploy is the right order: GA4 backfills a dimension only from its creation date.
+
+`event_submitted` and `event_submit_started` are deliberately ordinary events, not key events:
+they are mid-funnel, and marking them would double-count a contributor who finishes.
+
+**Still to do, and only in the GA4 UI:** exclude the remaining bot traffic. GA4's data filters
+cover internal and developer traffic only and are **not** in the Admin API — `GET
+properties/519579810/dataFilters` returns 404, so this cannot be scripted. The
+`navigator.webdriver` guard in the code catches driven Chrome, which is the likely source; watch
+whether Direct sessions at ~1s durations persist after the next deploy before building anything
+more elaborate.
+
+Then, when there is an appetite for it: `pnpm prod-cli dedup-ragas`, review the CSV, and apply.
+Roughly 312 of 1,869 raga pages are a duplicate of one already on the site. Nothing merges without
+a decision written into the file. Reindex search afterwards.
+
+**A second pass over Search Console (2026-08-04) found the same fault in three more places**, all
+now fixed: venue, organiser, artist and composition pages all described *what kind of page they
+were* instead of what was on them. Classified all 892 queries that clear Google's privacy
+threshold (6,467 of 25,792 impressions):
+
+| class | queries | impressions | CTR | avg pos |
+|---|---|---|---|---|
+| artist names | 446 | 2,469 | 0.97% | 10.5 |
+| raga arohanam/avarohanam | 121 | 1,358 | 0.44% | 9.9 |
+| raga name lookup | 141 | 1,051 | 3.90% | 8.7 |
+| venue / organiser | 45 | 877 | 1.25% | 9.1 |
+| composition lyrics | 106 | 444 | 0.68% | 11.2 |
+
+The arohanam and name-lookup rows are the same pages on different queries — 0.44% against 3.90%
+— which is the clearest measurement of what the IAST default was costing. 551 queries sit on page
+one or two with zero clicks, worth 4,521 impressions.
+
+**Still open, and it needs a person's judgment rather than a script: 9 of 75 tala records are
+junk.** They came from an import that turned a composition's free-text tala field into a record
+each, so the corpus now holds talas named `.`, `m`, `or`, `/jhampa`, and compound values like
+`adi/rupaka`, `k./triputa`, `roopakam/aadi`, `tala/adi`. All nine are live, indexable pages;
+talas are the worst-converting section on the site (131 impressions, 0.76%, position 13.7). The
+compound ones probably mean the composition has two talas, so they cannot simply be deleted. No
+other section has this problem — ragas, artists, compositions, venues and festivals are clean.
+
+Not attempted: the 5 sitemap warnings in Search Console, and the ~17 raga slugs carrying `?`, `&`
+or `®` (canonical tags already point them at clean URLs, so this is cosmetic).
+
+## Done: artist bio structuring (2026-07-30, verified 2026-08-02)
+
+The three-step corpus pipeline (`extract-artist-bios` → `import-bio-extractions` →
+`rewrite-artist-bios`) and the wizard's per-artist Extract button are built, and the extraction has
+been checked against a real bio. The bulk-approval screen stays unbuilt on purpose.
+
+What landed: typed `gurus` (`relationship` + `source`), a new **`ArtistAffiliation` junction** (not a list attribute — the spec said no new entity, but its own step 5 wanted an Organiser reverse lookup, which a list cannot serve without a scan), `credentials` and `works` as list attributes, arangetram fields, wizard editors for all of them, conditional profile sections, the organiser "Artists" listing, and a "Get media kit" panel in the artist page rail that generates promotional copy *from* the structured fields. See CLAUDE.md for the model and the rules that hold it together.
+
+## Also active: artist profile redesign
+
+Plan: `docs/plans/260722-01-artist-profile-redesign.md` (revised 2026-07-22 against the codebase).
+
+**Next step: deploy.** Every phase is built and the whole-feature review is done and acted on (2026-07-29, below). Nothing is outstanding in code; what remains is the pre-deploy list.
+
+**Nothing in phases 7–9 has run against a deploy.** `sst` does not run in this environment, so the composited OG card, the gallery reorder, the login-time invite redemption, the claims queue, the claim form and the events split have never executed for real. Check on the first deploy, in order:
+
+1. **A Google sign-in still succeeds** — the `verified_email` gate can refuse a login that previously worked.
+2. **An invite redeems on login.**
+3. **The OG card renders with a photo** — and note the photo fetch is now allowlisted to the CDN host, so if artist photos are served from any other origin the card silently degrades to text. `[og] refusing to fetch off-CDN photoUrl` in the logs is the tell.
+4. **`ArtistDenormRebuildCron` completes.** It now runs three full-table sweeps, not two; its timeout went 300s → 900s and memory 1024 → 2048 MB on estimate, not measurement. Read the duration and max-memory metrics off the first run and bring them back down if there is room.
+5. **Run the backfills once** — `pnpm prod-cli rebuild-repertoire`, `rebuild-featured`, and `rebuild-collaborators`. The last one has never successfully run: it crashed on a missing export until this review.
+
+Also: the OG cache-key change orphans every existing `og-images/**` object (harmless, reclaimable), and `cascadeEventMetadataToArtists` wrote malformed `gsi1sk` values until this review — **any artist whose event was edited before this deploy has a corrupted junction row that will show as "Upcoming" forever**. `pnpm cli rebuild-collaborators` does not fix it; the row needs rewriting through ElectroDB. Worth a scan for `gsi1sk` values not starting with `$eventartist_` if the events lists look wrong.
+
+### From the design audit (2026-07-29)
+
+`/impeccable audit` over the feature's surfaces: **15/20, Good**. Accessibility was the weak dimension and the cause was three colour tokens, not diffuse sloppiness. All nine findings are fixed.
+
+**The token defects, which reached far past this feature.** Light-mode `--primary` sat at L 53.7% and gave **2.97:1** as link text, below AA and below even the 3:1 large-text floor. Fixing it exposed two more the audit had missed and a test then caught: white on that same rust was **3.38:1** on every filled button in both themes, and dark-mode `--destructive` was **2.19:1**, so form errors were close to invisible on dark. The shared cause was one value serving both themes. Now light `--primary` is L40 (links 4.73, buttons 5.38), dark `--primary-foreground` flips to near-black (5.76), dark `--destructive` goes to L50 with a dark label (4.89), and `--ring` tracks the light primary so the focus indicator clears 1.4.11's 3:1. Hue and saturation are untouched, so the earthenware character holds; only the value moved.
+
+`--muted` and `--accent` also carried hue **-21**, which CSS normalises to 339 and renders rose while every other token sits on the brand's 17. Every `bg-muted` surface site-wide was quietly off-brand.
+
+**`app/lib/contrast.test.ts` now pins all of it** — it parses the real `globals.css`, asserts each on-screen pair in both themes, and fails on a negative hue. It is what found the destructive failure. `app/lib/contrast.ts` exports the maths so a candidate value can be checked before committing.
+
+**Smaller fixes:** the verified badge on artist cards was an `aria-label` on a bare `<svg>`, which is not reliably announced, so it is an `aria-hidden` icon plus `sr-only` text; gallery images set `alt=""` when a `<figcaption>` already shows the caption, instead of making screen readers hear it twice; the public claim button moved off `size="sm"` (36px) to 44px with a pending label, and the rank input off 32px; `text-amber-600` became `text-warning`.
+
+**Three anti-patterns:** events render as hairline rows with a leading `<time>` column rather than three stacked groups of identical cards (which I introduced in phase 9, and which also gets the row to a 44px tap target for free); "Explore More" — three same-sized cards carrying "Browse other musicians" and the like — is now a plain row of links; and the subtitle stopped printing twice, since the header and the hero each rendered one and with no instrument or city both read "Indian classical music artist".
+
+**Not done, deliberately:** `ui/button.tsx`'s `sm` size stays at 36px. PRODUCT.md asks for 44px, but changing the shared primitive restyles every button on the site, which is a decision worth taking on its own rather than as a side effect of an artist-profile audit. The two public 44px targets that matter are fixed directly. Also unaddressed: no DESIGN.md exists, which is how a hue of `-21` survived; `/impeccable document` would generate one.
+
+### From the whole-feature review (2026-07-29)
+
+One `/code-review` fork over phases 0–9. Fifteen findings; I verified the load-bearing ones by hand before acting (dumping the real `gsi1sk` from the entity, reading SST's generated cache policy, checking `UpdateArtistSchema`'s shape). Two were downgraded to plausible — the eventual-consistency pair, real in the code but unobservable without a deploy. All fifteen are now fixed.
+
+**The three that would have hurt in production:**
+
+- **The artist subroutes shared-cached signed-in documents.** `/events`, `/compositions` and `/gallery` each declared `public, s-maxage=120` from a static `headers` export. But the root loader puts the viewer's name and email into every document, and SST's generated CloudFront server cache policy sets `cookieBehavior: "none"` — the session cookie is not in the cache key. So one signed-in moderator loading a subroute would populate the edge cache with their own email and hand it to every subsequent visitor for two minutes. The profile index had this right; the three subroutes diverged from it. All four now route through one `publicPageCacheControl` in `auth.server.ts`, which decides from the session cookie (cheap, no I/O) rather than `getUser` (a token verify plus a tRPC fetch — far too costly for an anonymous path). An expired cookie costs a cache miss, never a leak. Phase 6 flagged the cookie-in-cache-key question and judged it cosmetic; that judgement was only ever true of the index route.
+- **`cascadeEventMetadataToArtists` wrote a raw ISO timestamp into `gsi1sk`.** The real key is `$eventartist_1#eventstartdatetime_<lowercased iso>`; `'2'` sorts above `'$'`, so every row it touched compared greater than every correctly-keyed row. Latent until phase 9 gave `listEventsByArtist` a `.gt(now)`/`.lt(now)` split — after which any concert whose title a moderator had edited read as *upcoming*, permanently. The whole raw `UpdateCommand` is gone: ElectroDB recomputes the GSI key from the composite on `.patch().set()`, verified with `.params()`, and `.patch()` brings the existence condition a raw update lacks. The old test asserted the wrong value and so was the bug's alibi — the same failure mode as the phase-7 reorder test.
+- **The phase-8 claimant auto-approve granted more than it claimed to.** `UpdateArtistSchema` is `CreateArtistSchema.partial()`, so it admits `name`, `isGroup` and `photoUrl` — meaning a verified claimant could rename an artist (cascading across four entity types), flip `isGroup` (the field `artist.update` is `moderatorProcedure` to protect), or set the URL the OG lambda fetches server-side. §4.3.1 described the grant as the editor form on their own record. Narrowed to `CLAIMANT_EDITABLE_ARTIST_FIELDS`, a named allowlist in the artist schema with a test per exclusion. An edit outside the set is not rejected, only left in the moderator queue.
+
+**Also fixed:**
+
+- **JSON-LD was serialised with a bare `JSON.stringify` into `dangerouslySetInnerHTML`.** Phase 6 started feeding it `sameAs` from `socialLinks[].url`, and `z.string().url()` validates without rewriting, so `https://x.com/</script><script>…` stored verbatim would end the script element on the public, edge-cached profile. Both call sites now use a tested `serializeJsonLd` that escapes `<`.
+- **The OG lambda's photo fetch is pinned to the CDN host.** A known phase-7 deferral, closed: `/og/artist/{id}` is public and unauthenticated, and `photoUrl` was an unrestricted URL any editor could set, so an anonymous request could make the lambda fetch instance metadata or a VPC address. An off-CDN URL now reads as "no photo" rather than as a failed fetch, which matters because a failed fetch is deliberately never cached.
+- **`rebuild-collaborators` had never worked.** It imported `collaboratorsFrom` from the artist barrel, which never exported it, so the sweep the plan calls mandatory (§4.5.1) completed both full table scans and then threw. It also reached across the package boundary into core's entity modules by relative path. The sweep now lives in core beside the repertoire and featured ones, the CLI is a thin wrapper, and **the daily cron runs it** — which also gives the inline collaborator recompute a healer it never had: it reads the `byArtist` GSI immediately after writing to it, so a just-approved event can be computed away, and over-cap casts and merges are skipped inline by design.
+- **A merge destroyed guru years and discipline.** The `gurus[]` fixup built a fresh `{id, name}`, dropping the three keys §4.6 widened the element with — the fixup predates the reshape. Spread now, with the years in the test fixture.
+- **The merge's claim recompute raced its own writes.** `recomputeArtistClaimStatus` takes a `justWritten` hint precisely because the re-read is an eventually-consistent Query; the merge passed nothing, so it could compute `unclaimed` and strip `verifiedAt` from an artist that had just received the only verified claim. The parameter takes a list now, since a merge moves many rows at once.
+- **The gallery page was unreachable for most artists.** Both the teaser and its "View all photos" link were gated on there being *featured* photos, and `addArtistPhoto` defaults `featured` to false. The section now shows whenever there are photos at all, preferring featured ones, and the loader fetches 24 rather than 12 so a featured photo further down the order is not silently ignored.
+- **The reorder reply truncated the gallery.** It answered with `listPhotos` at the core default of 20 while the client replaced its whole state with the reply, so a moderator with more than 20 photos watched rows vanish. The editor loader had the same omission. One `GALLERY_EDITOR_PAGE_SIZE` now, used by both.
+- Smaller: the claim prompt no longer invites anonymous visitors to claim a profile that already shows a Verified badge; `resolveArtist` memoizes the candidate *promise*, so the concurrent resolves within one event share a table sweep instead of each starting one; `cascadeArtistNameUpdate`'s silence about `collaborators[].name` is now a stated omission with its reasoning (unindexed, self-heals on the daily sweep, and the URL resolves by id regardless); and the unused 124-line `SourceEntity` is deleted.
+
+### Phase 9 — polish (2026-07-28)
+
+Scope was settled with the repo owner: surface instrument/city in the UI (not a derived-data sweep), restyle the events block, add the deferred rank input.
+
+- **The events teaser showed an artist's *oldest* concerts.** `byArtist` sorts ascending by date, so `limit: 6` returned six rows from years ago and never the date the artist is about to play — on the profile and on `/artists/:id/events` alike. `listEventsByArtist` takes `when: 'upcoming' | 'past'` now (forward from now, or backward from it), the router passes it through, and omitting it keeps the whole-run behaviour the wizard's performances list wants. The profile renders one Events section as Upcoming → Notable performances → Recent, with an upcoming date beating a featured one on the overlap. The subroute gives past events the pagination and shows upcoming whole, on the first page only.
+- **The artist card ignored two phases of work.** It rendered initials and `specialisations[0]` — no phase-7 photo, no phase-1 instrument/city. Now photo, "instrument · city", and the verified tick, on `/artists` and the home page. Search results still fall back to name + specialisation: the Fuse index carries `{id, name, description}` per §5, and widening `SearchDocument` for one entity type would bloat the shared blob for all eight.
+- **The profile hero rendered the city twice** for anyone with a city and no instrument — once in the joined line, once in the `MapPin` paragraph under it. Both callers now go through one `artistTagline` helper (`app/lib/artist-display.ts`, tested).
+- **`setEventArtistFeatured` never cleared `featureRank`**, despite its own comment claiming it did. It passed `featureRank: undefined` to `.set()`, and ElectroDB drops undefined values out of the UpdateExpression — verified against the real entity with `.params()`, where the attribute was simply absent. So an unfeatured row kept a stale rank that would silently reorder the teaser if it were ever featured again. It is an explicit `.remove(['featureRank'])` now. **The old test was the bug's alibi**, asserting the `.set()` call shape rather than the effect — the same shape of mistake the phase-7 reorder test made. Three tests replace it, including one pinning that a rank of `0` is kept rather than read as absent.
+- The rank input the phase-5 recognition slice dropped is back: a per-row box that appears once a row is featured, committing on blur rather than per keystroke (typing "12" would otherwise write rank 1 first and reorder the list under the moderator's hands). `api.artist.performance` reads it with `readOptionalInt` — its `parseInt` read `'2.7'` as 2 — and rejects a sub-1 rank with a readable message rather than letting a stringified Zod issues array reach the toast.
+
+**Deferred, with reasons:** search results still show the plain card (see above). The per-row rank input shares one fetcher with the feature toggles, so an in-flight write disables every control in the list — the same deferral phase 7 made for the gallery grid, and it should be closed for both at once or neither. Nothing derives instrument or city from the events an artist has played; that sweep was considered and deliberately not built.
+
+### From the phases 7–8 review (2026-07-28)
+
+One `dhh-code-reviewer` on Opus across both phases. It re-verified the phase-7 fixes as correct and confirmed the parts of phase 8 that matter most: the anonymous profile document cannot vary by viewer, no email or claim detail reaches a public read path, email normalization has one definition every writer and reader routes through, no attacker-controlled address can reach it, and the claim-then-delete ordering in redemption is right in every partial-failure case it traced. Its verdict on the whole: the data model was sound and the feature was **write-only** — a grant nothing could see, undo, or use. Everything below is fixed.
+
+- **An invite was irreversible through the product.** Nothing listed invites and nothing deleted them, so a mistyped address was a standing offer of someone else's profile to whoever owned the typo, redeemable at any future login and removable only by hand. Now `getInvitedClaims`/`revokeArtistClaimInvite`, an `invited` + `revokeInvite` procedure pair, and the wizard lists outstanding invites beside the field that creates them with a Withdraw button.
+- **The only grant that skipped review was the only one not requiring a `moderatorNote`.** Approve and reject were guarded twice over; the invite — which reaches `verified` with no review at all — took none. Required now in the Zod schema, in core, in the router and in the wizard. The invite's own timestamp was also being destroyed: ElectroDB's `upsert` re-applies the `createdAt` default unconditionally, so redemption overwrote "when was this address trusted" with the moment of redemption. Carried across as `invitedAt`.
+- **`canManageArtist` was granted and never checked** — see the note below, this one is a design fix rather than a wiring fix.
+- **A merge could strand a verified grant.** "Canonical always wins" silently dropped a verified claim when the loser held it and the canonical held a rejection, and the claimant lost management of their own profile with no trace. Resolved by status precedence (verified > pending > rejected > invited), tested in both directions. The merge also never recomputed the canonical's badge, so a verified claim could arrive on an artist whose `claimStatus` still said unclaimed — `recomputeArtistClaimStatus` is now extracted and called after the claim pass.
+- **Every claim failure reported "you have already claimed this artist."** A bare `catch` mapped throttles and permission errors to CONFLICT, so a user whose write had genuinely failed stopped retrying. Narrowed to the conditional-check failure; everything else rethrows.
+- **The moderator queue never showed its own errors** — a failed approve was indistinguishable from a success. **The claim affordance was hidden from logged-out visitors**, which is nearly the whole audience and includes the artist arriving at their own page; the signed-out branch is viewer-invariant so it stays cacheable. **`mine` was a GSI query used as a point read** and returned full rows including the moderator's private reasoning about the claimant, over a public function URL — replaced by `myStatusFor`, a GetItem returning only the status.
+- **Two artist writes used `.update()`, which has no existence condition** and would create a phantom row rather than fail — the exact shape of the uppercase-key bug this repo repaired in production. Both are `.patch()` now, and redemption skips a soft-deleted or merged-away artist instead of resurrecting it with a verified badge.
+- **`packages/og-image/src/card.ts` contained a literal NUL byte**, so git treated a TypeScript source file as binary and every future change to the OG card would have been undiffable. It came from the phase-7 field-separator fix being written as a raw control character instead of the `\0` escape. Now the escape, with a comment saying why it must stay one.
+- Nits: dropped two `as never` casts on the writes that decide who manages a profile (they suppressed nothing), and the claim disclosure is `<details>` rather than a `useState` toggle so it works before hydration.
+
+**What a verified claim actually confers, and why that needed deciding.** §4.3.1 said it should unlock "the existing editor form on their own record" — but `createDraft` is `protectedProcedure` and the edit route only calls `requireUser`, so **every signed-in user could already do that for any artist**. The grant as specced was vacuous, and a claims queue whose approvals confer nothing is worse than no queue. `edit.submit` now auto-approves a submitted edit when the submitter holds a verified claim on that artist. Deliberately narrow: it applies to the named artist only, requires `verified` (not invited, not pending), and the edit still travels the ordinary Edit pipeline with the same schema, validation and audit row — so it widens *who may approve*, not *what may be written*. The check is server-side in the router because the client must not be able to assert it. **This was chosen as a stated default, not confirmed by the repo owner** — the alternatives were the moderator wizard scoped to the claimant's own record (richer, but it writes across five entity types including shared event data) or recognition-only with no new powers. Reversible in one place.
+
+**Deliberately deferred, with reasons:** `cascadeArtistNameUpdate` does not refresh `ArtistClaim.artistName` — the one junction it skips, cosmetic per §4.2 but now the only exception to the pattern. Nothing bounds claims per user, so any account can fill the pending queue (not an access risk). `api.artist.claim.tsx` is the sixth copy of the `/api/artist/*` boilerplate the whole-phase-5 review said to collapse into `withModerator(handler)` + `field(formData, name)`; fold it into that pending refactor rather than adding a seventh variant. `issuer.ts` throws inside `success()` for an unverified account, which surfaces as a blank 500 rather than a message.
+
+### Phase 8, slice 1: the `ArtistClaim` core domain (2026-07-28)
+
+Built across two commits: an agent wrote the four modules and then hit the monthly spend limit, leaving no tests and no merge fixup (`bbe0f70ad`, committed as wip); both were finished afterwards along with the index redesign below.
+
+Landed: `packages/core/src/domain/artist-claim/{schema,entity,client,index,index.test}.ts`, `'invited'` added to `ARTIST_CLAIM_STATUSES`, and the `cascadeArtistMerge` claim fixup with three tests. Two row kinds share the `ARTIST#${artistId}` partition behind a `kind` discriminator — `CLAIM#${userId}` and `INVITE#${normalizedEmail}` — so `getArtistClaims` stays one query.
+
+Now wired up: exported from `packages/core/src/index.ts` and given an `./domain/artist-claim/client` subpath for browser-safe types.
+
+**The index trap it was built on, and the fix.** The obvious shape is a `byUser` index on `userId` and a `byEmail` index on `email`, each expected to be sparse because the other kind leaves its field unset. **ElectroDB does not omit an index whose composite is missing — it writes the template with an empty suffix.** Checked against the real entity with `.params()`:
+
+```
+invite row (no userId) → gsi2pk = "artist_claim_user#"
+claim  row (no email)  → gsi3pk = "artist_claim_email#"
+```
+
+That is a hot partition on both sides, and on the byEmail side it is worse than untidy: `getClaimsByEmail` is the **login-time authorization lookup**, so a blank argument would have matched every pre-authorized artist on the site instead of none.
+
+Replaced by a single `byActor` index keyed on `['kind', 'subject']` — `ARTIST_CLAIM_ACTOR#${kind}#${subject}`. `subject` is required and always present (the userId or the normalized email), so there is no empty partition to fall into, `kind` keeps the two lookups from ever returning each other, and it costs one GSI slot less: **gsi3 is free again**. Re-verified with `.params()` that no key ends in a bare `#`. The empty-argument guards stay as belt and braces on the authorization path.
+
+**Worth carrying forward:** that trap is not specific to this entity. Any future ElectroDB index over an optional attribute has the same shape, and the failure is silent — the index simply fills up with one giant partition nobody queries until someone passes a blank value.
+
+Also settled in slice 1: `moderatorNote` is required to approve as well as reject (§8 calls it the audit trail, and a TS `string` still admits `''`); rejecting one of several claimants recomputes the badge as verified-beats-pending-beats-unclaimed rather than dropping straight to unclaimed; and a merge drops rather than overwrites a row the canonical artist already has for the same actor, so a verified claim can't be silently demoted by the loser's copy.
+
+**Still unstarted in phase 8:** the tRPC router, `canManageArtist`, the claim UI, and the moderator queue. Nothing collects artist emails yet, so enrichment done before phase 8 ships needs a second pass to add them.
+
+The other phase-8 piece already done: `05c7bb941` makes a verified Google email a precondition of signing in, so the email is safe to use as an authorization key. Note it can refuse a login that previously succeeded; unexercised against a deploy.
+
+Phase 7 also adds two things to the pre-deploy list: (1) the OG cache key changed shape, so **every existing `og-images/**` object is orphaned** — harmless, but the prefix can be emptied to reclaim the space. (2) The **degraded-card rule is unverified against a real deploy**: a card that should carry a photo but couldn't fetch one is served and deliberately *not* cached, so watch that a genuinely photo-less artist doesn't cause a render on every request (it shouldn't — no `photoUrl` means not degraded).
+
+### From the phase-7 review (2026-07-27)
+
+One `dhh-code-reviewer` on Opus over the whole phase. It confirmed the risky parts sound — the `featured` round trip end to end (this is what un-deadens the profile Gallery section), the data URI genuinely rendering through librsvg, no SVG injection, and the photo fetch being unable to wedge the Lambda. Three must-fix and six should-fix, all acted on:
+
+- **The reorder could not express a move between photos sharing an `order`.** Swapping two equal values writes each row the value it already had: two 200s, no toast, no movement, and no sequence of clicks recovers. Duplicates are easy to reach — `addArtistPhoto` defaults `order` to 0. `computePhotoReorder` now renumbers by position and returns only rows that changed, which also heals duplicates already in production. The test that asserted the broken output was itself the bug's alibi; it now asserts the move.
+- **A partially-failed reorder diverged the UI from the table.** Two independent POSTs, and the catch rolled *local* state back while the server kept half the write. Now one request carrying the whole move, and the reply always returns the stored list — on the error arm too — so the client syncs to truth instead of a guess.
+- **One transient photo-fetch timeout poisoned the cache for a year.** The text-only fallback was written to a key hashed over the unchanged `photoUrl`, and the HEAD then served it forever without retrying. A degraded card is now served but not persisted.
+- **The truncation ladder let real names under the photo.** It counted characters; SVG text is measured in pixels. "Bombay Jayashri Ramnath" overflowed 6px, synthetic worst cases by up to 371px, and because the photo paints after the text the title was sliced mid-glyph by the photograph. Replaced with one width estimate driving both font size and truncation, plus a `clipPath` as the hard guarantee since Lambda resolves fonts against Amazon Linux and we cannot measure that here. Verified by rendering through Sharp and measuring the rightmost title pixel: worst case now ends at 719 against a panel starting at 760.
+- **The raw `fetch` read a session-expiry redirect as success** — `requireModerator` throws a `redirect`, `fetch` follows it, the login page returns 200 HTML, `res.ok` is true. Dissolved by moving to `useFetcher`.
+- **`CARD_VERSION` now feeds the cache hash.** The hash covered the content but not the template, so a redesign would leave every existing card frozen for a year with no remedy but emptying the S3 prefix by hand. The hash also gained a field separator, so a rename shifting a character across the title/subtitle boundary no longer collides.
+- Smaller: clearing a caption now `remove`s the attribute instead of storing `''` (so "absent" and "present but blank" stop disagreeing); `readOptionalInt` uses `Number` + `isInteger` rather than `parseInt`, which read `'12.7'` as 12; Remove is held during an in-flight move; the dead `content-length` pre-check, the redundant `preserveAspectRatio`, and the "not an error" comment sitting above a `console.error` are gone. `packages/og-image` split into `card.ts` / `request.ts` / `handler.ts`, so a unit test no longer constructs an S3 client and a tRPC client to call `escapeXml`.
+
+**Deliberately deferred, with reasons:**
+- **An atomic reorder via a DynamoDB transaction.** The rows share a partition so it is the natural shape, but nothing in core uses ElectroDB transactions yet. Renumbering made a partial failure self-healing rather than permanent, and the reply now reports truth, so the remaining exposure is a brief wrong order — not corruption. Revisit if it bites.
+- **Carrying the hash in the OG URL.** Every request now pays one tRPC query before it can HEAD, including cache hits, which is real cost on a crawler-heavy path. The page emitting `og:image` already has the artist loaded, so `/og/artist/{id}/{hash}` would let the Lambda HEAD immediately. Bigger than the rest; the comment in `handler.ts` states the cost honestly rather than claiming it is free.
+- **Streaming the photo fetch with a byte counter.** It buffers the whole body before checking size, and `artist.photoUrl` is an unrestricted `z.string().url()`, so it is a mild SSRF surface. Low risk — moderator-only field, 2.5s cap, sharp's own pixel limit — but pinning to the CDN host would close it.
+- **A fetcher per gallery row.** One shared update fetcher means an in-flight toggle disables every Feature and Save button in the grid.
+
+### Phase 6, and what it still owes the first deploy (2026-07-26)
+
+Phase 6 is complete and DHH-reviewed (two agents: backend + frontend) with every finding fixed. Profile redesign, gallery subroute, §6.2 denormalization (repertoire + featured), the daily `ArtistDenormRebuildCron` (both sweeps), and anon-only CDN caching all landed. Before/after deploy: (1) **Run the backfills once post-deploy** so the profile isn't empty until the first cron fires — `pnpm prod-cli rebuild-repertoire` and `pnpm prod-cli rebuild-featured`. (2) **Verify the caching segments on auth:** the profile `_index` loader sends `public, s-maxage=120, stale-while-revalidate=600` to anonymous viewers and `private, no-cache` to signed-in ones (subroutes are public and cache unconditionally). Full CDN offload is safe only if the CloudFront **server cache key includes the `rasika_session` cookie** — confirm SST's default does, or add it, else a logged-in viewer can briefly get a cached anon page (cosmetic only: no sensitive data, gated routes enforce auth themselves). (3) None of this is **verified against a running deploy** (`sst` can't run here) — render the profile, confirm the cron bundles, and check the cache behaviour on the first deploy. A full DHH review of phases 1–5 ran earlier (2026-07-25) and is also fixed — see "From the full phases 1–5 review" below.
+
+### From the phase-6 review (2026-07-26)
+
+Two `dhh-code-reviewer` agents (backend + frontend). Both found the risky parts sound — the CDN caching is correct (RR7 header bubbling traced in the installed dist; no auth leak), the repertoire denormalization is clean, JSON-LD/dates/empty-states/links all verified. Two should-fix clusters, both fixed:
+
+- **Featured only ever *grew* correctly.** Every path that should *remove* a featured entry — event soft-delete, un-crediting an artist, merge — left a dangling teaser link, and `rebuild-featured` had no deleted-event filter so it reinstated stale data. Fixed by giving featured the same scheduled, deleted-event-excluding sweep repertoire has: `Artist.rebuildAllFeatured` rebuilds from the live `isFeatured` junction rows, so all three self-heal (un-credit removes the row, merge rewrites it, delete is filtered). The daily cron now runs both sweeps (renamed `ArtistDenormRebuildCron`).
+- **The profile route was a layout *and* the index.** Split into `artists.$artistid._index.tsx` (profile body) + a thin `<Outlet/>` layout — no wasted parent-loader work on subroute SSR, no brittle pathname sniffing.
+
+Nits fixed: stable tie-breaks in the repertoire/featured sorts; CLI sweeps delegate to core (no cross-package reach-ins); loader-typed artist (dropped the casts, added `mergedIntoId`/`deletedAt` to the browser type); `capitalize` dedup; gallery meta group-noun; lazy gallery images; public cache headers on the subroutes. Also null-guarded the events/compositions subroute loaders (pre-existing baseline errors).
+
+### Phase 6 progress (2026-07-25)
+
+Done and committed:
+- **Foundations:** `formatEventDate` in `web/app/lib/utils.ts` pins the zone to `Asia/Kolkata` (fixes the runtime-TZ off-by-one), tested under `TZ=UTC`; `structured-data.tsx` gained `MusicGroupStructuredData` and an extended `PersonStructuredData` (image/sameAs/award/memberOf).
+- **`artists.$artistid.tsx` redesigned** — hero (photo or initial placeholder, honorific, instrument·city, website + socials), About high, Awards, Gurus & lineage (linked, chronological), Compositions teaser, Repertoire, Notable performances (featured), Events, Gallery teaser, Members/Groups (group-aware), Frequent collaborators, Explore. One empty-state rule, one date formatter, names as stored, JSON-LD switches by `isGroup`. Loader parallelizes `getUser`.
+- **New `artists.$artistid.gallery.tsx`** — SSR photo grid via `listPhotos`, paginated, canonical + breadcrumb + empty state; teaser "View all" wired.
+- **`/events` subroute** now uses `formatEventDate` (was the runtime-TZ bug); `/compositions` needed no change (renders no dates, already uses shared cards).
+- **§6.2 read-efficiency denormalization — done.** Repertoire (`topCompositions`/`topRagas`) and featured performances (`featuredPerformances`) are denormalized onto the Artist row; the loader reads them as fields, so it makes **zero** extra queries for either (down from getRepertoire's ~51-query fan-out and getFeaturedEventsByArtist's full-partition scan). `getRepertoire`/`listFeaturedPerformances`/`getFeaturedEventsByArtist` deleted as dead. Repertoire is refreshed by the `rebuild-repertoire` sweep (scheduled, not inline — see the trigger note in the commit); featured is maintained inline by `setEventArtistFeatured` and backfilled by `rebuild-featured`.
+
+Not visually verified yet (typecheck/lint/tests pass).
+
+**Phase 6 kickoff — read the plan first: `docs/plans/260722-01-artist-profile-redesign.md` §6 (page structure), §6.1 (index subroutes), §7 (JSON-LD).**
+
+The main file to rework is `packages/web/app/routes/artists.$artistid.tsx` (the public profile). Everything phase 6 renders already has data and a procedure behind it — reuse them, do not add new backend:
+
+- **Hero** — `artist.photoUrl` (initial-based placeholder if absent), `artist.name` (rendered as stored, no `fromItrans` — see 0c), instrument + city line, honorific/title, `socialLinks`, `website`. OG image already exists (`packages/og-image`, `artistOgImageUrl`).
+- **About** — `biography`, `specialisations`, `activeYears`, `birthYear`/`birthPlace` (the main crawlable block; place high).
+- **Awards** — `artist.listAwards` (already loaded in the edit route the same way).
+- **Gurus / lineage** — `artist.gurus` now carries `fromYear`/`toYear`/`discipline`; render chronologically, each linked. `displayName ?? name` is NOT a thing — names render as stored.
+- **Compositions** — `composition.byComposer` (already used on the profile).
+- **Events** — `event.byArtist` (already used); featured-past selection via `artist.listFeaturedPerformances`.
+- **Gallery teaser** — `artist.listPhotos` (top `featured`, ordered); hidden entirely when no photos.
+- **Members / Groups** — group record (`isGroup`): `artist.listMembers`; individual: `artist.listGroups`. Both render single-hop off the junction's denormalized names.
+- **Frequent collaborators** — `artist.collaborators` (denormalized on the record; `Collaborator[]` on the browser-safe `@rasika/core/domain/artist/client`). Re-sort in the browser by `strength` — it is stored but decays with wall-clock time (see the phase-4 deferral).
+- **Every section hides cleanly when empty** — no bare headers.
+
+**JSON-LD (§7):** `~/components/structured-data.tsx` has a minimal `PersonStructuredData` (name/url only) and NO `MusicGroup` type. Phase 6 adds `MusicGroup` (with `member[]` for groups), extends `Person` (`image` from photoUrl, `sameAs` from socialLinks+website, `award`, `memberOf` from `listGroups`), switching by `isGroup`.
+
+**Index subroutes (§6.1):** `/artists/:id/events` and `/artists/:id/compositions` already exist — restyle only. `/artists/:id/gallery` is new (`artist.listPhotos`, SSR, canonical, breadcrumb, paginated).
+
+**Heed the whole-phase-5 review's lesson:** phase 6 touches many sections at once. Keep one consistent empty-state rule, one date-formatting rule (pin `timeZone: 'Asia/Kolkata'` — the profile currently formats dates in the runtime TZ, which is UTC on the SSR Lambda; the prefill review found this bites), and one link/name-rendering convention across all sections rather than letting each drift.
+
+**Read-efficiency follow-up (plan §6.2, from the pre-phase-6 DDB review):** the rendering reuses existing procedures, but two read paths are wasteful and must be fixed before the profile ships to production, not before building it — `getRepertoire` is a 51-query per-view fan-out, and `getFeaturedEventsByArtist` filters after a full-partition read. Fix both by denormalizing `topCompositions`/`topRagas` and the short featured list onto the Artist row at write time (the `collaborators` pattern), then swap the loader to single-field reads. Add careful CDN caching (anon-only — the page varies on auth). The S3 search-blob pattern is the wrong granularity for a per-artist page; see §6.2 for why.
+
+### Phase status
+
+| Phase | What | Status |
+|---|---|---|
+| 0a | Artist write auth: tighten `create`/`update` to editor, `delete` to moderator + soft delete | done |
+| 0b | Shared dedup helper; `mergeArtist` gaps (`ArtistAward`, `gurus[]`); artist-rename name-copy cascade | done |
+| 0c | Drop `fromItrans` from artist read paths | done |
+| 1 | Artist attributes, `EventArtist.isFeatured`, `Image` 'artist', admin CSV columns | done |
+| 2 | `ArtistMembership` junction | done |
+| 3 | `ArtistPhoto` gallery entity | done |
+| 4 | Collaborator engine + `rebuild-collaborators` backfill sweep | done |
+| 5 | Create/edit wizard (moderator-only, direct write) | done |
+| 6 | Presentation redesign + JSON-LD + gallery subroute + §6.2 denorm | done (reviewed 2026-07-26) |
+| 7 | Photo enrichment incl. OG compositing in `packages/og-image` | done (reviewed 2026-07-27) |
+| 8 | Claims + verification queue, incl. moderator-invited claims (§4.3.1) | done (reviewed 2026-07-28) |
+| 9 | Polish: events split, instrument/city on cards, rank input | done |
+| — | Whole-feature review (phases 0–9), 15 findings, all fixed | done (2026-07-29) |
+
+### From the full phases 1–5 review (pre-phase-6, 2026-07-25)
+
+One `dhh-code-reviewer` per phase (phase 2 had never had a machine review). All actionable findings fixed across four commits (core, tRPC, web, cleanup). The two sharpest were verified by hand against the code, then fixed:
+
+- **Two silent data-drift bugs from recovering an id by stripping a lowercased key** — the exact sibling of the key-casing bug the phase-3 sweep couldn't catch, invisible to tests because before and after gave the same wrong answer. (1) `cascade.batchGetCompositions` keyed its map by the lowercased pk, so raga/tala rename and merge never matched the mixed-case `compositionId` and skipped the composition `ragas[]`/`talas[]` refresh. (2) `concert-log.listPastRsvpedWithoutLogs` compared a lowercased sk-stripped id against mixed-case `pastEventIds`, so every logged event reappeared as unlogged. Both now read the id attribute; both guarded with mixed-case tests.
+- **`createPerformance` featuring ran outside the approval try/catch** — a featuring failure reported the whole call as failed, so a retry created a *second* approved public event. Now tolerated; returns the true `isFeatured`.
+- **`cascadeArtistNameUpdate` skipped `ArtistMembership.groupName`/`memberName`** (the merge path handled them); **photo merge** now upserts-before-deletes so a mid-merge crash can't lose a photo; **`rebuildArtistCollaborators` returns the computed list** so the merge fixup no longer under-repairs from an eventually-consistent re-read; **`canonicalRole` dropped `dance → bharatanatyam`** (it mislabelled every other dance form) and gained `tanpura`/`nadaswaram`/`thavil`.
+- Smaller: `addAward` and `addMember` give a friendly CONFLICT + verify the artist exists; `addMember` rejects a merged-away tombstone; the wizard Form swallows a bare Enter (was: publish + jump out mid-flow); the editor draft carries the guru `id` so a rename keeps years/discipline; `api.upload.image` uses `Object.hasOwn`; `searchLive` skips sub-2-char scans; `ArtistPhoto` order cap enforced at the entity; a shared `existingKeySet` guards all six merge existence-checks against unprocessed BatchGet keys.
+- **Deleted dead/broken tooling:** `scripts/fixGsiKeys.ts` (+ `fix:gsi-keys` CLI) scanned uppercase keys against lowercase rows so it repaired nothing while reporting "healthy"; `core/shared/singleTable.ts` was unimported uppercase-key dead code.
+
+**Deliberately not changed (defensible as-is, not fixes):**
+- `listMembers`/`listGroups` stay `publicProcedure` over `pages:'all'` — the public profile must read them and the partitions are tiny (a duo has two members). Bounding the core query would break the merge cascade, which needs all rows.
+- `searchLive` does **not** short-circuit the fuzzy scan on an exact hit — a typeahead should still offer alternatives; the sub-2-char guard is the real cost cut.
+- `ArtistPhoto` has no per-photo moderation status field — "moderation" in §4.7 is the moderator-gated writes (all photo mutations are `moderatorProcedure`), which exist. No status workflow was specced.
+- The pre-existing phase-4 design deferrals below (strength decay, inline-cap dimension, nothing schedules `rebuild-collaborators`, hard-delete leaves junctions) are unchanged — they predate this review and are design calls, not review findings. The one phase-4 deferral this review *did* close: `rebuildArtistCollaborators` no longer returns void.
+
+### Phase 5 slices (it is large, so it is built in vertical slices)
+
+| Slice | What | Status |
+|---|---|---|
+| wave 1 | Live artist/award search endpoints; `/artists/new` flat form; `EventArtist.isFeatured` setter + procedures | done |
+| shell | `/artists/:id/edit` role branch: moderator wizard (Identity, About, Review) writing Artist directly; editor keeps draft form. Reviewed. | done |
+| relationships | Guru timeline + group-membership section. Reviewed. | done |
+| recognition | Awards + notable-performances + gallery sections. Reviewed. | done |
+| prefill | 'Add a performance' path: event.createPerformance creates+approves a single event tagging the artist. Reviewed. | done |
+
+Phase 5 also had a **whole-phase review** after all slices landed — it caught three cross-slice defects (auth policy applied to one mutation not nine; a dead award-search slice; a Review screen that promised a clearing preserve-on-blank never performs) and several consistency items, all fixed. See "From the whole-phase 5 review" below.
+
+Each modal writes to one sub-collection through procedures already built: gurus → `artist.update`, membership → `artist.addMember`/`removeMember`, awards → `artist.addAward`/`removeAward`, performances → `artist.setFeaturedPerformance`, gallery → `artist.addPhoto`/`updatePhoto`/`deletePhoto`. `SearchSelect` (with `createNew`) is the picker; the live endpoints back it.
+
+### What phase 0 landed
+
+- **0a** — `artist.create`/`update` now require editor, `delete` requires moderator and soft-deletes. Previously any logged-in user could hard-delete an artist.
+- **0c** — artist and composer names no longer pass through `fromItrans`. Raga names, tala names, composition titles and lyrics still do; the split is per field.
+- **0b** — `packages/core/src/domain/artist/dedup.ts` holds the shared find-or-create, now backing the event router's `resolveArtist`. `cascadeArtistMerge` migrates `ArtistAward` rows and rewrites `gurus[]` on other artists. New `cascadeArtistNameUpdate` refreshes `EventArtist.artistName` and `ArtistAward.artistName` on rename.
+- **1** — new Artist fields (`instrument`, `city`, `practiceStartYear`, `debutYear`, `photoUrl`, `photoUploadId`, `isGroup`, plus entity-only `claimStatus`/`verifiedAt`), widened `gurus`, `EventArtist.isFeatured`/`featureRank`, `Image` `'artist'` end to end, and the admin CSV columns.
+
+### Resolved: the uppercase-key bug (fixed in code and repaired in prod)
+
+ElectroDB lowercases key values, so the table holds `event#abc` / `#metadata`. Around thirty raw commands hand-wrote `EVENT#abc` / `#METADATA`, addressing rows that do not exist. Both failure modes were silent — `DeleteItem` succeeds having deleted nothing, `UpdateItem` *creates* the row instead of updating the real one. Three GSI key writes were wrong the same way, which is quieter still: the row updates but drops out of that index, so after a merge compositions vanished from `byComposer` and events from their venue and organiser listings.
+
+**Code:** `packages/core/src/db/keys.ts` now holds `keyOfEntity`/`keysOfEntity`, which ask the entity via `conversions.fromComposite.toKeys`. Raw commands remain only where ElectroDB cannot express the operation (atomic counters, nested attribute updates) but no longer build their own keys. Entity mocks in tests take real `conversions`, so key assertions exercise the real derivation rather than agreeing with the test's own literals.
+
+**Production, repaired 2026-07-22:** 30,198 items scanned, 15 phantom rows found. Nine attributes repaired from source rather than by replaying stale phantom values — eight `venueName`s (seven events were displaying a street address instead of "Sri Siddi Ganapathi Temple") and one `rsvpCount` recounted from the actual RSVP rows. All 15 phantoms deleted; a re-scan reports zero. `pnpm cli repair-uppercase-keys` re-runs the scan, dry by default.
+
+Five `EDIT#` phantoms were deleted without repair: those edits are already approved and their real rows still carry `proposedValues`, so the lost write was a superseded update.
+
+### From the whole-phase 5 review
+
+Acted on: the auth policy (all nine wizard mutations now moderatorProcedure, not one), the dead award-search slice (deleted; resolveOrCreate now case-insensitive), the Review-screen dishonesty (blanked preserve-on-blank fields show "(unchanged)"), the anonymous full-scan search endpoint (moderator-gated), the PerformancesEditor dedup guard, and the misleading guru copy.
+
+Still open — one focused follow-up, its own review:
+
+- **The five `/api/artist/*` resource routes are copy-paste** — method-check, `requireModerator`, the `((formData.get(x) as string) || '').trim()` idiom, and a try/catch/`console.error`/`data({error},{status})` block, repeated ~7 sites including `artists.new.tsx` and the edit action. The repetition has already diverged: `api.artist.resolve` returns 500 while the others return 400, and four pass raw `error.message` to the client (fine for TRPCError text, a mild leak on an unexpected fault). A `withModerator(handler)` + `field(formData, name)` helper would collapse them to their logic and single-source the error contract. This is the review's "third cross-cutting pass"; it is a real refactor and should be reviewed on its own.
+- The review's named pattern: invariants that live *between* slices (one auth policy, one error contract, one empty-field rule, one verified consumer per endpoint) were owned by no slice, so they drifted. Worth remembering for phase 6, which is even more cross-cutting.
+
+### Deferred from the phase 5 recognition slice
+
+(The recognition and prefill DHH reviews have both been run; findings applied. These are the leftover UI-polish items only.)
+
+- ~~**Per-performance featureRank input was dropped**~~ — closed in phase 9: a per-row box that appears once a row is featured, committing on blur. Building it surfaced that the setter had never cleared a rank; see the phase 9 notes.
+- **Awards use a plain name input, not a picker.** `award.resolveOrCreate` now matches case-insensitively, so it is safe find-or-create; a typeahead would only aid discovery. (Note: the `award.searchLive` endpoint and `/api/search/award-live` route were deleted in the whole-phase review as dead code — a future picker would re-add them.)
+- ~~Gallery reorder is a future item~~ — closed in phase 7: move-up/move-down buttons (not drag, see §5.4e's note), renumbering by position in one request, and new photos append past the highest `order` rather than by count.
+
+### Deferred from the phase 5 relationships review
+
+- **specialisations and gurus clear oppositely.** gurus (a managed row list) publishes `[]` when emptied and clears; specialisations (a free-text field) preserves on blank. Left as-is — the controls are visibly different, so "row list clears, text preserves" is a defensible model — but it is an asymmetry a moderator could trip on.
+- **Unchecking group on an artist with members orphans the edges.** `updateArtist` writes `isGroup: false` but does not cascade the membership rows; they survive hidden but are still rewritten on merge. This is the deliberately-accepted isGroup trade-off (flip is allowed, stranding is rare and repairable); the wizard now warns rather than fixing it.
+- **Browser-only, low priority:** a guru name typed into the picker but neither selected nor "created" leaves the row nameless and is silently dropped on publish; and removing a guru row while its resolve fetcher is in flight can land the resolved id on the re-indexed row (key={i}). Both narrow; confirm/handle in the browser pass.
+
+### Deferred from the phase 5 shell review
+
+- **The venue and organiser edit wizards share the hidden-step validity bug** the artist wizard just fixed: a `required`/`min`/`max`/`type=url` field on a `display:none` step blocks submission with a non-focusable control and no visible error. `venues.$venueid_.edit.tsx` and `organisers.$organiserid_.edit.tsx` want the same step-advance validity gate. Out of scope for the artist slice; worth a small dedicated pass.
+- ~~**The moderator wizard cannot clear a field**~~ — closed 2026-07-30, after a moderator hit it on `website`. Blanking a field now clears it: every field renders pre-filled, so emptying one is deliberate. The intent travels as `clearFields`, a named list, because a value cannot carry it — `website` is validated with `.url()` so `''` fails the schema, and writing `''` elsewhere leaves the row claiming the field exists and is blank. `updateArtist` filters the list against `CLEARABLE_ARTIST_FIELDS` (it arrives from a request, and `clearFields: ['name']` would otherwise strip what every read path depends on) and skips anything the same call is setting. The Review screen said "(unchanged)" for a blanked field; it now says what it will clear.
+- `EditorArtistForm` destructures `user` and never uses it — a verbatim carry-over from the original, not introduced here.
+
+### Deferred from the phase 4 code review
+
+Raised, judged real, not yet done:
+
+- **`strength` is stored but decays with wall-clock time.** It is a pure function of `sharedEventCount` and `lastSharedAt`, both stored, so the persisted value and the persisted sort order are stale the moment they are written — and the profile re-sorts in the browser anyway, making it both stored and recomputed. Kept for now only because a naive consumer doing `.slice(0, 12)` without sorting gets roughly-right results from a stored order. Dropping it would shrink the item too, which the 400KB note cares about. Decide deliberately rather than by inertia.
+- **The inline cap guards the wrong dimension.** `COLLABORATOR_INLINE_CAP` counts cast size, but the cost is the sum of the cast's *lifetime event counts* — each rebuild walks that artist's whole history, sequentially. Twelve busy accompanists with 300 events each is ~3,600 queries and passes the cap; a 40-artist festival of newcomers is cheap and gets rejected. The guard belongs on event history.
+- **Nothing schedules `rebuild-collaborators`.** There is no infra entry, so a skipped festival or a swallowed failure stays stale until someone runs the CLI by hand. `collaboratorsComputedAt` is stored precisely so a sweep could find stale artists by timestamp — but something has to run it.
+- **Hard `deleteEvent` leaves junction rows and never recomputes.** Filtered correctly by accident (a missing row is absent from the batch-get result), but no rebuild is triggered.
+- ~~`rebuildArtistCollaborators` returns `void`, so `rebuildCollaboratorsAfterMerge` re-reads the artist it just computed.~~ — closed in the phases 1–5 review: it now returns `Collaborator[]` and the merge fixup uses it directly, which also fixes the eventually-consistent stale-read that could under-repair.
+
+### Deferred from the phase 2 self-review
+
+The DHH reviewer failed twice (a stalled stream, then the monthly spend limit), so phase 2 was reviewed by hand against the same questions. Verified sound: the self-membership guards in both merge sweeps are symmetric; the `addMember` `z.union` genuinely rejects both-fields and neither-field payloads, confirmed by parsing rather than reading; `pages: 'all'` on the two membership queries is fine at group sizes.
+
+Fixed on review: `addMember` rejected a non-group target, and a duplicate member now returns `CONFLICT` instead of surfacing an ElectroDB write failure as a 500.
+
+Still open:
+
+- ~~`softDeleteArtist` leaves membership rows behind~~ — closed in phase 3 via `cascadeArtistDeleteToMemberships`. But the phase 3 review made a fair objection that is still open: `softDeleteArtist` is now the only `softDelete*` in the repo that destroys anything, and it is also the `deleteEntity` handler in `edit/registry.ts`, so approving a delete proposal hard-drops membership edges too. The cleaner shape is a `deletedAt` on `ArtistMembership` filtered inside `getGroupMembers`, which already sorts in memory and so pays nothing extra.
+- **Phase 2 never got a machine review.** Worth re-running the reviewer over `5ee3234f0..HEAD` when budget allows, since the parts I checked were the parts I already suspected.
+
+### Deferred from the phase 1 code review
+
+- `'venue' | 'organiser' | 'artist'` is written in four places (`image/s3.ts`, `ImageUpload.tsx`, and twice in `api.upload.image.tsx`). A fifth entity means finding all four. Wants a browser-safe `ImageEntityType` in its own subpath — it cannot come from `s3.ts`, which pulls in the AWS SDK.
+- `bool()` and `flags()` in `columns.ts` now carry the same truthy/falsy ladder; one `parseFlagCell` would collapse them.
+- `json()` has no explicit-clear escape hatch, so `gurus` can never be emptied from CSV — unlike `flags()`, which advertises exactly that. The two conventions now sit in the same column list.
+- `bool()` exports `''` for both `false` and unset, so an export can't distinguish "not a group" from "nobody has said".
+- `createEventArtistJunctions` (`event/index.ts`) is the third `EventArtistEntity.upsert` and was deliberately not given the `isFeatured` carry-forward, because `updateApprovedEvent` only passes artists not already linked. Nothing records that reasoning, and a refactor that stops filtering would wipe the flag with no test to catch it.
+
+### Carried into later phases
+
+- ~~`isGroup` gating~~ — settled in phase 2: `artist.update` rejects an `isGroup` change from a non-moderator. The admin CSV import bypasses that check by calling `Artist.updateArtist` directly, which is fine since `adminData.import` is `adminProcedure`.
+- `claimStatus` and `verifiedAt` exist on the entity but nothing writes them until phase 8.
+- `EventArtist.isFeatured`/`featureRank` exist but have no setter yet; the performances modal in phase 5 owns that.
+
+Every wizard picker added later must route through `findOrCreateArtist` rather than calling `createArtist` — that is the guard against multiplying duplicate artists. See 11.2 in the plan. When resolving a batch, fetch `listAllArtistsForMatching()` once and pass it as `candidates`; otherwise each new name sweeps the artist list again.
+
+### Deferred from the phase 0 code review
+
+Raised, judged real, not yet done:
+
+- `cascadeArtistMerge`'s `ArtistAward` block is a copy of its `EventArtist` block with the nouns swapped, verbatim comment included. Both want one `migrateJunctionRows` helper, and `cascadeVenueMerge` probably does too.
+- Neither block checks BatchGet `unprocessed`. If keys come back unprocessed the existence check under-reports and the upsert overwrites a canonical `ArtistAward`'s `rank`/`year`/`category`. Pre-existing, inherited by the copy.
+- `dedup.ts` imports from `'.'` while `index.ts` re-exports it — a cycle, and the reason the test has to mock the barrel that exports the thing under test.
+- `initialsMatch` is exported and tested but no longer called internally; `tokenMatches` absorbed its job.
+- Transliteration forks (`Raghunathan`/`Ragunathan`, `Subrahmanyan`/`Subrahmanyam`) are currently rejected as a deliberate false negative. Folding `aa→a`, `ee/ii→i`, `oo/uu→u` and post-stop `h` inside `normalizeArtistName` would catch them without weakening the surname rule. Do not reach for Soundex or Metaphone — they are tuned for English orthography and collide `Krishna` with `Krishnan`.
+
+### Known baselines (so regressions are visible)
+
+Re-measured 2026-07-30 at the end of the bio-structuring work. All failures below are pre-existing, none caused by this work — a clean run matches these, and any increase is a regression to investigate. **The previously recorded core and web test counts were stale** (758 and 111); the numbers here were measured, and the pre-work figures were verified by running the same suites in a worktree at HEAD.
+
+- `packages/core`: **1074 tests pass, 3 fail** (`updateArtist`/`updateRaga`/`updateTala` "should throw error when update fails" — all three assert a capitalised message the code emits lowercase; confirmed failing identically at HEAD, and again on a clean tree 2026-08-02); **2 files with typecheck errors** (`edit/service.ts`, `event/index.ts:46` — a `festivalId` null). Was 899 before Rasika Classes; +175 for the nine `class-*` domains, `shared/timezone.ts`, the invite claim, the auto-confirm sweep and the teacher junction. Before the bio work it was 795.
+- `packages/classes`: **18 tests pass**, typecheck clean, `pnpm build` succeeds. Tests run under `TZ=America/New_York` deliberately — that is the zone where the date-only rendering bug would show.
+- `packages/ui`: typecheck clean, no tests of its own (the token-drift assertion lives in web, which already has the CSS-parsing machinery).
+- `packages/trpc`: **15 unit tests pass** via `pnpm test:unit` (no AWS needed). `pnpm test` is still the integration suite and still needs `sst shell`. 0 own typecheck errors.
+- `packages/web`: **166 tests pass, 14 files** (was 151; +5 for `token-drift.test.ts`, +10 elsewhere). `pnpm build` verified after the session-cookie change.
+- `packages/web`: **151 tests pass, 12 files** (was 137). +14 for `readRepeatedRows` and `affiliationPeriod`. Typecheck errors sit in **8 files**, unchanged by this work and none in artist, organiser or gallery files: `api.server.ts`, `lib/auth.server.ts`, `$artform.events.tsx`, four `carnatic.*` routes, `events.new_.api.tsx`, `moderator.request-deletion.tsx`. It was 11 until `sst-env.d.ts` was committed with the current resource declarations — the three `Resource.*` errors were stale generated types, not real.
+- `packages/scripts`: **17 typecheck errors, all pre-existing**, in `check-id.ts` (6), `recompute-performance-counts.ts` (3), `enrichRagas.ts` (3), `cli.ts` (2 — `Resource.RasikaTable`/`SearchIndexBucket`, environmental like the web ones), `bulkUpload.ts` (2), `backfillWebp.ts` (1). **This package was never typechecked until 2026-07-30**: it had no `typecheck` script, and its tsconfig paired `module: NodeNext` with `moduleResolution: Bundler`, which are mutually exclusive, so `tsc` refused to start. That gap let a call to a non-existent `Edit` namespace reach a commit — the edit service is exported flat from core, not as a namespace. Both are fixed; run `pnpm typecheck` here now.
+- ~~Importing `@rasika/core` from a script fails on an `@openauthjs/openauth` subpath~~ — **fixed 2026-07-31.** `packages/scripts` was the only package without `"type": "module"`, so tsx loaded it as CommonJS and resolved dependencies under the `require` condition; openauth exports only `import`, so every script died before running a line. That had disabled the entire CLI, including the `rebuild-*` backfills listed above as required post-deploy. `bulkUpload.ts` also needed a real `__dirname` under ESM. The CLI runs now — `pnpm prod-cli backfill-photo-dimensions` was exercised against prod end to end.
+- `packages/og-image`: **25 tests pass**, **0 own typecheck errors** (its `pnpm typecheck` surfaces the same 7 core errors through the `@rasika/trpc` type import — filter with `grep -v 'core/src'`).
+- `packages/trpc`: **0 errors under `src/routers/`** (its `npx tsc --noEmit -p .` reports the same 7 core errors, which are not its own).
+- Pre-existing lint, do not treat as new: `event.ts` non-null assertion (~line 424), `ImageUpload.tsx` a11y `useKeyWithClickEvents`, and `noArrayIndexKey` warnings (warn-severity per the web override) throughout the wizard.
+- Commit messages with inner double-quotes break `git commit -m` shell quoting — commit prose via `git commit -F <file>`.
