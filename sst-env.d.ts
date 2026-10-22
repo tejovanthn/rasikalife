@@ -90,6 +90,10 @@ declare module "sst" {
       "type": "sst.aws.Function"
       "url": string
     }
+    "Talapettige": {
+      "type": "sst.aws.StaticSite"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />
