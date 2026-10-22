@@ -6,6 +6,7 @@ import { email } from './email';
 import { eventPostersBucket, eventPostersCdn, geminiApiKey } from './event-posters';
 import { instagramImageFetcherFunction, instagramScraperFunction } from './instagram';
 import { searchBucket, searchReindexFunction } from './search';
+import { siteCacheEnvironment, siteCachePermissions } from './site-cache';
 
 const trpc = new sst.aws.Function('RasikaTRPC', {
   url: true,
@@ -22,7 +23,10 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
   ],
   handler: './packages/trpc/src/index.handler',
   timeout: '5 minutes',
+  // Mutations clear the page cache (packages/trpc/src/middleware/site-cache.ts).
+  permissions: siteCachePermissions,
   environment: {
+    ...siteCacheEnvironment,
     DYNAMODB_TABLE: database.name,
     AWS_REGION: undefined,
     SEARCH_INDEX_BUCKET: searchBucket.name,

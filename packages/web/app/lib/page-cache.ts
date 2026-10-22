@@ -11,11 +11,14 @@
  * viewer's name and email into every document. Anything that sets a cookie, or is not a plain
  * 200, is left alone.
  *
- * An hour is how stale a signed-out reader may see an edit. Editors are signed in, so they
- * never see the cached copy.
+ * A week, because writes clear the cache themselves (`invalidateSiteCache`, from every public
+ * tRPC mutation, the enrich cron and `pnpm cli reindex`) and each deploy changes the cache key
+ * (infra/site.ts). An hour was too short to help: crawlers reach most of the ~15k pages about
+ * once, so the copy expired before anyone asked again. The week is the backstop for a write
+ * that clears nothing. Editors are signed in, so they never see the cached copy.
  */
 export const DEFAULT_PUBLIC_CACHE_CONTROL =
-  'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400';
+  'public, max-age=0, s-maxage=604800, stale-while-revalidate=86400';
 export const SIGNED_IN_CACHE_CONTROL = 'private, no-cache';
 
 const SESSION_COOKIE = /(?:^|;\s*)rasika_session=/;

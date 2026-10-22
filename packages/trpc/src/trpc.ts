@@ -5,6 +5,7 @@ import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import { ZodError } from 'zod';
 import { ROLE, type Role } from '../../core/src/auth/roles';
 import { ApplicationError } from '../../core/src/constants';
+import { clearSiteCacheAfterMutation } from './middleware/site-cache';
 
 export interface Context {
   event: APIGatewayProxyEventV2;
@@ -27,9 +28,13 @@ const t = initTRPC.context<Context>().create({
 });
 
 export const router = t.router;
-export const publicProcedure = t.procedure;
 
-export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+// Every procedure starts here, so no mutation can skip clearing the page cache.
+const baseProcedure = t.procedure.use(clearSiteCacheAfterMutation);
+
+export const publicProcedure = baseProcedure;
+
+export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',

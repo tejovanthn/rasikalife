@@ -1,4 +1,5 @@
 import { Artist, Enrichment } from '@rasika/core';
+import { invalidateSiteCache } from '@rasika/core/site-cache';
 
 /**
  * Weekly cron entry point for the venue, organiser and artist fills. Thin on purpose — the
@@ -23,7 +24,9 @@ import { Artist, Enrichment } from '@rasika/core';
 export async function handler(): Promise<void> {
   console.log('Starting scheduled venue, organiser and artist fill');
   try {
+    let written = 0;
     const result = await Enrichment.enrichVenuesAndOrganisers({ apply: true });
+    written += result.written;
     console.log(
       `Scanned ${result.scanned.venues} venues, ${result.scanned.organisers} organisers, ` +
         `${result.scanned.events} events; filled ${result.venues.length} venues and ` +
@@ -43,6 +46,7 @@ export async function handler(): Promise<void> {
     // scan must not throw away the venue and organiser fills that already landed above.
     try {
       const artists = await Artist.fillArtistInstruments({ apply: true });
+      written += artists.written;
       console.log(
         `Scanned ${artists.scanned.artists} artists and ${artists.scanned.junctionRows} credits; ` +
           `filled ${artists.written} instruments (${artists.keptExisting} already set, ` +
@@ -58,6 +62,10 @@ export async function handler(): Promise<void> {
     } catch (error) {
       console.error('Scheduled artist instrument fill failed', error);
     }
+
+    // Pages are cached for a week, so a run that filled anything clears them. Most runs fill
+    // nothing and leave the cache alone.
+    if (written > 0) await invalidateSiteCache(`enrich cron: ${written} records`);
 
     // No reindex here. `SearchIndexCron` already rebuilds every 6 hours, so a fill is searchable
     // within one of those windows; rebuilding here as well would read the whole table a second

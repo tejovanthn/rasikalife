@@ -3,6 +3,7 @@ import { getCookieDomain, getDomain } from './domain';
 import { blockBadBots } from './edge-security';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
 import { ogImageFunction } from './og-image';
+import { siteDistributionParam } from './site-cache';
 import { bucket } from './storage';
 import { trpc } from './trpc';
 
@@ -23,7 +24,7 @@ const serverCachePolicy = new aws.cloudfront.CachePolicy('RasikaWebServerCachePo
     },
     headersConfig: {
       headerBehavior: 'whitelist',
-      headers: { items: ['x-open-next-cache-key'] },
+      headers: { items: ['x-open-next-cache-key', 'x-rasika-build'] },
     },
     queryStringsConfig: { queryStringBehavior: 'all' },
     enableAcceptEncodingBrotli: true,
@@ -31,13 +32,40 @@ const serverCachePolicy = new aws.cloudfront.CachePolicy('RasikaWebServerCachePo
   },
 });
 
+// Changes on every deploy, and the viewer-request function puts it in the cache key. Pages are
+// cached for a week (packages/web/app/lib/page-cache.ts), and SST clears the cache on deploy
+// only when the hashed assets change, so a loader-only change would otherwise keep serving the
+// old HTML. A new key also strands old copies cleanly instead of racing an invalidation.
+const buildId = Date.now().toString(36);
+const tagBuild = `
+event.request.headers['x-rasika-build'] = { value: '${buildId}' };
+`;
+
+// CloudFront access logs, prod only, kept 30 days. Lambda logs carry no path or user agent, so
+// these are the only record of which pages crawlers hit and how often the cache answers.
+let cdnLogsDomain: $util.Output<string> | undefined;
+if ($app.stage === 'prod') {
+  const cdnLogs = new aws.s3.BucketV2('RasikaWebCdnLogs');
+  // CloudFront writes logs through bucket ACLs, which S3 disables by default.
+  const ownership = new aws.s3.BucketOwnershipControls('RasikaWebCdnLogsOwnership', {
+    bucket: cdnLogs.id,
+    rule: { objectOwnership: 'BucketOwnerPreferred' },
+  });
+  new aws.s3.BucketLifecycleConfigurationV2('RasikaWebCdnLogsExpiry', {
+    bucket: cdnLogs.id,
+    rules: [{ id: 'expire-30-days', status: 'Enabled', filter: {}, expiration: { days: 30 } }],
+  });
+  // Through the ownership controls, so the distribution is not pointed at the bucket first.
+  cdnLogsDomain = $resolve([ownership.id, cdnLogs.bucketDomainName]).apply(([, domain]) => domain);
+}
+
 const site = new sst.aws.React('RasikaWeb', {
   link: [bucket, trpc, auth, eventPostersBucket],
   path: 'packages/web/',
   domain: getDomain(''),
   cachePolicy: serverCachePolicy.id,
   edge: {
-    viewerRequest: { injection: blockBadBots },
+    viewerRequest: { injection: blockBadBots + tagBuild },
   },
   environment: {
     STAGE: $app.stage,
@@ -51,6 +79,27 @@ const site = new sst.aws.React('RasikaWeb', {
   server: {
     timeout: '60 seconds',
   },
+  transform: {
+    cdn: args => {
+      if (!cdnLogsDomain) return;
+      const bucket = cdnLogsDomain;
+      args.transform = {
+        ...args.transform,
+        distribution: distribution => {
+          distribution.loggingConfig = { bucket, prefix: 'rasika-web/', includeCookies: false };
+        },
+      };
+    },
+  },
 });
+
+// Read by `invalidateSiteCache` (packages/core/src/site-cache.ts). See infra/site-cache.ts.
+if (site.nodes.cdn) {
+  new aws.ssm.Parameter('RasikaWebDistributionId', {
+    name: siteDistributionParam,
+    type: 'String',
+    value: site.nodes.cdn.nodes.distribution.id,
+  });
+}
 
 export { bucket, site };

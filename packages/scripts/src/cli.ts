@@ -20,6 +20,15 @@ program
   });
 
 program
+  .command('clear-page-cache')
+  .description('Clear the CloudFront page cache, after a data change that ran no reindex')
+  .action(async () => {
+    setup();
+    const { invalidateSiteCache } = await import('@rasika/core/site-cache');
+    await invalidateSiteCache('cli clear-page-cache');
+  });
+
+program
   .command('seed:content')
   .description('Write static content pages (about, privacy, etc.), updating them by path')
   .option('-n, --dry-run', 'List what would be created or updated')

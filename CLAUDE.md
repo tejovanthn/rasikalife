@@ -1230,12 +1230,14 @@ because the integration setup imports `@rasika/core` before any test file's `vi.
 
 ### Caching a public page (`Cache-Control`)
 
-**Every signed-out page is cached at CloudFront by default.** `applyDefaultCacheControl`
-(`~/lib/page-cache.ts`) runs in `entry.server.tsx` for documents and for `.data` navigations, and
-gives any GET 200 whose route set no `Cache-Control` and no cookie
-`public, max-age=0, s-maxage=3600, stale-while-revalidate=86400`, or `private, no-cache` when the
+**Every signed-out page is cached at CloudFront for a week, and writes clear it.**
+`applyDefaultCacheControl` (`~/lib/page-cache.ts`) runs in `entry.server.tsx` for documents and
+for `.data` navigations, and gives any GET 200 whose route set no `Cache-Control` and no cookie
+`public, max-age=0, s-maxage=604800, stale-while-revalidate=86400`, or `private, no-cache` when the
 request carries `rasika_session`. Before it, nothing outside the artist routes was cacheable, and
 crawlers ran ~850k Lambda invocations in ten days of Oct 2026 (web plus 2–3 tRPC calls a page).
+It started at an hour, which barely helped: crawlers reach most pages about once, so the copy
+expired before a second request.
 
 It is safe only because of the cache policy in `infra/site.ts`. SST's own policy keys on no
 cookie at all, which would serve one cached copy to signed-in readers and to every script and
@@ -1244,10 +1246,37 @@ that change a page. **A new cookie that changes what a page renders must be adde
 whitelist**, or one reader's version is served to everyone. A request header is the same: no
 loader may read `user-agent`, geo or language headers into the page.
 
-The cost is an hour of staleness for signed-out readers after an edit. Editors are signed in and
-always see fresh pages. A route that must be fresher sets its own header, which is kept: the
-artist routes use `publicPageCacheControl(request)` (`~/lib/auth.server`, 2 minutes), returned
-via `data(payload, { headers })` and forwarded by the route's `headers` export.
+**What clears it.** `invalidateSiteCache` (`@rasika/core/site-cache`) invalidates `/*`, never a
+single URL: one composition shows on its raga's, its composer's and every list page. It never
+throws; the week is the backstop. It is called from:
+
+- **every successful tRPC mutation** (`middleware/site-cache.ts`, on the base procedure, so no
+  procedure can skip it), except the `classes`, `concertLog` and `user` routers, which change no
+  rasika.life page. A new router whose writes are private belongs in `PRIVATE_ROUTERS`;
+- **`VenueOrganiserEnrichCron`**, only when a run wrote something;
+- **`pnpm cli reindex`**, which every data script ends with, and `pnpm cli clear-page-cache` for
+  a hand edit that runs no reindex.
+
+**Deploys change the cache key instead.** The viewer-request function sets `x-rasika-build` to a
+value that changes every deploy, and the cache policy keys on it. SST only clears the cache when
+the hashed assets change, so a loader-only change would otherwise keep serving week-old HTML.
+
+**Not hooked, on purpose:** `ArtistDenormRebuildCron` rewrites every artist daily with no signal
+of what changed, and clearing on it would cap the cache at a day. Its fixes are a safety net for
+the inline paths, which are tRPC mutations and already clear. They reach signed-out readers on
+the next clear or within the week. The Instagram scraper writes social posts, which no page
+shows. **A new job that writes something a page shows must call `invalidateSiteCache`** and needs
+`siteCachePermissions` and `siteCacheEnvironment` (`infra/site-cache.ts`).
+
+The distribution id reaches functions through an SSM parameter (`/rasika/<stage>/web-distribution-id`),
+because the site links tRPC and taking the id directly would be a cycle.
+
+**Access logs** for the site go to the `RasikaWebCdnLogs` bucket (prod only, 30 days). They are
+the only record of paths and user agents; Lambda logs carry neither.
+
+A route that must be fresher sets its own header, which is kept: the artist routes use
+`publicPageCacheControl(request)` (`~/lib/auth.server`, 2 minutes), returned via
+`data(payload, { headers })` and forwarded by the route's `headers` export.
 
 ### Admin: bulk CSV export/import (all domains)
 

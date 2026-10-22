@@ -1,6 +1,7 @@
 // infra/venue-organiser-enrich.ts
 
 import { database } from './database';
+import { siteCacheEnvironment, siteCachePermissions } from './site-cache';
 
 // Weekly fill of the derivable venue and organiser fields: `venueType` and `organisationType`
 // from the name, and an organiser's contact details and tags from the events they ran.
@@ -17,7 +18,8 @@ import { database } from './database';
 // backfill, a handful of writes. Nothing here overwrites, so a run that finds nothing writes
 // nothing.
 //
-// No reindex — SearchIndexCron already rebuilds every 6 hours.
+// No reindex — SearchIndexCron already rebuilds every 6 hours. A run that fills anything does
+// clear the page cache, since pages are cached for a week.
 new sst.aws.Cron('VenueOrganiserEnrichCron', {
   schedule: 'rate(7 days)',
   job: {
@@ -25,8 +27,10 @@ new sst.aws.Cron('VenueOrganiserEnrichCron', {
     link: [database],
     memory: '1024 MB',
     timeout: '600 seconds',
+    permissions: siteCachePermissions,
     environment: {
       DYNAMODB_TABLE: database.name,
+      ...siteCacheEnvironment,
     },
   },
 });
