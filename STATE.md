@@ -44,6 +44,8 @@ standard aarti text; `jaya jaya narasimha` line 1 is Malayalam and a Panini line
 
 ## Done, not yet verified after deploy
 
+- **Talapettige** is live at talapettige.rasika.life (2026-10-22). Headers checked. Still
+  untested on a real phone: install from the browser, then airplane mode, reopen and press Play.
 - **Artist profile redesign** is live. Never confirmed: the backfills (`rebuild-repertoire`,
   `rebuild-featured`, `rebuild-collaborators`), `ArtistDenormRebuildCron` duration and memory,
   and junction rows with malformed `gsi1sk` (scan for values not starting `$eventartist_`).
