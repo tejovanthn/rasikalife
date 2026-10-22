@@ -1,0 +1,22 @@
+{
+  "name": "Talapettige",
+  "short_name": "Talapettige",
+  "description": "A tanpura drone and Carnatic tala metronome that works offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffe9e0",
+  "theme_color": "#ffe9e0",
+  "categories": ["music", "education"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

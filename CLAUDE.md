@@ -41,6 +41,7 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - **packages/og-image**: Lambda that renders OG share images (Sharp); kept separate from the web Lambda because `sst.aws.React` does not bundle `node_modules/` so native modules like Sharp can't live in the React server function
 - **packages/scraper**: Data scraping utilities
 - **packages/classes**: React Router v7 PWA for Rasika Classes, deployed to `classes.rasika.life` as its own SST site
+- **packages/talapettige**: Talapettige, a tanpura drone and Carnatic tala metronome. A static, prerendered React Router v7 PWA at `talapettige.rasika.life` that works offline
 - **packages/ui**: Shared Tailwind preset, design tokens and the primitives Classes needs. Browser-only; never imports `@rasika/core` outside a `/client` subpath
 - **infra/**: SST infrastructure definitions
 
@@ -1227,6 +1228,31 @@ for any object in the bucket.
 `packages/trpc` now has two vitest configs. `pnpm test` is the integration suite and needs
 `sst shell`; `pnpm test:unit` (`*.unit.test.ts`, `vitest.unit.config.ts`) has no setup file,
 because the integration setup imports `@rasika/core` before any test file's `vi.mock` applies.
+
+### Talapettige (`packages/talapettige`)
+
+A practice tool: a tanpura drone and a tala metronome, synthesised in the browser by two
+AudioWorklets (`hooks/useFaustDSP.ts`, `hooks/useTalaDSP.ts`). Moved in from its own repo in
+2026-10. The `dsp/*.dsp` files are the Faust sources the worklets were ported from; nothing
+compiles them and the app does not load Faust.
+
+- **No server.** `ssr: false` with every route prerendered, deployed as an `sst.aws.StaticSite`
+  (`infra/talapettige.ts`). Settings and practice history live in `localStorage`, so there is
+  no session, no tRPC and no database link. Keep it that way: a server would end offline use.
+- **It is offline-first, unlike Classes.** Nothing here is private, so `public/sw.js` precaches
+  the whole build at install. `scripts/build-sw.mjs` runs after `react-router build` and writes
+  the file list and a content hash into `build/client/sw.js`; the hash names the cache, so a
+  deploy replaces it. Pages are network-first, hashed assets cache-first, and Google Fonts are
+  cached on first use. The build fails if a placeholder is left unfilled, because a worker that
+  does not evaluate shows up in a browser only as "registration failed".
+- **Cache headers carry the update path.** Only `assets/` is immutable. `sw.js` and the pages
+  must revalidate, or a browser keeps the old worker and never sees a deploy.
+- **The look comes from `@rasika/ui`**: the preset, `tokens.css` (so it follows the OS theme),
+  `AppShell` with the bottom tab bar, `Card`, `Button`, `Field`/`Select`/`Input`,
+  `EmptyState`. Nav items are `Link`s styled with `navItemClasses`, because `NavItem` is a plain
+  `<a>` and would reload the page. Only the slider and the switch are local, since `@rasika/ui`
+  has neither. Settings sections are `<details>` (`components/settings-section.tsx`).
+- Icons come from `pnpm icons` (`scripts/generate-icons.mjs`), as in Classes.
 
 ### Caching a public page (`Cache-Control`)
 

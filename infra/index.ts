@@ -5,6 +5,7 @@ export * from './classes';
 export * from './event-posters';
 export * from './og-image';
 export * from './site';
+export * from './talapettige';
 export * from './trpc';
 export * from './search';
 export * from './auth';
