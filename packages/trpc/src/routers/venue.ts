@@ -1,4 +1,4 @@
-import { Image, Venue } from '@rasika/core';
+import { Image, Search, Venue } from '@rasika/core';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
@@ -34,7 +34,7 @@ export const venueRouter = createTRPCRouter({
     .query(({ input }) => Venue.listVenuesByCity(input.city, input)),
 
   // Every city a venue sits in, for the `/<city>/concerts` pages and their sitemap entries.
-  cities: publicProcedure.query(() => Venue.listVenueCities()),
+  cities: publicProcedure.query(() => Search.listVenueCities()),
 
   create: editorProcedure.input(Venue.CreateVenueSchema).mutation(async ({ input }) => {
     const result = await Venue.createVenue(input);

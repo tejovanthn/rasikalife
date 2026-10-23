@@ -1,6 +1,6 @@
 /**
- * Straight-line distance for "≈ 6 km" on the event listings. Browser-only in use, but pure,
- * so it is tested in node.
+ * Straight-line distance for "≈ 6 km" on the event listings, computed by the listing loader
+ * from the signed-in reader's saved location.
  *
  * Straight-line on purpose: a road distance needs a routing service per reader, and the
  * figure is there to tell Malleswaram from Electronic City, not to plan the drive.
@@ -30,8 +30,4 @@ export function formatDistance(km: number): string {
   if (km < 1) return `≈ ${Math.max(100, Math.round(km * 10) * 100)} m`;
   if (km < 10) return `≈ ${Math.round(km * 2) / 2} km`;
   return `≈ ${Math.round(km)} km`;
-}
-
-export function isPin(value: string): boolean {
-  return /^[1-9]\d{5}$/.test(value.replace(/\s+/g, ''));
 }

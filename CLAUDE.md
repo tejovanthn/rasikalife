@@ -1260,38 +1260,52 @@ compiles them and the app does not load Faust.
 
 ### Event listings: filters, city pages, WhatsApp text, distance
 
-`/events` and `/<city>/concerts[/today|/this-weekend|/this-week]` are one page
-(`components/events/event-listing.tsx`) over one loader (`lib/event-listing.server.ts`), which
-loads **every** upcoming event (`event.upcomingListings`, 23 in Oct 2026) and filters in memory.
-Plan: `docs/plans/261023-01-listing-features.md`.
+`/events`, its date pages (`/events/today`, `/events/this-weekend`, `/events/this-week`) and
+`/<city>/concerts` are one page (`components/events/event-listing.tsx`) over one loader
+(`lib/event-listing.server.ts`), which loads **every** upcoming event (`event.upcomingListings`,
+23 in Oct 2026, projected fields) and filters in memory. Revisit with a pre-built snapshot past
+~1,000 upcoming events. Plan: `docs/plans/261023-01-listing-features.md`.
 
 - **Every filter is a query parameter or a path segment, never client state.** The page works
   without JavaScript and each view is its own cached, shareable URL (the CloudFront policy keys on
-  all query strings). Build links with `listingHref`; a city page puts the date preset in the
-  path, `/events` puts everything in the query.
+  all query strings). Build links with `listingHref`. Only the three date presets of the whole
+  listing are pages of their own; on a city page every filter is a query parameter and the
+  canonical is the city page. Keyword Planner (Oct 2026): "carnatic concerts in bangalore"
+  260/month, "… this weekend" and "… this week" 0, so per-city date pages were dropped.
 - **Date-relative pages are cached until midnight in India** (`cacheUntilMidnight`), not for the
   week. Otherwise a quiet day serves yesterday's "Today".
 - **An event's city is its venue's** (`EventListings.listUpcomingListings`). `event.venueCity`
   was empty on 22 of 23 upcoming events; nothing is written back. City slugs fold old names
   (`bangalore` → `bengaluru`, `shared/city.ts`) and the route 301s to the stored one; a city no
-  venue is in is a 404, and a city with nothing upcoming carries `noindex`.
+  venue is in is a 404, and a city with nothing upcoming carries `noindex`. The list of cities
+  comes from the search index (`Search.listVenueCities`, venue documents carry `city`), not a
+  venue-table scan per request.
 - **"Free only" means `entryType === 'free'`.** Missing is unknown, not free.
 - **Filters are buttons, not chips** (DESIGN.md: a chip never toggles), and reach 44px on mobile.
-- **Distance is computed in the browser only.** The reader's PIN or location lives in
-  `localStorage`, never a cookie, so the cached page stays one copy for everyone. PIN centroids
-  are `web/public/pin-centroids.json`, built by `pnpm cli pin-centroids` from Nominatim (GeoNames
-  was rejected: it puts Bengaluru PINs at the district centre). Venue `lat`/`lng`/`geoSource` come
-  from `pnpm cli geocode-venues [--apply]` (map link first, else PIN centroid; fill-only, dry by
-  default, rules in `domain/venue/geo.ts`). A stated city that disagrees with the PIN places
-  nothing.
-- **WhatsApp text** is `?view=whatsapp` on any listing, plus a panel on the festival page. "Open
-  in WhatsApp" is a plain `wa.me` link; Copy and Share appear after hydration. It stops at 30
-  events and always ends with the listing's own URL, which is the point: every pasted copy links
-  back. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
+- **Distance needs an account.** The reader saves a PIN or their device location in
+  `/settings/location` (`user.homeLocation`, never more precise than ~1 km: `resolveHomeLocation`
+  rounds a device point to two decimals), and the listing loader computes "≈ 6 km away" on the
+  server for that private page. Signed-out readers see a sign-in prompt. Clearing uses
+  `.remove()` (rule 8). PIN centroids are `core/src/shared/pin-centroids.json`, built by
+  `pnpm cli pin-centroids` from Nominatim (GeoNames was rejected: it puts Bengaluru PINs at the
+  district centre). Venue `lat`/`lng`/`geoSource` come from `pnpm cli geocode-venues [--apply]`
+  (map link first, else PIN centroid; fill-only, dry by default, `domain/venue/geo.ts`). A stated
+  city that disagrees with the PIN places nothing.
+- **A PIN-centroid venue point is for distance only.** Directions links and the venue's JSON-LD
+  `geo` use `exactVenueCoordinates`, which accepts `map-link` and `manual` and nothing else.
+- **WhatsApp text** is `?view=whatsapp` on any listing, plus a panel on the festival page, open to
+  everyone (every paste is distribution). "Open in WhatsApp" is a plain `wa.me` link; Copy and
+  Share appear after hydration. It stops at 30 events and ends with the listing's own URL. Every
+  rasika.life link in it carries `utm_source=whatsapp&utm_medium=social`, `utm_campaign`
+  (`listing_share`/`festival_share`) and `utm_content` (`listing`/`event`); ticket links are left
+  alone. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
 - **Artists "Popular" and "Verified"** are ranked from the search index (`artist.browse`):
   `artistPopularity` (credited approved events + RSVPs + attendance) and `verified` are written
   onto each artist document at index time, so they refresh every 6 hours. The Verified filter
   renders only when at least one artist is verified (none were in Oct 2026).
+- **Sign-in returns to the page that asked.** `/auth/login?redirectTo=` keeps the path in the
+  session and the callback sends the reader there; it used to drop it and land everyone on `/`.
+  Both ends go through `safeRedirectPath`, which refuses anything but a same-site path.
 
 ### Caching a public page (`Cache-Control`)
 

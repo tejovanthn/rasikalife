@@ -4,7 +4,7 @@
  * | Field                     | Source                                                     |
  * |---------------------------|------------------------------------------------------------|
  * | `lat`/`lng`, `map-link`   | the venue's `mapLink`, short links followed to the full URL |
- * | `lat`/`lng`, `postal-code`| the PIN centroid table (`web/public/pin-centroids.json`)   |
+ * | `lat`/`lng`, `postal-code`| the PIN centroid table (`core/src/shared/pin-centroids.json`) |
  * | `address.postalCode`      | a six-digit PIN already in the street line                 |
  * | `address.city`            | the PIN, for the ranges the table covers                   |
  *
@@ -13,9 +13,10 @@
  *
  * Usage: `pnpm prod-cli geocode-venues [--out venue-geo.csv]` (dry run), then `--apply`.
  */
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { Venue } from '@rasika/core';
 import { toCsv } from '@rasika/core/admin/csv';
+import { PIN_CENTROIDS } from '@rasika/core/shared/pin-centroids';
 
 const USER_AGENT = 'rasika.life geocode-venues (https://rasika.life)';
 
@@ -50,10 +51,8 @@ async function listAllVenues() {
   return all;
 }
 
-export async function geocodeVenues(opts: { apply?: boolean; out?: string; pins: string }) {
-  const pins = (
-    JSON.parse(await readFile(opts.pins, 'utf8')) as { pins: Record<string, [number, number]> }
-  ).pins;
+export async function geocodeVenues(opts: { apply?: boolean; out?: string }) {
+  const pins = PIN_CENTROIDS;
   const venues = await listAllVenues();
 
   const rows: Array<Record<string, string>> = [];

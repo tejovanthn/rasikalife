@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { authClient, commitSession, getSession } from '~/lib/auth.server';
+import { safeRedirectPath } from '~/lib/safe-redirect';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -29,6 +30,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   // Store PKCE challenge in session with timestamp
   session.set('pkce_challenge', JSON.stringify(challenge));
   session.set('pkce_timestamp', Date.now());
+  // Where to land after the callback. `requireUser` and the sign-in prompts pass it; until now
+  // it was dropped here and every sign-in landed on the home page.
+  const back = safeRedirectPath(url.searchParams.get('redirectTo'));
+  if (back) session.set('post_login_redirect', back);
+  else session.unset('post_login_redirect');
 
   return redirect(authUrl, {
     headers: {

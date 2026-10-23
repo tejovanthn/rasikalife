@@ -7,6 +7,7 @@ export {
   getDocuments,
   rankArtistDocuments,
   rankArtists,
+  listVenueCities,
 } from './service';
 export type { ArtistRanking } from './service';
 export type { SearchWithFullDataResponse, DocumentsResponse } from './service';

@@ -605,10 +605,34 @@ export function festivalJsonLd(festival: {
  * are marked up too, by `Place.event`, each pointing back at this Place by `@id` so the
  * address is stated once and every concert inherits a complete location.
  */
+/**
+ * A venue's coordinates only when they are the venue's own: read off its map link or entered by
+ * hand. A PIN centroid (`geoSource: 'postal-code'`) is good enough for "≈ 6 km away" and wrong
+ * for a pin on a map: it can be a kilometre or two from the door. So it is never published and
+ * never used for directions.
+ */
+export function exactVenueCoordinates(venue: {
+  lat?: number | null;
+  lng?: number | null;
+  geoSource?: string | null;
+}): { lat: number; lng: number } | null {
+  if (typeof venue.lat !== 'number' || typeof venue.lng !== 'number') return null;
+  if (venue.geoSource !== 'map-link' && venue.geoSource !== 'manual') return null;
+  return { lat: venue.lat, lng: venue.lng };
+}
+
+/** Google Maps directions to a point, which opens the reader's own maps app on a phone. */
+export function directionsUrl(point: { lat: number; lng: number }): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${point.lat},${point.lng}`;
+}
+
 export function venueJsonLd(venue: {
   id: string;
   name: string;
   url: string;
+  lat?: number | null;
+  lng?: number | null;
+  geoSource?: string | null;
   description?: string | null;
   venueType?: string | null;
   address?: StructuredAddress | null;
@@ -634,6 +658,12 @@ export function venueJsonLd(venue: {
     image: trimmed(venue.photoUrl),
     address: postalAddress(venue.address),
     hasMap: trimmed(venue.mapLink),
+    geo: (() => {
+      const exact = exactVenueCoordinates(venue);
+      return exact
+        ? { '@type': 'GeoCoordinates', latitude: exact.lat, longitude: exact.lng }
+        : undefined;
+    })(),
     telephone: trimmed(venue.phone),
     email: venueTakesEmail(venue.venueType) ? trimmed(venue.email) : undefined,
     sameAs: list([

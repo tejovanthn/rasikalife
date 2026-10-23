@@ -4,6 +4,7 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { S3Client } from '@aws-sdk/client-s3';
 import { ApplicationError, ErrorCode } from '@rasika/core';
 import Fuse, { type FuseResult, type FuseResultMatch } from 'fuse.js';
+import { type CityEntry, foldCities } from '../../shared/city';
 import { ArtistEntity } from '../artist/entity';
 import type { Artist } from '../artist/entity';
 import { CompositionEntity } from '../composition/entity';
@@ -428,4 +429,14 @@ export async function rankArtists(opts: {
 }): Promise<ArtistRanking> {
   const index = await loadIndex();
   return rankArtistDocuments(index.documents, opts);
+}
+
+/**
+ * Every city a venue sits in, from the index the search Lambda already holds in memory. It
+ * replaced a scan of the whole venue table on every uncached listing request. Refreshed with
+ * the index, so a venue's new city appears within six hours or on the next reindex.
+ */
+export async function listVenueCities(): Promise<CityEntry[]> {
+  const index = await loadIndex();
+  return foldCities(index.documents.filter(doc => doc.entityType === 'venue').map(doc => doc.city));
 }

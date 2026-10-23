@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { authClient, commitSession, getSession } from '~/lib/auth.server';
+import { safeRedirectPath } from '~/lib/safe-redirect';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -66,8 +67,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     session.unset('pkce_challenge');
     session.unset('pkce_timestamp');
 
-    // Redirect to home page after successful auth
-    return redirect('/', {
+    // Back to the page that asked for sign-in, else home. Re-checked here: the session value
+    // came from a query parameter.
+    const back = safeRedirectPath(session.get('post_login_redirect')) ?? '/';
+    session.unset('post_login_redirect');
+    return redirect(back, {
       headers: {
         'Set-Cookie': await commitSession(session),
       },

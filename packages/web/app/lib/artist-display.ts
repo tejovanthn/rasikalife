@@ -116,3 +116,20 @@ export function artistMetaDescription(artist: {
 
   return sentences.join(' ');
 }
+
+/**
+ * An event's cast on one line, each with what they played: "Vid. Sunil Gargyan (vocal),
+ * Keshav Mohankumar (violin)". The role is the stored `EventArtist` credit, read off the
+ * poster; the accompanists are who a rasika is often choosing between concerts for.
+ */
+export function castLine(
+  artists: Array<{ title?: string | null; name: string; role?: string | null }>
+): string {
+  return artists
+    .map(a => {
+      const name = `${a.title ? `${a.title} ` : ''}${a.name}`;
+      const role = a.role?.trim();
+      return role ? `${name} (${role})` : name;
+    })
+    .join(', ');
+}

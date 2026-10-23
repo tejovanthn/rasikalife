@@ -1,58 +1,50 @@
 import { Plus } from 'lucide-react';
-import { Link, data, redirect, useLoaderData } from 'react-router';
+import { Link, useLoaderData } from 'react-router';
 import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { useAuth } from '~/components/auth-context';
 import { EventListing } from '~/components/events/event-listing';
 import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
 import { Button } from '~/components/ui/button';
-import {
-  type EventListingData,
-  ListingRedirect,
-  loadEventListing,
-} from '~/lib/event-listing.server';
-import { eventsIndexMeta } from '~/lib/listing-description';
+import { DATE_PRESETS, listingHref } from '~/lib/event-filters';
+import { type EventsPageData, eventsLoader } from '~/lib/events-page.server';
+import { concertsMeta, eventsIndexMeta } from '~/lib/listing-description';
 import { SIGNED_IN_CACHE_CONTROL } from '~/lib/page-cache';
 import { eventListItems } from '~/lib/structured-data';
 import { generateEventUrl } from '~/lib/url-slug';
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const result = await loadEventListing(request).catch(error => {
-    if (error instanceof Response) throw error;
-    console.error('Failed to load events:', error);
-    throw new Response('Failed to load events', { status: 500 });
-  });
-  if (result instanceof ListingRedirect) throw redirect(result.location, 301);
-  return data(result.data, { headers: result.headers });
-};
+export const loader = (args: LoaderFunctionArgs) => eventsLoader(args);
 
 export const headers: HeadersFunction = ({ loaderHeaders }) => ({
   'Cache-Control': loaderHeaders.get('Cache-Control') ?? SIGNED_IN_CACHE_CONTROL,
 });
 
-export const meta: MetaFunction<typeof loader> = ({ data: d }) => {
-  const { title, description } = eventsIndexMeta({
-    count: d?.count ?? 0,
-    cities: d?.topCities ?? [],
-  });
+export const meta: MetaFunction<typeof loader> = ({ data: raw }) => {
+  const d = raw as unknown as EventsPageData | undefined;
+  const preset = DATE_PRESETS.find(p => p.value === d?.state.when);
+  const { title, description } = preset
+    ? concertsMeta({ range: preset.label, count: d?.count ?? 0, next: d?.first })
+    : eventsIndexMeta({ count: d?.count ?? 0, cities: d?.topCities ?? [] });
+  // A date page is its own page; any other filter is a view of /events.
+  const url = `https://rasika.life${preset ? listingHref({ kind: 'all' }, { when: preset.value }) : '/events'}`;
   return [
     { title },
     { name: 'description', content: description },
     { property: 'og:title', content: title },
     { property: 'og:description', content: description },
     { property: 'og:type', content: 'website' },
-    { property: 'og:url', content: 'https://rasika.life/events' },
+    { property: 'og:url', content: url },
     { property: 'og:image', content: 'https://rasika.life/og-image.png' },
     { name: 'twitter:card', content: 'summary_large_image' },
     { name: 'twitter:title', content: title },
     { name: 'twitter:description', content: description },
     { name: 'twitter:image', content: 'https://rasika.life/og-image.png' },
-    // Every filtered view is a variant of this page; the city pages are the ones to rank.
-    { tagName: 'link', rel: 'canonical', href: 'https://rasika.life/events' },
+    { tagName: 'link', rel: 'canonical', href: url },
   ];
 };
 
 export default function EventsIndex() {
-  const listing = useLoaderData<typeof loader>() as unknown as EventListingData;
+  const listing = useLoaderData<typeof loader>() as unknown as EventsPageData;
+  const preset = DATE_PRESETS.find(p => p.value === listing.state.when);
   const { user } = useAuth();
 
   return (
@@ -62,7 +54,9 @@ export default function EventsIndex() {
         intro={
           <header className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <h1 className="page-title">Events</h1>
+              <h1 className="page-title">
+                {preset ? `Concerts ${preset.label.toLowerCase()}` : 'Events'}
+              </h1>
               <p className="text-xl text-muted-foreground">
                 Upcoming Carnatic concerts and classical arts events
               </p>

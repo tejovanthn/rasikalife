@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/settings/profile', label: 'Profile' },
   { to: '/settings/contributions', label: 'Contributions' },
   { to: '/settings/display', label: 'Display' },
+  { to: '/settings/location', label: 'Location' },
   { to: '/settings/account', label: 'Account' },
 ];
 

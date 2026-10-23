@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { EventCard } from '~/components/EventCard';
 import { EventDayGroup } from '~/components/EventDayGroup';
-import { NearMeControl, NearProvider } from '~/components/events/near-me';
+import { HomeLocationForm } from '~/components/events/home-location-form';
 import { WhatsAppDigest } from '~/components/events/whatsapp-digest';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { buttonVariants } from '~/components/ui/button';
@@ -53,6 +53,44 @@ function FilterLink({
 }
 
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
+
+/**
+ * "≈ 6 km away" needs an account: the reader's location is saved to it, and the distances are
+ * computed on the server for a page that is private anyway. A signed-out reader sees why.
+ */
+function DistanceControl({
+  viewer,
+  here,
+}: {
+  viewer: EventListingData['viewer'];
+  here: string;
+}) {
+  return (
+    <section aria-labelledby="distance-heading" className="space-y-2">
+      <h2 id="distance-heading" className="text-sm font-semibold">
+        Distance from you
+      </h2>
+      {!viewer.signedIn ? (
+        <p className="text-sm text-muted-foreground">
+          <Link to={`/auth/login?${new URLSearchParams({ redirectTo: here })}`}>Sign in</Link> to
+          see how far each concert is from you.
+        </p>
+      ) : viewer.home ? (
+        <p className="text-sm text-muted-foreground">
+          Measured from {viewer.home.label}. <Link to="/settings/location">Change</Link>
+        </p>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Save a PIN code to see how far each concert is.
+          </p>
+          <HomeLocationForm redirectTo={here} />
+        </>
+      )}
+      <p className="text-xs text-muted-foreground">Straight-line distance.</p>
+    </section>
+  );
+}
 
 function shortMonth(month: string) {
   return new Date(`${month}-01T12:00:00Z`).toLocaleDateString('en-IN', {
@@ -187,7 +225,7 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
   const isDigest = state.view === 'whatsapp';
 
   return (
-    <NearProvider>
+    <>
       {intro}
 
       <nav aria-label="Filter events" className="mb-6 space-y-3">
@@ -277,7 +315,7 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
               </ul>
             </section>
           )}
-          <NearMeControl />
+          <DistanceControl viewer={data.viewer} here={href({})} />
         </aside>
 
         <div className="min-w-0">
@@ -337,6 +375,6 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
           )}
         </div>
       </div>
-    </NearProvider>
+    </>
   );
 }

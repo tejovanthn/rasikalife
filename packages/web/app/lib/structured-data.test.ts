@@ -3,8 +3,10 @@ import { serializeJsonLd } from './json-ld';
 import {
   artistJsonLd,
   definedTermJsonLd,
+  directionsUrl,
   eventJsonLd,
   eventListItems,
+  exactVenueCoordinates,
   festivalJsonLd,
   festivalLocationName,
   itemListJsonLd,
@@ -364,6 +366,15 @@ describe('venueJsonLd', () => {
     address: { street: 'Gayathri Devi Park Extension', city: 'Bengaluru' },
   };
 
+  it('publishes coordinates read off a map link, never a PIN centroid', () => {
+    expect(
+      emitted(venueJsonLd({ ...venue, lat: 12.99, lng: 77.57, geoSource: 'map-link' })).geo
+    ).toEqual({ '@type': 'GeoCoordinates', latitude: 12.99, longitude: 77.57 });
+    expect(
+      emitted(venueJsonLd({ ...venue, lat: 13.0, lng: 77.57, geoSource: 'postal-code' })).geo
+    ).toBeUndefined();
+  });
+
   it('states the address once and has every event point back at it', () => {
     const out = emitted(
       venueJsonLd({
@@ -496,5 +507,22 @@ describe('itemListJsonLd', () => {
 
   it('emits nothing for an empty listing rather than an empty ItemList', () => {
     expect(itemListJsonLd([])).toBeUndefined();
+  });
+});
+
+describe('exactVenueCoordinates', () => {
+  it('trusts a map link or a hand-entered point, and nothing else', () => {
+    expect(exactVenueCoordinates({ lat: 1, lng: 2, geoSource: 'manual' })).toEqual({
+      lat: 1,
+      lng: 2,
+    });
+    expect(exactVenueCoordinates({ lat: 1, lng: 2, geoSource: 'postal-code' })).toBeNull();
+    expect(exactVenueCoordinates({ lat: 1, geoSource: 'map-link' })).toBeNull();
+  });
+
+  it('builds a directions link', () => {
+    expect(directionsUrl({ lat: 12.9925, lng: 77.57 })).toBe(
+      'https://www.google.com/maps/dir/?api=1&destination=12.9925,77.57'
+    );
   });
 });

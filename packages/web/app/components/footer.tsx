@@ -69,6 +69,17 @@ export const Footer = () => {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [communityOpen, setCommunityOpen] = useState(false);
+  const [concertsOpen, setConcertsOpen] = useState(false);
+
+  // The date pages and the busiest city page, linked from every page so crawlers reach them.
+  // Bengaluru is named outright: it holds nearly every listed concert (Oct 2026). Add a city
+  // here when it has a steady listing of its own.
+  const concertLinks = [
+    { href: '/events/today', label: 'Concerts today' },
+    { href: '/events/this-weekend', label: 'This weekend' },
+    { href: '/events/this-week', label: 'This week' },
+    { href: '/bengaluru/concerts', label: 'Concerts in Bengaluru' },
+  ];
 
   const aboutLinks = [
     { href: '/about', label: 'About' },
@@ -95,7 +106,14 @@ export const Footer = () => {
     <footer className="bg-background border-t">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <FooterSection
+              id="footer-concerts"
+              title="Concerts"
+              links={concertLinks}
+              isOpen={concertsOpen}
+              onToggle={() => setConcertsOpen(!concertsOpen)}
+            />
             <FooterSection
               id="footer-about"
               title="About & Legal"

@@ -579,8 +579,7 @@ program
   .description('Fill venue coordinates, city and PIN from map links and PIN centroids')
   .option('--apply', 'Write the changes (default is a dry run)')
   .option('--out <path>', 'Write the planned changes as CSV')
-  .option('--pins <path>', 'PIN centroid table', '../web/public/pin-centroids.json')
-  .action(async (opts: { apply?: boolean; out?: string; pins: string }) => {
+  .action(async (opts: { apply?: boolean; out?: string }) => {
     setup();
     const { geocodeVenues } = await import('./geocodeVenues.js');
     await geocodeVenues(opts);
@@ -588,8 +587,8 @@ program
 
 program
   .command('pin-centroids')
-  .description('Build packages/web/public/pin-centroids.json from Nominatim (no AWS needed)')
-  .option('--out <path>', 'Output file', '../web/public/pin-centroids.json')
+  .description('Build core/src/shared/pin-centroids.json from Nominatim (no AWS needed)')
+  .option('--out <path>', 'Output file', '../core/src/shared/pin-centroids.json')
   .option('--ranges <list>', 'PIN ranges, e.g. 560001-560300,600001-600130')
   .action(async (opts: { out: string; ranges?: string }) => {
     const { buildPinCentroids } = await import('./pinCentroids.js');

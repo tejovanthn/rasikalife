@@ -12,9 +12,13 @@ import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { eventListingDescription } from '~/lib/listing-description';
+import { directionsUrl, exactVenueCoordinates } from '~/lib/structured-data';
 import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
 
 interface VenueDetail {
+  lat?: number;
+  lng?: number;
+  geoSource?: string;
   id: string;
   name: string;
   address?: {
@@ -167,6 +171,8 @@ export default function VenueDetailPage() {
     .sort((a, b) => new Date(b.startDateTime).getTime() - new Date(a.startDateTime).getTime());
 
   const addressStr = formatAddress(venue.address);
+  // Directions only to the venue's own point; a PIN centroid is not a door.
+  const exact = exactVenueCoordinates(venue);
   const shareUrl = `https://rasika.life${generateVenueUrl(venue.name, venue.id)}`;
   const venueTypeLabel = venue.venueType
     ? (VENUE_TYPE_LABELS[venue.venueType] ?? venue.venueType)
@@ -257,6 +263,17 @@ export default function VenueDetailPage() {
             >
               <ExternalLink className="h-4 w-4" />
               Website
+            </a>
+          )}
+          {exact && (
+            <a
+              href={directionsUrl(exact)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Directions
             </a>
           )}
           {venue.mapLink && (

@@ -3,6 +3,7 @@ import {
   artistMetaDescription,
   artistMetaTitle,
   artistTagline,
+  castLine,
   parseInstruments,
 } from './artist-display';
 
@@ -154,5 +155,17 @@ describe('artistMetaTitle', () => {
       'A | Concerts & Repertoire – Rasika.life'
     );
     expect(artistMetaTitle({ name: 'A' })).toBe('A | Concerts & Repertoire – Rasika.life');
+  });
+});
+
+describe('castLine', () => {
+  it('names each performer with what they played', () => {
+    expect(
+      castLine([
+        { title: 'Vid.', name: 'Sunil Gargyan', role: 'vocal' },
+        { name: 'Keshav Mohankumar', role: ' violin ' },
+        { name: 'Unknown Role' },
+      ])
+    ).toBe('Vid. Sunil Gargyan (vocal), Keshav Mohankumar (violin), Unknown Role');
   });
 });

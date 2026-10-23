@@ -4,6 +4,8 @@ import { ROLE } from '../../auth/roles';
 import { generateId } from '../../utils';
 import { UserEntity } from './entity';
 import type { User } from './entity';
+import { resolveHomeLocation } from './home-location';
+import type { HomeLocation, HomeLocationInput, HomeLocationResult } from './home-location';
 import type { CreateUserSchema, UpdateUserSchema } from './schema';
 
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;
@@ -190,6 +192,30 @@ export async function updateUserPreferences(
   return getEffectivePreferences(updated.data as User);
 }
 
+export async function getHomeLocation(id: string): Promise<HomeLocation | null> {
+  const user = await getUser(id);
+  return (user?.homeLocation as HomeLocation | undefined) ?? null;
+}
+
+/**
+ * Saves where the reader's distances are measured from. A refused input (bad or unknown PIN)
+ * writes nothing and says why, so the form can.
+ */
+export async function setHomeLocation(
+  id: string,
+  input: HomeLocationInput
+): Promise<HomeLocationResult> {
+  const result = resolveHomeLocation(input);
+  if (!result.ok) return result;
+  await UserEntity.update({ id }).set({ homeLocation: result.location }).go();
+  return result;
+}
+
+/** `.remove`, not `.set(undefined)`: ElectroDB drops an undefined value (CLAUDE.md rule 8). */
+export async function clearHomeLocation(id: string): Promise<void> {
+  await UserEntity.update({ id }).remove(['homeLocation']).go();
+}
+
 export async function getUserByUsername(username: string): Promise<User | null> {
   const result = await UserEntity.query.byUsername({ username: username.toLowerCase() }).go();
   return (result.data?.[0] as User) ?? null;
@@ -197,3 +223,5 @@ export async function getUserByUsername(username: string): Promise<User | null> 
 
 export type { User } from './entity';
 export { CreateUserSchema, UpdateUserSchema, UpdateUserRoleSchema } from './schema';
+export { homeLocationLabel, resolveHomeLocation } from './home-location';
+export type { HomeLocation, HomeLocationInput, HomeLocationResult } from './home-location';

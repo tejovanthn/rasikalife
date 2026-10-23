@@ -134,31 +134,33 @@ export function eventsIndexMeta({
 }
 
 /**
- * Title and description for `/<city>/concerts` and its date pages
- * ("carnatic concerts in bangalore this weekend"). Names the count and the next concert, the
- * fact a searcher came for, rather than describing the kind of page; when the range is empty
- * it says so and names the next concert after it, which the page also lists.
+ * Title and description for a dated or city listing: `/events/today`, `/events/this-weekend`,
+ * `/events/this-week`, and `/<city>/concerts` ("carnatic concerts in bangalore"). Names the
+ * count and the next concert, the fact a searcher came for, rather than describing the kind of
+ * page; when the range is empty it says so and names the next concert after it, which the page
+ * also lists.
  */
-export function cityConcertsMeta({
+export function concertsMeta({
   city,
   range,
   count,
   next,
 }: {
-  city: string;
+  city?: string;
   /** "Today", "This weekend", "This week", or absent for all upcoming. */
   range?: string;
   count: number;
   /** The first concert the page shows. */
   next?: { name: string; day: string; venue?: string };
 }): { title: string; description: string } {
+  const where = city ? ` in ${city}` : '';
   const when = range ? ` ${range.replace(/\b\w/g, c => c.toUpperCase())}` : '';
-  const title = `Carnatic Concerts in ${city}${when} | Rasika.life`;
+  const title = `Carnatic Concerts${where}${when} | Rasika.life`;
   const scope = range ? range.toLowerCase() : 'coming up';
   const lead =
     count > 0
-      ? `${plural(count, 'concert')} in ${city} ${scope}.`
-      : `No concerts listed in ${city} ${scope} yet.`;
+      ? `${plural(count, 'concert')}${where} ${scope}.`
+      : `No concerts listed${where} ${scope} yet.`;
   const nextLine = next
     ? ` ${count > 0 ? 'First' : 'Next'}: ${next.name}, ${next.day}${next.venue ? ` at ${next.venue}` : ''}.`
     : '';

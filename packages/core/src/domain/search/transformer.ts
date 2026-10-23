@@ -81,7 +81,10 @@ export function transformCompositionToDocument(
 
 export function transformVenueToDocument(venue: Venue): SearchDocument {
   const parts = [venue.city || '', ...(venue.alternateNames || [])];
-  return createDocument(venue.id, 'venue', venue.name, parts.filter(Boolean).join(' '));
+  const doc = createDocument(venue.id, 'venue', venue.name, parts.filter(Boolean).join(' '));
+  const city = venue.address?.city || venue.city;
+  if (city) doc.city = city;
+  return doc;
 }
 
 export function transformOrganiserToDocument(organiser: Organiser): SearchDocument {

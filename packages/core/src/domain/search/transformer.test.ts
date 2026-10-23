@@ -150,3 +150,12 @@ describe('transformToSearchDocuments', () => {
     expect(transformToSearchDocuments([], [], [], [], [], [], [], [])).toEqual([]);
   });
 });
+
+describe('transformVenueToDocument city', () => {
+  it('carries the stored city, address first, for the city pages', async () => {
+    const { transformVenueToDocument } = await import('./transformer');
+    const venue = { id: 'v1', name: 'Hall', city: 'Bangalore', address: { city: 'Bengaluru' } };
+    expect(transformVenueToDocument(venue as never).city).toBe('Bengaluru');
+    expect(transformVenueToDocument({ id: 'v2', name: 'Bare' } as never).city).toBeUndefined();
+  });
+});

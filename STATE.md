@@ -5,13 +5,25 @@ Open items only, newest first. History moved to `docs/plans/state-archive-2026-1
 
 ## 2026-10-23: listing features (Kalaverse review), not yet deployed
 
-Built: event times fixed to the event zone; /events date presets, month calendar and "Free only";
-`/<city>/concerts[/today|/this-weekend|/this-week]`; WhatsApp text on listings and festivals;
-"≈ km from you"; artists Popular/Verified. Plan: `docs/plans/261023-01-listing-features.md`.
+Built: event times in the event zone with a zone label; /events with date pages
+(`/events/today`, `/this-weekend`, `/this-week`), month calendar and "Free only";
+`/<city>/concerts`; WhatsApp text with UTM tags; "≈ km away" for signed-in readers with a saved
+location; artists Popular/Verified; accompanists on cards; "Listen on"; directions; sign-in now
+returns to the page that asked. Plan: `docs/plans/261023-01-listing-features.md`.
 In prod already: 53 of 145 venues geocoded (`geocode-venues --apply`, 6 map link, 47 PIN).
 
-Next step: deploy, then `pnpm prod-cli reindex` so artist documents carry `popularity`, and mark
-`whatsapp_digest` a key event in GA4.
+Next step: deploy, then `pnpm prod-cli reindex` (artist documents gain `popularity`, venue
+documents gain `city`, which the city pages read), and mark `whatsapp_digest` a key event in GA4.
+
+## Backlog (listing features)
+
+- Artist and venue event lists grouped by month, with "show more months".
+- Home page "Carnatic today" section from the upcoming listing.
+- Follow artists and venues. Needs a delivery channel (an email digest) before it means anything.
+- Venue "what's on" 14-day strip, once venues hold more than a few events.
+- City naming: people search "bangalore" (260/month), not "bengaluru" (0); consider titling the
+  city page "Bangalore" or making `/bangalore/concerts` canonical.
+- A pre-built listing snapshot (S3, rebuilt on approval) once upcoming events pass ~1,000.
 
 ## Done 2026-10-21: tala, lyrics and content cleanup in prod
 

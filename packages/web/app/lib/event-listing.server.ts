@@ -1,7 +1,9 @@
 import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
 import { canonicalCitySlug } from '@rasika/core/shared/city';
 import { startOfDayInstant, todayInTimeZone } from '@rasika/core/shared/timezone';
-import { client } from '~/api.server';
+import { client, createServerClient } from '~/api.server';
+import { getUser } from '~/lib/auth.server';
+import { distanceKm } from '~/lib/distance';
 import {
   type DateRange,
   type ListingScope,
@@ -27,7 +29,11 @@ import { formatWhatsAppDigest } from '~/lib/whatsapp-digest';
 
 export type ListingEvent = Awaited<
   ReturnType<typeof client.event.upcomingListings.query>
->[number] & { isGeneric: boolean };
+>[number] & {
+  isGeneric: boolean;
+  /** Straight-line km from the signed-in reader's home location, when both ends are known. */
+  distanceKm?: number;
+};
 
 export interface EventListingData {
   scope: ListingScope;
@@ -45,6 +51,8 @@ export interface EventListingData {
   topCities: string[];
   /** Present in the WhatsApp view only. */
   digest?: string;
+  /** Distance needs an account: who is reading, and where they measure from. */
+  viewer: { signedIn: boolean; home: { label: string } | null };
 }
 
 const ORIGIN = 'https://rasika.life';
@@ -62,9 +70,10 @@ export async function loadEventListing(
   const today = todayInTimeZone(zone);
   const state = readListingState(url, opts.presetSegment);
 
-  const [listings, venueCities] = await Promise.all([
+  const [listings, venueCities, viewer] = await Promise.all([
     client.event.upcomingListings.query({ from: startOfDayInstant(today, zone) }),
     client.venue.cities.query(),
+    readViewer(request),
   ]);
   const cityNames = new Map(venueCities.map(c => [c.slug, c.name]));
 
@@ -95,9 +104,14 @@ export async function loadEventListing(
     free: state.free,
   });
   const shown = filterEvents(scoped, { range });
+  const home = viewer.home;
   const withGeneric = (e: (typeof listings)[number]): ListingEvent => ({
     ...e,
     isGeneric: isGenericTitle(e.title, e.artists ?? undefined, e.artForm ?? undefined),
+    distanceKm:
+      home && typeof e.venueLat === 'number' && typeof e.venueLng === 'number'
+        ? distanceKm(home, { lat: e.venueLat, lng: e.venueLng })
+        : undefined,
   });
 
   const cityCounts = new Map<string, number>();
@@ -130,6 +144,10 @@ export async function loadEventListing(
     months: monthCounts(scoped),
     cities,
     topCities: cities.slice(0, 3).map(c => c.name),
+    viewer: {
+      signedIn: viewer.signedIn,
+      home: home ? { label: home.pin ? `PIN ${home.pin}` : 'your location' } : null,
+    },
   };
 
   if (state.view === 'whatsapp') {
@@ -140,10 +158,28 @@ export async function loadEventListing(
       eventUrl: e => `${ORIGIN}${generateEventUrl(e.title, e.id)}`,
       cast: state.cast,
       links: state.links,
+      campaign: 'listing_share',
     });
   }
 
   return { data, headers: { 'Cache-Control': cacheUntilMidnight(request, zone) } };
+}
+
+/**
+ * The signed-in reader and their saved location. Only a request carrying a session pays for
+ * this; a signed-out one is the cached page, the same for everyone. A failure costs the
+ * distances, never the page.
+ */
+async function readViewer(request: Request) {
+  const user = await getUser(request).catch(() => null);
+  if (!user) return { signedIn: false, home: null };
+  try {
+    const serverClient = await createServerClient(request);
+    return { signedIn: true, home: await serverClient.user.getHomeLocation.query() };
+  } catch (error) {
+    console.error('Failed to read home location:', error);
+    return { signedIn: true, home: null };
+  }
 }
 
 /** The first concert a page shows, for its meta description. */

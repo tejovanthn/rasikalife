@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cityConcertsMeta, eventListingDescription, eventsIndexMeta } from './listing-description';
+import { concertsMeta, eventListingDescription, eventsIndexMeta } from './listing-description';
 
 const NOW = new Date('2026-08-04T00:00:00Z');
 
@@ -135,10 +135,10 @@ describe('eventsIndexMeta', () => {
   });
 });
 
-describe('cityConcertsMeta', () => {
+describe('concertsMeta', () => {
   it('names the range, the count and the first concert', () => {
     expect(
-      cityConcertsMeta({
+      concertsMeta({
         city: 'Bengaluru',
         range: 'This weekend',
         count: 3,
@@ -152,7 +152,7 @@ describe('cityConcertsMeta', () => {
   });
 
   it('says when the range is empty and names the next concert after it', () => {
-    const { description } = cityConcertsMeta({
+    const { description } = concertsMeta({
       city: 'Mysuru',
       range: 'Today',
       count: 0,
@@ -163,8 +163,15 @@ describe('cityConcertsMeta', () => {
     );
   });
 
+  it('reads without a city for /events/today', () => {
+    expect(concertsMeta({ range: 'Today', count: 2 })).toEqual({
+      title: 'Carnatic Concerts Today | Rasika.life',
+      description: '2 concerts today. Date, venue and artists for each.',
+    });
+  });
+
   it('reads "coming up" for the whole listing', () => {
-    expect(cityConcertsMeta({ city: 'Chennai', count: 1 })).toEqual({
+    expect(concertsMeta({ city: 'Chennai', count: 1 })).toEqual({
       title: 'Carnatic Concerts in Chennai | Rasika.life',
       description: '1 concert in Chennai coming up. Date, venue and artists for each.',
     });

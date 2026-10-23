@@ -40,6 +40,22 @@ export interface DigestOptions {
   links?: boolean;
   /** Past this many events the text stops and points at the listing. */
   max?: number;
+  /** `utm_campaign` on every rasika.life link in the text: `listing_share`, `festival_share`. */
+  campaign: string;
+}
+
+/**
+ * Tags a rasika.life link so GA4 can count the readers a pasted text brings back. Only our own
+ * links: a ticket link belongs to someone else. `utm_content` says which link in the text it
+ * was, the listing or one event.
+ */
+export function withUtm(url: string, campaign: string, content: 'listing' | 'event'): string {
+  const parsed = new URL(url);
+  parsed.searchParams.set('utm_source', 'whatsapp');
+  parsed.searchParams.set('utm_medium', 'social');
+  parsed.searchParams.set('utm_campaign', campaign);
+  parsed.searchParams.set('utm_content', content);
+  return parsed.toString();
 }
 
 export const DIGEST_MAX_EVENTS = 30;
@@ -89,7 +105,7 @@ function eventBlock(event: DigestEvent, opts: DigestOptions): string[] {
   if (event.entryType === 'ticketed' && ticketUrl && /^https?:\/\//.test(ticketUrl)) {
     lines.push(`🎟 ${ticketUrl}`);
   }
-  if (opts.links) lines.push(opts.eventUrl(event));
+  if (opts.links) lines.push(withUtm(opts.eventUrl(event), opts.campaign, 'event'));
   return lines;
 }
 
@@ -110,9 +126,10 @@ export function formatWhatsAppDigest(events: DigestEvent[], opts: DigestOptions)
   }
 
   const rest = events.length - shown.length;
+  const listingUrl = withUtm(opts.listingUrl, opts.campaign, 'listing');
   out.push(
     '',
-    rest > 0 ? `…and ${rest} more: ${opts.listingUrl}` : `More on Rasika.life: ${opts.listingUrl}`
+    rest > 0 ? `…and ${rest} more: ${listingUrl}` : `More on Rasika.life: ${listingUrl}`
   );
   return out.join('\n');
 }

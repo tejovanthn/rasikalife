@@ -1,9 +1,10 @@
 import { Link } from 'react-router';
 import { PosterImage } from '~/components/PosterImage';
 import { EventTime } from '~/components/events/event-time';
-import { EventDistance } from '~/components/events/near-me';
 import { Badge, type BadgeProps } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
+import { castLine } from '~/lib/artist-display';
+import { formatDistance } from '~/lib/distance';
 import { eventZone } from '~/lib/event-time';
 import { generateEventUrl } from '~/lib/url-slug';
 
@@ -13,9 +14,8 @@ export interface EventCardEvent {
   startDateTime: string;
   timezone?: string | null;
   venueName?: string;
-  /** The venue's coordinates, when known, for "≈ 6 km away". */
-  venueLat?: number | null;
-  venueLng?: number | null;
+  /** From the signed-in reader's saved location, computed by the listing loader. */
+  distanceKm?: number;
   artists?: Array<{ title?: string; name: string; role?: string }>;
   posterUrl?: string;
   entryType?: string;
@@ -37,10 +37,6 @@ const entryTypeBadgeVariant: Record<string, BadgeProps['variant']> = {
   ticketed: 'tala',
   'by-invitation': 'raga',
 };
-
-function artistLine(artists: Array<{ title?: string; name: string }>) {
-  return artists.map(a => `${a.title ? `${a.title} ` : ''}${a.name}`).join(' · ');
-}
 
 export function EventCard({ event, isGeneric = false }: EventCardProps) {
   const artists = event.artists?.length ? event.artists : null;
@@ -70,8 +66,10 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
               <span className="font-normal text-muted-foreground"> · {event.venueName}</span>
             )}
           </p>
-          {artists && <p className="text-sm text-muted-foreground">{artistLine(artists)}</p>}
-          <EventDistance lat={event.venueLat} lng={event.venueLng} />
+          {artists && <p className="text-sm text-muted-foreground">{castLine(artists)}</p>}
+          {event.distanceKm !== undefined && (
+            <p className="text-sm text-muted-foreground">{formatDistance(event.distanceKm)} away</p>
+          )}
           {event.entryType && (
             <div>
               <Badge variant={entryTypeBadgeVariant[event.entryType] ?? 'secondary'}>

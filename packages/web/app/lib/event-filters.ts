@@ -155,9 +155,10 @@ export function shiftMonth(month: string, delta: number): string {
 }
 
 /**
- * Where a listing lives. `/events` carries every filter as a query parameter. A city page
- * carries its date presets in the path (`/bengaluru/concerts/this-weekend`), because those are
- * the pages worth ranking; a month or day there is still a query parameter.
+ * Where a listing lives. The date presets of the whole listing are pages of their own
+ * (`/events/today`, `/events/this-weekend`, `/events/this-week`); a city page carries every
+ * filter, presets included, as a query parameter. Per-city date pages were dropped: Keyword
+ * Planner shows no searches for "… in bangalore this weekend" (Oct 2026).
  */
 export type ListingScope = { kind: 'all' } | { kind: 'city'; slug: string };
 
@@ -187,8 +188,10 @@ export function listingHref(scope: ListingScope, state: ListingState): string {
   const preset = DATE_PRESETS.find(p => p.value === state.when)?.value;
 
   if (scope.kind === 'city') {
-    path = `/${scope.slug}/concerts${preset ? `/${PRESET_SEGMENTS[preset]}` : ''}`;
-    if (state.when && !preset) query.set('when', state.when);
+    path = `/${scope.slug}/concerts`;
+    if (state.when) query.set('when', state.when);
+  } else if (preset) {
+    path = `/events/${PRESET_SEGMENTS[preset]}`;
   } else if (state.when) {
     query.set('when', state.when);
   }
@@ -203,7 +206,7 @@ export function listingHref(scope: ListingScope, state: ListingState): string {
   return qs ? `${path}?${qs}` : path;
 }
 
-/** The state a listing URL describes. `presetSegment` is the city route's path segment. */
+/** The state a listing URL describes. `presetSegment` is the `/events/<preset>` path segment. */
 export function readListingState(url: URL, presetSegment?: string): ListingState {
   const p = url.searchParams;
   return {

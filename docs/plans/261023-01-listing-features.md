@@ -105,3 +105,14 @@ All five phases built, tests green, not deployed. Venue geocoding applied to pro
 venues (6 from a map link, 47 from a PIN). The venues most upcoming events point at are
 name-only duplicates, so their merges (`docs/research/venue-merge-2026-10-23.csv`) are what
 gives those concerts a city and a distance.
+
+## Changes after review (2026-10-23)
+
+- Per-city date pages dropped (no search volume); the date presets became `/events/today`,
+  `/events/this-weekend`, `/events/this-week`.
+- Distance moved behind sign-in: saved to the account, computed on the server. The
+  browser-storage version and the public PIN file were removed.
+- The city list reads the search index instead of scanning venues.
+- WhatsApp links carry UTM tags; the text itself stays open to everyone.
+- Also: accompanists on cards, "Listen on", directions and venue `geo` for exact points only,
+  footer concert links, and sign-in returning to the page that asked.

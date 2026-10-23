@@ -6,7 +6,9 @@ const base = {
   heading: 'Concerts in Bengaluru · This weekend',
   listingUrl: 'https://rasika.life/bengaluru/concerts/this-weekend',
   eventUrl: (e: DigestEvent) => `https://rasika.life/events/${e.id}`,
+  campaign: 'listing_share',
 };
+const UTM = 'utm_source=whatsapp&utm_medium=social&utm_campaign=listing_share';
 
 const concert: DigestEvent = {
   id: 'e1',
@@ -35,7 +37,7 @@ describe('formatWhatsAppDigest', () => {
         '🕕 6:30 pm · Ticketed',
         '🎟 https://example.com/tickets',
         '',
-        'More on Rasika.life: https://rasika.life/bengaluru/concerts/this-weekend',
+        `More on Rasika.life: https://rasika.life/bengaluru/concerts/this-weekend?${UTM}&utm_content=listing`,
       ].join('\n')
     );
   });
@@ -54,13 +56,17 @@ describe('formatWhatsAppDigest', () => {
   it('adds a link per event only when asked', () => {
     expect(formatWhatsAppDigest([concert], base)).not.toContain('/events/e1');
     expect(formatWhatsAppDigest([concert], { ...base, links: true })).toContain(
-      'https://rasika.life/events/e1'
+      `https://rasika.life/events/e1?${UTM}&utm_content=event`
     );
   });
 
   it('strips WhatsApp markup out of stored text', () => {
     const text = formatWhatsAppDigest([{ ...concert, title: 'Raga_Sudha *Live*' }], base);
     expect(text).toContain('*RagaSudha Live*');
+  });
+
+  it('tags only rasika.life links, never the ticket seller', () => {
+    expect(formatWhatsAppDigest([concert], base)).toContain('🎟 https://example.com/tickets\n');
   });
 
   it('stops at the cap and points at the listing', () => {

@@ -42,6 +42,21 @@ export const userRouter = createTRPCRouter({
     .input(preferencesSchema)
     .mutation(({ input, ctx }) => User.updateUserPreferences(ctx.user.id, input)),
 
+  // Where the reader's "≈ 6 km away" is measured from. A PIN or a device location; the core
+  // stores neither more precisely than a PIN (`resolveHomeLocation`).
+  getHomeLocation: protectedProcedure.query(({ ctx }) => User.getHomeLocation(ctx.user.id)),
+
+  setHomeLocation: protectedProcedure
+    .input(
+      z.union([
+        z.object({ pin: z.string().min(1).max(10) }),
+        z.object({ lat: z.number(), lng: z.number() }),
+      ])
+    )
+    .mutation(({ input, ctx }) => User.setHomeLocation(ctx.user.id, input)),
+
+  clearHomeLocation: protectedProcedure.mutation(({ ctx }) => User.clearHomeLocation(ctx.user.id)),
+
   getPublicProfile: publicProcedure
     .input(z.object({ username: z.string().min(1) }))
     .query(async ({ input }) => {

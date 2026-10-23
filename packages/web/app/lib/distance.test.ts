@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { distanceKm, formatDistance, isPin } from './distance';
+import { distanceKm, formatDistance } from './distance';
 
 describe('distanceKm', () => {
   it('measures Malleswaram to Basavanagudi at about 6 km', () => {
@@ -16,14 +16,5 @@ describe('formatDistance', () => {
     expect(formatDistance(6.2)).toBe('≈ 6 km');
     expect(formatDistance(6.3)).toBe('≈ 6.5 km');
     expect(formatDistance(23.6)).toBe('≈ 24 km');
-  });
-});
-
-describe('isPin', () => {
-  it('accepts six digits, with a space if printed that way', () => {
-    expect(isPin('560003')).toBe(true);
-    expect(isPin('560 003')).toBe(true);
-    expect(isPin('060003')).toBe(false);
-    expect(isPin('56003')).toBe(false);
   });
 });

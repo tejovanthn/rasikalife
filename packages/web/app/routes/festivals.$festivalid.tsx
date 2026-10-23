@@ -84,6 +84,7 @@ export const loader: LoaderFunction = async ({ request, params }) => {
             heading: festival.name,
             listingUrl: festivalUrl,
             eventUrl: e => `https://rasika.life${generateEventUrl(e.title, e.id)}`,
+            campaign: 'festival_share',
           })
         : null;
 

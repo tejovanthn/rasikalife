@@ -30,3 +30,32 @@ export function canonicalCitySlug(nameOrSlug: string): string {
   const slug = citySlug(nameOrSlug);
   return CITY_SLUG_ALIASES[slug] ?? slug;
 }
+
+export interface CityEntry {
+  slug: string;
+  /** The spelling most records in the city store. */
+  name: string;
+  count: number;
+}
+
+/**
+ * One entry per city from a list of stored city names, one name per record. "Bangalore" and
+ * "Bengaluru" are one city, named by whichever spelling more records use. Busiest first.
+ */
+export function foldCities(names: Array<string | null | undefined>): CityEntry[] {
+  const bySlug = new Map<string, Map<string, number>>();
+  for (const raw of names) {
+    const name = raw?.trim();
+    if (!name) continue;
+    const slug = canonicalCitySlug(name);
+    const spellings = bySlug.get(slug) ?? new Map<string, number>();
+    spellings.set(name, (spellings.get(name) ?? 0) + 1);
+    bySlug.set(slug, spellings);
+  }
+  return [...bySlug]
+    .map(([slug, spellings]) => {
+      const ranked = [...spellings].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      return { slug, name: ranked[0][0], count: ranked.reduce((sum, [, n]) => sum + n, 0) };
+    })
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}

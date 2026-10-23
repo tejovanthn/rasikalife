@@ -2,39 +2,35 @@ import { data, redirect, useLoaderData } from 'react-router';
 import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { EventListing } from '~/components/events/event-listing';
 import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
-import { DATE_PRESETS, listingHref, presetFromSegment } from '~/lib/event-filters';
+import { listingHref } from '~/lib/event-filters';
 import {
   type EventListingData,
   ListingRedirect,
   firstConcert,
   loadEventListing,
 } from '~/lib/event-listing.server';
-import { cityConcertsMeta } from '~/lib/listing-description';
+import { concertsMeta } from '~/lib/listing-description';
 import { SIGNED_IN_CACHE_CONTROL } from '~/lib/page-cache';
 import { eventListItems } from '~/lib/structured-data';
 import { generateEventUrl } from '~/lib/url-slug';
 
 /**
- * `/<city>/concerts`, and through `$city.concerts.$when.tsx`, `/today`, `/this-weekend` and
- * `/this-week` under it. The pages people search for ("carnatic concerts in bangalore this
- * weekend"), server-rendered from the same listing as /events. An old city name redirects to
- * the stored one; a city no venue is in is a 404.
+ * `/<city>/concerts`: the page people search for ("carnatic concerts in bangalore", 260 a month
+ * in Oct 2026), server-rendered from the same listing as /events. One page per city: a date,
+ * month or "free" filter is a query parameter and a view of it, since nobody searches for
+ * "… in bangalore this weekend". An old city name redirects to the stored one; a city no venue
+ * is in is a 404.
  */
 
 const SITE = 'https://rasika.life';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const city = params.city ?? '';
-  if (params.when !== undefined && !presetFromSegment(params.when)) {
-    throw new Response('Not Found', { status: 404 });
-  }
-  const result = await loadEventListing(request, { city, presetSegment: params.when }).catch(
-    error => {
-      if (error instanceof Response) throw error;
-      console.error(`Failed to load concerts for ${city}:`, error);
-      throw new Response('Failed to load events', { status: 500 });
-    }
-  );
+  const result = await loadEventListing(request, { city }).catch(error => {
+    if (error instanceof Response) throw error;
+    console.error(`Failed to load concerts for ${city}:`, error);
+    throw new Response('Failed to load events', { status: 500 });
+  });
   if (result instanceof ListingRedirect) throw redirect(result.location, 301);
   return data(
     { ...result.data, first: firstConcert(result.data), hasAny: result.data.months.length > 0 },
@@ -51,23 +47,16 @@ type LoaderData = EventListingData & {
   hasAny: boolean;
 };
 
-/** Only the date presets are pages of their own; a month, a day or "free" is a view of one. */
-function canonicalPath(d: LoaderData) {
-  const preset = DATE_PRESETS.some(p => p.value === d.state.when) ? d.state.when : null;
-  return listingHref(d.scope, { when: preset });
-}
-
 export const meta: MetaFunction<typeof loader> = ({ data: raw }) => {
   const d = raw as unknown as LoaderData | undefined;
   if (!d?.cityName) return [{ title: 'Concerts | Rasika.life' }];
-  const preset = DATE_PRESETS.find(p => p.value === d.state.when);
-  const { title, description } = cityConcertsMeta({
+  const { title, description } = concertsMeta({
     city: d.cityName,
-    range: preset?.label,
     count: d.count,
     next: d.first,
   });
-  const url = `${SITE}${canonicalPath(d)}`;
+  // Every filter is a view of the one city page.
+  const url = `${SITE}${listingHref(d.scope, {})}`;
   return [
     { title },
     { name: 'description', content: description },
@@ -87,7 +76,6 @@ export const meta: MetaFunction<typeof loader> = ({ data: raw }) => {
 export default function CityConcerts() {
   const d = useLoaderData<typeof loader>() as unknown as LoaderData;
   const city = d.cityName ?? '';
-  const preset = DATE_PRESETS.find(p => p.value === d.state.when);
   const base = listingHref(d.scope, {});
 
   return (
@@ -96,10 +84,7 @@ export default function CityConcerts() {
         data={d}
         intro={
           <header className="mb-6">
-            <h1 className="page-title">
-              Concerts in {city}
-              {preset ? ` ${preset.label.toLowerCase()}` : ''}
-            </h1>
+            <h1 className="page-title">Concerts in {city}</h1>
             <p className="text-xl text-muted-foreground">
               Carnatic concerts and classical arts events, with the venue and artists for each
             </p>
@@ -111,7 +96,6 @@ export default function CityConcerts() {
           { name: 'Home', item: SITE },
           { name: 'Events', item: `${SITE}/events` },
           { name: `Concerts in ${city}`, item: `${SITE}${base}` },
-          ...(preset ? [{ name: preset.label, item: `${SITE}${canonicalPath(d)}` }] : []),
         ]}
       />
       <ItemListStructuredData

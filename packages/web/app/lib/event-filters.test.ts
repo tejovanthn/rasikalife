@@ -146,16 +146,17 @@ describe('shiftMonth', () => {
 });
 
 describe('listingHref', () => {
-  it('keeps every filter in the query on /events', () => {
+  it('gives the presets of the whole listing their own path, the rest in the query', () => {
     expect(listingHref({ kind: 'all' }, { when: 'weekend', free: true })).toBe(
-      '/events?when=weekend&free=1'
+      '/events/this-weekend?free=1'
     );
+    expect(listingHref({ kind: 'all' }, { when: '2026-11' })).toBe('/events?when=2026-11');
     expect(listingHref({ kind: 'all' }, {})).toBe('/events');
   });
 
-  it('puts a preset in the path of a city page, and a month in the query', () => {
+  it('keeps every filter in the query on a city page', () => {
     const city = { kind: 'city', slug: 'bengaluru' } as const;
-    expect(listingHref(city, { when: 'weekend' })).toBe('/bengaluru/concerts/this-weekend');
+    expect(listingHref(city, { when: 'weekend' })).toBe('/bengaluru/concerts?when=weekend');
     expect(listingHref(city, { when: '2026-11', free: true })).toBe(
       '/bengaluru/concerts?when=2026-11&free=1'
     );
@@ -170,7 +171,7 @@ describe('listingHref', () => {
 
   it('round-trips through readListingState', () => {
     const state = readListingState(
-      new URL('https://rasika.life/bengaluru/concerts/this-week?free=1&view=whatsapp&cast=0'),
+      new URL('https://rasika.life/events/this-week?free=1&view=whatsapp&cast=0'),
       'this-week'
     );
     expect(state).toEqual({
@@ -180,8 +181,8 @@ describe('listingHref', () => {
       cast: false,
       links: false,
     });
-    expect(listingHref({ kind: 'city', slug: 'bengaluru' }, state)).toBe(
-      '/bengaluru/concerts/this-week?free=1&view=whatsapp&cast=0'
+    expect(listingHref({ kind: 'all' }, state)).toBe(
+      '/events/this-week?free=1&view=whatsapp&cast=0'
     );
   });
 });

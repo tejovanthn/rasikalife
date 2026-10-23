@@ -58,6 +58,20 @@ export const UserEntity = new Entity(
         },
         required: false,
       },
+      // Where distances on the event listings are measured from ("≈ 6 km away"). Signed-in
+      // only, set by the reader in /settings/location. Never precise: a PIN centroid, or the
+      // device location rounded to ~1 km, since a home address is not something a concert
+      // listing needs (DPDP). Not indexed, so optional is safe.
+      homeLocation: {
+        type: 'map',
+        properties: {
+          lat: { type: 'number', required: true },
+          lng: { type: 'number', required: true },
+          pin: { type: 'string', required: false },
+          source: { type: ['pin', 'device'] as const, required: true },
+        },
+        required: false,
+      },
       // URL-safe slug for the public profile (/u/:username).
       // Explicitly set when the user updates their displayName preference.
       // Sparse: only present once the user has set a display name.

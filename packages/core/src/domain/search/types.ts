@@ -28,6 +28,8 @@ export interface SearchDocument {
   popularity?: number;
   /** Artists only: `claimStatus === 'verified'`. */
   verified?: boolean;
+  /** Venues only: the stored city, for the `/<city>/concerts` pages (`listVenueCities`). */
+  city?: string;
 }
 
 export interface SearchIndex {

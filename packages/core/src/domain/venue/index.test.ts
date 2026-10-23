@@ -208,31 +208,6 @@ describe('Venue', () => {
   });
 });
 
-describe('listVenueCities', () => {
-  it('folds spellings of one city and names it by the commoner one', async () => {
-    const { listVenueCities } = await import('.');
-    const { VenueEntity } = await import('./entity');
-    const go = vi.fn().mockResolvedValue({
-      data: [
-        { address: { city: 'Bengaluru' } },
-        { address: { city: 'Bengaluru' } },
-        { city: 'Bangalore' },
-        { address: { city: 'Mysuru' } },
-        { address: {} },
-      ],
-      cursor: null,
-    });
-    vi.mocked(VenueEntity.query.list).mockReturnValue({
-      where: vi.fn().mockReturnValue({ go }),
-    } as never);
-
-    expect(await listVenueCities()).toEqual([
-      { slug: 'bengaluru', name: 'Bengaluru', venueCount: 3 },
-      { slug: 'mysuru', name: 'Mysuru', venueCount: 1 },
-    ]);
-  });
-});
-
 describe('getVenuesByIds', () => {
   it('asks once per id and drops deleted venues', async () => {
     const { getVenuesByIds } = await import('.');

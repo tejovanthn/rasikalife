@@ -261,6 +261,11 @@
       "import": "./src/shared/city.ts",
       "default": "./src/shared/city.ts"
     },
+    "./shared/pin-centroids": {
+      "types": "./src/shared/pin-centroids.ts",
+      "import": "./src/shared/pin-centroids.ts",
+      "default": "./src/shared/pin-centroids.ts"
+    },
     "./shared/completion": {
       "types": "./src/shared/completion.ts",
       "import": "./src/shared/completion.ts",

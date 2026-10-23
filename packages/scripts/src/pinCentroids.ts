@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 /**
  * Builds the PIN-code centroid table the events page uses for "≈ 6 km from you"
- * (packages/web/public/pin-centroids.json). Run once and commit the file; rerun only to add a
+ * (packages/core/src/shared/pin-centroids.json). Run once and commit the file; rerun only to add a
  * range. Nothing here touches the database.
  *
  * Nominatim (OpenStreetMap), not GeoNames: GeoNames puts Bengaluru PINs at the district

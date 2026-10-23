@@ -5,8 +5,8 @@ import { client } from '~/api.server';
 import { DATE_PRESETS, listingHref } from '~/lib/event-filters';
 
 /**
- * `/<city>/concerts` and its date pages, for every city with a concert coming up. A city with
- * none carries `noindex`, so listing it here would contradict the page.
+ * `/<city>/concerts` for every city with a concert coming up (a city with none carries
+ * `noindex`, so listing it would contradict the page), and the `/events/<preset>` date pages.
  */
 async function cityConcertPages(): Promise<
   Array<{ path: string; changefreq: string; priority: number }>
@@ -16,14 +16,18 @@ async function cityConcertPages(): Promise<
     .query({ from: startOfDayInstant(todayInTimeZone(zone), zone) })
     .catch(() => []);
   const slugs = [...new Set(listings.map(e => e.citySlug).filter((s): s is string => Boolean(s)))];
-  return slugs.flatMap(slug => [
-    { path: listingHref({ kind: 'city', slug }, {}), changefreq: 'daily', priority: 0.8 },
+  return [
+    ...slugs.map(slug => ({
+      path: listingHref({ kind: 'city', slug }, {}),
+      changefreq: 'daily',
+      priority: 0.8,
+    })),
     ...DATE_PRESETS.map(p => ({
-      path: listingHref({ kind: 'city', slug }, { when: p.value }),
+      path: listingHref({ kind: 'all' }, { when: p.value }),
       changefreq: 'daily',
       priority: 0.7,
     })),
-  ]);
+  ];
 }
 
 export const loader: LoaderFunction = async () => {

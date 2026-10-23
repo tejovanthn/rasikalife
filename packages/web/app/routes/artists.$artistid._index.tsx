@@ -5,6 +5,8 @@ import {
   type GuruRelationship,
   LINEAGE_RELATIONSHIPS,
 } from '@rasika/core/domain/artist/client';
+import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
+import type { SocialPlatform } from '@rasika/core/domain/social-link';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { Award, BadgeCheck, Check, Copy, FileText, Loader2, Users } from 'lucide-react';
 import { useState } from 'react';
@@ -24,7 +26,7 @@ import { SocialIconLink } from '~/components/SocialIconLink';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { ArtistStructuredData, BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
-import { Button } from '~/components/ui/button';
+import { Button, buttonVariants } from '~/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -48,7 +50,13 @@ import {
   generateSlug,
   parseSlug,
 } from '~/lib/url-slug';
-import { capitalize, formatEventDate } from '~/lib/utils';
+import { capitalize, cn, formatEventDate } from '~/lib/utils';
+
+const LISTEN_PLATFORMS: ReadonlySet<SocialPlatform> = new Set([
+  'spotify',
+  'apple_music',
+  'soundcloud',
+]);
 
 export async function loader({
   params,
@@ -743,7 +751,12 @@ export default function ArtistDetails() {
   // beside the portrait on its own, where "Vidhushi" read like the artist's name.
   const identityLine = [artist.title, tagline ?? subtitle].filter(Boolean).join(' · ');
 
-  const socialLinks = artist.socialLinks ?? [];
+  // Music services get their own labelled row ("Listen on"): a rasika who has just found an
+  // artist wants to hear them, and an icon among Instagram and Facebook hides the one link that
+  // does that. The rest stay icons.
+  const allLinks = artist.socialLinks ?? [];
+  const listenLinks = allLinks.filter(l => LISTEN_PLATFORMS.has(l.platform));
+  const socialLinks = allLinks.filter(l => !LISTEN_PLATFORMS.has(l.platform));
   const specialisations = artist.specialisations ?? [];
   const gurus = (artist.gurus ?? [])
     .slice()
@@ -833,7 +846,7 @@ export default function ArtistDetails() {
     { label: artist.name, path: artistUrl },
   ];
 
-  const sameAs = [...socialLinks.map(l => l.url), artist.website].filter((u): u is string => !!u);
+  const sameAs = [...allLinks.map(l => l.url), artist.website].filter((u): u is string => !!u);
   const awardNames = awards.map(a => a.awardName);
 
   // The vital-statistics block. Built as a list so an absent field simply is not there, which
@@ -1371,6 +1384,31 @@ export default function ArtistDetails() {
                 </div>
               )}
             </dl>
+
+            {listenLinks.length > 0 && (
+              <nav aria-label="Listen" className="mt-5 border-t pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                  Listen on
+                </p>
+                <ul className="flex flex-wrap gap-2">
+                  {listenLinks.map(link => (
+                    <li key={link.platform}>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(
+                          buttonVariants({ variant: 'outline', size: 'sm' }),
+                          'min-h-11 md:min-h-9 no-underline'
+                        )}
+                      >
+                        {SOCIAL_PLATFORM_LABELS[link.platform]}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
 
             {(socialLinks.length > 0 || artist.website) && (
               /* Icons rather than a stacked list of names: a row of glyphs is a fraction of
