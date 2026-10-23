@@ -549,10 +549,13 @@ function RsvpButton({
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-        <Users aria-hidden="true" className="h-4 w-4" />
-        {displayCount} {displayCount === 1 ? 'person' : 'people'} going
-      </span>
+      {/* No "0 people going": an empty community signal is worse than none (DESIGN.md). */}
+      {displayCount > 0 && (
+        <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Users aria-hidden="true" className="h-4 w-4" />
+          {displayCount} {displayCount === 1 ? 'person' : 'people'} going
+        </span>
+      )}
       {isLoggedIn ? (
         <fetcher.Form method="post">
           <input type="hidden" name="intent" value="toggleRsvp" />
@@ -790,12 +793,14 @@ export default function EventDetail() {
             </section>
           )}
 
-          {/* Artists */}
+          {/* Artists. A list, one item per person, the role tight under its own name and the
+              gap between people: with paragraph margins the role sat halfway between two
+              names, and "Vocal" read as the next person's. */}
           {event.artists && event.artists.length > 0 && (
-            <div className="space-y-1">
+            <ul className="space-y-3">
               {event.artists.map(artist => (
-                <div key={`${artist.name}-${artist.role || 'artist'}`}>
-                  <p className="font-medium">
+                <li key={`${artist.name}-${artist.role || 'artist'}`} className="leading-tight">
+                  <span className="block font-medium">
                     {artist.title ? `${artist.title} ` : ''}
                     {artist.id ? (
                       <Link to={generateArtistUrl(artist.name, artist.id)} className="text-primary">
@@ -804,13 +809,15 @@ export default function EventDetail() {
                     ) : (
                       artist.name
                     )}
-                  </p>
+                  </span>
                   {artist.role && (
-                    <p className="text-sm text-muted-foreground capitalize">{artist.role}</p>
+                    <span className="block mt-0.5 text-sm text-muted-foreground capitalize">
+                      {artist.role}
+                    </span>
                   )}
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
 
           {/* Date & Time */}
