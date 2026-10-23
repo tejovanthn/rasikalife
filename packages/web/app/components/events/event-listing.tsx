@@ -13,6 +13,7 @@ import {
   type ListingState,
   formatMonthLabel,
   listingHref,
+  monthButtonLabel,
   monthGrid,
   shiftMonth,
 } from '~/lib/event-filters';
@@ -31,15 +32,19 @@ function FilterLink({
   to,
   active,
   children,
+  label,
 }: {
   to: string;
   active: boolean;
   children: ReactNode;
+  /** For a screen reader, when the visible text is abbreviated. */
+  label?: string;
 }) {
   return (
     <Link
       to={to}
       preventScrollReset
+      aria-label={label}
       aria-current={active ? 'page' : undefined}
       className={cn(
         buttonVariants({ variant: active ? 'secondary' : 'outline', size: 'sm' }),
@@ -90,13 +95,6 @@ function DistanceControl({
       <p className="text-xs text-muted-foreground">Straight-line distance.</p>
     </section>
   );
-}
-
-function shortMonth(month: string) {
-  return new Date(`${month}-01T12:00:00Z`).toLocaleDateString('en-IN', {
-    timeZone: 'UTC',
-    month: 'short',
-  });
 }
 
 function Calendar({
@@ -238,12 +236,23 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
               {p.label}
             </FilterLink>
           ))}
-          {months.map(([month, count]) => (
-            <FilterLink key={month} to={href({ when: month })} active={state.when === month}>
-              {shortMonth(month)} · {count}
-            </FilterLink>
-          ))}
         </div>
+        {months.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-muted-foreground mr-1">By month</span>
+            {months.map(([month, count]) => (
+              <FilterLink
+                key={month}
+                to={href({ when: month })}
+                active={state.when === month}
+                label={`${formatMonthLabel(month)}, ${count} ${count === 1 ? 'event' : 'events'}`}
+              >
+                {monthButtonLabel(month, today)}
+                <span className="ml-1 text-muted-foreground font-normal">({count})</span>
+              </FilterLink>
+            ))}
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to={href({ free: !state.free })}

@@ -3,6 +3,7 @@ import {
   dayCounts,
   filterEvents,
   listingHref,
+  monthButtonLabel,
   monthCounts,
   monthGrid,
   readListingState,
@@ -184,5 +185,13 @@ describe('listingHref', () => {
     expect(listingHref({ kind: 'all' }, state)).toBe(
       '/events/this-week?free=1&view=whatsapp&cast=0'
     );
+  });
+});
+
+describe('monthButtonLabel', () => {
+  it('names the year only outside the current one', () => {
+    expect(monthButtonLabel('2026-11', FRIDAY)).toBe('Nov');
+    expect(monthButtonLabel('2027-01', FRIDAY)).toBe('Jan 2027');
+    expect(monthButtonLabel('2027-10', FRIDAY)).not.toBe(monthButtonLabel('2026-10', FRIDAY));
   });
 });

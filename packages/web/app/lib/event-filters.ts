@@ -125,6 +125,18 @@ export function dayCounts(events: Filterable[]): Record<string, number> {
   return counts;
 }
 
+/**
+ * A month button's text: `Nov`, or `Jan 2027` once the month is outside the current year, so
+ * two Octobers a year apart can never read the same. Count goes beside it, in brackets.
+ */
+export function monthButtonLabel(month: string, today: string): string {
+  const short = new Date(`${month}-01T12:00:00Z`).toLocaleDateString('en-IN', {
+    timeZone: 'UTC',
+    month: 'short',
+  });
+  return month.slice(0, 4) === today.slice(0, 4) ? short : `${short} ${month.slice(0, 4)}`;
+}
+
 /** Months that hold at least one event, in order, with their counts: `[['2026-11', 4], …]`. */
 export function monthCounts(events: Filterable[]): Array<[string, number]> {
   const counts = new Map<string, number>();
