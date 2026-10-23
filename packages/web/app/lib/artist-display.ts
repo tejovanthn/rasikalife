@@ -123,13 +123,17 @@ export function artistMetaDescription(artist: {
  * poster; the accompanists are who a rasika is often choosing between concerts for.
  */
 export function castLine(
-  artists: Array<{ title?: string | null; name: string; role?: string | null }>
+  artists: Array<{ title?: string | null; name: string; role?: string | null }>,
+  opts: { max?: number } = {}
 ): string {
-  return artists
-    .map(a => {
-      const name = `${a.title ? `${a.title} ` : ''}${a.name}`;
-      const role = a.role?.trim();
-      return role ? `${name} (${role})` : name;
-    })
-    .join(', ');
+  const named = artists.map(a => {
+    const name = `${a.title ? `${a.title} ` : ''}${a.name}`;
+    const role = a.role?.trim();
+    return role ? `${name} (${role})` : name;
+  });
+  // A card has room for a concert's cast, not a production's: one Ramayana presentation
+  // credits about thirty singers. The event page lists everyone.
+  const { max } = opts;
+  if (!max || named.length <= max) return named.join(', ');
+  return `${named.slice(0, max).join(', ')} and ${named.length - max} more`;
 }

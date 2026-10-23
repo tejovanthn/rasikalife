@@ -168,4 +168,13 @@ describe('castLine', () => {
       ])
     ).toBe('Vid. Sunil Gargyan (vocal), Keshav Mohankumar (violin), Unknown Role');
   });
+
+  it('stops at the cap and counts the rest', () => {
+    const cast = Array.from({ length: 30 }, (_, i) => ({ name: `Singer ${i + 1}`, role: 'vocal' }));
+    expect(castLine(cast, { max: 4 })).toBe(
+      'Singer 1 (vocal), Singer 2 (vocal), Singer 3 (vocal), Singer 4 (vocal) and 26 more'
+    );
+    // At or under the cap nothing is counted.
+    expect(castLine(cast.slice(0, 4), { max: 4 })).not.toContain('more');
+  });
 });
