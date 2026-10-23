@@ -91,9 +91,10 @@ export const Header = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <Link to="/">
+                {/* 96px for a 32px slot (3x screens): the 192px icon was 68 kB here. */}
                 <img
                   className="h-8 w-8"
-                  src="/android-chrome-192x192.png"
+                  src="/logo-96.png"
                   alt="Rasika.life - Indian Classical Music Database"
                   width={32}
                   height={32}

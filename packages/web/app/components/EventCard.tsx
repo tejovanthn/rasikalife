@@ -24,6 +24,8 @@ export interface EventCardEvent {
 interface EventCardProps {
   event: EventCardEvent;
   isGeneric?: boolean;
+  /** The first card on the page: its poster is the largest image, so it loads at once. */
+  priority?: boolean;
 }
 
 const entryTypeLabel: Record<string, string> = {
@@ -41,7 +43,7 @@ const entryTypeBadgeVariant: Record<string, BadgeProps['variant']> = {
 /** Performers named on a card before the rest are counted. Four covers a concert's cast. */
 const CARD_CAST_MAX = 4;
 
-export function EventCard({ event, isGeneric = false }: EventCardProps) {
+export function EventCard({ event, isGeneric = false, priority = false }: EventCardProps) {
   const artists = event.artists?.length ? event.artists : null;
   const heading = isGeneric ? (event.venueName ?? event.title) : event.title;
   const showVenueInline = !isGeneric && event.venueName;
@@ -58,6 +60,7 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
           <PosterImage
             posterUrl={event.posterUrl}
             alt={event.title}
+            priority={priority}
             className="w-full h-28 md:h-36 object-cover rounded-t-lg"
             width={400}
             height={144}

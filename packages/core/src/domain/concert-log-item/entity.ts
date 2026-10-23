@@ -1,22 +1,10 @@
 import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
+import { COMPOSITION_TYPES } from './composition-types';
 
-export const COMPOSITION_TYPES = [
-  'varnam',
-  'kriti',
-  'rtp',
-  'thillana',
-  'javali',
-  'padam',
-  'viruttam',
-  'thukkada',
-  'slokam',
-  'tani',
-  'other',
-] as const;
-
-export type CompositionType = (typeof COMPOSITION_TYPES)[number];
+export { COMPOSITION_TYPES } from './composition-types';
+export type { CompositionType } from './composition-types';
 
 export const ConcertLogItemEntity = new Entity(
   {

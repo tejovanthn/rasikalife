@@ -5,9 +5,11 @@ interface EventDayGroupProps {
   /** `YYYY-MM-DD`, the day in the events' own zone (`groupByEventDate`). */
   date: string;
   events: Array<EventCardEvent & { isGeneric: boolean }>;
+  /** This is the first group on the page, so its first poster gets load priority. */
+  first?: boolean;
 }
 
-export function EventDayGroup({ date, events }: EventDayGroupProps) {
+export function EventDayGroup({ date, events, first = false }: EventDayGroupProps) {
   return (
     <section>
       {/* Sticks below the site nav (h-14, md:h-16), which is itself sticky at top-0 and above
@@ -22,8 +24,13 @@ export function EventDayGroup({ date, events }: EventDayGroupProps) {
         </h2>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {events.map(event => (
-          <EventCard key={event.id} event={event} isGeneric={event.isGeneric} />
+        {events.map((event, i) => (
+          <EventCard
+            key={event.id}
+            event={event}
+            isGeneric={event.isGeneric}
+            priority={first && i === 0}
+          />
         ))}
       </div>
     </section>

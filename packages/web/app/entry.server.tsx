@@ -9,6 +9,7 @@ import { isbot } from 'isbot';
 import { renderToPipeableStream } from 'react-dom/server';
 import type { EntryContext, HandleDataRequestFunction } from 'react-router';
 import { ServerRouter } from 'react-router';
+import { compressResponse } from '~/lib/compress.server';
 import { applyDefaultCacheControl } from '~/lib/page-cache';
 
 const ABORT_DELAY = 5_000;
@@ -17,7 +18,7 @@ const ABORT_DELAY = 5_000;
 // a crawler that follows links in a hydrated page would bypass the cache that documents get.
 export const handleDataRequest: HandleDataRequestFunction = (response, { request }) => {
   applyDefaultCacheControl(request, response.status, response.headers);
-  return response;
+  return compressResponse(request, response);
 };
 
 export default async function handleRequest(
@@ -55,11 +56,15 @@ function handleBotRequest(
           responseHeaders.set('Content-Type', 'text/html');
           applyDefaultCacheControl(request, currentStatusCode, responseHeaders);
 
+          // Compressed here: CloudFront will not, since SST streams every response chunked.
           resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: currentStatusCode,
-            })
+            compressResponse(
+              request,
+              new Response(stream, {
+                headers: responseHeaders,
+                status: currentStatusCode,
+              })
+            )
           );
 
           pipe(body);
@@ -103,11 +108,15 @@ function handleBrowserRequest(
           responseHeaders.set('Content-Type', 'text/html');
           applyDefaultCacheControl(request, currentStatusCode, responseHeaders);
 
+          // Compressed here: CloudFront will not, since SST streams every response chunked.
           resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: currentStatusCode,
-            })
+            compressResponse(
+              request,
+              new Response(stream, {
+                headers: responseHeaders,
+                status: currentStatusCode,
+              })
+            )
           );
 
           pipe(body);

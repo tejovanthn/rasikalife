@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rasika-v2';
+const CACHE_NAME = 'rasika-v3';
 
 const APP_SHELL = ['/manifest.json', '/android-chrome-192x192.png', '/android-chrome-512x512.png'];
 

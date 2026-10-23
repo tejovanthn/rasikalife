@@ -3,6 +3,11 @@ interface PosterImageProps {
   alt: string;
   className?: string;
   loading?: 'lazy' | 'eager';
+  /**
+   * The page's largest image (usually the first poster in a listing): loaded at once and at
+   * high priority. Lazy-loading it held back LCP by about a second on slow 4G.
+   */
+  priority?: boolean;
   width?: number;
   height?: number;
 }
@@ -18,17 +23,22 @@ export function PosterImage({
   alt,
   className,
   loading = 'lazy',
+  priority = false,
   width,
   height,
 }: PosterImageProps) {
   const webpUrl = getWebpUrl(posterUrl);
+  // React 18 has no `fetchPriority` prop but passes an unknown lowercase attribute through.
+  const fetchHint = priority ? ({ fetchpriority: 'high' } as Record<string, string>) : {};
+  const loadingMode = priority ? 'eager' : loading;
   if (!webpUrl) {
     return (
       <img
+        {...fetchHint}
         src={posterUrl}
         alt={alt}
         className={className}
-        loading={loading}
+        loading={loadingMode}
         decoding="async"
         width={width}
         height={height}
@@ -39,10 +49,11 @@ export function PosterImage({
     <picture>
       <source srcSet={webpUrl} type="image/webp" />
       <img
+        {...fetchHint}
         src={posterUrl}
         alt={alt}
         className={className}
-        loading={loading}
+        loading={loadingMode}
         decoding="async"
         width={width}
         height={height}

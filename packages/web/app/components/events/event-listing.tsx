@@ -306,8 +306,13 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
             />
           ) : groups.length > 0 ? (
             <div className="space-y-8">
-              {groups.map(group => (
-                <EventDayGroup key={group.date} date={group.date} events={group.events} />
+              {groups.map((group, i) => (
+                <EventDayGroup
+                  key={group.date}
+                  date={group.date}
+                  events={group.events}
+                  first={i === 0}
+                />
               ))}
             </div>
           ) : (

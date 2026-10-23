@@ -1,2 +1,3 @@
-export type { EventSetlist, EventSetlistStatus } from './entity';
-export { EVENT_SETLIST_STATUSES } from './entity';
+export type { EventSetlist } from './entity';
+export { EVENT_SETLIST_STATUSES } from './statuses';
+export type { EventSetlistStatus } from './statuses';

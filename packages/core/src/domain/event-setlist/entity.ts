@@ -2,8 +2,10 @@ import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { dynamoClient } from '../../db/client';
 
-export const EVENT_SETLIST_STATUSES = ['derived', 'verified', 'disputed', 'lowConfidence'] as const;
-export type EventSetlistStatus = (typeof EVENT_SETLIST_STATUSES)[number];
+import { EVENT_SETLIST_STATUSES } from './statuses';
+
+export { EVENT_SETLIST_STATUSES } from './statuses';
+export type { EventSetlistStatus } from './statuses';
 
 export const EventSetlistEntity = new Entity(
   {

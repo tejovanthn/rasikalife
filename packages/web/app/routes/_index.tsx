@@ -143,8 +143,8 @@ export default function HomePage() {
         <section className="mb-14">
           <SectionHeader title="Upcoming Events" viewAllPath="/events" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingEvents.map(event => (
-              <EventCard key={event.id} event={event} />
+            {upcomingEvents.map((event, i) => (
+              <EventCard key={event.id} event={event} priority={i === 0} />
             ))}
           </div>
         </section>

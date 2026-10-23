@@ -1350,6 +1350,14 @@ shows. **A new job that writes something a page shows must call `invalidateSiteC
 The distribution id reaches functions through an SSM parameter (`/rasika/<stage>/web-distribution-id`),
 because the site links tRPC and taking the id directly would be a cycle.
 
+**Pages are compressed in the Lambda, not by CloudFront.** CloudFront compresses only a
+response with a `Content-Length`, and SST's React handler streams every response chunked, so
+every page went out raw (118 kB for /events) despite the cache policy enabling Brotli.
+`compressResponse` (`~/lib/compress.server.ts`) runs in `entry.server.tsx` for documents and
+`.data` navigations: Brotli quality 5, else gzip, flushed per chunk so streaming still works, and
+always `Vary: Accept-Encoding`. The cache policy keys on the normalised encoding, so each variant
+is cached apart.
+
 **Access logs** for the site go to the `RasikaWebCdnLogs` bucket (prod only, 30 days). They are
 the only record of paths and user agents; Lambda logs carry neither.
 
@@ -1417,6 +1425,11 @@ Always use a subpath export instead:
 | `fromItrans`, `transliterate`, `formatSwaras`, `TransliterationScheme` | `@rasika/core/utils` |
 | `ragaExactKey`, `ragaVariantKey` | `@rasika/core/domain/raga/dedup` |
 | `citySlug`, `canonicalCitySlug` | `@rasika/core/shared/city` |
+
+**A `client.ts` may take only types from `./entity`.** A value re-exported from an entity file
+(`COMPOSITION_TYPES` was) drags ElectroDB and the AWS SDK into the browser: 106 kB gzipped on
+two routes. Such constants live in a module with no imports (`composition-types.ts`,
+`event-setlist/statuses.ts`); `domain/client-boundary.test.ts` fails if one comes back.
 
 All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.
 
