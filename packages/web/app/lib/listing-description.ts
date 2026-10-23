@@ -132,3 +132,35 @@ export function eventsIndexMeta({
       : `Upcoming Carnatic concerts and classical music and dance events${where}.`;
   return { title, description: clamp(`${lead} See the date, venue and artists for each.`) };
 }
+
+/**
+ * Title and description for `/<city>/concerts` and its date pages
+ * ("carnatic concerts in bangalore this weekend"). Names the count and the next concert, the
+ * fact a searcher came for, rather than describing the kind of page; when the range is empty
+ * it says so and names the next concert after it, which the page also lists.
+ */
+export function cityConcertsMeta({
+  city,
+  range,
+  count,
+  next,
+}: {
+  city: string;
+  /** "Today", "This weekend", "This week", or absent for all upcoming. */
+  range?: string;
+  count: number;
+  /** The first concert the page shows. */
+  next?: { name: string; day: string; venue?: string };
+}): { title: string; description: string } {
+  const when = range ? ` ${range.replace(/\b\w/g, c => c.toUpperCase())}` : '';
+  const title = `Carnatic Concerts in ${city}${when} | Rasika.life`;
+  const scope = range ? range.toLowerCase() : 'coming up';
+  const lead =
+    count > 0
+      ? `${plural(count, 'concert')} in ${city} ${scope}.`
+      : `No concerts listed in ${city} ${scope} yet.`;
+  const nextLine = next
+    ? ` ${count > 0 ? 'First' : 'Next'}: ${next.name}, ${next.day}${next.venue ? ` at ${next.venue}` : ''}.`
+    : '';
+  return { title, description: clamp(`${lead}${nextLine} Date, venue and artists for each.`) };
+}

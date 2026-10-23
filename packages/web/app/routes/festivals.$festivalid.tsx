@@ -6,6 +6,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { PosterImage } from '~/components/PosterImage';
+import { WhatsAppDigest } from '~/components/events/whatsapp-digest';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, FestivalStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -13,12 +14,14 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { eventZone, formatEventTime, groupByEventDate } from '~/lib/event-time';
 import {
   generateEventUrl,
   generateFestivalUrl,
   generateOrganiserUrl,
   parseSlug,
 } from '~/lib/url-slug';
+import { formatWhatsAppDigest } from '~/lib/whatsapp-digest';
 
 interface FestivalDetail {
   id: string;
@@ -39,6 +42,7 @@ interface FestivalEvent {
   title: string;
   startDateTime: string;
   endDateTime?: string;
+  timezone?: string;
   venueName?: string;
   artists?: Array<{ title?: string; name: string; role?: string }>;
   tags?: string[];
@@ -71,9 +75,21 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       limit: 50,
     });
 
+    // The programme as WhatsApp text: the one thing a sabha's members forward to each other.
+    const festivalUrl = `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`;
+    const digest =
+      events.items.length > 0
+        ? formatWhatsAppDigest(events.items, {
+            heading: festival.name,
+            listingUrl: festivalUrl,
+            eventUrl: e => `https://rasika.life${generateEventUrl(e.title, e.id)}`,
+          })
+        : null;
+
     return data({
       festival,
       events: events.items,
+      digest,
       user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
@@ -164,17 +180,6 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
   ];
 };
 
-function groupEventsByDate(events: FestivalEvent[]): Map<string, FestivalEvent[]> {
-  const groups = new Map<string, FestivalEvent[]>();
-  for (const event of events) {
-    const dateKey = event.startDateTime.split('T')[0];
-    const existing = groups.get(dateKey) || [];
-    existing.push(event);
-    groups.set(dateKey, existing);
-  }
-  return new Map([...groups.entries()].sort());
-}
-
 function PosterUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'uploading' | 'error'>('idle');
@@ -252,14 +257,16 @@ function PosterUploader() {
 }
 
 export default function FestivalDetail() {
-  const { festival, events, user, isModerator } = useLoaderData<{
+  const { festival, events, digest, user, isModerator } = useLoaderData<{
     festival: FestivalDetail;
     events: FestivalEvent[];
+    digest: string | null;
     user: { id: string; role: string } | null;
     isModerator: boolean;
   }>();
 
-  const groupedEvents = groupEventsByDate(events);
+  // Grouped and timed in each event's own zone; the SSR Lambda runs in UTC.
+  const groupedEvents = groupByEventDate(events);
   const startDateStr = new Date(festival.startDate).toLocaleDateString('en-IN', {
     dateStyle: 'long',
   });
@@ -375,10 +382,11 @@ export default function FestivalDetail() {
           <EmptyState message="No events scheduled yet." />
         ) : (
           <div className="space-y-8">
-            {[...groupedEvents.entries()].map(([dateKey, dayEvents]) => (
+            {groupedEvents.map(({ date: dateKey, events: dayEvents }) => (
               <div key={dateKey}>
                 <h3 className="font-semibold text-lg mb-3 border-b pb-2">
-                  {new Date(dateKey).toLocaleDateString('en-IN', {
+                  {new Date(`${dateKey}T12:00:00Z`).toLocaleDateString('en-IN', {
+                    timeZone: 'UTC',
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -386,62 +394,48 @@ export default function FestivalDetail() {
                   })}
                 </h3>
                 <div className="space-y-3">
-                  {dayEvents
-                    .sort(
-                      (a, b) =>
-                        new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
-                    )
-                    .map(event => (
-                      <Link
-                        key={event.id}
-                        to={generateEventUrl(event.title, event.id)}
-                        className="block no-underline"
-                      >
-                        <Card className="hover:border-primary/50 transition-colors">
-                          <CardContent className="py-3">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-medium text-foreground">{event.title}</p>
-                                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                                  <span>
-                                    {new Date(event.startDateTime).toLocaleTimeString('en-IN', {
-                                      hour: 'numeric',
-                                      minute: '2-digit',
-                                    })}
-                                    {event.endDateTime &&
-                                      ` - ${new Date(event.endDateTime).toLocaleTimeString(
-                                        'en-IN',
-                                        {
-                                          hour: 'numeric',
-                                          minute: '2-digit',
-                                        }
-                                      )}`}
+                  {dayEvents.map(event => (
+                    <Link
+                      key={event.id}
+                      to={generateEventUrl(event.title, event.id)}
+                      className="block no-underline"
+                    >
+                      <Card className="hover:border-primary/50 transition-colors">
+                        <CardContent className="py-3">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-foreground">{event.title}</p>
+                              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                                <span>
+                                  {formatEventTime(event.startDateTime, eventZone(event))}
+                                  {event.endDateTime &&
+                                    ` - ${formatEventTime(event.endDateTime, eventZone(event))}`}
+                                </span>
+                                {event.venueName && (
+                                  <span className="flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {event.venueName}
                                   </span>
-                                  {event.venueName && (
-                                    <span className="flex items-center gap-1">
-                                      <MapPin className="h-3 w-3" />
-                                      {event.venueName}
-                                    </span>
-                                  )}
-                                </div>
-                                {event.artists && event.artists.length > 0 && (
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    {event.artists
-                                      .map(a => `${a.title ? `${a.title} ` : ''}${a.name}`)
-                                      .join(', ')}
-                                  </p>
                                 )}
                               </div>
-                              {event.entryType && (
-                                <Badge variant="outline" className="text-xs flex-shrink-0">
-                                  {event.entryType}
-                                </Badge>
+                              {event.artists && event.artists.length > 0 && (
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  {event.artists
+                                    .map(a => `${a.title ? `${a.title} ` : ''}${a.name}`)
+                                    .join(', ')}
+                                </p>
                               )}
                             </div>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
+                            {event.entryType && (
+                              <Badge variant="outline" className="text-xs flex-shrink-0">
+                                {event.entryType}
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
                 </div>
               </div>
             ))}
@@ -464,6 +458,16 @@ export default function FestivalDetail() {
         </section>
       )}
 
+      {digest && (
+        <details className="mt-10 rounded-lg border p-4">
+          <summary className="cursor-pointer font-semibold min-h-11 md:min-h-0 flex items-center">
+            Share the programme on WhatsApp
+          </summary>
+          <div className="mt-4">
+            <WhatsAppDigest text={digest} options={[]} />
+          </div>
+        </details>
+      )}
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },

@@ -31,6 +31,9 @@ export const AnalyticsEvent = {
   SEARCH_PERFORMED: 'search_performed',
   /** Sign-in was started — the redirect to the provider. */
   SIGN_IN_STARTED: 'sign_in_started',
+  /** A listing left the site as WhatsApp text: `method` is copy, share or open. The
+   *  listing's own link inside the text is what brings readers back. */
+  WHATSAPP_DIGEST: 'whatsapp_digest',
 } as const;
 
 export type AnalyticsEventName = (typeof AnalyticsEvent)[keyof typeof AnalyticsEvent];

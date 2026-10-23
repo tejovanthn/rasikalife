@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventListingDescription, eventsIndexMeta } from './listing-description';
+import { cityConcertsMeta, eventListingDescription, eventsIndexMeta } from './listing-description';
 
 const NOW = new Date('2026-08-04T00:00:00Z');
 
@@ -132,5 +132,41 @@ describe('eventsIndexMeta', () => {
     });
     expect(title.length).toBeLessThanOrEqual(60);
     expect(description.length).toBeLessThanOrEqual(156);
+  });
+});
+
+describe('cityConcertsMeta', () => {
+  it('names the range, the count and the first concert', () => {
+    expect(
+      cityConcertsMeta({
+        city: 'Bengaluru',
+        range: 'This weekend',
+        count: 3,
+        next: { name: 'Sunil Gargyan', day: 'Sat, 24 Oct', venue: 'Chowdiah Memorial Hall' },
+      })
+    ).toEqual({
+      title: 'Carnatic Concerts in Bengaluru This Weekend | Rasika.life',
+      description:
+        '3 concerts in Bengaluru this weekend. First: Sunil Gargyan, Sat, 24 Oct at Chowdiah Memorial Hall. Date, venue and artists for each.',
+    });
+  });
+
+  it('says when the range is empty and names the next concert after it', () => {
+    const { description } = cityConcertsMeta({
+      city: 'Mysuru',
+      range: 'Today',
+      count: 0,
+      next: { name: 'A recital', day: 'Sun, 1 Nov' },
+    });
+    expect(description).toBe(
+      'No concerts listed in Mysuru today yet. Next: A recital, Sun, 1 Nov. Date, venue and artists for each.'
+    );
+  });
+
+  it('reads "coming up" for the whole listing', () => {
+    expect(cityConcertsMeta({ city: 'Chennai', count: 1 })).toEqual({
+      title: 'Carnatic Concerts in Chennai | Rasika.life',
+      description: '1 concert in Chennai coming up. Date, venue and artists for each.',
+    });
   });
 });

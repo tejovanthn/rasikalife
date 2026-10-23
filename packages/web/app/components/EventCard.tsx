@@ -1,14 +1,20 @@
 import { Link } from 'react-router';
 import { PosterImage } from '~/components/PosterImage';
+import { EventDistance } from '~/components/events/near-me';
 import { Badge, type BadgeProps } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
+import { eventZone, formatEventTime } from '~/lib/event-time';
 import { generateEventUrl } from '~/lib/url-slug';
 
 export interface EventCardEvent {
   id: string;
   title: string;
   startDateTime: string;
+  timezone?: string | null;
   venueName?: string;
+  /** The venue's coordinates, when known, for "≈ 6 km away". */
+  venueLat?: number | null;
+  venueLng?: number | null;
   artists?: Array<{ title?: string; name: string; role?: string }>;
   posterUrl?: string;
   entryType?: string;
@@ -31,14 +37,6 @@ const entryTypeBadgeVariant: Record<string, BadgeProps['variant']> = {
   'by-invitation': 'raga',
 };
 
-function formatTime(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString('en-IN', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
-}
-
 function artistLine(artists: Array<{ title?: string; name: string }>) {
   return artists.map(a => `${a.title ? `${a.title} ` : ''}${a.name}`).join(' · ');
 }
@@ -47,7 +45,8 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
   const artists = event.artists?.length ? event.artists : null;
   const heading = isGeneric ? (event.venueName ?? event.title) : event.title;
   const showVenueInline = !isGeneric && event.venueName;
-  const time = formatTime(event.startDateTime);
+  // In the event's own zone: the SSR Lambda runs in UTC (see lib/event-time.ts).
+  const time = formatEventTime(event.startDateTime, eventZone(event));
 
   return (
     <Link
@@ -73,6 +72,7 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
             )}
           </p>
           {artists && <p className="text-sm text-muted-foreground">{artistLine(artists)}</p>}
+          <EventDistance lat={event.venueLat} lng={event.venueLng} />
           {event.entryType && (
             <div>
               <Badge variant={entryTypeBadgeVariant[event.entryType] ?? 'secondary'}>

@@ -121,6 +121,10 @@ The core package uses a domain-driven design with:
 - `raga-description.ts` — `ragaMetaDescription` and `ragaMetaTitle`. The title leads with "<Name> Raga", the form these pages are found by ("bindumalini raga", "rasika ranjani ragam"), then names only what the page shows: "Arohanam, Avarohanam" when the scale is stored, "Compositions" when any are listed, and the melakarta number for a melakarta only. It must fit 60 characters, so detail and the brand are dropped first, never the name. The description drops whole trailing sentences past 155 characters, and when no performance is logged it names two listed compositions. Composition titles reach it converted with `fromItrans`; the page cards still use the raw title for their links.
 - `artist-display.ts` — `artistMetaDescription(artist)` builds an artist's description from instrument, city, lineage and upcoming concerts. It replaced one sentence shared by all 1,111 artists that called every one of them "renowned" — the inflation `GURU_RELATIONSHIPS` exists to prevent, applied site-wide. The lineage clause counts only `primary`, `advanced` and unclassified gurus; a workshop teacher must never be rendered as "disciple of". `artistMetaTitle(artist)` is the matching `<title>`: name plus instrument ("Savita Vasu – Vocal | Concerts & Repertoire – Rasika.life"), because "X - Artist" ranked #2 for the name and still took only 6% of clicks — the instrument is what tells a searcher it is the right person.
 - `utils.ts` — `titleCaseName(name)` capitalizes every word of an **entity name** for display. Stored names are lowercase ITRANS, so a raga arrives as `darbari kanada` once transliterated and `capitalize` alone leaves the second word bare. Names only; never run it over lyrics or prose.
+- `event-time.ts` — `formatEventTime`, `eventDateKey`, `groupByEventDate`, `formatDayLabel`. **Every event time and day is read in the event's own `timezone`, never the runtime's.** The SSR Lambda runs in UTC, so a bare `toLocaleTimeString` printed "12:30 pm" for a 6:00 pm concert, and `startDateTime.slice(0, 10)` put a late concert on the wrong day.
+- `event-filters.ts` — the listing filters (`resolveDateRange` for `today`/`weekend`/`week`/a month/a day, `filterEvents`, `dayCounts`, `monthGrid`) and `listingHref`, the one builder of every listing URL. See "Event listings" below.
+- `whatsapp-digest.ts` — `formatWhatsAppDigest(events, opts)`: a listing as WhatsApp text. Stored fields only; `*_~` are stripped from stored text before it is wrapped in bold.
+- `distance.ts` — `distanceKm`, `formatDistance` ("≈ 6 km", never a decimal a PIN centroid cannot back).
 - `analytics.ts` — `AnalyticsEvent` and `trackEvent(name, params)`. Every GA4 event name lives in that constant rather than as a string literal at the call site. Adding one means adding it there, wiring the call, and then **marking it a key event in the GA4 console** — the SDK cannot do that, and an unmarked event is collected but not counted as a conversion. Event *parameters* likewise need registering as custom dimensions before they can be reported on; the property has none today.
 
 ### Structured data (JSON-LD)
@@ -1254,6 +1258,41 @@ compiles them and the app does not load Faust.
   has neither. Settings sections are `<details>` (`components/settings-section.tsx`).
 - Icons come from `pnpm icons` (`scripts/generate-icons.mjs`), as in Classes.
 
+### Event listings: filters, city pages, WhatsApp text, distance
+
+`/events` and `/<city>/concerts[/today|/this-weekend|/this-week]` are one page
+(`components/events/event-listing.tsx`) over one loader (`lib/event-listing.server.ts`), which
+loads **every** upcoming event (`event.upcomingListings`, 23 in Oct 2026) and filters in memory.
+Plan: `docs/plans/261023-01-listing-features.md`.
+
+- **Every filter is a query parameter or a path segment, never client state.** The page works
+  without JavaScript and each view is its own cached, shareable URL (the CloudFront policy keys on
+  all query strings). Build links with `listingHref`; a city page puts the date preset in the
+  path, `/events` puts everything in the query.
+- **Date-relative pages are cached until midnight in India** (`cacheUntilMidnight`), not for the
+  week. Otherwise a quiet day serves yesterday's "Today".
+- **An event's city is its venue's** (`EventListings.listUpcomingListings`). `event.venueCity`
+  was empty on 22 of 23 upcoming events; nothing is written back. City slugs fold old names
+  (`bangalore` → `bengaluru`, `shared/city.ts`) and the route 301s to the stored one; a city no
+  venue is in is a 404, and a city with nothing upcoming carries `noindex`.
+- **"Free only" means `entryType === 'free'`.** Missing is unknown, not free.
+- **Filters are buttons, not chips** (DESIGN.md: a chip never toggles), and reach 44px on mobile.
+- **Distance is computed in the browser only.** The reader's PIN or location lives in
+  `localStorage`, never a cookie, so the cached page stays one copy for everyone. PIN centroids
+  are `web/public/pin-centroids.json`, built by `pnpm cli pin-centroids` from Nominatim (GeoNames
+  was rejected: it puts Bengaluru PINs at the district centre). Venue `lat`/`lng`/`geoSource` come
+  from `pnpm cli geocode-venues [--apply]` (map link first, else PIN centroid; fill-only, dry by
+  default, rules in `domain/venue/geo.ts`). A stated city that disagrees with the PIN places
+  nothing.
+- **WhatsApp text** is `?view=whatsapp` on any listing, plus a panel on the festival page. "Open
+  in WhatsApp" is a plain `wa.me` link; Copy and Share appear after hydration. It stops at 30
+  events and always ends with the listing's own URL, which is the point: every pasted copy links
+  back. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
+- **Artists "Popular" and "Verified"** are ranked from the search index (`artist.browse`):
+  `artistPopularity` (credited approved events + RSVPs + attendance) and `verified` are written
+  onto each artist document at index time, so they refresh every 6 hours. The Verified filter
+  renders only when at least one artist is verified (none were in Oct 2026).
+
 ### Caching a public page (`Cache-Control`)
 
 **Every signed-out page is cached at CloudFront for a week, and writes clear it.**
@@ -1363,6 +1402,7 @@ Always use a subpath export instead:
 | `todayInTimeZone`, `dateInTimeZone`, `startOfDayInstant` | `@rasika/core/shared/timezone` |
 | `fromItrans`, `transliterate`, `formatSwaras`, `TransliterationScheme` | `@rasika/core/utils` |
 | `ragaExactKey`, `ragaVariantKey` | `@rasika/core/domain/raga/dedup` |
+| `citySlug`, `canonicalCitySlug` | `@rasika/core/shared/city` |
 
 All available subpaths are listed in `packages/core/package.json` under `"exports"`. When adding a new browser-safe utility to core, add a dedicated subpath export there rather than relying on the main entry.
 

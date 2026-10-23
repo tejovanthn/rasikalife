@@ -1,4 +1,5 @@
 import type { z } from 'zod';
+import { canonicalCitySlug } from '../../shared/city';
 import { generateId } from '../../utils';
 import { cascadeVenueMerge, cascadeVenueNameUpdate } from '../cascade';
 import { createFailedError, notFoundError } from '../helpers';
@@ -22,6 +23,14 @@ export async function createVenue(input: CreateVenueInput): Promise<Venue> {
   }
 
   return result.data as Venue;
+}
+
+/** Many venues in one call, for a listing that resolves each event's city and coordinates. */
+export async function getVenuesByIds(ids: string[]): Promise<Venue[]> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return [];
+  const result = await VenueEntity.get(unique.map(id => ({ id }))).go();
+  return ((result.data || []) as Venue[]).filter(venue => !venue.deletedAt);
 }
 
 export async function getVenue(id: string): Promise<Venue | null> {
@@ -94,6 +103,45 @@ export async function listVenues(params?: { limit?: number; nextToken?: string }
   };
 }
 
+export interface VenueCity {
+  slug: string;
+  /** The spelling most venues in the city store. */
+  name: string;
+  venueCount: number;
+}
+
+/**
+ * Every city a venue sits in, one entry per canonical slug, for the `/<city>/concerts` pages.
+ * "Bangalore" and "Bengaluru" are one city; the name shown is the commoner spelling.
+ */
+export async function listVenueCities(): Promise<VenueCity[]> {
+  const names = new Map<string, Map<string, number>>();
+  let cursor: string | undefined;
+  do {
+    const result = await VenueEntity.query
+      .list({})
+      .where((attr, op) => op.notExists(attr.deletedAt))
+      .go({ limit: 500, cursor, attributes: ['address', 'city'] as never[] });
+    for (const venue of (result.data || []) as Venue[]) {
+      const name = (venue.address?.city || venue.city || '').trim();
+      if (!name) continue;
+      const slug = canonicalCitySlug(name);
+      const spellings = names.get(slug) ?? new Map<string, number>();
+      spellings.set(name, (spellings.get(name) ?? 0) + 1);
+      names.set(slug, spellings);
+    }
+    cursor = result.cursor || undefined;
+  } while (cursor);
+
+  return [...names]
+    .map(([slug, spellings]) => {
+      const ranked = [...spellings].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      const venueCount = ranked.reduce((sum, [, n]) => sum + n, 0);
+      return { slug, name: ranked[0][0], venueCount };
+    })
+    .sort((a, b) => b.venueCount - a.venueCount || a.name.localeCompare(b.name));
+}
+
 export async function listVenuesByCity(
   city: string,
   params?: { limit?: number; nextToken?: string }
@@ -160,3 +208,5 @@ export async function getVenueMergeScore(id: string): Promise<number> {
 export type { Venue } from './entity';
 export { CreateVenueSchema, UpdateVenueSchema } from './schema';
 export { isNonPlaceVenueName, venueTypeFromName } from './enrich';
+export { cityForPin, parseMapLinkCoordinates, planVenueGeo, venuePostalCode } from './geo';
+export type { LatLng, VenueGeoPatch } from './geo';

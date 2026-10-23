@@ -10,7 +10,8 @@ import type { CreateVenueSchema, UpdateVenueSchema } from './schema';
 export { CreateVenueSchema, UpdateVenueSchema } from './schema';
 
 // Re-export the enum constants so forms can render options without redeclaring them
-export { VENUE_AMENITIES, VENUE_TYPES } from './schema';
+export { VENUE_AMENITIES, VENUE_GEO_SOURCES, VENUE_TYPES } from './schema';
+export type { VenueGeoSource } from './schema';
 export type { VenueAmenity, VenueType } from './schema';
 
 // Export input types derived from schemas

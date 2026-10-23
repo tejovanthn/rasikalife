@@ -256,6 +256,11 @@
       "import": "./src/domain/*/index.ts",
       "default": "./src/domain/*/index.ts"
     },
+    "./shared/city": {
+      "types": "./src/shared/city.ts",
+      "import": "./src/shared/city.ts",
+      "default": "./src/shared/city.ts"
+    },
     "./shared/completion": {
       "types": "./src/shared/completion.ts",
       "import": "./src/shared/completion.ts",

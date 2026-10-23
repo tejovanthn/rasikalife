@@ -1,4 +1,5 @@
 import type { ArtistType } from '@rasika/core/types/entities';
+import type { ReactNode } from 'react';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -7,15 +8,38 @@ import { ArtistCard } from '~/components/ArtistCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { buttonVariants } from '~/components/ui/button';
 import { ApplicationError } from '~/lib/errors';
+import { cn } from '~/lib/utils';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const nextToken = url.searchParams.get('nextToken');
   const query = url.searchParams.get('q');
+  const sort = url.searchParams.get('sort') === 'popular' ? 'popular' : null;
+  const verifiedOnly = url.searchParams.get('verified') === '1';
+  const page = Math.max(1, Number.parseInt(url.searchParams.get('page') || '1', 10) || 1);
   const itemsPerPage = 36;
 
   try {
+    // Popular and Verified are ranked from the search index (derived popularity and the
+    // verified flag live there); the plain listing keeps its own pagination.
+    if (!query && (sort || verifiedOnly)) {
+      const results = await client.artist.browse.query({
+        sort: sort ?? 'name',
+        verifiedOnly,
+        page,
+        limit: itemsPerPage,
+      });
+      return data({
+        artists: results.items,
+        nextToken: null,
+        hasMore: results.hasMore,
+        prevToken: null,
+        searchQuery: null,
+        browse: { sort, verifiedOnly, page, verifiedCount: results.verifiedCount },
+      });
+    }
     if (query) {
       const results = await client.search.search.query({
         query,
@@ -43,10 +67,16 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
     }
 
-    const results = await client.artist.list.query({
-      limit: itemsPerPage,
-      nextToken: nextToken || undefined,
-    });
+    const [results, counts] = await Promise.all([
+      client.artist.list.query({
+        limit: itemsPerPage,
+        nextToken: nextToken || undefined,
+      }),
+      // Only to learn whether any artist is verified, so the filter is never offered empty.
+      client.artist.browse
+        .query({ sort: 'name', page: 1, limit: 1 })
+        .catch(() => null),
+    ]);
 
     return data({
       artists: results.items || [],
@@ -54,6 +84,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       hasMore: results.hasMore,
       prevToken: nextToken,
       searchQuery: null,
+      browse: { sort: null, verifiedOnly: false, page, verifiedCount: counts?.verifiedCount ?? 0 },
     });
   } catch (error) {
     if (error instanceof ApplicationError) {
@@ -80,13 +111,51 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+interface BrowseState {
+  sort: 'popular' | null;
+  verifiedOnly: boolean;
+  page: number;
+  verifiedCount: number;
+}
+
+function browseHref(state: { sort: 'popular' | null; verifiedOnly: boolean; page?: number }) {
+  const q = new URLSearchParams();
+  if (state.sort) q.set('sort', state.sort);
+  if (state.verifiedOnly) q.set('verified', '1');
+  if (state.page && state.page > 1) q.set('page', String(state.page));
+  const qs = q.toString();
+  return qs ? `/artists?${qs}` : '/artists';
+}
+
+function FilterLink({
+  to,
+  active,
+  children,
+}: { to: string; active: boolean; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      aria-current={active ? 'page' : undefined}
+      className={cn(
+        buttonVariants({ variant: active ? 'secondary' : 'outline', size: 'sm' }),
+        'min-h-11 md:min-h-9 no-underline',
+        active && 'font-semibold'
+      )}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export default function ArtistsIndex() {
-  const { artists, nextToken, hasMore, searchQuery } = useLoaderData<{
+  const { artists, nextToken, hasMore, searchQuery, browse } = useLoaderData<{
     artists: ArtistType[];
     nextToken: string | null;
     hasMore: boolean;
     searchQuery: string | null;
+    browse?: BrowseState;
   }>();
+  const isBrowse = Boolean(browse && (browse.sort || browse.verifiedOnly));
 
   const [searchParams] = useSearchParams();
   const currentPage = Number.parseInt(searchParams.get('page') || '1', 10);
@@ -104,6 +173,33 @@ export default function ArtistsIndex() {
         )}
       </header>
 
+      {browse && !searchQuery && (
+        <nav aria-label="Sort and filter artists" className="mb-6 flex flex-wrap gap-2">
+          <FilterLink
+            to={browseHref({ sort: null, verifiedOnly: browse.verifiedOnly })}
+            active={!browse.sort}
+          >
+            All
+          </FilterLink>
+          <FilterLink
+            to={browseHref({ sort: 'popular', verifiedOnly: browse.verifiedOnly })}
+            active={browse.sort === 'popular'}
+          >
+            Popular
+          </FilterLink>
+          {/* Offered only once someone is verified: a filter that always returns nothing is
+              worse than no filter. */}
+          {browse.verifiedCount > 0 && (
+            <FilterLink
+              to={browseHref({ sort: browse.sort, verifiedOnly: !browse.verifiedOnly })}
+              active={browse.verifiedOnly}
+            >
+              Verified · {browse.verifiedCount}
+            </FilterLink>
+          )}
+        </nav>
+      )}
+
       {artists.length === 0 ? (
         <EmptyState message="No artists available at the moment." />
       ) : (
@@ -114,12 +210,23 @@ export default function ArtistsIndex() {
             ))}
           </div>
 
-          <EntityPagination
-            currentPage={currentPage}
-            hasMore={hasMore}
-            nextToken={nextToken}
-            baseUrl="/artists"
-          />
+          {isBrowse && browse ? (
+            <nav aria-label="Pages" className="flex justify-between">
+              {browse.page > 1 ? (
+                <Link to={browseHref({ ...browse, page: browse.page - 1 })}>Previous</Link>
+              ) : (
+                <span />
+              )}
+              {hasMore && <Link to={browseHref({ ...browse, page: browse.page + 1 })}>Next</Link>}
+            </nav>
+          ) : (
+            <EntityPagination
+              currentPage={currentPage}
+              hasMore={hasMore}
+              nextToken={nextToken}
+              baseUrl="/artists"
+            />
+          )}
         </>
       )}
       <BreadcrumbStructuredData

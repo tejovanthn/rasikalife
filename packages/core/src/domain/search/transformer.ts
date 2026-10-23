@@ -1,6 +1,7 @@
 // packages/core/src/domain/search/transformer.ts
 
 import type { Artist } from '../artist';
+import { artistPopularity } from '../artist/popularity';
 import type { CompositionWithRelations } from '../composition';
 import type { Event } from '../event';
 import type { Festival } from '../festival';
@@ -27,8 +28,20 @@ function createDocument(
   };
 }
 
-export function transformArtistToDocument(artist: Artist): SearchDocument {
-  return createDocument(artist.id, 'artist', artist.name, (artist.alternateNames || []).join(' '));
+/**
+ * `popularity` is known only when the whole corpus is being indexed, like a raga's
+ * composition count; a partial update leaves it out rather than writing a zero.
+ */
+export function transformArtistToDocument(artist: Artist, popularity?: number): SearchDocument {
+  const doc = createDocument(
+    artist.id,
+    'artist',
+    artist.name,
+    (artist.alternateNames || []).join(' ')
+  );
+  if (popularity !== undefined) doc.popularity = popularity;
+  if (artist.claimStatus === 'verified') doc.verified = true;
+  return doc;
 }
 
 /**
@@ -106,6 +119,7 @@ export function transformToSearchDocuments(
   events: Event[],
   festivals: Festival[]
 ): SearchDocument[] {
+  const popularity = artistPopularity(events);
   const compositionsPerRaga = new Map<string, number>();
   for (const composition of compositions) {
     for (const r of composition.ragas || []) {
@@ -114,7 +128,7 @@ export function transformToSearchDocuments(
   }
 
   return [
-    ...artists.map(transformArtistToDocument),
+    ...artists.map(a => transformArtistToDocument(a, popularity.get(a.id) ?? 0)),
     ...ragas.map(r => transformRagaToDocument(r, compositionsPerRaga.get(r.id) ?? 0)),
     ...talas.map(transformTalaToDocument),
     ...compositions.map(transformCompositionToDocument),

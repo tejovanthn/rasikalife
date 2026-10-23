@@ -3,6 +3,7 @@ import {
   DEFAULT_PUBLIC_CACHE_CONTROL,
   SIGNED_IN_CACHE_CONTROL,
   applyDefaultCacheControl,
+  cacheUntilMidnight,
 } from './page-cache';
 
 function get(cookie?: string, method = 'GET') {
@@ -51,5 +52,29 @@ describe('applyDefaultCacheControl', () => {
     expect(cacheControl(get(), 404)).toBeNull();
     expect(cacheControl(get(), 302)).toBeNull();
     expect(cacheControl(get(undefined, 'POST'))).toBeNull();
+  });
+});
+
+describe('cacheUntilMidnight', () => {
+  const anon = new Request('https://rasika.life/events');
+
+  it('lasts until midnight in the given zone', () => {
+    // 22:00 IST on 23 Oct is 16:30Z; midnight IST is 18:30Z, two hours on.
+    expect(cacheUntilMidnight(anon, 'Asia/Kolkata', new Date('2026-10-23T16:30:00Z'))).toBe(
+      'public, max-age=0, s-maxage=7200, stale-while-revalidate=60'
+    );
+  });
+
+  it('never drops below a minute', () => {
+    expect(cacheUntilMidnight(anon, 'Asia/Kolkata', new Date('2026-10-23T18:29:59Z'))).toContain(
+      's-maxage=60,'
+    );
+  });
+
+  it('keeps a signed-in reader private', () => {
+    const signedIn = new Request('https://rasika.life/events', {
+      headers: { Cookie: 'rasika_session=abc' },
+    });
+    expect(cacheUntilMidnight(signedIn, 'Asia/Kolkata')).toBe(SIGNED_IN_CACHE_CONTROL);
   });
 });

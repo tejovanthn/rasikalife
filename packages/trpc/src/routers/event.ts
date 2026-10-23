@@ -1,5 +1,15 @@
 import { InvokeCommand, LambdaClient } from '@aws-sdk/client-lambda';
-import { Artist, Auth, Event, EventArtist, Festival, Organiser, Search, Venue } from '@rasika/core';
+import {
+  Artist,
+  Auth,
+  Event,
+  EventArtist,
+  EventListings,
+  Festival,
+  Organiser,
+  Search,
+  Venue,
+} from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -49,6 +59,15 @@ export const eventRouter = createTRPCRouter({
         .optional()
     )
     .query(({ input }) => Event.listUpcomingEvents(input)),
+
+  // Every upcoming event with its venue's city and coordinates, for the listing pages, which
+  // filter in memory. `from` is the start of the reader's day, so "Today" keeps a concert
+  // that began this morning.
+  upcomingListings: publicProcedure
+    .input(z.object({ from: z.string().datetime({ offset: true }).optional() }).optional())
+    .query(({ input }) =>
+      EventListings.listUpcomingListings(input?.from ? new Date(input.from) : undefined)
+    ),
 
   listPast: publicProcedure
     .input(

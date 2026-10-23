@@ -43,6 +43,7 @@ export * as Image from './domain/image/s3';
 export * as PrivateImage from './domain/image/private-s3';
 export * as AdminData from './admin/bulk-data';
 export * as Enrichment from './domain/enrichment';
+export * as EventListings from './domain/event-listing';
 
 // Social link types (browser-safe exports)
 export { SocialPlatform, SOCIAL_PLATFORM_LABELS, type SocialLink } from './domain/social-link';

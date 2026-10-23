@@ -207,3 +207,43 @@ describe('Venue', () => {
     });
   });
 });
+
+describe('listVenueCities', () => {
+  it('folds spellings of one city and names it by the commoner one', async () => {
+    const { listVenueCities } = await import('.');
+    const { VenueEntity } = await import('./entity');
+    const go = vi.fn().mockResolvedValue({
+      data: [
+        { address: { city: 'Bengaluru' } },
+        { address: { city: 'Bengaluru' } },
+        { city: 'Bangalore' },
+        { address: { city: 'Mysuru' } },
+        { address: {} },
+      ],
+      cursor: null,
+    });
+    vi.mocked(VenueEntity.query.list).mockReturnValue({
+      where: vi.fn().mockReturnValue({ go }),
+    } as never);
+
+    expect(await listVenueCities()).toEqual([
+      { slug: 'bengaluru', name: 'Bengaluru', venueCount: 3 },
+      { slug: 'mysuru', name: 'Mysuru', venueCount: 1 },
+    ]);
+  });
+});
+
+describe('getVenuesByIds', () => {
+  it('asks once per id and drops deleted venues', async () => {
+    const { getVenuesByIds } = await import('.');
+    const { VenueEntity } = await import('./entity');
+    const go = vi.fn().mockResolvedValue({
+      data: [{ id: 'a' }, { id: 'b', deletedAt: '2026-01-01' }],
+    });
+    vi.mocked(VenueEntity.get).mockReturnValue({ go } as never);
+
+    expect(await getVenuesByIds(['a', 'b', 'a'])).toEqual([{ id: 'a' }]);
+    expect(VenueEntity.get).toHaveBeenCalledWith([{ id: 'a' }, { id: 'b' }]);
+    expect(await getVenuesByIds([])).toEqual([]);
+  });
+});

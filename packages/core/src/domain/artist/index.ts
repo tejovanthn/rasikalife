@@ -133,6 +133,19 @@ export async function softDeleteArtist(id: string): Promise<void> {
   await cascadeArtistDeleteToAffiliations(id);
 }
 
+/**
+ * Many artists in one call, in the order asked for: the order is the ranking (`rankArtists`).
+ * Deleted and unlisted records are dropped, as `listArtists` drops them.
+ */
+export async function getArtistsByIds(ids: string[]): Promise<Artist[]> {
+  if (ids.length === 0) return [];
+  const result = await ArtistEntity.get(ids.map(id => ({ id }))).go();
+  const byId = new Map(((result.data || []) as Artist[]).map(artist => [artist.id, artist]));
+  return ids
+    .map(id => byId.get(id))
+    .filter((artist): artist is Artist => Boolean(artist && !artist.deletedAt && !artist.unlisted));
+}
+
 export async function listArtists(params?: { limit?: number; nextToken?: string }): Promise<{
   items: Artist[];
   nextToken?: string;
@@ -285,3 +298,4 @@ export type { ArtistResearchContext, ComposerContext } from './research-context'
 export { ARTIST_FILLABLE_FIELDS, artistMergeFillPatch } from './merge-fill';
 export { creditsByArtist, fillArtistInstruments } from './instrument-sweep';
 export type { InstrumentFill, InstrumentSweepResult } from './instrument-sweep';
+export { artistPopularity } from './popularity';

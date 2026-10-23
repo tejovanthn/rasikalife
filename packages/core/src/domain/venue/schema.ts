@@ -43,10 +43,18 @@ export const VENUE_TYPES = [
 
 export type VenueType = (typeof VENUE_TYPES)[number];
 
+/** How a venue's coordinates were found: exact from a map link, or a PIN-code centroid. */
+export const VENUE_GEO_SOURCES = ['map-link', 'postal-code', 'manual'] as const;
+
+export type VenueGeoSource = (typeof VENUE_GEO_SOURCES)[number];
+
 export const CreateVenueSchema = z.object({
   name: z.string().min(1).max(200),
   address: AddressSchema.optional(),
   mapLink: z.string().url().optional(),
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
+  geoSource: z.enum(VENUE_GEO_SOURCES).optional(),
   description: z.string().max(5000).optional(),
   venueType: z.enum(VENUE_TYPES).optional(),
   capacity: z.number().int().min(1).optional(),

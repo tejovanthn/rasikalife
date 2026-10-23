@@ -5,6 +5,7 @@ import {
   deleteEvent,
   getEvent,
   getEventsByIds,
+  listAllUpcomingEvents,
   listEventsByArtist,
   listEventsByFestival,
   listEventsByOrganiser,
@@ -268,6 +269,38 @@ describe('Event', () => {
         nextToken: 'next-token',
         hasMore: true,
       });
+    });
+  });
+
+  describe('listAllUpcomingEvents', () => {
+    it('pages to the end, cuts on the parsed instant, and sorts across offsets', async () => {
+      const { EventEntity } = await import('./entity');
+      const go = vi
+        .fn()
+        .mockResolvedValueOnce({
+          data: [
+            // 18:00 IST on the 24th is 12:30Z, after the 10:00Z one below.
+            { id: 'late', startDateTime: '2026-10-24T18:00:00+05:30' },
+            // Started yesterday evening, inside the query's one-day margin.
+            { id: 'yesterday', startDateTime: '2026-10-22T19:00:00+05:30' },
+          ],
+          cursor: 'page-2',
+        })
+        .mockResolvedValueOnce({
+          data: [{ id: 'early', startDateTime: '2026-10-24T10:00:00Z' }],
+          cursor: null,
+        });
+      const gt = vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue({ go }) });
+      vi.mocked(EventEntity.query.byStatus).mockReturnValue({ gt } as any);
+
+      // Start of 23 Oct in India.
+      const result = await listAllUpcomingEvents(new Date('2026-10-22T18:30:00.000Z'));
+
+      expect(gt).toHaveBeenCalledWith({ startDateTime: '2026-10-21T18:30:00.000Z' });
+      expect(go).toHaveBeenCalledTimes(2);
+      expect(go.mock.calls[1][0]).toMatchObject({ cursor: 'page-2' });
+      expect(go.mock.calls[0][0].attributes).not.toContain('extractionRawResponse');
+      expect(result.map(e => e.id)).toEqual(['early', 'late']);
     });
   });
 

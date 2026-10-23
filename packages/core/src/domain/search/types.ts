@@ -24,6 +24,10 @@ export interface SearchDocument {
    * for ragas today (see `isThinRaga`); absent means indexable.
    */
   noindex?: boolean;
+  /** Artists only: credited approved events plus their RSVPs and attendance (`artistPopularity`). */
+  popularity?: number;
+  /** Artists only: `claimStatus === 'verified'`. */
+  verified?: boolean;
 }
 
 export interface SearchIndex {

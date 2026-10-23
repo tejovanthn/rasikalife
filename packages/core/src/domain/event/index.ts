@@ -453,6 +453,60 @@ export async function listUpcomingEvents(params?: {
   };
 }
 
+/**
+ * What a listing page needs from an event, and nothing else. A stored event averages ~5 KB,
+ * most of it extraction metadata no listing shows.
+ */
+export const EVENT_LISTING_ATTRIBUTES = [
+  'id',
+  'title',
+  'startDateTime',
+  'endDateTime',
+  'timezone',
+  'venueId',
+  'venueName',
+  'venueCity',
+  'organiserName',
+  'festivalId',
+  'artists',
+  'artForm',
+  'tags',
+  'entryType',
+  'ticketing',
+  'posterUrl',
+] as const;
+
+export type EventListing = Pick<Event, (typeof EVENT_LISTING_ATTRIBUTES)[number]>;
+
+/**
+ * Every upcoming approved event, in start order. The listing pages filter by date, city and
+ * entry in memory, which is right at this size (23 upcoming in Oct 2026) and keeps every
+ * filter a query parameter on one cached page. Revisit with a range query on `byStatus` past
+ * a few thousand.
+ *
+ * `from` is an instant, usually the start of today in India so a concert that began this
+ * morning still lists under "Today". The key comparison is a string one, and stored start
+ * times carry their own offset (`+05:30` beside `Z`), so the query starts a day early and the
+ * exact cut is made on parsed instants.
+ */
+export async function listAllUpcomingEvents(from: Date = new Date()): Promise<EventListing[]> {
+  const margin = new Date(from.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const all: EventListing[] = [];
+  let cursor: string | undefined;
+  do {
+    const result = await EventEntity.query
+      .byStatus({ status: 'approved' })
+      .gt({ startDateTime: margin })
+      .where((attr, op) => op.notExists(attr.deletedAt))
+      .go({ limit: 100, cursor, attributes: [...EVENT_LISTING_ATTRIBUTES] as never[] });
+    all.push(...((result.data || []) as EventListing[]));
+    cursor = result.cursor || undefined;
+  } while (cursor);
+  return all
+    .filter(event => Date.parse(event.startDateTime) >= from.getTime())
+    .sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime));
+}
+
 export async function listPastEvents(params?: {
   limit?: number;
   nextToken?: string;

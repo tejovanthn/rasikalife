@@ -33,6 +33,9 @@ export const venueRouter = createTRPCRouter({
     )
     .query(({ input }) => Venue.listVenuesByCity(input.city, input)),
 
+  // Every city a venue sits in, for the `/<city>/concerts` pages and their sitemap entries.
+  cities: publicProcedure.query(() => Venue.listVenueCities()),
+
   create: editorProcedure.input(Venue.CreateVenueSchema).mutation(async ({ input }) => {
     const result = await Venue.createVenue(input);
     triggerReindex();

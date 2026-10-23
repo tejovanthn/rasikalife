@@ -387,3 +387,45 @@ export async function getDocuments(
     builtAt: index.builtAt,
   };
 }
+
+export interface ArtistRanking {
+  ids: string[];
+  total: number;
+  /** Shown or hidden: the "Verified" filter is offered only when this is above zero. */
+  verifiedCount: number;
+}
+
+/**
+ * Orders the artist documents for /artists?sort=popular and ?verified=1. Ties break on name,
+ * so a page of artists with no events yet is alphabetical rather than arbitrary.
+ */
+export function rankArtistDocuments(
+  documents: SearchDocument[],
+  opts: { sort: 'popular' | 'name'; verifiedOnly?: boolean; offset: number; limit: number }
+): ArtistRanking {
+  const artists = documents.filter(doc => doc.entityType === 'artist');
+  const verifiedCount = artists.filter(doc => doc.verified).length;
+  const pool = opts.verifiedOnly ? artists.filter(doc => doc.verified) : artists;
+  const byName = (a: SearchDocument, b: SearchDocument) =>
+    a.displayName.localeCompare(b.displayName, 'en', { sensitivity: 'base' });
+  const sorted = [...pool].sort(
+    opts.sort === 'popular'
+      ? (a, b) => (b.popularity ?? 0) - (a.popularity ?? 0) || byName(a, b)
+      : byName
+  );
+  return {
+    ids: sorted.slice(opts.offset, opts.offset + opts.limit).map(doc => doc.id),
+    total: pool.length,
+    verifiedCount,
+  };
+}
+
+export async function rankArtists(opts: {
+  sort: 'popular' | 'name';
+  verifiedOnly?: boolean;
+  offset: number;
+  limit: number;
+}): Promise<ArtistRanking> {
+  const index = await loadIndex();
+  return rankArtistDocuments(index.documents, opts);
+}

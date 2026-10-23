@@ -1,4 +1,30 @@
+import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
+import { startOfDayInstant, todayInTimeZone } from '@rasika/core/shared/timezone';
 import type { LoaderFunction } from 'react-router';
+import { client } from '~/api.server';
+import { DATE_PRESETS, listingHref } from '~/lib/event-filters';
+
+/**
+ * `/<city>/concerts` and its date pages, for every city with a concert coming up. A city with
+ * none carries `noindex`, so listing it here would contradict the page.
+ */
+async function cityConcertPages(): Promise<
+  Array<{ path: string; changefreq: string; priority: number }>
+> {
+  const zone = DEFAULT_EVENT_TIMEZONE;
+  const listings = await client.event.upcomingListings
+    .query({ from: startOfDayInstant(todayInTimeZone(zone), zone) })
+    .catch(() => []);
+  const slugs = [...new Set(listings.map(e => e.citySlug).filter((s): s is string => Boolean(s)))];
+  return slugs.flatMap(slug => [
+    { path: listingHref({ kind: 'city', slug }, {}), changefreq: 'daily', priority: 0.8 },
+    ...DATE_PRESETS.map(p => ({
+      path: listingHref({ kind: 'city', slug }, { when: p.value }),
+      changefreq: 'daily',
+      priority: 0.7,
+    })),
+  ]);
+}
 
 export const loader: LoaderFunction = async () => {
   const baseUrl = 'https://rasika.life';
@@ -17,6 +43,7 @@ export const loader: LoaderFunction = async () => {
     { path: '/carnatic/ragas', changefreq: 'weekly', priority: 0.7 },
     { path: '/carnatic/talas', changefreq: 'monthly', priority: 0.6 },
     { path: '/carnatic/languages', changefreq: 'monthly', priority: 0.6 },
+    ...(await cityConcertPages()),
   ];
 
   const entries = pages

@@ -1,6 +1,14 @@
 // packages/core/src/domain/search/index.ts
 
-export { search, searchWithFullData, getHealth, getDocuments } from './service';
+export {
+  search,
+  searchWithFullData,
+  getHealth,
+  getDocuments,
+  rankArtistDocuments,
+  rankArtists,
+} from './service';
+export type { ArtistRanking } from './service';
 export type { SearchWithFullDataResponse, DocumentsResponse } from './service';
 export { buildAndStoreSearchIndex } from './indexer';
 export type {

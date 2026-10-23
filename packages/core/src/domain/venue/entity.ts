@@ -37,6 +37,21 @@ export const VenueEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // Coordinates, for "≈ 6 km from you" on the events page. Filled by `geocode-venues`
+      // or by hand; `geoSource` says how precise they are, since a PIN centroid can be a
+      // kilometre or two off where a map link is exact. Never indexed, so optional is safe.
+      lat: {
+        type: 'number',
+        required: false,
+      },
+      lng: {
+        type: 'number',
+        required: false,
+      },
+      geoSource: {
+        type: ['map-link', 'postal-code', 'manual'] as const,
+        required: false,
+      },
       description: {
         type: 'string',
         required: false,

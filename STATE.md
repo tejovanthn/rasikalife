@@ -3,6 +3,16 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-10-23: listing features (Kalaverse review), not yet deployed
+
+Built: event times fixed to the event zone; /events date presets, month calendar and "Free only";
+`/<city>/concerts[/today|/this-weekend|/this-week]`; WhatsApp text on listings and festivals;
+"≈ km from you"; artists Popular/Verified. Plan: `docs/plans/261023-01-listing-features.md`.
+In prod already: 53 of 145 venues geocoded (`geocode-venues --apply`, 6 map link, 47 PIN).
+
+Next step: deploy, then `pnpm prod-cli reindex` so artist documents carry `popularity`, and mark
+`whatsapp_digest` a key event in GA4.
+
 ## Done 2026-10-21: tala, lyrics and content cleanup in prod
 
 Talas 75 → 20 (record: `docs/research/tala-cleanup-2026-10.csv.applied.json`); 145 compositions
@@ -14,6 +24,15 @@ standard aarti text; `jaya jaya narasimha` line 1 is Malayalam and a Panini line
 `nandAtmajAnanda`, `sAvaLE sundar` and `gurumUrti pAdamulE` hold guessed readings.
 
 ## Waiting on the owner's review
+
+- **Venue merges that unlock the city pages:** `docs/research/venue-merge-2026-10-23.csv`. The
+  venues 16 of 23 upcoming events use are name-only duplicates (The Gayana Samaja, a bare PCPA),
+  so those concerts show no city or distance. Write `merge` in `decision`, then
+  `pnpm prod-cli dedup-places --apply --file <csv> --dry-run`, then without `--dry-run`, reindex.
+  The PCPA row is deliberately reversed from the report's suggestion: `mergeVenue` copies no
+  fields, and the report would have kept the record without an address.
+- **MLR Convention Centre** (venue `3KHmLJubyhp3S7RrEWyRd5pylsp`, 30 Oct concert) has no address.
+  Brigade runs two (JP Nagar 7th Phase 560078, and Whitefield); confirm which before filling it.
 
 - **Raga dedupe:** `docs/research/raga-dedupe-2026-10.csv` (67 suggested merges). Write `merge` in
   `decision`, then the commands in `docs/research/raga-dedupe-2026-10.md`: dry run, apply,

@@ -278,3 +278,41 @@ describe('search/service', () => {
     });
   });
 });
+
+describe('rankArtistDocuments', () => {
+  const doc = (id: string, name: string, popularity?: number, verified?: boolean) =>
+    ({
+      id,
+      entityType: 'artist',
+      name,
+      displayName: name,
+      description: '',
+      indexedAt: '',
+      popularity,
+      verified,
+    }) as const;
+  const docs = [
+    doc('a', 'Bharat Sundar', 2),
+    doc('b', 'Abhishek Raghuram', 9, true),
+    doc('c', 'Amrutha Venkatesh', 2),
+    doc('d', 'Charulatha Mani'),
+    { ...doc('r', 'kalyANi', 99), entityType: 'raga' as const },
+  ];
+
+  it('sorts by popularity, ties by name, and pages', async () => {
+    const { rankArtistDocuments } = await freshService();
+    expect(rankArtistDocuments(docs, { sort: 'popular', offset: 0, limit: 3 })).toEqual({
+      ids: ['b', 'c', 'a'],
+      total: 4,
+      verifiedCount: 1,
+    });
+    expect(rankArtistDocuments(docs, { sort: 'popular', offset: 3, limit: 3 }).ids).toEqual(['d']);
+  });
+
+  it('filters to verified artists and still reports the count', async () => {
+    const { rankArtistDocuments } = await freshService();
+    expect(
+      rankArtistDocuments(docs, { sort: 'name', verifiedOnly: true, offset: 0, limit: 10 })
+    ).toEqual({ ids: ['b'], total: 1, verifiedCount: 1 });
+  });
+});

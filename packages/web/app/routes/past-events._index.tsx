@@ -5,6 +5,7 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EventDayGroup } from '~/components/EventDayGroup';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { groupByEventDate } from '~/lib/event-time';
 import { isGenericTitle } from '~/lib/generic-title';
 
 interface EventItem {
@@ -27,17 +28,9 @@ interface DayGroup {
   events: Array<EventItem & { isGeneric: boolean }>;
 }
 
-function groupByDate<T extends { startDateTime: string }>(events: T[]) {
-  const map = new Map<string, T[]>();
-  for (const event of events) {
-    const key = event.startDateTime.slice(0, 10);
-    const bucket = map.get(key);
-    if (bucket) bucket.push(event);
-    else map.set(key, [event]);
-  }
-  return [...map]
-    .sort(([a], [b]) => b.localeCompare(a))
-    .map(([date, events]) => ({ date, events }));
+// Newest day first. The day is read in the event's own zone, never off the stored string.
+function groupByDate<T extends { startDateTime: string; timezone?: string | null }>(events: T[]) {
+  return groupByEventDate(events).reverse();
 }
 
 export const loader: LoaderFunction = async ({ request }) => {

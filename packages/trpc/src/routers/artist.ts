@@ -10,6 +10,7 @@ import {
   EventArtist,
   Image,
   Organiser,
+  Search,
 } from '@rasika/core';
 import { extractFromBiography, rewriteBiography } from '@rasika/core/domain/artist/bio-extract';
 import { toProposals } from '@rasika/core/domain/artist/bio-proposals';
@@ -98,6 +99,33 @@ export const artistRouter = createTRPCRouter({
         .optional()
     )
     .query(({ input }) => Artist.listArtists(input)),
+
+  // /artists?sort=popular and ?verified=1. Ranked from the search index, which holds each
+  // artist's derived popularity and verified flag, then the page's records batch-got in order.
+  browse: publicProcedure
+    .input(
+      z.object({
+        sort: z.enum(['popular', 'name']).default('popular'),
+        verifiedOnly: z.boolean().optional(),
+        page: z.number().int().min(1).default(1),
+        limit: z.number().int().min(1).max(100).default(36),
+      })
+    )
+    .query(async ({ input }) => {
+      const ranking = await Search.rankArtists({
+        sort: input.sort,
+        verifiedOnly: input.verifiedOnly,
+        offset: (input.page - 1) * input.limit,
+        limit: input.limit,
+      });
+      const items = await Artist.getArtistsByIds(ranking.ids);
+      return {
+        items,
+        total: ranking.total,
+        verifiedCount: ranking.verifiedCount,
+        hasMore: input.page * input.limit < ranking.total,
+      };
+    }),
 
   // Live DB search for the moderator find-or-create pickers (SearchSelect).
   // Unlike search.searchArtists (Fuse index in S3), this hits the table
