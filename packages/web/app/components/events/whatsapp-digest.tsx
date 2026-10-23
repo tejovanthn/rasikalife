@@ -54,16 +54,16 @@ export function WhatsAppDigest({
         Text for WhatsApp
       </h2>
       <div className="flex flex-wrap gap-2">
-        {canCopy && (
-          <Button type="button" onClick={copy} className="min-h-11 md:min-h-10">
-            {copied ? (
-              <Check className="mr-2 h-4 w-4" aria-hidden="true" />
-            ) : (
-              <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
-            )}
-            <span aria-live="polite">{copied ? 'Copied' : 'Copy text'}</span>
-          </Button>
-        )}
+        {/* Rendered from the start and enabled once the page can reach the clipboard, so the
+            row does not jump on hydration. Share is last, so its late arrival moves nothing. */}
+        <Button type="button" onClick={copy} disabled={!canCopy} className="min-h-11 md:min-h-10">
+          {copied ? (
+            <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+          ) : (
+            <Copy className="mr-2 h-4 w-4" aria-hidden="true" />
+          )}
+          <span aria-live="polite">{copied ? 'Copied' : 'Copy text'}</span>
+        </Button>
         <a
           href={whatsAppShareUrl(text)}
           target="_blank"

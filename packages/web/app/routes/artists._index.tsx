@@ -1,11 +1,11 @@
 import type { ArtistType } from '@rasika/core/types/entities';
-import type { ReactNode } from 'react';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
 import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
 import { EntityPagination } from '~/components/EntityPagination';
+import { FilterLink } from '~/components/filter-link';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { buttonVariants } from '~/components/ui/button';
@@ -127,26 +127,6 @@ function browseHref(state: { sort: 'popular' | null; verifiedOnly: boolean; page
   return qs ? `/artists?${qs}` : '/artists';
 }
 
-function FilterLink({
-  to,
-  active,
-  children,
-}: { to: string; active: boolean; children: ReactNode }) {
-  return (
-    <Link
-      to={to}
-      aria-current={active ? 'page' : undefined}
-      className={cn(
-        buttonVariants({ variant: active ? 'secondary' : 'outline', size: 'sm' }),
-        'min-h-11 md:min-h-9 no-underline',
-        active && 'font-semibold'
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
-
 export default function ArtistsIndex() {
   const { artists, nextToken, hasMore, searchQuery, browse } = useLoaderData<{
     artists: ArtistType[];
@@ -213,11 +193,23 @@ export default function ArtistsIndex() {
           {isBrowse && browse ? (
             <nav aria-label="Pages" className="flex justify-between">
               {browse.page > 1 ? (
-                <Link to={browseHref({ ...browse, page: browse.page - 1 })}>Previous</Link>
+                <Link
+                  to={browseHref({ ...browse, page: browse.page - 1 })}
+                  className={cn(buttonVariants({ variant: 'outline' }), 'min-h-11 no-underline')}
+                >
+                  Previous
+                </Link>
               ) : (
                 <span />
               )}
-              {hasMore && <Link to={browseHref({ ...browse, page: browse.page + 1 })}>Next</Link>}
+              {hasMore && (
+                <Link
+                  to={browseHref({ ...browse, page: browse.page + 1 })}
+                  className={cn(buttonVariants({ variant: 'outline' }), 'min-h-11 no-underline')}
+                >
+                  Next
+                </Link>
+              )}
             </nav>
           ) : (
             <EntityPagination

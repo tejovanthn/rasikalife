@@ -235,7 +235,7 @@ cannot drop a page from the sitemap by accident.
 
 Every colour comes from the HSL variables in `app/globals.css`; hard-coded Tailwind palette classes (`text-amber-600`) are a bug, not a style choice. Two rules the tokens now enforce:
 
-- **Light and dark are not the same value.** `--primary` is L40 in light and L53.7 in dark, `--destructive` is L30 and L50, and `--primary-foreground` is white in light but near-black in dark. A single value for both modes is what produced 2.97:1 links and 2.19:1 error text.
+- **Light and dark are not the same value.** `--primary` is L40 in light and L53.7 in dark, `--destructive` is L30 and L50, `--warning` is L26 and L60 (it is mostly text, and the old light L50 read 1.88:1), and `--primary-foreground` is white in light but near-black in dark. A single value for both modes is what produced 2.97:1 links and 2.19:1 error text.
 - **Hues stay on the brand.** Every surface token sits on hue 17. Two tokens once carried `-21`, which CSS normalises to 339 and renders rose.
 
 `app/lib/contrast.test.ts` parses `globals.css` and asserts the real pairs against WCAG AA (4.5:1 for text, 3:1 for the focus ring), in both themes, plus that no hue is negative. Run it before committing a token change; `app/lib/contrast.ts` exports the maths so a candidate value can be checked first.

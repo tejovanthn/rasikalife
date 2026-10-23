@@ -5,6 +5,7 @@ import { EventCard } from '~/components/EventCard';
 import { EventDayGroup } from '~/components/EventDayGroup';
 import { HomeLocationForm } from '~/components/events/home-location-form';
 import { WhatsAppDigest } from '~/components/events/whatsapp-digest';
+import { FilterLink } from '~/components/filter-link';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { buttonVariants } from '~/components/ui/button';
 import {
@@ -28,36 +29,11 @@ import { cn } from '~/lib/utils';
  * thing and never toggles (DESIGN.md).
  */
 
-function FilterLink({
-  to,
-  active,
-  children,
-  label,
-}: {
-  to: string;
-  active: boolean;
-  children: ReactNode;
-  /** For a screen reader, when the visible text is abbreviated. */
-  label?: string;
-}) {
-  return (
-    <Link
-      to={to}
-      preventScrollReset
-      aria-label={label}
-      aria-current={active ? 'page' : undefined}
-      className={cn(
-        buttonVariants({ variant: active ? 'secondary' : 'outline', size: 'sm' }),
-        'min-h-11 md:min-h-9 no-underline',
-        active && 'font-semibold'
-      )}
-    >
-      {children}
-    </Link>
-  );
-}
-
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
+
+/** One sideways-scrolling line on a phone, wrapping from md up. Bleeds to the screen edge. */
+const SCROLL_ROW =
+  '-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0';
 
 /**
  * "≈ 6 km away" needs an account: the reader's location is saved to it, and the distances are
@@ -171,17 +147,28 @@ function Calendar({
                 const count = counts[day] ?? 0;
                 const selected = state.when === day;
                 const label = `${formatDayLabel(day)}, ${count === 0 ? 'no events' : `${count} ${count === 1 ? 'event' : 'events'}`}`;
+                // The visible digits are hidden from a screen reader, which hears the sentence
+                // instead ("Sat, 24 Oct, 7 events"). A link carries it as its name; a plain day
+                // carries it as hidden text, since aria-label on a span is not read.
                 const inner = (
-                  <>
+                  <span aria-hidden="true" className="flex flex-col items-center">
                     <span className={cn(day === today && 'underline underline-offset-4')}>
                       {Number(day.slice(8))}
                     </span>
                     {count > 0 && (
-                      <span className="block text-[10px] leading-none text-primary font-semibold">
+                      <span
+                        className={cn(
+                          'block text-xs leading-none font-semibold',
+                          // Primary fails on the selected and hover fills; ink does not.
+                          selected
+                            ? 'text-secondary-foreground'
+                            : 'text-primary group-hover:text-foreground'
+                        )}
+                      >
                         {count}
                       </span>
                     )}
-                  </>
+                  </span>
                 );
                 return (
                   <td key={weekday} className="p-0.5">
@@ -192,18 +179,16 @@ function Calendar({
                         aria-label={label}
                         aria-current={selected ? 'date' : undefined}
                         className={cn(
-                          'flex h-11 md:h-10 flex-col items-center justify-center rounded-md no-underline text-foreground hover:bg-accent',
-                          selected && 'bg-secondary font-semibold'
+                          'group flex h-11 md:h-10 flex-col items-center justify-center rounded-md no-underline text-foreground hover:bg-accent',
+                          selected && 'bg-secondary text-secondary-foreground font-semibold'
                         )}
                       >
                         {inner}
                       </Link>
                     ) : (
-                      <span
-                        aria-label={label}
-                        className="flex h-11 md:h-10 flex-col items-center justify-center text-muted-foreground"
-                      >
+                      <span className="flex h-11 md:h-10 flex-col items-center justify-center text-muted-foreground">
                         {inner}
+                        <span className="sr-only">{label}</span>
                       </span>
                     )}
                   </td>
@@ -226,29 +211,38 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
     <>
       {intro}
 
+      {/* On a phone the date and month rows each scroll sideways as one line, so the first
+          concert is near the top of the screen rather than under six rows of buttons. */}
       <nav aria-label="Filter events" className="mb-6 space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <FilterLink to={href({ when: null })} active={!state.when}>
+        <div className={SCROLL_ROW}>
+          <FilterLink to={href({ when: null })} active={!state.when} className="shrink-0">
             All upcoming
           </FilterLink>
           {DATE_PRESETS.map(p => (
-            <FilterLink key={p.value} to={href({ when: p.value })} active={state.when === p.value}>
+            <FilterLink
+              key={p.value}
+              to={href({ when: p.value })}
+              active={state.when === p.value}
+              className="shrink-0"
+            >
               {p.label}
             </FilterLink>
           ))}
         </div>
         {months.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted-foreground mr-1">By month</span>
+          <div className={cn(SCROLL_ROW, 'items-center')}>
+            <span className="shrink-0 text-sm text-muted-foreground mr-1">By month</span>
             {months.map(([month, count]) => (
               <FilterLink
                 key={month}
                 to={href({ when: month })}
                 active={state.when === month}
                 label={`${formatMonthLabel(month)}, ${count} ${count === 1 ? 'event' : 'events'}`}
+                className="shrink-0"
               >
                 {monthButtonLabel(month, today)}
-                <span className="ml-1 text-muted-foreground font-normal">({count})</span>
+                {/* The button's own colour: muted grey on the selected fill was 3.23:1. */}
+                <span className="ml-1 font-normal">({count})</span>
               </FilterLink>
             ))}
           </div>
@@ -281,52 +275,9 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
         </div>
       </nav>
 
+      {/* The list comes first in the document, so a keyboard or screen reader reaches the
+          concerts before thirty calendar days; the sidebar is raised beside it from md up. */}
       <div className="grid gap-8 md:grid-cols-[16rem_1fr]">
-        <aside className="order-last md:order-first space-y-8">
-          <Calendar
-            scope={scope}
-            state={state}
-            month={calendar.month}
-            counts={calendar.counts}
-            today={today}
-          />
-          {cities.length > 1 && (
-            <section aria-labelledby="cities-heading" className="space-y-2">
-              <h2 id="cities-heading" className="text-sm font-semibold">
-                Cities
-              </h2>
-              <ul className="space-y-1 text-sm">
-                {scope.kind === 'city' && (
-                  <li>
-                    <Link to={listingHref({ kind: 'all' }, { when: state.when, free: state.free })}>
-                      All cities
-                    </Link>
-                  </li>
-                )}
-                {cities.map(city => (
-                  <li key={city.slug}>
-                    {scope.kind === 'city' && scope.slug === city.slug ? (
-                      <span aria-current="page" className="font-semibold">
-                        {city.name} · {city.count}
-                      </span>
-                    ) : (
-                      <Link
-                        to={listingHref(
-                          { kind: 'city', slug: city.slug },
-                          { when: state.when, free: state.free }
-                        )}
-                      >
-                        {city.name} · {city.count}
-                      </Link>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-          <DistanceControl viewer={data.viewer} here={href({})} />
-        </aside>
-
         <div className="min-w-0">
           {range && (
             <h2 className="mb-4 text-lg font-semibold">
@@ -383,6 +334,50 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
             </>
           )}
         </div>
+        <aside className="md:order-first space-y-8">
+          <Calendar
+            scope={scope}
+            state={state}
+            month={calendar.month}
+            counts={calendar.counts}
+            today={today}
+          />
+          {cities.length > 1 && (
+            <section aria-labelledby="cities-heading" className="space-y-2">
+              <h2 id="cities-heading" className="text-sm font-semibold">
+                Cities
+              </h2>
+              <ul className="space-y-1 text-sm">
+                {scope.kind === 'city' && (
+                  <li>
+                    <Link to={listingHref({ kind: 'all' }, { when: state.when, free: state.free })}>
+                      All cities
+                    </Link>
+                  </li>
+                )}
+                {cities.map(city => (
+                  <li key={city.slug}>
+                    {scope.kind === 'city' && scope.slug === city.slug ? (
+                      <span aria-current="page" className="font-semibold">
+                        {city.name} · {city.count}
+                      </span>
+                    ) : (
+                      <Link
+                        to={listingHref(
+                          { kind: 'city', slug: city.slug },
+                          { when: state.when, free: state.free }
+                        )}
+                      >
+                        {city.name} · {city.count}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <DistanceControl viewer={data.viewer} here={href({})} />
+        </aside>
       </div>
     </>
   );

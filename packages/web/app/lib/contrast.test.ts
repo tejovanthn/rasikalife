@@ -57,6 +57,12 @@ describe.each(['light', 'dark'] as const)('%s theme token contrast', mode => {
     expect(contrastRatio(t.destructive, t.background)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
   });
 
+  // Warning is mostly text (pending states, notices), and it sits on the page, on cards and
+  // on muted panels. The light value was 1.88:1 on the page until it was deepened.
+  it.each(['background', 'card', 'muted'])('warning text meets AA on %s', surface => {
+    expect(contrastRatio(t.warning, t[surface])).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
   // 1.4.11 Non-text Contrast: 3:1, not 4.5. The focus ring is the only thing telling a
   // keyboard user where they are, so it has to be visible against what surrounds it.
   it('the focus ring meets non-text contrast against the background', () => {

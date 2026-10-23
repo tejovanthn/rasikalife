@@ -48,8 +48,8 @@
     --tala-foreground: 30 80% 30%;
     --success: 142 71% 45%;
     --success-foreground: 17 20% 8%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 17 20% 8%;
+    --warning: 38 92% 26%;
+    --warning-foreground: 17 100% 99%;
   }
 
   .dark,

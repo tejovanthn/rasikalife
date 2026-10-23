@@ -23,7 +23,8 @@ colors:
   language-indigo: "#dee7f7"
   language-indigo-ink: "#1f3d7a"
   affirm-green: "#21c45d"
-  caution-amber: "#f59f0a"
+  caution-amber: "#7f5305"
+  caution-amber-dark: "#f7b23b"
   alarm-red: "#990000"
   alarm-red-dark: "#ff0000"
 typography:
@@ -155,7 +156,7 @@ These three are a vocabulary, not a palette. A reader who learns them once can s
 
 ### Tertiary
 - **Affirm Green** (`#21c45d`): Success only.
-- **Caution Amber** (`#f59f0a`): Warning only. Note it sits close to Tala Amber; caution amber is saturated and used on text or icons, tala amber is a pale surface behind a badge. Never let them meet in the same component.
+- **Caution Amber** (`#7f5305` light, `#f7b23b` dark): Warning only: pending states, notices, the bio-length cap. It is mostly text, so the light value is a deep amber; the saturated `#f59f0a` it replaced read 1.88:1 on Hall Light. Never use it for anything that is not a warning, an event time included. Note it sits close to Tala Amber; caution amber is used on text or icons, tala amber is a pale surface behind a badge. Never let them meet in the same component.
 - **Alarm Red** (`#990000` light, `#ff0000` dark): Destructive actions and error text. The dark value is much lighter than the light one on purpose: the shared value read 2.19:1 on lamp black and made form errors nearly invisible.
 
 ### Neutral
@@ -174,7 +175,7 @@ These three are a vocabulary, not a palette. A reader who learns them once can s
 
 **The Filled Surface Rule.** Any token ending in `-foreground` names a label sitting on its matching fill, and that pairing is a contrast obligation, not a formality. White on `--success` read 2.30:1, and `bg-success` is what the moderator Approve button uses, so the worst pairing on the site was on an action. Every `-foreground` pair is asserted in `app/lib/contrast.test.ts`.
 
-**The Two Temperatures Rule.** Light and dark are not one value on two backgrounds. `--primary`, `--primary-foreground`, and `--destructive` all differ between themes because a single value cannot clear contrast on both. Any new colour token must be checked in both blocks before it ships.
+**The Two Temperatures Rule.** Light and dark are not one value on two backgrounds. `--primary`, `--primary-foreground`, `--destructive`, `--warning` and `--warning-foreground` all differ between themes because a single value cannot clear contrast on both. Any new colour token must be checked in both blocks before it ships.
 
 **The Vocabulary Rule.** Raga violet, tala amber, and language indigo mean exactly one thing each. Using raga violet for emphasis, or tala amber for a warning, destroys a scanning aid it took a reader months to internalise.
 

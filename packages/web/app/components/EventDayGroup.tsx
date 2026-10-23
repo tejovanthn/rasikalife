@@ -10,7 +10,10 @@ interface EventDayGroupProps {
 export function EventDayGroup({ date, events }: EventDayGroupProps) {
   return (
     <section>
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b py-3 mb-3">
+      {/* Sticks below the site nav (h-14, md:h-16), which is itself sticky at top-0 and above
+          it; at top-0 the date slid underneath and vanished just when it was needed. A solid
+          page colour rather than a blur, which was decoration. */}
+      <div className="sticky top-14 md:top-16 z-10 bg-background border-b py-3 mb-3">
         <h2 className="font-semibold text-base">
           {formatDayLabel(date, { year: true })}
           <span className="ml-2 text-sm font-normal text-muted-foreground">

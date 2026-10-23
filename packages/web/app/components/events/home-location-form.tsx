@@ -38,6 +38,7 @@ export function HomeLocationForm({ redirectTo, error }: { redirectTo: string; er
   }
 
   const message = error ?? deviceError;
+  const errorId = `${inputId}-error`;
 
   return (
     <div className="space-y-2">
@@ -54,6 +55,8 @@ export function HomeLocationForm({ redirectTo, error }: { redirectTo: string; er
             maxLength={7}
             required
             placeholder="560004"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={message ? errorId : undefined}
           />
         </div>
         <Button type="submit" variant="outline" className="min-h-11 md:min-h-10">
@@ -78,7 +81,11 @@ export function HomeLocationForm({ redirectTo, error }: { redirectTo: string; er
           </Button>
         </Form>
       )}
-      {message && <output className="block text-sm text-destructive">{message}</output>}
+      {message && (
+        <output id={errorId} className="block text-sm text-destructive">
+          {message}
+        </output>
+      )}
     </div>
   );
 }

@@ -65,7 +65,7 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
         )}
         <CardContent className="py-4 flex flex-1 flex-col gap-1.5">
           <h3 className="font-semibold text-foreground leading-snug line-clamp-2">{heading}</h3>
-          <p className="text-sm font-medium text-warning line-clamp-2">
+          <p className="text-sm font-semibold text-foreground line-clamp-2">
             <EventTime start={event.startDateTime} zone={eventZone(event)} />
             {showVenueInline && (
               <span className="font-normal text-muted-foreground"> · {event.venueName}</span>
