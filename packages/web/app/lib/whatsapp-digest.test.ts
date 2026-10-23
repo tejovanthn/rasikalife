@@ -70,6 +70,15 @@ describe('formatWhatsAppDigest', () => {
     expect(text).toMatch(/…and 1 more: https:\/\/rasika\.life\/bengaluru/);
   });
 
+  it('names the zone of a concert outside India, and only then', () => {
+    const text = formatWhatsAppDigest(
+      [{ ...concert, startDateTime: '2026-10-25T02:30:00Z', timezone: 'America/Los_Angeles' }],
+      base
+    );
+    expect(text).toContain('🕕 7:30 pm PDT · Ticketed');
+    expect(formatWhatsAppDigest([concert], base)).not.toContain('IST');
+  });
+
   it('says so when nothing is listed', () => {
     expect(formatWhatsAppDigest([], base)).toContain('Nothing listed yet.');
   });

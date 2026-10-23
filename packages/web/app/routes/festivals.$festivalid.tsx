@@ -6,6 +6,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { PosterImage } from '~/components/PosterImage';
+import { EventTime } from '~/components/events/event-time';
 import { WhatsAppDigest } from '~/components/events/whatsapp-digest';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, FestivalStructuredData } from '~/components/structured-data';
@@ -14,7 +15,7 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { eventZone, formatEventTime, groupByEventDate } from '~/lib/event-time';
+import { eventZone, groupByEventDate } from '~/lib/event-time';
 import {
   generateEventUrl,
   generateFestivalUrl,
@@ -407,9 +408,11 @@ export default function FestivalDetail() {
                               <p className="font-medium text-foreground">{event.title}</p>
                               <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                                 <span>
-                                  {formatEventTime(event.startDateTime, eventZone(event))}
-                                  {event.endDateTime &&
-                                    ` - ${formatEventTime(event.endDateTime, eventZone(event))}`}
+                                  <EventTime
+                                    start={event.startDateTime}
+                                    end={event.endDateTime}
+                                    zone={eventZone(event)}
+                                  />
                                 </span>
                                 {event.venueName && (
                                   <span className="flex items-center gap-1">

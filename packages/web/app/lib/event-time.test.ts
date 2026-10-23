@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { eventDateKey, formatDayLabel, formatEventTime, groupByEventDate } from './event-time';
+import {
+  eventDateKey,
+  formatDayLabel,
+  formatEventDate,
+  formatEventTime,
+  groupByEventDate,
+  needsZoneLabel,
+  zoneLabel,
+} from './event-time';
 
 describe('formatEventTime', () => {
   it('prints the time where the concert happens, not where the server runs', () => {
@@ -33,5 +41,45 @@ describe('groupByEventDate', () => {
       ['2026-10-23', ['c']],
       ['2026-10-24', ['a', 'b']],
     ]);
+  });
+});
+
+describe('zoneLabel', () => {
+  it('uses the common abbreviation where one exists', () => {
+    expect(zoneLabel('2026-10-23T12:30:00Z', 'Asia/Kolkata')).toBe('IST');
+    expect(zoneLabel('2026-10-23T12:30:00Z', 'America/Los_Angeles')).toBe('PDT');
+    expect(zoneLabel('2026-12-23T12:30:00Z', 'America/Los_Angeles')).toBe('PST');
+    expect(zoneLabel('2026-07-01T12:00:00Z', 'Europe/London')).toBe('BST');
+  });
+
+  it('falls back to an offset', () => {
+    expect(zoneLabel('2026-10-23T12:30:00Z', 'Asia/Singapore')).toBe('GMT+8');
+  });
+});
+
+describe('needsZoneLabel', () => {
+  const iso = '2026-10-23T12:30:00Z';
+
+  it('labels a concert outside India for everyone', () => {
+    expect(needsZoneLabel(iso, 'America/Los_Angeles')).toBe(true);
+  });
+
+  it('leaves an Indian concert bare for a reader in India or with no zone known', () => {
+    expect(needsZoneLabel(iso, 'Asia/Kolkata')).toBe(false);
+    expect(needsZoneLabel(iso, 'Asia/Kolkata', 'Asia/Kolkata')).toBe(false);
+    // The old name of the same zone is the same zone.
+    expect(needsZoneLabel(iso, 'Asia/Kolkata', 'Asia/Calcutta')).toBe(false);
+  });
+
+  it('labels an Indian concert for a reader abroad', () => {
+    expect(needsZoneLabel(iso, 'Asia/Kolkata', 'America/New_York')).toBe(true);
+  });
+});
+
+describe('formatEventDate', () => {
+  it('reads the day in the event zone', () => {
+    expect(
+      formatEventDate('2026-10-23T19:00:00Z', 'Asia/Kolkata', { day: 'numeric', month: 'short' })
+    ).toBe('24 Oct');
   });
 });

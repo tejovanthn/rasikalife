@@ -21,6 +21,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventCard } from '~/components/EventCard';
 import { PosterImage } from '~/components/PosterImage';
+import { EventTime } from '~/components/events/event-time';
 import { BreadcrumbStructuredData, EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
@@ -32,6 +33,7 @@ import {
   type ResolvedEventContact,
   resolveEventContact,
 } from '~/lib/event-contact';
+import { eventZone, formatEventDate } from '~/lib/event-time';
 import type { StructuredAddress } from '~/lib/structured-data';
 import {
   generateArtistUrl,
@@ -47,6 +49,7 @@ interface FestivalEventItem {
   title: string;
   startDateTime: string;
   endDateTime?: string;
+  timezone?: string;
   venueName?: string;
   artists?: Array<{ name: string; role?: string }>;
 }
@@ -64,6 +67,7 @@ interface RelatedEventItem {
 interface EventDetail {
   id: string;
   title: string;
+  timezone?: string;
   status?: string;
   description?: string;
   startDateTime: string;
@@ -339,9 +343,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     return [{ title: 'Event Not Found - Rasika.life' }];
   }
 
-  const dateStr = new Date(event.startDateTime).toLocaleDateString('en-IN', {
-    dateStyle: 'long',
-  });
+  const dateStr = formatEventDate(event.startDateTime, eventZone(event), { dateStyle: 'long' });
 
   const desc =
     event.description ||
@@ -693,11 +695,11 @@ export default function EventDetail() {
     setlistUserOwn: Array<{ order: number; compositionTitle: string }> | null;
   }>();
 
-  const startDate = new Date(event.startDateTime);
-  const endDate = event.endDateTime ? new Date(event.endDateTime) : null;
+  // Dates and times in the event's own zone; the SSR Lambda runs in UTC (lib/event-time.ts).
+  const zone = eventZone(event);
   const displayPosterUrl = event.posterUrl || festivalPosterUrl;
   const shareUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
-  const dateStr = startDate.toLocaleDateString('en-IN', { dateStyle: 'long' });
+  const dateStr = formatEventDate(event.startDateTime, zone, { dateStyle: 'long' });
 
   const venueQueryStr = [event.venueName, venueAddress].filter(Boolean).join(', ');
   const mapsUrl =
@@ -816,7 +818,7 @@ export default function EventDetail() {
             <Calendar className="h-5 w-5 text-primary" />
             <div>
               <p className="font-medium">
-                {startDate.toLocaleDateString('en-IN', {
+                {formatEventDate(event.startDateTime, zone, {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
@@ -824,15 +826,7 @@ export default function EventDetail() {
                 })}
               </p>
               <p className="text-sm text-muted-foreground">
-                {startDate.toLocaleTimeString('en-IN', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-                {endDate &&
-                  ` - ${endDate.toLocaleTimeString('en-IN', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}`}
+                <EventTime start={event.startDateTime} end={event.endDateTime} zone={zone} />
               </p>
             </div>
           </div>
@@ -1058,7 +1052,6 @@ export default function EventDetail() {
           <div className="space-y-1">
             {festivalEvents.map(fe => {
               const isCurrent = fe.id === event.id;
-              const feDate = new Date(fe.startDateTime);
               return (
                 <Link
                   key={fe.id}
@@ -1071,9 +1064,12 @@ export default function EventDetail() {
                   aria-current={isCurrent ? 'page' : undefined}
                 >
                   <span className="text-muted-foreground text-xs whitespace-nowrap self-start pt-0.5">
-                    {feDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                    {formatEventDate(fe.startDateTime, eventZone(fe), {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
                     {', '}
-                    {feDate.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' })}
+                    <EventTime start={fe.startDateTime} zone={eventZone(fe)} />
                   </span>
                   <span className="truncate">{fe.title}</span>
                   {fe.artists && fe.artists.length > 0 && (

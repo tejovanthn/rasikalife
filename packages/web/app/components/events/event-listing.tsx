@@ -52,6 +52,8 @@ function FilterLink({
   );
 }
 
+const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
+
 function shortMonth(month: string) {
   return new Date(`${month}-01T12:00:00Z`).toLocaleDateString('en-IN', {
     timeZone: 'UTC',
@@ -116,7 +118,7 @@ function Calendar({
       <table className="w-full table-fixed text-center text-sm">
         <thead>
           <tr className="text-xs text-muted-foreground">
-            {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+            {WEEKDAYS.map(d => (
               <th key={d} scope="col" className="font-normal pb-1">
                 {d}
               </th>
@@ -124,11 +126,12 @@ function Calendar({
           </tr>
         </thead>
         <tbody>
-          {monthGrid(month).map((week, w) => (
-            // Weeks of one month never reorder, so the index is a stable key.
-            <tr key={`${month}-${w}`}>
-              {week.map((day, i) => {
-                if (!day) return <td key={`pad-${i}`} />;
+          {monthGrid(month).map(week => (
+            // Every week holds at least one day of the month, so its first day names it.
+            <tr key={week.find(Boolean) ?? month}>
+              {WEEKDAYS.map((weekday, col) => {
+                const day = week[col];
+                if (!day) return <td key={weekday} />;
                 const count = counts[day] ?? 0;
                 const selected = state.when === day;
                 const label = `${formatDayLabel(day)}, ${count === 0 ? 'no events' : `${count} ${count === 1 ? 'event' : 'events'}`}`;
@@ -145,7 +148,7 @@ function Calendar({
                   </>
                 );
                 return (
-                  <td key={day} className="p-0.5">
+                  <td key={weekday} className="p-0.5">
                     {count > 0 && day >= today ? (
                       <Link
                         to={href(day)}

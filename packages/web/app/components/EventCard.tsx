@@ -1,9 +1,10 @@
 import { Link } from 'react-router';
 import { PosterImage } from '~/components/PosterImage';
+import { EventTime } from '~/components/events/event-time';
 import { EventDistance } from '~/components/events/near-me';
 import { Badge, type BadgeProps } from '~/components/ui/badge';
 import { Card, CardContent } from '~/components/ui/card';
-import { eventZone, formatEventTime } from '~/lib/event-time';
+import { eventZone } from '~/lib/event-time';
 import { generateEventUrl } from '~/lib/url-slug';
 
 export interface EventCardEvent {
@@ -45,8 +46,6 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
   const artists = event.artists?.length ? event.artists : null;
   const heading = isGeneric ? (event.venueName ?? event.title) : event.title;
   const showVenueInline = !isGeneric && event.venueName;
-  // In the event's own zone: the SSR Lambda runs in UTC (see lib/event-time.ts).
-  const time = formatEventTime(event.startDateTime, eventZone(event));
 
   return (
     <Link
@@ -66,7 +65,7 @@ export function EventCard({ event, isGeneric = false }: EventCardProps) {
         <CardContent className="py-4 space-y-1.5">
           <h3 className="font-semibold text-foreground leading-snug">{heading}</h3>
           <p className="text-sm font-medium text-warning">
-            {time}
+            <EventTime start={event.startDateTime} zone={eventZone(event)} />
             {showVenueInline && (
               <span className="font-normal text-muted-foreground"> · {event.venueName}</span>
             )}

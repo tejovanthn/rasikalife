@@ -1,4 +1,11 @@
-import { eventZone, formatDayLabel, formatEventTime, groupByEventDate } from '~/lib/event-time';
+import {
+  eventZone,
+  formatDayLabel,
+  formatEventTime,
+  groupByEventDate,
+  needsZoneLabel,
+  zoneLabel,
+} from '~/lib/event-time';
 import { isGenericTitle } from '~/lib/generic-title';
 
 /**
@@ -69,7 +76,12 @@ function eventBlock(event: DigestEvent, opts: DigestOptions): string[] {
   }
   if (event.venueName) lines.push(`📍 ${plain(event.venueName)}`);
 
-  const time = formatEventTime(event.startDateTime, eventZone(event));
+  // Pasted text has no reader zone to compare with, so only a concert outside India is
+  // labelled: the group reading it is almost always in India.
+  const zone = eventZone(event);
+  const time = needsZoneLabel(event.startDateTime, zone)
+    ? `${formatEventTime(event.startDateTime, zone)} ${zoneLabel(event.startDateTime, zone)}`
+    : formatEventTime(event.startDateTime, zone);
   const entry = event.entryType ? ENTRY_LABELS[event.entryType] : undefined;
   lines.push(`🕕 ${[time, entry].filter(Boolean).join(' · ')}`);
 

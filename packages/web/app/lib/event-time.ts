@@ -62,3 +62,41 @@ export function groupByEventDate<T extends Timed>(
       events: [...list].sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime)),
     }));
 }
+
+/**
+ * The short name of the zone an event happens in, at that moment: `IST`, `PDT`, `BST`, or
+ * `GMT+8` where no common abbreviation exists. Each locale knows a different set of names
+ * (en-IN says IST but not PDT, en-US the reverse), so the first locale with a lettered name wins.
+ */
+export function zoneLabel(iso: string, timeZone: string = DEFAULT_EVENT_TIMEZONE): string {
+  const date = new Date(iso);
+  let fallback = '';
+  for (const locale of ['en-US', 'en-GB', 'en-IN']) {
+    const name =
+      new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: 'short', hour: 'numeric' })
+        .formatToParts(date)
+        .find(part => part.type === 'timeZoneName')?.value ?? '';
+    if (name && !/^(GMT|UTC)[+-]/.test(name)) return name;
+    fallback ||= name;
+  }
+  return fallback;
+}
+
+/**
+ * Whether the time needs its zone printed. On the server, only for a concert outside India:
+ * the readers and Googlebot are in India, and "IST" beside every card would be noise. In the
+ * browser, also whenever the reader's zone reads differently at that moment.
+ */
+export function needsZoneLabel(iso: string, eventZone: string, readerZone?: string): boolean {
+  if (eventZone !== DEFAULT_EVENT_TIMEZONE) return true;
+  return Boolean(readerZone) && zoneLabel(iso, readerZone) !== zoneLabel(iso, eventZone);
+}
+
+/** A date in the event's zone, with whatever `Intl` options the page wants. */
+export function formatEventDate(
+  iso: string,
+  timeZone: string,
+  options: Intl.DateTimeFormatOptions
+): string {
+  return new Date(iso).toLocaleDateString('en-IN', { ...options, timeZone });
+}
