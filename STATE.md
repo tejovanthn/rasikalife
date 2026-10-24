@@ -22,7 +22,7 @@ Open, each needing a person's call:
 Next step: mark the merges in a `dedup-places` CSV and dry-run it.
 
 Deployed 2026-10-24: approval now copies a poster's printed address onto a venue that has
-none (`event.venueAddress`, verify-page address block, `cascadeEventAddressToVenue`). Not yet
+none (`event.venueAddress`, verify-page address block, `cascadeEventAddressToVenue`). Not
 tried with a real poster yet. Deferred: a weekly Gemini pass over older venues' posters
 that writes a review list, not the record; build it only if venues still arrive empty.
 
