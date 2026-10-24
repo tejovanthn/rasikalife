@@ -5,6 +5,7 @@ import { deleteEventArtist } from '../event-artist';
 import { EventArtistEntity } from '../event-artist/entity';
 import { createFestival } from '../festival';
 import { createFailedError, notFoundError } from '../helpers';
+import { printedVenueAddress } from '../venue/address';
 import { EventEntity } from './entity';
 import type { Event } from './entity';
 import type { ExtractionResult } from './extraction';
@@ -211,6 +212,16 @@ export async function approveEvent(id: string, moderatorId: string): Promise<Eve
         );
       }
     );
+  }
+
+  // Seed an empty venue's address from the one this poster printed, at the same point and with
+  // the same swallow. A venue a poster introduced is created holding only its name; the address
+  // that poster printed is on this event.
+  if (approved.venueId && approved.venueAddress) {
+    const { cascadeEventAddressToVenue } = await import('../cascade');
+    await cascadeEventAddressToVenue(approved.venueId, approved.venueAddress).catch(error => {
+      console.error(`[approveEvent] address seed failed for venue ${approved.venueId}`, error);
+    });
   }
 
   // Seed each cast member's empty `instrument` from the role on this poster, for the same
@@ -709,6 +720,7 @@ export async function extractAndCreateDrafts(
         startDateTime: eventData.startDateTime,
         endDateTime: eventData.endDateTime ?? undefined,
         venueName: eventData.venue?.name,
+        venueAddress: printedVenueAddress(eventData.venue?.address),
         organiserName: eventData.organiser?.name || extraction.festival?.organiser?.name,
         artists: eventData.artists.map(a => ({
           name: a.name,

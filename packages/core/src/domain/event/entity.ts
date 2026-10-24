@@ -36,6 +36,20 @@ export const EventEntity = new Entity(
       venueId: { type: 'string', required: false },
       venueName: { type: 'string', required: false },
       venueCity: { type: 'string', required: false },
+      // The hall's address as this poster printed it. Evidence, not the venue's address: it
+      // reaches the venue only on approval, and only when the venue has none
+      // (`venue/address.ts`). Kept on the event so a moderator approving later still has it.
+      venueAddress: {
+        type: 'map',
+        properties: {
+          street: { type: 'string', required: false },
+          city: { type: 'string', required: false },
+          state: { type: 'string', required: false },
+          postalCode: { type: 'string', required: false },
+          country: { type: 'string', required: false },
+        },
+        required: false,
+      },
 
       // Organiser (denormalized + linked)
       organiserId: { type: 'string', required: false },

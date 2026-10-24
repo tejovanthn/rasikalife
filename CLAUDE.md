@@ -752,6 +752,22 @@ had the chance to read. Note this is separate from **Ticketing → Contact Phone
 booking desk; `PhonesInput` therefore takes a `label` so the two sets of repeated rows are not
 both announced as "Contact phone 1".
 
+**A venue's address comes from its posters the same way, on approval.** The extractor always
+asked for the hall's street, city and PIN, and the draft write dropped them, so every venue a
+poster introduced arrived holding only a name; in Oct 2026 the posters of 82 venues were re-read
+by hand to fill them (`docs/research/venue-addresses-2026-10.csv`). The event now keeps the
+address as printed (`event.venueAddress`, evidence rather than the venue's address), the verify
+step shows it as an editable block under the venue, and `approveEvent` calls
+`cascadeEventAddressToVenue`. The rules are in `domain/venue/address.ts`:
+
+- **Whole address or nothing.** A venue holding any address part is never touched, because a
+  street from one poster beside a PIN from another is an address nobody wrote.
+- **A city that disagrees seeds nothing**, whether it disagrees with the venue's stored `city` or
+  with the city its PIN belongs to. That is the sign of an event linked to the wrong venue: the
+  Oct 2026 pass found two Chennai concerts attached to Bengaluru halls of the same name.
+- `city` is patched beside `address`, since listings and city pages read the top-level field.
+  Coordinates are left to `geocode-venues`.
+
 ### Filling artists (`pnpm cli enrich-artists`)
 
 The artist corpus arrived barer than the ragas: of 1,159 artists, **503 hold nothing but a name**

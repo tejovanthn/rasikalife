@@ -326,6 +326,36 @@ export async function cascadeEventContactToOrganiser(
 }
 
 /**
+ * Seed an empty venue's address from the one printed on an event that has just been approved.
+ *
+ * The same drift as the organiser seed above: `submitVerified` creates a venue holding only a
+ * name each time a poster names an unknown hall, while the address that poster printed sat on
+ * the draft unused. Approval, never submission, for the same reason, and the rules (copy the
+ * whole address or nothing, never onto a venue holding any part of one, never when the cities
+ * disagree) are `venue/address.ts`'s.
+ *
+ * `city` is patched beside `address` because listings and city pages read the top-level field.
+ * Coordinates are not set here; `geocode-venues` derives them from the PIN.
+ */
+export async function cascadeEventAddressToVenue(
+  venueId: string,
+  venueAddress: unknown
+): Promise<void> {
+  if (!venueId || !venueAddress) return;
+
+  const { VenueEntity } = await import('./venue/entity');
+  const existing = await VenueEntity.get({ id: venueId }).go();
+  const venue = existing.data;
+  if (!venue || venue.deletedAt || venue.mergedIntoId) return;
+
+  const { venueAddressSeed } = await import('./venue/address');
+  const seed = venueAddressSeed(venue, venueAddress as Parameters<typeof venueAddressSeed>[1]);
+  if (!seed) return;
+
+  await VenueEntity.patch({ id: venueId }).set(seed).go();
+}
+
+/**
  * Seed an artist's empty `instrument` from the role they were credited with on an event that
  * has just been approved.
  *

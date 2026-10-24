@@ -56,6 +56,14 @@ export interface Event {
   timezone: string;
   venueId?: string;
   venueName?: string;
+  /** As the poster printed it; see `venue/address.ts`. */
+  venueAddress?: {
+    street?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
   organiserId?: string;
   organiserName?: string;
   artists?: EventArtist[];

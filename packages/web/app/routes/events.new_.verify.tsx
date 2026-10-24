@@ -164,7 +164,9 @@ export async function loader({
         description: e.description,
         startDateTime: e.startDateTime || '',
         endDateTime: e.endDateTime,
-        venue: e.venueName ? { name: e.venueName } : undefined,
+        venue: e.venueName
+          ? { name: e.venueName, address: e.venueAddress as ExtractedVenue['address'] }
+          : undefined,
         organiser: e.organiserName ? { name: e.organiserName } : undefined,
         artists: (e.artists as ExtractedArtist[]) || [],
         tags: (e.tags as string[]) || [],
@@ -263,6 +265,18 @@ export const meta: MetaFunction = () => {
     { name: 'robots', content: 'noindex, nofollow' },
   ];
 };
+
+/** Set one part of the venue's printed address, dropping a part that is cleared. */
+function withVenueAddress(
+  event: DraftEvent,
+  part: keyof NonNullable<ExtractedVenue['address']>,
+  value: string
+): DraftEvent {
+  if (!event.venue) return event;
+  const address = { ...event.venue.address, [part]: value || undefined };
+  const hasAny = Object.values(address).some(Boolean);
+  return { ...event, venue: { ...event.venue, address: hasAny ? address : undefined } };
+}
 
 // --- Tag Input Component ---
 function TagInput({
@@ -902,6 +916,45 @@ function EventStep({
               })
             }
           />
+          {/* Editable for the reason Contact Details is: approving the event copies this onto
+              the venue when it has no address yet (`cascadeEventAddressToVenue`), so a person
+              must be able to read it first. A city here that differs from the linked venue's
+              usually means the wrong venue is linked. */}
+          {event.venue && (
+            <fieldset className="space-y-2 pt-1">
+              <legend className="text-xs text-muted-foreground">
+                Address as printed on the poster. Approving the event adds it to the venue's page if
+                the venue has no address yet.
+              </legend>
+              <Input
+                aria-label="Venue street"
+                value={event.venue.address?.street || ''}
+                onChange={e => onChange(withVenueAddress(event, 'street', e.target.value))}
+                placeholder="Street and area"
+              />
+              <div className="grid grid-cols-3 gap-2">
+                <Input
+                  aria-label="Venue city"
+                  value={event.venue.address?.city || ''}
+                  onChange={e => onChange(withVenueAddress(event, 'city', e.target.value))}
+                  placeholder="City"
+                />
+                <Input
+                  aria-label="Venue state"
+                  value={event.venue.address?.state || ''}
+                  onChange={e => onChange(withVenueAddress(event, 'state', e.target.value))}
+                  placeholder="State"
+                />
+                <Input
+                  aria-label="Venue PIN code"
+                  inputMode="numeric"
+                  value={event.venue.address?.postalCode || ''}
+                  onChange={e => onChange(withVenueAddress(event, 'postalCode', e.target.value))}
+                  placeholder="PIN"
+                />
+              </div>
+            </fieldset>
+          )}
         </div>
       </div>
 
@@ -1225,6 +1278,7 @@ export default function VerifyEvents() {
             endDateTime: normalizeDateTime(e.endDateTime),
             venueName: e.venue?.name,
             venueId: e.venue?.id,
+            venueAddress: e.venue?.address,
             organiserName: e.organiser?.name,
             organiserId: e.organiser?.id,
             artists: e.artists,

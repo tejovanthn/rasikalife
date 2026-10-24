@@ -62,6 +62,12 @@ vi.mock('./organiser/entity', () => ({
   OrganiserEntity: { get: vi.fn(), patch: vi.fn() },
 }));
 
+// Only `cascadeEventAddressToVenue` reaches this one. The keys its patch writes are asserted
+// against the real entity in `venue/address.test.ts`.
+vi.mock('./venue/entity', () => ({
+  VenueEntity: { get: vi.fn(), patch: vi.fn() },
+}));
+
 vi.mock('./award/entity', async importOriginal => {
   const actual = await importOriginal<typeof import('./award/entity')>();
   return {
@@ -260,6 +266,7 @@ import { EventSetlistEntity } from './event-setlist/entity';
 import { EventEntity } from './event/entity';
 import { OrganiserEntity } from './organiser/entity';
 import { adjustPerformanceCount as adjustRagaCount } from './raga';
+import { VenueEntity } from './venue/entity';
 
 /** Builds a `.query.xxx(args)` mock that yields the given pages in sequence, one per `.go()` call. */
 function pagedQuery(pages: Array<{ data: unknown[]; cursor: string | null }>) {
@@ -607,6 +614,69 @@ describe('cascade', () => {
       mockOrganiser({ id: 'org1', deletedAt: '2026-01-01T00:00:00.000Z' });
       await cascade.cascadeEventContactToOrganiser('org1', contactInfo);
       expect(OrganiserEntity.patch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cascadeEventAddressToVenue', () => {
+    const printed = {
+      street: 'No. 44/1, 19th B Main Road, 1st K Block, Rajajinagar',
+      city: 'Bangalore',
+      postalCode: '560 010',
+      country: null,
+    };
+
+    /** Returns the `set` spy so a test can assert what was written. */
+    function mockVenue(stored: Record<string, unknown> | null) {
+      vi.mocked(VenueEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: stored }),
+      } as never);
+      const setSpy = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+      vi.mocked(VenueEntity.patch).mockReturnValue({ set: setSpy } as never);
+      return setSpy;
+    }
+
+    it('copies the printed address onto a venue holding only its name', async () => {
+      const setSpy = mockVenue({ id: 'v1', name: 'Balamohan Vidya Mandira' });
+
+      await cascade.cascadeEventAddressToVenue('v1', printed);
+
+      expect(VenueEntity.patch).toHaveBeenCalledWith({ id: 'v1' });
+      expect(setSpy).toHaveBeenCalledWith({
+        address: {
+          street: 'No. 44/1, 19th B Main Road, 1st K Block, Rajajinagar',
+          city: 'Bengaluru',
+          postalCode: '560010',
+        },
+        city: 'Bengaluru',
+      });
+    });
+
+    it('writes nothing to a venue that already has an address', async () => {
+      mockVenue({ id: 'v1', address: { street: 'Rajajinagar' } });
+
+      await cascade.cascadeEventAddressToVenue('v1', printed);
+
+      // Idempotent: approving a second event at the same hall is a no-op.
+      expect(VenueEntity.patch).not.toHaveBeenCalled();
+    });
+
+    it('skips a venue that is missing, soft-deleted or merged', async () => {
+      for (const stored of [
+        null,
+        { id: 'v1', deletedAt: '2026-01-01T00:00:00.000Z' },
+        { id: 'v1', mergedIntoId: 'v2' },
+      ]) {
+        mockVenue(stored);
+        await cascade.cascadeEventAddressToVenue('v1', printed);
+      }
+      expect(VenueEntity.patch).not.toHaveBeenCalled();
+    });
+
+    it('does nothing without a venue id or an address', async () => {
+      await cascade.cascadeEventAddressToVenue('', printed);
+      await cascade.cascadeEventAddressToVenue('v1', undefined);
+
+      expect(VenueEntity.get).not.toHaveBeenCalled();
     });
   });
 

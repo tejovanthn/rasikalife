@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SponsorSchema } from '../shared/schemas';
+import { AddressSchema, SponsorSchema } from '../shared/schemas';
 
 /**
  * Where the events are. Every form that has to attach an offset to a wall-clock time reads it
@@ -22,6 +22,7 @@ export const CreateEventSchema = z.object({
   venueId: z.string().nullish(),
   venueName: z.string().nullish(),
   venueCity: z.string().optional(),
+  venueAddress: AddressSchema.optional(),
   organiserId: z.string().nullish(),
   organiserName: z.string().nullish(),
   artists: z

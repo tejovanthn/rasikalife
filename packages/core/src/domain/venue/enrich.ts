@@ -4,7 +4,8 @@
  * 132 of the 132 venues in prod carry a name; 8 carry anything else. Nothing on the event
  * record fills that gap — `venueCity` is set on 5 events out of 739, and the `contactInfo`
  * block belongs to the **organiser**, not the hall (see `organiser/enrich.ts`). So the only
- * honest source for a venue is its own name.
+ * honest source for a venue is its own name. (The address a poster prints is the exception, and
+ * it travels a separate path, on approval: see `address.ts`.)
  *
  * That limits this module to `venueType`, and only where the name states the type outright.
  * A name that does not say what the place is gets no type: "Hamsadhwani", "Arohy" and
