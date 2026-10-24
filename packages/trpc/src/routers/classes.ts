@@ -486,7 +486,7 @@ export const classesRouter = createTRPCRouter({
         forLearner.map(invite => ClassInvite.deleteClassInvite(invite.normalizedEmail, invite.id))
       );
 
-      return ClassInvite.createClassInvite({
+      const invite = await ClassInvite.createClassInvite({
         email: input.email,
         institutionId: actor.institutionId,
         programId: first?.programId,
@@ -494,6 +494,26 @@ export const classesRouter = createTRPCRouter({
         relation: first?.relation ?? 'guardian',
         invitedBy: ctx.user.id,
       });
+
+      // The corrected address is the only one that can claim the invite, and it has heard
+      // nothing yet: the first email went to the typo. Without this the family was never told.
+      const [learner, program] = await Promise.all([
+        ClassLearner.getClassLearner(input.learnerId),
+        first?.programId ? ClassProgram.getClassProgram(first.programId) : null,
+      ]);
+      if (learner && program) {
+        await sendStudentAddedEmail({
+          to: invite.rawEmail,
+          learnerName: ClassLearner.learnerDisplayName(learner),
+          guruName: ctx.user.name,
+          guruEmail: ctx.user.email,
+          institutionId: actor.institutionId,
+          programTitle: ClassProgram.programDisplayTitle(program),
+          relation: invite.relation,
+        });
+      }
+
+      return invite;
     }),
 
   revokeInvite: protectedProcedure
