@@ -366,9 +366,7 @@ export default function VenueDetailPage() {
           <EmptyState message="No events listed at this venue yet." />
         ) : (
           <>
-            {upcomingEvents.length > 0 && (
-              <EventList events={upcomingEvents} />
-            )}
+            {upcomingEvents.length > 0 && <EventList events={upcomingEvents} />}
             {pastEvents.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">

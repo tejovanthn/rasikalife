@@ -99,7 +99,9 @@ export function EventCard({
       </div>
       <div className="min-w-0 flex-1 space-y-0.5">
         <h3 className="font-semibold text-foreground leading-snug line-clamp-2">{heading}</h3>
-        {showVenue && <p className="text-sm text-muted-foreground line-clamp-1">{event.venueName}</p>}
+        {showVenue && (
+          <p className="text-sm text-muted-foreground line-clamp-1">{event.venueName}</p>
+        )}
         {artists && (
           <p className="text-sm text-muted-foreground line-clamp-2">
             {castLine(artists, { max: CARD_CAST_MAX })}

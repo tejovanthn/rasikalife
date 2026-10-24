@@ -33,7 +33,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   if (result instanceof ListingRedirect) throw redirect(result.location, 301);
   return data(
-    { ...result.data, first: firstConcert(result.data), hasAny: result.data.months.length > 0 },
+    {
+      ...result.data,
+      first: firstConcert(result.data),
+      hasAny: result.data.calendar.lastMonth !== null,
+    },
     { headers: result.headers }
   );
 };
@@ -83,9 +87,11 @@ export default function CityConcerts() {
       <EventListing
         data={d}
         intro={
+          // No subtitle on a phone: the heading and the filters must leave the first concert on
+          // the first screen.
           <header className="mb-6">
             <h1 className="page-title">Concerts in {city}</h1>
-            <p className="text-xl text-muted-foreground">
+            <p className="hidden md:block text-muted-foreground">
               Carnatic concerts and classical arts events, with the venue and artists for each
             </p>
           </header>
@@ -94,7 +100,7 @@ export default function CityConcerts() {
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: SITE },
-          { name: 'Events', item: `${SITE}/events` },
+          { name: 'Concerts', item: `${SITE}/events` },
           { name: `Concerts in ${city}`, item: `${SITE}${base}` },
         ]}
       />

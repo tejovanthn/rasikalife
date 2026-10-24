@@ -146,7 +146,9 @@ export async function loadEventListing(
   const lastMonth = lastEventMonth(counts);
   const presetCounts = { all: scoped.length } as EventListingData['presetCounts'];
   for (const p of DATE_PRESETS) {
-    presetCounts[p.value] = filterEvents(scoped, { range: resolveDateRange(p.value, today) }).length;
+    presetCounts[p.value] = filterEvents(scoped, {
+      range: resolveDateRange(p.value, today),
+    }).length;
   }
   const pinError = viewer.signedIn ? (url.searchParams.get('pin_error') ?? undefined) : undefined;
 

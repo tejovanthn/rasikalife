@@ -1183,7 +1183,10 @@ export default function ArtistDetails() {
                 </div>
               )}
 
-              <Link to={`${artistUrl}/events`} className="mt-2 inline-flex min-h-11 items-center text-sm text-primary md:min-h-0">
+              <Link
+                to={`${artistUrl}/events`}
+                className="mt-2 inline-flex min-h-11 items-center text-sm text-primary md:min-h-0"
+              >
                 View all events &rarr;
               </Link>
             </section>

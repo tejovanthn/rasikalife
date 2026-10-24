@@ -4,8 +4,8 @@ import {
   artistMetaTitle,
   artistTagline,
   castLine,
-  roleLabel,
   parseInstruments,
+  roleLabel,
 } from './artist-display';
 
 describe('artistTagline', () => {

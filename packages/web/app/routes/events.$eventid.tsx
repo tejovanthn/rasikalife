@@ -1,3 +1,4 @@
+import { canonicalCitySlug } from '@rasika/core/shared/city';
 import {
   Calendar,
   CalendarPlus,
@@ -26,6 +27,7 @@ import { BreadcrumbStructuredData, EventStructuredData } from '~/components/stru
 import { Badge } from '~/components/ui/badge';
 import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
+import { roleLabel } from '~/lib/artist-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import {
@@ -379,7 +381,7 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
 };
 
 function toCalendarDate(iso: string): string {
-  return iso.replace(/[-:]/g, '').split('.')[0] + 'Z';
+  return `${iso.replace(/[-:]/g, '').split('.')[0]}Z`;
 }
 
 function buildGoogleCalendarUrl(
@@ -514,10 +516,11 @@ function PosterUploader() {
         type="button"
         size="sm"
         variant="secondary"
+        className="min-h-11 md:min-h-9"
         onClick={handleUpload}
         disabled={!file || status === 'uploading'}
       >
-        <Upload className="h-4 w-4 mr-2" />
+        <Upload aria-hidden="true" className="h-4 w-4 mr-2" />
         {status === 'uploading' ? 'Uploading...' : 'Replace Poster'}
       </Button>
     </div>
@@ -565,7 +568,7 @@ function RsvpButton({
             variant={displayIsGoing ? 'default' : 'outline'}
             aria-pressed={displayIsGoing}
             disabled={fetcher.state !== 'idle'}
-            className={displayIsGoing ? 'group' : ''}
+            className={`min-h-11 md:min-h-9${displayIsGoing ? ' group' : ''}`}
           >
             {displayIsGoing ? (
               <>
@@ -578,7 +581,7 @@ function RsvpButton({
           </Button>
         </fetcher.Form>
       ) : (
-        <Button asChild size="sm" variant="outline">
+        <Button asChild size="sm" variant="outline" className="min-h-11 md:min-h-9">
           <Link to="/login">Sign in to RSVP</Link>
         </Button>
       )}
@@ -624,17 +627,21 @@ function AttendedButton({
             variant={displayIsAttended ? 'default' : 'outline'}
             aria-pressed={displayIsAttended}
             disabled={fetcher.state !== 'idle'}
+            className="min-h-11 md:min-h-9"
           >
             {displayIsAttended ? 'I was here ✓' : 'I was here'}
           </Button>
         </fetcher.Form>
       ) : (
-        <Button asChild size="sm" variant="outline">
+        <Button asChild size="sm" variant="outline" className="min-h-11 md:min-h-9">
           <Link to="/login">Sign in to log</Link>
         </Button>
       )}
       {displayIsAttended && (
-        <Link to={`/my-concerts/${eventId}`} className="text-xs text-primary hover:underline">
+        <Link
+          to={`/my-concerts/${eventId}`}
+          className="inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
+        >
           Add notes
         </Link>
       )}
@@ -711,23 +718,25 @@ export default function EventDetail() {
 
   const googleCalendarUrl = buildGoogleCalendarUrl(event, venueAddress, shareUrl);
 
+  // The middle crumb names the city when the venue's address knows it: "Concerts in Chennai"
+  // is where a reader on this page goes next, and the bare "Events" list lost where they were.
+  const venueCity = venueAddressParts?.city?.trim();
+  const listCrumb = venueCity
+    ? { label: `Concerts in ${venueCity}`, path: `/${canonicalCitySlug(venueCity)}/concerts` }
+    : { label: 'Events', path: '/events' };
+
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
-      <Breadcrumb
-        items={[
-          { label: 'Events', path: '/events' },
-          { label: event.title, path: '#' },
-        ]}
-      />
+      <Breadcrumb items={[listCrumb, { label: event.title, path: '#' }]} />
 
       {(prevEvent || nextEvent) && (
         <div className="flex items-center justify-between mb-4 gap-2">
           {prevEvent ? (
             <Link
               to={generateEventUrl(prevEvent.title, prevEvent.id)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary min-w-0 max-w-[45%]"
+              className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-primary min-w-0 max-w-[45%]"
             >
-              <ChevronLeft className="h-4 w-4 shrink-0" />
+              <ChevronLeft aria-hidden="true" className="h-4 w-4 shrink-0" />
               <span className="truncate">{prevEvent.title}</span>
             </Link>
           ) : (
@@ -736,10 +745,10 @@ export default function EventDetail() {
           {nextEvent ? (
             <Link
               to={generateEventUrl(nextEvent.title, nextEvent.id)}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary min-w-0 max-w-[45%] text-right"
+              className="flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-primary min-w-0 max-w-[45%] text-right"
             >
               <span className="truncate">{nextEvent.title}</span>
-              <ChevronRight className="h-4 w-4 shrink-0" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0" />
             </Link>
           ) : (
             <div />
@@ -812,7 +821,7 @@ export default function EventDetail() {
                   </span>
                   {artist.role && (
                     <span className="block mt-0.5 text-sm text-muted-foreground capitalize">
-                      {artist.role}
+                      {roleLabel(artist.role)}
                     </span>
                   )}
                 </li>
@@ -840,20 +849,22 @@ export default function EventDetail() {
 
           {/* Add to Calendar */}
           <div className="flex items-center gap-2 flex-wrap">
-            <CalendarPlus className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CalendarPlus aria-hidden="true" className="h-4 w-4 text-muted-foreground shrink-0" />
             <a
               href={googleCalendarUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="no-ext-arrow text-sm text-primary hover:underline"
+              className="no-ext-arrow inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
             >
               Add to Google Calendar
             </a>
-            <span className="text-muted-foreground text-sm">·</span>
+            <span aria-hidden="true" className="text-muted-foreground text-sm">
+              ·
+            </span>
             <button
               type="button"
               onClick={() => downloadICS(event, venueAddress, shareUrl)}
-              className="text-sm text-primary hover:underline"
+              className="inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
             >
               Download .ics
             </button>
@@ -896,9 +907,9 @@ export default function EventDetail() {
                 href={mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="no-ext-arrow pl-7 flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
+                className="no-ext-arrow pl-7 flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-primary md:min-h-0"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
                 Maps
               </a>
             </div>
@@ -947,9 +958,9 @@ export default function EventDetail() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="no-ext-arrow flex items-center gap-2 text-primary"
+                  className="no-ext-arrow flex min-h-11 items-center gap-2 text-primary md:min-h-0"
                 >
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink aria-hidden="true" className="h-4 w-4" />
                   Book Tickets
                 </a>
               )}
@@ -983,14 +994,20 @@ export default function EventDetail() {
                 </p>
               )}
               {contact.phone && (
-                <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4" />
+                <a
+                  href={`tel:${contact.phone}`}
+                  className="flex min-h-11 items-center gap-2 text-sm md:min-h-0"
+                >
+                  <Phone aria-hidden="true" className="h-4 w-4" />
                   {contact.phone}
                 </a>
               )}
               {contact.email && (
-                <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4" />
+                <a
+                  href={`mailto:${contact.email}`}
+                  className="flex min-h-11 items-center gap-2 text-sm md:min-h-0"
+                >
+                  <Mail aria-hidden="true" className="h-4 w-4" />
                   {contact.email}
                 </a>
               )}
@@ -999,9 +1016,9 @@ export default function EventDetail() {
                   href={contact.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="no-ext-arrow flex items-center gap-2 text-sm"
+                  className="no-ext-arrow flex min-h-11 items-center gap-2 text-sm md:min-h-0"
                 >
-                  <Globe className="h-4 w-4" />
+                  <Globe aria-hidden="true" className="h-4 w-4" />
                   {contact.website}
                 </a>
               )}
@@ -1210,7 +1227,7 @@ export default function EventDetail() {
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },
-          { name: 'Events', item: 'https://rasika.life/events' },
+          { name: listCrumb.label, item: `https://rasika.life${listCrumb.path}` },
           {
             name: event.title,
             item: `https://rasika.life${generateEventUrl(event.title, event.id)}`,

@@ -211,7 +211,10 @@ describe('calendarMonth', () => {
 
 describe('cal', () => {
   it('round-trips through listingHref and readListingState', () => {
-    const state = readListingState(new URL('https://rasika.life/events/today?cal=2026-12'), 'today');
+    const state = readListingState(
+      new URL('https://rasika.life/events/today?cal=2026-12'),
+      'today'
+    );
     expect(state).toMatchObject({ when: 'today', cal: '2026-12' });
     expect(listingHref({ kind: 'all' }, state)).toBe('/events/today?cal=2026-12');
     const city = { kind: 'city', slug: 'bengaluru' } as const;
@@ -286,9 +289,7 @@ describe('rangeDates', () => {
   };
 
   it('names the days a preset covers, and nothing for a month or a day', () => {
-    expect(rangeDates(range('weekend'))).toBe(
-      'Sat, 24 Oct – Sun, 25 Oct'
-    );
+    expect(rangeDates(range('weekend'))).toBe('Sat, 24 Oct – Sun, 25 Oct');
     expect(rangeDates(range('today'))).toBe('Fri, 23 Oct');
     expect(rangeDates(range('2026-11'))).toBeUndefined();
   });

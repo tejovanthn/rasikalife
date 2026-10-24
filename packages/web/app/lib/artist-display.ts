@@ -110,7 +110,7 @@ export function artistMetaDescription(artist: {
   } else if (sentences.length === 1) {
     // Nothing specific is known, so describe the page rather than the person.
     sentences.push(
-      `Concerts, repertoire and recordings on Rasika.life, the Indian classical arts wiki.`
+      'Concerts, repertoire and recordings on Rasika.life, the Indian classical arts wiki.'
     );
   }
 

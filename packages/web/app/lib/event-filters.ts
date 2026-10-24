@@ -177,7 +177,8 @@ export function rangeDates(range: DateRange): string | undefined {
  */
 export function sortByDistance<T extends { distanceKm?: number }>(events: T[]): T[] {
   return [...events].sort(
-    (a, b) => (a.distanceKm ?? Number.POSITIVE_INFINITY) - (b.distanceKm ?? Number.POSITIVE_INFINITY)
+    (a, b) =>
+      (a.distanceKm ?? Number.POSITIVE_INFINITY) - (b.distanceKm ?? Number.POSITIVE_INFINITY)
   );
 }
 

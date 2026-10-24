@@ -4,13 +4,14 @@ import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-ro
 import { useAuth } from '~/components/auth-context';
 import { EventListing } from '~/components/events/event-listing';
 import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
-import { Button } from '~/components/ui/button';
+import { buttonVariants } from '~/components/ui/button';
 import { DATE_PRESETS, listingHref } from '~/lib/event-filters';
 import { type EventsPageData, eventsLoader } from '~/lib/events-page.server';
 import { concertsMeta, eventsIndexMeta } from '~/lib/listing-description';
 import { SIGNED_IN_CACHE_CONTROL } from '~/lib/page-cache';
 import { eventListItems } from '~/lib/structured-data';
 import { generateEventUrl } from '~/lib/url-slug';
+import { cn } from '~/lib/utils';
 
 export const loader = (args: LoaderFunctionArgs) => eventsLoader(args);
 
@@ -52,21 +53,26 @@ export default function EventsIndex() {
       <EventListing
         data={listing}
         intro={
+          // On a phone the subtitle goes and the button shrinks to "Add", so the heading and the
+          // filters leave the first concert on the first screen at 390x844.
           <header className="mb-6 flex items-start justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <h1 className="page-title">
-                {preset ? `Concerts ${preset.label.toLowerCase()}` : 'Events'}
+                {preset ? `Concerts ${preset.label.toLowerCase()}` : 'Concerts'}
               </h1>
-              <p className="text-xl text-muted-foreground">
-                Upcoming Carnatic concerts and classical arts events
+              <p className="hidden md:block text-muted-foreground">
+                Carnatic concerts and classical arts events
               </p>
             </div>
             {user && (
-              <Link to="/events/new" className="shrink-0">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Event
-                </Button>
+              <Link
+                to="/events/new"
+                aria-label="Add event"
+                className={cn(buttonVariants(), 'shrink-0 min-h-11 md:min-h-10 no-underline')}
+              >
+                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+                <span className="md:hidden">Add</span>
+                <span className="hidden md:inline">Add event</span>
               </Link>
             )}
           </header>
@@ -76,7 +82,7 @@ export default function EventsIndex() {
       <BreadcrumbStructuredData
         items={[
           { name: 'Home', item: 'https://rasika.life' },
-          { name: 'Events', item: 'https://rasika.life/events' },
+          { name: 'Concerts', item: 'https://rasika.life/events' },
         ]}
       />
       {/* The concerts on show, flattened back out of their day groups. `ItemList` is the shape
