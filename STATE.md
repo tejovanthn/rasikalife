@@ -3,6 +3,24 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-10-24: venue addresses from posters, applied to prod
+
+68 venues got address parts read off their own event posters
+(`docs/research/venue-addresses-2026-10.csv`, one row per venue with the poster text), then
+2 `venueType` fills, 35 PIN-centroid points, reindex. Prod now: city 126/150, PIN 92, coords 88.
+Open, each needing a person's call:
+- Merge: Ramanamaharshi Auditorium → Ramana Maharshi Heritage Auditorium; SRLKM Concert Hall ↔
+  Sri Rama Lalitha Kala Mandir Hall; the two "Lecture Theatre 1" (St. John's). Check: Sri Vani
+  Vidya Kendra / Sri Vanikala Kendra, MLR Convention / Cultural Centre, the two Mudaliar Sangam
+  halls, the two Aksharam rows. Plus the pending rows in `venue-merge-2026-10-23.csv`.
+- Do not merge: Bhairavi Sabha (Puducherry) into Indiranagar Sangeetha Sabha; the Shankarapura
+  and JP Nagar Sringeri Maths. `dedup-places` proposes both.
+- Re-point events: the Chennai concerts on Geri Care and Hamsadhwani (Bengaluru records);
+  Samanwaya Dance Academy's event (poster says ADA Rangamandira); the events at JSS Chintana
+  Mantapa, Bhagavatha Keerthi Dhama and Indian Heritage Academy Hall carry a shared schedule
+  screenshot as their poster.
+Next step: mark the merges in a `dedup-places` CSV and dry-run it.
+
 ## 2026-10-23: listing features (Kalaverse review), deployed 2026-10-24
 
 Built: event times in the event zone with a zone label; /events with date pages
