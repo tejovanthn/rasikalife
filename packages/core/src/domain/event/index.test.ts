@@ -7,6 +7,7 @@ import {
   getEventsByIds,
   listAllUpcomingEvents,
   listEventsByArtist,
+  listEventsByCreator,
   listEventsByFestival,
   listEventsByOrganiser,
   listEventsByVenue,
@@ -31,6 +32,7 @@ vi.mock('./entity', () => ({
       byStatus: vi.fn(),
       byFestival: vi.fn(),
       byVenue: vi.fn(),
+      byCreator: vi.fn(),
       byOrganiser: vi.fn(),
     },
   },
@@ -343,6 +345,23 @@ describe('Event', () => {
 
       expect(EventEntity.query.byVenue).toHaveBeenCalledWith({ venueId: 'venue-1' });
       expect(result.items).toEqual([]);
+    });
+  });
+
+  describe('listEventsByCreator', () => {
+    it("lists a user's own events newest first", async () => {
+      const { EventEntity } = await import('./entity');
+      const go = vi.fn().mockResolvedValue({ data: [{ id: 'e1' }], cursor: 'next' });
+      vi.mocked(EventEntity.query.byCreator).mockReturnValue({
+        where: vi.fn().mockReturnThis(),
+        go,
+      } as any);
+
+      const result = await listEventsByCreator('user-1');
+
+      expect(EventEntity.query.byCreator).toHaveBeenCalledWith({ createdBy: 'user-1' });
+      expect(go).toHaveBeenCalledWith(expect.objectContaining({ order: 'desc' }));
+      expect(result).toEqual({ items: [{ id: 'e1' }], nextToken: 'next', hasMore: true });
     });
   });
 

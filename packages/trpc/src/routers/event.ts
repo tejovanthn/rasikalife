@@ -247,6 +247,13 @@ export const eventRouter = createTRPCRouter({
    * "Is this the same concert?" on the verify step: listed events at the same venue within
    * three hours, for each draft that has a resolved venue. Read-only.
    */
+  /** The signed-in user's own events, every status, for "My events". */
+  mine: editorProcedure
+    .input(z.object({ nextToken: z.string().optional() }).optional())
+    .query(({ input, ctx }) =>
+      Event.listEventsByCreator(ctx.user.id, { nextToken: input?.nextToken })
+    ),
+
   nearDuplicates: editorProcedure
     .input(
       z.object({

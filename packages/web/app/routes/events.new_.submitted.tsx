@@ -175,6 +175,15 @@ export default function EventSubmitted() {
         >
           Back to concerts
         </Link>
+        <Link
+          to="/my-events"
+          className={cn(
+            buttonVariants({ variant: 'outline' }),
+            'min-h-11 md:min-h-10 no-underline'
+          )}
+        >
+          All my events
+        </Link>
       </div>
     </main>
   );

@@ -3,6 +3,7 @@ import {
   Activity,
   BadgeCheck,
   Calendar,
+  CalendarPlus,
   ChevronDown,
   ClipboardList,
   Database,
@@ -176,6 +177,12 @@ export const Header = () => {
                     <Link to="/my-concerts" className="flex items-center gap-2">
                       <NotebookPen className="h-4 w-4" />
                       My Concerts
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/my-events" className="flex items-center gap-2">
+                      <CalendarPlus className="h-4 w-4" />
+                      My Events
                     </Link>
                   </DropdownMenuItem>
                   {(user.role === 'moderator' || user.role === 'admin') && (
@@ -398,6 +405,14 @@ export const Header = () => {
                         >
                           <NotebookPen className="h-4 w-4" />
                           My Concerts
+                        </Link>
+                        <Link
+                          to="/my-events"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <CalendarPlus className="h-4 w-4" />
+                          My Events
                         </Link>
                         {(user.role === 'moderator' || user.role === 'admin') && (
                           <>

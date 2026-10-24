@@ -588,6 +588,27 @@ export async function findNearDuplicateEvents(params: {
   return nearDuplicates((result.data || []) as Event[], params);
 }
 
+/**
+ * Everything a user has added, newest first, in every status: a draft they never finished, an
+ * event waiting for review, one approved, one rejected with the moderator's note. The "My
+ * events" page reads this; nothing public does.
+ */
+export async function listEventsByCreator(
+  createdBy: string,
+  params?: { limit?: number; nextToken?: string }
+): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
+  const result = await EventEntity.query
+    .byCreator({ createdBy })
+    .where((attr, op) => op.notExists(attr.deletedAt))
+    .go({ order: 'desc', limit: params?.limit || 50, cursor: params?.nextToken });
+
+  return {
+    items: (result.data || []) as Event[],
+    nextToken: result.cursor || undefined,
+    hasMore: !!result.cursor,
+  };
+}
+
 export async function listEventsByOrganiser(
   organiserId: string,
   params?: { limit?: number; nextToken?: string }
