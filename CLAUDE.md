@@ -1294,11 +1294,31 @@ compiles them and the app does not load Faust.
 - **A PIN-centroid venue point is for distance only.** Directions links and the venue's JSON-LD
   `geo` use `exactVenueCoordinates`, which accepts `map-link` and `manual` and nothing else.
 - **WhatsApp text** is `?view=whatsapp` on any listing, plus a panel on the festival page, open to
-  everyone (every paste is distribution). "Open in WhatsApp" is a plain `wa.me` link; Copy and
-  Share appear after hydration. It stops at 30 events and ends with the listing's own URL. Every
-  rasika.life link in it carries `utm_source=whatsapp&utm_medium=social`, `utm_campaign`
-  (`listing_share`/`festival_share`) and `utm_content` (`listing`/`event`); ticket links are left
-  alone. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
+  everyone (every paste is distribution). The heading carries actual dates (`digestHeading`:
+  "Concerts in Bengaluru · This weekend, Sat, 24 Oct – Sun, 25 Oct"), because a forwarded text
+  outlives the day it was written. "Open in WhatsApp" is a plain `wa.me` link, shortened or hidden
+  past ~3500 encoded characters (`whatsAppOpenLink`), since long `?text=` links fail on some
+  Android builds; Copy always has the whole list. It stops at 30 events and ends with the
+  listing's own URL. Every rasika.life link in it carries `utm_source=whatsapp&utm_medium=social`,
+  `utm_campaign` (`listing_share`/`festival_share`) and `utm_content` (`listing`/`event`); ticket
+  links are left alone. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
+- **Dates are chosen two ways only: the presets and the calendar.** The month-button row was
+  removed (a 2026-10 critique counted three overlapping date pickers). The calendar's arrows set
+  `cal=YYYY-MM`, which moves the calendar and never filters the list; only the month title
+  (`when=YYYY-MM`) and the days do. Arrows stop at this month and at the last month holding an
+  event. Presets show their count, muted at zero, so "Today (0)" is honest.
+- **Nearest first** (`sort=near`) is offered only to a signed-in reader with a saved location. It
+  orders strictly by distance and starts a new date header wherever the day changes
+  (`groupConsecutiveByDate`), so a day can appear twice: grouping whole days would put a far
+  concert ahead of a near one.
+- **A failed PIN save comes back to the listing** as `pin_error=<reason>` (the location form's
+  action redirects to its `redirectTo`). It is read only for signed-in readers, is not part of
+  `ListingState`, and `listingHref` never writes it, so it cannot leak into a shared link.
+- **Events render as rows, not cards** (`EventCard` and `EventList`, DESIGN.md "a list of rows
+  is a list"): a leading date/time column, title, venue, cast, badge and distance, and a 64×88
+  top-cropped poster with `alt=""` because the row link already names the event. Ticketed and By
+  invitation badges are neutral; the raga and tala colours mean those things only. Stored credits
+  are shown through `roleLabel` ("chief-guest" → "chief guest").
 - **Artists "Popular" and "Verified"** are ranked from the search index (`artist.browse`):
   `artistPopularity` (credited approved events + RSVPs + attendance) and `verified` are written
   onto each artist document at index time, so they refresh every 6 hours. The Verified filter
