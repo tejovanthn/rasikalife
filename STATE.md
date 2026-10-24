@@ -3,19 +3,22 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
-## 2026-10-24: self-serve event listing, steps 1–2 of 6
+## 2026-10-24: self-serve event listing, built, not deployed
 
-Built: a page after Submit (`/events/new/submitted`) with status, links and WhatsApp text for
-live events, and "List your event" in the header, on `/events` and on venue and organiser
-pages. Not yet checked in a browser. Next, in order:
-3. Duplicate check by venue and time on the verify step: `byVenue` (gsi4), same venue ±3h,
-   "Is this the same concert?". Today only the poster hash is checked.
-4. "My events" page on `byCreator` (gsi1), with review status.
-5. Email on approval: `core/src/email/send.ts` hard-codes "Rasika Classes" and the `classes`
-   sender domain; make it generic first.
-6. Later: upload before sign-in (needs rate limits and draft ownership), confidence
-   highlighting on verify, auto-approve on `user.trustLevel` (exists, nothing sets it),
-   organiser claim. Decide first whether arangetrams and student recitals are in scope.
+Built: the after-submit page, "List your event" entry points, the same-venue ±3h duplicate
+check, `/my-events`, the approval email, and the verify step's "Please check" list. None of
+it has been tried in a browser. Before deploying, submit one poster as a normal user and one
+as a moderator, then approve the first and check the email arrives. SES may still be in
+sandbox, which would send only to verified addresses. Check that first.
+
+Deferred by the owner on 2026-10-24, each until real submitters exist:
+- Auto-approve on `user.trustLevel` (exists, nothing sets it). Approval does not record
+  whether a moderator edited the event, so "3 approved without edits" cannot be measured
+  yet. Decide whether arangetrams and student recitals are in scope first.
+- Upload before sign-in: needs an unauthenticated Gemini call, a per-IP limit and a way to
+  attach drafts after sign-in.
+- Organiser claim (`OrganiserMember`, like `ArtistClaim`): seed the top sabhas' events first.
+- "Clone from last" on My events, for recurring series.
 
 ## 2026-10-24: venue addresses from posters, applied to prod
 
