@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { studentAddedEmail } from './index';
+import { eventApprovedEmail, studentAddedEmail } from './index';
 
 const base = {
   learnerName: 'Meera',
@@ -49,5 +49,37 @@ describe('studentAddedEmail', () => {
     // Not a substring of the dev host, so this catches a reintroduced hardcoded production link.
     expect(email.html).not.toContain('//classes.rasika.life');
     expect(email.text).not.toContain('//classes.rasika.life');
+  });
+});
+
+describe('eventApprovedEmail', () => {
+  const event = {
+    eventId: '2abcDEF',
+    eventTitle: 'Vocal concert by Savita Vasu',
+    startDateTime: '2026-11-01T12:30:00Z',
+    timezone: 'Asia/Kolkata',
+    venueName: 'Bangalore Gayana Samaja',
+    siteUrl: 'https://dev.rasika.life/',
+  };
+
+  it('links the event, the share text and My events on the stage it was sent from', async () => {
+    const email = await eventApprovedEmail(event);
+    expect(email.subject).toBe('Your event is live: Vocal concert by Savita Vasu');
+    expect(email.html).toContain('https://dev.rasika.life/events/2abcDEF');
+    expect(email.html).toContain('https://dev.rasika.life/events/new/submitted?eventId=2abcDEF');
+    expect(email.html).toContain('https://dev.rasika.life/my-events');
+    expect(email.text).not.toContain('//rasika.life');
+  });
+
+  it("states the time in the event's own zone, not the server's", async () => {
+    const email = await eventApprovedEmail(event);
+    // 12:30Z is 6:00 pm in India; the Lambda runs in UTC.
+    expect(email.text).toMatch(/6:00\s?pm/i);
+  });
+
+  it('sends as Rasika.life, not Rasika Classes', async () => {
+    const email = await eventApprovedEmail(event);
+    expect(email.html).toContain('Rasika.life');
+    expect(email.html).not.toContain('Rasika Classes');
   });
 });

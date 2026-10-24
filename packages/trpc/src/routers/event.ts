@@ -13,6 +13,7 @@ import {
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { sendEventApprovedEmail } from '../event-approved-email';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
@@ -535,6 +536,7 @@ export const eventRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const result = await Event.approveEvent(input.eventId, ctx.user.id);
       triggerReindex();
+      await sendEventApprovedEmail(result, ctx.user.id);
       return result;
     }),
 

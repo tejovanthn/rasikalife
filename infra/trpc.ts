@@ -43,6 +43,9 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     // knows the stage's real domain (classes.rasika.life in prod, classes.<stage>.rasika.life
     // otherwise).
     CLASSES_URL: `https://${getDomain('classes').name}`,
+    // The approval email's links, for the same reason: rasika.life in prod, <stage>.rasika.life
+    // otherwise.
+    SITE_URL: `https://${getDomain().name}`,
   },
 });
 

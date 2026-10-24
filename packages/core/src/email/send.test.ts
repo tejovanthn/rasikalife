@@ -26,6 +26,11 @@ describe('getFromAddress', () => {
     expect(getFromAddress()).toBe('Rasika Classes <noreply@classes.rasika.life>');
   });
 
+  it('takes a display name from the caller', () => {
+    vi.stubEnv('EMAIL_SENDER', 'classes.rasika.life');
+    expect(getFromAddress('Rasika.life')).toBe('Rasika.life <noreply@classes.rasika.life>');
+  });
+
   it('uses a verified single address as-is, since it cannot send as anything else', () => {
     vi.stubEnv('EMAIL_SENDER', 'hello@classes.rasika.life');
     expect(getFromAddress()).toBe('Rasika Classes <hello@classes.rasika.life>');

@@ -10,8 +10,6 @@ import {
   Text,
 } from '@react-email/components';
 
-const APP_NAME = 'Rasika Classes';
-
 interface LayoutProps {
   preview: string;
   /**
@@ -20,6 +18,8 @@ interface LayoutProps {
    * production, while the button beside it pointed at the stage.
    */
   appUrl: string;
+  /** The product the email is from, named in the header and footer. */
+  appName?: string;
   children: React.ReactNode;
 }
 
@@ -28,18 +28,23 @@ function displayDomain(appUrl: string): string {
   return appUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 }
 
-export function EmailLayout({ preview, appUrl, children }: LayoutProps) {
+export function EmailLayout({
+  preview,
+  appUrl,
+  appName = 'Rasika Classes',
+  children,
+}: LayoutProps) {
   return (
     <Html lang="en">
       <Head />
       <Preview>{preview}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={brand}>{APP_NAME}</Text>
+          <Text style={brand}>{appName}</Text>
           <Section>{children}</Section>
           <Hr style={hr} />
           <Text style={footerText}>
-            {APP_NAME} ·{' '}
+            {appName} ·{' '}
             <Link href={appUrl} style={footerLink}>
               {displayDomain(appUrl)}
             </Link>

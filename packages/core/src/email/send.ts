@@ -2,8 +2,12 @@ import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 const sesClient = new SESv2Client({ region: process.env.AWS_REGION || 'us-east-1' });
 
-/** Only Rasika Classes sends transactional email today; rename this when a second sender does. */
-const APP_NAME = 'Rasika Classes';
+/**
+ * The display name when a caller names none. Rasika Classes was the first sender; the event
+ * approval email sends as Rasika.life from the same verified identity. Both are transactional,
+ * which is the line `infra/email.ts` draws: a marketing stream would need its own subdomain.
+ */
+const DEFAULT_FROM_NAME = 'Rasika Classes';
 
 /**
  * `EMAIL_SENDER` is whatever `sst.aws.Email` verified — see `infra/email.ts`, where it is the
@@ -14,13 +18,13 @@ const APP_NAME = 'Rasika Classes';
  * build the malformed `noreply@`, and SES's rejection of that names neither the variable nor the
  * missing resource link.
  */
-export function getFromAddress(): string {
+export function getFromAddress(fromName: string = DEFAULT_FROM_NAME): string {
   const sender = process.env.EMAIL_SENDER;
   if (!sender) {
     throw new Error('EMAIL_SENDER is unset — link the Email resource to this function');
   }
   const address = sender.includes('@') ? sender : `noreply@${sender}`;
-  return `${APP_NAME} <${address}>`;
+  return `${fromName} <${address}>`;
 }
 
 export interface SendEmailInput {
@@ -33,6 +37,8 @@ export interface SendEmailInput {
    * anything a person would naturally answer.
    */
   replyTo?: string;
+  /** The From display name; the address is always the verified sender. */
+  fromName?: string;
 }
 
 /**
@@ -44,7 +50,7 @@ export interface SendEmailInput {
 export async function sendTransactional(input: SendEmailInput): Promise<void> {
   await sesClient.send(
     new SendEmailCommand({
-      FromEmailAddress: getFromAddress(),
+      FromEmailAddress: getFromAddress(input.fromName),
       Destination: { ToAddresses: [input.to] },
       ReplyToAddresses: input.replyTo ? [input.replyTo] : undefined,
       Content: {
