@@ -3,7 +3,7 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
-## 2026-10-23: listing features (Kalaverse review), not yet deployed
+## 2026-10-23: listing features (Kalaverse review), deployed 2026-10-24
 
 Built: event times in the event zone with a zone label; /events with date pages
 (`/events/today`, `/this-weekend`, `/this-week`), month calendar and "Free only";
@@ -12,8 +12,9 @@ location; artists Popular/Verified; accompanists on cards; "Listen on"; directio
 returns to the page that asked. Plan: `docs/plans/261023-01-listing-features.md`.
 In prod already: 53 of 145 venues geocoded (`geocode-venues --apply`, 6 map link, 47 PIN).
 
-Next step: deploy, then `pnpm prod-cli reindex` (artist documents gain `popularity`, venue
-documents gain `city`, which the city pages read), and mark `whatsapp_digest` a key event in GA4.
+Live check 2026-10-24: all listing pages return 200 with Brotli, `/bangalore/concerts` 301s to
+`/bengaluru/concerts`, the city list and the Popular sort already read the new index fields.
+Next step: mark `whatsapp_digest` a key event in GA4, then check the new rows on a phone.
 
 ## Backlog (listing features)
 
