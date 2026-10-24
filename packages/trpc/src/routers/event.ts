@@ -243,6 +243,45 @@ export const eventRouter = createTRPCRouter({
 
   // === MUTATIONS ===
 
+  /**
+   * "Is this the same concert?" on the verify step: listed events at the same venue within
+   * three hours, for each draft that has a resolved venue. Read-only.
+   */
+  nearDuplicates: editorProcedure
+    .input(
+      z.object({
+        drafts: z
+          .array(
+            z.object({
+              id: z.string().min(1),
+              venueId: z.string().min(1),
+              startDateTime: z.string().min(1),
+            })
+          )
+          .max(50),
+      })
+    )
+    .query(async ({ input }) => {
+      const excludeIds = input.drafts.map(d => d.id);
+      const found = await Promise.all(
+        input.drafts.map(async d => {
+          const matches = await Event.findNearDuplicateEvents({ ...d, excludeIds });
+          return [
+            d.id,
+            matches.slice(0, 3).map(m => ({
+              id: m.id,
+              title: m.title,
+              startDateTime: m.startDateTime,
+              timezone: m.timezone,
+              venueName: m.venueName,
+              status: m.status,
+            })),
+          ] as const;
+        })
+      );
+      return Object.fromEntries(found.filter(([, matches]) => matches.length > 0));
+    }),
+
   getUploadUrl: editorProcedure
     .input(z.object({ fileName: z.string(), contentType: z.string() }))
     .mutation(({ input }) => Event.getUploadUrl(input.fileName, input.contentType)),

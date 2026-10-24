@@ -6,6 +6,7 @@ import { EventArtistEntity } from '../event-artist/entity';
 import { createFestival } from '../festival';
 import { createFailedError, notFoundError } from '../helpers';
 import { printedVenueAddress } from '../venue/address';
+import { duplicateSearchRange, nearDuplicates } from './duplicates';
 import { EventEntity } from './entity';
 import type { Event } from './entity';
 import type { ExtractionResult } from './extraction';
@@ -566,6 +567,25 @@ export async function listEventsByVenue(
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
+}
+
+/**
+ * Listed concerts at this venue within `DUPLICATE_WINDOW_HOURS` of `startDateTime`, closest
+ * first. Reads `byVenue` over a few whole days and compares instants in memory; see
+ * `duplicateSearchRange` for why the key range alone cannot be trusted.
+ */
+export async function findNearDuplicateEvents(params: {
+  venueId: string;
+  startDateTime: string;
+  excludeIds?: string[];
+}): Promise<Event[]> {
+  const range = duplicateSearchRange(params.startDateTime);
+  if (!range) return [];
+  const result = await EventEntity.query
+    .byVenue({ venueId: params.venueId })
+    .between({ startDateTime: range.from }, { startDateTime: range.to })
+    .go({ limit: 100 });
+  return nearDuplicates((result.data || []) as Event[], params);
 }
 
 export async function listEventsByOrganiser(

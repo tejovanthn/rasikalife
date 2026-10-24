@@ -35,6 +35,17 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
+  if (body.intent === 'nearDuplicates') {
+    try {
+      const matches = await serverClient.event.nearDuplicates.query({ drafts: body.drafts });
+      return data({ matches });
+    } catch (error) {
+      // The check is a courtesy; failing it must not block a submission.
+      console.error('Failed to check for duplicate events:', error);
+      return data({ matches: {} });
+    }
+  }
+
   if (body.intent === 'extract') {
     try {
       const result = await serverClient.event.extractFromPoster.mutate({

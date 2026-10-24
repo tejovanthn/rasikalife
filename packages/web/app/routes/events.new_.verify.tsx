@@ -24,7 +24,8 @@ import {
 import { Textarea } from '~/components/ui/textarea';
 import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { requireUser } from '~/lib/auth.server';
-import { generateFestivalUrl } from '~/lib/url-slug';
+import { formatEventTime } from '~/lib/event-time';
+import { generateEventUrl, generateFestivalUrl } from '~/lib/url-slug';
 
 interface ExtractedArtist {
   title?: string;
@@ -1054,6 +1055,90 @@ function EventStep({
 }
 
 // --- Review Step ---
+interface DuplicateMatch {
+  id: string;
+  title: string;
+  startDateTime: string;
+  timezone?: string | null;
+  venueName?: string | null;
+  status?: string | null;
+}
+
+/**
+ * "Is this the same concert?" A second poster of a listed concert is the usual duplicate, and
+ * the poster-hash check only catches the same file. Marking one as the same leaves it out of
+ * the submission; the draft stays where it is, unsubmitted.
+ */
+function DuplicateCheck({
+  events,
+  matches,
+  skipped,
+  onToggle,
+}: {
+  events: DraftEvent[];
+  matches: Record<string, DuplicateMatch[]>;
+  skipped: string[];
+  onToggle: (id: string) => void;
+}) {
+  const flagged = events.filter(e => matches[e.id]?.length);
+  if (flagged.length === 0) return null;
+  return (
+    <section
+      aria-labelledby="duplicate-heading"
+      className="mb-6 rounded-lg border border-warning/40 bg-warning/10 p-4 space-y-4"
+    >
+      <h2 id="duplicate-heading" className="font-semibold">
+        Is this the same concert?
+      </h2>
+      {flagged.map(e => {
+        const isSkipped = skipped.includes(e.id);
+        return (
+          <div key={e.id} className="space-y-2">
+            <p className="text-sm">
+              <span className="font-medium">{e.title || 'Untitled'}</span> is at the same venue,
+              close in time, as:
+            </p>
+            <ul className="text-sm space-y-1">
+              {matches[e.id].map(m => (
+                <li key={m.id}>
+                  {m.status === 'approved' ? (
+                    <Link to={generateEventUrl(m.title, m.id)} target="_blank">
+                      {m.title}
+                    </Link>
+                  ) : (
+                    <span>{m.title} (waiting for review)</span>
+                  )}
+                  <span className="text-muted-foreground">
+                    {' '}
+                    · {formatEventTime(m.startDateTime, m.timezone || DEFAULT_EVENT_TIMEZONE)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <Button
+              type="button"
+              size="sm"
+              variant={isSkipped ? 'default' : 'outline'}
+              onClick={() => onToggle(e.id)}
+              aria-pressed={isSkipped}
+              className="min-h-11 md:min-h-9"
+            >
+              {isSkipped ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Same concert: left out
+                </>
+              ) : (
+                'Same concert, leave mine out'
+              )}
+            </Button>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 function ReviewStep({
   festival,
   events,
@@ -1194,6 +1279,8 @@ export default function VerifyEvents() {
   const [events, setEvents] = useState<DraftEvent[]>(loaderData.events);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duplicates, setDuplicates] = useState<Record<string, DuplicateMatch[]>>({});
+  const [skipped, setSkipped] = useState<string[]>([]);
   // Tracks whether the one-time restore from sessionStorage has run
   const [hasRestored, setHasRestored] = useState(false);
 
@@ -1233,6 +1320,32 @@ export default function VerifyEvents() {
   const isFestivalStep = editingFestival && currentStep === 0;
   const eventIndex = editingFestival ? currentStep - 1 : currentStep;
 
+  // Checked on reaching the review step, when venue and time are final.
+  useEffect(() => {
+    if (!isReviewStep) return;
+    const drafts = events.flatMap(e => {
+      const startDateTime = normalizeDateTime(e.startDateTime);
+      return e.venue?.id && startDateTime ? [{ id: e.id, venueId: e.venue.id, startDateTime }] : [];
+    });
+    if (drafts.length === 0) return;
+    let cancelled = false;
+    fetch('/events/new/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent: 'nearDuplicates', drafts }),
+    })
+      .then(res => (res.ok ? res.json() : { matches: {} }))
+      .then(result => {
+        if (!cancelled) setDuplicates(result.matches ?? {});
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isReviewStep, events]);
+
+  const toSubmit = events.filter(e => !skipped.includes(e.id));
+
   const getStepLabel = () => {
     if (isFestivalStep) return 'Festival Details';
     if (isReviewStep) return isModerator ? 'Review & Publish' : 'Review & Submit';
@@ -1251,6 +1364,12 @@ export default function VerifyEvents() {
   };
 
   const handleSubmit = async () => {
+    if (toSubmit.length === 0) {
+      // Every poster was already listed: send them to the listing they found.
+      const first = duplicates[skipped[0]]?.find(m => m.status === 'approved');
+      navigate(first ? generateEventUrl(first.title, first.id) : '/events');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const response = await fetch('/events/new/api', {
@@ -1270,7 +1389,7 @@ export default function VerifyEvents() {
                   sponsors: festival.sponsors,
                 }
               : undefined,
-          events: events.map(e => ({
+          events: toSubmit.map(e => ({
             id: e.id,
             title: e.title,
             description: e.description,
@@ -1307,7 +1426,7 @@ export default function VerifyEvents() {
       // The next page says what happens now and, once an event is live, hands over its link
       // and the WhatsApp text. A toast on /events said neither.
       const params = new URLSearchParams();
-      for (const id of result.eventIds ?? events.map(e => e.id)) params.append('eventId', id);
+      for (const id of result.eventIds ?? toSubmit.map(e => e.id)) params.append('eventId', id);
       if (festival?.id) params.set('festivalId', festival.id);
       navigate(`/events/new/submitted?${params}`);
     } catch (err) {
@@ -1369,7 +1488,17 @@ export default function VerifyEvents() {
         )}
 
         {isReviewStep && (
-          <ReviewStep festival={festival} events={events} posterUrl={loaderData.posterUrl} />
+          <>
+            <DuplicateCheck
+              events={events}
+              matches={duplicates}
+              skipped={skipped}
+              onToggle={id =>
+                setSkipped(curr => (curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]))
+              }
+            />
+            <ReviewStep festival={festival} events={toSubmit} posterUrl={loaderData.posterUrl} />
+          </>
         )}
       </div>
 
@@ -1393,7 +1522,11 @@ export default function VerifyEvents() {
             ) : (
               <>
                 <Check className="mr-2 h-4 w-4" />
-                {isModerator ? 'Publish' : 'Submit for Review'}
+                {toSubmit.length === 0
+                  ? 'See the listed concert'
+                  : isModerator
+                    ? 'Publish'
+                    : 'Submit for Review'}
               </>
             )}
           </Button>
