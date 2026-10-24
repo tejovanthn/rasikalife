@@ -11,7 +11,7 @@ const DEFAULT_FROM_NAME = 'Rasika Classes';
 
 /**
  * `EMAIL_SENDER` is whatever `sst.aws.Email` verified — see `infra/email.ts`, where it is the
- * `classes` subdomain. A verified domain can send from any address on it; a single verified
+ * `mail` subdomain. A verified domain can send from any address on it; a single verified
  * address cannot, so it is used as-is.
  *
  * Exported for its test. It throws rather than defaulting: an unset variable would otherwise

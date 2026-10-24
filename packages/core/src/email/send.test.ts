@@ -22,18 +22,18 @@ afterEach(() => {
 
 describe('getFromAddress', () => {
   it('prefixes noreply@ when the verified identity is a domain', () => {
-    vi.stubEnv('EMAIL_SENDER', 'classes.rasika.life');
-    expect(getFromAddress()).toBe('Rasika Classes <noreply@classes.rasika.life>');
+    vi.stubEnv('EMAIL_SENDER', 'mail.rasika.life');
+    expect(getFromAddress()).toBe('Rasika Classes <noreply@mail.rasika.life>');
   });
 
   it('takes a display name from the caller', () => {
-    vi.stubEnv('EMAIL_SENDER', 'classes.rasika.life');
-    expect(getFromAddress('Rasika.life')).toBe('Rasika.life <noreply@classes.rasika.life>');
+    vi.stubEnv('EMAIL_SENDER', 'mail.rasika.life');
+    expect(getFromAddress('Rasika.life')).toBe('Rasika.life <noreply@mail.rasika.life>');
   });
 
   it('uses a verified single address as-is, since it cannot send as anything else', () => {
-    vi.stubEnv('EMAIL_SENDER', 'hello@classes.rasika.life');
-    expect(getFromAddress()).toBe('Rasika Classes <hello@classes.rasika.life>');
+    vi.stubEnv('EMAIL_SENDER', 'hello@mail.rasika.life');
+    expect(getFromAddress()).toBe('Rasika Classes <hello@mail.rasika.life>');
   });
 
   /**
@@ -50,17 +50,17 @@ describe('sendTransactional', () => {
   const base = { to: 'parent@example.com', subject: 'Subject', html: '<p>Body</p>', text: 'Body' };
 
   it('sends replies to the address given, not to the noreply sender', async () => {
-    vi.stubEnv('EMAIL_SENDER', 'classes.rasika.life');
+    vi.stubEnv('EMAIL_SENDER', 'mail.rasika.life');
     await sendTransactional({ ...base, replyTo: 'guru@example.com' });
 
     const { input } = sendMock.mock.calls[0][0];
-    expect(input.FromEmailAddress).toBe('Rasika Classes <noreply@classes.rasika.life>');
+    expect(input.FromEmailAddress).toBe('Rasika Classes <noreply@mail.rasika.life>');
     expect(input.ReplyToAddresses).toEqual(['guru@example.com']);
     expect(input.Destination.ToAddresses).toEqual(['parent@example.com']);
   });
 
   it('omits the header entirely when no reply address is given', async () => {
-    vi.stubEnv('EMAIL_SENDER', 'classes.rasika.life');
+    vi.stubEnv('EMAIL_SENDER', 'mail.rasika.life');
     await sendTransactional(base);
 
     expect(sendMock.mock.calls[0][0].input.ReplyToAddresses).toBeUndefined();
