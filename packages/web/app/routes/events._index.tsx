@@ -1,7 +1,6 @@
 import { Plus } from 'lucide-react';
 import { Link, useLoaderData } from 'react-router';
 import type { HeadersFunction, LoaderFunctionArgs, MetaFunction } from 'react-router';
-import { useAuth } from '~/components/auth-context';
 import { EventListing } from '~/components/events/event-listing';
 import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
 import { buttonVariants } from '~/components/ui/button';
@@ -46,7 +45,6 @@ export const meta: MetaFunction<typeof loader> = ({ data: raw }) => {
 export default function EventsIndex() {
   const listing = useLoaderData<typeof loader>() as unknown as EventsPageData;
   const preset = DATE_PRESETS.find(p => p.value === listing.state.when);
-  const { user } = useAuth();
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-5xl">
@@ -64,17 +62,16 @@ export default function EventsIndex() {
                 Carnatic concerts and classical arts events
               </p>
             </div>
-            {user && (
-              <Link
-                to="/events/new"
-                aria-label="Add event"
-                className={cn(buttonVariants(), 'shrink-0 min-h-11 md:min-h-10 no-underline')}
-              >
-                <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-                <span className="md:hidden">Add</span>
-                <span className="hidden md:inline">Add event</span>
-              </Link>
-            )}
+            {/* Shown signed out too: /events/new sends a visitor through sign-in and back. */}
+            <Link
+              to="/events/new"
+              aria-label="List your event"
+              className={cn(buttonVariants(), 'shrink-0 min-h-11 md:min-h-10 no-underline')}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
+              <span className="md:hidden">Add</span>
+              <span className="hidden md:inline">List your event</span>
+            </Link>
           </header>
         }
       />

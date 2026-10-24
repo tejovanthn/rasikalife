@@ -6,6 +6,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
+import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -363,10 +364,14 @@ export default function VenueDetailPage() {
         <h2 className="text-2xl font-bold mb-6">Events at this venue</h2>
 
         {events.length === 0 ? (
-          <EmptyState message="No events listed at this venue yet." />
+          <>
+            <EmptyState message="No events listed at this venue yet." />
+            <ListEventPrompt question="Organising a concert here?" />
+          </>
         ) : (
           <>
             {upcomingEvents.length > 0 && <EventList events={upcomingEvents} />}
+            <ListEventPrompt question="Organising a concert here?" />
             {pastEvents.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">

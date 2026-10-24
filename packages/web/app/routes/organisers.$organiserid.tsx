@@ -7,6 +7,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
+import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, OrganiserStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -386,10 +387,14 @@ export default function OrganiserDetailPage() {
         <h2 className="section-heading mb-6">Events</h2>
 
         {events.length === 0 ? (
-          <EmptyState message="No events by this organiser yet." />
+          <>
+            <EmptyState message="No events by this organiser yet." />
+            <ListEventPrompt question="Organising a concert for them?" />
+          </>
         ) : (
           <>
             {upcomingEvents.length > 0 && <EventList events={upcomingEvents} />}
+            <ListEventPrompt question="Organising a concert for them?" />
             {pastEvents.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">

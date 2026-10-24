@@ -3,6 +3,20 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-10-24: self-serve event listing, steps 1–2 of 6
+
+Built: a page after Submit (`/events/new/submitted`) with status, links and WhatsApp text for
+live events, and "List your event" in the header, on `/events` and on venue and organiser
+pages. Not yet checked in a browser. Next, in order:
+3. Duplicate check by venue and time on the verify step: `byVenue` (gsi4), same venue ±3h,
+   "Is this the same concert?". Today only the poster hash is checked.
+4. "My events" page on `byCreator` (gsi1), with review status.
+5. Email on approval: `core/src/email/send.ts` hard-codes "Rasika Classes" and the `classes`
+   sender domain; make it generic first.
+6. Later: upload before sign-in (needs rate limits and draft ownership), confidence
+   highlighting on verify, auto-approve on `user.trustLevel` (exists, nothing sets it),
+   organiser claim. Decide first whether arangetrams and student recitals are in scope.
+
 ## 2026-10-24: venue addresses from posters, applied to prod
 
 68 venues got address parts read off their own event posters

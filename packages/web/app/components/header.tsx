@@ -65,6 +65,7 @@ const EVENT_LINKS = [
   { href: '/festivals', label: 'Festivals' },
   { href: '/venues', label: 'Venues' },
   { href: '/organisers', label: 'Organisers' },
+  { href: '/events/new', label: 'List your event' },
 ];
 
 export const Header = () => {

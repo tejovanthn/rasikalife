@@ -1297,14 +1297,19 @@ export default function VerifyEvents() {
         throw new Error(err?.error || 'Failed to submit');
       }
 
+      const result: { eventIds?: string[] } = await response.json();
       try {
         sessionStorage.removeItem(storageKey);
       } catch {
         // ignore
       }
       trackEvent(AnalyticsEvent.EVENT_PUBLISHED, { moderated: isModerator });
-      toast.success(isModerator ? 'Events published!' : 'Events submitted for review!');
-      navigate(isExistingFestival && festivalUrl ? festivalUrl : '/events');
+      // The next page says what happens now and, once an event is live, hands over its link
+      // and the WhatsApp text. A toast on /events said neither.
+      const params = new URLSearchParams();
+      for (const id of result.eventIds ?? events.map(e => e.id)) params.append('eventId', id);
+      if (festival?.id) params.set('festivalId', festival.id);
+      navigate(`/events/new/submitted?${params}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit events.';
       toast.error(message);

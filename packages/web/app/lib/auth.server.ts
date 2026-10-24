@@ -178,7 +178,9 @@ export async function requireUser(request: Request, redirectTo?: string) {
   const user = await getUser(request);
 
   if (!user) {
-    const url = redirectTo ?? new URL(request.url).pathname;
+    // The query string too: `/events/new?festivalId=…` lost its festival on the way through.
+    const { pathname, search } = new URL(request.url);
+    const url = redirectTo ?? `${pathname}${search}`;
     const searchParams = new URLSearchParams([['redirectTo', url]]);
     throw redirect(`/auth/login?${searchParams}`);
   }
