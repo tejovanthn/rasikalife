@@ -1,7 +1,7 @@
 import { Link, data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
-import { EventCard } from '~/components/EventCard';
+import { EventList } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
 import { eventListItems } from '~/lib/structured-data';
@@ -70,11 +70,7 @@ export default function EventsByTag() {
       {events.length === 0 ? (
         <EmptyState message={`No upcoming events tagged "${tag}".`} />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {events.map(event => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        <EventList events={events} className="max-w-3xl" />
       )}
 
       <BreadcrumbStructuredData

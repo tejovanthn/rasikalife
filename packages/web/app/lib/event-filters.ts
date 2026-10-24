@@ -2,7 +2,8 @@ import { addDaysToDate } from '@rasika/core/shared/timezone';
 import { eventDateKey, formatDayLabel } from '~/lib/event-time';
 
 /**
- * The filters on the event listings: a date preset, a month or a day, "Free only", and a city.
+ * The filters on the event listings: a date preset, a month or a day, "Free only", a city and
+ * the sort.
  * Every one is a query parameter, so the page is server-rendered, works without JavaScript,
  * and CloudFront caches each combination (its policy keys on every query string).
  *
@@ -125,26 +126,79 @@ export function dayCounts(events: Filterable[]): Record<string, number> {
   return counts;
 }
 
-/**
- * A month button's text: `Nov`, or `Jan 2027` once the month is outside the current year, so
- * two Octobers a year apart can never read the same. Count goes beside it, in brackets.
- */
-export function monthButtonLabel(month: string, today: string): string {
-  const short = new Date(`${month}-01T12:00:00Z`).toLocaleDateString('en-IN', {
-    timeZone: 'UTC',
-    month: 'short',
-  });
-  return month.slice(0, 4) === today.slice(0, 4) ? short : `${short} ${month.slice(0, 4)}`;
+/** The last month holding an event, `YYYY-MM`, or `null` when nothing is listed. */
+export function lastEventMonth(counts: Record<string, number>): string | null {
+  const days = Object.keys(counts).sort();
+  return days.length > 0 ? (days.at(-1) as string).slice(0, 7) : null;
 }
 
-/** Months that hold at least one event, in order, with their counts: `[['2026-11', 4], …]`. */
-export function monthCounts(events: Filterable[]): Array<[string, number]> {
-  const counts = new Map<string, number>();
+/**
+ * The month the calendar shows when the reader has not browsed it: the month the chosen range
+ * starts in, else the current one.
+ */
+export function defaultCalendarMonth(range: DateRange | null, today: string): string {
+  return (range?.from ?? today).slice(0, 7);
+}
+
+/**
+ * The month the calendar shows. `cal` is the reader browsing with the arrows, kept apart from
+ * `when` so that looking at December does not empty the list of October's concerts. It is held
+ * between the current month and the last one with an event, the same bounds the arrows stop at,
+ * so a hand-typed `cal=2030-01` cannot strand the reader on blank months.
+ */
+export function calendarMonth(
+  cal: string | null | undefined,
+  range: DateRange | null,
+  today: string,
+  lastMonth: string | null
+): string {
+  if (!cal) return defaultCalendarMonth(range, today);
+  const thisMonth = today.slice(0, 7);
+  const last = lastMonth && lastMonth > thisMonth ? lastMonth : thisMonth;
+  if (cal < thisMonth) return thisMonth;
+  if (cal > last) return last;
+  return cal;
+}
+
+/**
+ * The days a preset covers, for its heading: "Sat, 24 Oct – Sun, 25 Oct", or one day alone.
+ * A month or a single day already names its dates in its label, so those get nothing.
+ */
+export function rangeDates(range: DateRange): string | undefined {
+  if (!DATE_PRESETS.some(p => p.value === range.when)) return undefined;
+  return range.from === range.to
+    ? formatDayLabel(range.from)
+    : `${formatDayLabel(range.from)} – ${formatDayLabel(range.to)}`;
+}
+
+/**
+ * "Nearest first": events by straight-line distance, those with no distance last and in date
+ * order (the sort is stable and the input is in start order).
+ */
+export function sortByDistance<T extends { distanceKm?: number }>(events: T[]): T[] {
+  return [...events].sort(
+    (a, b) => (a.distanceKm ?? Number.POSITIVE_INFINITY) - (b.distanceKm ?? Number.POSITIVE_INFINITY)
+  );
+}
+
+/**
+ * Runs of consecutive events on the same day, keeping the order given. For the nearest-first
+ * list: every card still sits under a date header, which is where `EventDayGroup` shows the
+ * date, but the order stays strictly by distance. A day can appear twice when a nearer concert
+ * on another day falls between two of its own; grouping whole days instead would put a far
+ * concert ahead of a near one, which is the one thing this sort promises not to do.
+ */
+export function groupConsecutiveByDate<T extends Filterable>(
+  events: T[]
+): Array<{ date: string; events: T[] }> {
+  const groups: Array<{ date: string; events: T[] }> = [];
   for (const event of events) {
-    const month = eventDateKey(event).slice(0, 7);
-    counts.set(month, (counts.get(month) ?? 0) + 1);
+    const date = eventDateKey(event);
+    const last = groups.at(-1);
+    if (last && last.date === date) last.events.push(event);
+    else groups.push({ date, events: [event] });
   }
-  return [...counts].sort(([a], [b]) => a.localeCompare(b));
+  return groups;
 }
 
 /** A Monday-first grid of a month, `null` padding the first and last weeks. */
@@ -182,6 +236,13 @@ export interface ListingState {
   cast?: boolean;
   /** WhatsApp text: a link per event. */
   links?: boolean;
+  /** "Nearest first", offered only to a reader with a saved home location. */
+  sort?: 'near' | null;
+  /**
+   * The month the calendar is browsed to, `YYYY-MM`. Display only: `filterEvents` never reads
+   * it, so the arrows move the calendar and leave the list alone.
+   */
+  cal?: string | null;
 }
 
 export const PRESET_SEGMENTS: Readonly<Record<DatePreset, string>> = {
@@ -209,16 +270,22 @@ export function listingHref(scope: ListingScope, state: ListingState): string {
   }
 
   if (state.free) query.set('free', '1');
+  if (state.sort === 'near') query.set('sort', 'near');
   if (state.view === 'whatsapp') {
     query.set('view', 'whatsapp');
     if (state.cast === false) query.set('cast', '0');
     if (state.links) query.set('links', '1');
   }
+  if (state.cal) query.set('cal', state.cal);
   const qs = query.toString();
   return qs ? `${path}?${qs}` : path;
 }
 
-/** The state a listing URL describes. `presetSegment` is the `/events/<preset>` path segment. */
+/**
+ * The state a listing URL describes. `presetSegment` is the `/events/<preset>` path segment.
+ * Anything else in the query, such as `pin_error` from a failed location save, is not state:
+ * `listingHref` never writes it back, so it drops off the first link the reader follows.
+ */
 export function readListingState(url: URL, presetSegment?: string): ListingState {
   const p = url.searchParams;
   return {
@@ -227,5 +294,7 @@ export function readListingState(url: URL, presetSegment?: string): ListingState
     view: p.get('view') === 'whatsapp' ? 'whatsapp' : null,
     cast: p.get('cast') !== '0',
     links: p.get('links') === '1',
+    sort: p.get('sort') === 'near' ? 'near' : null,
+    cal: MONTH.test(p.get('cal') ?? '') ? p.get('cal') : null,
   };
 }

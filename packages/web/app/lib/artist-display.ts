@@ -118,6 +118,16 @@ export function artistMetaDescription(artist: {
 }
 
 /**
+ * A stored `EventArtist` credit as words a reader can take in: "chief-guest" and
+ * "guest_of_honour" are slugs typed by whoever verified the poster, and printing them raw put
+ * hyphens in the middle of a cast list. Lowercase, so it sits inside a sentence or a bracket;
+ * a caller that wants a heading can capitalise it with CSS.
+ */
+export function roleLabel(role: string): string {
+  return role.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/**
  * An event's cast on one line, each with what they played: "Vid. Sunil Gargyan (vocal),
  * Keshav Mohankumar (violin)". The role is the stored `EventArtist` credit, read off the
  * poster; the accompanists are who a rasika is often choosing between concerts for.
@@ -128,7 +138,7 @@ export function castLine(
 ): string {
   const named = artists.map(a => {
     const name = `${a.title ? `${a.title} ` : ''}${a.name}`;
-    const role = a.role?.trim();
+    const role = a.role ? roleLabel(a.role) : '';
     return role ? `${name} (${role})` : name;
   });
   // A card has room for a concert's cast, not a production's: one Ramayana presentation

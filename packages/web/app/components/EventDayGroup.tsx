@@ -1,5 +1,4 @@
-import { EventCard, type EventCardEvent } from '~/components/EventCard';
-import { formatDayLabel } from '~/lib/event-time';
+import { type EventCardEvent, EventList, listDayLabel } from '~/components/EventCard';
 
 interface EventDayGroupProps {
   /** `YYYY-MM-DD`, the day in the events' own zone (`groupByEventDate`). */
@@ -15,24 +14,20 @@ export function EventDayGroup({ date, events, first = false }: EventDayGroupProp
       {/* Sticks below the site nav (h-14, md:h-16), which is itself sticky at top-0 and above
           it; at top-0 the date slid underneath and vanished just when it was needed. A solid
           page colour rather than a blur, which was decoration. */}
-      <div className="sticky top-14 md:top-16 z-10 bg-background border-b py-3 mb-3">
+      <div className="sticky top-14 md:top-16 z-10 bg-background border-b border-border py-3">
         <h2 className="font-semibold text-base">
-          {formatDayLabel(date, { year: true })}
-          <span className="ml-2 text-sm font-normal text-muted-foreground">
-            · {events.length} {events.length === 1 ? 'event' : 'events'}
+          {listDayLabel(date)}
+          {/* The count in brackets, as the month filters print it. */}
+          <span aria-hidden="true" className="ml-1.5 text-sm font-normal text-muted-foreground">
+            ({events.length})
+          </span>
+          <span className="sr-only">
+            , {events.length} {events.length === 1 ? 'event' : 'events'}
           </span>
         </h2>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {events.map((event, i) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            isGeneric={event.isGeneric}
-            priority={first && i === 0}
-          />
-        ))}
-      </div>
+      {/* The header says the day, so each row leads with the time alone. */}
+      <EventList events={events} priorityFirst={first} showDate={false} />
     </section>
   );
 }

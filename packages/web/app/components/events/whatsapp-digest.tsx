@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { Button, buttonVariants } from '~/components/ui/button';
 import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { cn } from '~/lib/utils';
-import { whatsAppShareUrl } from '~/lib/whatsapp-digest';
+import { whatsAppOpenLink } from '~/lib/whatsapp-digest';
 
 /**
  * The listing as text for a WhatsApp group. "Open in WhatsApp" is a plain `wa.me` link and
@@ -19,6 +19,9 @@ export function WhatsAppDigest({
   /** Each option is a link to the same listing with that option flipped. */
   options: Array<{ label: string; on: boolean; href: string }>;
 }) {
+  // A very long `wa.me` link opens WhatsApp empty on some phones, so a long text opens with
+  // fewer concerts, or not at all, and Copy carries the whole of it.
+  const open = whatsAppOpenLink(text);
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
   const [canCopy, setCanCopy] = useState(false);
@@ -53,6 +56,9 @@ export function WhatsAppDigest({
       <h2 id="whatsapp-digest-heading" className="sr-only">
         Text for WhatsApp
       </h2>
+      <p className="text-sm text-muted-foreground">
+        Paste this into a group: the concerts below as plain text, with a link back here.
+      </p>
       <div className="flex flex-wrap gap-2">
         {/* Rendered from the start and enabled once the page can reach the clipboard, so the
             row does not jump on hydration. Share is last, so its late arrival moves nothing. */}
@@ -64,19 +70,21 @@ export function WhatsAppDigest({
           )}
           <span aria-live="polite">{copied ? 'Copied' : 'Copy text'}</span>
         </Button>
-        <a
-          href={whatsAppShareUrl(text)}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackEvent(AnalyticsEvent.WHATSAPP_DIGEST, { method: 'open' })}
-          className={cn(
-            buttonVariants({ variant: 'outline' }),
-            'min-h-11 md:min-h-10 no-underline'
-          )}
-        >
-          <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
-          Open in WhatsApp
-        </a>
+        {open && (
+          <a
+            href={open.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackEvent(AnalyticsEvent.WHATSAPP_DIGEST, { method: 'open' })}
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'min-h-11 md:min-h-10 no-underline'
+            )}
+          >
+            <MessageCircle className="mr-2 h-4 w-4" aria-hidden="true" />
+            Open in WhatsApp
+          </a>
+        )}
         {canShare && (
           <Button type="button" variant="outline" onClick={share} className="min-h-11 md:min-h-10">
             <Share2 className="mr-2 h-4 w-4" aria-hidden="true" />
@@ -84,6 +92,17 @@ export function WhatsAppDigest({
           </Button>
         )}
       </div>
+      {open?.shortened && (
+        <p className="text-sm text-muted-foreground">
+          This list is long, so WhatsApp opens with the first concerts only. Copy text has all of
+          them.
+        </p>
+      )}
+      {!open && (
+        <p className="text-sm text-muted-foreground">
+          This list is too long to open in WhatsApp directly. Use Copy text instead.
+        </p>
+      )}
 
       <fieldset className="flex flex-wrap gap-x-4 gap-y-1">
         <legend className="sr-only">Include</legend>

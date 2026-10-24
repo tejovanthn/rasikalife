@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calendarMonth,
   dayCounts,
   filterEvents,
+  groupConsecutiveByDate,
+  lastEventMonth,
   listingHref,
-  monthButtonLabel,
-  monthCounts,
   monthGrid,
+  rangeDates,
   readListingState,
   resolveDateRange,
   shiftMonth,
+  sortByDistance,
 } from './event-filters';
 
 // 2026-10-23 is a Friday.
@@ -105,12 +108,10 @@ describe('counts', () => {
     { startDateTime: '2026-11-02T18:00:00+05:30' },
   ];
 
-  it('counts per day and per month', () => {
+  it('counts per day and finds the last month with an event', () => {
     expect(dayCounts(events)).toEqual({ '2026-10-24': 2, '2026-11-02': 1 });
-    expect(monthCounts(events)).toEqual([
-      ['2026-10', 2],
-      ['2026-11', 1],
-    ]);
+    expect(lastEventMonth(dayCounts(events))).toBe('2026-11');
+    expect(lastEventMonth({})).toBeNull();
   });
 });
 
@@ -181,6 +182,8 @@ describe('listingHref', () => {
       view: 'whatsapp',
       cast: false,
       links: false,
+      sort: null,
+      cal: null,
     });
     expect(listingHref({ kind: 'all' }, state)).toBe(
       '/events/this-week?free=1&view=whatsapp&cast=0'
@@ -188,10 +191,105 @@ describe('listingHref', () => {
   });
 });
 
-describe('monthButtonLabel', () => {
-  it('names the year only outside the current one', () => {
-    expect(monthButtonLabel('2026-11', FRIDAY)).toBe('Nov');
-    expect(monthButtonLabel('2027-01', FRIDAY)).toBe('Jan 2027');
-    expect(monthButtonLabel('2027-10', FRIDAY)).not.toBe(monthButtonLabel('2026-10', FRIDAY));
+describe('calendarMonth', () => {
+  it('follows the chosen range until the reader browses', () => {
+    expect(calendarMonth(null, null, FRIDAY, '2027-10')).toBe('2026-10');
+    expect(calendarMonth(null, resolveDateRange('2026-12-05', FRIDAY), FRIDAY, '2027-10')).toBe(
+      '2026-12'
+    );
+    expect(calendarMonth('2027-02', resolveDateRange('today', FRIDAY), FRIDAY, '2027-10')).toBe(
+      '2027-02'
+    );
+  });
+
+  it('holds a browsed month between this month and the last with an event', () => {
+    expect(calendarMonth('2026-01', null, FRIDAY, '2027-10')).toBe('2026-10');
+    expect(calendarMonth('2030-01', null, FRIDAY, '2027-10')).toBe('2027-10');
+    expect(calendarMonth('2026-12', null, FRIDAY, null)).toBe('2026-10');
+  });
+});
+
+describe('cal', () => {
+  it('round-trips through listingHref and readListingState', () => {
+    const state = readListingState(new URL('https://rasika.life/events/today?cal=2026-12'), 'today');
+    expect(state).toMatchObject({ when: 'today', cal: '2026-12' });
+    expect(listingHref({ kind: 'all' }, state)).toBe('/events/today?cal=2026-12');
+    const city = { kind: 'city', slug: 'bengaluru' } as const;
+    expect(listingHref(city, { when: '2026-11', cal: '2027-01' })).toBe(
+      '/bengaluru/concerts?when=2026-11&cal=2027-01'
+    );
+  });
+
+  it('ignores a cal it cannot read', () => {
+    expect(readListingState(new URL('https://rasika.life/events?cal=soon')).cal).toBeNull();
+    expect(readListingState(new URL('https://rasika.life/events?cal=2026-13')).cal).toBeNull();
+  });
+
+  it('never filters the list', () => {
+    const events = [{ startDateTime: '2026-10-24T18:00:00+05:30' }];
+    const state = readListingState(new URL('https://rasika.life/events?cal=2027-03'));
+    expect(filterEvents(events, { range: resolveDateRange(state.when, FRIDAY) })).toHaveLength(1);
+  });
+});
+
+describe('sort and stray parameters', () => {
+  it('round-trips nearest first', () => {
+    const state = readListingState(new URL('https://rasika.life/events?sort=near&free=1'));
+    expect(state.sort).toBe('near');
+    expect(listingHref({ kind: 'all' }, state)).toBe('/events?free=1&sort=near');
+    expect(readListingState(new URL('https://rasika.life/events?sort=far')).sort).toBeNull();
+  });
+
+  it('drops pin_error from every link', () => {
+    const state = readListingState(
+      new URL('https://rasika.life/events/this-weekend?pin_error=unknown-pin'),
+      'this-weekend'
+    );
+    expect(listingHref({ kind: 'all' }, state)).toBe('/events/this-weekend');
+  });
+});
+
+describe('sortByDistance', () => {
+  it('puts the nearest first and events with no distance last, in date order', () => {
+    const events = [
+      { id: 'a' },
+      { id: 'b', distanceKm: 12 },
+      { id: 'c', distanceKm: 3 },
+      { id: 'd' },
+      { id: 'e', distanceKm: 3 },
+    ];
+    expect(sortByDistance(events).map(e => e.id)).toEqual(['c', 'e', 'b', 'a', 'd']);
+  });
+});
+
+describe('groupConsecutiveByDate', () => {
+  it('starts a new header whenever the day changes, keeping the order given', () => {
+    const groups = groupConsecutiveByDate([
+      { id: 'near-sat', startDateTime: '2026-10-24T18:00:00+05:30' },
+      { id: 'near-sat-2', startDateTime: '2026-10-24T19:00:00+05:30' },
+      { id: 'sun', startDateTime: '2026-10-25T18:00:00+05:30' },
+      { id: 'far-sat', startDateTime: '2026-10-24T10:00:00+05:30' },
+    ]);
+    expect(groups.map(g => [g.date, g.events.map(e => e.id)])).toEqual([
+      ['2026-10-24', ['near-sat', 'near-sat-2']],
+      ['2026-10-25', ['sun']],
+      ['2026-10-24', ['far-sat']],
+    ]);
+  });
+});
+
+describe('rangeDates', () => {
+  const range = (when: string) => {
+    const r = resolveDateRange(when, FRIDAY);
+    if (!r) throw new Error(`unreadable: ${when}`);
+    return r;
+  };
+
+  it('names the days a preset covers, and nothing for a month or a day', () => {
+    expect(rangeDates(range('weekend'))).toBe(
+      'Sat, 24 Oct – Sun, 25 Oct'
+    );
+    expect(rangeDates(range('today'))).toBe('Fri, 23 Oct');
+    expect(rangeDates(range('2026-11'))).toBeUndefined();
   });
 });

@@ -3,7 +3,7 @@ import { data, useLoaderData } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
-import { EventCard } from '~/components/EventCard';
+import { EventList } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/structured-data';
 import { eventListItems } from '~/lib/structured-data';
@@ -98,11 +98,7 @@ export default function ArtFormEvents() {
         <EmptyState message={`No upcoming ${label.toLowerCase()} events at the moment.`} />
       ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {events.map(event => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          <EventList events={events} className="max-w-3xl" />
 
           <div className="mt-8">
             <EntityPagination

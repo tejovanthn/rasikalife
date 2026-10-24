@@ -1,4 +1,3 @@
-import { Calendar } from 'lucide-react';
 import { type HeadersFunction, type LoaderFunction, type MetaFunction, data } from 'react-router';
 import { Link, useLoaderData, useParams, useSearchParams } from 'react-router';
 // Unauthenticated client: this subroute renders only public event data and no per-viewer
@@ -7,8 +6,7 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
-import { Badge } from '~/components/ui/badge';
-import { Card, CardContent } from '~/components/ui/card';
+import { roleLabel } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateArtistUrl, generateEventUrl, parseSlug } from '~/lib/url-slug';
@@ -111,29 +109,25 @@ export const loader: LoaderFunction = async ({ params, request }) => {
   }
 };
 
+/** One credit as a hairline row: date first, then the concert and what this artist did in it. */
 function EventCard({ event }: { event: ArtistEvent }) {
   return (
-    <Link to={generateEventUrl(event.eventTitle, event.eventId)} className="block no-underline">
-      <Card className="hover:border-primary/50 transition-colors">
-        <CardContent className="py-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="font-medium text-foreground">{event.eventTitle}</p>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                <span className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  {formatEventDate(event.eventStartDateTime)}
-                </span>
-              </div>
-            </div>
-            {event.role && (
-              <Badge variant="outline" className="text-xs flex-shrink-0">
-                {event.role}
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    <Link
+      to={generateEventUrl(event.eventTitle, event.eventId)}
+      className="flex gap-3 rounded-sm px-2 py-3 no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+    >
+      <time
+        dateTime={event.eventStartDateTime}
+        className="w-[4.5rem] shrink-0 text-sm font-semibold tabular-nums text-foreground"
+      >
+        {formatEventDate(event.eventStartDateTime)}
+      </time>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium leading-snug text-foreground line-clamp-2">{event.eventTitle}</p>
+        {event.role && (
+          <p className="mt-0.5 text-sm text-muted-foreground">{roleLabel(event.role)}</p>
+        )}
+      </div>
     </Link>
   );
 }
@@ -177,11 +171,13 @@ export default function ArtistEvents() {
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 Upcoming
               </h2>
-              <div className="space-y-3">
+              <ul className="divide-y divide-border">
                 {upcoming.map(event => (
-                  <EventCard key={event.eventId} event={event} />
+                  <li key={event.eventId}>
+                    <EventCard event={event} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
 
@@ -190,11 +186,13 @@ export default function ArtistEvents() {
               <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                 Past
               </h2>
-              <div className="space-y-3">
+              <ul className="divide-y divide-border">
                 {events.map(event => (
-                  <EventCard key={event.eventId} event={event} />
+                  <li key={event.eventId}>
+                    <EventCard event={event} />
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
 

@@ -40,6 +40,15 @@ export function HomeLocationForm({ redirectTo, error }: { redirectTo: string; er
   const message = error ?? deviceError;
   const errorId = `${inputId}-error`;
 
+  // A saved-PIN error arrives with a fresh page (the listing redirects back with it), so
+  // nothing tells a screen reader it is there. Focus goes to the PIN field, which reads out
+  // the error through aria-describedby; the message itself is then not a live region, or it
+  // would be read twice. The device error happens in place and is announced instead.
+  const pinInput = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (error) pinInput.current?.focus();
+  }, [error]);
+
   return (
     <div className="space-y-2">
       <Form method="post" action="/settings/location" className="flex gap-2 items-end">
@@ -48,6 +57,7 @@ export function HomeLocationForm({ redirectTo, error }: { redirectTo: string; er
         <div className="flex-1 space-y-1">
           <Label htmlFor={inputId}>PIN code</Label>
           <Input
+            ref={pinInput}
             id={inputId}
             name="pin"
             inputMode="numeric"
@@ -82,9 +92,11 @@ export function HomeLocationForm({ redirectTo, error }: { redirectTo: string; er
         </Form>
       )}
       {message && (
-        <output id={errorId} className="block text-sm text-destructive">
+        // A <p>, not <output>: <output> is a live region of its own and would read the
+        // saved-PIN error a second time.
+        <p id={errorId} role={error ? undefined : 'alert'} className="text-sm text-destructive">
           {message}
-        </output>
+        </p>
       )}
     </div>
   );

@@ -6,6 +6,23 @@ import { Button } from '~/components/ui/button';
 import { requireUser } from '~/lib/auth.server';
 import { safeRedirectPath } from '~/lib/safe-redirect';
 
+const SETTINGS_PATH = '/settings/location';
+
+/**
+ * `path` with `pin_error` set, or taken out when `reason` is null. The form also sits on the
+ * event listings, and a failed save there has to land back on the listing with the reason,
+ * not strand the reader on a settings page they never opened. The existing query and hash
+ * are kept, so the listing's filters survive.
+ */
+function withPinError(path: string, reason: string | null): string {
+  const url = new URL(path, 'https://rasika.life');
+  if (reason) url.searchParams.set('pin_error', reason);
+  else url.searchParams.delete('pin_error');
+  // Parsing normalises the path, and `/.//evil.example` comes out as `//evil.example`, so the
+  // result is checked again rather than trusted because its input was.
+  return safeRedirectPath(`${url.pathname}${url.search}${url.hash}`) ?? SETTINGS_PATH;
+}
+
 export const meta: MetaFunction = () => [{ title: 'Location Settings - Rasika.life' }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -34,10 +51,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         })
       : await serverClient.user.setHomeLocation.mutate({ pin: String(form.get('pin') ?? '') });
 
+  const fromListing =
+    back !== null && new URL(back, 'https://rasika.life').pathname !== SETTINGS_PATH;
   if (!result.ok) {
+    if (fromListing) return redirect(withPinError(back, result.reason));
     return data({ error: HOME_LOCATION_ERRORS[result.reason] }, { status: 400 });
   }
-  return redirect(back ?? '/settings/location');
+  // A retry that succeeds must not carry the last failure's message back with it.
+  return redirect(fromListing ? withPinError(back, null) : SETTINGS_PATH);
 };
 
 export default function SettingsLocation() {

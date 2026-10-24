@@ -5,7 +5,7 @@ import type { LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
-import { EventCard } from '~/components/EventCard';
+import { EventList } from '~/components/EventCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -367,22 +367,14 @@ export default function VenueDetailPage() {
         ) : (
           <>
             {upcomingEvents.length > 0 && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {upcomingEvents.map(event => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
+              <EventList events={upcomingEvents} />
             )}
             {pastEvents.length > 0 && (
               <>
                 <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">
                   {upcomingEvents.length > 0 ? 'Past events' : 'Past events at this venue'}
                 </h3>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {pastEvents.map(event => (
-                    <EventCard key={event.id} event={event} />
-                  ))}
-                </div>
+                <EventList events={pastEvents} />
               </>
             )}
           </>

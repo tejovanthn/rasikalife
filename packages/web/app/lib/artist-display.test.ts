@@ -4,6 +4,7 @@ import {
   artistMetaTitle,
   artistTagline,
   castLine,
+  roleLabel,
   parseInstruments,
 } from './artist-display';
 
@@ -176,5 +177,19 @@ describe('castLine', () => {
     );
     // At or under the cap nothing is counted.
     expect(castLine(cast.slice(0, 4), { max: 4 })).not.toContain('more');
+  });
+});
+
+describe('roleLabel', () => {
+  it('turns a stored credit into lowercase words', () => {
+    expect(roleLabel('chief-guest')).toBe('chief guest');
+    expect(roleLabel('guest_of_honour')).toBe('guest of honour');
+    expect(roleLabel(' Vocal ')).toBe('vocal');
+    expect(roleLabel('main  -  vocal')).toBe('main vocal');
+    expect(roleLabel('')).toBe('');
+  });
+
+  it('is what castLine prints in the bracket', () => {
+    expect(castLine([{ name: 'A', role: 'Chief-Guest' }])).toBe('A (chief guest)');
   });
 });

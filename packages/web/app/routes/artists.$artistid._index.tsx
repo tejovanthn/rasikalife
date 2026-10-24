@@ -36,7 +36,7 @@ import {
 } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
 import { affiliationPeriod } from '~/lib/affiliation-display';
-import { artistTagline, parseInstruments } from '~/lib/artist-display';
+import { artistTagline, parseInstruments, roleLabel } from '~/lib/artist-display';
 import { artistMetaDescription, artistMetaTitle } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -447,48 +447,36 @@ function EventCard({
   role?: string;
   posterUrl?: string;
 }) {
-  // A card here, not the hairline row this replaced. The row was right when it carried a date
-  // and a title and nothing else: a bordered box around three words is furniture. A poster is
-  // real content, and on a page whose only other image is one portrait it is most of the
-  // visual weight the profile has.
-  //
-  // Posters are portrait, so the thumbnail is 3:4 and fixed-width; an event with no poster
-  // gets a date block in the same footprint rather than a ragged card, so a mixed row still
-  // lines up.
+  // A row, like every other list of events on the site (`EventCard`): the date leads, the
+  // title and the artist's own credit follow, and the poster sits small on the right. This was
+  // a bordered card once, for the poster's sake; a portrait thumbnail anchored at the top keeps
+  // the flyer's head visible without boxing every concert. An event with no poster simply has
+  // no thumbnail; the date column already lines the rows up.
   return (
     <Link
       to={generateEventUrl(eventTitle, eventId)}
-      className="group flex gap-3 rounded-lg border p-3 no-underline transition-colors hover:border-primary/50"
+      className="flex gap-3 rounded-sm px-2 py-3 no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
-      {posterUrl ? (
+      <time
+        dateTime={eventStartDateTime}
+        className="w-[4.5rem] shrink-0 text-sm font-semibold tabular-nums text-foreground"
+      >
+        {formatEventDate(eventStartDateTime)}
+      </time>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium leading-snug text-foreground line-clamp-2">{eventTitle}</p>
+        {role && <p className="mt-0.5 text-sm text-muted-foreground">{roleLabel(role)}</p>}
+      </div>
+      {posterUrl && (
         <img
           src={posterUrl}
           alt=""
           loading="lazy"
-          className="h-24 w-[4.5rem] shrink-0 rounded object-cover"
+          width={64}
+          height={88}
+          className="h-[88px] w-16 shrink-0 rounded-md bg-muted object-cover object-top"
         />
-      ) : (
-        <div
-          aria-hidden="true"
-          className="flex h-24 w-[4.5rem] shrink-0 flex-col items-center justify-center rounded bg-muted text-muted-foreground"
-        >
-          <span className="text-xl font-semibold tabular-nums leading-none">
-            {new Date(eventStartDateTime).getUTCDate()}
-          </span>
-          <span className="mt-1 text-[0.65rem] uppercase tracking-wide">
-            {formatEventDate(eventStartDateTime).split(' ')[1] ?? ''}
-          </span>
-        </div>
       )}
-      <div className="flex min-w-0 flex-col justify-center">
-        <time dateTime={eventStartDateTime} className="text-xs tabular-nums text-muted-foreground">
-          {formatEventDate(eventStartDateTime)}
-        </time>
-        <p className="mt-0.5 font-medium leading-snug text-foreground group-hover:underline">
-          {eventTitle}
-        </p>
-        {role && <p className="mt-1 text-xs text-muted-foreground">{role}</p>}
-      </div>
     </Link>
   );
 }
@@ -1137,18 +1125,19 @@ export default function ArtistDetails() {
                   <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                     Upcoming
                   </h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <ul className="divide-y divide-border">
                     {upcomingEvents.map(event => (
-                      <EventCard
-                        key={event.eventId}
-                        eventId={event.eventId}
-                        eventTitle={event.eventTitle}
-                        eventStartDateTime={event.eventStartDateTime}
-                        role={event.role}
-                        posterUrl={postersByEventId[event.eventId]}
-                      />
+                      <li key={event.eventId}>
+                        <EventCard
+                          eventId={event.eventId}
+                          eventTitle={event.eventTitle}
+                          eventStartDateTime={event.eventStartDateTime}
+                          role={event.role}
+                          posterUrl={postersByEventId[event.eventId]}
+                        />
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
@@ -1157,18 +1146,19 @@ export default function ArtistDetails() {
                   <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                     Notable performances
                   </h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <ul className="divide-y divide-border">
                     {notable.map(f => (
-                      <EventCard
-                        key={f.eventId}
-                        eventId={f.eventId}
-                        eventTitle={f.eventTitle}
-                        eventStartDateTime={f.eventStartDateTime}
-                        role={f.role}
-                        posterUrl={postersByEventId[f.eventId]}
-                      />
+                      <li key={f.eventId}>
+                        <EventCard
+                          eventId={f.eventId}
+                          eventTitle={f.eventTitle}
+                          eventStartDateTime={f.eventStartDateTime}
+                          role={f.role}
+                          posterUrl={postersByEventId[f.eventId]}
+                        />
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
@@ -1177,22 +1167,23 @@ export default function ArtistDetails() {
                   <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                     Recent
                   </h3>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <ul className="divide-y divide-border">
                     {recentEvents.map(event => (
-                      <EventCard
-                        key={event.eventId}
-                        eventId={event.eventId}
-                        eventTitle={event.eventTitle}
-                        eventStartDateTime={event.eventStartDateTime}
-                        role={event.role}
-                        posterUrl={postersByEventId[event.eventId]}
-                      />
+                      <li key={event.eventId}>
+                        <EventCard
+                          eventId={event.eventId}
+                          eventTitle={event.eventTitle}
+                          eventStartDateTime={event.eventStartDateTime}
+                          role={event.role}
+                          posterUrl={postersByEventId[event.eventId]}
+                        />
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
-              <Link to={`${artistUrl}/events`} className="mt-4 inline-block text-sm text-primary">
+              <Link to={`${artistUrl}/events`} className="mt-2 inline-flex min-h-11 items-center text-sm text-primary md:min-h-0">
                 View all events &rarr;
               </Link>
             </section>

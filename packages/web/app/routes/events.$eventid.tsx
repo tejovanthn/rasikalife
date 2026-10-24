@@ -19,7 +19,7 @@ import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router'
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
-import { EventCard } from '~/components/EventCard';
+import { EventList } from '~/components/EventCard';
 import { PosterImage } from '~/components/PosterImage';
 import { EventTime } from '~/components/events/event-time';
 import { BreadcrumbStructuredData, EventStructuredData } from '~/components/structured-data';
@@ -1182,16 +1182,12 @@ export default function EventDetail() {
             <h2 className="text-base font-semibold">More events at {event.venueName}</h2>
             <Link
               to={generateVenueUrl(event.venueName, event.venueId)}
-              className="text-sm text-primary"
+              className="inline-flex min-h-11 items-center text-sm text-primary md:min-h-0"
             >
               View venue
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedVenueEvents.map(e => (
-              <EventCard key={e.id} event={e} />
-            ))}
-          </div>
+          <EventList events={relatedVenueEvents} />
         </section>
       )}
 
@@ -1202,16 +1198,12 @@ export default function EventDetail() {
             <h2 className="text-base font-semibold">More events by {event.organiserName}</h2>
             <Link
               to={generateOrganiserUrl(event.organiserName, event.organiserId)}
-              className="text-sm text-primary"
+              className="inline-flex min-h-11 items-center text-sm text-primary md:min-h-0"
             >
               View organiser
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedOrganiserEvents.map(e => (
-              <EventCard key={e.id} event={e} />
-            ))}
-          </div>
+          <EventList events={relatedOrganiserEvents} />
         </section>
       )}
 

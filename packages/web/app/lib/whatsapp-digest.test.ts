@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatWhatsAppDigest, whatsAppShareUrl } from './whatsapp-digest';
+import {
+  WHATSAPP_URL_LIMIT,
+  digestHeading,
+  formatWhatsAppDigest,
+  whatsAppOpenLink,
+  whatsAppShareUrl,
+} from './whatsapp-digest';
 import type { DigestEvent } from './whatsapp-digest';
 
 const base = {
@@ -34,7 +40,7 @@ describe('formatWhatsAppDigest', () => {
         '*Sunil Gargyan - Carnatic Vocal*',
         'Vid. Sunil Gargyan (vocal), Keshav Mohankumar (violin)',
         '📍 Sri Sringeri Shankara Math',
-        '🕕 6:30 pm · Ticketed',
+        '⏰ 6:30 pm · Ticketed',
         '🎟 https://example.com/tickets',
         '',
         `More on Rasika.life: https://rasika.life/bengaluru/concerts/this-weekend?${UTM}&utm_content=listing`,
@@ -49,8 +55,22 @@ describe('formatWhatsAppDigest', () => {
     );
     expect(text).toContain('*Sunil Gargyan, Keshav Mohankumar*');
     expect(text).not.toContain('(violin)');
-    expect(text).toContain('🕕 6:30 pm · Free');
+    expect(text).toContain('⏰ 6:30 pm · Free');
     expect(text).not.toContain('🎟');
+  });
+
+  it('prints each name once when the performers lead and the cast line is on', () => {
+    const text = formatWhatsAppDigest([{ ...concert, title: 'Carnatic Music Concert' }], base);
+    expect(text).toContain('*Vid. Sunil Gargyan (vocal), Keshav Mohankumar (violin)*\n📍');
+    expect(text.match(/Keshav Mohankumar/g)).toHaveLength(1);
+  });
+
+  it('writes a stored role slug as words', () => {
+    const text = formatWhatsAppDigest(
+      [{ ...concert, artists: [{ name: 'R. K. Hegde', role: 'chief-guest' }] }],
+      base
+    );
+    expect(text).toContain('R. K. Hegde (chief guest)');
   });
 
   it('adds a link per event only when asked', () => {
@@ -81,7 +101,7 @@ describe('formatWhatsAppDigest', () => {
       [{ ...concert, startDateTime: '2026-10-25T02:30:00Z', timezone: 'America/Los_Angeles' }],
       base
     );
-    expect(text).toContain('🕕 7:30 pm PDT · Ticketed');
+    expect(text).toContain('⏰ 7:30 pm PDT · Ticketed');
     expect(formatWhatsAppDigest([concert], base)).not.toContain('IST');
   });
 
@@ -98,5 +118,90 @@ describe('formatWhatsAppDigest', () => {
 describe('whatsAppShareUrl', () => {
   it('encodes the text', () => {
     expect(whatsAppShareUrl('a b\n*c*')).toBe('https://wa.me/?text=a%20b%0A*c*');
+  });
+});
+
+describe('digestHeading', () => {
+  it('names the actual dates beside a relative range', () => {
+    expect(
+      digestHeading({
+        cityName: 'Bengaluru',
+        range: { from: '2026-10-24', to: '2026-10-25', label: 'This weekend' },
+      })
+    ).toBe('Concerts in Bengaluru · This weekend, Sat, 24 Oct – Sun, 25 Oct');
+  });
+
+  it('shows one date for a single day, and says free when filtered', () => {
+    expect(
+      digestHeading({
+        cityName: 'Bengaluru',
+        range: { from: '2026-10-24', to: '2026-10-24', label: 'Today' },
+        free: true,
+      })
+    ).toBe('Free concerts in Bengaluru · Today, Sat, 24 Oct');
+  });
+
+  it('does not repeat a label that is already a date', () => {
+    expect(
+      digestHeading({ range: { from: '2026-10-01', to: '2026-10-31', label: 'October 2026' } })
+    ).toBe('Concerts · October 2026');
+  });
+
+  it('falls back to upcoming when there is no range', () => {
+    expect(digestHeading({})).toBe('Upcoming concerts');
+    expect(digestHeading({ cityName: 'Chennai', free: true, range: null })).toBe(
+      'Upcoming free concerts in Chennai'
+    );
+  });
+
+  it('never uses an em dash', () => {
+    expect(
+      digestHeading({ range: { from: '2026-10-24', to: '2026-10-25', label: 'This weekend' } })
+    ).not.toContain('—');
+  });
+});
+
+describe('whatsAppOpenLink', () => {
+  const many = (n: number) =>
+    formatWhatsAppDigest(
+      Array.from({ length: n }, (_, i) => ({
+        ...concert,
+        id: `e${i}`,
+        startDateTime: `2026-10-${String(10 + (i % 15)).padStart(2, '0')}T13:00:00Z`,
+      })),
+      base
+    );
+
+  it('opens the whole text when it fits', () => {
+    const text = many(2);
+    expect(whatsAppOpenLink(text)).toEqual({ url: whatsAppShareUrl(text), shortened: false });
+  });
+
+  it('drops events from the end and counts them in the footer when it does not', () => {
+    const text = many(30);
+    expect(whatsAppShareUrl(text).length).toBeGreaterThan(WHATSAPP_URL_LIMIT);
+    const link = whatsAppOpenLink(text);
+    expect(link?.shortened).toBe(true);
+    expect(link?.url.length).toBeLessThanOrEqual(WHATSAPP_URL_LIMIT);
+    const short = decodeURIComponent(link?.url.replace('https://wa.me/?text=', '') ?? '');
+    const kept = short.match(/Sunil Gargyan - Carnatic Vocal/g)?.length ?? 0;
+    expect(kept).toBeGreaterThan(0);
+    expect(short).toContain(`…and ${30 - kept} more: https://rasika.life/bengaluru`);
+    // No day header is left with nothing under it.
+    expect(short).not.toMatch(/──\n\n…and/);
+  });
+
+  it('adds to a count the digest already had', () => {
+    const events = Array.from({ length: 40 }, (_, i) => ({ ...concert, id: `e${i}` }));
+    const text = formatWhatsAppDigest(events, base);
+    const short = decodeURIComponent(
+      whatsAppOpenLink(text)?.url.replace('https://wa.me/?text=', '') ?? ''
+    );
+    const kept = short.match(/Sunil Gargyan - Carnatic Vocal/g)?.length ?? 0;
+    expect(short).toContain(`…and ${40 - kept} more:`);
+  });
+
+  it('gives up when not even one event fits', () => {
+    expect(whatsAppOpenLink(many(3), 200)).toBeNull();
   });
 });

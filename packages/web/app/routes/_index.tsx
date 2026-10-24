@@ -5,7 +5,7 @@ import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
 import { CompositionCard } from '~/components/CompositionCard';
-import { EventCard } from '~/components/EventCard';
+import { EventList } from '~/components/EventCard';
 import { SectionHeader } from '~/components/shared';
 import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
 
@@ -142,11 +142,9 @@ export default function HomePage() {
       {upcomingEvents.length > 0 && (
         <section className="mb-14">
           <SectionHeader title="Upcoming Events" viewAllPath="/events" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingEvents.map((event, i) => (
-              <EventCard key={event.id} event={event} priority={i === 0} />
-            ))}
-          </div>
+          {/* A column of rows, held to a reading width: a row stretched across the whole page
+              puts the time and the poster a screen apart. */}
+          <EventList events={upcomingEvents} priorityFirst className="max-w-3xl" />
         </section>
       )}
 
