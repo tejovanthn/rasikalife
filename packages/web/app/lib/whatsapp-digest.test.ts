@@ -43,6 +43,7 @@ describe('formatWhatsAppDigest', () => {
         '📍 Sri Sringeri Shankara Math',
         '⏰ 6:30 pm · Ticketed',
         '🎟 https://example.com/tickets',
+        `https://rasika.life/events/e1?${UTM}&utm_content=event`,
         '',
         `More on Rasika.life: https://rasika.life/bengaluru/concerts/this-weekend?${UTM}&utm_content=listing`,
       ].join('\n')
@@ -74,11 +75,11 @@ describe('formatWhatsAppDigest', () => {
     expect(text).toContain('R. K. Hegde (chief guest)');
   });
 
-  it('adds a link per event only when asked', () => {
-    expect(formatWhatsAppDigest([concert], base)).not.toContain('/events/e1');
-    expect(formatWhatsAppDigest([concert], { ...base, links: true })).toContain(
+  it('adds a link per event unless turned off', () => {
+    expect(formatWhatsAppDigest([concert], base)).toContain(
       `https://rasika.life/events/e1?${UTM}&utm_content=event`
     );
+    expect(formatWhatsAppDigest([concert], { ...base, links: false })).not.toContain('/events/e1');
   });
 
   it('strips WhatsApp markup out of stored text', () => {
@@ -121,8 +122,8 @@ describe('short links', () => {
   const event = `https://rasika.life/events/e1?${UTM}&utm_content=event`;
 
   it('lists the tagged links the text will hold', () => {
-    expect(digestLinks([concert], base)).toEqual([listing]);
-    expect(digestLinks([concert], { ...base, links: true })).toEqual([listing, event]);
+    expect(digestLinks([concert], base)).toEqual([listing, event]);
+    expect(digestLinks([concert], { ...base, links: false })).toEqual([listing]);
   });
 
   it('prints a short link where one is known and the full link otherwise', () => {

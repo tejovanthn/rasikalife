@@ -409,8 +409,8 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
                 },
                 {
                   label: 'Link to each event',
-                  on: Boolean(state.links),
-                  href: href({ links: !state.links }),
+                  on: state.links !== false,
+                  href: href({ links: state.links === false }),
                 },
               ]}
             />

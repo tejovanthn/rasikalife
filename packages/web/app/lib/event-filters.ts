@@ -235,7 +235,7 @@ export interface ListingState {
   view?: 'whatsapp' | null;
   /** WhatsApp text: performers line. On unless `false`. */
   cast?: boolean;
-  /** WhatsApp text: a link per event. */
+  /** WhatsApp text: a short link per event. On unless `false`. */
   links?: boolean;
   /** "Nearest first", offered only to a reader with a saved home location. */
   sort?: 'near' | null;
@@ -275,7 +275,7 @@ export function listingHref(scope: ListingScope, state: ListingState): string {
   if (state.view === 'whatsapp') {
     query.set('view', 'whatsapp');
     if (state.cast === false) query.set('cast', '0');
-    if (state.links) query.set('links', '1');
+    if (state.links === false) query.set('links', '0');
   }
   if (state.cal) query.set('cal', state.cal);
   const qs = query.toString();
@@ -294,7 +294,7 @@ export function readListingState(url: URL, presetSegment?: string): ListingState
     free: p.get('free') === '1',
     view: p.get('view') === 'whatsapp' ? 'whatsapp' : null,
     cast: p.get('cast') !== '0',
-    links: p.get('links') === '1',
+    links: p.get('links') !== '0',
     sort: p.get('sort') === 'near' ? 'near' : null,
     cal: MONTH.test(p.get('cal') ?? '') ? p.get('cal') : null,
   };

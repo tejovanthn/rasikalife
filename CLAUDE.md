@@ -1299,7 +1299,8 @@ compiles them and the app does not load Faust.
   outlives the day it was written. "Open in WhatsApp" is a plain `wa.me` link, shortened or hidden
   past ~3500 encoded characters (`whatsAppOpenLink`), since long `?text=` links fail on some
   Android builds; Copy always has the whole list. It stops at 30 events and ends with the
-  listing's own URL. Every rasika.life link in it carries `utm_source=whatsapp&utm_medium=social`,
+  listing's own URL. Each event carries its own short link unless `links=0`; it was off while
+  the links were full length, because they doubled the text. Every rasika.life link in it carries `utm_source=whatsapp&utm_medium=social`,
   `utm_campaign` (`listing_share`/`festival_share`) and `utm_content` (`listing`/`event`); ticket
   links are left alone. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
 - **rasika.life links in the text are short: `rasika.life/l/<code>`** (`ShortLink` domain,

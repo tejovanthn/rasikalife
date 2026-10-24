@@ -165,10 +165,10 @@ describe('listingHref', () => {
   });
 
   it('carries the WhatsApp options only in the WhatsApp view', () => {
-    expect(listingHref({ kind: 'all' }, { view: 'whatsapp', cast: false, links: true })).toBe(
-      '/events?view=whatsapp&cast=0&links=1'
+    expect(listingHref({ kind: 'all' }, { view: 'whatsapp', cast: false, links: false })).toBe(
+      '/events?view=whatsapp&cast=0&links=0'
     );
-    expect(listingHref({ kind: 'all' }, { cast: false, links: true })).toBe('/events');
+    expect(listingHref({ kind: 'all' }, { cast: false, links: false })).toBe('/events');
   });
 
   it('round-trips through readListingState', () => {
@@ -181,7 +181,7 @@ describe('listingHref', () => {
       free: true,
       view: 'whatsapp',
       cast: false,
-      links: false,
+      links: true,
       sort: null,
       cal: null,
     });

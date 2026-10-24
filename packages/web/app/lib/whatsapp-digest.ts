@@ -37,7 +37,10 @@ export interface DigestOptions {
   eventUrl: (event: DigestEvent) => string;
   /** One line naming every performer and instrument. On by default. */
   cast?: boolean;
-  /** A rasika.life link under each event. Off by default: it doubles the length. */
+  /**
+   * A rasika.life link under each event. On by default: with short `/l/` links it adds about
+   * 30 characters an event, where the full tagged URL had doubled the text.
+   */
   links?: boolean;
   /** Past this many events the text stops and points at the listing. */
   max?: number;
@@ -76,7 +79,7 @@ function siteLink(url: string, content: 'listing' | 'event', opts: DigestOptions
  */
 export function digestLinks(events: DigestEvent[], opts: DigestOptions): string[] {
   const links = [withUtm(opts.listingUrl, opts.campaign, 'listing')];
-  if (opts.links) {
+  if (opts.links !== false) {
     for (const event of events.slice(0, opts.max ?? DIGEST_MAX_EVENTS)) {
       links.push(withUtm(opts.eventUrl(event), opts.campaign, 'event'));
     }
@@ -163,7 +166,7 @@ function eventBlock(event: DigestEvent, opts: DigestOptions): string[] {
   if (event.entryType === 'ticketed' && ticketUrl && /^https?:\/\//.test(ticketUrl)) {
     lines.push(`🎟 ${ticketUrl}`);
   }
-  if (opts.links) lines.push(siteLink(opts.eventUrl(event), 'event', opts));
+  if (opts.links !== false) lines.push(siteLink(opts.eventUrl(event), 'event', opts));
   return lines;
 }
 
