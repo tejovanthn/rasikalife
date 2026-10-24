@@ -23,6 +23,7 @@ export * as Venue from './domain/venue';
 export * as Organiser from './domain/organiser';
 export * as SocialPost from './domain/social-post';
 export * as Rsvp from './domain/rsvp';
+export * as ShortLink from './domain/short-link';
 export * as ConcertLog from './domain/concert-log';
 export * as ConcertLogItem from './domain/concert-log-item';
 export * as EventSetlist from './domain/event-setlist';

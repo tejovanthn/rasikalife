@@ -24,8 +24,14 @@ import {
 import { eventDateKey, formatDayLabel, groupByEventDate } from '~/lib/event-time';
 import { isGenericTitle } from '~/lib/generic-title';
 import { cacheUntilMidnight } from '~/lib/page-cache';
+import { shortLinksFor } from '~/lib/short-links.server';
 import { generateEventUrl } from '~/lib/url-slug';
-import { digestHeading, formatWhatsAppDigest } from '~/lib/whatsapp-digest';
+import {
+  type DigestOptions,
+  digestHeading,
+  digestLinks,
+  formatWhatsAppDigest,
+} from '~/lib/whatsapp-digest';
 
 /**
  * Everything `/events` and `/<city>/concerts[/<preset>]` render, from one load of every
@@ -195,13 +201,17 @@ export async function loadEventListing(
   };
 
   if (state.view === 'whatsapp') {
-    data.digest = formatWhatsAppDigest(shown, {
+    const digestOptions: DigestOptions = {
       heading: digestHeading({ cityName, range, free: state.free }),
       listingUrl: `${ORIGIN}${listingHref(scope, { when: state.when, free: state.free })}`,
       eventUrl: e => `${ORIGIN}${generateEventUrl(e.title, e.id)}`,
       cast: state.cast,
       links: state.links,
       campaign: 'listing_share',
+    };
+    data.digest = formatWhatsAppDigest(shown, {
+      ...digestOptions,
+      shortLinks: await shortLinksFor(digestLinks(shown, digestOptions)),
     });
   }
 

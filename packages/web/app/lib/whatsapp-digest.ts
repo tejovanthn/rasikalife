@@ -43,6 +43,11 @@ export interface DigestOptions {
   max?: number;
   /** `utm_campaign` on every rasika.life link in the text: `listing_share`, `festival_share`. */
   campaign: string;
+  /**
+   * Short `/l/` links by the tagged URL they stand for (`digestLinks` lists those). A link
+   * without one is printed in full, so a failed lookup costs length, never a link.
+   */
+  shortLinks?: Record<string, string>;
 }
 
 /**
@@ -57,6 +62,26 @@ export function withUtm(url: string, campaign: string, content: 'listing' | 'eve
   parsed.searchParams.set('utm_campaign', campaign);
   parsed.searchParams.set('utm_content', content);
   return parsed.toString();
+}
+
+/** A rasika.life link as printed: tagged, then shortened when a short link is known. */
+function siteLink(url: string, content: 'listing' | 'event', opts: DigestOptions): string {
+  const tagged = withUtm(url, opts.campaign, content);
+  return opts.shortLinks?.[tagged] ?? tagged;
+}
+
+/**
+ * Every rasika.life link the text will hold, tagged, in the form `shortLinks` is keyed by.
+ * The loader shortens these first and then builds the text.
+ */
+export function digestLinks(events: DigestEvent[], opts: DigestOptions): string[] {
+  const links = [withUtm(opts.listingUrl, opts.campaign, 'listing')];
+  if (opts.links) {
+    for (const event of events.slice(0, opts.max ?? DIGEST_MAX_EVENTS)) {
+      links.push(withUtm(opts.eventUrl(event), opts.campaign, 'event'));
+    }
+  }
+  return links;
 }
 
 export const DIGEST_MAX_EVENTS = 30;
@@ -138,7 +163,7 @@ function eventBlock(event: DigestEvent, opts: DigestOptions): string[] {
   if (event.entryType === 'ticketed' && ticketUrl && /^https?:\/\//.test(ticketUrl)) {
     lines.push(`🎟 ${ticketUrl}`);
   }
-  if (opts.links) lines.push(withUtm(opts.eventUrl(event), opts.campaign, 'event'));
+  if (opts.links) lines.push(siteLink(opts.eventUrl(event), 'event', opts));
   return lines;
 }
 
@@ -159,7 +184,7 @@ export function formatWhatsAppDigest(events: DigestEvent[], opts: DigestOptions)
   }
 
   const rest = events.length - shown.length;
-  const listingUrl = withUtm(opts.listingUrl, opts.campaign, 'listing');
+  const listingUrl = siteLink(opts.listingUrl, 'listing', opts);
   out.push(
     '',
     rest > 0 ? `…and ${rest} more: ${listingUrl}` : `More on Rasika.life: ${listingUrl}`

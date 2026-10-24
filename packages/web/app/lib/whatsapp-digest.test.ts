@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   WHATSAPP_URL_LIMIT,
   digestHeading,
+  digestLinks,
   formatWhatsAppDigest,
   whatsAppOpenLink,
   whatsAppShareUrl,
@@ -112,6 +113,37 @@ describe('formatWhatsAppDigest', () => {
   it('never prints a ticket link that is not a web address', () => {
     const text = formatWhatsAppDigest([{ ...concert, ticketing: { url: 'call 98450' } }], base);
     expect(text).not.toContain('🎟');
+  });
+});
+
+describe('short links', () => {
+  const listing = `https://rasika.life/bengaluru/concerts/this-weekend?${UTM}&utm_content=listing`;
+  const event = `https://rasika.life/events/e1?${UTM}&utm_content=event`;
+
+  it('lists the tagged links the text will hold', () => {
+    expect(digestLinks([concert], base)).toEqual([listing]);
+    expect(digestLinks([concert], { ...base, links: true })).toEqual([listing, event]);
+  });
+
+  it('prints a short link where one is known and the full link otherwise', () => {
+    const text = formatWhatsAppDigest([concert], {
+      ...base,
+      links: true,
+      shortLinks: { [listing]: 'https://rasika.life/l/abc1234' },
+    });
+    expect(text).toContain('More on Rasika.life: https://rasika.life/l/abc1234');
+    expect(text).toContain(event);
+    expect(text).not.toContain(listing);
+  });
+
+  it('still lets Open in WhatsApp find the listing link to shorten towards', () => {
+    const text = formatWhatsAppDigest(Array(30).fill(concert), {
+      ...base,
+      shortLinks: { [listing]: 'https://rasika.life/l/abc1234' },
+    });
+    const open = whatsAppOpenLink(text, 1500);
+    expect(open?.shortened).toBe(true);
+    expect(decodeURIComponent(open?.url ?? '')).toContain('more: https://rasika.life/l/abc1234');
   });
 });
 

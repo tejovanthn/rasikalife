@@ -3,10 +3,11 @@ import { invalidateSiteCache } from '@rasika/core/site-cache';
 /**
  * Routers whose writes never change a page on rasika.life. `classes` serves
  * classes.rasika.life, which caches nothing; `concertLog` is the signed-in reader's own
- * "my concerts"; `user` holds preferences and roles. `rsvp` is not here: the event page shows
- * the count.
+ * "my concerts"; `user` holds preferences and roles; `shortLink` adds `/l/` redirects, which
+ * no page shows, and is called while a page renders, so clearing on it would empty the cache
+ * from inside a cache miss. `rsvp` is not here: the event page shows the count.
  */
-const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user']);
+const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink']);
 
 /** Whether a finished call may have changed a public page, so the CDN copy must go. */
 export function changesPublicPage(type: string, path: string, ok: boolean): boolean {

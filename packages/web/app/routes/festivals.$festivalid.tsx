@@ -16,13 +16,14 @@ import { Card, CardContent } from '~/components/ui/card';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { eventZone, groupByEventDate } from '~/lib/event-time';
+import { shortLinksFor } from '~/lib/short-links.server';
 import {
   generateEventUrl,
   generateFestivalUrl,
   generateOrganiserUrl,
   parseSlug,
 } from '~/lib/url-slug';
-import { formatWhatsAppDigest } from '~/lib/whatsapp-digest';
+import { type DigestOptions, digestLinks, formatWhatsAppDigest } from '~/lib/whatsapp-digest';
 
 interface FestivalDetail {
   id: string;
@@ -78,13 +79,17 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     // The programme as WhatsApp text: the one thing a sabha's members forward to each other.
     const festivalUrl = `https://rasika.life${generateFestivalUrl(festival.name, festival.id)}`;
+    const digestOptions: DigestOptions = {
+      heading: festival.name,
+      listingUrl: festivalUrl,
+      eventUrl: e => `https://rasika.life${generateEventUrl(e.title, e.id)}`,
+      campaign: 'festival_share',
+    };
     const digest =
       events.items.length > 0
         ? formatWhatsAppDigest(events.items, {
-            heading: festival.name,
-            listingUrl: festivalUrl,
-            eventUrl: e => `https://rasika.life${generateEventUrl(e.title, e.id)}`,
-            campaign: 'festival_share',
+            ...digestOptions,
+            shortLinks: await shortLinksFor(digestLinks(events.items, digestOptions)),
           })
         : null;
 

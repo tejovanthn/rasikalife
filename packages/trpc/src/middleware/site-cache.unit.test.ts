@@ -21,6 +21,7 @@ describe('changesPublicPage', () => {
     expect(changesPublicPage('mutation', 'classes.markAttended', true)).toBe(false);
     expect(changesPublicPage('mutation', 'concertLog.upsert', true)).toBe(false);
     expect(changesPublicPage('mutation', 'user.updatePreferences', true)).toBe(false);
+    expect(changesPublicPage('mutation', 'shortLink.ensure', true)).toBe(false);
   });
 });
 

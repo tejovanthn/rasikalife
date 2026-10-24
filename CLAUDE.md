@@ -1302,6 +1302,16 @@ compiles them and the app does not load Faust.
   listing's own URL. Every rasika.life link in it carries `utm_source=whatsapp&utm_medium=social`,
   `utm_campaign` (`listing_share`/`festival_share`) and `utm_content` (`listing`/`event`); ticket
   links are left alone. Copy/share/open fire `whatsapp_digest` (mark it a key event in GA4).
+- **rasika.life links in the text are short: `rasika.life/l/<code>`** (`ShortLink` domain,
+  `routes/l.$code.tsx`). The stored target is the path with its UTM tags, so the short link
+  carries them and GA4 sees them on the page it lands on. The code is the first seven base36
+  digits of the target's SHA-256: the same link always gets the same code, so building a text
+  twice writes nothing, and a collision moves the newcomer to a longer code. Lowercase only,
+  because ElectroDB lowercases key values. `shortLink.ensure` is a public mutation, since the
+  text is built for signed-out readers; `isShortLinkTarget` keeps it from being an open
+  redirect (a site path only, known query keys only). It is in `PRIVATE_ROUTERS`, so it does
+  not clear the site cache: it runs while a page renders. The redirect is a 301 cached for a
+  year. If the lookup fails the text prints the long links (`shortLinksFor`).
 - **Dates are chosen two ways only: the presets and the calendar.** The month-button row was
   removed (a 2026-10 critique counted three overlapping date pickers). The calendar's arrows set
   `cal=YYYY-MM`, which moves the calendar and never filters the list; only the month title
