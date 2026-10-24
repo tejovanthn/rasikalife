@@ -26,6 +26,7 @@ import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { requireUser } from '~/lib/auth.server';
 import { formatEventTime } from '~/lib/event-time';
 import { generateEventUrl, generateFestivalUrl } from '~/lib/url-slug';
+import { fieldsToCheck } from '~/lib/verify-checks';
 
 interface ExtractedArtist {
   title?: string;
@@ -64,6 +65,8 @@ interface DraftEvent {
   artists: ExtractedArtist[];
   tags: string[];
   entryType: 'free' | 'ticketed' | 'by-invitation';
+  /** One number for the whole poster, from the extractor. */
+  extractionConfidence?: number;
   ticketing?: {
     url?: string;
     prices?: Record<string, number>;
@@ -175,6 +178,7 @@ export async function loader({
         ticketing: e.ticketing as DraftEvent['ticketing'],
         contactInfo: e.contactInfo as DraftEvent['contactInfo'],
         sponsors: e.sponsors as DraftEvent['sponsors'],
+        extractionConfidence: e.extractionConfidence ?? undefined,
       });
     }
   }
@@ -660,9 +664,25 @@ function EventStep({
       artists: [...event.artists, { name: '', role: '' }],
     });
   };
+  const checks = fieldsToCheck(event);
 
   return (
     <div className="space-y-6">
+      {checks.length > 0 && (
+        <section
+          aria-labelledby="checks-heading"
+          className="rounded-lg border border-warning/40 bg-warning/10 p-4"
+        >
+          <h2 id="checks-heading" className="font-semibold mb-2">
+            Please check
+          </h2>
+          <ul className="list-disc pl-5 text-sm space-y-1">
+            {checks.map(check => (
+              <li key={check}>{check}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div className="space-y-2">
         <Label htmlFor="event-title">Event Title</Label>
         <Input
