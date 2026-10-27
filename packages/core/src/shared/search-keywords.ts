@@ -36,11 +36,34 @@ export function foldVowels(phrase: string): string {
 }
 
 /**
- * How people type what IAST writes as `c`: "chintayama", not "cintayama". The `roman` view keeps
- * `c` because it is what the URL slugs hold; search boxes do not.
+ * How people type a name: "chintayama", "shankarabharanam", "ritigaula". Read from IAST, which
+ * still tells ś from s and c from ch; the `roman` view has already merged them, because it is
+ * what the URL slugs hold. Qualifiers in brackets are dropped.
  */
-export function typedSpelling(phrase: string): string {
-  return phrase.replace(/c(?!h)/g, 'ch');
+export function typedSpelling(itrans: string): string {
+  return fromItrans(itrans, 'iast')
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\u015b|\u1e63/g, 'sh') // ś, ṣ
+    .replace(/\u1e5b/g, 'ri') // ṛ
+    .replace(/c(?!h)/g, 'ch')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^a-z\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * The other names a raga is stored with, from its brackets: `Ahiri bhairavi (Ahir bhairav)`
+ * is also searched as "ahir bhairav". Ragas only: a composition's brackets hold a qualifier
+ * such as `(varNam)`, not a second name.
+ */
+export function bracketAliases(itrans: string): string[] {
+  return [...itrans.matchAll(/\(([^)]*)\)/g)]
+    .flatMap(m => (m[1] ?? '').split(/[,/;]/))
+    .map(a => a.trim())
+    .filter(a => a.length >= 3);
 }
 
 function usable(phrases: string[]): string[] {
@@ -71,7 +94,7 @@ const TYPE_WORDS: Record<string, string> = {
 export function compositionKeywords(c: { title: string; compositionType?: string }): string[] {
   const title = romanPhrase(c.title);
   if (!title) return [];
-  const folded = foldVowels(typedSpelling(title));
+  const folded = foldVowels(typedSpelling(c.title));
   const form = TYPE_WORDS[(c.compositionType ?? '').toLowerCase()];
   return usable([
     title,
@@ -82,12 +105,17 @@ export function compositionKeywords(c: { title: string; compositionType?: string
   ]);
 }
 
-/** Phrases for a raga: "<name> raga" and "<name> ragam", as typed and folded. */
+/** Phrases for a raga and each bracketed alias: "<name> raga" and "<name> ragam". */
 export function ragaKeywords(name: string): string[] {
-  const roman = romanPhrase(name);
-  if (!roman) return [];
-  const folded = foldVowels(typedSpelling(roman));
-  return usable([`${roman} raga`, `${folded} raga`, `${folded} ragam`]);
+  const names = [name.replace(/\([^)]*\)/g, ' '), ...bracketAliases(name)];
+  return usable(
+    names.flatMap(n => {
+      const roman = romanPhrase(n);
+      if (!roman) return [];
+      const typed = foldVowels(typedSpelling(n));
+      return [`${roman} raga`, `${typed} raga`, `${typed} ragam`];
+    })
+  );
 }
 
 /**
@@ -98,4 +126,43 @@ export function bestVolume(phrases: string[], volumes: ReadonlyMap<string, numbe
   let best = 0;
   for (const p of phrases) best = Math.max(best, volumes.get(p.toLowerCase()) ?? 0);
   return best;
+}
+
+/** "1,300" → 1300, "1K" → 1000, "1K – 10K" → 1000 (a range counts as its lower bound). */
+export function plannerNumber(cell: string): number | undefined {
+  const low = cell.split(/[–-]/)[0]?.trim().replace(/,/g, '') ?? '';
+  const m = /^(\d+(?:\.\d+)?)\s*([KM])?$/i.exec(low);
+  if (!m) return undefined;
+  const scale = m[2]?.toUpperCase() === 'M' ? 1e6 : m[2] ? 1e3 : 1;
+  return Math.round(Number(m[1]) * scale);
+}
+
+/**
+ * Keyword → monthly volume from either a plain `keyword,avg_monthly_searches` CSV or Keyword
+ * Planner's own download: tab-separated, a title and a date line above the header, and
+ * "Avg. monthly searches" as a number or, on an account without ad spend, a range. A range is
+ * read as its lower bound, which keeps the order and claims no more than the planner said.
+ */
+export function parsePlannerVolumes(text: string): Map<string, number> {
+  const lines = text.replace(/^﻿/, '').split(/\r?\n/);
+  const headerAt = lines.findIndex(l => /^"?keyword"?[\t,]/i.test(l.trim()));
+  if (headerAt < 0) throw new Error('no header row starting with "Keyword"');
+  const delimiter = lines[headerAt]?.includes('\t') ? '\t' : ',';
+  const cells = (line: string) =>
+    line.split(delimiter).map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+  const header = cells(lines[headerAt] as string).map(h => h.toLowerCase());
+  const volumeCol = header.findIndex(
+    h => h === 'avg_monthly_searches' || h === 'avg. monthly searches'
+  );
+  if (volumeCol < 0) throw new Error('no "Avg. monthly searches" column');
+
+  const volumes = new Map<string, number>();
+  for (const line of lines.slice(headerAt + 1)) {
+    if (!line.trim()) continue;
+    const row = cells(line);
+    const keyword = row[0]?.toLowerCase();
+    const n = plannerNumber(row[volumeCol] ?? '');
+    if (keyword && n !== undefined) volumes.set(keyword, n);
+  }
+  return volumes;
 }

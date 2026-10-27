@@ -262,11 +262,16 @@ from `raga/client`).
   hundred).
 
 **Search volume** (`shared/search-keywords.ts`): `pnpm cli search-volume-keywords --domain
-<composition|raga> --out kw.csv`, then ask Keyword Planner (India) for the `keyword` column and
-save `keyword,avg_monthly_searches`, then `search-volume-import --domain <d> --keywords kw.csv
---volumes vol.csv [--dry-run]`, then reindex. Each name is asked in several spellings and the
-**highest** wins, never the sum (Google merges close variants). Spelling decides the number:
-"chintaya ma" had none and "chintayama" is what people type, so IAST `c` is also asked as `ch`.
+<composition|raga> --out kw.csv`, then upload the `keyword` column to Keyword Planner's "Get
+search volume and forecasts" (India, 10,000 phrases an upload) and download each result, then
+`search-volume-import --domain <d> --keywords kw.csv --volumes dl1.csv dl2.csv [--dry-run]`,
+then reindex. The download is read as is (UTF-16, tabs, title lines); a range such as
+"1K – 10K", which an account without ad spend gets, counts as its lower bound. Not through the
+planner tool in a Claude session: it returns twelve months of history per phrase. Each name is
+asked in several spellings and the **highest** wins, never the sum (Google merges close
+variants). Spelling decides the number: "chintaya ma" had none and "chintayama" is what people
+type, so the typed spelling is read from IAST (ś/ṣ → sh, c → ch, ṛ → ri), and a raga's
+bracketed alias is asked as a name of its own.
 The import refuses a volumes file that answers under 90% of the phrases, because a
 half-finished run would write 0 over everything it never asked about.
 

@@ -2,8 +2,8 @@
  * Search volume for compositions and ragas, in two steps with Keyword Planner in between.
  *
  *   search-volume-keywords --domain <composition|raga> --out keywords.csv
- *   (ask Keyword Planner for every phrase in the `keyword` column, India, and save the answer
- *    as volumes.csv with columns `keyword,avg_monthly_searches`)
+ *   (upload the `keyword` column to Keyword Planner's "Get search volume and forecasts", India,
+ *    and download the result; or any CSV with `keyword,avg_monthly_searches`)
  *   search-volume-import --domain <d> --keywords keywords.csv --volumes volumes.csv [--dry-run]
  *
  * The planner is not called from here: its credentials stay with whoever holds them, and a
@@ -18,7 +18,12 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { Composition, Raga } from '@rasika/core';
 import { parseCsv, toCsv } from '@rasika/core/admin/csv';
-import { bestVolume, compositionKeywords, ragaKeywords } from '@rasika/core/shared/search-keywords';
+import {
+  bestVolume,
+  compositionKeywords,
+  parsePlannerVolumes,
+  ragaKeywords,
+} from '@rasika/core/shared/search-keywords';
 
 type Domain = 'composition' | 'raga';
 
@@ -70,16 +75,18 @@ function readTable(text: string): Array<Record<string, string>> {
 export async function searchVolumeImport(opts: {
   domain: Domain;
   keywords: string;
-  volumes: string;
+  /** One file per planner download; Keyword Planner takes 10,000 phrases at a time. */
+  volumes: string[];
   dryRun?: boolean;
 }) {
   const keywordRows = readTable(await readFile(opts.keywords, 'utf8'));
-  const volumeRows = readTable(await readFile(opts.volumes, 'utf8'));
-
   const volumes = new Map<string, number>();
-  for (const row of volumeRows) {
-    const n = Number(row.avg_monthly_searches);
-    if (row.keyword && Number.isFinite(n)) volumes.set(row.keyword.toLowerCase(), n);
+  for (const path of opts.volumes) {
+    // Keyword Planner downloads its CSV as UTF-16 with a byte-order mark.
+    const raw = await readFile(path);
+    const text =
+      raw[0] === 0xff && raw[1] === 0xfe ? raw.toString('utf16le') : raw.toString('utf8');
+    for (const [k, v] of parsePlannerVolumes(text)) volumes.set(k, v);
   }
 
   const phrasesById = new Map<string, { name: string; phrases: string[] }>();

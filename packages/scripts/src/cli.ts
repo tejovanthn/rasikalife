@@ -601,13 +601,16 @@ program
   .description('Store the best Keyword Planner volume on each composition or raga')
   .requiredOption('--domain <domain>', 'composition or raga')
   .requiredOption('--keywords <path>', 'The CSV search-volume-keywords wrote')
-  .requiredOption('--volumes <path>', 'CSV of keyword,avg_monthly_searches')
+  .requiredOption(
+    '--volumes <paths...>',
+    'Keyword Planner downloads (or CSVs of keyword,avg_monthly_searches), one per upload'
+  )
   .option('--dry-run', 'Print the ranking without writing')
   .action(
     async (opts: {
       domain: 'composition' | 'raga';
       keywords: string;
-      volumes: string;
+      volumes: string[];
       dryRun?: boolean;
     }) => {
       setup();
