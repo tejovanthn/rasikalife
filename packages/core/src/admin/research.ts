@@ -457,6 +457,60 @@ export interface MergeReport {
   keptExisting: number;
   rejections: MergeRejection[];
   derivedMela: number;
+  /**
+   * Raga only: every web source the merged citations name, slug → origin. The ingest writes
+   * them as a `source` sheet, which must be imported before the raga sheet (`prepareRaga`
+   * refuses a citation to a source that does not exist).
+   */
+  webSources: Map<string, string>;
+}
+
+/**
+ * A stable slug for a web page's site: `https://www.karnatik.com/ragas.shtml` → `web-karnatik-com`.
+ * Keyed by host, so every page of one site is one source and the URL itself is the locator.
+ */
+export function webSourceSlug(url: string): string | undefined {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    const slug = `web-${host.replace(/[^a-z0-9]+/g, '-')}`.replace(/-+$/, '');
+    return slug.length <= 60 ? slug : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Adds a citation per source URL to the row's `citations` cell, for a field just filled.
+ *
+ * Until this existed the workers' `sources` were read and thrown away, so not one of the
+ * 1,278 stored scales could say where it came from. A field filled with no usable URL gets no
+ * citation, and then shows only if it is a legacy field (`sourced.ts`).
+ */
+function citeFill(
+  row: Row,
+  field: string,
+  sources: string[] | undefined,
+  seen: Map<string, string>
+): void {
+  const urls = (sources ?? []).filter(u => /^https?:\/\//.test(u));
+  if (urls.length === 0) return;
+  let citations: Array<Record<string, unknown>> = [];
+  if (row.citations?.trim()) {
+    try {
+      citations = JSON.parse(row.citations);
+    } catch {
+      return; // a hand-edited cell we cannot read is left for a person, not overwritten
+    }
+  }
+  for (const url of urls) {
+    const sourceSlug = webSourceSlug(url);
+    if (!sourceSlug) continue;
+    seen.set(sourceSlug, new URL(url).origin);
+    if (!citations.some(c => c.field === field && c.locator === url)) {
+      citations.push({ field, sourceSlug, locator: url });
+    }
+  }
+  row.citations = JSON.stringify(citations);
 }
 
 type Row = Record<string, string>;
@@ -478,7 +532,17 @@ function nameKey(name: string): string {
  */
 export function mergeResearch(domain: string, rows: Row[], results: ResearchRecord[]): MergeReport {
   const byId = new Map(rows.map(row => [row.id, row]));
-  const report: MergeReport = { filled: 0, keptExisting: 0, rejections: [], derivedMela: 0 };
+  const report: MergeReport = {
+    filled: 0,
+    keptExisting: 0,
+    rejections: [],
+    derivedMela: 0,
+    webSources: new Map(),
+  };
+  // Only ragas carry citations so far; the artist sheet has no column for them.
+  const cite = (row: Row, field: string, sources: string[] | undefined) => {
+    if (domain === 'raga' && 'citations' in row) citeFill(row, field, sources, report.webSources);
+  };
   // Raga-only: it keys on `melaNumber` and the raga variant key, and building it over another
   // domain's rows would cost a sweep to produce a map nothing reads.
   const byName = domain === 'raga' ? corpusNames(rows) : undefined;
@@ -548,6 +612,7 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
         }
         row[column] = resolved;
         report.filled += 1;
+        cite(row, column, record.sources);
         continue;
       }
 
@@ -572,6 +637,7 @@ export function mergeResearch(domain: string, rows: Row[], results: ResearchReco
 
       row[column] = checked.value as string;
       report.filled += 1;
+      cite(row, column, record.sources);
     }
   }
 

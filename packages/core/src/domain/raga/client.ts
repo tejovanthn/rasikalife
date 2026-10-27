@@ -23,3 +23,39 @@ export interface Raga {
 
 // Pure rule shared by the raga page and the sitemap.
 export { isThinRaga } from './thin';
+
+export { SCALE_TYPES, PrayogaSchema, type Prayoga } from './schema';
+export {
+  SWARA_SEMITONES,
+  parseSwaraSet,
+  resolveVariant,
+  scalePositions,
+  scaleTokens,
+  swarasOutsideRaga,
+  validatePhrase,
+  type ScalePositions,
+} from './notation';
+export {
+  CITABLE_RAGA_FIELDS,
+  CitationSchema,
+  LEGACY_FIELDS,
+  citationsFor,
+  isCited,
+  isEmptyValue,
+  isShown,
+  numberReferences,
+  pruneCitations,
+  shownRaga,
+  type CitableRagaField,
+  type Citation,
+  type Reference,
+  type StoredCitation,
+} from './sourced';
+export {
+  describeChange,
+  findRelatives,
+  noteChanges,
+  type NoteChange,
+  type Relative,
+  type ScaleOf,
+} from './relatives';

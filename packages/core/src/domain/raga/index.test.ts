@@ -39,8 +39,13 @@ vi.mock('./entity', async importOriginal => {
 });
 
 describe('Raga', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // updateRaga reads the stored record before a rename or a cited-field change.
+    const { RagaEntity } = await import('./entity');
+    vi.mocked(RagaEntity.get).mockReturnValue({
+      go: vi.fn().mockResolvedValue({ data: null }),
+    } as any);
   });
 
   describe('createRaga', () => {
@@ -182,6 +187,62 @@ describe('Raga', () => {
       await expect(updateRaga('raga-123', updateInput)).rejects.toThrow(
         'raga with ID raga-123 not found'
       );
+    });
+
+    it('drops the citation of a field the update empties', async () => {
+      const { RagaEntity } = await import('./entity');
+      vi.mocked(RagaEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({
+          data: {
+            id: 'raga-123',
+            rasa: 'karuna',
+            timeOfDay: 'evening',
+            citations: [
+              { field: 'rasa', sourceSlug: 'sambamoorthy-5', locator: 'p. 117' },
+              { field: 'timeOfDay', sourceSlug: 'ssp-1963-tamil', locator: 'p. 375' },
+            ],
+          },
+        }),
+      } as any);
+      const set = vi.fn().mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: { id: 'raga-123' } }),
+      });
+      vi.mocked(RagaEntity.update).mockReturnValue({ set } as any);
+
+      await updateRaga('raga-123', { rasa: '' });
+
+      expect(set).toHaveBeenCalledWith({
+        rasa: '',
+        citations: [{ field: 'timeOfDay', sourceSlug: 'ssp-1963-tamil', locator: 'p. 375' }],
+      });
+    });
+
+    it('reads nothing when the update touches no cited field and no name', async () => {
+      const { RagaEntity } = await import('./entity');
+      vi.mocked(RagaEntity.update).mockReturnValue({
+        set: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: { id: 'r' } }) }),
+      } as any);
+
+      await updateRaga('r', { performanceCount: 1 } as never);
+
+      expect(RagaEntity.get).not.toHaveBeenCalled();
+    });
+
+    it('runs the rename cascade only when the name really changes', async () => {
+      const { RagaEntity } = await import('./entity');
+      const { cascadeRagaNameUpdate } = await import('../cascade');
+      vi.mocked(RagaEntity.get).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: { id: 'r', name: 'bhairavi' } }),
+      } as any);
+      vi.mocked(RagaEntity.update).mockReturnValue({
+        set: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: { id: 'r' } }) }),
+      } as any);
+
+      await updateRaga('r', { name: 'bhairavi' });
+      expect(cascadeRagaNameUpdate).not.toHaveBeenCalled();
+
+      await updateRaga('r', { name: 'bhairavi (raga)' });
+      expect(cascadeRagaNameUpdate).toHaveBeenCalledWith('r', 'bhairavi (raga)');
     });
   });
 

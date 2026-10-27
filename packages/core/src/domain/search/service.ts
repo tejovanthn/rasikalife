@@ -18,6 +18,7 @@ import { OrganiserEntity } from '../organiser/entity';
 import type { Organiser } from '../organiser/entity';
 import { RagaEntity } from '../raga/entity';
 import type { Raga } from '../raga/entity';
+import { type Relative, findRelatives } from '../raga/relatives';
 import { TalaEntity } from '../tala/entity';
 import type { Tala } from '../tala/entity';
 import { VenueEntity } from '../venue/entity';
@@ -439,4 +440,24 @@ export async function rankArtists(opts: {
 export async function listVenueCities(): Promise<CityEntry[]> {
   const index = await loadIndex();
   return foldCities(index.documents.filter(doc => doc.entityType === 'venue').map(doc => doc.city));
+}
+
+/**
+ * Ragas whose scales are one or two notes from this one's (`findRelatives`), read from the
+ * index the search Lambda already holds. Merged-away ragas are not indexed, so none is
+ * offered. Empty when the raga has no indexed scale.
+ */
+export async function ragaRelatives(id: string, limit = 6): Promise<Relative[]> {
+  const index = await loadIndex();
+  const ragas = index.documents
+    .filter(doc => doc.entityType === 'raga')
+    .map(doc => ({
+      id: doc.id,
+      name: doc.displayName,
+      arohanam: doc.arohanam,
+      avarohanam: doc.avarohanam,
+      popularity: doc.popularity,
+    }));
+  const self = ragas.find(r => r.id === id);
+  return self ? findRelatives(self, ragas, limit) : [];
 }

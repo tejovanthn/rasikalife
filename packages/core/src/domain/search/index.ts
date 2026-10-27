@@ -8,6 +8,7 @@ export {
   rankArtistDocuments,
   rankArtists,
   listVenueCities,
+  ragaRelatives,
 } from './service';
 export type { ArtistRanking } from './service';
 export type { SearchWithFullDataResponse, DocumentsResponse } from './service';

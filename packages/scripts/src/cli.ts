@@ -586,6 +586,37 @@ program
   });
 
 program
+  .command('search-volume-keywords')
+  .description('Write the phrases to ask Keyword Planner for, per composition or raga')
+  .requiredOption('--domain <domain>', 'composition or raga')
+  .requiredOption('--out <path>', 'CSV of id,name,keyword')
+  .action(async (opts: { domain: 'composition' | 'raga'; out: string }) => {
+    setup();
+    const { searchVolumeKeywords } = await import('./searchVolume.js');
+    await searchVolumeKeywords(opts);
+  });
+
+program
+  .command('search-volume-import')
+  .description('Store the best Keyword Planner volume on each composition or raga')
+  .requiredOption('--domain <domain>', 'composition or raga')
+  .requiredOption('--keywords <path>', 'The CSV search-volume-keywords wrote')
+  .requiredOption('--volumes <path>', 'CSV of keyword,avg_monthly_searches')
+  .option('--dry-run', 'Print the ranking without writing')
+  .action(
+    async (opts: {
+      domain: 'composition' | 'raga';
+      keywords: string;
+      volumes: string;
+      dryRun?: boolean;
+    }) => {
+      setup();
+      const { searchVolumeImport } = await import('./searchVolume.js');
+      await searchVolumeImport(opts);
+    }
+  );
+
+program
   .command('pin-centroids')
   .description('Build core/src/shared/pin-centroids.json from Nominatim (no AWS needed)')
   .option('--out <path>', 'Output file', '../core/src/shared/pin-centroids.json')

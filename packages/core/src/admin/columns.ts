@@ -305,7 +305,34 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       str('timeOfDay'),
       str('season'),
       num('melaNumber'),
-      ref('parentRaga', 'parentRaga', 'parentRagaName')
+      ref('parentRaga', 'parentRaga', 'parentRagaName'),
+      str('scaleType'),
+      bool('isBhashanga'),
+      list('jivaSwaras'),
+      list('nyasaSwaras'),
+      list('grahaSwaras'),
+      list('anyaSwaras'),
+      json('prayogas'),
+      str('movement'),
+      list('keyCompositionIds'),
+      // What backs each field: [{field, sourceSlug, locator, confidence?, tradition?, note?}].
+      // A field outside the legacy set shows on the page only when cited (`sourced.ts`).
+      json('citations')
+    ),
+  },
+  // Keyed by slug, not id: a row always takes the create path, which is an upsert. The row is
+  // the source's whole state, as an export holds it.
+  source: {
+    label: 'Sources',
+    columns: flat(
+      str('slug'),
+      str('title'),
+      str('citation'),
+      str('kind'),
+      str('url'),
+      num('year'),
+      str('language'),
+      str('licence')
     ),
   },
   tala: {

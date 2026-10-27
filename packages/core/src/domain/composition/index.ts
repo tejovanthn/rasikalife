@@ -242,6 +242,56 @@ export async function getCompositionsByRaga(
   };
 }
 
+/**
+ * Orders a raga's compositions for its page: the ones a source names as the way to learn the
+ * raga (`firstIds`, in that order), then by search volume, then those with lyrics, then by
+ * title. Pure, so the order is testable without a table.
+ */
+export function rankCompositions<
+  T extends { id: string; title: string; searchVolume?: number; lyricsV1?: unknown[] },
+>(compositions: T[], firstIds: string[] = []): T[] {
+  const first = new Map(firstIds.map((id, i) => [id, i]));
+  return [...compositions].sort((a, b) => {
+    const fa = first.get(a.id) ?? Number.POSITIVE_INFINITY;
+    const fb = first.get(b.id) ?? Number.POSITIVE_INFINITY;
+    if (fa !== fb) return fa - fb;
+    const volume = (b.searchVolume ?? 0) - (a.searchVolume ?? 0);
+    if (volume !== 0) return volume;
+    const lyrics = Number((b.lyricsV1?.length ?? 0) > 0) - Number((a.lyricsV1?.length ?? 0) > 0);
+    if (lyrics !== 0) return lyrics;
+    return a.title.localeCompare(b.title);
+  });
+}
+
+/**
+ * A raga's compositions, ranked, with the total. Reads every junction row, because ranking
+ * needs the whole set: a raga holds a few hundred at most (Shankarabharanam 322), and the page
+ * that calls this is cached for a week. The paginated `getCompositionsByRaga` stays for the
+ * full list, which is ordered by the junction.
+ */
+export async function getRankedCompositionsByRaga(
+  ragaId: string,
+  params?: { limit?: number; firstIds?: string[] }
+): Promise<{ items: CompositionWithRelations[]; total: number }> {
+  const ids: string[] = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await getRagaJunctionRecords(ragaId, { limit: 100, nextToken });
+    ids.push(...page.items.map(j => j.compositionId));
+    nextToken = page.nextToken;
+  } while (nextToken);
+
+  if (ids.length === 0) return { items: [], total: 0 };
+
+  const { data } = await CompositionEntity.get(ids.map(id => ({ id }))).go();
+  const live = (data ?? []).filter(c => !c.deletedAt);
+  const ranked = rankCompositions(live, params?.firstIds);
+  return {
+    items: ranked.slice(0, params?.limit ?? 6).map(toCompositionWithRelations),
+    total: live.length,
+  };
+}
+
 export async function getCompositionsByTala(
   talaId: string,
   params?: { limit?: number; nextToken?: string }
@@ -473,3 +523,14 @@ export {
   CreateCompositionSchema,
   UpdateCompositionSchema,
 } from './schema';
+
+/** Written only by `search-volume-import`; a patch, so a deleted id fails rather than creating. */
+export async function setCompositionSearchVolume(
+  id: string,
+  searchVolume: number,
+  checkedAt: string
+): Promise<void> {
+  await CompositionEntity.patch({ id })
+    .set({ searchVolume, searchVolumeCheckedAt: checkedAt })
+    .go();
+}

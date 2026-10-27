@@ -73,6 +73,22 @@ export const compositionRouter = createTRPCRouter({
       })
     ),
 
+  /** A raga's compositions in page order (`rankCompositions`), with the total. */
+  rankedByRaga: publicProcedure
+    .input(
+      z.object({
+        ragaId: z.string().min(1),
+        limit: z.number().int().min(1).max(50).optional(),
+        firstIds: z.array(z.string().min(1)).max(5).optional(),
+      })
+    )
+    .query(({ input }) =>
+      Composition.getRankedCompositionsByRaga(input.ragaId, {
+        limit: input.limit,
+        firstIds: input.firstIds,
+      })
+    ),
+
   byTala: publicProcedure
     .input(
       z.object({

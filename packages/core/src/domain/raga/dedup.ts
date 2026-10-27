@@ -155,9 +155,20 @@ const FILLABLE_FIELDS = [
   'rasa',
   'timeOfDay',
   'season',
+  'scaleType',
+  'isBhashanga',
+  'prayogas',
+  'jivaSwaras',
+  'nyasaSwaras',
+  'grahaSwaras',
+  'anyaSwaras',
+  'movement',
+  'keyCompositionIds',
 ] as const;
 
-type Fillable = Partial<Record<(typeof FILLABLE_FIELDS)[number], unknown>>;
+type Fillable = Partial<Record<(typeof FILLABLE_FIELDS)[number], unknown>> & {
+  citations?: Array<{ field: string }> | null;
+};
 
 function isBlank(value: unknown): boolean {
   if (value === undefined || value === null) return true;
@@ -179,5 +190,9 @@ export function mergeFillPatch(survivor: Fillable, loser: Fillable): Record<stri
   for (const field of FILLABLE_FIELDS) {
     if (isBlank(survivor[field]) && !isBlank(loser[field])) patch[field] = loser[field];
   }
+  // A copied field brings its citations. Without them a cited field would arrive hidden
+  // (sourced.ts shows only what is cited), and a legacy one would lose its source.
+  const carried = (loser.citations ?? []).filter(c => c.field in patch);
+  if (carried.length > 0) patch.citations = [...(survivor.citations ?? []), ...carried];
   return patch;
 }

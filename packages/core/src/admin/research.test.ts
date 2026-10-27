@@ -231,6 +231,34 @@ describe('mergeResearch', () => {
     expect(report.rejections.find(r => r.field === 'melaNumber')?.reason).toContain('derived');
   });
 
+  it('cites the sources a worker returned on the field it filled', () => {
+    const rows = rowsFor().map(r => ({ ...r, citations: '' }));
+    const report = mergeResearch('raga', rows, [
+      {
+        id: 'r1',
+        fields: { arohanam: 'S R2 G3 M2 P D2 N3 S' },
+        sources: ['https://www.karnatik.com/ragask.shtml', 'not a url'],
+      },
+    ]);
+
+    expect(JSON.parse(rows[0].citations)).toEqual([
+      {
+        field: 'arohanam',
+        sourceSlug: 'web-karnatik-com',
+        locator: 'https://www.karnatik.com/ragask.shtml',
+      },
+    ]);
+    expect([...report.webSources]).toEqual([['web-karnatik-com', 'https://www.karnatik.com']]);
+  });
+
+  it('adds no citation for a value it kept as stored', () => {
+    const rows = rowsFor().map(r => ({ ...r, citations: '' }));
+    mergeResearch('raga', rows, [
+      { id: 'r2', fields: { description: 'other' }, sources: ['https://example.org/x'] },
+    ]);
+    expect(rows[1].citations).toBe('');
+  });
+
   it('ignores a record whose id is not in the sheet', () => {
     const rows = rowsFor();
     const report = mergeResearch('raga', rows, [{ id: 'ghost', fields: { rasa: 'karuna' } }]);

@@ -1,7 +1,19 @@
-import { ConcertLogItem, Raga } from '@rasika/core';
+import { ConcertLogItem, Raga, Search } from '@rasika/core';
+import { ROLE } from '@rasika/core/auth';
+import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
+
+/**
+ * Citations decide what a raga page shows (`shownRaga`), so they are a moderator's to set. The
+ * field that makes a claim look sourced must not be supplied by whoever made the claim.
+ */
+function assertMayCite(role: string | undefined, data: { citations?: unknown }) {
+  if (data.citations === undefined) return;
+  if (role === ROLE.MODERATOR || role === ROLE.ADMIN) return;
+  throw new TRPCError({ code: 'FORBIDDEN', message: 'Only a moderator may set citations' });
+}
 
 export const ragaRouter = createTRPCRouter({
   get: publicProcedure
@@ -19,7 +31,8 @@ export const ragaRouter = createTRPCRouter({
     )
     .query(({ input }) => Raga.listRagas(input)),
 
-  create: protectedProcedure.input(Raga.CreateRagaSchema).mutation(async ({ input }) => {
+  create: protectedProcedure.input(Raga.CreateRagaSchema).mutation(async ({ ctx, input }) => {
+    assertMayCite(ctx.user?.role, input);
     const result = await Raga.createRaga(input);
     triggerReindex();
     return result;
@@ -27,7 +40,8 @@ export const ragaRouter = createTRPCRouter({
 
   update: protectedProcedure
     .input(z.object({ id: z.string().min(1), data: Raga.UpdateRagaSchema }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
+      assertMayCite(ctx.user?.role, input.data);
       const result = await Raga.updateRaga(input.id, input.data);
       triggerReindex();
       return result;
@@ -40,6 +54,11 @@ export const ragaRouter = createTRPCRouter({
       triggerReindex();
       return result;
     }),
+
+  /** Ragas one or two notes away, computed from the search index (`ragaRelatives`). */
+  relatives: publicProcedure
+    .input(z.object({ id: z.string().min(1), limit: z.number().int().min(1).max(12).optional() }))
+    .query(({ input }) => Search.ragaRelatives(input.id, input.limit)),
 
   byMela: publicProcedure
     .input(

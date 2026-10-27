@@ -86,6 +86,16 @@
       "import": "./src/domain/artist-claim/client.ts",
       "default": "./src/domain/artist-claim/client.ts"
     },
+    "./domain/source/client": {
+      "types": "./src/domain/source/client.ts",
+      "import": "./src/domain/source/client.ts",
+      "default": "./src/domain/source/client.ts"
+    },
+    "./shared/search-keywords": {
+      "types": "./src/shared/search-keywords.ts",
+      "import": "./src/shared/search-keywords.ts",
+      "default": "./src/shared/search-keywords.ts"
+    },
     "./domain/raga/client": {
       "types": "./src/domain/raga/client.ts",
       "import": "./src/domain/raga/client.ts",

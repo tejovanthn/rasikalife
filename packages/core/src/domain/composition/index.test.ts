@@ -9,6 +9,7 @@ import {
   getCompositionsByRaga,
   getCompositionsByTala,
   listCompositions,
+  rankCompositions,
   updateComposition,
 } from './index';
 import type { CreateCompositionInput, UpdateCompositionInput } from './index';
@@ -841,5 +842,26 @@ describe('Composition', () => {
       expect(deleteCompositionTala).toHaveBeenCalledWith('comp-123', 'tala-789');
       expect(CompositionEntity.delete).toHaveBeenCalledWith({ id: 'comp-123' });
     });
+  });
+});
+
+describe('rankCompositions', () => {
+  const c = (id: string, searchVolume?: number, lyrics = 0) => ({
+    id,
+    title: id,
+    searchVolume,
+    lyricsV1: Array.from({ length: lyrics }, () => ({})),
+  });
+
+  it('puts the named compositions first, then by search volume, then with lyrics', () => {
+    const ranked = rankCompositions(
+      [c('obscure', 0, 1), c('popular', 170), c('bare'), c('viriboni', 210), c('lyrics', 0, 3)],
+      ['viriboni']
+    );
+    expect(ranked.map(x => x.id)).toEqual(['viriboni', 'popular', 'lyrics', 'obscure', 'bare']);
+  });
+
+  it('keeps the order of the named ones as given', () => {
+    expect(rankCompositions([c('a'), c('b')], ['b', 'a']).map(x => x.id)).toEqual(['b', 'a']);
   });
 });

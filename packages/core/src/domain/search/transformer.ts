@@ -54,6 +54,9 @@ export function transformRagaToDocument(raga: Raga, compositionCount?: number): 
   if (compositionCount !== undefined && isThinRaga({ ...raga, compositionCount })) {
     doc.noindex = true;
   }
+  if (raga.arohanam?.trim()) doc.arohanam = raga.arohanam.trim();
+  if (raga.avarohanam?.trim()) doc.avarohanam = raga.avarohanam.trim();
+  if (raga.searchVolume) doc.popularity = raga.searchVolume;
   return doc;
 }
 

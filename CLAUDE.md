@@ -51,7 +51,7 @@ The core package uses a domain-driven design with:
 
 - **Single-Table Design**: All entities stored in one DynamoDB table using composite keys
 - **ElectroDB**: Entity modeling library wrapping DynamoDB (each domain has an `entity.ts`)
-- **Domain Structure**: artist, artist-affiliation, composition, raga, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, concert-log, and more
+- **Domain Structure**: artist, artist-affiliation, composition, raga, source, tala, event, festival, venue, organiser, award, user, social-post, rsvp, edit, search, change-history, concert-log, and more
 - **Access Patterns**: Optimized for DynamoDB with GSI queries via ElectroDB
 - **KSUID IDs**: Time-sortable unique identifiers with domain prefixes
 - **Modular Exports**: Package supports selective imports via subpath exports (`@rasika/core/domain/artist`, `@rasika/core/utils`, etc.)
@@ -132,6 +132,7 @@ The core package uses a domain-driven design with:
 **Duplicates on the verify step** (`core/src/domain/event/duplicates.ts`, `event.nearDuplicates`): each draft with a resolved venue is checked against approved and submitted events at that venue within three hours, and the submitter may leave a match out. `byVenue` is read over whole days and compared as instants, because stored times carry their own offsets and string order is not time order.
 
 **The approval email** (`packages/trpc/src/event-approved-email.ts`, template `packages/email/emails/event-approved.tsx`) goes out from `event.approveEvent` only, never for a moderator's own event, and never throws. It links the event id-only (`/events/<id>`, which the route accepts) so the slug is not copied out of web. It sends as "Rasika.life" from `noreply@mail.rasika.life`, the one transactional identity every Rasika product shares under its own display name, which is the line `infra/email.ts` draws. `SITE_URL` gives the links the stage's domain.
+- `raga-page.ts` — `ragaPageModel(shownRaga)`: which raga sections hold cited data, where the one WhatsApp request for help goes, the numbered references in page order, and swara sets resolved to the raga's own variants. `help-request.ts` builds that request's `wa.me` link.
 - `analytics.ts` — `AnalyticsEvent` and `trackEvent(name, params)`. Every GA4 event name lives in that constant rather than as a string literal at the call site. Adding one means adding it there, wiring the call, and then **marking it a key event in the GA4 console** — the SDK cannot do that, and an unmarked event is collected but not counted as a conversion. Event *parameters* likewise need registering as custom dimensions before they can be reported on; the property has none today.
 
 ### Structured data (JSON-LD)
@@ -217,6 +218,57 @@ none.
 A janya raga carries its **parent's** mela number. Reporting `raga.melaNumber` bare said
 "Melakarta 20" on a page whose own title read "Janya Raga" — two claims in one search result, the
 wrong one being what an arohanam search is there to check. Branch on `parentRaga` first.
+
+### Raga sources: a fact shows only when it is cited
+
+Plan: `docs/plans/261027-01-raga-depth.md`. Rules in `domain/raga/sourced.ts` (pure, re-exported
+from `raga/client`).
+
+- **`shownRaga(raga)` is what the page, the meta description and the JSON-LD read**, never the
+  record. A field renders only when `citations` holds an entry for it. The exception is
+  `LEGACY_FIELDS` (description, scale, alternate scales, parent), which stay visible uncited
+  (owner, 2026-10-27): the research ingest had dropped every worker's sources, and hiding them
+  would empty ~1,200 ranking pages. Rasa, time of day and season are *not* legacy. They are
+  where schools disagree, and Bhairavi's uncited "Universal" against SSP's "evening" is why.
+- **`citations` is a list on the raga**: `{field, sourceSlug, locator, confidence?, tradition?,
+  note?}`. `tradition` says whose reading it is and the page prints it. Clearing a field takes
+  its citations with it (`pruneCitations`, applied in `updateRaga`). A merge that copies a field
+  copies its citations (`mergeFillPatch`), or the copied value would arrive hidden.
+- **Citations are a moderator's to set.** `raga.create`/`raga.update` refuse them from anyone
+  else: the field that makes a claim look sourced must not be supplied by whoever made it.
+- **`source` is its own domain, keyed by slug** (`ssp-1963-tamil`, `web-karnatik-com`), not a
+  KSUID, so a citation is readable in a CSV. The slug is rasika-books' `book_id` for a book that
+  went through that pipeline. The admin CSV domain `source` upserts by slug. The raga import
+  refuses a citation to a slug that does not exist, so **import the source sheet first**.
+- **New raga fields**: `prayogas` (`{notation, label?, gamaka?}`), `jivaSwaras`, `nyasaSwaras`,
+  `grahaSwaras`, `anyaSwaras`, `scaleType`, `isBhashanga`, `movement` (our own plain words, never a
+  source's sentences) and `keyCompositionIds`. Phrases go through `validatePhrase`
+  (`domain/raga/notation.ts`): octave dot `N2.`, upper `S'`, karvai `G2:2`, pause `,`. Swara sets
+  may be bare letters (SSP writes "ri, ga, ma, ni"); the page resolves each to the raga's own
+  variant (`resolveVariant`) and leaves it bare when the scale uses two.
+- **`research-ingest` now keeps sources.** Each URL becomes a citation on the field it filled,
+  under `web-<host>`, and the cited sites are written to `<out>.sources.csv` for import first.
+- **Where a section has nothing cited, the page asks for help** (`lib/help-request.ts`): one
+  WhatsApp request per page, at the first empty section of How it moves, Learn it from and
+  Character. The number lives in `HELP_WHATSAPP_NUMBER` only. The click fires
+  `raga_help_request`; mark it a key event in GA4.
+- **Relatives** (`domain/raga/relatives.ts`): ragas whose scales differ by at most two notes, from
+  the search index (raga documents carry `arohanam`, `avarohanam`, and `popularity` = search
+  volume). A line that uses two variants of one letter takes no part, since it is no simple
+  substitution.
+- **A raga's compositions are ranked**, not listed in junction order: the sourced
+  `keyCompositionIds` first, then `searchVolume`, then lyrics present
+  (`getRankedCompositionsByRaga`, which reads every junction row; a raga holds at most a few
+  hundred).
+
+**Search volume** (`shared/search-keywords.ts`): `pnpm cli search-volume-keywords --domain
+<composition|raga> --out kw.csv`, then ask Keyword Planner (India) for the `keyword` column and
+save `keyword,avg_monthly_searches`, then `search-volume-import --domain <d> --keywords kw.csv
+--volumes vol.csv [--dry-run]`, then reindex. Each name is asked in several spellings and the
+**highest** wins, never the sum (Google merges close variants). Spelling decides the number:
+"chintaya ma" had none and "chintayama" is what people type, so IAST `c` is also asked as `ch`.
+The import refuses a volumes file that answers under 90% of the phrases, because a
+half-finished run would write 0 over everything it never asked about.
 
 ### Thin raga pages: `noindex`, decided from the record
 
@@ -1479,6 +1531,8 @@ Always use a subpath export instead:
 | `fromItrans`, `transliterate`, `formatSwaras`, `TransliterationScheme` | `@rasika/core/utils` |
 | `ragaExactKey`, `ragaVariantKey` | `@rasika/core/domain/raga/dedup` |
 | `citySlug`, `canonicalCitySlug` | `@rasika/core/shared/city` |
+| `shownRaga`, `numberReferences`, `findRelatives`, `validatePhrase`, `scalePositions` | `@rasika/core/domain/raga/client` |
+| Source schemas, `SOURCE_KINDS` | `@rasika/core/domain/source/client` |
 
 **A `client.ts` may take only types from `./entity`.** A value re-exported from an entity file
 (`COMPOSITION_TYPES` was) drags ElectroDB and the AWS SDK into the browser: 106 kB gzipped on

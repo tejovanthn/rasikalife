@@ -190,4 +190,23 @@ describe('mergeFillPatch', () => {
     });
     expect(mergeFillPatch({}, { rasa: '  ', alternateScales: [] })).toEqual({});
   });
+
+  it('brings the citations of the fields it copies, and only those', () => {
+    const own = { field: 'arohanam', sourceSlug: 'karnatik-ragas', locator: 'u' };
+    const patch = mergeFillPatch(
+      { arohanam: 'S R2 G2 M1 P D2 N2 S', citations: [own] },
+      {
+        timeOfDay: 'evening',
+        arohanam: 'other',
+        citations: [
+          { field: 'timeOfDay', sourceSlug: 'ssp-1963-tamil', locator: 'p. 375' },
+          { field: 'arohanam', sourceSlug: 'raga-pravaham', locator: 'p. 122' },
+        ],
+      }
+    );
+    expect(patch).toEqual({
+      timeOfDay: 'evening',
+      citations: [own, { field: 'timeOfDay', sourceSlug: 'ssp-1963-tamil', locator: 'p. 375' }],
+    });
+  });
 });

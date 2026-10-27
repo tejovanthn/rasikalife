@@ -9,6 +9,7 @@ import { mergeFillPatch } from './dedup';
 import { RagaEntity } from './entity';
 import type { Raga } from './entity';
 import type { CreateRagaSchema, UpdateRagaSchema } from './schema';
+import { CITABLE_RAGA_FIELDS, type Citation, pruneCitations } from './sourced';
 
 export type CreateRagaInput = z.infer<typeof CreateRagaSchema>;
 export type UpdateRagaInput = z.infer<typeof UpdateRagaSchema>;
@@ -44,17 +45,43 @@ export async function getRagaByName(name: string): Promise<Raga | null> {
 }
 
 export async function updateRaga(id: string, input: UpdateRagaInput): Promise<Raga> {
-  const result = await RagaEntity.update({ id }).set(input).go();
+  // Read once, and only when something below needs the stored record: the citation prune, or
+  // the rename check.
+  const needsStored =
+    !!input.name || CITABLE_RAGA_FIELDS.some(f => f in input) || 'citations' in input;
+  const stored = needsStored ? (await RagaEntity.get({ id }).go()).data : null;
+
+  const result = await RagaEntity.update({ id }).set(withPrunedCitations(stored, input)).go();
 
   if (!result.data) {
     throw notFoundError('raga', id);
   }
 
-  if (input.name) {
+  // A cascade fires on a real change, not on a field being present. Every row of an exported
+  // raga sheet carries `name`, so a bulk import used to rewrite every composition and junction
+  // naming each raga with the value it already held (the artist importer's eight-hour lesson).
+  if (input.name && input.name !== stored?.name) {
     await cascadeRagaNameUpdate(id, input.name);
   }
 
   return result.data as Raga;
+}
+
+/**
+ * A citation for a field the update empties claims nothing, so it goes with the value.
+ */
+function withPrunedCitations(
+  stored: Record<string, unknown> | null,
+  input: UpdateRagaInput
+): UpdateRagaInput {
+  const touches = CITABLE_RAGA_FIELDS.some(f => f in input) || 'citations' in input;
+  if (!touches) return input;
+  const merged = { ...stored, ...input } as Record<string, unknown> & {
+    citations?: Citation[];
+  };
+  const pruned = pruneCitations(merged);
+  if (pruned.length === (merged.citations ?? []).length && !('citations' in input)) return input;
+  return { ...input, citations: pruned };
 }
 
 export async function deleteRaga(id: string): Promise<void> {
@@ -229,6 +256,15 @@ export async function adjustPerformanceCount(ragaId: string, delta: number): Pro
   );
 }
 
+/** Written only by `search-volume-import`; a patch, so a deleted id fails rather than creating. */
+export async function setRagaSearchVolume(
+  id: string,
+  searchVolume: number,
+  checkedAt: string
+): Promise<void> {
+  await RagaEntity.patch({ id }).set({ searchVolume, searchVolumeCheckedAt: checkedAt }).go();
+}
+
 export type { Raga } from './entity';
 // Matching keys for the dedup CLI in packages/scripts, which cannot host its own
 // tests — keeping them here is what makes the matching testable.
@@ -244,3 +280,8 @@ export {
 } from './melakarta';
 export type { ChakraName } from './melakarta';
 export { CreateRagaSchema, UpdateRagaSchema } from './schema';
+// Citations, notation and relatives are pure and also reachable from `./client`.
+export * from './sourced';
+export * from './notation';
+export * from './relatives';
+export { SCALE_TYPES, PrayogaSchema, type Prayoga } from './schema';

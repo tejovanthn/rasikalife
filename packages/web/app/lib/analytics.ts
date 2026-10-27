@@ -34,6 +34,9 @@ export const AnalyticsEvent = {
   /** A listing left the site as WhatsApp text: `method` is copy, share or open. The
    *  listing's own link inside the text is what brings readers back. */
   WHATSAPP_DIGEST: 'whatsapp_digest',
+  /** A reader opened WhatsApp to offer a source for a raga section with none. `section` is
+   *  character, movement or learn. */
+  RAGA_HELP_REQUEST: 'raga_help_request',
 } as const;
 
 export type AnalyticsEventName = (typeof AnalyticsEvent)[keyof typeof AnalyticsEvent];

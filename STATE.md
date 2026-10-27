@@ -3,6 +3,21 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-10-27: raga sources and depth, built, not deployed
+
+Plan: `docs/plans/261027-01-raga-depth.md`. Built: the `source` domain, `citations` on raga,
+the show-only-cited rule (rasa, time and season hide until cited), the new raga fields, phrase
+validation, relatives, composition ranking by search volume, the search-volume CLI, the
+WhatsApp request for help, and `research-ingest` keeping sources. Not tried in a browser.
+
+Next, in order:
+1. Deploy, then open a raga page with no citations (e.g. Kalyani) and check the request for
+   help and the relatives. Mark `raga_help_request` a key event in GA4.
+2. Import `docs/research/sources-2026-10.csv` (domain `source`), then
+   `docs/research/bhairavi-ssp-2026-10.csv` (domain `raga`), dry run first. Open Bhairavi.
+3. Run search volume for ragas, then compositions (CLAUDE.md, "Raga sources"). Reindex.
+4. SSP through rasika-books (owner). Its output becomes a raga sheet plus citations.
+
 ## 2026-10-24: self-serve event listing, built, not deployed
 
 Built: the after-submit page, "List your event" entry points, the same-venue ±3h duplicate

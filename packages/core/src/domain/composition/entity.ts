@@ -144,6 +144,18 @@ export const CompositionEntity = new Entity(
         required: false,
         default: () => 0,
       },
+      /**
+       * Monthly Keyword Planner volume for the title, the highest across its spellings. Ranks
+       * a raga's compositions. Entity-only: written by `search-volume-import`, never by a form.
+       */
+      searchVolume: {
+        type: 'number',
+        required: false,
+      },
+      searchVolumeCheckedAt: {
+        type: 'string',
+        required: false,
+      },
     },
     indexes: {
       primary: {

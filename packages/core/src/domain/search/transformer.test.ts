@@ -32,6 +32,28 @@ describe('transformRagaToDocument', () => {
   });
 });
 
+describe('transformRagaToDocument scale and volume', () => {
+  it('carries the scale and the search volume for ragaRelatives', () => {
+    const raga = {
+      id: 'r',
+      name: 'bhairavi',
+      arohanam: 'S R2 G2 M1 P D2 N2 S',
+      avarohanam: 'S N2 D1 P M1 G2 R2 S',
+      searchVolume: 12100,
+    } as Raga;
+    const doc = transformRagaToDocument(raga);
+    expect(doc.arohanam).toBe('S R2 G2 M1 P D2 N2 S');
+    expect(doc.avarohanam).toBe('S N2 D1 P M1 G2 R2 S');
+    expect(doc.popularity).toBe(12100);
+  });
+
+  it('leaves both out when nothing is stored', () => {
+    const doc = transformRagaToDocument({ id: 'r', name: 'bare' } as Raga);
+    expect(doc).not.toHaveProperty('arohanam');
+    expect(doc).not.toHaveProperty('popularity');
+  });
+});
+
 describe('transformRagaToDocument noindex', () => {
   it('never marks noindex when the composition count is unknown', () => {
     const doc = transformRagaToDocument({ id: 'r', name: 'Bare' } as Raga);

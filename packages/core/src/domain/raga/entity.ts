@@ -63,6 +63,83 @@ export const RagaEntity = new Entity(
         },
         required: false,
       },
+      scaleType: {
+        type: 'string',
+        required: false,
+      },
+      isBhashanga: {
+        type: 'boolean',
+        required: false,
+      },
+      prayogas: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            notation: { type: 'string', required: true },
+            label: { type: 'string' },
+            gamaka: { type: 'string' },
+          },
+        },
+        required: false,
+      },
+      jivaSwaras: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
+      nyasaSwaras: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
+      grahaSwaras: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
+      anyaSwaras: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
+      movement: {
+        type: 'string',
+        required: false,
+      },
+      keyCompositionIds: {
+        type: 'list',
+        items: { type: 'string' },
+        required: false,
+      },
+      /** What backs each field. See `sourced.ts`: a field outside LEGACY_FIELDS shows only when cited. */
+      citations: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            field: { type: 'string', required: true },
+            sourceSlug: { type: 'string', required: true },
+            locator: { type: 'string', required: true },
+            confidence: { type: 'number' },
+            tradition: { type: 'string' },
+            note: { type: 'string' },
+          },
+        },
+        required: false,
+      },
+      /**
+       * Monthly Keyword Planner volume for "<name> raga", the highest across its spellings.
+       * Entity-only: written by `search-volume-import`, absent from every form and CSV.
+       */
+      searchVolume: {
+        type: 'number',
+        required: false,
+      },
+      searchVolumeCheckedAt: {
+        type: 'string',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

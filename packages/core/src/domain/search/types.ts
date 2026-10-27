@@ -24,8 +24,14 @@ export interface SearchDocument {
    * for ragas today (see `isThinRaga`); absent means indexable.
    */
   noindex?: boolean;
-  /** Artists only: credited approved events plus their RSVPs and attendance (`artistPopularity`). */
+  /**
+   * Artists: credited approved events plus their RSVPs and attendance (`artistPopularity`).
+   * Ragas: monthly search volume (`searchVolume`).
+   */
   popularity?: number;
+  /** Ragas only: the stored scale, for `ragaRelatives`. ITRANS-free notation, never transliterated. */
+  arohanam?: string;
+  avarohanam?: string;
   /** Artists only: `claimStatus === 'verified'`. */
   verified?: boolean;
   /** Venues only: the stored city, for the `/<city>/concerts` pages (`listVenueCities`). */

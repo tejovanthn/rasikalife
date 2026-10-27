@@ -1,5 +1,11 @@
 import type { Edit } from '@rasika/core/domain/edit/client';
-import { isThinRaga } from '@rasika/core/domain/raga/client';
+import {
+  type Reference,
+  type Relative,
+  describeChange,
+  isThinRaga,
+  shownRaga,
+} from '@rasika/core/domain/raga/client';
 import type { CompositionWithRelations, RagaType } from '@rasika/core/types/entities';
 import { formatSwaras, fromItrans } from '@rasika/core/utils/transliteration';
 import { type MetaFunction, data, redirect } from 'react-router';
@@ -7,6 +13,13 @@ import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import {
+  Cite,
+  RagaHelpRequest,
+  RagaReferences,
+  type SourceInfo,
+} from '~/components/raga/raga-sources';
+import { SwaraStrip } from '~/components/raga/swara-strip';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import {
   BreadcrumbStructuredData,
@@ -18,6 +31,7 @@ import { MELAKARTA_NAMES } from '~/lib/carnatic';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ragaOgImageUrl } from '~/lib/og';
 import { ragaMetaDescription, ragaMetaTitle } from '~/lib/raga-description';
+import { type RagaPageModel, ragaPageModel } from '~/lib/raga-page';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -58,20 +72,34 @@ export async function loader({
       }
     }
 
-    const [compositions, similarRagas, repertoireStats, activeEdit, script] = await Promise.all([
-      client.composition.byRaga.query({ ragaId: raga.id, limit: 6 }),
-      raga.melaNumber
-        ? client.raga.byMela.query({ melaNumber: raga.melaNumber, excludeId: raga.id })
-        : Promise.resolve([]),
-      client.raga.getRepertoireStats.query({ ragaId: raga.id }),
-      user
-        ? client.edit.getActiveEditForEntity.query({ entityType: 'raga', entityId: raga.id })
-        : Promise.resolve(null),
-      scriptSessionResolver.getScript(request),
-    ]);
+    // Only what is cited, or a legacy field, from here on: the page, the meta description and
+    // the JSON-LD all read `shown`, never the record (`sourced.ts`).
+    const shown = shownRaga(raga);
+    const keyIds = shown.keyCompositionIds ?? [];
+    const sourceSlugs = [...new Set((shown.citations ?? []).map(c => c.sourceSlug))];
+
+    const [compositions, similarRagas, repertoireStats, activeEdit, script, relatives, sources] =
+      await Promise.all([
+        client.composition.rankedByRaga.query({ ragaId: raga.id, limit: 6, firstIds: keyIds }),
+        raga.melaNumber
+          ? client.raga.byMela.query({ melaNumber: raga.melaNumber, excludeId: raga.id })
+          : Promise.resolve([]),
+        client.raga.getRepertoireStats.query({ ragaId: raga.id }),
+        user
+          ? client.edit.getActiveEditForEntity.query({ entityType: 'raga', entityId: raga.id })
+          : Promise.resolve(null),
+        scriptSessionResolver.getScript(request),
+        // The index lives in S3; a page without relatives is better than no page.
+        client.raga.relatives
+          .query({ id: raga.id })
+          .catch(() => [] as Relative[]),
+        sourceSlugs.length > 0
+          ? client.source.bySlugs.query({ slugs: sourceSlugs }).catch(() => [])
+          : Promise.resolve([]),
+      ]);
 
     const displayRaga = {
-      ...raga,
+      ...shown,
       name: titleCaseName(fromItrans(raga.name, script)),
       // Swaras are notation, not words — see formatSwaras.
       arohanam: raga.arohanam ? formatSwaras(raga.arohanam) : raga.arohanam,
@@ -79,9 +107,9 @@ export async function loader({
       alternateScales: raga.alternateScales
         ? raga.alternateScales.map(s => formatSwaras(s))
         : raga.alternateScales,
-      parentRaga: raga.parentRaga
-        ? { ...raga.parentRaga, name: titleCaseName(fromItrans(raga.parentRaga.name, script)) }
-        : raga.parentRaga,
+      parentRaga: shown.parentRaga
+        ? { ...shown.parentRaga, name: titleCaseName(fromItrans(shown.parentRaga.name, script)) }
+        : shown.parentRaga,
     };
 
     return data({
@@ -90,7 +118,27 @@ export async function loader({
       rawArohanam: raga.arohanam,
       rawAvarohanam: raga.avarohanam,
       compositions: compositions.items,
-      hasMoreCompositions: compositions.hasMore,
+      hasMoreCompositions: compositions.total > compositions.items.length,
+      keyCompositions: compositions.items
+        .filter(c => keyIds.includes(c.id))
+        .map(c => ({
+          id: c.id,
+          title: c.title,
+          display: titleCaseName(fromItrans(c.title, script)),
+        })),
+      relatives: relatives.map(r => ({
+        id: r.id,
+        rawName: r.name,
+        name: titleCaseName(fromItrans(r.name, script)),
+        changes: r.changes.map(describeChange),
+      })),
+      sources: Object.fromEntries(
+        sources.map(s => [
+          s.slug,
+          { slug: s.slug, title: s.title, citation: s.citation, url: s.url, licence: s.licence },
+        ])
+      ) as Record<string, SourceInfo>,
+      page: ragaPageModel(shown),
       similarRagas: similarRagas.slice(0, 6).map(r => ({
         ...r,
         name: titleCaseName(fromItrans(r.name, script)),
@@ -114,8 +162,10 @@ export async function loader({
         avarohanam: raga.avarohanam,
         alternateScales: raga.alternateScales,
         description: raga.description,
+        prayogas: shown.prayogas,
+        movement: shown.movement,
         performanceCount: repertoireStats?.performanceCount ?? raga.performanceCount,
-        compositionCount: compositions.items.length,
+        compositionCount: compositions.total,
       }),
       activeEdit,
       isLoggedIn: !!user,
@@ -208,6 +258,79 @@ function RagaGrid({ ragas }: { ragas: RagaType[] }) {
   );
 }
 
+type ShownRaga = RagaType & {
+  prayogas?: Array<{ notation: string; label?: string }>;
+  movement?: string;
+  scaleType?: string;
+  isBhashanga?: boolean;
+};
+
+interface RelativeRow {
+  id: string;
+  rawName: string;
+  name: string;
+  changes: string[];
+}
+
+const TIME_LABELS: Record<string, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  night: 'Night',
+  universal: 'Any time',
+};
+
+function SwaraList({ label, swaras, cite }: { label: string; swaras: string[]; cite?: number[] }) {
+  if (swaras.length === 0) return null;
+  return (
+    <div className="flex gap-3 text-sm">
+      <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
+      <span className="font-mono">
+        {swaras.join(' ')}
+        <Cite numbers={cite} />
+      </span>
+    </div>
+  );
+}
+
+function HowItMoves({ raga, page }: { raga: ShownRaga; page: RagaPageModel }) {
+  const { footnotes, swaras } = page;
+  return (
+    <section className="mt-8 pt-8 border-t space-y-4" aria-labelledby="movement-heading">
+      <h2 id="movement-heading" className="text-xl font-semibold">
+        How it moves
+      </h2>
+      {(raga.prayogas?.length ?? 0) > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Characteristic phrases
+            <Cite numbers={footnotes.prayogas} />
+          </h3>
+          <ul className="space-y-1">
+            {raga.prayogas?.map(p => (
+              <li key={p.notation} className="text-sm">
+                <span className="font-mono">{p.notation}</span>
+                {p.label && <span className="text-muted-foreground"> · {p.label}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      <div className="grid gap-2">
+        <SwaraList label="Jiva swaras" swaras={swaras.jiva} cite={footnotes.jivaSwaras} />
+        <SwaraList label="Nyasa swaras" swaras={swaras.nyasa} cite={footnotes.nyasaSwaras} />
+        <SwaraList label="Graha swara" swaras={swaras.graha} cite={footnotes.grahaSwaras} />
+      </div>
+      {raga.movement && (
+        <p className="text-muted-foreground leading-relaxed max-w-prose">
+          {raga.movement}
+          <Cite numbers={footnotes.movement} />
+        </p>
+      )}
+    </section>
+  );
+}
+
 export default function RagaDetails() {
   const location = useLocation();
 
@@ -216,6 +339,10 @@ export default function RagaDetails() {
     rawName,
     compositions,
     hasMoreCompositions,
+    keyCompositions,
+    relatives,
+    sources,
+    page,
     similarRagas,
     performanceCount,
     topCompositions,
@@ -223,10 +350,14 @@ export default function RagaDetails() {
     isLoggedIn,
     isModerator,
   } = useLoaderData<{
-    raga: RagaType;
+    raga: ShownRaga;
     rawName: string;
     compositions: CompositionWithRelations[];
     hasMoreCompositions: boolean;
+    keyCompositions: { id: string; title: string; display: string }[];
+    relatives: RelativeRow[];
+    sources: Record<string, SourceInfo>;
+    page: RagaPageModel;
     similarRagas: RagaType[];
     performanceCount: number;
     topCompositions: { id: string; title: string; count: number }[];
@@ -243,6 +374,11 @@ export default function RagaDetails() {
   }
 
   const shareUrl = `https://rasika.life${generateRagaUrl(rawName, raga.id)}`;
+  const { footnotes } = page;
+  const help = (section: RagaPageModel['helpSection']) =>
+    page.helpSection === section && section ? (
+      <RagaHelpRequest ragaName={raga.name} section={section} pageUrl={shareUrl} />
+    ) : null;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -253,6 +389,11 @@ export default function RagaDetails() {
       path: generateRagaUrl(rawName, raga.id),
     },
   ];
+
+  const kind = [
+    raga.isBhashanga ? 'Bhashanga' : undefined,
+    raga.scaleType ? capitalize(raga.scaleType) : undefined,
+  ].filter(Boolean);
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
@@ -271,12 +412,15 @@ export default function RagaDetails() {
       />
       <section className="mb-8 space-y-6">
         {raga.description && (
-          <p className="text-muted-foreground leading-relaxed">{raga.description}</p>
+          <p className="text-muted-foreground leading-relaxed">
+            {raga.description}
+            <Cite numbers={footnotes.description} />
+          </p>
         )}
 
         {/* Scale */}
         {(raga.arohanam || raga.avarohanam) && (
-          <div className="p-5 bg-muted rounded-lg space-y-3">
+          <div className="p-5 bg-muted rounded-lg space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Scale
             </h2>
@@ -284,13 +428,19 @@ export default function RagaDetails() {
               {raga.arohanam && (
                 <div className="flex gap-3">
                   <span className="w-28 shrink-0 text-muted-foreground">Arohanam</span>
-                  <span className="font-mono">{raga.arohanam}</span>
+                  <span className="font-mono">
+                    {raga.arohanam}
+                    <Cite numbers={footnotes.arohanam} />
+                  </span>
                 </div>
               )}
               {raga.avarohanam && (
                 <div className="flex gap-3">
                   <span className="w-28 shrink-0 text-muted-foreground">Avarohanam</span>
-                  <span className="font-mono">{raga.avarohanam}</span>
+                  <span className="font-mono">
+                    {raga.avarohanam}
+                    <Cite numbers={footnotes.avarohanam} />
+                  </span>
                 </div>
               )}
               {raga.alternateScales && raga.alternateScales.length > 0 && (
@@ -308,7 +458,17 @@ export default function RagaDetails() {
                   </div>
                 </div>
               )}
+              <SwaraList
+                label="Borrowed note"
+                swaras={page.swaras.anya}
+                cite={footnotes.anyaSwaras}
+              />
             </div>
+            <SwaraStrip
+              arohanam={raga.arohanam}
+              avarohanam={raga.avarohanam}
+              anya={page.swaras.anya}
+            />
           </div>
         )}
 
@@ -336,29 +496,56 @@ export default function RagaDetails() {
                 >
                   {raga.parentRaga.name}
                 </Link>
+                <Cite numbers={footnotes.parentRaga} />
               </dd>
             </div>
           )}
-          {raga.rasa && (
+          {kind.length > 0 && (
             <div>
-              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Rasa</dt>
-              <dd className="mt-0.5 font-medium">{raga.rasa}</dd>
-            </div>
-          )}
-          {raga.timeOfDay && (
-            <div>
-              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Time of Day</dt>
-              <dd className="mt-0.5 font-medium">{capitalize(raga.timeOfDay)}</dd>
-            </div>
-          )}
-          {raga.season && (
-            <div>
-              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Season</dt>
-              <dd className="mt-0.5 font-medium">{raga.season}</dd>
+              <dt className="text-muted-foreground text-xs uppercase tracking-wide">Type</dt>
+              <dd className="mt-0.5 font-medium">
+                {kind.join(', ')}
+                <Cite
+                  numbers={[
+                    ...(footnotes.isBhashanga ?? []),
+                    ...(footnotes.scaleType ?? []),
+                  ].filter((n, i, all) => all.indexOf(n) === i)}
+                />
+              </dd>
             </div>
           )}
         </div>
       </section>
+
+      {page.hasMovement ? (
+        <HowItMoves raga={raga} page={page} />
+      ) : (
+        help('movement') && <div className="mt-8">{help('movement')}</div>
+      )}
+
+      {page.hasLearnFrom ? (
+        <section className="mt-8 pt-8 border-t" aria-labelledby="learn-heading">
+          <h2 id="learn-heading" className="text-xl font-semibold mb-3">
+            Learn it from
+            <Cite numbers={footnotes.keyCompositionIds} />
+          </h2>
+          <ul className="space-y-1 text-sm">
+            {keyCompositions.map(c => (
+              <li key={c.id}>
+                <Link
+                  to={generateCompositionUrl(c.title, c.id)}
+                  className="text-primary hover:underline"
+                >
+                  {c.display}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+        help('learn') && <div className="mt-8">{help('learn')}</div>
+      )}
+
       {performanceCount > 0 && (
         <section className="mt-8 pt-8 border-t">
           <div className="flex items-baseline gap-2 mb-4">
@@ -382,13 +569,44 @@ export default function RagaDetails() {
           </ul>
         </section>
       )}
-      <EntityCompositions
-        compositions={compositions}
-        entityType="raga"
-        entitySlug={`${generateSlug(raga.name)}-${raga.id}`}
-        showViewMore={hasMoreCompositions}
-        customHeading={`Compositions in ${raga.name} raga`}
-      />
+      <div className="mt-8">
+        <EntityCompositions
+          compositions={compositions}
+          entityType="raga"
+          entitySlug={`${generateSlug(raga.name)}-${raga.id}`}
+          showViewMore={hasMoreCompositions}
+          customHeading={`Compositions in ${raga.name} raga`}
+        />
+      </div>
+
+      {relatives.length > 0 && (
+        <section className="mt-8 pt-8 border-t" aria-labelledby="relatives-heading">
+          <h2 id="relatives-heading" className="text-xl font-semibold">
+            Close relatives
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1 mb-4">
+            Ragas whose scale differs from {raga.name}&apos;s by a note or two.
+          </p>
+          <ul className="divide-y border-y">
+            {relatives.map(r => (
+              <li key={r.id} className="py-3">
+                <Link
+                  to={generateRagaUrl(r.rawName, r.id)}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {r.name}
+                </Link>
+                <p className="text-sm text-muted-foreground">
+                  {r.changes.length === 0
+                    ? 'the same notes, moving differently'
+                    : r.changes.join('; ')}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Similar ragas from the same melakarta */}
       {similarRagas.length > 0 && raga.melaNumber && (
         <section className="mt-8 pt-8 border-t">
@@ -403,6 +621,57 @@ export default function RagaDetails() {
           <RagaGrid ragas={similarRagas} />
         </section>
       )}
+
+      {page.hasCharacter ? (
+        <section className="mt-8 pt-8 border-t" aria-labelledby="character-heading">
+          <h2 id="character-heading" className="text-xl font-semibold mb-3">
+            Character
+          </h2>
+          <dl className="grid gap-3 text-sm sm:grid-cols-3">
+            {raga.rasa && (
+              <div>
+                <dt className="text-muted-foreground text-xs uppercase tracking-wide">Rasa</dt>
+                <dd className="mt-0.5 font-medium">
+                  {raga.rasa}
+                  <Cite numbers={footnotes.rasa} />
+                  {page.traditionOf.rasa && (
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      according to {page.traditionOf.rasa}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
+            {raga.timeOfDay && (
+              <div>
+                <dt className="text-muted-foreground text-xs uppercase tracking-wide">Time</dt>
+                <dd className="mt-0.5 font-medium">
+                  {TIME_LABELS[raga.timeOfDay] ?? capitalize(raga.timeOfDay)}
+                  <Cite numbers={footnotes.timeOfDay} />
+                  {page.traditionOf.timeOfDay && (
+                    <span className="block text-xs font-normal text-muted-foreground">
+                      in the {page.traditionOf.timeOfDay}
+                    </span>
+                  )}
+                </dd>
+              </div>
+            )}
+            {raga.season && (
+              <div>
+                <dt className="text-muted-foreground text-xs uppercase tracking-wide">Season</dt>
+                <dd className="mt-0.5 font-medium">
+                  {raga.season}
+                  <Cite numbers={footnotes.season} />
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      ) : (
+        help('character') && <div className="mt-8">{help('character')}</div>
+      )}
+
+      <RagaReferences references={page.references as Reference[]} sources={sources} />
 
       {/* Three identical cards saying "Browse other ragas", "Find compositions in this raga"
           and "Learn about the tradition" told a reader nothing they could not guess. A plain

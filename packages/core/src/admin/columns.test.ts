@@ -254,8 +254,13 @@ describe('parseDomainCsv — validation and errors', () => {
   });
 });
 
+// The id is what makes a re-imported export update rows instead of duplicating them. A source
+// is keyed by its slug and every row is an upsert on it, so it needs no id to round-trip.
+const KEYED_BY_SLUG = new Set(['source']);
+
 describe('every domain exposes an id column', () => {
-  it.each(Object.keys(ADMIN_CSV_DOMAINS))('%s has an id header', domain => {
-    expect(ADMIN_CSV_DOMAINS[domain].columns.some(column => column.header === 'id')).toBe(true);
+  it.each(Object.keys(ADMIN_CSV_DOMAINS))('%s has an id or slug header', domain => {
+    const key = KEYED_BY_SLUG.has(domain) ? 'slug' : 'id';
+    expect(ADMIN_CSV_DOMAINS[domain].columns.some(column => column.header === key)).toBe(true);
   });
 });

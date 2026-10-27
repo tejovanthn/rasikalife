@@ -28,6 +28,9 @@ export function isThinRaga(raga: {
   alternateScales?: string[] | null;
   description?: string | null;
   performanceCount?: number | null;
+  /** Phrases and movement are content a searcher came for, once cited. */
+  prayogas?: unknown[] | null;
+  movement?: string | null;
   /** Compositions linked to this raga. */
   compositionCount: number;
 }): boolean {
@@ -38,7 +41,10 @@ export function isThinRaga(raga: {
     (raga.alternateScales ?? []).some(s => s.trim().length > 0);
   const hasDescription = !!raga.description?.trim();
   const hasPerformances = (raga.performanceCount ?? 0) > 0;
-  return !hasScale && !hasDescription && !hasPerformances && raga.compositionCount === 0;
+  const hasMovement = (raga.prayogas ?? []).length > 0 || !!raga.movement?.trim();
+  return (
+    !hasScale && !hasDescription && !hasPerformances && !hasMovement && raga.compositionCount === 0
+  );
 }
 
 /**

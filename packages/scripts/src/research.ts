@@ -345,7 +345,39 @@ export async function ingestResearch(opts: {
     console.log(`   refusals → ${report}`);
   }
 
+  // Citations name their site as a source, and the raga import refuses a citation to a
+  // source that does not exist — so the source sheet goes in first.
+  const sourcesOut = `${out.replace(/\.csv$/, '')}.sources.csv`;
+  if (merged.webSources.size > 0) {
+    writeFileSync(
+      sourcesOut,
+      toCsv([
+        ['slug', 'title', 'citation', 'kind', 'url', 'year', 'language', 'licence'],
+        ...[...merged.webSources].map(([slug, origin]) => {
+          const host = new URL(origin).hostname.replace(/^www\./, '');
+          return [
+            slug,
+            host,
+            `${host}, accessed ${new Date().toISOString().slice(0, 10)}.`,
+            'web',
+            origin,
+            '',
+            '',
+            '',
+          ];
+        }),
+      ]),
+      'utf-8'
+    );
+    console.log(`   ${merged.webSources.size} cited sites → ${sourcesOut}`);
+  }
+
   console.log(`\n📄 ${out}`);
+  if (merged.webSources.size > 0) {
+    console.log(
+      `Import the cited sites first (an existing slug is rewritten, so drop rows already stored):\n   pnpm cli admin-csv-import --domain source --file ${sourcesOut} --user <id> --dry-run`
+    );
+  }
   console.log(
     `Review it, then:\n   pnpm cli admin-csv-import --domain ${domain} --file ${out} --user <id> --dry-run`
   );

@@ -31,6 +31,11 @@ describe('isThinRaga', () => {
     expect(isThinRaga({ performanceCount: 2, compositionCount: 0 })).toBe(false);
   });
 
+  it('is not thin with phrases or a movement note', () => {
+    expect(isThinRaga({ prayogas: [{ notation: 'P D N S' }], compositionCount: 0 })).toBe(false);
+    expect(isThinRaga({ movement: 'Rises through G and R.', compositionCount: 0 })).toBe(false);
+  });
+
   it('never marks an allowlisted raga thin, however bare', () => {
     // rajalahari: no scale, no description, no composition, but 5 impressions.
     expect(isThinRaga({ id: '3A73KrTU0EgXIV0W20AGmQSDsZw', compositionCount: 0 })).toBe(false);

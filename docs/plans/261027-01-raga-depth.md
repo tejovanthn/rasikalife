@@ -1,6 +1,8 @@
 # Raga depth: how a raga moves, with a source for every claim
 
-Status: plan, nothing built. Written 2026-10-27, revised the same day after the owner's review.
+Status: phases 1, 2, 4 and 5 built on 2026-10-27, not deployed. Phase 3 (SSP through rasika-books)
+and phase 6 (other sources) are research and run outside this repo. Phase 7 is deferred and
+phase 8 is optional. Written 2026-10-27 and revised the same day after the owner's review.
 
 ## Why
 

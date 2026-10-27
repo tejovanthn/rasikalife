@@ -31,6 +31,9 @@ import { CreateOrganiserSchema, UpdateOrganiserSchema } from '../domain/organise
 import * as Raga from '../domain/raga';
 import { RagaEntity } from '../domain/raga/entity';
 import { CreateRagaSchema, UpdateRagaSchema } from '../domain/raga/schema';
+import * as Source from '../domain/source';
+import { SourceEntity } from '../domain/source/entity';
+import { CreateSourceSchema } from '../domain/source/schema';
 import * as Tala from '../domain/tala';
 import { TalaEntity } from '../domain/tala/entity';
 import { CreateTalaSchema, UpdateTalaSchema } from '../domain/tala/schema';
@@ -156,8 +159,23 @@ async function idsFor(names: unknown, resolve: (name: string) => Promise<Ref>): 
 const prepareRaga: PrepareFn = async (row, ctx) => {
   const { parentRagaName, ...rest } = row;
   if (typeof parentRagaName === 'string') rest.parentRaga = await ctx.resolve.raga(parentRagaName);
+  await assertSourcesExist(rest.citations);
   return rest;
 };
+
+/**
+ * A citation to a source that does not exist would render as a footnote to nothing. Import the
+ * `source` sheet first; this refuses the row rather than inventing a source from a slug.
+ */
+async function assertSourcesExist(citations: unknown): Promise<void> {
+  if (!Array.isArray(citations) || citations.length === 0) return;
+  const slugs = [
+    ...new Set(citations.map(c => (c as { sourceSlug?: unknown })?.sourceSlug).map(String)),
+  ];
+  const found = new Set((await Source.getSources(slugs)).map(s => s.slug));
+  const missing = slugs.filter(slug => !found.has(slug));
+  if (missing.length > 0) throw new Error(`unknown source: ${missing.join(', ')}`);
+}
 
 const prepareComposition: PrepareFn = async (row, ctx) => {
   const { composerName, ragaNames, talaNames, ...rest } = row;
@@ -251,6 +269,14 @@ const REGISTRY: Record<string, DomainConfig> = {
     update: (id, input) => Raga.updateRaga(id, input as Parameters<typeof Raga.updateRaga>[1]),
     scanAll: () => scanEntity(opts => RagaEntity.scan.go(opts)),
     prepare: prepareRaga,
+  },
+  source: {
+    createSchema: CreateSourceSchema,
+    updateSchema: CreateSourceSchema,
+    getById: Source.getSource,
+    create: input => Source.putSource(input as Parameters<typeof Source.putSource>[0]),
+    update: (slug, input) => Source.putSource({ ...(input as object), slug } as never),
+    scanAll: () => scanEntity(opts => SourceEntity.scan.go(opts)),
   },
   tala: {
     createSchema: CreateTalaSchema,
