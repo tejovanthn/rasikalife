@@ -50,8 +50,25 @@ Effect today:
 - `rasa` (90), `timeOfDay` (95) and `season` (11) disappear at once. Bhairavi's "Universal" goes.
   They come back with the source and the school named ("evening, in the Dikshitar school").
 - `melaNumber` is derived from the parent and needs no citation, the same as now.
-- `arohanam`, `avarohanam` and `description` are the open question below, because hiding them
-  would empty 1,200 pages that rank.
+- `arohanam`, `avarohanam` and `description` **stay visible** (owner, 2026-10-27). Hiding them
+  would empty 1,200 pages that rank. They gain citations as enrichment reaches them. When a
+  backfill finds a source that disagrees, the page shows the sourced value.
+
+### Where a raga has no sourced data: ask for help
+
+A section with nothing cited does not disappear silently. It shows a short request for help:
+"We have no source yet for how Bhairavi moves. Do you know a book or a teacher's notes? Tell
+us on WhatsApp." The button opens `wa.me/919611131648` with the text filled in: the raga's name,
+the section, and the page URL.
+
+- The number lives in one constant (`HELP_WHATSAPP_NUMBER`, `app/lib/`), never inline.
+- The text names the raga and the section only. No reader data goes into the URL.
+- The request is the same for every reader, so it does not break the page cache.
+- A click fires `raga_help_request` through `trackEvent` (add it to `AnalyticsEvent`, and mark
+  it a key event in GA4).
+- Sections that show it: Character (rasa and time, hidden until cited), How it moves, Learn it
+  from. One request per page, at the first empty section, so a bare page is not a column of
+  the same box.
 
 ## Rule 2: we read their sources, never their data
 
@@ -228,8 +245,8 @@ on the raga, because the raga index can use it for "popular".
 
 ## The page
 
-Order, in our existing layout (DESIGN.md, tokens in `globals.css`). Each section renders only
-when it holds cited data:
+Order, in our existing layout (DESIGN.md, tokens in `globals.css`). Each section renders its
+cited data, or the request for help described under Rule 1:
 
 1. **Header**: name, "janya of Natabhairavi · mela 20", bhashanga badge, footnote markers.
 2. **Scale**: arohanam and avarohanam, plus a 12-position swara strip (server-rendered SVG) with
@@ -256,7 +273,7 @@ JSON-LD drops any field that is not cited, by the same rule as the page.
 | # | What | Notes |
 |---|---|---|
 | 1 | Search volume on compositions, sorted raga composition lists, relatives on the page | ships alone |
-| 2 | `source` domain, `citations`, the show-only-sourced rule, `research-ingest` keeps sources | hides rasa/time/season at once |
+| 2 | `source` domain, `citations`, the show-only-sourced rule, `research-ingest` keeps sources, the WhatsApp request for help | hides rasa/time/season at once |
 | 3 | SSP through rasika-books (owner runs it), then import as fields plus citations | the main data |
 | 4 | New raga fields and validators, admin CSV columns | before the import in phase 3 lands |
 | 5 | Page sections 2–7 | can ship before phase 3 finishes |
@@ -264,13 +281,11 @@ JSON-LD drops any field that is not cited, by the same rule as the page.
 | 7 | Prayogas proposed from Shivkumar notation | **deferred by the owner** |
 | 8 | Sound | later, optional |
 
-## Open question
+## Decided
 
-**Unsourced scales and descriptions.** Rule 1 hides any fact without a citation, and 1,278
-scales and 1,176 descriptions have none, because ingest dropped them. Recommendation: hide
-rasa, time and season now (206 values, little traffic). Keep scales and descriptions visible
-until the citation backfill in phase 2 checks each one against SSP, karnatik.com or Raga
-Pravaham and cites the one that agrees. Hide whatever no source confirms. The owner decides.
+**Unsourced scales and descriptions stay visible** (owner, 2026-10-27). Enriched fields replace
+or confirm them as sources arrive. Rasa, time and season are hidden until cited. Any section
+with nothing cited shows the WhatsApp request for help.
 
 ## Appendix: Bhairavi from SSP, as the worked example
 
