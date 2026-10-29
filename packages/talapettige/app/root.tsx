@@ -9,6 +9,7 @@ import {
   isRouteErrorResponse,
   useRouteError,
 } from 'react-router';
+import { Analytics } from '~/components/analytics';
 import { RegisterServiceWorker } from '~/components/register-sw';
 import { TalapettigeShell } from '~/components/shell';
 import styles from './globals.css?url';
@@ -44,6 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Analytics />
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -19,6 +19,10 @@ const talapettigeSite = new sst.aws.StaticSite('Talapettige', {
     output: 'build/client',
   },
   domain: getDomain('talapettige'),
+  // Read at build time; analytics.tsx sends nothing unless this is `prod`.
+  environment: {
+    VITE_STAGE: $app.stage,
+  },
   assets: {
     fileOptions: [
       { files: '**', cacheControl: 'public,max-age=0,must-revalidate' },

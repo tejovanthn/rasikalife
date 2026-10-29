@@ -10,6 +10,7 @@ import {
   isRouteErrorResponse,
   useRouteError,
 } from 'react-router';
+import { Analytics } from '~/components/analytics';
 import { RegisterServiceWorker } from '~/components/register-sw';
 import { pageMeta } from '~/lib/meta';
 import styles from './globals.css?url';
@@ -83,6 +84,7 @@ function Document({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        <Analytics />
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -1313,6 +1313,14 @@ for any object in the bucket.
 `sst shell`; `pnpm test:unit` (`*.unit.test.ts`, `vitest.unit.config.ts`) has no setup file,
 because the integration setup imports `@rasika/core` before any test file's `vi.mock` applies.
 
+### GA4 on Classes and Talapettige
+
+Each app has its own GA4 stream (Classes `G-ZL00N9T3C6`, Talapettige `G-4PQ1H7Y008`) and loads gtag
+through `components/analytics.tsx`, not the Firebase SDK that web uses. It sends only when
+`VITE_STAGE` is `prod` and the browser is not driven (`navigator.webdriver`), and sends `page_view`
+by hand on each route change. Classes paths hold learner and program ids, so they reach GA4;
+keep ledger content out of any event parameter added there.
+
 ### Talapettige (`packages/talapettige`)
 
 A practice tool: a tanpura drone and a tala metronome, synthesised in the browser by two
