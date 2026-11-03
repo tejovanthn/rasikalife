@@ -106,6 +106,21 @@
       "import": "./src/domain/raga/dedup.ts",
       "default": "./src/domain/raga/dedup.ts"
     },
+    "./domain/raga/ssp": {
+      "types": "./src/domain/raga/ssp.ts",
+      "import": "./src/domain/raga/ssp.ts",
+      "default": "./src/domain/raga/ssp.ts"
+    },
+    "./domain/raga/ssp-match": {
+      "types": "./src/domain/raga/ssp-match.ts",
+      "import": "./src/domain/raga/ssp-match.ts",
+      "default": "./src/domain/raga/ssp-match.ts"
+    },
+    "./domain/raga/ssp-apply": {
+      "types": "./src/domain/raga/ssp-apply.ts",
+      "import": "./src/domain/raga/ssp-apply.ts",
+      "default": "./src/domain/raga/ssp-apply.ts"
+    },
     "./domain/raga/melakarta": {
       "types": "./src/domain/raga/melakarta.ts",
       "import": "./src/domain/raga/melakarta.ts",
