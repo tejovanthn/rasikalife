@@ -16,7 +16,8 @@ Next, in order:
 2. Import `docs/research/sources-2026-10.csv` (domain `source`), then
    `docs/research/bhairavi-ssp-2026-10.csv` (domain `raga`), dry run first. Open Bhairavi.
 3. Run search volume for ragas, then compositions (CLAUDE.md, "Raga sources"). Reindex.
-4. SSP through rasika-books (owner). Its output becomes a raga sheet plus citations.
+4. SSP is extracted in rasika-books. What rasikalife needs to import it: `docs/plans/261103-01-ssp-import.md`.
+   Next step: owner answers its decisions, first which edition the citations name.
 
 ## 2026-10-24: self-serve event listing, built, not deployed
 
