@@ -213,12 +213,7 @@ export interface SspInput {
 // ── small helpers ───────────────────────────────────────────────────────────────────────────
 
 function ascii(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 /** `Vol. 1, p. 390` or `Vol. 1, pp. 390–391`, from printed page numbers. */
@@ -235,7 +230,11 @@ const minOf = (nums: (number | null | undefined)[]): number | undefined => {
 };
 
 /** Does the English value say what the stored one says? A bare stored letter matches any variant. */
-function agreesWithStored(field: SspField, value: unknown, stored: SspStoredRaga | undefined): boolean {
+function agreesWithStored(
+  field: SspField,
+  value: unknown,
+  stored: SspStoredRaga | undefined
+): boolean {
   const have = stored?.[field];
   if (field === 'prayogas') {
     const a = ((value as SspPrayogaOut[]) ?? []).map(p => p.notation).join('/');
@@ -340,9 +339,11 @@ export function cleanMurcchanaLine(raw: string | null | undefined): CleanLine {
     .toUpperCase()
     .split(/\s+/)
     .filter(Boolean);
-  if (tokens.length < 3) return { ok: false, reason: `only ${tokens.length} token(s); not a scale` };
+  if (tokens.length < 3)
+    return { ok: false, reason: `only ${tokens.length} token(s); not a scale` };
   const bad = tokens.filter(t => !(t in SWARA_SEMITONES));
-  if (bad.length > 0) return { ok: false, reason: `not swara notation: ${bad.slice(0, 3).join(' ')}` };
+  if (bad.length > 0)
+    return { ok: false, reason: `not swara notation: ${bad.slice(0, 3).join(' ')}` };
   const line = tokens.join(' ');
   if (!tokens.includes('S')) return { ok: true, value: line };
   const checked = validateSwaras(line);
@@ -443,7 +444,9 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
   const sources = lakshana.sources ?? [];
   const sourceInfo = (...names: string[]) => {
     const entries = sources.filter(s => names.includes(s.field));
-    const pages = entries.map(s => s.printed_page).filter((p): p is number => typeof p === 'number');
+    const pages = entries
+      .map(s => s.printed_page)
+      .filter((p): p is number => typeof p === 'number');
     return { pages, confidence: minOf(entries.map(s => s.confidence)) };
   };
   const recordPages = (record.printed_pages ?? []).filter(p => Number.isFinite(p));
@@ -546,13 +549,16 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
         return;
       }
       seen.add(key);
-      const pages =
-        typeof meta.page === 'number' ? [meta.page] : sourceInfo('murcchana').pages;
+      const pages = typeof meta.page === 'number' ? [meta.page] : sourceInfo('murcchana').pages;
       additions.push(entry);
       addCites.push(
         cite(
           'alternateScales',
-          pages.length > 0 ? pages : typeof murcchana?.printed_page === 'number' ? [murcchana.printed_page] : [],
+          pages.length > 0
+            ? pages
+            : typeof murcchana?.printed_page === 'number'
+              ? [murcchana.printed_page]
+              : [],
           {
             confidence: meta.confidence ?? murcchana?.confidence ?? undefined,
             tradition: DIKSHITAR_SCHOOL,
@@ -610,7 +616,8 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
     if (additions.length > 0) {
       const hold = holdFor('alternateScales');
       if (hold) {
-        for (const entry of additions) held.push({ field: 'alternateScales', value: entry, reason: hold });
+        for (const entry of additions)
+          held.push({ field: 'alternateScales', value: entry, reason: hold });
       } else {
         patch.alternateScales = [...existing, ...additions];
         citations.push(...addCites);
@@ -681,7 +688,9 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
   {
     const info = sourceInfo('scale_type');
     const known = (v: string | null | undefined) =>
-      (SCALE_TYPES as readonly string[]).includes(String(v)) ? (v as SspPatch['scaleType']) : undefined;
+      (SCALE_TYPES as readonly string[]).includes(String(v))
+        ? (v as SspPatch['scaleType'])
+        : undefined;
     const value = known(lakshana.scale_type) ?? known(record.sloka?.facts?.scale_type);
     if (value) {
       commit('scaleType', value, [
@@ -717,7 +726,10 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
     if (value !== undefined) {
       const info = sourceInfo('raga_class');
       commit('isBhashanga', value, [
-        cite('isBhashanga', info.pages, { confidence: info.confidence, tradition: DIKSHITAR_SCHOOL }),
+        cite('isBhashanga', info.pages, {
+          confidence: info.confidence,
+          tradition: DIKSHITAR_SCHOOL,
+        }),
       ]);
     }
   }
@@ -805,7 +817,11 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
     }
     const checked = parseSwaraSet([swara]);
     if (!checked.ok || !checked.tokens) {
-      held.push({ field: 'anyaSwaras', value: swara, reason: `not swara notation: ${checked.reason}` });
+      held.push({
+        field: 'anyaSwaras',
+        value: swara,
+        reason: `not swara notation: ${checked.reason}`,
+      });
       return;
     }
     for (const t of checked.tokens) if (!anyaTokens.includes(t)) anyaTokens.push(t);
@@ -965,7 +981,10 @@ export function sspMovementFacts(record: SspRagaRecord): SspMovementFact[] {
   for (const f of lakshana.other_facts ?? []) push('other_fact', f.fact, f.page);
   for (const f of record.historical_notes ?? []) push('historical_note', f.fact, f.page);
   for (const f of record.editor_notes ?? []) push('editor_note', f.fact, f.page);
-  for (const a of (lakshana.anya_swaras ?? []) as (SspAnya & { rules?: string[]; page?: number })[]) {
+  for (const a of (lakshana.anya_swaras ?? []) as (SspAnya & {
+    rules?: string[];
+    page?: number;
+  })[]) {
     for (const rule of a.rules ?? []) push('anya_rule', `${a.swara ?? ''}: ${rule}`, a.page);
   }
   for (const g of lakshana.gamaka_rules ?? []) {
@@ -1008,7 +1027,9 @@ export function sspMatchCheck(
   const reasons: string[] = [];
   const storedMela = stored.melaNumber ?? options.parentMelaNumber ?? null;
   const melaMismatch =
-    typeof record.mela_number === 'number' && storedMela !== null && storedMela !== record.mela_number;
+    typeof record.mela_number === 'number' &&
+    storedMela !== null &&
+    storedMela !== record.mela_number;
   if (melaMismatch) {
     reasons.push(`mela number: SSP says ${record.mela_number}, stored says ${storedMela}`);
   }
