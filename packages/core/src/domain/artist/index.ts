@@ -11,6 +11,7 @@ import { ArtistEntity } from './entity';
 import type { Artist } from './entity';
 import { CLEARABLE_ARTIST_FIELDS } from './schema';
 import type { CreateArtistSchema, UpdateArtistSchema } from './schema';
+import { CITABLE_ARTIST_FIELDS, pruneArtistCitations } from './sourced';
 
 export type CreateArtistInput = z.infer<typeof CreateArtistSchema>;
 export type UpdateArtistInput = z.infer<typeof UpdateArtistSchema>;
@@ -62,6 +63,24 @@ export async function getArtistByName(name: string): Promise<Artist | null> {
  * a request: without it, `clearFields: ['name']` would strip the one attribute every read
  * path and every merge depends on.
  */
+/**
+ * A citation for a field the update empties claims nothing, so it goes with the value.
+ * Returns the input unchanged when no citation would be dropped.
+ */
+function withPrunedCitations(
+  stored: Record<string, unknown> | null,
+  input: UpdateArtistInput,
+  cleared: readonly string[]
+): UpdateArtistInput {
+  const merged: Record<string, unknown> = { ...stored, ...input };
+  for (const field of cleared) delete merged[field];
+  const pruned = pruneArtistCitations(merged as Parameters<typeof pruneArtistCitations>[0]);
+  const before = (merged.citations as unknown[] | undefined)?.length ?? 0;
+  if (pruned.length === before && !('citations' in input)) return input;
+  // If every citation goes, the list is written empty rather than left holding the old one.
+  return { ...input, citations: pruned as UpdateArtistInput['citations'] };
+}
+
 export async function updateArtist(
   id: string,
   input: UpdateArtistInput,
@@ -74,12 +93,19 @@ export async function updateArtist(
     field => allowed.has(field) && (input as Record<string, unknown>)[field] === undefined
   );
 
-  // Read the stored name *before* writing, so the cascade below can tell a real rename from a
-  // payload that merely carries the name it already had. One GetItem, and only when a name is
-  // present at all.
-  const previousName = input.name ? (await getArtist(id))?.name : undefined;
+  // Read the stored record *before* writing, once, and only when something below needs it: the
+  // rename check (so the cascade can tell a real rename from a payload that merely carries the
+  // name it already had) or the citation prune.
+  // Clearing `citations` itself needs no prune, and setting and removing one path is an error.
+  const touchesCitations =
+    !toClear.includes('citations') &&
+    ('citations' in input || CITABLE_ARTIST_FIELDS.some(f => f in input || toClear.includes(f)));
+  const stored = input.name || touchesCitations ? await getArtist(id) : null;
+  const previousName = input.name ? stored?.name : undefined;
 
-  const operation = ArtistEntity.update({ id }).set(input);
+  const operation = ArtistEntity.update({ id }).set(
+    touchesCitations ? withPrunedCitations(stored, input, toClear) : input
+  );
   const result = await (toClear.length > 0
     ? operation.remove([...toClear] as Parameters<typeof operation.remove>[0])
     : operation

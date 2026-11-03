@@ -111,6 +111,40 @@ export const ArtistEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // Historical people (see `isHistorical` and `sourced.ts`). All are set by the importer
+      // from a published source, and none is claimant-editable.
+      deathYear: {
+        type: 'number',
+        required: false,
+      },
+      deathPlace: {
+        type: 'string',
+        required: false,
+      },
+      isHistorical: {
+        type: 'boolean',
+        required: false,
+      },
+      mudra: {
+        type: 'string',
+        required: false,
+      },
+      /** What backs each field. See `sourced.ts`: on a historical artist a field shows only when cited. */
+      citations: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            field: { type: 'string', required: true },
+            sourceSlug: { type: 'string', required: true },
+            locator: { type: 'string', required: true },
+            confidence: { type: 'number' },
+            tradition: { type: 'string' },
+            note: { type: 'string' },
+          },
+        },
+        required: false,
+      },
       website: {
         type: 'string',
         required: false,

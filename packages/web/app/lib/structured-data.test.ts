@@ -113,6 +113,41 @@ describe('artistJsonLd', () => {
     expect(out.award).toEqual(['Sangita Kalanidhi']);
   });
 
+  it('gives a historical person years and places, round-tripped through serializeJsonLd', () => {
+    const out = JSON.parse(
+      serializeJsonLd(
+        artistJsonLd(
+          {
+            ...base,
+            name: 'Muttuswami Dikshitar',
+            birthYear: 1775,
+            deathYear: 1835,
+            birthPlace: 'Tiruvarur',
+            deathPlace: ' Ettayapuram ',
+          },
+          false
+        )
+      )
+    );
+    expect(out.birthDate).toBe('1775');
+    expect(out.deathDate).toBe('1835');
+    expect(out.birthPlace).toEqual({ '@type': 'Place', name: 'Tiruvarur' });
+    expect(out.deathPlace).toEqual({ '@type': 'Place', name: 'Ettayapuram' });
+  });
+
+  it('emits no life dates or places when the record holds none', () => {
+    const out = JSON.parse(serializeJsonLd(artistJsonLd({ ...base, deathYear: 1835 }, false)));
+    expect(out.deathDate).toBe('1835');
+    for (const key of ['birthDate', 'birthPlace', 'deathPlace']) {
+      expect(out).not.toHaveProperty(key);
+    }
+  });
+
+  it('never gives a group a birth or death', () => {
+    const out = emitted(artistJsonLd({ ...base, birthYear: 1990 }, true));
+    expect(out).not.toHaveProperty('birthDate');
+  });
+
   it('renders a group as a MusicGroup with members, and never as a Person', () => {
     const out = emitted(
       artistJsonLd(

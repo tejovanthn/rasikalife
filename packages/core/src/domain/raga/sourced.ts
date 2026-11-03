@@ -14,8 +14,20 @@
  * Browser-safe and pure.
  */
 
-import { z } from 'zod';
-import { SourceSlugSchema } from '../source/schema';
+import type { z } from 'zod';
+import {
+  type Reference,
+  type StoredCitation,
+  citationSchemaFor,
+  citationsOf,
+  isEmptyValue,
+  numberReferencesOf,
+  pruneCitationsOf,
+  referenceKeyOf,
+} from '../source/citations';
+
+export { isEmptyValue };
+export type { Reference, StoredCitation };
 
 /** Every raga field a citation may back. */
 export const CITABLE_RAGA_FIELDS = [
@@ -50,39 +62,16 @@ export const LEGACY_FIELDS: ReadonlySet<CitableRagaField> = new Set([
   'parentRaga',
 ]);
 
-export const CitationSchema = z.object({
-  field: z.enum(CITABLE_RAGA_FIELDS),
-  sourceSlug: SourceSlugSchema,
-  /** Where in the source: a page ("pp. 375–376") or a URL. */
-  locator: z.string().min(1).max(300),
-  /** rasika-books' extraction confidence, 0–1. */
-  confidence: z.number().min(0).max(1).optional(),
-  /** Whose reading this is, where schools differ ("Dikshitar school"). */
-  tradition: z.string().max(100).optional(),
-  note: z.string().max(300).optional(),
-});
+export const CitationSchema = citationSchemaFor(CITABLE_RAGA_FIELDS);
 
 export type Citation = z.infer<typeof CitationSchema>;
-
-/**
- * A citation as read back from the table, where `field` is any string. Writes are checked
- * against `CitationSchema`; reads accept the stored shape and match on the field name.
- */
-export interface StoredCitation {
-  field: string;
-  sourceSlug: string;
-  locator: string;
-  confidence?: number;
-  tradition?: string;
-  note?: string;
-}
 
 interface Cited {
   citations?: StoredCitation[] | null;
 }
 
 export function citationsFor(raga: Cited, field: CitableRagaField): StoredCitation[] {
-  return (raga.citations ?? []).filter(c => c.field === field);
+  return citationsOf(raga, field);
 }
 
 export function isCited(raga: Cited, field: CitableRagaField): boolean {
@@ -106,80 +95,19 @@ export function shownRaga<T extends Cited>(raga: T): T {
   return out as T;
 }
 
-/** A field with nothing to show, for deciding where the request for help goes. */
-export function isEmptyValue(value: unknown): boolean {
-  if (value === undefined || value === null) return true;
-  if (typeof value === 'string') return value.trim() === '';
-  if (Array.isArray(value)) return value.length === 0;
-  return false;
-}
+/** The raga fields whose citation `note` names an entry, not a remark (see `raga-page.ts`). */
+const ENTRY_MARKER_FIELDS: ReadonlySet<string> = new Set(['alternateScales']);
 
-export interface Reference {
-  /** 1-based, in the order the page first cites it. */
-  number: number;
-  sourceSlug: string;
-  locator: string;
-  tradition?: string;
-  /** What this citation says of the field, where it is not an entry marker. */
-  note?: string;
-}
-
-/**
- * The note a reference prints. For `alternateScales` the note is the entry the citation marks
- * (see `raga-page.ts` in web), not a remark, so it stays off the references list.
- */
-function referenceNote(c: StoredCitation): string | undefined {
-  return c.field === 'alternateScales' ? undefined : c.note?.trim() || undefined;
-}
-
-/**
- * The key two citations share when they print as one reference: same source, place, tradition
- * and note. Two traditions on one page, or one field read two ways, must not collapse into
- * whichever came first.
- */
 export function referenceKey(c: StoredCitation): string {
-  return [c.sourceSlug, c.locator, c.tradition ?? '', referenceNote(c) ?? ''].join('\u0000');
+  return referenceKeyOf(c, ENTRY_MARKER_FIELDS);
 }
 
 /**
  * Numbered references, one per distinct (source, locator, tradition, note), in the order
- * `fields` lists them, which is the order the page shows them. Returns the list and each field's footnote
- * numbers.
+ * `fields` lists them, which is the order the page shows them.
  */
-export function numberReferences(
-  raga: Cited,
-  fields: readonly CitableRagaField[]
-): {
-  references: Reference[];
-  footnotes: Partial<Record<CitableRagaField, number[]>>;
-  /** The reference number a citation prints under. */
-  numberOf: (c: StoredCitation) => number | undefined;
-} {
-  const references: Reference[] = [];
-  const byKey = new Map<string, number>();
-  const footnotes: Partial<Record<CitableRagaField, number[]>> = {};
-
-  for (const field of fields) {
-    const numbers: number[] = [];
-    for (const c of citationsFor(raga, field)) {
-      const key = referenceKey(c);
-      let n = byKey.get(key);
-      if (n === undefined) {
-        n = references.length + 1;
-        byKey.set(key, n);
-        references.push({
-          number: n,
-          sourceSlug: c.sourceSlug,
-          locator: c.locator,
-          tradition: c.tradition,
-          note: referenceNote(c),
-        });
-      }
-      if (!numbers.includes(n)) numbers.push(n);
-    }
-    if (numbers.length > 0) footnotes[field] = numbers;
-  }
-  return { references, footnotes, numberOf: c => byKey.get(referenceKey(c)) };
+export function numberReferences(raga: Cited, fields: readonly CitableRagaField[]) {
+  return numberReferencesOf(raga, fields, ENTRY_MARKER_FIELDS);
 }
 
 /**
@@ -189,5 +117,5 @@ export function numberReferences(
 export function pruneCitations<C extends StoredCitation>(
   raga: { citations?: C[] | null } & Record<string, unknown>
 ): C[] {
-  return (raga.citations ?? []).filter(c => !isEmptyValue(raga[c.field]));
+  return pruneCitationsOf(raga);
 }

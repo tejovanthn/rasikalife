@@ -229,7 +229,10 @@ const BLANKISH = new Set(['', 'n/a', 'na', 'unknown', 'none', 'null', '-', 'not 
  *   also cannot travel this path: the column is deliberately absent from `ADMIN_CSV_DOMAINS`,
  *   and `packages/og-image` allowlists the photo fetch to the CDN host, so an external URL
  *   would store cleanly and silently degrade every share card to text.
- * - **`birthYear` and `gurus`.** A birth year is a claim about a private individual, and many
+ * - **`birthYear` and `gurus`.** (`birthYear` is refused whatever its range: the historical
+ *   years the SSP importer may write do not widen what a worker may report. `deathYear`,
+ *   `deathPlace`, `isHistorical`, `mudra`, `alternateNames` and `citations` are the importer's
+ *   too, and none is a research field.) A birth year is a claim about a private individual, and many
  *   here are children performing an arangetram. A guru edge is *the* credential in this domain,
  *   and prose flattens exactly the distinction `GURU_RELATIONSHIPS` exists to keep — a workshop
  *   attendee and a senior disciple both read as "studied under".

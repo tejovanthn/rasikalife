@@ -25,3 +25,23 @@ describe('artistMergeFillPatch', () => {
     expect(artistMergeFillPatch({}, { title: '  ', gurus: [] })).toEqual({});
   });
 });
+
+describe('artistMergeFillPatch for historical fields', () => {
+  it('fills the new fields and carries their citations', () => {
+    const cite = { field: 'mudra', sourceSlug: 'ssp-2008-english', locator: 'p. 14' };
+    const patch = artistMergeFillPatch(
+      { deathYear: 1835 },
+      { deathYear: 1900, mudra: 'guruguha', deathPlace: 'Ettayapuram', citations: [cite] }
+    );
+    expect(patch).toEqual({
+      mudra: 'guruguha',
+      deathPlace: 'Ettayapuram',
+      citations: [cite],
+    });
+  });
+
+  it('never copies isHistorical', () => {
+    const patch = artistMergeFillPatch({}, { isHistorical: true } as Record<string, unknown>);
+    expect(patch).not.toHaveProperty('isHistorical');
+  });
+});

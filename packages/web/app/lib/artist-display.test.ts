@@ -4,6 +4,8 @@ import {
   artistMetaTitle,
   artistTagline,
   castLine,
+  lifeFacts,
+  lifeSpan,
   parseInstruments,
   roleLabel,
 } from './artist-display';
@@ -191,5 +193,77 @@ describe('roleLabel', () => {
 
   it('is what castLine prints in the bracket', () => {
     expect(castLine([{ name: 'A', role: 'Chief-Guest' }])).toBe('A (chief guest)');
+  });
+});
+
+describe('historical artists', () => {
+  const dikshitar = {
+    name: 'Muttuswami Dikshitar',
+    isHistorical: true,
+    instrument: 'vina',
+    birthYear: 1775,
+    deathYear: 1835,
+    birthPlace: 'Tiruvarur',
+    mudra: 'guruguha',
+    upcomingEventCount: 3,
+    gurus: [
+      { name: 'Chidambaranatha Yogi', relationship: 'spiritual' },
+      { name: 'Ramaswami Dikshitar' },
+    ],
+  };
+
+  it('writes no concert line and never says renowned', () => {
+    const text = artistMetaDescription(dikshitar);
+    expect(text).not.toMatch(/upcoming|concert/i);
+    expect(text).not.toMatch(/renowned/i);
+  });
+
+  it('leads with the life span, place and mudra', () => {
+    const text = artistMetaDescription(dikshitar);
+    expect(text).toContain('1775–1835.');
+    expect(text).toContain('Born in Tiruvarur.');
+    expect(text).toContain('Mudra: guruguha.');
+  });
+
+  it('does not call a spiritual teacher a guru of the lineage', () => {
+    const text = artistMetaDescription(dikshitar);
+    expect(text).toContain('Disciple of Ramaswami Dikshitar.');
+    expect(text).not.toContain('Chidambaranatha');
+  });
+
+  it('leaves the concert line alone for a living artist', () => {
+    expect(
+      artistMetaDescription({ name: 'A', instrument: 'vocal', upcomingEventCount: 2 })
+    ).toContain('2 upcoming concerts.');
+  });
+
+  it('keeps the title lead of name plus instrument', () => {
+    expect(artistMetaTitle(dikshitar)).toBe(
+      'Muttuswami Dikshitar – Vina | Life & Compositions – Rasika.life'
+    );
+    expect(artistMetaTitle({ name: 'A', instrument: 'vocal' })).toBe(
+      'A – Vocal | Concerts & Repertoire – Rasika.life'
+    );
+  });
+
+  it('writes Born and Died with years and places', () => {
+    expect(
+      lifeFacts({
+        birthYear: 1775,
+        birthPlace: 'Tiruvarur',
+        deathYear: 1835,
+        deathPlace: 'Ettayapuram',
+      })
+    ).toEqual([
+      { label: 'Born', value: '1775, Tiruvarur', fields: ['birthYear', 'birthPlace'] },
+      { label: 'Died', value: '1835, Ettayapuram', fields: ['deathYear', 'deathPlace'] },
+    ]);
+    expect(lifeFacts({})).toEqual([]);
+  });
+
+  it('writes the life span', () => {
+    expect(lifeSpan({ birthYear: 1775, deathYear: 1835 })).toBe('1775–1835');
+    expect(lifeSpan({ deathYear: 1835 })).toBe('died 1835');
+    expect(lifeSpan({})).toBeUndefined();
   });
 });

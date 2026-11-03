@@ -205,6 +205,11 @@ export interface ArtistJsonLdInput {
   memberOf?: Array<{ name: string; url: string }>;
   affiliations?: Array<{ name: string; url?: string }>;
   alumniOf?: string[];
+  /** Years only, for a person. The record holds no day or month, so none is claimed. */
+  birthYear?: number | null;
+  deathYear?: number | null;
+  birthPlace?: string | null;
+  deathPlace?: string | null;
   /** Set only for a group (`isGroup`) — the artists who make it up. */
   members?: Array<{ name: string; url: string }>;
 }
@@ -249,8 +254,14 @@ export function artistJsonLd(artist: ArtistJsonLdInput, isGroup: boolean): JsonL
     });
   }
 
+  const birthPlace = trimmed(artist.birthPlace);
+  const deathPlace = trimmed(artist.deathPlace);
   return withContext({
     ...shared,
+    birthDate: artist.birthYear ? String(artist.birthYear) : undefined,
+    deathDate: artist.deathYear ? String(artist.deathYear) : undefined,
+    birthPlace: birthPlace ? { '@type': 'Place', name: birthPlace } : undefined,
+    deathPlace: deathPlace ? { '@type': 'Place', name: deathPlace } : undefined,
     memberOf: list(
       artist.memberOf?.map(group => ({ '@type': 'MusicGroup', name: group.name, url: group.url }))
     ),

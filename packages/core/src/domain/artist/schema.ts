@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import { YearSchema } from '../shared/schemas';
+import { BirthYearSchema, HistoricalYearSchema, YearSchema } from '../shared/schemas';
 import { SocialLinkSchema } from '../social-link';
+import { ArtistCitationSchema } from './sourced';
 
 // 'invited' is a moderator pre-authorization (artist-claim/entity.ts, §4.3.1) — it is
 // a valid status for an ArtistClaim row but never a value of artist.claimStatus below:
@@ -28,7 +29,14 @@ export type ArtistClaimStatus = (typeof ARTIST_CLAIM_STATUSES)[number];
  * relationship of unknown type, and defaulting those to 'primary' would assert lineage the
  * data does not support — so an unlabelled row renders unlabelled and waits for a human.
  */
-export const GURU_RELATIONSHIPS = ['primary', 'advanced', 'workshop', 'institutional'] as const;
+export const GURU_RELATIONSHIPS = [
+  'primary',
+  'advanced',
+  'workshop',
+  'institutional',
+  // Mantra initiation or philosophy, not music. Never lineage, so never "disciple of".
+  'spiritual',
+] as const;
 export type GuruRelationship = (typeof GURU_RELATIONSHIPS)[number];
 
 /**
@@ -46,6 +54,8 @@ export const CLAIM_SOURCES = [
   'sabha-listing',
   'press',
   'iccr',
+  // A printed book or archive, cited through `artist.citations`.
+  'published-source',
 ] as const;
 export type ClaimSource = (typeof CLAIM_SOURCES)[number];
 
@@ -110,8 +120,21 @@ export const CreateArtistSchema = z.object({
   gurus: z.array(GuruSchema).default([]),
   biography: z.string().max(10000).optional(),
   specialisations: z.array(z.string().min(1).max(100)).optional(),
-  birthYear: YearSchema.optional(),
+  birthYear: BirthYearSchema.optional(),
   birthPlace: z.string().max(200).optional(),
+  // The fields below are for historical people and come from a published source. None is
+  // claimant-editable (see CLAIMANT_EDITABLE_ARTIST_FIELDS), and none is derived or researched.
+  deathYear: HistoricalYearSchema.optional(),
+  deathPlace: z.string().max(200).optional(),
+  // Set only by the importer, for a person long dead. It switches off the claim button, the
+  // media kit and the upcoming-concerts line, and makes the cited-only rule apply.
+  isHistorical: z.boolean().optional(),
+  // The signature word a composer puts in a song ("guruguha").
+  mudra: z.string().max(100).optional(),
+  // Other spellings of the name. They feed the dedup matcher, so a claimant must not set them.
+  alternateNames: z.array(z.string().min(1).max(200)).max(50).optional(),
+  // What backs each historical fact. A moderator or the importer sets these.
+  citations: z.array(ArtistCitationSchema).max(100).optional(),
   website: z.string().url().optional(),
   socialLinks: z.array(SocialLinkSchema).optional(),
   activeYears: z.string().max(50).optional(),
@@ -167,6 +190,11 @@ export const CLEARABLE_ARTIST_FIELDS = [
   'specialisations',
   'birthYear',
   'birthPlace',
+  'deathYear',
+  'deathPlace',
+  'mudra',
+  'alternateNames',
+  'citations',
   'practiceStartYear',
   'debutYear',
   'activeYears',
@@ -194,9 +222,11 @@ export type ClearableArtistField = (typeof CLEARABLE_ARTIST_FIELDS)[number];
  *   and flipping it strands existing membership edges.
  * - `photoUrl` — the OG card lambda server-side fetches whatever URL this holds, so it is
  *   a network-request primitive, not a description. It stays with the upload flow.
- * - `alternateNames` is absent from the create schema entirely, but note for anyone adding
- *   it: it feeds the dedup matcher, so a claimant could make their record absorb the
+ * - `alternateNames` feeds the dedup matcher, so a claimant could make their record absorb the
  *   find-or-create for someone else's name.
+ * - `deathYear`, `deathPlace`, `isHistorical`, `mudra` and `citations` come from a published
+ *   source through the importer. `citations` is what makes a claim look sourced, and the
+ *   claimant must not supply it.
  * - `credentials` — a degree nobody can check. Unlike a guru or a venue, a qualification
  *   has no other record on the platform to corroborate it, so self-asserted degrees go to
  *   the moderator queue. `works` stays here: a production is announced publicly and its

@@ -27,6 +27,19 @@ export {
   UpdateArtistSchema,
   WorkSchema,
 } from './schema';
+export {
+  ArtistCitationSchema,
+  CITABLE_ARTIST_FIELDS,
+  artistCitationsFor,
+  isArtistCited,
+  isArtistFieldShown,
+  numberArtistReferences,
+  pruneArtistCitations,
+  shownArtist,
+  type ArtistCitation,
+  type CitableArtistField,
+} from './sourced';
+export type { Reference, StoredCitation } from './sourced';
 export type {
   ArtistClaimStatus,
   ClaimSource,
@@ -39,7 +52,7 @@ export type {
 /**
  * Display labels for the guru relationship types, and the order the profile groups them in.
  *
- * `primary` and `advanced` are lineage; `workshop` and `institutional` are exposure. The
+ * `primary` and `advanced` are lineage; `workshop`, `institutional` and `spiritual` are not. The
  * profile splits on exactly that line, so the order here is the render order.
  */
 export const GURU_RELATIONSHIP_LABELS: Record<GuruRelationship, string> = {
@@ -47,9 +60,11 @@ export const GURU_RELATIONSHIP_LABELS: Record<GuruRelationship, string> = {
   advanced: 'Advanced training',
   workshop: 'Workshops',
   institutional: 'Institutional',
+  spiritual: 'Spiritual teachers',
 };
 
 /** The relationship types that count as discipleship, as against workshop exposure. */
+/** (`spiritual` is exposure of a different kind: initiation, not music.) */
 export const LINEAGE_RELATIONSHIPS: GuruRelationship[] = ['primary', 'advanced'];
 
 /**
@@ -65,6 +80,7 @@ export const GURU_RELATIONSHIP_PROSE: Record<GuruRelationship, string> = {
   advanced: 'took advanced training with',
   workshop: 'attended workshops with',
   institutional: 'was taught during formal study by',
+  spiritual: 'was initiated or guided spiritually by',
 };
 
 /**

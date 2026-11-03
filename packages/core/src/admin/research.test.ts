@@ -501,6 +501,22 @@ describe('validateResearchField — artist', () => {
     }
   });
 
+  it('refuses a historical birth year, and every field the SSP import owns', () => {
+    // 1775 is valid for the importer. Research must still refuse it: the importer's range
+    // must not widen what a worker may report.
+    expect(check('birthYear', 1775), 'birthYear').toMatchObject({ ok: false });
+    for (const field of [
+      'deathYear',
+      'deathPlace',
+      'isHistorical',
+      'mudra',
+      'alternateNames',
+      'citations',
+    ]) {
+      expect(check(field, 'anything'), field).toMatchObject({ ok: false });
+    }
+  });
+
   describe('website', () => {
     it('takes an ordinary site', () => {
       expect(check('website', 'https://sudharagunathan.com').value).toBe(

@@ -275,6 +275,14 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       list('specialisations'),
       num('birthYear'),
       str('birthPlace'),
+      num('deathYear'),
+      str('deathPlace'),
+      bool('isHistorical'),
+      str('mudra'),
+      list('alternateNames'),
+      // [{field, sourceSlug, locator, ...}], as on a raga. On a historical artist a field shows
+      // only when cited (`domain/artist/sourced.ts`).
+      json('citations'),
       num('practiceStartYear'),
       num('debutYear'),
       // JSON cells for the same reason gurus is one: both carry several keys per row, and a

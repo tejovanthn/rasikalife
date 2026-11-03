@@ -259,3 +259,69 @@ describe('isClaimantEditablePatch', () => {
     }
   });
 });
+
+describe('historical people', () => {
+  it('takes a birth year before 1800 and a death year', () => {
+    const result = CreateArtistSchema.safeParse({
+      name: 'Muttuswami Dikshitar',
+      birthYear: 1775,
+      deathYear: 1835,
+      deathPlace: 'Ettayapuram',
+      isHistorical: true,
+      mudra: 'guruguha',
+      alternateNames: ['Muttusvami Diksita'],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('still takes a living artist birth year, and refuses nonsense', () => {
+    expect(CreateArtistSchema.safeParse({ name: 'A', birthYear: 1985 }).success).toBe(true);
+    expect(CreateArtistSchema.safeParse({ name: 'A', birthYear: 999 }).success).toBe(false);
+    expect(CreateArtistSchema.safeParse({ name: 'A', birthYear: 2150 }).success).toBe(false);
+  });
+
+  it('keeps the 1800 floor on every other year', () => {
+    expect(CreateArtistSchema.safeParse({ name: 'A', debutYear: 1775 }).success).toBe(false);
+    expect(CreateArtistSchema.safeParse({ name: 'A', arangetramYear: 1775 }).success).toBe(false);
+    expect(
+      CreateArtistSchema.safeParse({ name: 'A', gurus: [{ name: 'G', fromYear: 1775 }] }).success
+    ).toBe(false);
+  });
+
+  it('keeps death years in the historical range', () => {
+    expect(CreateArtistSchema.safeParse({ name: 'A', deathYear: 2001 }).success).toBe(false);
+  });
+
+  it('takes spiritual gurus and published-source rows', () => {
+    const result = CreateArtistSchema.safeParse({
+      name: 'A',
+      gurus: [
+        { name: 'Cidambaranatha Yogi', relationship: 'spiritual', source: 'published-source' },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('takes citations only for citable fields', () => {
+    const cite = { field: 'mudra', sourceSlug: 'ssp-2008-english', locator: 'p. 14' };
+    expect(CreateArtistSchema.safeParse({ name: 'A', citations: [cite] }).success).toBe(true);
+    expect(
+      CreateArtistSchema.safeParse({ name: 'A', citations: [{ ...cite, field: 'biography' }] })
+        .success
+    ).toBe(false);
+  });
+
+  it('leaves every new field out of what a claimant may edit', () => {
+    for (const field of [
+      'deathYear',
+      'deathPlace',
+      'isHistorical',
+      'mudra',
+      'alternateNames',
+      'citations',
+    ]) {
+      expect(CLAIMANT_EDITABLE_ARTIST_FIELDS as readonly string[], field).not.toContain(field);
+      expect(isClaimantEditablePatch({ [field]: 'x' }), field).toBe(false);
+    }
+  });
+});

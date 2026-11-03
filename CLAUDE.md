@@ -119,7 +119,7 @@ The core package uses a domain-driven design with:
 - `listing-description.ts` — `eventListingDescription({name, events, preposition, fallback, location})` builds the meta description for a page that is really a listing (a venue, an organiser). It names the count and the next event rather than restating what kind of page it is: "Events and performances at X. Indian classical arts venue." took 196 impressions at position 9.8 for "chowdiah memorial hall events" and no clicks at all. Falls back to past events before the generic line, because a hall with only past concerts is still the right answer for that query.
 - `listing-description.ts` also has `eventsIndexMeta({count, cities, city})` for `/events`: "Carnatic Concerts and Classical Music Events" plus the upcoming count and the three busiest cities. The old title, "Upcoming Events - Indian Classical Arts", held none of the searched words ("carnatic music" 22,200/month, "classical music concerts near me" 1,300) and the page sat at position 20. A `?city=` filter changes the title; the canonical stays `/events`.
 - `raga-description.ts` — `ragaMetaDescription` and `ragaMetaTitle`. The title leads with "<Name> Raga", the form these pages are found by ("bindumalini raga", "rasika ranjani ragam"), then names only what the page shows: "Arohanam, Avarohanam" when the scale is stored, "Compositions" when any are listed, and the melakarta number for a melakarta only. It must fit 60 characters, so detail and the brand are dropped first, never the name. The description drops whole trailing sentences past 155 characters, and when no performance is logged it names two listed compositions. Composition titles reach it converted with `fromItrans`; the page cards still use the raw title for their links.
-- `artist-display.ts` — `artistMetaDescription(artist)` builds an artist's description from instrument, city, lineage and upcoming concerts. It replaced one sentence shared by all 1,111 artists that called every one of them "renowned" — the inflation `GURU_RELATIONSHIPS` exists to prevent, applied site-wide. The lineage clause counts only `primary`, `advanced` and unclassified gurus; a workshop teacher must never be rendered as "disciple of". `artistMetaTitle(artist)` is the matching `<title>`: name plus instrument ("Savita Vasu – Vocal | Concerts & Repertoire – Rasika.life"), because "X - Artist" ranked #2 for the name and still took only 6% of clicks — the instrument is what tells a searcher it is the right person.
+- `artist-display.ts` — `artistMetaDescription(artist)` builds an artist's description from instrument, city, lineage and upcoming concerts. For an `isHistorical` artist it uses the life span, birthplace and mudra instead, and no concert line. It replaced one sentence shared by all 1,111 artists that called every one of them "renowned" — the inflation `GURU_RELATIONSHIPS` exists to prevent, applied site-wide. The lineage clause counts only `primary`, `advanced` and unclassified gurus; a workshop teacher must never be rendered as "disciple of". `artistMetaTitle(artist)` is the matching `<title>`: name plus instrument ("Savita Vasu – Vocal | Concerts & Repertoire – Rasika.life"), because "X - Artist" ranked #2 for the name and still took only 6% of clicks — the instrument is what tells a searcher it is the right person.
 - `utils.ts` — `titleCaseName(name)` capitalizes every word of an **entity name** for display. Stored names are lowercase ITRANS, so a raga arrives as `darbari kanada` once transliterated and `capitalize` alone leaves the second word bare. Names only; never run it over lyrics or prose.
 - `event-time.ts` — `formatEventTime`, `eventDateKey`, `groupByEventDate`, `formatDayLabel`. **Every event time and day is read in the event's own `timezone`, never the runtime's.** The SSR Lambda runs in UTC, so a bare `toLocaleTimeString` printed "12:30 pm" for a 6:00 pm concert, and `startDateTime.slice(0, 10)` put a late concert on the wrong day. Render times with `components/events/event-time.tsx`: it names the zone (`zoneLabel`: IST, PDT, `GMT+8`) when the concert is outside India, and, after hydration, when the reader's own zone differs, so the server HTML and first client render still match.
 - `event-filters.ts` — the listing filters (`resolveDateRange` for `today`/`weekend`/`week`/a month/a day, `filterEvents`, `dayCounts`, `monthGrid`) and `listingHref`, the one builder of every listing URL. See "Event listings" below.
@@ -368,8 +368,8 @@ An artist's facts live in fields, not in the prose. The bio is narrative only, s
 
 Three rules that are load-bearing:
 
-- **`GURU_RELATIONSHIPS` is `primary | advanced | workshop | institutional`, and it is optional
-  with no backfill.** Every row stored before the field existed is a real relationship of
+- **`GURU_RELATIONSHIPS` is `primary | advanced | workshop | institutional | spiritual`, and it is
+  optional with no backfill.** Every row stored before the field existed is a real relationship of
   unknown type; defaulting those to `primary` would assert lineage nobody verified. The profile
   treats unclassified rows as lineage and splits only the explicitly weaker two into "Also
   studied with".
@@ -406,6 +406,46 @@ self-granted), `credentials` because nothing on the platform can corroborate a d
 `arangetramGuruId` because it is a claim about a *third party* with no per-row `source` to
 mark it self-asserted. A patch whose rows set their own `source` does not self-approve either
 — the field that exposes inflation must not be supplied by the inflater.
+
+### Historical artists (people from published sources, such as SSP)
+
+People who died long ago come from a book, not from a poster. They need a few more fields and a
+rule that every fact shows its source. Plan: `docs/plans/261103-01-ssp-import.md`, Phase B.
+
+- **New artist fields:** `deathYear`, `deathPlace`, `isHistorical`, `mudra`, `alternateNames`
+  (now also in the create and update schemas) and `citations`. All are in the admin CSV and in
+  `CLEARABLE_ARTIST_FIELDS`, and `artistMergeFillPatch` fills them. **None is claimant-editable.**
+  `artist.create` refuses `citations`, `isHistorical`, `deathYear`, `deathPlace`, `mudra` and
+  `alternateNames` from an editor. `isHistorical` is set by the importer only. It is not in the
+  clear list and merge never copies it.
+- **`HistoricalYearSchema` (1000–1920)** is for artist `birthYear` and `deathYear` only
+  (`BirthYearSchema` is the union with `YearSchema`; `deathYear` is historical only). Every other
+  year keeps the 1800 floor. Research and the bio extractor keep `YearSchema`, and research still
+  refuses `birthYear`, `deathYear`, `deathPlace`, `isHistorical`, `mudra`, `alternateNames` and
+  `citations`. A test asserts it.
+- **`GURU_RELATIONSHIPS` has `spiritual`** (initiation, not music). It is not in
+  `LINEAGE_RELATIONSHIPS`, so it never prints "Disciple of", and it shows under "Also studied
+  with". `GURU_RELATIONSHIP_PROSE` reads "was initiated or guided spiritually by". The bio
+  extractor accepts it but its prompt still lists four. **`CLAIM_SOURCES` has `published-source`.**
+- **`artist.citations`** has the raga shape: `{field, sourceSlug, locator, confidence?,
+  tradition?, note?}`, with `field` one of `CITABLE_ARTIST_FIELDS` (birthYear, deathYear,
+  birthPlace, deathPlace, mudra, gurus, works, alternateNames, instrument, specialisations). The
+  shared code is `domain/source/citations.ts`; `raga/sourced.ts` and `artist/sourced.ts` both use
+  it. The admin CSV import refuses a citation to a source that does not exist.
+- **The rule differs from the raga rule.** `shownArtist` hides an uncited field **only when
+  `isHistorical` is set**. A living artist's page does not change. There is no legacy set.
+  The profile, the meta description and the JSON-LD all read `shownArtist`, never the record.
+  `updateArtist` prunes the citations of a field it clears (`pruneArtistCitations`).
+- **Profile** (`lifeFacts`, `lifeSpan`, `artistReferences` in `lib/artist-display.ts`): Born and
+  Died with place, Mudra, Also written, footnote marks, and the raga references block
+  (`RagaReferences`). When `isHistorical` is set there is no claim button and no media kit. The
+  meta description has the life span, birthplace and mudra, no "upcoming concerts" line, and never
+  "renowned". `artistMetaTitle` keeps name plus instrument; only the tail becomes "Life &
+  Compositions".
+- **JSON-LD** gives a `Person` `birthDate` and `deathDate` (a year only), and `birthPlace` and
+  `deathPlace` as `Place`. The route passes them **only for a historical artist**. A living
+  artist's birth year shows on the page but is not published as structured data.
+- Not built yet: `relations`, `isThinArtist`, raga `attributedTo`.
 
 ### Extracting fields from one bio, in the wizard
 
@@ -1585,7 +1625,7 @@ Always use a subpath export instead:
 | Edit types/status | `@rasika/core/domain/edit/client` |
 | Artist/Raga/Tala/etc. types & schemas | `@rasika/core/domain/[name]/client` |
 | Concert log types | `@rasika/core/domain/concert-log/client` |
-| `GURU_RELATIONSHIPS`, `GURU_RELATIONSHIP_LABELS`, `LINEAGE_RELATIONSHIPS`, `isGuruRelationship`, `CLAIM_SOURCES`, `Credential`, `Work` | `@rasika/core/domain/artist/client` |
+| `GURU_RELATIONSHIPS`, `GURU_RELATIONSHIP_LABELS`, `LINEAGE_RELATIONSHIPS`, `isGuruRelationship`, `CLAIM_SOURCES`, `Credential`, `Work`, `shownArtist`, `CITABLE_ARTIST_FIELDS` | `@rasika/core/domain/artist/client` |
 | Pure utilities (completion score, `missingFields`) | `@rasika/core/shared/completion` (or relevant subpath) |
 | Class schemas, enums, `programDisplayTitle`, `creditBalanceLabel`, `expectedCredits`, `checkRevokeLearnerAccess`, `normalizeInviteEmail` | `@rasika/core/domain/class-[name]/client` |
 | `todayInTimeZone`, `dateInTimeZone`, `startOfDayInstant` | `@rasika/core/shared/timezone` |

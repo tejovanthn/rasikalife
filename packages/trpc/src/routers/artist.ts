@@ -202,6 +202,22 @@ export const artistRouter = createTRPCRouter({
     }),
 
   create: editorProcedure.input(Artist.CreateArtistSchema).mutation(async ({ input }) => {
+    // Facts from a published source are a moderator's to set: `citations` is what makes a
+    // claim look sourced, and `isHistorical` switches off the claim button and the media kit.
+    const historicalKeys = [
+      'citations',
+      'isHistorical',
+      'deathYear',
+      'deathPlace',
+      'mudra',
+      'alternateNames',
+    ];
+    if (historicalKeys.some(key => (input as Record<string, unknown>)[key] !== undefined)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Only a moderator may set historical or cited facts',
+      });
+    }
     const result = await Artist.createArtist(input);
     triggerReindex();
     return result;

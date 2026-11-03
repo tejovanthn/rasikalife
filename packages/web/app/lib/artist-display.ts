@@ -1,3 +1,8 @@
+import {
+  type CitableArtistField,
+  type StoredCitation,
+  numberArtistReferences,
+} from '@rasika/core/domain/artist/client';
 import { capitalize } from './utils';
 
 /**
@@ -55,10 +60,90 @@ export function artistTagline(artist: {
  * missing. Instrument only, not city: the title is the short form, the description carries
  * the rest.
  */
-export function artistMetaTitle(artist: { name: string; instrument?: string | null }): string {
+export function artistMetaTitle(artist: {
+  name: string;
+  instrument?: string | null;
+  isHistorical?: boolean | null;
+}): string {
   const instruments = parseInstruments(artist.instrument);
   const lead = instruments.length > 0 ? `${artist.name} – ${instruments.join(', ')}` : artist.name;
-  return `${lead} | Concerts & Repertoire – Rasika.life`;
+  // The lead is the same. A person who died in 1835 has no concerts, so the tail changes.
+  return `${lead} | ${artist.isHistorical ? 'Life & Compositions' : 'Concerts & Repertoire'} – Rasika.life`;
+}
+
+/**
+ * "1775–1835", "born 1775", or "died 1835". Years only: a source that gives a Saka year and an
+ * AD year gives us the AD year, and the day and month are never claimed.
+ */
+export function lifeSpan(artist: {
+  birthYear?: number | null;
+  deathYear?: number | null;
+}): string | undefined {
+  const { birthYear, deathYear } = artist;
+  if (birthYear && deathYear) return `${birthYear}–${deathYear}`;
+  if (birthYear) return `born ${birthYear}`;
+  if (deathYear) return `died ${deathYear}`;
+  return undefined;
+}
+
+/** A year and a place on one line: "1775, Tiruvarur". Either may be missing. */
+function yearAndPlace(year?: number | null, place?: string | null): string | undefined {
+  const parts = [year ? String(year) : '', place?.trim() ?? ''].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : undefined;
+}
+
+export interface LifeFact {
+  label: string;
+  value: string;
+  /** The fields whose citations back this line, for its footnotes. */
+  fields: CitableArtistField[];
+}
+
+/**
+ * The Born, Died, Mudra and Also known as lines of the profile rail. Pure, so the rules are
+ * tested here. The record has already been through `shownArtist`, so a historical person's
+ * uncited fields are absent and their lines do not appear.
+ */
+export function lifeFacts(artist: {
+  birthYear?: number | null;
+  birthPlace?: string | null;
+  deathYear?: number | null;
+  deathPlace?: string | null;
+  mudra?: string | null;
+  alternateNames?: string[] | null;
+}): LifeFact[] {
+  const facts: LifeFact[] = [];
+  const born = yearAndPlace(artist.birthYear, artist.birthPlace);
+  if (born) facts.push({ label: 'Born', value: born, fields: ['birthYear', 'birthPlace'] });
+  const died = yearAndPlace(artist.deathYear, artist.deathPlace);
+  if (died) facts.push({ label: 'Died', value: died, fields: ['deathYear', 'deathPlace'] });
+  const mudra = artist.mudra?.trim();
+  if (mudra) facts.push({ label: 'Mudra', value: mudra, fields: ['mudra'] });
+  const others = (artist.alternateNames ?? []).map(n => n.trim()).filter(Boolean);
+  if (others.length > 0) {
+    facts.push({ label: 'Also written', value: others.join(', '), fields: ['alternateNames'] });
+  }
+  return facts;
+}
+
+/** Page order, top to bottom. Footnotes are numbered in this order. */
+export const ARTIST_PAGE_FIELDS: readonly CitableArtistField[] = [
+  'birthYear',
+  'birthPlace',
+  'deathYear',
+  'deathPlace',
+  'mudra',
+  'alternateNames',
+  'instrument',
+  'specialisations',
+  'gurus',
+  'works',
+];
+
+/** The numbered references for the fields the page shows, and each field's footnotes. */
+export function artistReferences(artist: { citations?: StoredCitation[] | null }) {
+  const { references, footnotes } = numberArtistReferences(artist, ARTIST_PAGE_FIELDS);
+  return { references, footnotes };
 }
 
 /**
@@ -80,6 +165,12 @@ export function artistMetaTitle(artist: { name: string; instrument?: string | nu
 export function artistMetaDescription(artist: {
   name: string;
   isGroup?: boolean;
+  /** A person long dead, from a published source: no concerts, and the life span leads. */
+  isHistorical?: boolean | null;
+  birthYear?: number | null;
+  deathYear?: number | null;
+  birthPlace?: string | null;
+  mudra?: string | null;
   instrument?: string | null;
   city?: string | null;
   gurus?: Array<{ name: string; relationship?: string }> | null;
@@ -93,6 +184,15 @@ export function artistMetaDescription(artist: {
   const lead = tagline ?? (specialisation ? capitalize(specialisation) : undefined);
   sentences.push(lead ? `${artist.name} — ${lead}.` : `${artist.name}.`);
 
+  if (artist.isHistorical) {
+    const span = lifeSpan(artist);
+    if (span) sentences.push(`${capitalize(span)}.`);
+    const place = artist.birthPlace?.trim();
+    if (place) sentences.push(`Born in ${place}.`);
+    const mudra = artist.mudra?.trim();
+    if (mudra) sentences.push(`Mudra: ${mudra}.`);
+  }
+
   // Only lineage-grade relationships. A workshop teacher is not a guru, and
   // "disciple of" is precisely the claim that must not be inflated.
   const lineage = (artist.gurus ?? []).filter(
@@ -104,13 +204,16 @@ export function artistMetaDescription(artist: {
     sentences.push(`${artist.isGroup ? 'Trained under' : 'Disciple of'} ${names.join(' and ')}.`);
   }
 
-  const upcoming = artist.upcomingEventCount ?? 0;
+  // A historical person has no concerts to count, and the line would only ever be wrong.
+  const upcoming = artist.isHistorical ? 0 : (artist.upcomingEventCount ?? 0);
   if (upcoming > 0) {
     sentences.push(`${upcoming} upcoming concert${upcoming === 1 ? '' : 's'}.`);
   } else if (sentences.length === 1) {
     // Nothing specific is known, so describe the page rather than the person.
     sentences.push(
-      'Concerts, repertoire and recordings on Rasika.life, the Indian classical arts wiki.'
+      artist.isHistorical
+        ? 'Life, compositions and sources on Rasika.life, the Indian classical arts wiki.'
+        : 'Concerts, repertoire and recordings on Rasika.life, the Indian classical arts wiki.'
     );
   }
 

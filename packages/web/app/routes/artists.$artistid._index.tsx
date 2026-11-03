@@ -4,6 +4,7 @@ import {
   GURU_RELATIONSHIP_LABELS,
   type GuruRelationship,
   LINEAGE_RELATIONSHIPS,
+  shownArtist,
 } from '@rasika/core/domain/artist/client';
 import { SOCIAL_PLATFORM_LABELS } from '@rasika/core/domain/social-link';
 import type { SocialPlatform } from '@rasika/core/domain/social-link';
@@ -23,6 +24,7 @@ import { ArtistGalleryHero } from '~/components/ArtistGalleryHero';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { SocialIconLink } from '~/components/SocialIconLink';
+import { Cite, RagaReferences, type SourceInfo } from '~/components/raga/raga-sources';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { ArtistStructuredData, BreadcrumbStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -36,7 +38,13 @@ import {
 } from '~/components/ui/dialog';
 import { Input } from '~/components/ui/input';
 import { affiliationPeriod } from '~/lib/affiliation-display';
-import { artistTagline, parseInstruments, roleLabel } from '~/lib/artist-display';
+import {
+  artistReferences,
+  artistTagline,
+  lifeFacts,
+  parseInstruments,
+  roleLabel,
+} from '~/lib/artist-display';
 import { artistMetaDescription, artistMetaTitle } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -195,9 +203,25 @@ export async function loader({
     // cookie the subroutes have to settle for. Same two values, one definition.
     const cacheControl = user ? PRIVATE_PAGE_CACHE_CONTROL : PUBLIC_PAGE_CACHE_CONTROL;
 
+    // What the page, the meta description and the JSON-LD may say. A historical person's
+    // uncited fields are dropped here (`shownArtist`), so all three make the same claim. An
+    // ordinary artist passes through unchanged.
+    const shown = shownArtist(artist);
+    const sourceSlugs = [...new Set((shown.citations ?? []).map(c => c.sourceSlug))];
+    const sources =
+      sourceSlugs.length > 0
+        ? await client.source.bySlugs.query({ slugs: sourceSlugs }).catch(() => [])
+        : [];
+
     return data(
       {
-        artist,
+        artist: shown,
+        sources: Object.fromEntries(
+          sources.map(s => [
+            s.slug,
+            { slug: s.slug, title: s.title, citation: s.citation, url: s.url, licence: s.licence },
+          ])
+        ) as Record<string, SourceInfo>,
         compositions: compositions.items,
         hasMoreCompositions: compositions.hasMore,
         upcomingEvents: upcoming.items,
@@ -277,6 +301,11 @@ export const meta: MetaFunction = ({ data }) => {
     const description = artistMetaDescription({
       name: artist.name,
       isGroup: artist.isGroup,
+      isHistorical: artist.isHistorical,
+      birthYear: artist.birthYear,
+      deathYear: artist.deathYear,
+      birthPlace: artist.birthPlace,
+      mudra: artist.mudra,
       instrument: artist.instrument,
       city: artist.city,
       gurus: artist.gurus,
@@ -700,6 +729,7 @@ function MediaKitPanel({ artistId, artistName }: { artistId: string; artistName:
 export default function ArtistDetails() {
   const {
     artist,
+    sources,
     compositions,
     hasMoreCompositions,
     upcomingEvents,
@@ -839,17 +869,21 @@ export default function ArtistDetails() {
 
   // The vital-statistics block. Built as a list so an absent field simply is not there, which
   // keeps the rail looking deliberate on a sparse record rather than full of empty rows.
-  const facts: Array<{ label: string; value: string }> = [];
-  if (artist.birthYear) {
-    facts.push({
-      label: 'Born',
-      value: `${artist.birthYear}${artist.birthPlace ? `, ${artist.birthPlace}` : ''}`,
-    });
+  // Footnotes and the reference list. Both come from the shown record, so a citation for a field
+  // the page does not render never appears.
+  const { references, footnotes } = artistReferences(artist);
+  const isHistorical = !!artist.isHistorical;
+  const facts: Array<{ label: string; value: string; cite?: number[] }> = [];
+  // Born, Died, Mudra and Also written. A living artist has Born only, as before.
+  for (const fact of lifeFacts(artist)) {
+    const cite = [...new Set(fact.fields.flatMap(f => footnotes[f] ?? []))].sort((a, b) => a - b);
+    facts.push({ label: fact.label, value: fact.value, cite });
   }
   if (instruments.length > 0) {
     facts.push({
       label: instruments.length > 1 ? 'Disciplines' : 'Discipline',
       value: instruments.join(', '),
+      cite: footnotes.instrument,
     });
   }
   if (artist.city) facts.push({ label: 'Based in', value: artist.city });
@@ -938,7 +972,10 @@ export default function ArtistDetails() {
               because the rail carried a single one; the rail no longer does. */}
           {lineageGurus.length > 0 && (
             <section className="mb-8">
-              <h2 className="mb-3 text-xl font-semibold">Gurus & lineage</h2>
+              <h2 className="mb-3 text-xl font-semibold">
+                Gurus & lineage
+                <Cite numbers={footnotes.gurus} />
+              </h2>
               <GuruList gurus={lineageGurus} />
             </section>
           )}
@@ -989,7 +1026,10 @@ export default function ArtistDetails() {
               is the Repertoire section further down and comes from setlists. */}
           {works.length > 0 && (
             <section className="mb-8">
-              <h2 className="mb-3 text-xl font-semibold">Works & productions</h2>
+              <h2 className="mb-3 text-xl font-semibold">
+                Works & productions
+                <Cite numbers={footnotes.works} />
+              </h2>
               <ul className="space-y-2 text-sm">
                 {works.map((work, i) => (
                   <li key={`${work.title}-${i}`}>
@@ -1358,7 +1398,10 @@ export default function ArtistDetails() {
                   <dt className="text-xs uppercase tracking-wide text-muted-foreground">
                     {fact.label}
                   </dt>
-                  <dd className="mt-0.5">{fact.value}</dd>
+                  <dd className="mt-0.5">
+                    {fact.value}
+                    <Cite numbers={fact.cite} />
+                  </dd>
                 </div>
               ))}
               {latestAward && (
@@ -1424,18 +1467,26 @@ export default function ArtistDetails() {
           {/* Signed-in only, because a miss costs a model call and an anonymous page must not
               be able to spend anything. Placed in the rail rather than the main column: it is a
               tool for the handful of people who need copy, not part of the public record. */}
-          {isLoggedIn && <MediaKitPanel artistId={artist.id} artistName={artist.name} />}
+          {isLoggedIn && !isHistorical && (
+            <MediaKitPanel artistId={artist.id} artistName={artist.name} />
+          )}
 
           {/* Claim (§8) — understated and low in the reading order: it speaks to one person
               in a thousand visitors. */}
-          <ClaimProfile
-            artistName={artist.name}
-            status={myClaimStatus}
-            isLoggedIn={isLoggedIn}
-            claimStatus={artist.claimStatus}
-          />
+          {/* Nobody can claim a person who died long ago. */}
+          {!isHistorical && (
+            <ClaimProfile
+              artistName={artist.name}
+              status={myClaimStatus}
+              isLoggedIn={isLoggedIn}
+              claimStatus={artist.claimStatus}
+            />
+          )}
         </aside>
       </div>
+
+      {/* The sources behind a historical person's facts, numbered in page order. */}
+      <RagaReferences references={references} sources={sources} />
 
       <BreadcrumbStructuredData
         items={[
@@ -1457,12 +1508,27 @@ export default function ArtistDetails() {
           description: artistMetaDescription({
             name: artist.name,
             isGroup: artist.isGroup,
+            isHistorical: artist.isHistorical,
+            birthYear: artist.birthYear,
+            deathYear: artist.deathYear,
+            birthPlace: artist.birthPlace,
+            mudra: artist.mudra,
             instrument: artist.instrument,
             city: artist.city,
             gurus: artist.gurus,
             specialisations: artist.specialisations,
             upcomingEventCount: upcomingEvents.length,
           }),
+          // Only for a historical person. The profile shows a living artist's birth year, but
+          // publishing it as structured data is a separate step for a private individual.
+          ...(isHistorical
+            ? {
+                birthYear: artist.birthYear,
+                deathYear: artist.deathYear,
+                birthPlace: artist.birthPlace,
+                deathPlace: artist.deathPlace,
+              }
+            : {}),
           image: artist.photoUrl,
           city: artist.city,
           instruments,

@@ -293,3 +293,36 @@ describe('updateArtist clearing', () => {
     expect(remove).not.toHaveBeenCalled();
   });
 });
+
+describe('updateArtist citations', () => {
+  const cite = (field: string) => ({ field, sourceSlug: 'ssp-2008-english', locator: 'p. 14' });
+
+  async function mocks(stored: Record<string, unknown>) {
+    const { ArtistEntity } = await import('./entity');
+    vi.mocked(ArtistEntity.get).mockReturnValue({
+      go: vi.fn().mockResolvedValue({ data: { id: 'artist-1', name: 'X', ...stored } }),
+    } as any);
+    const go = vi.fn().mockResolvedValue({ data: { id: 'artist-1', name: 'X' } });
+    const remove = vi.fn().mockReturnValue({ go });
+    const set = vi.fn().mockReturnValue({ go, remove });
+    vi.mocked(ArtistEntity.update).mockReturnValue({ set } as any);
+    return { set, remove };
+  }
+
+  it('drops the citation of a field the update clears', async () => {
+    const { set, remove } = await mocks({
+      birthPlace: 'Tiruvarur',
+      mudra: 'guruguha',
+      citations: [cite('birthPlace'), cite('mudra')],
+    });
+    await updateArtist('artist-1', {}, ['birthPlace']);
+    expect(set).toHaveBeenCalledWith({ citations: [cite('mudra')] });
+    expect(remove).toHaveBeenCalledWith(['birthPlace']);
+  });
+
+  it('writes nothing extra when no citation would go', async () => {
+    const { set } = await mocks({ mudra: 'guruguha', citations: [cite('mudra')] });
+    await updateArtist('artist-1', { mudra: 'guruguha' });
+    expect(set).toHaveBeenCalledWith({ mudra: 'guruguha' });
+  });
+});

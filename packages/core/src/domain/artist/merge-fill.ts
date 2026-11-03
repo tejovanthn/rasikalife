@@ -9,6 +9,9 @@
  * Blanks only, nothing overwritten, the same rule as the raga merge (`mergeFillPatch`): what the
  * survivor holds was put there by a person or a reviewed import.
  *
+ * `isHistorical` is left out too: it is the importer's flag. A copied field brings its citations
+ * (as `mergeFillPatch` does for ragas), or it would arrive hidden on a historical record.
+ *
  * `isGroup` is left out on purpose. Flipping it strands membership edges, which is why
  * `artist.update` is a moderator procedure at all.
  */
@@ -22,6 +25,10 @@ export const ARTIST_FILLABLE_FIELDS = [
   'specialisations',
   'birthYear',
   'birthPlace',
+  'deathYear',
+  'deathPlace',
+  'mudra',
+  'alternateNames',
   'practiceStartYear',
   'debutYear',
   'credentials',
@@ -35,7 +42,9 @@ export const ARTIST_FILLABLE_FIELDS = [
   'photoUrl',
 ] as const;
 
-type Fillable = Partial<Record<(typeof ARTIST_FILLABLE_FIELDS)[number], unknown>>;
+type Fillable = Partial<Record<(typeof ARTIST_FILLABLE_FIELDS)[number], unknown>> & {
+  citations?: Array<{ field: string }> | null;
+};
 
 function isBlank(value: unknown): boolean {
   if (value === undefined || value === null) return true;
@@ -49,5 +58,7 @@ export function artistMergeFillPatch(survivor: Fillable, loser: Fillable): Recor
   for (const field of ARTIST_FILLABLE_FIELDS) {
     if (isBlank(survivor[field]) && !isBlank(loser[field])) patch[field] = loser[field];
   }
+  const carried = (loser.citations ?? []).filter(c => c.field in patch);
+  if (carried.length > 0) patch.citations = [...(survivor.citations ?? []), ...carried];
   return patch;
 }

@@ -258,8 +258,12 @@ const REGISTRY: Record<string, DomainConfig> = {
     update: (id, input) =>
       Artist.updateArtist(id, input as Parameters<typeof Artist.updateArtist>[1]),
     scanAll: () => scanEntity(opts => ArtistEntity.scan.go(opts)),
-    // No prepare hook: gurus are a JSON cell now, so the parsed row already
-    // carries the full objects. There are no linked names left to resolve.
+    // Gurus are a JSON cell, so the parsed row already carries the full objects. The only
+    // check is that a citation names a source that exists.
+    prepare: async row => {
+      await assertSourcesExist(row.citations);
+      return row;
+    },
   },
   raga: {
     createSchema: CreateRagaSchema,
