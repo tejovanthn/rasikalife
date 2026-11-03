@@ -323,6 +323,64 @@ Rules:
 - Apply calls `updateRaga` in core, so `pruneCitations` runs. The moderator-only check on
   citations is in the tRPC router, not in core, so the CLI is not blocked by it.
 
+### Importing SSP people (`ssp-people-*`)
+
+The people of the same book: composers named in Vols 1–4 and the subjects of the Vol 5
+biographies (130 in the first join; the owner expected 100–120). Rulers who composed nothing,
+deities, places, the British royals and people named only in passing are skipped, and the skip
+list with its reasons is printed by the match run. The rules are in `domain/artist/ssp-people.ts`
+(join, scope, facts), `ssp-match.ts` (matching) and `ssp-people-apply.ts` (patch, citations,
+undo plan); all pure and tested. `packages/scripts/src/sspPeople.ts` only reads, prints and
+writes. It follows the `ssp-*` raga import above.
+
+Order:
+1. Import the `source` sheet first, as for ragas. A dry run only warns.
+2. `ssp-people-match --out ssp-people.csv`: one row per person. `decision` is pre-filled
+   `attach` only for an exact name match with one candidate and no flag, and `create` for a
+   composer with no match (and for a major one, 15 or more compositions, whose only candidate
+   shares a first name). Everything else is blank. Read `flags`, `all_candidates` and `held`.
+   Edit `new_name` to change the name a new record gets, or `candidate_id` to pick another record.
+3. `ssp-people-apply --file ssp-people.csv --user <id> --dry-run`, then without `--dry-run`.
+   Reindex after.
+4. `ssp-people-undo --manifest <file>.applied-<time>.json [--only id,id] [--dry-run]`.
+
+Rules:
+- **A person is created only when a person marks `create`.** The owner's call (2026-11-03): make
+  the composers, merge by hand later. Apply checks again at run time: a name already taken, or a
+  matching record that the review file did not list, holds the row. Two `attach` rows on one
+  artist hold both.
+- **Matching folds spelling and ignores the lineage word.** `Muttusvāmi`, `Muddusvāmi` and
+  `Muttuswaamee` meet; `Dīkṣita` meets `Dikshitar`; `Vēṅkaṭamakhi` meets `Vēṅkaṭamakhin`. A
+  `Dīkṣita` alone is not a match, and one name must hold the other. A stored record named only
+  `Dikshitar` is never a candidate. Folding drops `y` and `h`, so a second, lighter test keeps
+  `Nannayya` from `Nayana`. Candidates rank by compositions held.
+- **People are joined across volumes by name key, SSP's own `possible_same_person` rows, and a
+  variant that names exactly one other person.** A name with a bracketed qualifier ("Muddusvāmi
+  (son of Subbarāma Dīkṣita)") is its own person. `VC §` markers are not qualifiers of that kind.
+  The two Eṭṭēndra rulers join on an identical key only, and three pairs SSP flagged are kept
+  apart by name. The Muddu Vēṅkaṭamakhi stays apart from Vēṅkaṭamakhi.
+- **Facts are short values, each with a citation** `{field, ssp-2008-english, 'Vol. 5, p. 19'}`
+  (printed page, from the page manifest). The importer reads only absolute years, places, mudra,
+  guru names, work titles and name variants. A relative date, an English sentence, caste or
+  community, and a lyric are never read. `works` keeps a value only if it reads as a title. A
+  `śaka` year goes in the citation `note`.
+- **Names.** A new record's `name` is the searched spelling (`searchedSpelling`: Subbarama
+  Dikshitar, Venkatamakhi), and the IAST goes to `alternateNames`. A matched record keeps its
+  own name and gains the IAST as an alternate. The suggestion is a guess; the reviewer edits it.
+- **Gurus** come from `disciple_of`, `guru_of` and `initiated_by`. The relationship is left
+  unset, except mantra initiation, which is `spiritual`. A guru that is in the import gets its
+  artist id, found after the creates (a second pass fills it). Other gurus stay as names.
+- **Attach fills only what is empty.** A stored year, place or mudra that differs is held and
+  never replaced. `gurus`, `works` and `alternateNames` merge by name onto the stored rows and
+  keep every stored row and key. `isHistorical` is set, so the cited-only rule then applies to
+  that record. Citations merge as for ragas.
+- **Undo** restores a scalar only while it still equals what the import wrote, takes out exactly
+  the list rows and citations it added, and soft-deletes a created artist only if no composition,
+  event or other artist's guru row names it. `isHistorical` is set back to `false`, since it is
+  not clearable.
+- The scripts check each payload against the artist schema and hold the row if a field is not in
+  it, rather than writing a patch the schema would drop.
+
 ### Thin raga pages: `noindex`, decided from the record
 
 `isThinRaga` (`@rasika/core/domain/raga/client`, pure) marks a raga page thin when it has no

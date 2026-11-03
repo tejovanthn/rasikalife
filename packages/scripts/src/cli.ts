@@ -158,6 +158,42 @@ program
   });
 
 program
+  .command('ssp-people-match')
+  .description('Match SSP people to stored artists and write a review CSV')
+  .option('--books-dir <path>', 'The rasika-books checkout (default ~/codes/rasika-books)')
+  .option('--out <path>', 'Review CSV to write', 'ssp-people.csv')
+  .action(async (opts: { booksDir?: string; out: string }) => {
+    setup();
+    const { matchSspToPeople } = await import('./sspPeople.js');
+    await matchSspToPeople(opts);
+  });
+
+program
+  .command('ssp-people-apply')
+  .description('Create the people marked "create" and patch those marked "attach", with a manifest')
+  .requiredOption('--file <path>', 'Reviewed CSV from ssp-people-match')
+  .requiredOption('--user <id>', 'Admin user id (the run acts as this user)')
+  .option('-n, --dry-run', 'Plan and report without writing')
+  .option('--books-dir <path>', 'The rasika-books checkout (default ~/codes/rasika-books)')
+  .action(async (opts: { file: string; user: string; dryRun?: boolean; booksDir?: string }) => {
+    setup();
+    const { applySspPeople } = await import('./sspPeople.js');
+    await applySspPeople({ ...opts, userId: opts.user });
+  });
+
+program
+  .command('ssp-people-undo')
+  .description('Take back an ssp-people-apply run, wholly or for the artist ids given')
+  .requiredOption('--manifest <path>', 'The .applied-*.json that ssp-people-apply wrote')
+  .option('--only <ids>', 'Comma-separated artist ids', (v: string) => v.split(','))
+  .option('-n, --dry-run', 'Report without writing')
+  .action(async (opts: { manifest: string; only?: string[]; dryRun?: boolean }) => {
+    setup();
+    const { undoSspPeople } = await import('./sspPeople.js');
+    await undoSspPeople(opts);
+  });
+
+program
   .command('admin-csv-export')
   .description('Export a domain to the admin CSV, the same shape /admin/data/<domain> downloads')
   .requiredOption('--domain <name>', 'artist, raga, tala, composition, venue, organiser, ...')

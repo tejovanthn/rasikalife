@@ -116,6 +116,21 @@
       "import": "./src/domain/raga/ssp-match.ts",
       "default": "./src/domain/raga/ssp-match.ts"
     },
+    "./domain/artist/ssp-people": {
+      "types": "./src/domain/artist/ssp-people.ts",
+      "import": "./src/domain/artist/ssp-people.ts",
+      "default": "./src/domain/artist/ssp-people.ts"
+    },
+    "./domain/artist/ssp-match": {
+      "types": "./src/domain/artist/ssp-match.ts",
+      "import": "./src/domain/artist/ssp-match.ts",
+      "default": "./src/domain/artist/ssp-match.ts"
+    },
+    "./domain/artist/ssp-people-apply": {
+      "types": "./src/domain/artist/ssp-people-apply.ts",
+      "import": "./src/domain/artist/ssp-people-apply.ts",
+      "default": "./src/domain/artist/ssp-people-apply.ts"
+    },
     "./domain/raga/ssp-apply": {
       "types": "./src/domain/raga/ssp-apply.ts",
       "import": "./src/domain/raga/ssp-apply.ts",

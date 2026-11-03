@@ -137,16 +137,7 @@ export function splitQualifier(name: string): { base: string; qualifier?: string
   return { base: m[1].trim(), qualifier: m[2].trim() };
 }
 
-const HONORIFIC_WORDS = new Set([
-  'sri',
-  'shri',
-  'mr',
-  'dr',
-  'avargal',
-  'avargaḷ',
-  'garu',
-  'gaaru',
-]);
+const HONORIFIC_WORDS = new Set(['sri', 'shri', 'mr', 'dr', 'avargal', 'avargaḷ', 'garu', 'gaaru']);
 
 /** Endings that carry no identity: Dīkṣitar/Dīkṣita, Vēṅkaṭamakhin/-khi, Śāstrigal/Śāstri. */
 function wordKey(word: string): string {
@@ -156,11 +147,27 @@ function wordKey(word: string): string {
   return key;
 }
 
-/**
- * A key under which one person's spellings meet. Lossy on purpose: it finds, a person decides.
- * `Muttusvāmi`, `Muddusvāmi` and `Muttuswaamee` meet; `Dīkṣita` and `Dikshitar` meet.
- */
-export function sspNameKey(name: string): string {
+export interface SspNameWord {
+  /** The lossy fold (`foldKey` and the endings). Spellings meet here. */
+  fold: string;
+  /** A light fold that keeps `y`, doubled consonants and the like. It tells `Nannayya` from `Nayana`. */
+  light: string;
+}
+
+function lightKey(word: string): string {
+  return word
+    .replace(/aa+/g, 'a')
+    .replace(/ee+/g, 'i')
+    .replace(/ii+/g, 'i')
+    .replace(/oo+/g, 'u')
+    .replace(/uu+/g, 'u')
+    .replace(/h/g, '')
+    .replace(/w/g, 'v')
+    .replace(/c/g, 'k');
+}
+
+/** The words of a name, each folded, with honorifics and bracketed qualifiers removed. */
+export function sspNameWords(name: string): SspNameWord[] {
   const base = splitQualifier(name).base;
   const plain = ascii(base)
     .replace(/[^a-z\s]/g, ' ')
@@ -169,7 +176,16 @@ export function sspNameKey(name: string): string {
   return plain
     .split(/\s+/)
     .filter(w => w && !HONORIFIC_WORDS.has(w))
-    .map(wordKey)
+    .map(w => ({ fold: wordKey(w), light: lightKey(w) }));
+}
+
+/**
+ * A key under which one person's spellings meet. Lossy on purpose: it finds, a person decides.
+ * `Muttusvāmi`, `Muddusvāmi` and `Muttuswaamee` meet; `Dīkṣita` and `Dikshitar` meet.
+ */
+export function sspNameKey(name: string): string {
+  return sspNameWords(name)
+    .map(w => w.fold)
     .join(' ');
 }
 
@@ -207,6 +223,24 @@ export const GENERIC_NAME_WORDS: ReadonlySet<string> = new Set(
     'pandita',
     'pillai',
     'naidu',
+    'aiyyar',
+    'aiyar',
+    'aiyer',
+    'aiyangar',
+    'chetty',
+    'chettiar',
+    'reddy',
+    'sarma',
+    'sharma',
+    'sarman',
+    'svami',
+    'swami',
+    'swaami',
+    'tanjavur',
+    'tanjore',
+    'tiruvarur',
+    'madurai',
+    'tirunelveli',
   ].map(wordKey)
 );
 
@@ -241,14 +275,15 @@ export function searchedSpelling(iast: string): string {
     .filter(Boolean)
     .map(word => {
       let w = '';
-      for (const ch of word.normalize('NFC')) {
+      for (const ch of word.normalize('NFC').replace(/śv/g, 'sw').replace(/Śv/g, 'Sw')) {
         const lower = ch.toLowerCase();
         w += IAST_TO_PLAIN[lower] ?? lower.normalize('NFD').replace(/\p{M}/gu, '');
       }
       w = w
         .replace(/c(?!h)/g, 'ch')
-        .replace(/\bsv/g, 'sw')
+        .replace(/sv(?=[aeiou])/g, 'sw')
         .replace(/makhin$/, 'makhi')
+        .replace(/^muddu(?=sw)/, 'muttu')
         .replace(/^dikshita$/, 'dikshitar')
         .replace(/[^a-z.'-]/g, '');
       return w.charAt(0).toUpperCase() + w.slice(1);
@@ -270,9 +305,9 @@ function usableVariant(variant: string, canonicalBase: string): string | null {
     return null;
   }
   if (v[0] === v[0].toLowerCase() && v[0] !== v[0].toUpperCase()) return null;
-  if (/\b(avarga|gāru|garu|mr\.|rao bahadur|chennai|his highness|misprint|mudrā|the |this )/i.test(v))
+  if (/[(),‘’'"“”¯]/.test(v)) return null;
+  if (/\b(avarga|gāru|garu|mr\.|rao bah|chennai|his highness|misprint|mudrā|the |this )/i.test(v))
     return null;
-  if (/[¯.]\w/.test(v) && /¯/.test(v)) return null;
   const canonicalWords = canonicalBase.split(/\s+/).length;
   if (canonicalWords >= 2 && !/\s/.test(v)) return null;
   return v;
@@ -313,7 +348,11 @@ export function parseSspYear(value: unknown): { year: number; saka?: number } | 
 
 function valueText(value: unknown): string | undefined {
   if (typeof value === 'string') return value;
-  if (value && typeof value === 'object' && typeof (value as { name?: unknown }).name === 'string') {
+  if (
+    value &&
+    typeof value === 'object' &&
+    typeof (value as { name?: unknown }).name === 'string'
+  ) {
     return (value as { name: string }).name;
   }
   return undefined;
@@ -323,6 +362,7 @@ function valueText(value: unknown): string | undefined {
 export function cleanPlace(raw: string): string | undefined {
   const place = raw
     .replace(/\s*\([^)]*\)/g, '')
+    .split(',')[0]
     .replace(/\s+/g, ' ')
     .trim();
   if (place.length < 2 || place.length > 60) return undefined;
@@ -342,11 +382,15 @@ export function cleanWorkTitle(raw: string): string | undefined {
   if (title.length < 3 || title.length > 80) return undefined;
   if (title.split(/\s+/).length > 6) return undefined;
   if (/^(a|an|the|his|her)\s/i.test(title)) return undefined;
-  if (/\b(set in|dedicated|translation|commentary|kīrtanas|kirtanas|tamil|telugu|title|book|with)\b/i.test(title)) {
+  if (
+    /\b(set in|dedicated|translation|commentary|kīrtanas|kirtanas|tamil|telugu|title|book|with)\b/i.test(
+      title
+    )
+  ) {
     return undefined;
   }
   if (/[,;:]/.test(title)) return undefined;
-  return titleCase(title);
+  return title === title.toLowerCase() ? titleCase(title) : title;
 }
 
 function flatten(values: unknown[] | undefined): unknown[] {
@@ -373,6 +417,19 @@ export function sspPeopleLocator(volume: number, pages: readonly number[]): stri
 
 // ── scope ─────────────────────────────────────────────────────────────────────────────────
 
+/** Vol 5 keys that mark a person as more than a name in a list: a musician with facts. */
+const MUSICIAN_KEYS = [
+  'birth_date',
+  'death_date',
+  'death_year_ce',
+  'composition_forms',
+  'composed_forms',
+  'forms_composed',
+  'composition_language',
+  'language_of_compositions',
+  'works',
+];
+
 const BIO_KEYS = [
   'vc_section',
   'section_number',
@@ -395,6 +452,14 @@ const KEEP_APART_PAIRS: readonly [string, string][] = [
   ['Ghanam Kṛṣṇayya', 'Ghanam Sīnayya'],
   ['S. Rādhākṛṣṇayya', 'S. Rāmakṛṣṇayya'],
 ];
+
+/** Two names SSP uses for one man (Vol 4 calls Tyāgarāja "Tyāgarājasvāmi" in a heading). */
+const SAME_PERSON_PAIRS: readonly [string, string][] = [['Tyāgarāja', 'Tyāgarājasvāmi']];
+
+/** "VC §67" names a section of the biographies. It does not tell this man from another. */
+function isSectionQualifier(qualifier: string): boolean {
+  return /^VC\s*§/.test(qualifier);
+}
 
 /** The two Eṭṭēndra rulers share a name. They join on an identical key only. */
 function isEttendra(key: string): boolean {
@@ -528,16 +593,21 @@ export function buildSspPeople(volumes: readonly SspVolumeInput[]): SspPeopleRes
     }
   }
 
+  for (const [a, b] of SAME_PERSON_PAIRS) {
+    for (const i of unqualifiedByKey.get(sspNameKey(a)) ?? [])
+      for (const j of unqualifiedByKey.get(sspNameKey(b)) ?? []) uf.union(i, j);
+  }
+
   // A variant spelling that is exactly one other person's name.
   const notes = new Map<number, string[]>();
   rows.forEach((r, i) => {
-    if (r.qualifier || isEttendra(r.key)) return;
+    if ((r.qualifier && !isSectionQualifier(r.qualifier)) || isEttendra(r.key)) return;
     for (const vk of r.variantKeys) {
       if (isEttendra(vk) || apart.has(`${r.key}\u0001${vk}`)) continue;
       const targets = unqualifiedByKey.get(vk) ?? [];
       const components = new Set(targets.map(t => uf.find(t)));
       components.delete(uf.find(i));
-      if (components.size === 1 && vk.split(' ').length >= 2) {
+      if (components.size === 1 && (vk.includes(' ') || !r.key.includes(' '))) {
         for (const t of targets) uf.union(i, t);
       } else if (components.size > 1) {
         notes.set(i, [...(notes.get(i) ?? []), `variant "${vk}" names several people; not joined`]);
@@ -605,11 +675,15 @@ export function buildSspPeople(volumes: readonly SspVolumeInput[]): SspPeopleRes
 
     const rolesSeen = [...new Set(members.flatMap(m => m.row.roles_seen ?? []))];
     const composedCount = composedBy.get(root)?.size ?? 0;
-    const composerRole = members.some(m => m.volume <= 4 && (m.row.roles_seen ?? []).includes('composer'));
+    const composerRole = members.some(
+      m => m.volume <= 4 && (m.row.roles_seen ?? []).includes('composer')
+    );
     const bio =
       members.some(m => m.volume === 5) &&
       (BIO_KEYS.some(k => attrs(k).some(a => a.member.volume === 5)) ||
         attrs('mudra').some(a => a.member.volume === 5) ||
+        MUSICIAN_KEYS.some(k => attrs(k).some(a => a.member.volume === 5)) ||
+        COMPOSER_RULER_KEYS.has(sspNameKey(pickIastName(members))) ||
         vol5Evidence.has(root));
 
     const display = pickIastName(members);
@@ -621,7 +695,11 @@ export function buildSspPeople(volumes: readonly SspVolumeInput[]): SspPeopleRes
       continue;
     }
     if (NOT_A_PERSON.test(ascii(display))) {
-      skipped.push({ name: label, volumes: vols, reason: 'not a person (deity, place, group or royal)' });
+      skipped.push({
+        name: label,
+        volumes: vols,
+        reason: 'not a person (deity, place, group or royal)',
+      });
       continue;
     }
 
@@ -676,7 +754,8 @@ export function buildSspPeople(volumes: readonly SspVolumeInput[]): SspPeopleRes
   const guruCitations = new Map<string, SspPersonCitation[]>();
   for (const input of volumes) {
     for (const rel of input.relationships) {
-      if (rel.type !== 'disciple_of' && rel.type !== 'guru_of' && rel.type !== 'initiated_by') continue;
+      if (rel.type !== 'disciple_of' && rel.type !== 'guru_of' && rel.type !== 'initiated_by')
+        continue;
       const [discipleId, guruId] = rel.type === 'guru_of' ? [rel.to, rel.from] : [rel.from, rel.to];
       const di = rowById.get(discipleId);
       const gi = rowById.get(guruId);
@@ -736,9 +815,7 @@ export function buildSspPeople(volumes: readonly SspVolumeInput[]): SspPeopleRes
     people.push(person);
   }
 
-  people.sort(
-    (a, b) => b.composedCount - a.composedCount || a.name.localeCompare(b.name, 'en')
-  );
+  people.sort((a, b) => b.composedCount - a.composedCount || a.name.localeCompare(b.name, 'en'));
   return {
     people,
     skipped,
@@ -806,7 +883,8 @@ function stagePerson(s: StageInput): SspPerson {
 
   // Years: the first absolute one, highest volume first. A second, different year is noted.
   const yearFrom = (keys: string[]) => {
-    const found: { year: number; saka?: number; member: Row; entry: { sections?: string[] } }[] = [];
+    const found: { year: number; saka?: number; member: Row; entry: { sections?: string[] } }[] =
+      [];
     for (const k of keys) {
       for (const { member, entry } of attrs(k)) {
         for (const v of flatten(entry.values)) {
@@ -820,14 +898,26 @@ function stagePerson(s: StageInput): SspPerson {
   const births = yearFrom(['birth_date']);
   if (births[0]) {
     facts.birthYear = births[0].year;
-    cite('birthYear', births[0].member, births[0].entry, births[0].saka ? `śaka ${births[0].saka}` : undefined);
-    if (births.some(b => b.year !== births[0].year)) notes.push('birth years disagree between volumes');
+    cite(
+      'birthYear',
+      births[0].member,
+      births[0].entry,
+      births[0].saka ? `śaka ${births[0].saka}` : undefined
+    );
+    if (births.some(b => b.year !== births[0].year))
+      notes.push('birth years disagree between volumes');
   }
   const deaths = yearFrom(['death_date', 'death_year_ce']);
   if (deaths[0]) {
     facts.deathYear = deaths[0].year;
-    cite('deathYear', deaths[0].member, deaths[0].entry, deaths[0].saka ? `śaka ${deaths[0].saka}` : undefined);
-    if (deaths.some(d => d.year !== deaths[0].year)) notes.push('death years disagree between volumes');
+    cite(
+      'deathYear',
+      deaths[0].member,
+      deaths[0].entry,
+      deaths[0].saka ? `śaka ${deaths[0].saka}` : undefined
+    );
+    if (deaths.some(d => d.year !== deaths[0].year))
+      notes.push('death years disagree between volumes');
   }
 
   const placeFrom = (keys: string[]) => {
@@ -857,7 +947,10 @@ function stagePerson(s: StageInput): SspPerson {
   for (const { member, entry } of mudras) {
     const first = flatten(entry.values).find(v => typeof v === 'string' && v.trim().length > 0);
     if (typeof first === 'string') {
-      const mudra = first.replace(/\s*\(.*?\)\s*/g, ' ').replace(/\s+/g, ' ').trim();
+      const mudra = first
+        .replace(/\s*\(.*?\)\s*/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
       if (mudra && mudra.length <= 60) {
         facts.mudra = mudra;
         cite('mudra', member, entry);
@@ -879,7 +972,9 @@ function stagePerson(s: StageInput): SspPerson {
       for (const v of flatten(entry.values)) {
         const title = typeof v === 'string' ? cleanWorkTitle(v) : undefined;
         if (!title) continue;
-        const wk = ascii(title).replace(/[^a-z]/g, '').replace(/(.)\1+/g, '$1');
+        const wk = ascii(title)
+          .replace(/[^a-z]/g, '')
+          .replace(/(.)\1+/g, '$1');
         if (seenWork.has(wk)) continue;
         seenWork.add(wk);
         facts.works.push(title);
