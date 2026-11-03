@@ -24,7 +24,13 @@ export interface Raga {
 // Pure rule shared by the raga page and the sitemap.
 export { isThinRaga } from './thin';
 
-export { SCALE_TYPES, PrayogaSchema, type Prayoga } from './schema';
+export {
+  SCALE_TYPES,
+  PrayogaSchema,
+  type Prayoga,
+  SlokaSchema,
+  type Sloka,
+} from './schema';
 export {
   SWARA_SEMITONES,
   parseSwaraSet,
@@ -44,6 +50,7 @@ export {
   isEmptyValue,
   isShown,
   numberReferences,
+  referenceKey,
   pruneCitations,
   shownRaga,
   type CitableRagaField,

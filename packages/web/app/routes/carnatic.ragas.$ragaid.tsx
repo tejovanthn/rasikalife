@@ -260,6 +260,7 @@ function RagaGrid({ ragas }: { ragas: RagaType[] }) {
 
 type ShownRaga = RagaType & {
   prayogas?: Array<{ notation: string; label?: string }>;
+  slokas?: Array<{ text: string; author?: string }>;
   movement?: string;
   scaleType?: string;
   isBhashanga?: boolean;
@@ -293,6 +294,55 @@ function SwaraList({ label, swaras, cite }: { label: string; swaras: string[]; c
   );
 }
 
+const PRAYOGAS_SHOWN = 8;
+
+function PrayogaItem({ prayoga }: { prayoga: { notation: string; label?: string } }) {
+  return (
+    <li className="text-sm">
+      <span className="font-mono">{prayoga.notation}</span>
+      {prayoga.label && <span className="text-muted-foreground"> · {prayoga.label}</span>}
+    </li>
+  );
+}
+
+/**
+ * A verse as the source prints it. Stored in IAST: never run through fromItrans or formatSwaras,
+ * which would read its letters as ITRANS codes.
+ */
+function Slokas({
+  slokas,
+  cite,
+}: {
+  slokas: Array<{ text: string; author?: string }>;
+  cite?: number[];
+}) {
+  return (
+    <section className="space-y-4" aria-labelledby="sloka-heading">
+      <h2
+        id="sloka-heading"
+        className="text-sm font-semibold uppercase tracking-wide text-muted-foreground"
+      >
+        {slokas.length > 1 ? 'Ślokas' : 'Śloka'}
+        <Cite numbers={cite} />
+      </h2>
+      {slokas.map(s => (
+        <figure key={`${s.author ?? ''}${s.text}`} className="border-l-2 border-border pl-4">
+          <blockquote lang="sa-Latn" className="whitespace-pre-line leading-relaxed italic">
+            {s.text}
+          </blockquote>
+          {s.author && (
+            <figcaption className="mt-1 text-sm text-muted-foreground">
+              {possessive(s.author)} śloka
+            </figcaption>
+          )}
+        </figure>
+      ))}
+    </section>
+  );
+}
+
+const possessive = (name: string) => `${name}\u2019s`;
+
 function HowItMoves({ raga, page }: { raga: ShownRaga; page: RagaPageModel }) {
   const { footnotes, swaras } = page;
   return (
@@ -307,13 +357,22 @@ function HowItMoves({ raga, page }: { raga: ShownRaga; page: RagaPageModel }) {
             <Cite numbers={footnotes.prayogas} />
           </h3>
           <ul className="space-y-1">
-            {raga.prayogas?.map(p => (
-              <li key={p.notation} className="text-sm">
-                <span className="font-mono">{p.notation}</span>
-                {p.label && <span className="text-muted-foreground"> · {p.label}</span>}
-              </li>
+            {raga.prayogas?.slice(0, PRAYOGAS_SHOWN).map(p => (
+              <PrayogaItem key={p.notation} prayoga={p} />
             ))}
           </ul>
+          {(raga.prayogas?.length ?? 0) > PRAYOGAS_SHOWN && (
+            <details className="text-sm">
+              <summary className="cursor-pointer text-primary hover:underline">
+                Show {(raga.prayogas?.length ?? 0) - PRAYOGAS_SHOWN} more phrases
+              </summary>
+              <ul className="mt-2 space-y-1">
+                {raga.prayogas?.slice(PRAYOGAS_SHOWN).map(p => (
+                  <PrayogaItem key={p.notation} prayoga={p} />
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       )}
       <div className="grid gap-2">
@@ -447,14 +506,21 @@ export default function RagaDetails() {
                 <div className="flex gap-3">
                   <span className="w-28 shrink-0 text-muted-foreground">Alternate</span>
                   <div className="flex flex-wrap gap-1">
-                    {raga.alternateScales.map(scale => (
+                    {page.alternateScales.map(row => (
                       <span
-                        key={scale}
+                        key={row.scale}
                         className="font-mono text-xs px-2 py-0.5 bg-background rounded border"
                       >
-                        {scale}
+                        {formatSwaras(row.scale)}
+                        <Cite numbers={row.numbers} />
+                        {row.tradition && (
+                          <span className="ml-1 font-sans text-muted-foreground">
+                            {row.tradition}
+                          </span>
+                        )}
                       </span>
                     ))}
+                    <Cite numbers={footnotes.alternateScales} />
                   </div>
                 </div>
               )}
@@ -470,6 +536,10 @@ export default function RagaDetails() {
               anya={page.swaras.anya}
             />
           </div>
+        )}
+
+        {(raga.slokas?.length ?? 0) > 0 && (
+          <Slokas slokas={raga.slokas ?? []} cite={footnotes.slokas} />
         )}
 
         {/* Metadata grid */}

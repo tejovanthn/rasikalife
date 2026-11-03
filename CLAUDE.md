@@ -240,12 +240,20 @@ from `raga/client`).
   KSUID, so a citation is readable in a CSV. The slug is rasika-books' `book_id` for a book that
   went through that pipeline. The admin CSV domain `source` upserts by slug. The raga import
   refuses a citation to a slug that does not exist, so **import the source sheet first**.
-- **New raga fields**: `prayogas` (`{notation, label?, gamaka?}`), `jivaSwaras`, `nyasaSwaras`,
+- **New raga fields**: `prayogas` (`{notation, label?, gamaka?}`, up to 50; the page shows the first 8 and the rest under "Show more"),
+  `slokas` (`{text, author?}`, up to 5; the verse in IAST as the source prints it, never run through
+  `fromItrans` or `formatSwaras`; cited-only, and never in JSON-LD), `jivaSwaras`, `nyasaSwaras`,
   `grahaSwaras`, `anyaSwaras`, `scaleType`, `isBhashanga`, `movement` (our own plain words, never a
   source's sentences) and `keyCompositionIds`. Phrases go through `validatePhrase`
   (`domain/raga/notation.ts`): octave dot `N2.`, upper `S'`, karvai `G2:2`, pause `,`. Swara sets
   may be bare letters (SSP writes "ri, ga, ma, ni"); the page resolves each to the raga's own
   variant (`resolveVariant`) and leaves it bare when the scale uses two.
+- **A citation can mark one `alternateScales` entry.** When its `note` equals an entry string, the
+  footnote and the tradition sit beside that entry only. A citation with no matching note stays a
+  field-level footnote. Uncited entries still show (legacy field). Logic: `lib/raga-page.ts`.
+- **Two citations on one field both print.** A reference is one per (source, locator, tradition,
+  note), so two traditions on one page never merge into the first. The references list shows each
+  tradition and note. The tradition is named beside the fact only when all citations agree.
 - **`research-ingest` now keeps sources.** Each URL becomes a citation on the field it filled,
   under `web-<host>`, and the cited sites are written to `<out>.sources.csv` for import first.
 - **Where a section has nothing cited, the page asks for help** (`lib/help-request.ts`): one

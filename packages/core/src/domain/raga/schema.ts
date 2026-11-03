@@ -40,6 +40,14 @@ export const PrayogaSchema = z.object({
 
 export type Prayoga = z.infer<typeof PrayogaSchema>;
 
+export const SlokaSchema = z.object({
+  /** The verse as printed in the source, IAST, one line per pada. */
+  text: z.string().min(1).max(2000),
+  author: z.string().max(200).optional(),
+});
+
+export type Sloka = z.infer<typeof SlokaSchema>;
+
 export const CreateRagaSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(5000).optional(),
@@ -54,7 +62,8 @@ export const CreateRagaSchema = z.object({
   parentRaga: EntityRefSchema.optional(),
   scaleType: z.enum(SCALE_TYPES).optional(),
   isBhashanga: z.boolean().optional(),
-  prayogas: z.array(PrayogaSchema).max(20).optional(),
+  prayogas: z.array(PrayogaSchema).max(50).optional(),
+  slokas: z.array(SlokaSchema).max(5).optional(),
   jivaSwaras: SwaraSetSchema.optional(),
   nyasaSwaras: SwaraSetSchema.optional(),
   grahaSwaras: SwaraSetSchema.optional(),

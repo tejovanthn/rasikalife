@@ -158,6 +158,7 @@ const FILLABLE_FIELDS = [
   'scaleType',
   'isBhashanga',
   'prayogas',
+  'slokas',
   'jivaSwaras',
   'nyasaSwaras',
   'grahaSwaras',

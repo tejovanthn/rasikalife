@@ -83,6 +83,17 @@ export const RagaEntity = new Entity(
         },
         required: false,
       },
+      slokas: {
+        type: 'list',
+        items: {
+          type: 'map',
+          properties: {
+            text: { type: 'string', required: true },
+            author: { type: 'string' },
+          },
+        },
+        required: false,
+      },
       jivaSwaras: {
         type: 'list',
         items: { type: 'string' },

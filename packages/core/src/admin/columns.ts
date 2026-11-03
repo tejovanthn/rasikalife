@@ -313,6 +313,7 @@ export const ADMIN_CSV_DOMAINS: Record<string, DomainCsvConfig> = {
       list('grahaSwaras'),
       list('anyaSwaras'),
       json('prayogas'),
+      json('slokas'),
       str('movement'),
       list('keyCompositionIds'),
       // What backs each field: [{field, sourceSlug, locator, confidence?, tradition?, note?}].

@@ -69,6 +69,7 @@ export function RagaReferences({
                   <>, {ref.locator}</>
                 )}
                 {ref.tradition && <span className="text-muted-foreground"> ({ref.tradition})</span>}
+                {ref.note && <span className="text-muted-foreground"> {ref.note}</span>}
               </span>
             </li>
           );

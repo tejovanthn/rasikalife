@@ -172,6 +172,19 @@ describe('definedTermJsonLd', () => {
     expect(janya).not.toHaveProperty('termCode');
   });
 
+  it('carries no sloka, phrase or other sourced raga field, whatever the caller holds', () => {
+    const term = {
+      name: 'Bhairavi',
+      url: 'https://x/4',
+      ...set,
+      slokas: [{ text: 'a verse' }],
+      prayogas: [{ notation: 'S R2' }],
+    };
+    const text = JSON.stringify(emitted(definedTermJsonLd(term)));
+    expect(text).not.toContain('a verse');
+    expect(text).not.toContain('S R2');
+  });
+
   it('is a DefinedTerm, not a CreativeWork, so nothing asks it for a composer', () => {
     const out = emitted(definedTermJsonLd({ name: 'Adi', url: 'https://x/3', ...set }));
     expect(out['@type']).toBe('DefinedTerm');

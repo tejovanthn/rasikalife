@@ -30,6 +30,7 @@ export const CITABLE_RAGA_FIELDS = [
   'scaleType',
   'isBhashanga',
   'prayogas',
+  'slokas',
   'jivaSwaras',
   'nyasaSwaras',
   'grahaSwaras',
@@ -119,17 +120,41 @@ export interface Reference {
   sourceSlug: string;
   locator: string;
   tradition?: string;
+  /** What this citation says of the field, where it is not an entry marker. */
+  note?: string;
 }
 
 /**
- * Numbered references, one per distinct (source, locator) pair, in the order `fields` lists
- * them, which is the order the page shows them. Returns the list and each field's footnote
+ * The note a reference prints. For `alternateScales` the note is the entry the citation marks
+ * (see `raga-page.ts` in web), not a remark, so it stays off the references list.
+ */
+function referenceNote(c: StoredCitation): string | undefined {
+  return c.field === 'alternateScales' ? undefined : c.note?.trim() || undefined;
+}
+
+/**
+ * The key two citations share when they print as one reference: same source, place, tradition
+ * and note. Two traditions on one page, or one field read two ways, must not collapse into
+ * whichever came first.
+ */
+export function referenceKey(c: StoredCitation): string {
+  return [c.sourceSlug, c.locator, c.tradition ?? '', referenceNote(c) ?? ''].join('\u0000');
+}
+
+/**
+ * Numbered references, one per distinct (source, locator, tradition, note), in the order
+ * `fields` lists them, which is the order the page shows them. Returns the list and each field's footnote
  * numbers.
  */
 export function numberReferences(
   raga: Cited,
   fields: readonly CitableRagaField[]
-): { references: Reference[]; footnotes: Partial<Record<CitableRagaField, number[]>> } {
+): {
+  references: Reference[];
+  footnotes: Partial<Record<CitableRagaField, number[]>>;
+  /** The reference number a citation prints under. */
+  numberOf: (c: StoredCitation) => number | undefined;
+} {
   const references: Reference[] = [];
   const byKey = new Map<string, number>();
   const footnotes: Partial<Record<CitableRagaField, number[]>> = {};
@@ -137,7 +162,7 @@ export function numberReferences(
   for (const field of fields) {
     const numbers: number[] = [];
     for (const c of citationsFor(raga, field)) {
-      const key = `${c.sourceSlug}\u0000${c.locator}`;
+      const key = referenceKey(c);
       let n = byKey.get(key);
       if (n === undefined) {
         n = references.length + 1;
@@ -147,13 +172,14 @@ export function numberReferences(
           sourceSlug: c.sourceSlug,
           locator: c.locator,
           tradition: c.tradition,
+          note: referenceNote(c),
         });
       }
       if (!numbers.includes(n)) numbers.push(n);
     }
     if (numbers.length > 0) footnotes[field] = numbers;
   }
-  return { references, footnotes };
+  return { references, footnotes, numberOf: c => byKey.get(referenceKey(c)) };
 }
 
 /**

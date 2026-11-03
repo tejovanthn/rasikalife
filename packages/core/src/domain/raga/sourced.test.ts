@@ -30,6 +30,14 @@ describe('shownRaga', () => {
     expect(shown.description).toBe('x');
   });
 
+  it('hides an uncited sloka and shows a cited one', () => {
+    const slokas = [{ text: 'verse', author: 'Venkatamakhi' }];
+    expect(shownRaga({ id: 'r', slokas })).not.toHaveProperty('slokas');
+    expect(shownRaga({ id: 'r', slokas, citations: [ssp('slokas', 'p. 1')] }).slokas).toEqual(
+      slokas
+    );
+  });
+
   it('hides uncited phrases', () => {
     expect(shownRaga({ id: 'r', prayogas: [{ notation: 'R2 G2 M1 P D1 P' }] })).not.toHaveProperty(
       'prayogas'
@@ -105,5 +113,28 @@ describe('CreateRagaSchema', () => {
       prayogas: [{ notation: 'zig-zags between ga and ri' }],
     });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe('prayogas and slokas bounds', () => {
+  const phrase = { notation: 'R2 G2 M1 P' };
+  it('takes up to 50 phrases and 5 slokas, and refuses more', () => {
+    const ok = CreateRagaSchema.safeParse({
+      name: 'x',
+      prayogas: Array.from({ length: 50 }, () => phrase),
+      slokas: Array.from({ length: 5 }, () => ({ text: 'v' })),
+    });
+    expect(ok.success).toBe(true);
+    expect(
+      CreateRagaSchema.safeParse({ name: 'x', prayogas: Array.from({ length: 51 }, () => phrase) })
+        .success
+    ).toBe(false);
+    expect(
+      CreateRagaSchema.safeParse({ name: 'x', slokas: Array.from({ length: 6 }, () => ({ text: 'v' })) })
+        .success
+    ).toBe(false);
+    expect(CreateRagaSchema.safeParse({ name: 'x', slokas: [{ text: 'a'.repeat(2001) }] }).success).toBe(
+      false
+    );
   });
 });

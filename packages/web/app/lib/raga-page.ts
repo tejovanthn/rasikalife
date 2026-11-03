@@ -25,6 +25,7 @@ export const RAGA_PAGE_FIELDS: readonly CitableRagaField[] = [
   'avarohanam',
   'alternateScales',
   'anyaSwaras',
+  'slokas',
   'description',
   'prayogas',
   'jivaSwaras',
@@ -41,6 +42,8 @@ export interface RagaPageInput {
   arohanam?: string | null;
   avarohanam?: string | null;
   prayogas?: Array<{ notation: string; label?: string }> | null;
+  slokas?: Array<{ text: string; author?: string }> | null;
+  alternateScales?: string[] | null;
   jivaSwaras?: string[] | null;
   nyasaSwaras?: string[] | null;
   grahaSwaras?: string[] | null;
@@ -63,8 +66,20 @@ export interface RagaPageModel {
   swaras: { jiva: string[]; nyasa: string[]; graha: string[]; anya: string[] };
   references: Reference[];
   footnotes: Partial<Record<CitableRagaField, number[]>>;
+  /**
+   * Alternate scales, each with the footnotes of the citations whose `note` is that entry.
+   * `footnotes.alternateScales` then holds only the citations that name no entry.
+   */
+  alternateScales: AlternateScaleRow[];
   /** The tradition a field's citation names, for "Evening, in the Dikshitar school". */
   traditionOf: Partial<Record<CitableRagaField, string>>;
+}
+
+export interface AlternateScaleRow {
+  scale: string;
+  /** Footnotes for this entry alone. Empty when no citation names it. */
+  numbers: number[];
+  tradition?: string;
 }
 
 const nonEmpty = (list: unknown[] | null | undefined) => (list?.length ?? 0) > 0;
@@ -92,11 +107,37 @@ export function ragaPageModel(raga: RagaPageInput): RagaPageModel {
   ];
   const helpSection = empty.find(([, has]) => !has)?.[0];
 
+  // Named inline only when every citation for the field agrees. Where two traditions read it
+  // differently, each is printed against its own footnote in the references.
   const traditionOf: Partial<Record<CitableRagaField, string>> = {};
-  for (const c of raga.citations ?? []) {
-    const field = c.field as CitableRagaField;
-    if (c.tradition && !traditionOf[field]) traditionOf[field] = c.tradition;
+  for (const field of RAGA_PAGE_FIELDS) {
+    const traditions = new Set(
+      (raga.citations ?? []).filter(c => c.field === field && c.tradition).map(c => c.tradition)
+    );
+    const only = traditions.size === 1 ? [...traditions][0] : undefined;
+    if (only) traditionOf[field] = only;
   }
+
+  const numbered = numberReferences({ citations: raga.citations ?? [] }, RAGA_PAGE_FIELDS);
+  // A citation whose note equals one entry marks that entry alone. One that matches none keeps
+  // the field-level footnote, as before.
+  const entries = raga.alternateScales ?? [];
+  const altCitations = (raga.citations ?? []).filter(c => c.field === 'alternateScales');
+  const matches = (c: StoredCitation, scale: string) => c.note?.trim() === scale.trim();
+  const alternateScales: AlternateScaleRow[] = entries.map(scale => {
+    const own = altCitations.filter(c => matches(c, scale));
+    const numbers = [
+      ...new Set(own.map(c => numbered.numberOf(c)).filter((n): n is number => !!n)),
+    ];
+    return { scale, numbers, tradition: own.find(c => c.tradition)?.tradition };
+  });
+  const fieldLevel = altCitations.filter(c => !entries.some(scale => matches(c, scale)));
+  const footnotes = { ...numbered.footnotes };
+  const fieldNumbers = [
+    ...new Set(fieldLevel.map(c => numbered.numberOf(c)).filter((n): n is number => !!n)),
+  ];
+  if (fieldNumbers.length > 0) footnotes.alternateScales = fieldNumbers;
+  else delete footnotes.alternateScales;
 
   return {
     hasMovement,
@@ -109,7 +150,9 @@ export function ragaPageModel(raga: RagaPageInput): RagaPageModel {
       graha: resolve(raga.grahaSwaras),
       anya: resolve(raga.anyaSwaras),
     },
-    ...numberReferences({ citations: raga.citations ?? [] }, RAGA_PAGE_FIELDS),
+    references: numbered.references,
+    footnotes,
+    alternateScales,
     traditionOf,
   };
 }
