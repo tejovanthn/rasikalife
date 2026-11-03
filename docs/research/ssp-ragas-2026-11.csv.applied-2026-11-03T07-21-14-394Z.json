@@ -1,0 +1,3442 @@
+[
+  {
+    "ragaId": "38bEBhsLSI04jlBeG03D2WsSFua",
+    "ragaName": "bhanumati",
+    "sspId": "raga_ssp-2008-english-vol-1_bhanumati",
+    "section": "4",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 M1 P D2 N2 S - S N2 D2 P M1 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "ṣaḍjagrahā bhānumatī saṃpūrṇā sarvakālikā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 32",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R1 M1 P D2 N2 S - S N2 D2 P M1 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 32",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 32",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 32",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 32"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEDqZu8zaC1DQ8YtcPMz1SWRI",
+    "ragaName": "chAyAvati",
+    "sspId": "raga_ssp-2008-english-vol-1_chayavati",
+    "section": "17",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 G3 M1 D2 D2 D2 N3 S S - S N3 D2 P M1 G3 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "M1",
+          "D2"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "D2 D2 D2",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "M1 D2 D2 D2 N3 S"
+          },
+          {
+            "notation": "M1 P M1 D2 N3 S"
+          },
+          {
+            "notation": "M1 R1 S"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "chāyāvatī tu ārōhē pavarjā sārvakālikā ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315",
+        "confidence": 0.75,
+        "tradition": "Dikshitar school",
+        "note": "S R1 G3 M1 D2 D2 D2 N3 S S - S N3 D2 P M1 G3 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315",
+        "tradition": "Venkatamakhi",
+        "note": "Only Vēṅkaṭamakhi's śloka gives a time: all times."
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 315"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEEVsagaNQ1I08cKUrnh3HQ7z",
+    "ragaName": "dhunibhinnaSaDjam",
+    "sspId": "raga_ssp-2008-english-vol-1_dhunibhinnasadjam",
+    "section": "9",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 G2 M1 P D1 N3 S - S N3 D1 P M1 G2 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "morning"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "R1"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "bhinnaṣaḍjākhyarāgōyaṃ ṛṣabhagrahasaṃyutaḥ | saṃpūrṇaḥ prathamē yāmē dinasya parigīyatē ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 92",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school",
+        "note": "S R1 G2 M1 P D1 N3 S - S N3 D1 P M1 G2 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 92",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 92",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 92",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 92"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEQwqJCMPwwrD04PAEywQ2m27",
+    "ragaName": "gaurivELAvaLi",
+    "sspId": "raga_ssp-2008-english-vol-1_gaurivelavali",
+    "section": "23",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G2 G2 S R2 M1 M1 P D2 D2 S - S N3 D2 P M1 G2 G2 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "D2"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "M1",
+          "D2",
+          "R2"
+        ]
+      },
+      "nyasaSwaras": {
+        "before": null,
+        "after": [
+          "M1",
+          "D2",
+          "R2"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S R2 G2 G2 S",
+            "label": "Characteristic phrase",
+            "gamaka": "/ ⋎ (on second g)"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "rāgō vēḷāvaḷir jñēyō ārōhē ganivarjitaḥ | dhaivatagraha saṃyuktaḥ prātaḥ kālē pragīyatē ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.8,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G2 G2 S R2 M1 M1 P D2 D2 S - S N3 D2 P M1 G2 G2 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "tradition": "Venkatamakhi",
+        "note": "Vēṅkaṭamakhi's śloka gives the time as: morning."
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "nyasaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 611"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bECj8JshzzMFtjVh4ybuKsYQH",
+    "ragaName": "gAnasAmavarALi",
+    "sspId": "raga_ssp-2008-english-vol-1_ganasamavarali",
+    "section": "3",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 M1 P D1 N3 S - S N3 D1 P M1 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "saṃpūrṇā sagrahā sāmavarāḷī sārvakālikā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 21",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R1 M1 P D1 N3 S - S N3 D1 P M1 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 21",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 21",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 21",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 21"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bELkP8X3J8GFQTzRebtg7OSmG",
+    "ragaName": "jhankArabhramari",
+    "sspId": "raga_ssp-2008-english-vol-1_jhankarabhramari",
+    "section": "19",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G2 M1 P D1 N1 D1 P D1 S - S N1 D1 P M1 G2 R2 G2 R2 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S P",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "P N1 D1 D1 P",
+            "label": "Jiva phrase",
+            "gamaka": "/"
+          },
+          {
+            "notation": "M1 G2 M1 P",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "G2 R2 G2 N1 D1 P",
+            "label": "Jiva phrase",
+            "gamaka": "/"
+          },
+          {
+            "notation": "R2 G2 R2 R2 S",
+            "label": "Ranjaka phrase"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "jhaṃkārabhramarī rāga ārōhē tu nivarjitaḥ | sarvakālēṣu gīyaṃtē gānaśāstraviśāradhaiḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 327",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G2 M1 P D1 N1 D1 P D1 S - S N1 D1 P M1 G2 R2 G2 R2 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 327",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 327",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 327",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 327",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 327"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEQ8ka5fUMUDaVvWOcpFg5Ig1",
+    "ragaName": "kanakAmbari",
+    "sspId": "raga_ssp-2008-english-vol-1_kanakambari",
+    "section": "1",
+    "volume": 1,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "R1 M1"
+          },
+          {
+            "notation": "S N1 D1",
+            "gamaka": "\\"
+          },
+          {
+            "notation": "M1 G1 R1"
+          },
+          {
+            "notation": "S P N1 D1 P"
+          },
+          {
+            "notation": "S D1 N1 D1 P"
+          },
+          {
+            "notation": "M1 G1 R1 S",
+            "gamaka": "\\"
+          },
+          {
+            "notation": "R1 M1 P D1 P M1 G1 G1 R1 S",
+            "gamaka": "\\"
+          },
+          {
+            "notation": "S P D1 P N1 D1 P M1 G1 G1 R1 S",
+            "gamaka": "/ \\"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "kanakāṃbari rāgasya ārōhē ganivarjitaḥ | ni vakrassarvakālēṣu gīyatē gāyakōttamaiḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 2",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 2",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 2",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 2",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 2"
+      }
+    ]
+  },
+  {
+    "ragaId": "38aww9mSVytyRpTx2peUZ97SHAV",
+    "ragaName": "manOranjani",
+    "sspId": "raga_ssp-2008-english-vol-1_manoranjani",
+    "section": "5",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 M1 P D2 N3 S - S N3 D2 P M1 M1 P M1 R1 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "M1 G1 R1 S"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "manōrañjani saṃpūrṇassagrahāssārvakālikā | avarōhē ga vakra syādēvaṃ gāyanti gāyakāḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 39",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R1 M1 P D2 N3 S - S N3 D2 P M1 M1 P M1 R1 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 39",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 39",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 39",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 43",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 39"
+      }
+    ]
+  },
+  {
+    "ragaId": "38avXYzrfBqnk6DE0n4s7H3woGq",
+    "ragaName": "mALavagauLa",
+    "sspId": "raga_ssp-2008-english-vol-1_malavagaula",
+    "section": "15",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 G3 M1 P D1 N3 S - S N3 D1 P M1 G3 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "pūrṇō māḷavagauḷākhyassagrahō gīyatē sadā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 142",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school",
+        "note": "S R1 G3 M1 P D1 N3 S - S N3 D1 P M1 G3 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 142",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 142",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 142",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 142"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bFBA5yozcsAidgmnjAVQRp4uJ",
+    "ragaName": "naTAbharaNam",
+    "sspId": "raga_ssp-2008-english-vol-1_natabharanam",
+    "section": "10",
+    "volume": 1,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "naṭābharaṇa rāgasyādārōhē rishabhōjjitaḥ | ārōhēcāvarōhē ca dhavakrassārvakālikaḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 113",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 113",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 113",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 113"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEcTeAezfUz7AYHX7cvdEl4WJ",
+    "ragaName": "nArIrItigauLa",
+    "sspId": "raga_ssp-2008-english-vol-1_nariritigaula",
+    "section": "20",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G2 M1 N2 D1 P N2 N2 S - S N2 N2 D1 M1 G2 G2 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "evening"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "N2"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "N2",
+          "S",
+          "G2",
+          "M1"
+        ]
+      },
+      "nyasaSwaras": {
+        "before": null,
+        "after": [
+          "N2",
+          "S",
+          "G2",
+          "M1"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S N2.",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "S G2",
+            "label": "Jiva phrase",
+            "gamaka": "∼∼∼ (on G)"
+          },
+          {
+            "notation": "G2 M1",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "S N2",
+            "label": "Jiva phrase",
+            "gamaka": "/"
+          },
+          {
+            "notation": "N2 D1 M1",
+            "label": "Jiva phrase",
+            "gamaka": "\\"
+          },
+          {
+            "notation": "P D1 P M1",
+            "label": "Jiva phrase",
+            "gamaka": "\\"
+          },
+          {
+            "notation": "S R2 G2 M1",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "S G2 G2 M1",
+            "label": "Jiva phrase",
+            "gamaka": "∴ (on second g)"
+          },
+          {
+            "notation": "S G2 R2 G2 M1",
+            "label": "Jiva phrase",
+            "gamaka": "⋎ (on first g), w (on second g)"
+          },
+          {
+            "notation": "S G2 G2 G2",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "N2. G2 G2 G2",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "N2. G2 R2 S",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "S N2 N2 N2 N2",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "G2 M1 P M1 G2 R2 S",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "M1 N2 D1 M1 G2 R2 S",
+            "label": "Jiva phrase",
+            "gamaka": "/"
+          },
+          {
+            "notation": "D1 P M1 G2 R2",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "P M1 G2 R2 S",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "G2 M1 N2 D1 M1 N2 N2 S'",
+            "label": "Jiva phrase",
+            "gamaka": "∴ (on second-last n)"
+          },
+          {
+            "notation": "S' N2 D1 M1 G2 R2",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "G2 M1 G2 R2 S",
+            "label": "Jiva phrase"
+          },
+          {
+            "notation": "N2. P. N2. N2."
+          },
+          {
+            "notation": "P. N2. N2. S"
+          },
+          {
+            "notation": "N2. P. N2. N2 S",
+            "gamaka": "\\ (before P), ∴ (on fourth svara)"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nigrahō rītigauḷākhyō ārōhē tu dhavarjitaḥ | saṃpūrṇaścaiṣa gātavyaḥ sāyāhnē gītakōvidaiḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G2 M1 N2 D1 P N2 N2 S - S N2 N2 D1 M1 G2 G2 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "nyasaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333",
+        "confidence": 0.75,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 333"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEudDkocFQh3psbkzDeI2KJLm",
+    "ragaName": "rUpavati",
+    "sspId": "raga_ssp-2008-english-vol-1_rupavati",
+    "section": "12",
+    "volume": 1,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "M1 R1 S"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "ārōhē rūpavatyāstu ga dha nī varjitā kramāt | avarōhē dhavakrasyādrivarjā sārvakālikā ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 123",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 123",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 123",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 123",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 123"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bENI0thZUp1QCPikmu0tiF9gd",
+    "ragaName": "sEnAgraNi",
+    "sspId": "raga_ssp-2008-english-vol-1_senagrani",
+    "section": "7",
+    "volume": 1,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "D1 S"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "sēnāgraṇī tu ārōhē ma dha vakrēti gīyatē | sagrahā sarvakālēṣu gāyantē gāyakōttamaiḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 55",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 55",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 55",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 55",
+        "confidence": 0.75,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 55"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEE7nFXJ9Mk9aYUCmwUsqOQ9N",
+    "ragaName": "tAnukIrti",
+    "sspId": "raga_ssp-2008-english-vol-1_tanukirti",
+    "section": "6",
+    "volume": 1,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 M1 P N3 S - S N3 D3 N3 P M1 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "avarōhē dha vakra syāttanukīrtistu sammatā | ṣaḍjagrahāssarvakālē gīyatē gāyakōttmaiḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 46",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R1 M1 P N3 S - S N3 D3 N3 P M1 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 46",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 46",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 46",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 1, p. 46"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEiKsNfOdz70ohudJSr48qALq",
+    "ragaName": "calanATa",
+    "sspId": "raga_ssp-2008-english-vol-2_calanata",
+    "section": "36",
+    "volume": 2,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R3 G3 M1 P D3 N3 S - S N3 P M1 M1 R3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "evening"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "M1",
+          "R3"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nāṭā ṣaḍjagrahōpētāvarōhē gadhavarjitā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 986",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school",
+        "note": "S R3 G3 M1 P D3 N3 S - S N3 P M1 M1 R3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 986",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 986",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 986",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 986",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 986"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bF8eLhcigaXwcVhrwtfDA9VuC",
+    "ragaName": "gangAtarangiNi",
+    "sspId": "raga_ssp-2008-english-vol-2_gangatarangini",
+    "section": "33",
+    "volume": 2,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R3 G3 M1 P D1 N3 S - S N3 P D1 M1 M1 G3 M1 R3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "M1",
+          "R3"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "gaṅgātaraṅgiṇī rāgō dharivakrāvarōhaṇē |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 964",
+        "confidence": 0.75,
+        "tradition": "Dikshitar school",
+        "note": "S R3 G3 M1 P D1 N3 S - S N3 P D1 M1 M1 G3 M1 R3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 964",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 964",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 964",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 964",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 964"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEZcEUHPo9SRyvrytVYpKzkL8",
+    "ragaName": "nAgAbharaNam",
+    "sspId": "raga_ssp-2008-english-vol-2_nagabharanam",
+    "section": "30",
+    "volume": 2,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G3 M1 P N3 D3 N3 S - S N3 P M1 G3 M1 R2 S M1 G3 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "R2"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nāgābharaṇarāgassyāt ārōhē vakradhaivataḥ |\navarōhē dhavarjyassyāt sagrahassārvakālikaḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 944",
+        "confidence": 0.75,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G3 M1 P N3 D3 N3 S - S N3 P M1 G3 M1 R2 S M1 G3 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 944",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 944",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 944",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 944",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 944"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bF2igoxLxCeEk60af3hRd8OcY",
+    "ragaName": "rAgacUDAmaNi",
+    "sspId": "raga_ssp-2008-english-vol-2_ragacudamani",
+    "section": "32",
+    "volume": 2,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S M1 R3 G3 M1 P P N2 N2 S - S N2 D1 P M1 M1 R3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "N2",
+          "M1"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "ārōhē tyakta gāndhārō dhavarjyamavarōhaṇē |\ngavarjyassagrahō rāgacūḍāmaṇir virājatē ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 959",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S M1 R3 G3 M1 P P N2 N2 S - S N2 D1 P M1 M1 R3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 959",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 959",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 959",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 959",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 959"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEpKj5j40hGU1xDs7dl2p7M4S",
+    "ragaName": "saurasEna",
+    "sspId": "raga_ssp-2008-english-vol-2_saurasena",
+    "section": "27",
+    "volume": 2,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G3 M1 P D1 N3 S - S N3 D1 P M1 G3 R2 G3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "saurasenābhidhō rāgastvavarōhē rivarjitaḥ |\nsampūrṇassarvakālēṣu gīyatē sagrahastviti ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 636",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G3 M1 P D1 N3 S - S N3 D1 P M1 G3 R2 G3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 636",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 636",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 636",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 636"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEYR0junG1hnZ9puU3YgmXCO5",
+    "ragaName": "tarangiNi",
+    "sspId": "raga_ssp-2008-english-vol-2_tarangini",
+    "section": "26",
+    "volume": 2,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G3 P D1 N2 D1 P D1 S - S D1 P G3 R2 S R2 G3 M1 G3 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "R2"
+        ]
+      },
+      "nyasaSwaras": {
+        "before": null,
+        "after": [
+          "R2"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "rāgastaraṅgiṇī pūrṇa ārōhē manivarjitaḥ |\navarōhē padhanidharigamāgari saṃyutaḥ |\nsarvakālēṣu gīyantē sagrahastūcyatē budhaiḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G3 P D1 N2 D1 P D1 S - S D1 P G3 R2 S R2 G3 M1 G3 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "nyasaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 2, p. 629"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEMsm3480Uj4wykWOn8TXNjYO",
+    "ragaName": "bhavAni",
+    "sspId": "raga_ssp-2008-english-vol-3_bhavani",
+    "section": "44",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 G2 M2 P D1 P N2 S - S N2 D1 P M2 G2 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "G2",
+          "N2"
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1049",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school",
+        "note": "S R1 G2 M2 P D1 P N2 S - S N2 D1 P M2 G2 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1049",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1049",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1049",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1049",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bE6P08isnVebev3wnZOf4APAD",
+    "ragaName": "bhUSAvati",
+    "sspId": "raga_ssp-2008-english-vol-3_bhusavati",
+    "section": "64",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G3 S S R2 P M2 P D2 S - S D2 P D2 N2 P G3 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S R2 G3 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S R2 P M2 P D2 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S D2 P",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "D2 N2 P G3 R2 S",
+            "label": "Characteristic phrase"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1155",
+        "confidence": 0.8,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G3 S S R2 P M2 P D2 S - S D2 P D2 N2 P G3 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1155",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1155",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1155",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1155",
+        "confidence": 0.75,
+        "tradition": "Dikshitar school"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEGnZ3rDMl6MIWNzqTG6zFzhZ",
+    "ragaName": "caturangiNi",
+    "sspId": "raga_ssp-2008-english-vol-3_caturangini",
+    "section": "66",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G3 M2 P D3 N3 S - S N3 P M2 G3 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S R2 R2 P M2 P N3 N3 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S' N3 P M2 P R2 G3 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "N3 P S' N3 P M2 P R2 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S R2 P M2 R2 G3 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "N3 P M2 P R2 G3 R2 S",
+            "label": "Characteristic phrase"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1212",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G3 M2 P D3 N3 S - S N3 P M2 G3 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1212",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1212",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1212",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1212",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEXroFLdCFz0XYDo87MGrytoI",
+    "ragaName": "dhautapancamam",
+    "sspId": "raga_ssp-2008-english-vol-3_dhautapancamam",
+    "section": "69",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R3 G3 M2 P D1 N3 S - S N3 D1 P M2 R3 G3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "M2 P D1 S'"
+          },
+          {
+            "notation": "N3 P N3 S'"
+          },
+          {
+            "notation": "S N3 P M2 P"
+          },
+          {
+            "notation": "D1 P M2 P"
+          },
+          {
+            "notation": "R3 G3 S",
+            "gamaka": "w over r"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "dhautapañcamarāgasya avarōhē rivakratā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1227",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R3 G3 M2 P D1 N3 S - S N3 D1 P M2 R3 G3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1227",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1227",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1227",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1227",
+        "confidence": 0.8,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1227"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEgbXcAsbEHwb9L50RtDpmRHr",
+    "ragaName": "dhAmavati",
+    "sspId": "raga_ssp-2008-english-vol-3_dhamavati",
+    "section": "59",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G2 M2 P D2 N3 S - S N3 D2 P M2 G2 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "dhāmavatyatha saṃpūrṇā sagrahā sārvakālikā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1134",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G2 M2 P D2 N3 S - S N3 D2 P M2 G2 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1134",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1134",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1134",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1134"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEGI02ELbMjfq20MJxnzrPz0S",
+    "ragaName": "gamakakriyA",
+    "sspId": "raga_ssp-2008-english-vol-3_gamakakriya",
+    "section": "53",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 G3 M2 P D2 S - S N3 D2 P M2 G3 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "jivaSwaras": {
+        "before": null,
+        "after": [
+          "G3"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "gamakakriyā rāgōyaṃ sarvakālē pragīyatē |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1101",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R1 G3 M2 P D2 S - S N3 D2 P M2 G3 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1101",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1101",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1101",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "jivaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1101",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1101"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEaTU0ju4cJd2HNXgnKUlgsZS",
+    "ragaName": "gIrvANi",
+    "sspId": "raga_ssp-2008-english-vol-3_girvani",
+    "section": "43",
+    "volume": 3,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nivarjārōhaṇē pūrṇā gīrvāṇī sārvakālikā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1044",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1044",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1044",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1044"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEn5I0au2bhkiflZZWNUNFsSv",
+    "ragaName": "gItapriyA",
+    "sspId": "raga_ssp-2008-english-vol-3_gitapriya",
+    "section": "63",
+    "volume": 3,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "gītapriyā susaṃpūrṇā sagrahā sārvakālikā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1151",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1151",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1151",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1151"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEljtYc04npkUdkZ0TXg7jZFu",
+    "ragaName": "kumbhini",
+    "sspId": "raga_ssp-2008-english-vol-3_kumbhini",
+    "section": "41",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S G1 R1 G1 M2 P N3 D2 N3 S - S N3 P M2 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S G1 R1 G1 M2"
+          },
+          {
+            "notation": "S R1 G1 R1 S"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1031",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S G1 R1 G1 M2 P N3 D2 N3 S - S N3 P M2 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1031",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1031",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1031",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1031",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEZQgbJCmbbJGFaRVFwpMwYxM",
+    "ragaName": "nabhOmaNi",
+    "sspId": "raga_ssp-2008-english-vol-3_nabhomani",
+    "section": "40",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S G1 R1 M2 P D2 P N2 S - S N2 D2 P M2 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "P D2 P N2 S'"
+          },
+          {
+            "notation": "P N2 D2 N2 S'"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nabhōmaṇī ca sampūrṇā ārōhē ridhavakritā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1025",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S G1 R1 M2 P D2 P N2 S - S N2 D2 P M2 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1025",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1025",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1025",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1025",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1025"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEbDbkgxL8nBdvfGGzxl6pEBG",
+    "ragaName": "nAmadEsi",
+    "sspId": "raga_ssp-2008-english-vol-3_namadesi",
+    "section": "50",
+    "volume": 3,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S R1 G3 P D1 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "P N2 N2 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S' D1 P M2 G3 D1 P M2 G3 R1 S",
+            "label": "Characteristic phrase"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nāmadēśī rāga pūrṇā ṣaḍjagraha samanvitā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1077",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1077",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1077",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1077",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1077"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEusrtt3cQipRDTIy0eSOsx83",
+    "ragaName": "nAsAmaNi",
+    "sspId": "raga_ssp-2008-english-vol-3_nasamani",
+    "section": "70",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R3 G3 M2 P D2 N2 S - S N2 D2 P M2 R3 G3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "P N2 D2 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "P N2 D2 N2 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "P M2 P S R3 G3 S",
+            "label": "Characteristic phrase",
+            "gamaka": "w over r"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "avarōhē rivakrā syāt gēyā nāsāmaṇī sadā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1231",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R3 G3 M2 P D2 N2 S - S N2 D2 P M2 R3 G3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1231",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1231",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1231",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1231",
+        "confidence": 0.8,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1231"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEYAvlxkxo2acwwon7EpzAMCm",
+    "ragaName": "ramAmanOhari",
+    "sspId": "raga_ssp-2008-english-vol-3_ramamanohari",
+    "section": "52",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 G3 M2 P D2 N2 S - S N2 D2 P M2 G3 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "P M2 P D2 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "P N2 N2 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "D2. G3 R1 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "P. R1 S N2 S.",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S' N2 P M2 G3 R1 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "N2. D2. N2. S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S G3 R1 S",
+            "label": "Characteristic phrase"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "ramāmanōharī pūrṇā sarvakālēṣu gīyatē |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1097",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R1 G3 M2 P D2 N2 S - S N2 D2 P M2 G3 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1097",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1097",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1097",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1097",
+        "confidence": 0.7,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1097"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bF29LMOcQtL1ZS4yQyMYQVeyX",
+    "ragaName": "rasamanjari",
+    "sspId": "raga_ssp-2008-english-vol-3_rasamanjari",
+    "section": "72",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R3 G3 S P M2 P N3 D3 N3 S - S N3 D3 N3 P P M2 P R3 G3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "avarōhē ridhau varjyau rāgāṅgō rasamañjarī |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1239",
+        "confidence": 0.8,
+        "tradition": "Dikshitar school",
+        "note": "S R3 G3 S P M2 P N3 D3 N3 S - S N3 D3 N3 P P M2 P R3 G3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1239",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1239",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1239",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1239"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEWrqs9sdjS5zLGACQKCtHYuV",
+    "ragaName": "ratipriya",
+    "sspId": "raga_ssp-2008-english-vol-3_ratipriya",
+    "section": "62",
+    "volume": 3,
+    "changes": {
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S D1 P M2 P D1 S'",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "S R2 G3 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "D1 P R2 G3 S",
+            "label": "Characteristic phrase"
+          },
+          {
+            "notation": "P M2 R2 G3 S",
+            "label": "Characteristic phrase"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "ratipriyā ca saṃpūrṇā sagrahā sārvakālikā |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1147",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1147",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1147",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1147",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1147"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEMB2VdFN7XlOh9Npw6m70OFP",
+    "ragaName": "ravikriyA",
+    "sspId": "raga_ssp-2008-english-vol-3_ravikriya",
+    "section": "42",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S G1 R1 G1 M2 P N3 D3 N3 S - S N3 P P M2 G1 R1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "S G1 R1 G1 M2"
+          },
+          {
+            "notation": "S R1 G1 R1 S"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "ārōhē ridhavakraśca dhavarjyaścāvarōhaṇē | ravikriyā rāgaḥ pūrṇassagrahassārvakālikaḥ ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1037",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S G1 R1 G1 M2 P N3 D3 N3 S - S N3 P P M2 G1 R1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1037",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1037",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1037",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1037",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1037"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEnqI4oLTt8v4eY1HDfwqLzDE",
+    "ragaName": "santAnamanjari",
+    "sspId": "raga_ssp-2008-english-vol-3_santanamanjari",
+    "section": "67",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R3 G3 M2 P D1 S - S N1 D1 P M2 R3 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "nivarjārōhaṇē gēyā avarōhē gavarjitā| santāna mañjarī rāgassarvakālē pragīyatē ∥",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1219",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R3 G3 M2 P D1 S - S N1 D1 P M2 R3 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1219",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1219",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1219",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1219"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEOV6ujkwWecw3LmfGsOYdh8K",
+    "ragaName": "saugandhini",
+    "sspId": "raga_ssp-2008-english-vol-3_saugandhini",
+    "section": "37",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R1 M2 P D1 S - S N1 D1 P M2 G1 R1 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1005",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school",
+        "note": "S R1 M2 P D1 S - S N1 D1 P M2 G1 R1 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1005",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1005",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1005",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      }
+    ]
+  },
+  {
+    "ragaId": "38bEOHtL3wsSSjOCELw41ubrEAu",
+    "ragaName": "sumadyuti",
+    "sspId": "raga_ssp-2008-english-vol-3_sumadyuti",
+    "section": "57",
+    "volume": 3,
+    "changes": {
+      "alternateScales": {
+        "before": null,
+        "after": [
+          "S R2 G2 M2 P D1 N3 S - S N3 D1 P M2 G2 R2 S"
+        ]
+      },
+      "timeOfDay": {
+        "before": null,
+        "after": "universal"
+      },
+      "scaleType": {
+        "before": null,
+        "after": "sampurna"
+      },
+      "grahaSwaras": {
+        "before": null,
+        "after": [
+          "S"
+        ]
+      },
+      "prayogas": {
+        "before": null,
+        "after": [
+          {
+            "notation": "M2 P D1 S'"
+          }
+        ]
+      },
+      "slokas": {
+        "before": null,
+        "after": [
+          {
+            "text": "sagrahassarvakālēṣu gātavyā ca sumadyuti |",
+            "author": "Vēṅkaṭamakhi"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateScales",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1126",
+        "confidence": 0.85,
+        "tradition": "Dikshitar school",
+        "note": "S R2 G2 M2 P D1 N3 S - S N3 D1 P M2 G2 R2 S"
+      },
+      {
+        "field": "timeOfDay",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1126",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "scaleType",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1126",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "grahaSwaras",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1126",
+        "confidence": 0.95,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "prayogas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1126",
+        "confidence": 0.9,
+        "tradition": "Dikshitar school"
+      },
+      {
+        "field": "slokas",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 3, p. 1126"
+      }
+    ]
+  }
+]

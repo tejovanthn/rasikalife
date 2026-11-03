@@ -16,13 +16,13 @@ Next, in order:
 2. Import `docs/research/sources-2026-10.csv` (domain `source`), then
    `docs/research/bhairavi-ssp-2026-10.csv` (domain `raga`), dry run first. Open Bhairavi.
 3. Run search volume for ragas, then compositions (CLAUDE.md, "Raga sources"). Reindex.
-4. SSP ragas: commands are built (CLAUDE.md, "Importing SSP into ragas"), not run. Run, in order,
-   with `pnpm prod-cli` (or `pnpm cli` for a personal stage):
-   - `admin-csv-import --domain source --file docs/research/sources-2026-10.csv --user <id>` (drop rows already stored)
-   - `ssp-match --out ssp-ragas.csv`, then read it and edit `decision`
-   - `ssp-apply --file ssp-ragas.csv --user <id> --only melas --dry-run`, read the held file, then run without `--dry-run`
-   - same with `--only janyas`
-   - `reindex`
+4. SSP ragas: DONE in prod 2026-11-03 for the 103 exact matches (sources sheet imported, melas
+   and janyas applied, reindexed). Manifests and held items: `docs/research/ssp-ragas-2026-11.csv.*`.
+   Undo: `ssp-undo --manifest <applied json>`. Not yet visible: deploy first (item 1).
+   **Do not import `bhairavi-ssp-2026-10.csv` as is**: admin-csv-import replaces `citations` whole and
+   would drop the 9 English citations SSP just wrote to Bhairavi. Merge its Tamil citations instead.
+   Left: review the 16 held exact rows and 52 variant rows in `ssp-ragas-2026-11.csv`, the 47 held
+   items, and the `movement` writing pass over `sspMovementFacts`.
    Compositions and people (phases B and C of `docs/plans/261103-01-ssp-import.md`) are not built.
 
 ## 2026-10-24: self-serve event listing, built, not deployed

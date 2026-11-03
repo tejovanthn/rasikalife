@@ -1,0 +1,192 @@
+decision,suggestion,section,ssp_id,ssp_name,volume,kind,tier,candidate_id,candidate_name,candidate_mela,all_candidates,flags,would_set,would_cite,held
+apply,apply,8.3,raga_ssp-2008-english-vol-1_asaveri,asāvēri,1,janya,exact,38b7KD64akaZbYuiXEpP6pveSUM,asAvEri,8,,,timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras slokas,6,0
+apply,apply,15.16,raga_ssp-2008-english-vol-1_bauli,bauḷi,1,janya,exact,38avVrgkqsRzkYrmDLl4592760h,bauLi,15,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,16.1,raga_ssp-2008-english-vol-1_bhairavam,bhairavam,1,janya,exact,3A73537Phs0Ft0UbjJy9VKnIGYB,bhairavam,17,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras prayogas slokas,10,2
+apply,apply,20.9,raga_ssp-2008-english-vol-1_bhairavi,bhairavi,1,janya,exact,38avUziLkV5coHIV2RKJ2Dm8zez,bhairavi,20,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras slokas,9,2
+,review,3.2,raga_ssp-2008-english-vol-1_bhinnapancama,bhinnapañcama,1,janya,variant,38bEYOP2iuJ2ilGQrhP92jVzWKP,bhinnapancamam,3,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,4,raga_ssp-2008-english-vol-1_bhanumati,bhānumati,1,mela,exact,38bEBhsLSI04jlBeG03D2WsSFua,bhanumati,4,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+,review,9.2,raga_ssp-2008-english-vol-1_bhupalam,bhūpāḷam,1,janya,variant,38avDkh2rcwcHixsBeRAy3C1rpy,bhUpALa,,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,5,0
+apply,apply,22.11,raga_ssp-2008-english-vol-1_brndavani,bṛndāvani,1,janya,exact,38bF5XppqavFbfrzwGKL5bmYph0,brndAvani,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,0
+apply,apply,15.2,raga_ssp-2008-english-vol-1_chayagaula,chāyāgauḷa,1,janya,exact,38bEdWPCgN1LVVIXQxnMCr1WAVm,chAyAgauLa,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,17,raga_ssp-2008-english-vol-1_chayavati,chāyāvati,1,mela,exact,38bEDqZu8zaC1DQ8YtcPMz1SWRI,chAyAvati,17,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras prayogas slokas,7,1
+skip,skip,22.18,raga_ssp-2008-english-vol-1_darubaru,darubāru,1,janya,none,,,,,,,,
+,review,20.11,raga_ssp-2008-english-vol-1_dhanyasi,dhanyāśi,1,janya,exact,38avIiv6RBEug1cN4HzaeqhV0Jh,dhanyAsi,8,,mela-mismatch,alternateScales scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras slokas,8,2
+apply,apply,9,raga_ssp-2008-english-vol-1_dhunibhinnasadjam,dhunibhinnaṣaḍjam,1,mela,exact,38bEEVsagaNQ1I08cKUrnh3HQ7z,dhunibhinnaSaDjam,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+,review,22.6,raga_ssp-2008-english-vol-1_devagandhari,dēvagāndhāri,1,janya,exact,38avTmPr46EhBLss74GyhCG0SnY,dEvagAndhAri,29,,duplicate-name mela-mismatch duplicate-target,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,8,0
+apply,apply,22.16,raga_ssp-2008-english-vol-1_devamanohari,dēvamanōhari,1,janya,exact,38b7S7C094zSUbcEaDieCbyEkRr,dEvamanOhari,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,8,0
+apply,apply,15.18,raga_ssp-2008-english-vol-1_devaranji,dēvarañji,1,janya,exact,38bEaPjvmCccTE5WCdEj6Mq3hdu,dEvaranji,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,1
+apply,apply,15.29,raga_ssp-2008-english-vol-1_gauri,gauri,1,janya,exact,38b9CVQeITCQLwBO29UQ72VNCPb,gauri,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,2
+apply,apply,23,raga_ssp-2008-english-vol-1_gaurivelavali,gaurīvēḷāvaḷi,1,mela,exact,38bEQwqJCMPwwrD04PAEywQ2m27,gaurivELAvaLi,23,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,0
+skip,skip,15.21,raga_ssp-2008-english-vol-1_gaudipantu,gauḍipantu,1,janya,none,,,,,,,,
+apply,apply,15.11,raga_ssp-2008-english-vol-1_gaula,gauḷa,1,janya,exact,38avCaXJPorqf6Dpu8ZvgbwpkmP,gauLa,15,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,5,0
+,review,20.4,raga_ssp-2008-english-vol-1_ghanta,ghaṇṭā,1,janya,exact,38b5io0X94UHR9W70Pb5u98IuN4,ghanTa,8,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras slokas,7,5
+apply,apply,15.14,raga_ssp-2008-english-vol-1_gundakriya,guṇḍakriyā,1,janya,exact,38avZbWPuSzS2BI3iAf7VqwF2yy,guNDakriyA,15,,,alternateScales scaleType isBhashanga grahaSwaras slokas,5,1
+apply,apply,3,raga_ssp-2008-english-vol-1_ganasamavarali,gānasāmavarāḷi,1,mela,exact,38bECj8JshzzMFtjVh4ybuKsYQH,gAnasAmavarALi,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+skip,skip,13,raga_ssp-2008-english-vol-1_geyahejjajji,gēyahejjajji,1,mela,none,,,,,,,,
+apply,apply,20.12,raga_ssp-2008-english-vol-1_gopikavasantam,gōpikāvasantam,1,janya,exact,38aywbTgl7XM5oksBeBRSRYAxOr,gOpikavasantam,20,,,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,7,2
+apply,apply,15.13,raga_ssp-2008-english-vol-1_gurjari,gūrjari,1,janya,exact,38awzN2TbuFv6tyodHJbt3sHEMO,gurjari,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,20.1,raga_ssp-2008-english-vol-1_hindola,hindōḷa,1,janya,exact,38avPvf9YEzoHnQjtHLjDx9OeJp,hindOLa,20,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,20.6,raga_ssp-2008-english-vol-1_hindolavasantam,hindōḷavasantam,1,janya,variant,38avoodA2KMU4spUerA50VpIU6n,hindOLavasantA,20,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+skip,skip,22.10,raga_ssp-2008-english-vol-1_husani,huśāni,1,janya,none,,,,,,,,
+skip,skip,8,raga_ssp-2008-english-vol-1_janatodi,janatōḍi,1,mela,none,,,,,,,,
+skip,skip,22.13,raga_ssp-2008-english-vol-1_janyam-6-bhasangam-kanra-aprasiddha,janyam 6 (bhāṣāṅgam) — kānrā (aprasiddha),1,janya,none,,,,,,,,
+,review,18,raga_ssp-2008-english-vol-1_jayasuddhamalavi,jayaśuddhamāḷavi,1,mela,variant,38bEaq2v1sDc4K5E2OPiLjsHZPU,jayashuddhamALavi,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,1
+apply,apply,19,raga_ssp-2008-english-vol-1_jhankarabhramari,jhaṅkārabhramari,1,mela,exact,38bELkP8X3J8GFQTzRebtg7OSmG,jhankArabhramari,19,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,1,raga_ssp-2008-english-vol-1_kanakambari,kanakāmbari,1,mela,exact,38bEQ8ka5fUMUDaVvWOcpFg5Ig1,kanakAmbari,1,,,timeOfDay scaleType grahaSwaras prayogas slokas,5,1
+apply,apply,15.10,raga_ssp-2008-english-vol-1_kannadabangala,kannaḍabaṅgāḷa,1,janya,exact,38bElSzizd5tMF4MrBtK0xUXUL7,kannaDabangALa,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,22.4,raga_ssp-2008-english-vol-1_kannadagaula,kannaḍagauḷa,1,janya,exact,38bEcmDN6y01iXn2SL7vzbvS3ij,kannaDagauLa,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+,review,21,raga_ssp-2008-english-vol-1_kiranavali,kiraṇāvali,1,mela,variant,38b5iSI2sD3FlWPcf6rH8pqIkSp,keeraNaavaLi,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+apply,apply,22.9,raga_ssp-2008-english-vol-1_kapi,kāpi,1,janya,exact,38avAHevxOrTy4Ne8Xn8VtlE1VK,kApi,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras prayogas slokas,10,0
+,review,11,raga_ssp-2008-english-vol-1_kokilaravam,kōkilāravam,1,mela,variant,38bEROAMIKigShSxMJlrDEuGJ1k,kOkilArava,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+apply,apply,15.12,raga_ssp-2008-english-vol-1_lalita,lalita,1,janya,exact,38avfDpbF5qIiftA1AR3UHFM40j,lalitA,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,14.1,raga_ssp-2008-english-vol-1_lalitapancamam,lalitapañcamam,1,janya,exact,38bECeZODoVF4dIBfAgZngnHE67,lalitapancamam,15,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,22.15,raga_ssp-2008-english-vol-1_madhyamavati,madhyamāvati,1,janya,exact,38avn7NduMybRIsD42tugSaiowY,madhyamAvati,22,,,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,8,0
+apply,apply,15.15,raga_ssp-2008-english-vol-1_malahari,malahari,1,janya,exact,3A73Fqdipdxq4FKj2Zo3323YbNt,malahari,15,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,5,0
+apply,apply,5,raga_ssp-2008-english-vol-1_manoranjani,manōrañjani,1,mela,exact,38aww9mSVytyRpTx2peUZ97SHAV,manOranjani,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+,review,15.3,raga_ssp-2008-english-vol-1_mangalakaisiki,maṅgaḷakaiśiki,1,janya,variant,38avSmCO8Kj3xgchQCyz8maaeDZ,mangaLakaishiki,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,1
+apply,apply,22.1,raga_ssp-2008-english-vol-1_manirangu,maṇiraṅgu,1,janya,exact,38awR4Q4koigur2W4TPllClKaz2,maNirangu,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras prayogas slokas,8,0
+,review,1.1,raga_ssp-2008-english-vol-1_mukhari,mukhāri,1,janya,exact,38ava69UQZWpB2kIO0VwE30qjNQ,mukhAri,22,,duplicate-name mela-mismatch duplicate-target,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,20.14,raga_ssp-2008-english-vol-1_mukhari-20-14,mukhāri,1,janya,exact,38ava69UQZWpB2kIO0VwE30qjNQ,mukhAri,22,,duplicate-name mela-mismatch duplicate-target,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras slokas,8,3
+apply,apply,22.14,raga_ssp-2008-english-vol-1_madhavamanohari,mādhavamanōhari,1,janya,exact,38bEV7BCXoq5SKeUtiQBoH18XWI,mAdhavamanOharI,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,3
+,review,15.26,raga_ssp-2008-english-vol-1_margadesi,mārgadēśi,1,janya,variant,38bEWSEHRNGrwcCQ32FeIM7c4yV,mArgadEshi,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,3
+,review,20.5,raga_ssp-2008-english-vol-1_margahindolam,mārgahindōḷam,1,janya,variant,38b8gexWO8ELmosmx7HXUtZPJhu,mArgahindOLa,22,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,15.22,raga_ssp-2008-english-vol-1_maruva,māruva,1,janya,exact,38bEXlxk2uvtIcBvc5CEQCIWEQ5,mAruva,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,1
+apply,apply,20.13,raga_ssp-2008-english-vol-1_manji,māñji,1,janya,exact,38axiSRY7hYLsvFSav85I3JdCLV,mAnji,20,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras prayogas slokas,8,1
+apply,apply,15,raga_ssp-2008-english-vol-1_malavagaula,māḷavagauḷa,1,mela,exact,38avXYzrfBqnk6DE0n4s7H3woGq,mALavagauLa,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+,review,15.24,raga_ssp-2008-english-vol-1_malavapancamam,māḷavapañcamam,1,janya,variant,38bF9FWgMzV5dSEwSAdymS4SiWV,mALavapancama,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras prayogas slokas,8,0
+,review,22.7,raga_ssp-2008-english-vol-1_malavasri,māḷavaśrī,1,janya,variant,38b5g4TCSlWCx8VF9N0knoH1bN4,maaLavashree,22,,,alternateScales timeOfDay scaleType isBhashanga jivaSwaras nyasaSwaras slokas,7,0
+apply,apply,15.5,raga_ssp-2008-english-vol-1_mecabauli,mēcabauḷi,1,janya,exact,38bEJxbJvqopSSjl7y7EaK4q61Y,mEcabauLi,,,,timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,6,0
+apply,apply,15.4,raga_ssp-2008-english-vol-1_megharanjani,mēgharañjani,1,janya,exact,38axr1I4Bs8xm5egjBLuricdmGZ,mEgharanjani,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,9.1,raga_ssp-2008-english-vol-1_mohananata,mōhananāṭa,1,janya,exact,38bEZApG1gglmnAKzel7sW89iFX,mOhananATa,9,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,20.8,raga_ssp-2008-english-vol-1_navaratnavilasam,navaratnavilāsam,1,janya,variant,38az9o0FpSznqcIngMnPokHxp8u,navaratna vilaasam,,,,,0,6
+apply,apply,10,raga_ssp-2008-english-vol-1_natabharanam,naṭābharaṇam,1,mela,exact,38bFBA5yozcsAidgmnjAVQRp4uJ,naTAbharaNam,10,,,timeOfDay scaleType grahaSwaras slokas,4,1
+skip,skip,15.7,raga_ssp-2008-english-vol-1_nadaramakriya,nādarāmakriya,1,janya,none,,,,,,,,
+,review,20.2,raga_ssp-2008-english-vol-1_nagagandhari,nāgagāndhāri,1,janya,variant,38awXzvA5xpYL3gytVYGYOtYt5R,naagagaandhaari,20,,,timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,6,0
+apply,apply,8.1,raga_ssp-2008-english-vol-1_nagavarali,nāgavarāḷi,1,janya,exact,38bEHn3PuvWSfwS89i5wQ3OqOCQ,nAgavarALi,8,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,20,raga_ssp-2008-english-vol-1_nariritigaula,nārīrītigauḷa,1,mela,exact,38bEcTeAezfUz7AYHX7cvdEl4WJ,nArIrItigauLa,,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,8,0
+apply,apply,22.20,raga_ssp-2008-english-vol-1_nayaki,nāyaki,1,janya,exact,38b8jkS7O53BKKefuR2a43GMbK1,nAyaki,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras prayogas slokas,8,0
+apply,apply,15.28,raga_ssp-2008-english-vol-1_pharaju,pharaju,1,janya,exact,38awkwezFBHnnD0wipQpLg6xlZt,pharaju,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,0
+skip,skip,2,raga_ssp-2008-english-vol-1_phenadyuti,phēnadyuti,1,mela,none,,,,,,,,
+apply,apply,8.2,raga_ssp-2008-english-vol-1_punnagavarali,punnāgavarāḷi,1,janya,exact,38av9I73XecmZPFFL5A37qp4r25,punnAgavarALi,8,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras prayogas slokas,8,0
+apply,apply,15.8,raga_ssp-2008-english-vol-1_padi,pāḍi,1,janya,exact,38avbXd554MTls2vXxCxAbbcOcz,pADi,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,3.1,raga_ssp-2008-english-vol-1_purvavarali,pūrvavarāḷi,1,janya,exact,3A73K9iOuTpeDHjFRpeNyCNShqn,pUrvavarALi,3,,,timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,6,0
+apply,apply,15.20,raga_ssp-2008-english-vol-1_purvi,pūrvi,1,janya,exact,38b9AyyBRvil9Lko3mWP3uRKnl8,pUrvi,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras prayogas slokas,8,0
+,review,15.25,raga_ssp-2008-english-vol-1_purnapancamam,pūrṇapañcamam,1,janya,variant,38bEmsArsLMVEHxTDeyYJ6hYS0c,pUrNapancama,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,22.17,raga_ssp-2008-english-vol-1_rudrapriya,rudrapriyā,1,janya,exact,38bEHxaHmgSOflEPAhkPI5kzFHx,rudrapriya,22,,,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras prayogas slokas,9,1
+apply,apply,15.27,raga_ssp-2008-english-vol-1_ramakali,rāmakali,1,janya,exact,38bEjv29XYIyI6LVbZMLUSq8Zca,rAmakali,15,,,timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras prayogas slokas,7,1
+apply,apply,15.9,raga_ssp-2008-english-vol-1_revagupti,rēvagupti,1,janya,exact,38b5mDNnDeTQexeUmYKL7UhxPau,rEvagupti,15,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,12,raga_ssp-2008-english-vol-1_rupavati,rūpavati,1,mela,exact,38bEudDkocFQh3psbkzDeI2KJLm,rUpavati,12,,,timeOfDay scaleType grahaSwaras prayogas slokas,5,1
+,review,22.19,raga_ssp-2008-english-vol-1_sahana,sahānā,1,janya,variant,38avM7MUFQJC5GyXMt67yrwG80W,shahAnA,28,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,9,0
+apply,apply,22.12,raga_ssp-2008-english-vol-1_saindhavi,saindhavi,1,janya,exact,38avFnCSgdWVYC1hts0fbtTw8zC,saindhavi,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras prayogas slokas,10,0
+,review,15.19,raga_ssp-2008-english-vol-1_saurastram,saurāṣṭram,1,janya,variant,38avlFFDgH4Lo9pMDq9RaQhjs4s,saurASTra,17,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras slokas,7,5
+apply,apply,15.23,raga_ssp-2008-english-vol-1_saveri,sāvēri,1,janya,exact,38avQOkbULgkgCC4GhmZhDpCBOl,sAvEri,15,,,timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras prayogas slokas,7,4
+apply,apply,22.2,raga_ssp-2008-english-vol-1_salagabhairavi,sāḷagabhairavi,1,janya,exact,38ayohvC0t0ebfImm94gDQGoFRI,sALagabhairavi,22,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,7,1
+apply,apply,15.1,raga_ssp-2008-english-vol-1_salanganata,sāḷaṅganāṭa,1,janya,exact,38avUQeJYU2s5bz6i8NF6BD8gyH,sAlanganATa,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,7,raga_ssp-2008-english-vol-1_senagrani,sēnāgraṇi,1,mela,exact,38bENI0thZUp1QCPikmu0tiF9gd,sEnAgraNi,,,,timeOfDay scaleType grahaSwaras prayogas slokas,5,2
+apply,apply,6,raga_ssp-2008-english-vol-1_tanukirti,tanukīrti,1,mela,exact,38bEE7nFXJ9Mk9aYUCmwUsqOQ9N,tAnukIrti,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+skip,skip,16,raga_ssp-2008-english-vol-1_toyavegavahini,tōyavēgavāhini,1,mela,none,,,,,,,,
+,review,9.3,raga_ssp-2008-english-vol-1_udayaravicandrika,udayaravicandrikā,1,janya,variant,38awCZNZtRUIZDEP1TXTszWf2w9,udhaya ravi candrikaa,22,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,15.30,raga_ssp-2008-english-vol-1_vasanta,vasanta,1,janya,exact,38avTItLQSIKUqAOyP6Dryr0Oe8,vasantA,17,,mela-mismatch,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras prayogas slokas,9,1
+skip,skip,14,raga_ssp-2008-english-vol-1_vativasantabhairavi,vāṭīvasantabhairavi,1,mela,none,,,,,,,,
+,review,24,raga_ssp-2008-english-vol-1_viravasantam,vīravasantam,1,mela,variant,38bEGaYRIzJQFLjlefqXhvsk2Tm,vIravasanta,24,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras prayogas slokas,7,0
+,review,20.7,raga_ssp-2008-english-vol-1_abheri,ābhērī,1,janya,exact,38b95hjF0MrS1NiTJc43IJTc4Wx,abhEri,22,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+,review,20.10,raga_ssp-2008-english-vol-1_ahiri,āhiri,1,janya,exact,38avKPagn1IhKSz30Lg3RQIyT3U,Ahiri,14,,mela-mismatch,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras slokas,8,12
+apply,apply,20.3,raga_ssp-2008-english-vol-1_anandabhairavi,ānandabhairavi,1,janya,exact,38avETB5qfNbzbypJrYXrYzyJlw,Anandabhairavi,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras anyaSwaras prayogas slokas,10,3
+,review,15.17,raga_ssp-2008-english-vol-1_ardradesi,ārdradēśī,1,janya,variant,3A732AqljTW0GikL40zz5jZnLdW,ardhradEsi,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,1
+,review,22,raga_ssp-2008-english-vol-1_sri,śrī,1,mela,variant,38avEoBSpYYp4h0XcLOqxlEf7Ts,shree,22,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,8,0
+,review,22.8,raga_ssp-2008-english-vol-1_sriranjani,śrīrañjani,1,janya,variant,38awQAyfc0c72ujVv8UYrSJiIuR,shree ranjani,22,,,timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,6,0
+,review,22.3,raga_ssp-2008-english-vol-1_suddhadhanyasi,śuddhadhanyāśi,1,janya,variant,38aw8dwx3cebOC9ExeWis0CnBM9,sudda dhanyaasi,22,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,5,0
+,review,22.5,raga_ssp-2008-english-vol-1_suddhadesi,śuddhadēśi,1,janya,variant,38b5eUvUhTAtJRw46uwjgj3Plcq,sudda dEsi,20,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+,review,1.2,raga_ssp-2008-english-vol-1_suddhasaveri,śuddhasāvēri,1,janya,variant,38aw79t9YItLoAbWMKKc9RWm2HR,sudda saavEri,29,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,6,0
+apply,apply,15.6,raga_ssp-2008-english-vol-1_takka,ṭakka,1,janya,exact,38b6ij2vUMqrwG7vYb3p6ANFyap,takka,15,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras slokas,7,0
+,review,28.13,raga_ssp-2008-english-vol-2_athana,aṭhāṇā,2,janya,exact,38avdNyfmt2wDfieuGXi6HL0jG5,aThANA,29,,mela-mismatch,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,8,5
+apply,apply,28.1,raga_ssp-2008-english-vol-2_balahamsa,balahamsa,2,janya,exact,38b6Jj3RFTuIe9BQUN7VpjvACXW,balahamsa,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,8,1
+,review,34,raga_ssp-2008-english-vol-2_bhogacchayanata,bhōgacchāyānāṭa,2,mela,variant,38bEB6daWFxkBTlbYSSPjc6khf9,bhOgachAyAnATa,34,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras slokas,6,0
+apply,apply,29.10,raga_ssp-2008-english-vol-2_bilahari,bilahari,2,janya,exact,38avD0kihqakCFFfsFxFvvfcLtd,bilahari,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras slokas,7,2
+apply,apply,29.11,raga_ssp-2008-english-vol-2_begada,bēgaḍa,2,janya,exact,38aw8z3bUDaNtVG48yqRjUvnjDr,bEgaDa,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,9,0
+apply,apply,36,raga_ssp-2008-english-vol-2_calanata,calanāṭa,2,mela,exact,38bEiKsNfOdz70ohudJSr48qALq,calanATa,36,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras slokas,6,0
+apply,apply,28.5,raga_ssp-2008-english-vol-2_chayatarangini,chāyātaraṅgiṇi,2,janya,exact,38bEoZPr7gbs168epk4NaELViSf,chAyAtarangiNi,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+skip,skip,29,raga_ssp-2008-english-vol-2_dhirasankarabharanam,dhīraśaṅkarābharaṇam,2,mela,none,,,,,,,,
+,review,29.17,raga_ssp-2008-english-vol-2_janyam-bhasanga-8-devagandhari,dēvagāndhāri,2,janya,exact,38avTmPr46EhBLss74GyhCG0SnY,dEvagAndhAri,29,,duplicate-name duplicate-target,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas,8,0
+,review,28.3,raga_ssp-2008-english-vol-2_devakriya,dēvakriyā,2,janya,exact,38b6POYqp40jlm6RRKQG83NVm8B,dEvakriya,20,,mela-mismatch,alternateScales scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,7,1
+skip,skip,28.12,raga_ssp-2008-english-vol-2_erukalakambhoji,erukalakāmbhōji,2,janya,none,,,,,,,,
+apply,apply,33,raga_ssp-2008-english-vol-2_gangatarangini,gaṅgātaraṅgiṇi,2,mela,exact,38bF8eLhcigaXwcVhrwtfDA9VuC,gangAtarangiNi,33,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras slokas,6,0
+skip,skip,28,raga_ssp-2008-english-vol-2_harikedaragaula,harikēdāragauḷa,2,mela,none,,,,,,,,
+,review,29.9,raga_ssp-2008-english-vol-2_hamsadhvani,haṃsadhvani,2,janya,variant,3A73AcAJXB8PRRpe0utp4Lc3WGe,hamsadwani,29,,,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras slokas,6,0
+apply,apply,28.15,raga_ssp-2008-english-vol-2_jujavanti,jujāvanti,2,janya,exact,38bE6qCiOL41EegD5NgIoTno2sY,jujAvanti,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,9,1
+,review,31,raga_ssp-2008-english-vol-2_kalavati,kalāvati,2,mela,exact,38bEO7PwFaw5xWZmbba98dIMZDY,kalAvati,16,,mela-mismatch,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+,review,28.16,raga_ssp-2008-english-vol-2_kamas,kamās,2,janya,variant,38avAQo2fDS0XmavGK7hBjwPyqq,khamAs,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas,8,1
+,review,28.9,raga_ssp-2008-english-vol-2_kannada,kannaḍa,2,janya,variant,38aw2E5kSMPYdIaV8p0cRM3fdvU,kAnaDA,22,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras slokas,7,4
+skip,skip,29.1,raga_ssp-2008-english-vol-2_kuranji,kurañji,2,janya,none,,,,,,,,
+apply,apply,28.8,raga_ssp-2008-english-vol-2_kambhoji,kāṃbhōji,2,janya,exact,38av91cpt3JjT0yP6tTomzc0o1M,kAmbhOji,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,9,0
+,review,29.14,raga_ssp-2008-english-vol-2_kedaram,kēdāram,2,janya,variant,38b8eGQ5KO061I2BpGa9OGiekoH,kEdAra,29,,,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras prayogas slokas,7,0
+,review,33.1,raga_ssp-2008-english-vol-2_manohari,manōhari,2,janya,exact,38avk8kVB2e4MVExwLRf370qn07,manOhari,22,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras,6,0
+apply,apply,28.2,raga_ssp-2008-english-vol-2_mahuri,māhūri,2,janya,exact,38bEW0YIg4wavNO8UIziXRM2qR6,mAhuri,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,0
+skip,skip,29.15,raga_ssp-2008-english-vol-2_navaroju,navarōju,2,janya,none,,,,,,,,
+apply,apply,28.7,raga_ssp-2008-english-vol-2_natanarayani,naṭanārāyaṇi,2,janya,exact,38b8PjnUsgezi190e7zGfURKcaM,naTanArAyaNi,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,29.8,raga_ssp-2008-english-vol-2_nagadhvani,nāgadhvani,2,janya,exact,38bECFHRoxhD47yMyCwxJAuWEFQ,nAgadhvani,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,30,raga_ssp-2008-english-vol-2_nagabharanam,nāgābharaṇam,2,mela,exact,38bEZcEUHPo9SRyvrytVYpKzkL8,nAgAbharaNam,,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras slokas,6,0
+,review,29.5,raga_ssp-2008-english-vol-2_narayanadesaksi,nārāyaṇadēśākṣi,2,janya,variant,38avgXURGRp7SMKGiG7bZKpbkCc,nArayaNadEshakSi,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,28.6,raga_ssp-2008-english-vol-2_narayanagaula,nārāyaṇagauḷa,2,janya,exact,38b9BxCia2qiDyzvOX0Ih2kGhwy,nArAyaNagauLa,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,0
+,review,29.2,raga_ssp-2008-english-vol-2_narayani,nārāyaṇi,2,janya,variant,38awxDSR6tZ3PVhNwbENKkF2o12,naaraayaNi,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,8,1
+apply,apply,28.14,raga_ssp-2008-english-vol-2_natakuranji,nāṭakurañji,2,janya,exact,38axj7lzttib7lSe6h1cKAYznGv,nATakuranji,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+,review,29.16,raga_ssp-2008-english-vol-2_nilambari,nīlāṃbari,2,janya,variant,38awBmamRwCjVOagU9yyou24lr4,neelaambari,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,9,1
+apply,apply,29.7,raga_ssp-2008-english-vol-2_purvagaula,pūrvagauḷa,2,janya,exact,38bEd5CmMyKwnC05kNRcz0zwbd7,pUrvagauLa,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+,review,29.12,raga_ssp-2008-english-vol-2_purnacandrika,pūrṇacandrikā,2,janya,variant,38aw5j2jZARQsJwMYG6NpAawyUJ,poornacandrikaa,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras anyaSwaras prayogas slokas,8,0
+apply,apply,32,raga_ssp-2008-english-vol-2_ragacudamani,rāgacūḍāmaṇi,2,mela,exact,38bF2igoxLxCeEk60af3hRd8OcY,rAgacUDAmaNi,,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras slokas,6,0
+,review,29.13,raga_ssp-2008-english-vol-2_sarasvatimanohari,sarasvatīmanōhari,2,janya,variant,38avKCRZBaCuDoL4ThdAwTLYxPv,saraswati manOhari,28,,mela-mismatch,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras prayogas slokas,8,0
+apply,apply,27,raga_ssp-2008-english-vol-2_saurasena,saurasēna,2,mela,exact,38bEpKj5j40hGU1xDs7dl2p7M4S,saurasEna,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,1
+apply,apply,28.11,raga_ssp-2008-english-vol-2_surati,suraṭi,2,janya,exact,38avbOQ6h2v6rpAy3BjkyLf0et9,suraTi,28,,,alternateScales timeOfDay isBhashanga grahaSwaras jivaSwaras anyaSwaras slokas,7,1
+apply,apply,29.6,raga_ssp-2008-english-vol-2_sama,sāma,2,janya,exact,38b5UECMvo7VSLYpBQDwtWqacjT,sAmA,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,9,0
+apply,apply,30.1,raga_ssp-2008-english-vol-2_samanta,sāmanta,2,janya,exact,38avScWdjpE5ehIHdiva3z4dKO9,sAmanta,30,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,26,raga_ssp-2008-english-vol-2_tarangini,taraṅgiṇi,2,mela,exact,38bEYR0junG1hnZ9puU3YgmXCO5,tarangiNi,,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras nyasaSwaras slokas,7,1
+apply,apply,28.4,raga_ssp-2008-english-vol-2_andhali,āndhāḷi,2,janya,exact,38awqkbyxqJfKxZxzT8y3LHuN6f,andhali,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,29.3,raga_ssp-2008-english-vol-2_arabhi,ārabhi,2,janya,exact,38avFMe9pVRdNc2LJZxU6CWkGF1,Arabhi,29,,,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras prayogas slokas,8,0
+,review,28.10,raga_ssp-2008-english-vol-2_isamanohari,īśamanōharī,2,janya,variant,38aw2zLDqFlcfEzZrrr8Yi6GZcu,eesamanOhari,28,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras nyasaSwaras anyaSwaras prayogas slokas,9,0
+,review,35,raga_ssp-2008-english-vol-2_sailadesa-ksi,śailadēśākṣi,2,mela,variant,38bEplMm2b0M5tSazusM85Qfp4C,shailadEshAkSi,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+,review,25,raga_ssp-2008-english-vol-2_saravati,śarāvati,2,mela,variant,38bEqibOKQpS4ViIPMBl6gGNLZN,sharAvati,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+,review,29.4,raga_ssp-2008-english-vol-2_suddhavasantam,śuddhavasantam,2,janya,variant,3A73QNC3OqtbFDSjjYuRSQylANY,sudda vasantA,29,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras prayogas slokas,7,0
+apply,apply,66.1,raga_ssp-2008-english-vol-3_amrtavarsini,amṛtavarṣiṇi,3,janya,exact,38b8Zm2W4KVGprnhtxpGjGBGpPj,amrtavarSiNi,66,,,timeOfDay scaleType isBhashanga grahaSwaras slokas,5,0
+apply,apply,44,raga_ssp-2008-english-vol-3_bhavani,bhavānī,3,mela,exact,38bEMsm3480Uj4wykWOn8TXNjYO,bhavAni,,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras,5,2
+apply,apply,64,raga_ssp-2008-english-vol-3_bhusavati,bhūṣāvati,3,mela,exact,38bE6P08isnVebev3wnZOf4APAD,bhUSAvati,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas,5,1
+apply,apply,66,raga_ssp-2008-english-vol-3_caturangini,caturaṅgiṇi,3,mela,exact,38bEGnZ3rDMl6MIWNzqTG6zFzhZ,caturangiNi,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas,5,1
+,review,56,raga_ssp-2008-english-vol-3_camara,cāmara,3,mela,variant,38bEH1hAHDomPzYDsJ1yFV8zJWD,cAmaram,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,69,raga_ssp-2008-english-vol-3_dhautapancamam,dhautapañcamam,3,mela,exact,38bEXroFLdCFz0XYDo87MGrytoI,dhautapancamam,69,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+,review,49,raga_ssp-2008-english-vol-3_dhavalanga,dhavaḷāṅga,3,mela,variant,38bF2VkTqRWwqTWg3uIQxfUypu6,dhavaLAngam,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+skip,skip,39,raga_ssp-2008-english-vol-3_dhalivarali,dhālivarāḷi,3,mela,none,,,,,,,,
+apply,apply,59,raga_ssp-2008-english-vol-3_dhamavati,dhāmavati,3,mela,exact,38bEgbXcAsbEHwb9L50RtDpmRHr,dhAmavati,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,1
+,review,58,raga_ssp-2008-english-vol-3_desisimharavam,dēśīsiṃharavam,3,mela,variant,38axjMuWI7oYjBhI7fIE5r1xKOP,dEshIsimhAravam,,,,timeOfDay scaleType grahaSwaras prayogas,4,1
+,review,51.1,raga_ssp-2008-english-vol-3_dipakam,dīpakam,3,janya,variant,38b5s1PfJSSpQXzjJEKwTKPPANn,deepakam,51,,,,0,0
+apply,apply,53,raga_ssp-2008-english-vol-3_gamakakriya,gamakakriyā,3,mela,exact,38bEGI02ELbMjfq20MJxnzrPz0S,gamakakriyA,,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras slokas,6,1
+apply,apply,43,raga_ssp-2008-english-vol-3_girvani,gīrvāṇi,3,mela,exact,38bEaTU0ju4cJd2HNXgnKUlgsZS,gIrvANi,,,,timeOfDay scaleType grahaSwaras slokas,4,1
+apply,apply,63,raga_ssp-2008-english-vol-3_gitapriya,gītapriyā,3,mela,exact,38bEn5I0au2bhkiflZZWNUNFsSv,gItapriyA,,,,timeOfDay scaleType grahaSwaras slokas,4,1
+skip,skip,65.3,raga_ssp-2008-english-vol-3_hamviru,haṃvīru,3,janya,none,,,,,,,,
+,review,38,raga_ssp-2008-english-vol-3_jaganmohanam,jaganmōhanam,3,mela,variant,38bF1mzMPTjvHogwsX3UcEu30kM,jaganmOhana,38,,,timeOfDay scaleType grahaSwaras prayogas slokas,5,1
+,review,48,raga_ssp-2008-english-vol-3_jivantika,jīvantikā,3,mela,exact,38bEC0mHElhEOLvrSeaC4dVa3dP,jIvantikA,17,,mela-mismatch,alternateScales timeOfDay scaleType grahaSwaras,4,1
+skip,skip,68,raga_ssp-2008-english-vol-3_joti,jōti,3,mela,none,,,,,,,,
+apply,apply,51.2,raga_ssp-2008-english-vol-3_kumudakriya,kumudakriyā,3,janya,exact,38bE8eD8gj1fqO0hReFKgw1Qrlc,kumudakriyA,51,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras,5,0
+,review,61,raga_ssp-2008-english-vol-3_kuntala,kuntala,3,mela,variant,38b7HyNFaZUzSQ1YSlJ0h4brtEX,kuntalam,,,,timeOfDay scaleType grahaSwaras prayogas,4,2
+,review,71,raga_ssp-2008-english-vol-3_kusumakara,kusumākara,3,mela,variant,38bESN2jW7CQJRSHIUnLpYWyJgi,kusumAkaram,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,41,raga_ssp-2008-english-vol-3_kumbhini,kuṃbhiṇi,3,mela,exact,38bEljtYc04npkUdkZ0TXg7jZFu,kumbhini,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas,5,1
+,review,51,raga_ssp-2008-english-vol-3_kasiramakriya,kāśirāmakriyā,3,mela,variant,38bEXOq992q9HsrrbjXJsx0U633,kAshIrAmakriya,51,,,alternateScales timeOfDay scaleType grahaSwaras jivaSwaras prayogas slokas,7,0
+,review,65.2,raga_ssp-2008-english-vol-3_mohanam,mōhanam,3,janya,variant,38avCGkeKQhzetpkszJuGyLKk7X,mOhana,28,,mela-mismatch,timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras nyasaSwaras slokas,7,0
+apply,apply,40,raga_ssp-2008-english-vol-3_nabhomani,nabhōmaṇi,3,mela,exact,38bEZQgbJCmbbJGFaRVFwpMwYxM,nabhOmaNi,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+,review,60,raga_ssp-2008-english-vol-3_nisadha,niṣadha,3,mela,variant,38bEdumlHXnKF89YkOI6O2WLH69,niSadam,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas,5,1
+apply,apply,50,raga_ssp-2008-english-vol-3_namadesi,nāmadēśi,3,mela,exact,38bEbDbkgxL8nBdvfGGzxl6pEBG,nAmadEsi,50,,,timeOfDay scaleType grahaSwaras prayogas slokas,5,0
+apply,apply,70,raga_ssp-2008-english-vol-3_nasamani,nāsāmaṇi,3,mela,exact,38bEusrtt3cQipRDTIy0eSOsx83,nAsAmaNi,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,52,raga_ssp-2008-english-vol-3_ramamanohari,ramāmanōhari,3,mela,exact,38bEYAvlxkxo2acwwon7EpzAMCm,ramAmanOhari,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,72,raga_ssp-2008-english-vol-3_rasamanjari,rasamañjari,3,mela,exact,38bF29LMOcQtL1ZS4yQyMYQVeyX,rasamanjari,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+apply,apply,62,raga_ssp-2008-english-vol-3_ratipriya,ratipriyā,3,mela,exact,38bEWrqs9sdjS5zLGACQKCtHYuV,ratipriya,62,,,timeOfDay scaleType grahaSwaras prayogas slokas,5,0
+apply,apply,42,raga_ssp-2008-english-vol-3_ravikriya,ravikriyā,3,mela,exact,38bEMB2VdFN7XlOh9Npw6m70OFP,ravikriyA,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,67,raga_ssp-2008-english-vol-3_santanamanjari,santānamañjari,3,mela,exact,38bEnqI4oLTt8v4eY1HDfwqLzDE,santAnamanjari,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+apply,apply,37,raga_ssp-2008-english-vol-3_saugandhini,saugandhini,3,mela,exact,38bEOV6ujkwWecw3LmfGsOYdh8K,saugandhini,,,,alternateScales timeOfDay scaleType grahaSwaras,4,1
+,review,47,raga_ssp-2008-english-vol-3_sauvira,sauvīra,3,mela,variant,38bEoNZlfYw7yQ0YHShzNNiNNvi,sauvIram,,,,timeOfDay scaleType grahaSwaras slokas,4,1
+apply,apply,45.1,raga_ssp-2008-english-vol-3_janya-sindhuramakriya,sindhurāmakriyā,3,janya,exact,38bEmVRdW4s1HAXQQgyvI9hxphh,sindhurAmakriya,,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras prayogas slokas,8,0
+,review,46,raga_ssp-2008-english-vol-3_stavaraja,stavarāja,3,mela,variant,38bETWvdvnkWc0KUo01etxwtT2N,stavarAjam,46,,,alternateScales timeOfDay scaleType grahaSwaras,4,1
+apply,apply,57,raga_ssp-2008-english-vol-3_sumadyuti,sumadyuti,3,mela,exact,38bEOHtL3wsSSjOCELw41ubrEAu,sumadyuti,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,65.4,raga_ssp-2008-english-vol-3_saranga,sāraṅga,3,janya,exact,38avTlStWVHPKDYtFNv29NuGO4I,sArangA,65,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,10,0
+,review,54,raga_ssp-2008-english-vol-3_vamsavati,vaṃśavatī,3,mela,variant,38bEAiiWmDXpJZXaYw7w2pKD1fn,vamshavati,,,,alternateScales timeOfDay scaleType grahaSwaras prayogas slokas,6,0
+apply,apply,65.1,raga_ssp-2008-english-vol-3_yamuna-kalyani,yamunā kalyāṇi,3,janya,exact,38av9SEf5yOSIKqbFyHGepX4qYC,yamunAkalyANi,65,,,alternateScales timeOfDay scaleType isBhashanga grahaSwaras jivaSwaras anyaSwaras prayogas slokas,9,1
+,review,45,raga_ssp-2008-english-vol-3_sivapantuvarali,śivapantuvarāḷi,3,mela,variant,38bEi5yRXvhDrNC0Eqj8Ls1gBHx,shivapantuvarALi,,,,alternateScales timeOfDay scaleType grahaSwaras slokas,5,0
+skip,skip,55,raga_ssp-2008-english-vol-3_samala,śāmaḷa,3,mela,none,,,,,,,,
+skip,skip,65,raga_ssp-2008-english-vol-3_santakalyani,śāntakalyāṇi,3,mela,none,,,,,,,,
