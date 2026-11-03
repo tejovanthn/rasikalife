@@ -92,8 +92,17 @@ function sameWord(a: SspNameWord, b: SspNameWord): boolean {
   const longest = Math.max(a.light.length, b.light.length);
   const lightOk = editDistance(a.light, b.light) <= Math.max(1, Math.floor(longest / 5));
   if (a.fold === b.fold) return lightOk;
+  if (Math.min(a.fold.length, b.fold.length) >= 6 && editDistance(a.fold, b.fold) <= 1 && lightOk) {
+    return true;
+  }
+  // A case or honorific ending only: `Rāmadāsar` and `Raamadaas`.
+  const stem = (w: string) => w.replace(/(ar|a|i|u|r|m)$/, '');
+  const sa = stem(a.fold);
+  const sb = stem(b.fold);
   return (
-    Math.min(a.fold.length, b.fold.length) >= 6 && editDistance(a.fold, b.fold) <= 1 && lightOk
+    Math.min(sa.length, sb.length) >= 5 &&
+    sa === sb &&
+    editDistance(stem(a.light), stem(b.light)) <= 1
   );
 }
 
@@ -113,6 +122,16 @@ function comparePair(a: Words, b: Words, keyA: string, keyB: string): Pair | und
   if (keyA === keyB && a.all.every((w, i) => sameWord(w, b.all[i]))) {
     return { tier: 'exact', score: 100 };
   }
+
+  // The same words run together or apart: `Purandara Daasar`, `Swaati TirunaaL`.
+  const joinedA = a.all.map(w => w.fold).join('');
+  const joinedB = b.all.map(w => w.fold).join('');
+  if (joinedA.length >= 8 && joinedA === joinedB) return { tier: 'exact', score: 95 };
+  const coreA = a.core.map(w => w.fold).join('');
+  const coreB = b.core.map(w => w.fold).join('');
+  const lineageOk =
+    a.generic.length === 0 || b.generic.length === 0 || a.generic.some(g => b.generic.includes(g));
+  if (coreA.length >= 8 && coreA === coreB && lineageOk) return { tier: 'close', score: 85 };
 
   // One name must hold the other: the SSP name may be the bare first name ("Muddusvāmi"), or
   // the stored one may add a place or a rank. Two names that each have a word the other lacks
@@ -212,6 +231,7 @@ export function matchSspPerson(
   if (person.qualifier) flags.push(FLAG_QUALIFIED);
   if (junkExcluded.length > 0) flags.push(FLAG_JUNK_EXCLUDED);
   if (person.notes.length > 0) flags.push(FLAG_PERSON_NOTES);
+  if (isDoubtfulName(person.iastName)) flags.push('doubtful-name');
   if (tier === 'loose') flags.push(FLAG_LOOSE_ONLY);
 
   return {
@@ -224,14 +244,26 @@ export function matchSspPerson(
   };
 }
 
+/**
+ * A name that is abbreviated (`K. Jagannātha`), garbled (`Akkul. Svāmi`) or a family
+ * designation (`Pollavaramuvāru`, "those of Pollavaram") is not safe to turn into a record.
+ */
+export function isDoubtfulName(iastName: string): boolean {
+  const words = iastName.split(/\s+/);
+  return words.some(
+    w => /^\p{L}\.$/u.test(w) || /\p{L}\.$/u.test(w) || /¯|[0-9]/.test(w) || /vāru$/i.test(w)
+  );
+}
+
 function suggest(
-  person: Pick<SspPerson, 'composedCount'>,
+  person: Pick<SspPerson, 'composedCount' | 'iastName'>,
   tier: SspPersonTier,
   exactCount: number,
   flags: readonly string[]
 ): SspPersonSuggestion {
   const blocking = flags.filter(f => f !== FLAG_JUNK_EXCLUDED && f !== FLAG_PERSON_NOTES);
   if (tier === 'exact' && exactCount === 1 && blocking.length === 0) return 'attach';
+  if (isDoubtfulName(person.iastName)) return 'review';
   if (tier === 'none') return person.composedCount > 0 ? 'create' : 'review';
   // A first name in common with an unrelated surname does not stand in the way of a major
   // composer, who has no record of their own. A lesser one is left for the reviewer.

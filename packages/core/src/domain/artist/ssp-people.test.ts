@@ -372,3 +372,34 @@ describe('gurus', () => {
     expect(r.stats.guruEdgesUnresolved).toBe(1);
   });
 });
+
+describe('spelling repairs and spacing joins', () => {
+  it('restores the ṣ SSP drops before an m', () => {
+    expect(searchedSpelling('Lakṃīkānta Mahārāju')).toBe('Lakshmikanta Maharaju');
+    expect(searchedSpelling('Lakṣmaṇācārya')).toBe('Lakshmanacharya');
+  });
+
+  it('joins one name written with different spacing, and Ponnayya with Ponnaiyā', () => {
+    const mk = (vol: number, slug: string, name: string) =>
+      row(vol, slug, name, { roles_seen: ['composer'] });
+    const r = buildSspPeople([
+      {
+        volume: 3,
+        artists: [mk(3, 'p', 'Ponnaiyā'), mk(3, 'n', 'Nārāyaṇatīrtha Yatīndra')],
+        relationships: [composedBy(3, 'a', 'p'), composedBy(3, 'b', 'n')],
+      },
+      {
+        volume: 5,
+        artists: [
+          row(5, 'p5', 'Ponnayya', { attributes_consolidated: { mudra: { values: ['x'] } } }),
+          row(5, 'n5', 'Nārāyaṇa Tīrtha', {
+            attributes_consolidated: { mudra: { values: ['y'] } },
+          }),
+        ],
+        relationships: [],
+      },
+    ]);
+    expect(r.people).toHaveLength(2);
+    expect(r.people.every(p => p.volumes.join() === '3,5')).toBe(true);
+  });
+});

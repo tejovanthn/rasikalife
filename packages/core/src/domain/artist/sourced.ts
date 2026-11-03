@@ -38,6 +38,22 @@ export const CITABLE_ARTIST_FIELDS = [
 
 export type CitableArtistField = (typeof CITABLE_ARTIST_FIELDS)[number];
 
+/**
+ * Shown while uncited, on a historical artist too, as raga's `LEGACY_FIELDS`. These were on
+ * the record before citations existed: Tyagaraja, Muttuswami Dikshitar and Syama Sastri all
+ * carry an uncited birthplace and specialisations, and marking them historical must not empty
+ * their pages. Only what SSP brings for the first time (years, death place, mudra) needs a
+ * citation to show.
+ */
+export const LEGACY_ARTIST_FIELDS: ReadonlySet<CitableArtistField> = new Set([
+  'birthPlace',
+  'gurus',
+  'works',
+  'alternateNames',
+  'instrument',
+  'specialisations',
+]);
+
 export const ArtistCitationSchema = citationSchemaFor(CITABLE_ARTIST_FIELDS);
 
 export type ArtistCitation = z.infer<typeof ArtistCitationSchema>;
@@ -59,10 +75,10 @@ export function isArtistCited(artist: Cited, field: CitableArtistField): boolean
 
 /**
  * A field the page may show. Anyone who is not historical shows everything, as before. A
- * historical person shows a field only when it is cited.
+ * historical person shows a legacy field always and any other field only when it is cited.
  */
 export function isArtistFieldShown(artist: CitedArtist, field: CitableArtistField): boolean {
-  return !artist.isHistorical || isArtistCited(artist, field);
+  return !artist.isHistorical || LEGACY_ARTIST_FIELDS.has(field) || isArtistCited(artist, field);
 }
 
 /**
@@ -73,7 +89,7 @@ export function shownArtist<T extends CitedArtist>(artist: T): T {
   if (!artist.isHistorical) return artist;
   const out = { ...artist } as Record<string, unknown>;
   for (const field of CITABLE_ARTIST_FIELDS) {
-    if (!isArtistCited(artist, field)) delete out[field];
+    if (!isArtistFieldShown(artist, field)) delete out[field];
   }
   return out as T;
 }

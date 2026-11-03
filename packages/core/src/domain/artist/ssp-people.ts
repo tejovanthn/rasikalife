@@ -173,10 +173,22 @@ export function sspNameWords(name: string): SspNameWord[] {
     .replace(/[^a-z\s]/g, ' ')
     // The Vol 1 "muttu Vēṅkaṭamakhi" and every "Muttusvāmi" are the Muddu spelling of Vol 5.
     .replace(/\bmuttu(?=\s|s[vw])/g, 'muddu');
-  return plain
-    .split(/\s+/)
-    .filter(w => w && !HONORIFIC_WORDS.has(w))
-    .map(w => ({ fold: wordKey(w), light: lightKey(w) }));
+  return (
+    plain
+      .split(/\s+/)
+      .filter(w => w && !HONORIFIC_WORDS.has(w))
+      // Ponnayya, Ponnaiyā and Ponniah are one ending.
+      .map(w => w.replace(/(ayyah|ayya|aiyah|aiya|aiah|iyah|iah|iya)$/, 'iya'))
+      .map(w => ({ fold: wordKey(w), light: lightKey(w) }))
+  );
+}
+
+/** The distinctive words of a name run together: `Narayana Tirtha` and `Nārāyaṇatīrtha Yatīndra`. */
+export function sspCoreJoined(name: string): string {
+  return sspNameWords(name)
+    .filter(w => !GENERIC_NAME_WORDS.has(w.fold) && w.fold.length >= 2)
+    .map(w => w.fold)
+    .join('');
 }
 
 /**
@@ -263,13 +275,18 @@ const IAST_TO_PLAIN: Record<string, string> = {
   ṟ: 'r',
 };
 
+/** SSP prints `Lakṃī` for `Lakṣmī`: the ṣ went missing before the m. */
+function repairIast(text: string): string {
+  return text.replace(/kṃ(?=ī|i)/g, 'kṣm').replace(/Kṃ(?=ī|i)/g, 'Kṣm');
+}
+
 /**
  * The way people type the name into a search box: `Subbarāma Dīkṣita` becomes `Subbarama
  * Dikshitar`, `Vēṅkaṭamakhin` becomes `Venkatamakhi`. A suggestion for a new record's `name`;
  * the review CSV lets a person correct it. The IAST goes to `alternateNames`.
  */
 export function searchedSpelling(iast: string): string {
-  const out = iast
+  const out = repairIast(iast)
     .normalize('NFC')
     .split(/\s+/)
     .filter(Boolean)
@@ -596,6 +613,28 @@ export function buildSspPeople(volumes: readonly SspVolumeInput[]): SspPeopleRes
   for (const [a, b] of SAME_PERSON_PAIRS) {
     for (const i of unqualifiedByKey.get(sspNameKey(a)) ?? [])
       for (const j of unqualifiedByKey.get(sspNameKey(b)) ?? []) uf.union(i, j);
+  }
+
+  // The same name written with different spacing: `Nārāyaṇa Tīrtha`, `Nārāyaṇatīrtha Yatīndra`.
+  const byCoreJoined = new Map<string, number[]>();
+  rows.forEach((r, i) => {
+    if (r.qualifier || isEttendra(r.key)) return;
+    const core = sspCoreJoined(r.base);
+    if (core.length >= 8) byCoreJoined.set(core, [...(byCoreJoined.get(core) ?? []), i]);
+  });
+  for (const idx of byCoreJoined.values()) {
+    for (const i of idx) {
+      for (const j of idx) {
+        if (i >= j) continue;
+        const wordsI = sspNameWords(rows[i].base).filter(w => !GENERIC_NAME_WORDS.has(w.fold));
+        const wordsJ = sspNameWords(rows[j].base).filter(w => !GENERIC_NAME_WORDS.has(w.fold));
+        const gI = sspNameWords(rows[i].base).filter(w => GENERIC_NAME_WORDS.has(w.fold));
+        const gJ = sspNameWords(rows[j].base).filter(w => GENERIC_NAME_WORDS.has(w.fold));
+        const lineageOk =
+          gI.length === 0 || gJ.length === 0 || gI.some(a => gJ.some(b => a.fold === b.fold));
+        if (wordsI.length !== wordsJ.length && lineageOk) uf.union(i, j);
+      }
+    }
   }
 
   // A variant spelling that is exactly one other person's name.

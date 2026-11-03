@@ -491,8 +491,11 @@ rule that every fact shows its source. Plan: `docs/plans/261103-01-ssp-import.md
   shared code is `domain/source/citations.ts`; `raga/sourced.ts` and `artist/sourced.ts` both use
   it. The admin CSV import refuses a citation to a source that does not exist.
 - **The rule differs from the raga rule.** `shownArtist` hides an uncited field **only when
-  `isHistorical` is set**. A living artist's page does not change. There is no legacy set.
-  The profile, the meta description and the JSON-LD all read `shownArtist`, never the record.
+  `isHistorical` is set**. A living artist's page does not change. On a historical artist the
+  `LEGACY_ARTIST_FIELDS` (birthPlace, gurus, works, alternateNames, instrument, specialisations)
+  still show uncited, as raga's legacy fields do: Tyagaraja and Muttuswami Dikshitar already had
+  an uncited birthplace and specialisations, and marking them historical must not empty their
+  pages. Only years, death place and mudra need a citation to show. The profile, the meta description and the JSON-LD all read `shownArtist`, never the record.
   `updateArtist` prunes the citations of a field it clears (`pruneArtistCitations`).
 - **Profile** (`lifeFacts`, `lifeSpan`, `artistReferences` in `lib/artist-display.ts`): Born and
   Died with place, Mudra, Also written, footnote marks, and the raga references block

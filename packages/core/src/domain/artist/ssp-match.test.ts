@@ -187,3 +187,64 @@ describe('suggestions for people with no record of their own', () => {
     expect(m.suggestion).toBe('review');
   });
 });
+
+describe('karnatik.com spellings in the stored names', () => {
+  const prod = [
+    artist('pd', 'Purandara Daasar'),
+    artist('st', 'Swaati TirunaaL'),
+    artist('bc', 'Badraacala Raamadaas'),
+    artist('pp', 'Ponniah Pillai'),
+    artist('nt', 'NaaraayaNa Teertar'),
+    artist('junk', 'Dikshitar'),
+    artist('rs', 'Raamaswaamy Shivan'),
+    artist('nay', 'Nayana'),
+  ];
+  const top = (iast: string, extra: Partial<SspPerson> = {}) =>
+    matchSspPerson(person(iast, { composedCount: 1, ...extra }), prod);
+
+  it('Purandaradāsa finds Purandara Daasar, spaced differently', () => {
+    const m = top('Purandaradāsa');
+    expect(m.candidates[0].id).toBe('pd');
+    expect(m.suggestion).not.toBe('create');
+  });
+
+  it('Svātittirunāḷ Mahārājā finds Swaati TirunaaL', () => {
+    const m = top('Svātittirunāḷ Mahārājā');
+    expect(m.candidates[0].id).toBe('st');
+    expect(m.suggestion).not.toBe('create');
+  });
+
+  it('Rāmadāsar, a subset of Badraacala Raamadaas, is a close match', () => {
+    const m = top('Rāmadāsar');
+    expect(m.candidates[0]).toMatchObject({ id: 'bc', tier: 'close' });
+    expect(m.suggestion).toBe('review');
+  });
+
+  it('Ponnayya finds Ponniah Pillai, and Ponnaiyā is the same key', () => {
+    expect(top('Ponnayya').candidates[0].id).toBe('pp');
+    expect(sspNameKey('Ponnaiyā')).toBe(sspNameKey('Ponnayya'));
+  });
+
+  it('Nārāyaṇatīrtha Yatīndra and Nārāyaṇa Tīrtha both find Naaraayana Teertar', () => {
+    expect(top('Nārāyaṇatīrtha Yatīndra').candidates[0].id).toBe('nt');
+    expect(top('Nārāyaṇa Tīrtha').candidates[0].id).toBe('nt');
+  });
+
+  it('keeps the safeguards', () => {
+    expect(top('Nannayya').candidates.map(c => c.id)).not.toContain('nay');
+    expect(top('Rāmasvāmi Dīkṣita').candidates.find(c => c.id === 'rs')?.tier).toBe('loose');
+    expect(top('Bālasvāmi Dīkṣita').candidates.map(c => c.id)).not.toContain('junk');
+    expect(top('Dīkṣita').candidates).toEqual([]);
+  });
+
+  it('pre-fills create only when there is no candidate at any tier', () => {
+    expect(top('Vēṅkaṭamakhi').suggestion).toBe('create');
+    expect(top('Rāmasvāmi Dīkṣita').suggestion).toBe('review');
+  });
+
+  it('leaves an abbreviated, garbled or family name blank', () => {
+    for (const n of ['K. Jagannātha Ceṭṭy', 'Akkul. Svāmi', 'Pollavaramuvāru']) {
+      expect(top(n).suggestion).toBe('review');
+    }
+  });
+});

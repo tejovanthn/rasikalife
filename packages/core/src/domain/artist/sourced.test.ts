@@ -32,6 +32,20 @@ describe('shownArtist', () => {
     expect(shown).not.toHaveProperty('mudra');
   });
 
+  it('keeps the uncited legacy facts a historical artist already had', () => {
+    // Tyagaraja's record, as stored before SSP: birthplace and specialisations, no citations.
+    const shown = shownArtist({
+      id: 'a',
+      isHistorical: true,
+      birthPlace: 'Thiruvarur',
+      specialisations: ['Telugu kritis'],
+      mudra: 'tyagaraja',
+    });
+    expect(shown.birthPlace).toBe('Thiruvarur');
+    expect(shown.specialisations).toEqual(['Telugu kritis']);
+    expect(shown).not.toHaveProperty('mudra');
+  });
+
   it('keeps fields outside the citable set', () => {
     const shown = shownArtist({ id: 'a', name: 'X', isHistorical: true, biography: 'text' });
     expect(shown.name).toBe('X');
