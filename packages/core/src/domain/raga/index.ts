@@ -84,6 +84,30 @@ function withPrunedCitations(
   return { ...input, citations: pruned };
 }
 
+/**
+ * Sets some attributes and removes others in one write. For `ssp-undo`: a field that was empty
+ * before must be removed, because `.set({ x: undefined })` drops the key from the expression and
+ * leaves the value in place (CLAUDE.md rule 8). Does not prune citations; the caller has.
+ */
+export async function applyRagaFieldPlan(
+  id: string,
+  plan: { set: Record<string, unknown>; remove: string[] }
+): Promise<void> {
+  const hasSet = Object.keys(plan.set).length > 0;
+  const hasRemove = plan.remove.length > 0;
+  const base = RagaEntity.update({ id });
+  if (hasSet && hasRemove) {
+    await base
+      .set(plan.set as never)
+      .remove(plan.remove as never)
+      .go();
+  } else if (hasSet) {
+    await base.set(plan.set as never).go();
+  } else if (hasRemove) {
+    await base.remove(plan.remove as never).go();
+  }
+}
+
 export async function deleteRaga(id: string): Promise<void> {
   await RagaEntity.delete({ id }).go();
 }

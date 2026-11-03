@@ -16,8 +16,14 @@ Next, in order:
 2. Import `docs/research/sources-2026-10.csv` (domain `source`), then
    `docs/research/bhairavi-ssp-2026-10.csv` (domain `raga`), dry run first. Open Bhairavi.
 3. Run search volume for ragas, then compositions (CLAUDE.md, "Raga sources"). Reindex.
-4. SSP is extracted in rasika-books. What rasikalife needs to import it: `docs/plans/261103-01-ssp-import.md`.
-   Next step: owner answers its decisions, first which edition the citations name.
+4. SSP ragas: commands are built (CLAUDE.md, "Importing SSP into ragas"), not run. Run, in order,
+   with `pnpm prod-cli` (or `pnpm cli` for a personal stage):
+   - `admin-csv-import --domain source --file docs/research/sources-2026-10.csv --user <id>` (drop rows already stored)
+   - `ssp-match --out ssp-ragas.csv`, then read it and edit `decision`
+   - `ssp-apply --file ssp-ragas.csv --user <id> --only melas --dry-run`, read the held file, then run without `--dry-run`
+   - same with `--only janyas`
+   - `reindex`
+   Compositions and people (phases B and C of `docs/plans/261103-01-ssp-import.md`) are not built.
 
 ## 2026-10-24: self-serve event listing, built, not deployed
 

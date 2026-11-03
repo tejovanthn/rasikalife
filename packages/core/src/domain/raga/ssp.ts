@@ -896,6 +896,16 @@ export function buildSspRagaPatch(input: SspInput): SspResult {
         });
         return;
       }
+      // A phrase the raga forbids is not one of its phrases. Shown in the same list, with the
+      // warning in muted text after it, it would teach exactly what the source rules out.
+      if (/avoid/i.test(ascii(String(p.label ?? '')))) {
+        held.push({
+          field: 'prayogas',
+          value: raw,
+          reason: 'phrase to avoid: no field for forbidden phrases yet',
+        });
+        return;
+      }
       const unmarked = p.octave_unmarked || unmarkedPrayogas.has(i);
       const text = unmarked ? raw.replace(/['.]/g, '') : raw;
       take(text, prayogaLabel(p.label), p.gamaka_raw ?? undefined, p.printed_page, p.confidence);
@@ -951,7 +961,6 @@ export function prayogaLabel(raw: string | null | undefined): string | undefined
   const k = ascii(String(raw ?? ''));
   if (!k) return undefined;
   if (/anya/.test(k)) return 'Borrowed-note phrase';
-  if (/avoid/.test(k)) return 'Phrase to avoid';
   if (/jiva/.test(k)) return 'Jiva phrase';
   if (/ranjaka/.test(k)) return 'Ranjaka phrase';
   if (/visesa|characteristic/.test(k)) return 'Characteristic phrase';

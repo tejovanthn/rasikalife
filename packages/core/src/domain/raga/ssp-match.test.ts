@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SspRagaRecord } from './ssp';
-import { type SspMatchStored, matchSspRagas } from './ssp-match';
+import { type SspMatchStored, matchSspRagas, sspKind } from './ssp-match';
 
 const rec = (
   name: string,
@@ -94,5 +94,14 @@ describe('matchSspRagas', () => {
   it('does not flag a mela mismatch when SSP gives none', () => {
     const [row] = matchSspRagas([rec('bhairavi', '20.1', null)], [stored('a', 'bhairavi', 20)]);
     expect(row.suggestion).toBe('apply');
+  });
+});
+
+describe('sspKind', () => {
+  it('reads mela or janya from the section number when the record lost its kind', () => {
+    expect(sspKind({ section_number: '45.1' })).toBe('janya');
+    expect(sspKind({ section_number: '45' })).toBe('mela');
+    expect(sspKind({ kind: 'mela', section_number: '45.1' })).toBe('mela');
+    expect(sspKind({ section_number: null })).toBe('');
   });
 });

@@ -55,6 +55,18 @@ export const FLAG_MELA_MISMATCH = 'mela-mismatch';
 export const FLAG_MULTIPLE_MATCHES = 'multiple-matches';
 export const FLAG_JUNK_HEADING = 'junk-heading';
 
+/**
+ * Mela or janya. A few records lost `kind` in extraction (sindhurāmakriyā, 45.1); the section
+ * number still says it: "45" is mela 45, "45.1" its first janya.
+ */
+export function sspKind(record: { kind?: string | null; section_number?: string | null }): string {
+  if (record.kind) return record.kind;
+  const section = record.section_number ?? '';
+  if (/^\d+\.\d+$/.test(section)) return 'janya';
+  if (/^\d+$/.test(section)) return 'mela';
+  return '';
+}
+
 export function matchSspRagas(
   sspRecords: readonly SspMatchInput[],
   storedRagas: readonly SspMatchStored[]
@@ -106,7 +118,7 @@ export function matchSspRagas(
       section: record.section_number ?? '',
       sspName: record.name_canonical,
       volume,
-      kind: record.kind ?? '',
+      kind: sspKind(record),
       tier,
       candidates,
       flags,

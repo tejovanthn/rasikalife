@@ -621,6 +621,22 @@ describe('prayogas', () => {
     ]);
   });
 
+  it('holds a phrase the raga forbids rather than listing it among its phrases', () => {
+    const rec: SspRagaRecord = {
+      ...husani,
+      lakshana: {
+        prayogas: [
+          { notation: 'R1 G1 M1', label: 'phrase to avoid', printed_page: 2 },
+          { notation: 'S P N1 D1 P', printed_page: 2 },
+        ],
+        sources: [],
+      },
+    };
+    const o = run(rec);
+    expect(o.patch.prayogas?.map(p => p.notation)).toEqual(['S P N1 D1 P']);
+    expect(o.held.find(h => h.value === 'R1 G1 M1')?.reason).toContain('phrase to avoid');
+  });
+
   it('strips octave marks from an octave_unmarked phrase', () => {
     const rec: SspRagaRecord = {
       ...husani,

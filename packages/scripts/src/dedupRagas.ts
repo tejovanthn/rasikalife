@@ -123,7 +123,7 @@ function filledFieldCount(r: RagaItem): number {
   ].filter(v => v !== undefined && v !== null && v !== '').length;
 }
 
-async function loadAllRagas(): Promise<RagaItem[]> {
+export async function loadAllRagas(): Promise<RagaItem[]> {
   const Raga = await import('@rasika/core/domain/raga');
   const all: RagaItem[] = [];
   let nextToken: string | undefined;

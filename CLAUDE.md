@@ -283,6 +283,46 @@ bracketed alias is asked as a name of its own.
 The import refuses a volumes file that answers under 90% of the phrases, because a
 half-finished run would write 0 over everything it never asked about.
 
+### Importing SSP into ragas (`ssp-*`)
+
+Facts and swara phrases from the 2008 English edition of Sangita Sampradaya Pradarshini, read from
+`~/codes/rasika-books` (`--books-dir` to change). Plan: `docs/plans/261103-01-ssp-import.md`. The
+rules are in `domain/raga/ssp.ts` (patch), `ssp-match.ts` (matching) and `ssp-apply.ts` (citation
+merge, undo plan); all pure and tested. `packages/scripts/src/sspImport.ts` only reads, prints and
+writes.
+
+Order:
+1. Import the `source` sheet first. `ssp-apply` stops if `ssp-2008-english` does not exist; a
+   dry run only warns, so it can preview before the sheet is in.
+2. `ssp-match --out ssp-ragas.csv`: one row per SSP record (191). `decision` is pre-filled `apply`
+   only for an exact name match with one candidate and no flag; `skip` for no match; blank for
+   everything else. Read the `flags`, `would_set` and `held` columns.
+3. `ssp-apply --file ssp-ragas.csv --user <id> --only melas --dry-run`, then without `--dry-run`,
+   then `--only janyas`. Reindex after.
+4. `ssp-undo --manifest <file>.applied-<time>.json [--only id,id] [--dry-run]`.
+
+Rules:
+- **Exact matches only in the first run.** Variant rows stay blank. A raga is never created.
+- **Held rows**: two SSP records on one stored raga (`duplicate-target`; mukhāri 1.1 and 20.14),
+  a mela number that disagrees (`mela-mismatch`), more than one stored match. Apply checks the
+  mela number and duplicate targets again at run time and holds the row.
+- **The stored raga is read again at apply time**, and the patch is built against it. SSP fills
+  an empty or uncited field only. New citations are merged onto stored ones on field, source,
+  locator, tradition and note; a stored citation is never dropped.
+- **A phrase SSP says to avoid is held, never listed as a prayoga.** The page shows a label only
+  as muted text after the phrase, so it would teach exactly what the source rules out.
+- **A record with no `kind`** takes it from its section number (`sspKind`: `45.1` is a janya).
+- **Held items inside a raga** (uncertain variants, text-versus-image conflicts, refused phrases)
+  go to `<csv>.held-<time>.csv` with the run's notes. They are not written.
+- **The manifest** (`<csv>.applied-<time>.json`, or `.dry-run-<time>.json`) lists each field's
+  before and after and the citations added. It is saved after every raga.
+- **Undo restores a field only while it still equals what the import wrote.** A field edited
+  since is left and reported. A field that was empty before is removed with `.remove()` (rule 8),
+  through `applyRagaFieldPlan`. Exactly the added citations are removed. An undone entry is marked
+  and a rerun does nothing.
+- Apply calls `updateRaga` in core, so `pruneCitations` runs. The moderator-only check on
+  citations is in the tRPC router, not in core, so the CLI is not blocked by it.
+
 ### Thin raga pages: `noindex`, decided from the record
 
 `isThinRaga` (`@rasika/core/domain/raga/client`, pure) marks a raga page thin when it has no

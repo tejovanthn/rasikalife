@@ -113,6 +113,51 @@ program
   );
 
 program
+  .command('ssp-match')
+  .description('Match SSP raga records to stored ragas and write a review CSV')
+  .option('--books-dir <path>', 'The rasika-books checkout (default ~/codes/rasika-books)')
+  .option('--out <path>', 'Review CSV to write', 'ssp-ragas.csv')
+  .action(async (opts: { booksDir?: string; out: string }) => {
+    setup();
+    const { matchSspToRagas } = await import('./sspImport.js');
+    await matchSspToRagas(opts);
+  });
+
+program
+  .command('ssp-apply')
+  .description('Write SSP facts and citations onto the ragas marked "apply", with a manifest')
+  .requiredOption('--file <path>', 'Reviewed CSV from ssp-match')
+  .requiredOption('--user <id>', 'Admin user id (the run acts as this user)')
+  .option('-n, --dry-run', 'Plan and report without writing')
+  .option('--only <set>', '"melas" or "janyas"')
+  .option('--books-dir <path>', 'The rasika-books checkout (default ~/codes/rasika-books)')
+  .action(
+    async (opts: {
+      file: string;
+      user: string;
+      dryRun?: boolean;
+      only?: string;
+      booksDir?: string;
+    }) => {
+      setup();
+      const { applySsp } = await import('./sspImport.js');
+      await applySsp({ ...opts, userId: opts.user });
+    }
+  );
+
+program
+  .command('ssp-undo')
+  .description('Take back an ssp-apply run, wholly or for the raga ids given')
+  .requiredOption('--manifest <path>', 'The .applied-*.json that ssp-apply wrote')
+  .option('--only <ids>', 'Comma-separated raga ids', (v: string) => v.split(','))
+  .option('-n, --dry-run', 'Report without writing')
+  .action(async (opts: { manifest: string; only?: string[]; dryRun?: boolean }) => {
+    setup();
+    const { undoSsp } = await import('./sspImport.js');
+    await undoSsp(opts);
+  });
+
+program
   .command('admin-csv-export')
   .description('Export a domain to the admin CSV, the same shape /admin/data/<domain> downloads')
   .requiredOption('--domain <name>', 'artist, raga, tala, composition, venue, organiser, ...')
