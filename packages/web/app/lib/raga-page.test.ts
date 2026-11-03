@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ragaPageModel } from './raga-page';
 
-const ssp = (field: string, locator: string, tradition?: string) =>
-  ({ field, sourceSlug: 'ssp-1963-tamil', locator, tradition }) as never;
+const ssp = (field: string, locator: string, tradition?: string, note?: string) =>
+  ({ field, sourceSlug: 'ssp-1963-tamil', locator, tradition, note }) as never;
 
 const bhairavi = {
   arohanam: 'S R2 G2 M1 P D2 N2 S',
@@ -54,9 +54,9 @@ describe('ragaPageModel', () => {
       ...bhairavi,
       timeOfDay: 'evening',
       citations: [
-        { ...ssp('timeOfDay', 'p. 375', 'Dikshitar school'), note: 'sung at dusk' },
-        { ...ssp('timeOfDay', 'p. 375', 'Tyagaraja school'), note: 'sung at dawn' },
-      ] as never,
+        ssp('timeOfDay', 'p. 375', 'Dikshitar school', 'sung at dusk'),
+        ssp('timeOfDay', 'p. 375', 'Tyagaraja school', 'sung at dawn'),
+      ],
     });
     expect(model.references).toHaveLength(2);
     expect(model.references.map(r => [r.tradition, r.note])).toEqual([
@@ -71,7 +71,7 @@ describe('ragaPageModel', () => {
   describe('alternateScales citations', () => {
     const alt = ['S R2 G2 M1 P D2 S', 'S R2 M1 P D2 S'];
     const entry = (note: string | undefined, tradition?: string) =>
-      ({ ...ssp('alternateScales', 'p. 9', tradition), note }) as never;
+      ssp('alternateScales', 'p. 9', tradition, note);
 
     it('marks only the entry whose note equals it', () => {
       const model = ragaPageModel({

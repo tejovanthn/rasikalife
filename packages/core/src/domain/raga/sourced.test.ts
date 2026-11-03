@@ -130,11 +130,13 @@ describe('prayogas and slokas bounds', () => {
         .success
     ).toBe(false);
     expect(
-      CreateRagaSchema.safeParse({ name: 'x', slokas: Array.from({ length: 6 }, () => ({ text: 'v' })) })
-        .success
+      CreateRagaSchema.safeParse({
+        name: 'x',
+        slokas: Array.from({ length: 6 }, () => ({ text: 'v' })),
+      }).success
     ).toBe(false);
-    expect(CreateRagaSchema.safeParse({ name: 'x', slokas: [{ text: 'a'.repeat(2001) }] }).success).toBe(
-      false
-    );
+    expect(
+      CreateRagaSchema.safeParse({ name: 'x', slokas: [{ text: 'a'.repeat(2001) }] }).success
+    ).toBe(false);
   });
 });

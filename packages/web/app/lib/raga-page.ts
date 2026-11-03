@@ -132,12 +132,12 @@ export function ragaPageModel(raga: RagaPageInput): RagaPageModel {
     return { scale, numbers, tradition: own.find(c => c.tradition)?.tradition };
   });
   const fieldLevel = altCitations.filter(c => !entries.some(scale => matches(c, scale)));
-  const footnotes = { ...numbered.footnotes };
+  const { alternateScales: _own, ...otherFootnotes } = numbered.footnotes;
   const fieldNumbers = [
     ...new Set(fieldLevel.map(c => numbered.numberOf(c)).filter((n): n is number => !!n)),
   ];
-  if (fieldNumbers.length > 0) footnotes.alternateScales = fieldNumbers;
-  else delete footnotes.alternateScales;
+  const footnotes: RagaPageModel['footnotes'] =
+    fieldNumbers.length > 0 ? { ...otherFootnotes, alternateScales: fieldNumbers } : otherFootnotes;
 
   return {
     hasMovement,
