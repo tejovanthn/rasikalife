@@ -1,0 +1,696 @@
+[
+  {
+    "kind": "created",
+    "sspKey": "subarama diksita",
+    "artistId": "3Lasyg8wWTde3T35as00TP8po5y",
+    "name": "Subbarama Dikshitar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "venkatamaki",
+    "artistId": "3LasypTc6Wic5X7cAymOSpa6HhN",
+    "name": "Venkatamakhi"
+  },
+  {
+    "kind": "created",
+    "sspKey": "ramasvami diksita",
+    "artistId": "3Lasyn7sGd5QPqRTlHS7uI8Zdu0",
+    "name": "Ramaswami Dikshitar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "kupusamia",
+    "artistId": "3LasyqWtZ4gMPaVnQqIPAk0yLBI",
+    "name": "Kuppusamayya"
+  },
+  {
+    "kind": "created",
+    "sspKey": "mudu venkatamaki",
+    "artistId": "3LasyupMRKPr3SVikWI7qD8gj6U",
+    "name": "Muddu Venkatamakhi"
+  },
+  {
+    "kind": "created",
+    "sspKey": "mukup pulava",
+    "artistId": "3Lasz3YQgXRy8y8GjM1KLtwUoO1",
+    "name": "Mukkup Pulavar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "kinasvami diksita",
+    "artistId": "3Lasz0dXHjInsaujS67PPE6wkTp",
+    "name": "Chinnaswami Dikshitar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "dorasamia",
+    "artistId": "3Lasz8fArbd8aIRC863jqiuEusq",
+    "name": "Dorasamayya"
+  },
+  {
+    "kind": "created",
+    "sspKey": "giriraja kavi",
+    "artistId": "3Lasz7HQRnC022C6kk6eYkfZGxU",
+    "name": "Giriraja Kavi"
+  },
+  {
+    "kind": "created",
+    "sspKey": "govindasamia",
+    "artistId": "3LaszHLepdVLRyDDGYGQCuvTo62",
+    "name": "Govindasamayya"
+  },
+  {
+    "kind": "created",
+    "sspKey": "govindasami",
+    "artistId": "3LaszIxIRCeWQOMwboLDG5N0MTW",
+    "name": "Govindasami"
+  },
+  {
+    "kind": "created",
+    "sspKey": "katikai mukupulava",
+    "artistId": "3LaszLXvPz8QydACAebRa3roSXg",
+    "name": "Katikai Mukkuppulava"
+  },
+  {
+    "kind": "created",
+    "sspKey": "kupusvami ia",
+    "artistId": "3LaszSoRYxIVeVFdWlfyqJGRVNW",
+    "name": "Kuppuswami Ayya"
+  },
+  {
+    "kind": "created",
+    "sspKey": "mutukumarapulava",
+    "artistId": "3LaszUYrqAYDk1hXcjSchZTgZoo",
+    "name": "Muttukkumarappulavar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "pedadasa",
+    "artistId": "3LaszUk4M4MQVLe4TUuQnYNody6",
+    "name": "Peddadasar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "sarangapani",
+    "artistId": "3Laszd6hqxmYpFeK9HhRuQwKKch",
+    "name": "Sarangapani"
+  },
+  {
+    "kind": "created",
+    "sspKey": "sesanga",
+    "artistId": "3LaszecFWhQSCpAmemIPfvi3AbN",
+    "name": "Sheshayyangar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "sonti venkatasuba",
+    "artistId": "3Laszj7M0VICs0srxk1FU29rkQI",
+    "name": "Sonti Venkatasubbayyar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "svamprakasa atindra",
+    "artistId": "3Laszn881Bb3NUKSxYJoVZRpW5h",
+    "name": "Swayamprakasha Yatindra"
+  },
+  {
+    "kind": "created",
+    "sspKey": "talapakam kinia",
+    "artistId": "3LasztJYQJH1qR1wTkCpl0ZUvek",
+    "name": "Talapakam Chinnayya"
+  },
+  {
+    "kind": "created",
+    "sspKey": "tirunelveli vengu bavata",
+    "artistId": "3Laszyv22G12ToiS0075xkXHbVy",
+    "name": "Tirunelveli Vengu Bhavatar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "tiruvarur asami natuvana",
+    "artistId": "3Laszz8EihbhlsI4bng0GKTVt8q",
+    "name": "Tiruvarur Ayyasami Nattuvanar"
+  },
+  {
+    "kind": "created",
+    "sspKey": "vaikunta sastri",
+    "artistId": "3Lat07mTJvtamklHhndo9XFnAfI",
+    "name": "Vaikuntha Shastri"
+  },
+  {
+    "kind": "patched",
+    "sspKey": "mudusvami diksita",
+    "artistId": "38avRjwTlwzqwpJFvt4tdOjvmbT",
+    "name": "Muttuswaamee Dikshitar",
+    "changes": {
+      "birthYear": {
+        "before": null,
+        "after": 1775
+      },
+      "deathYear": {
+        "before": null,
+        "after": 1835
+      },
+      "deathPlace": {
+        "before": null,
+        "after": "Eṭṭayapuram"
+      },
+      "mudra": {
+        "before": null,
+        "after": "guruguha"
+      },
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": [
+          "Dikshitar"
+        ],
+        "after": [
+          "Dikshitar",
+          "Muttusvāmi Dīkṣita",
+          "Muttuswami Dikshitar",
+          "Muddusvāmi Dīkṣita"
+        ],
+        "added": [
+          "Muttusvāmi Dīkṣita",
+          "Muttuswami Dikshitar",
+          "Muddusvāmi Dīkṣita"
+        ]
+      },
+      "gurus": {
+        "before": null,
+        "after": [
+          {
+            "name": "Chidambaranatha Yogi",
+            "relationship": "spiritual",
+            "source": "published-source"
+          }
+        ],
+        "added": [
+          {
+            "name": "Chidambaranatha Yogi",
+            "relationship": "spiritual",
+            "source": "published-source"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "birthYear",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 19",
+        "note": "śaka 1692"
+      },
+      {
+        "field": "deathYear",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 20",
+        "note": "śaka 1757"
+      },
+      {
+        "field": "deathPlace",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 20"
+      },
+      {
+        "field": "mudra",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 20"
+      },
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 14, 19"
+      },
+      {
+        "field": "gurus",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 19",
+        "note": "Chidambaranatha Yogi"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "sama sastri",
+    "artistId": "38avRvGz1Y091c14TS7XzR70106",
+    "name": "Shyaamaa Shaastree",
+    "changes": {
+      "birthYear": {
+        "before": null,
+        "after": 1763
+      },
+      "deathYear": {
+        "before": null,
+        "after": 1827
+      },
+      "mudra": {
+        "before": null,
+        "after": "śyāmakṛṣṇa"
+      },
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Śyāmā Śāstri",
+          "Shyama Shastri"
+        ],
+        "added": [
+          "Śyāmā Śāstri",
+          "Shyama Shastri"
+        ]
+      },
+      "gurus": {
+        "before": null,
+        "after": [
+          {
+            "name": "Sangita Swami",
+            "source": "published-source"
+          }
+        ],
+        "added": [
+          {
+            "name": "Sangita Swami",
+            "source": "published-source"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "birthYear",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 14",
+        "note": "śaka 1685"
+      },
+      {
+        "field": "deathYear",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 15",
+        "note": "śaka 1749"
+      },
+      {
+        "field": "mudra",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 15"
+      },
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 14–15"
+      },
+      {
+        "field": "gurus",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 15",
+        "note": "Sangita Swami"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "purandaradasa",
+    "artistId": "38aw5Aly2MhbvZE4kbUbiZytYuH",
+    "name": "Purandara Daasar",
+    "changes": {
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Purandaradāsa",
+          "Purandaraviṭhaladāsa",
+          "Purandaraviṭṭaladāsa",
+          "Śrī Purandaraviṭṭaladāsa",
+          "Purandaraviṭṭaladāsar"
+        ],
+        "added": [
+          "Purandaradāsa",
+          "Purandaraviṭhaladāsa",
+          "Purandaraviṭṭaladāsa",
+          "Śrī Purandaraviṭṭaladāsa",
+          "Purandaraviṭṭaladāsar"
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 8"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "tagaraja",
+    "artistId": "38avQeqVQNRMIWavYmPvKEhydpC",
+    "name": "Tyaagaraaja",
+    "changes": {
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Tyāgarāja",
+          "Tyāgarājayya",
+          "Śrī Tyāgarāja",
+          "Tyāgarājasvāmi"
+        ],
+        "added": [
+          "Tyāgarāja",
+          "Tyāgarājayya",
+          "Śrī Tyāgarāja",
+          "Tyāgarājasvāmi"
+        ]
+      },
+      "gurus": {
+        "before": null,
+        "after": [
+          {
+            "name": "Sonti Venkataramanayya",
+            "source": "published-source"
+          }
+        ],
+        "added": [
+          {
+            "name": "Sonti Venkataramanayya",
+            "source": "published-source"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 11, 16, 17"
+      },
+      {
+        "field": "gurus",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 16",
+        "note": "Sonti Venkataramanayya"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "ksetria",
+    "artistId": "38b5wfyWKhWPvGOrVZUe6FbeCgN",
+    "name": "Kshetrajna",
+    "changes": {
+      "mudra": {
+        "before": null,
+        "after": "muvvagōpāla"
+      },
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Kṣētrayya",
+          "Kshetrayya",
+          "Kṣētrajña"
+        ],
+        "added": [
+          "Kṣētrayya",
+          "Kshetrayya",
+          "Kṣētrajña"
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "mudra",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 9"
+      },
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 9, 11"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "narana tirta",
+    "artistId": "38awIq8pmX1N1D7PhMp44nofW48",
+    "name": "NaaraayaNa Teertar",
+    "changes": {
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Nārāyaṇa Tīrtha",
+          "Nārāyaṇatīrtha Yatīndra"
+        ],
+        "added": [
+          "Nārāyaṇa Tīrtha",
+          "Nārāyaṇatīrtha Yatīndra"
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 23"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "vinai kupa",
+    "artistId": "38awWFMatEIJkMsXAmegJjiel6j",
+    "name": "Veenai Kuppayyar",
+    "changes": {
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Vīṇai Kuppayyar"
+        ],
+        "added": [
+          "Vīṇai Kuppayyar"
+        ]
+      }
+    },
+    "citationsAdded": []
+  },
+  {
+    "kind": "patched",
+    "sspKey": "gopalakrsna barati",
+    "artistId": "38aw452oO2WySmtAkNpX58IbNTV",
+    "name": "GOpaalakrishna Bhaarati",
+    "changes": {
+      "mudra": {
+        "before": null,
+        "after": "gōpālakṛṣṇa"
+      },
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Gōpālakṛṣṇa Bhārati",
+          "Gopalakrishna Bharati",
+          "Ānatānḍavapuram Bālakṛṣṇa Bhārati"
+        ],
+        "added": [
+          "Gōpālakṛṣṇa Bhārati",
+          "Gopalakrishna Bharati",
+          "Ānatānḍavapuram Bālakṛṣṇa Bhārati"
+        ]
+      },
+      "works": {
+        "before": null,
+        "after": [
+          {
+            "title": "Nandan and Māmī Nāṭaka",
+            "source": "published-source"
+          }
+        ],
+        "added": [
+          {
+            "title": "Nandan and Māmī Nāṭaka",
+            "source": "published-source"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "mudra",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 26"
+      },
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 26"
+      },
+      {
+        "field": "works",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 26",
+        "note": "Nandan and Māmī Nāṭaka"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "jadeva",
+    "artistId": "38ax21T1WjgS1Ns7x6PN60rCpPr",
+    "name": "JayadEva",
+    "changes": {
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Śrī Jayadēva"
+        ],
+        "added": [
+          "Śrī Jayadēva"
+        ]
+      },
+      "gurus": {
+        "before": null,
+        "after": [
+          {
+            "name": "Govardhanacharya",
+            "source": "published-source"
+          }
+        ],
+        "added": [
+          {
+            "name": "Govardhanacharya",
+            "source": "published-source"
+          }
+        ]
+      },
+      "works": {
+        "before": null,
+        "after": [
+          {
+            "title": "Gītagōvindam",
+            "source": "published-source"
+          },
+          {
+            "title": "Prasanna Rāghava",
+            "source": "published-source"
+          }
+        ],
+        "added": [
+          {
+            "title": "Gītagōvindam",
+            "source": "published-source"
+          },
+          {
+            "title": "Prasanna Rāghava",
+            "source": "published-source"
+          }
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 7, 10"
+      },
+      {
+        "field": "gurus",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 10",
+        "note": "Govardhanacharya"
+      },
+      {
+        "field": "works",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 7, 10",
+        "note": "Gītagōvindam"
+      },
+      {
+        "field": "works",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 7, 10",
+        "note": "Prasanna Rāghava"
+      }
+    ]
+  },
+  {
+    "kind": "patched",
+    "sspKey": "subara sastri",
+    "artistId": "38awBHw140ZfQ5MfDwHCA8mUW97",
+    "name": "Subbaraaya Shaastree",
+    "changes": {
+      "birthYear": {
+        "before": null,
+        "after": 1803
+      },
+      "deathYear": {
+        "before": null,
+        "after": 1862
+      },
+      "isHistorical": {
+        "before": null,
+        "after": true
+      },
+      "alternateNames": {
+        "before": null,
+        "after": [
+          "Subbarāya Śāstri",
+          "Subbaraya Shastri"
+        ],
+        "added": [
+          "Subbarāya Śāstri",
+          "Subbaraya Shastri"
+        ]
+      }
+    },
+    "citationsAdded": [
+      {
+        "field": "birthYear",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 15",
+        "note": "śaka 1725"
+      },
+      {
+        "field": "deathYear",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, p. 15",
+        "note": "śaka 1784"
+      },
+      {
+        "field": "alternateNames",
+        "sourceSlug": "ssp-2008-english",
+        "locator": "Vol. 5, pp. 15, 25"
+      }
+    ]
+  }
+]

@@ -23,6 +23,11 @@ Next, in order:
    would drop the 9 English citations SSP just wrote to Bhairavi. Merge its Tamil citations instead.
    Left: review the 16 held exact rows and 52 variant rows in `ssp-ragas-2026-11.csv`, the 47 held
    items, and the `movement` writing pass over `sspMovementFacts`.
+5. SSP people: DONE in prod 2026-11-03. 23 artists created (Subbarama Dikshitar, Venkatamakhi,
+   Ramaswami Dikshitar and 20 lesser composers), 10 updated (Tyagaraja, Muttuswami Dikshitar,
+   Syama Sastri…), reindexed. Files: `docs/research/ssp-people-2026-11.csv.*`; undo with
+   `ssp-people-undo --manifest <applied json>`. Left: the 94 blank rows in that sheet (Swati
+   Tirunal, Ramadasa, Ponnayya and the loose matches), then Phase C, compositions.
    Compositions and people (phases B and C of `docs/plans/261103-01-ssp-import.md`) are not built.
 
 ## 2026-10-24: self-serve event listing, built, not deployed

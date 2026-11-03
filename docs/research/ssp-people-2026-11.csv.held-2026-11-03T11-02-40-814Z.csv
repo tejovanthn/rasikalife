@@ -1,0 +1,4 @@
+ssp_key,name,kind,field,value,reason
+mudusvami diksita,Muttusvāmi Dīkṣita,held,birthPlace,"""Tiruvārūr""",stored value differs (Thiruvarur); an import never overwrites
+sama sastri,Śyāmā Śāstri,held,birthPlace,"""Tiruvārūr""",stored value differs (Thiruvarur); an import never overwrites
+ksetria,Kṣētrayya,held,birthPlace,"""Muvva""",stored value differs (Movva); an import never overwrites
