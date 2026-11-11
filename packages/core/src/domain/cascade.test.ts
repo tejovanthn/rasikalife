@@ -242,6 +242,27 @@ vi.mock('./artist-claim', () => ({
   recomputeArtistClaimStatus: vi.fn(),
 }));
 
+// Venue QR Follow modules. Their own tests cover the behaviour; here they are stubs so the
+// cascades can be asserted on what they call and in what order.
+vi.mock('./follow', () => ({
+  moveFollows: vi.fn().mockResolvedValue({ moved: 0, dropped: 0 }),
+  refreshFollowTargetName: vi.fn().mockResolvedValue(undefined),
+  deleteUserFollows: vi.fn().mockResolvedValue(0),
+}));
+vi.mock('./partner-member', () => ({
+  movePartnerMembers: vi.fn().mockResolvedValue(0),
+  refreshPartnerTargetName: vi.fn().mockResolvedValue(undefined),
+  deleteUserPartnerMemberships: vi.fn().mockResolvedValue(0),
+}));
+vi.mock('./venue-qr', () => ({
+  repointQrsToVenue: vi.fn().mockResolvedValue(0),
+  refreshQrVenueName: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('./venue-space', () => ({ moveSpaces: vi.fn().mockResolvedValue(0) }));
+vi.mock('./push-subscription', () => ({
+  deleteUserPushSubscriptions: vi.fn().mockResolvedValue(0),
+}));
+
 import { dynamoClient } from '../db/client';
 import { keysOfEntity } from '../db/keys';
 import { ArtistAffiliationEntity } from './artist-affiliation/entity';
@@ -264,8 +285,17 @@ import { EventArtistEntity } from './event-artist/entity';
 import { deleteAllEventSetlistRows, getEventSetlist, recomputeEventSetlist } from './event-setlist';
 import { EventSetlistEntity } from './event-setlist/entity';
 import { EventEntity } from './event/entity';
+import { deleteUserFollows, moveFollows, refreshFollowTargetName } from './follow';
 import { OrganiserEntity } from './organiser/entity';
+import {
+  deleteUserPartnerMemberships,
+  movePartnerMembers,
+  refreshPartnerTargetName,
+} from './partner-member';
+import { deleteUserPushSubscriptions } from './push-subscription';
 import { adjustPerformanceCount as adjustRagaCount } from './raga';
+import { refreshQrVenueName, repointQrsToVenue } from './venue-qr';
+import { moveSpaces } from './venue-space';
 import { VenueEntity } from './venue/entity';
 
 /** Builds a `.query.xxx(args)` mock that yields the given pages in sequence, one per `.go()` call. */
@@ -1915,5 +1945,69 @@ describe('cascade', () => {
       expect(deleteAllEventSetlistRows).toHaveBeenCalledWith('fromEvent');
       expect(recomputeEventSetlist).toHaveBeenCalledWith('toEvent');
     });
+  });
+});
+
+describe('cascade: Venue QR Follow', () => {
+  beforeEach(() => {
+    vi.mocked(dynamoClient.send).mockReset();
+    vi.mocked(dynamoClient.send).mockResolvedValue({});
+    EventEntity.query.byVenue = pagedQuery([{ data: [], cursor: null }]);
+    EventEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+    AwardEntity.query.list = vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) }),
+    });
+    ArtistAffiliationEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
+  });
+
+  it('merging a venue moves spaces, codes, followers and grants to the canonical venue', async () => {
+    await cascade.cascadeVenueMerge('loser', 'canon', 'Canon Hall');
+
+    expect(moveSpaces).toHaveBeenCalledWith('loser', 'canon');
+    expect(repointQrsToVenue).toHaveBeenCalledWith('loser', 'canon', 'Canon Hall');
+    expect(moveFollows).toHaveBeenCalledWith('venue', 'loser', 'canon', 'Canon Hall');
+    expect(movePartnerMembers).toHaveBeenCalledWith('venue', 'loser', 'canon', 'Canon Hall');
+  });
+
+  it('merging an organiser moves followers and dashboard grants', async () => {
+    await cascade.cascadeOrganiserMerge('loser', 'canon', 'Canon Sabha');
+
+    expect(moveFollows).toHaveBeenCalledWith('organiser', 'loser', 'canon', 'Canon Sabha');
+    expect(movePartnerMembers).toHaveBeenCalledWith('organiser', 'loser', 'canon', 'Canon Sabha');
+  });
+
+  it('merging an artist moves followers', async () => {
+    ArtistMembershipEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
+    // The rest of the merge needs many more mocks; followers move first, which is the point here.
+    await cascade.cascadeArtistMerge('loser', 'canon', 'Canon Artist').catch(() => undefined);
+
+    expect(moveFollows).toHaveBeenCalledWith('artist', 'loser', 'canon', 'Canon Artist');
+  });
+
+  it('renames refresh the name held on codes, follows and grants', async () => {
+    await cascade.cascadeVenueNameUpdate('v1', 'New Hall');
+    expect(refreshQrVenueName).toHaveBeenCalledWith('v1', 'New Hall');
+    expect(refreshFollowTargetName).toHaveBeenCalledWith('venue', 'v1', 'New Hall');
+    expect(refreshPartnerTargetName).toHaveBeenCalledWith('venue', 'v1', 'New Hall');
+
+    AwardEntity.query.list = vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({ data: [] }) }),
+    });
+    await cascade.cascadeOrganiserNameUpdate('o1', 'New Sabha');
+    expect(refreshFollowTargetName).toHaveBeenCalledWith('organiser', 'o1', 'New Sabha');
+    expect(refreshPartnerTargetName).toHaveBeenCalledWith('organiser', 'o1', 'New Sabha');
+  });
+
+  it('deleting a user removes follows, push subscriptions and memberships', async () => {
+    vi.mocked(deleteUserFollows).mockResolvedValueOnce(3);
+    vi.mocked(deleteUserPushSubscriptions).mockResolvedValueOnce(2);
+    vi.mocked(deleteUserPartnerMemberships).mockResolvedValueOnce(1);
+
+    const result = await cascade.cascadeUserDeleteToFollowData('u1');
+
+    expect(result).toEqual({ follows: 3, pushSubscriptions: 2, partnerMemberships: 1 });
+    expect(deleteUserFollows).toHaveBeenCalledWith('u1');
+    expect(deleteUserPushSubscriptions).toHaveBeenCalledWith('u1');
+    expect(deleteUserPartnerMemberships).toHaveBeenCalledWith('u1');
   });
 });

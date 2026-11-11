@@ -3,6 +3,9 @@ export const CHANGE_ENTITY_TYPE = {
   RAGA: 'raga',
   TALA: 'tala',
   ARTIST: 'artist',
+  VENUE_QR: 'venueQr',
+  ORGANISER: 'organiser',
+  VENUE: 'venue',
 } as const;
 
 export type ChangeEntityType = (typeof CHANGE_ENTITY_TYPE)[keyof typeof CHANGE_ENTITY_TYPE];

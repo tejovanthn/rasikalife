@@ -21,6 +21,8 @@ export const CreateEventSchema = z.object({
   timezone: z.string().default(DEFAULT_EVENT_TIMEZONE),
   venueId: z.string().nullish(),
   venueName: z.string().nullish(),
+  spaceId: z.string().nullish(),
+  spaceName: z.string().nullish(),
   venueCity: z.string().optional(),
   venueAddress: AddressSchema.optional(),
   organiserId: z.string().nullish(),

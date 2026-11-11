@@ -2,6 +2,7 @@ import { Entity } from 'electrodb';
 import type { EntityItem } from 'electrodb';
 import { ROLE } from '../../auth/roles';
 import { dynamoClient } from '../../db/client';
+import { newUnsubscribeToken } from './unsubscribe-token';
 
 export const UserEntity = new Entity(
   {
@@ -72,6 +73,22 @@ export const UserEntity = new Entity(
         },
         required: false,
       },
+      // Notification preferences (Venue QR Follow). Defaults apply at create; rows written before
+      // these existed hold none, so read them through `effectiveNotifyPrefs`. The model version
+      // stays 2: ElectroDB filters queries by version, so a bump would hide every existing user.
+      notifyDigest: { type: 'boolean', required: false, default: () => true },
+      notifyReminder: { type: 'boolean', required: false, default: () => true },
+      notifyEmail: { type: 'boolean', required: false, default: () => true },
+      notifyPush: { type: 'boolean', required: false, default: () => false },
+      // Random, rotated on use; carried inside an HMAC-signed unsubscribe link.
+      unsubscribeToken: { type: 'string', required: false, default: () => newUnsubscribeToken() },
+      digestLastSentAt: { type: 'string', required: false },
+      // WhatsApp number as 10 national digits (^[6-9]\d{9}$). Collected and stored only.
+      whatsappNumber: { type: 'string', required: false },
+      whatsappConsentAt: { type: 'string', required: false },
+      whatsappConsentVersion: { type: 'string', required: false },
+      whatsappVerifiedAt: { type: 'string', required: false },
+      whatsappPromptDismissedAt: { type: 'string', required: false },
       // URL-safe slug for the public profile (/u/:username).
       // Explicitly set when the user updates their displayName preference.
       // Sparse: only present once the user has set a display name.

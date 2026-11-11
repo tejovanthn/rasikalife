@@ -37,6 +37,13 @@ export * as ClassEnrollment from './domain/class-enrollment';
 export * as ClassPack from './domain/class-pack';
 export * as ClassSession from './domain/class-session';
 export * as ClassInvite from './domain/class-invite';
+export * as VenueQr from './domain/venue-qr';
+export * as QrBatch from './domain/qr-batch';
+export * as Follow from './domain/follow';
+export * as VenueSpace from './domain/venue-space';
+export * as PartnerMember from './domain/partner-member';
+export * as PartnerInvite from './domain/partner-invite';
+export * as PushSubscription from './domain/push-subscription';
 export * as Email from './email';
 export * as Image from './domain/image/s3';
 // Its own namespace rather than merged into `Image`, so a call site cannot reach for the public
