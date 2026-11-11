@@ -466,3 +466,54 @@ export async function refreshQrVenueName(venueId: string, newName: string): Prom
     );
   } while (cursor);
 }
+
+/** Every code of one batch, whatever its status, ordered by code. A batch is at most 200. */
+export async function listQrsInBatch(batchId: string): Promise<VenueQr[]> {
+  const items: VenueQr[] = [];
+  for (const status of QR_STATUSES) {
+    const result = await VenueQrEntity.query.byStatus({ status, batchId }).go({ pages: 'all' });
+    items.push(...((result.data as VenueQr[]) ?? []));
+  }
+  return items.sort((a, b) => a.code.localeCompare(b.code));
+}
+
+export type VenueQrStatsRow = {
+  code: string;
+  status: VenueQr['status'];
+  label?: string;
+  spaceId?: string;
+  scansLast7Days: number;
+  scansTotal: number;
+  follows: number;
+  lastScannedAt?: string;
+};
+
+/**
+ * One row per code at a venue, for the venue QR panel and the partner dashboard. Retired codes
+ * are included (their scans are still counted); callers that want only live ones filter on
+ * `status`. A venue holds a handful of codes, so a rollup query each is fine.
+ */
+export async function statsByVenue(
+  venueId: string,
+  now: Date = new Date()
+): Promise<VenueQrStatsRow[]> {
+  const result = await VenueQrEntity.query.byVenue({ venueRef: venueId }).go({ pages: 'all' });
+  const codes = (result.data as VenueQr[]) ?? [];
+  const to = dateInTimeZone(now, DEFAULT_TIMEZONE);
+  const from = dateInTimeZone(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000), DEFAULT_TIMEZONE);
+  return Promise.all(
+    codes.map(async qr => {
+      const days = await listScanDays(qr.code, { from, to });
+      return {
+        code: qr.code,
+        status: qr.status,
+        label: qr.label,
+        spaceId: qr.spaceId,
+        scansLast7Days: days.reduce((sum, day) => sum + (day.scans ?? 0), 0),
+        scansTotal: qr.scanCount ?? 0,
+        follows: qr.followCount ?? 0,
+        lastScannedAt: qr.lastScannedAt,
+      };
+    })
+  );
+}

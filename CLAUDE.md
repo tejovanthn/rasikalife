@@ -51,6 +51,8 @@ An event with no poster shows a text card in the poster slot, and its share imag
 - **packages/scraper**: Data scraping utilities
 - **packages/classes**: React Router v7 PWA for Rasika Classes, deployed to `classes.rasika.life` as its own SST site
 - **packages/talapettige**: Talapettige, a tanpura drone and Carnatic tala metronome. A static, prerendered React Router v7 PWA at `talapettige.rasika.life` that works offline
+- **packages/admin**: React Router v7 app for moderators at `admin.rasika.life` (QR codes and batches; see "Venue QR Follow: admin")
+- **packages/qr**: SQS-driven Lambda that renders QR sticker, table tent and poster PDFs (HarfBuzz-shaped text, pdf-lib)
 - **packages/ui**: Shared Tailwind preset, design tokens and the primitives Classes needs. Browser-only; never imports `@rasika/core` outside a `/client` subpath
 - **infra/**: SST infrastructure definitions
 
@@ -2079,6 +2081,81 @@ Phase 7: the day-before reminder goes by web push for users who subscribed, else
      old public key). They then fail and are deleted, and users fall back to email.
   4. Subscribe on your own phone from a scan confirmation and check the next 18:00 IST reminder.
 - `TODO(copy)`: the push body when the event has no venue name (only the title is shown).
+
+### Venue QR Follow: admin
+
+Phase 4: the admin app, batch minting, PDF rendering, the `qr` and `space` routers, and the venue
+QR panel. Copy is in `packages/admin/app/lib/copy.ts` (`ADMIN_COPY` is verbatim from `copy.md`;
+`ADMIN_EXTRA_COPY` holds strings copy.md lacks, each a `TODO(copy)`).
+
+- **`packages/admin`** is a React Router v7 app at `admin.rasika.life` (`admin.<stage>.rasika.life`
+  off prod), `infra/admin.ts`. Same setup as Classes: fs-routes, `@rasika/ui` preset and tokens,
+  the shared `rasika_session` cookie (`SESSION_COOKIE_DOMAIN`), `noindex`, `private, no-store`,
+  `robots.txt` that disallows all. Every route calls `requireModerator` first: signed out goes to
+  sign-in, any role below moderator gets a plain 403 page. That gate is a convenience. The tRPC
+  procedures are `moderatorProcedure` and refuse the call themselves. The issuer already allows any
+  `*.rasika.life` redirect, so it needed no change. The app is linked to tRPC and auth only, not the
+  table or the bucket (same reasoning as Classes: one write path, one authorisation story). Existing
+  admin routes stay in `packages/web`.
+- **Routes.** `/qr` (codes, filters, "Assign code" box, batches), `/qr/batches/new`,
+  `/qr/batches/:id` (polls every 3 s while `pdfStatus` is `pending`), `/qr/batches/:id/assign` (bulk,
+  up to 50, numbered labels), `/qr/:code/assign`, `/qr/:code/edit?intent=label|reassign`,
+  `/qr/:code/retire` (a confirm page, so it works without JavaScript). The venue typeahead loads
+  every venue once (`loadVenueOptions`) and filters in the browser (`filterVenues`); spaces load per
+  venue from `/api/spaces`. Pure helpers are in `lib/qr-admin.ts` with tests.
+- **`qr` router** adds `createBatch`, `rerenderBatch`, `listBatches`, `getBatch` (with a 5 minute
+  presigned PDF url when ready), `list`, `get`, `assign`, `bulkAssign`, `updateLabel`, `reassign`,
+  `retire`, `statsByVenue`; the `space` router has `list`, `create`, `update`. All are
+  `moderatorProcedure`. `TODO(phase 8)`: `statsByVenue` and `space.*` also admit a partner. Core
+  `ApplicationError`s map to NOT_FOUND, CONFLICT or BAD_REQUEST (`toQrTrpcError`). The `cause` does not
+  cross HTTP, so the admin app branches on the loaded code status and shows the tRPC message.
+  `rerenderBatch` and `qr.get` are not in the spec table: the "PDF failed. Try again" button and the
+  assign form need them.
+- **Cache.** `qr` and `space` are in `PRIVATE_ROUTERS`. The scan page is `no-store` and the only
+  cached page that shows a code is the venue panel, which is moderator only. Assigning 50 stickers
+  must not clear the CDN 50 times.
+- **PDF rendering is `packages/qr`**, its own Lambda behind an SQS queue (`infra/qr.ts`,
+  `QrRenderQueue`, batch size 1, visibility 6 minutes, 2 GB, 5 minutes). `createBatch` writes the
+  batch and codes, then queues `{ batchId }` (`trpc/src/qr-render-queue.ts`, env
+  `QR_RENDER_QUEUE_URL`). The renderer reads the codes from the table, writes
+  `qr-batches/{batchId}.pdf` to the private bucket and sets `pdfStatus` and `pdfKey`. A failure sets
+  `failed` and is not rethrown (SQS would retry a stable fault). A re-render keeps every code.
+  The private bucket is new, `PrivateFiles` in `infra/qr.ts`, with a 7 day rule on `exports/`. It is
+  not the public posters bucket and not the Classes uploads bucket. Presigned reads go through
+  `getQrBatchPdfUrl` in core, which checks the `qr-batches/` prefix.
+- **Kannada shaping.** pdf-lib has no shaping. `@pdf-lib/fontkit` was tried first and its Indic
+  shaper throws `regeneratorRuntime is not defined` on the Kannada line in Node. So text is shaped
+  by HarfBuzz (`harfbuzzjs`, WASM) and drawn as vector outlines (`src/typesetter.ts`). Conjuncts
+  (ಲ್ಲಿ, ಸ್ಕ್ಯಾ) were checked on a rasterised page. The PDF holds paths, not text, so a printer cannot
+  substitute a font. Cost: the text cannot be selected, and the files are large (200 table tents is
+  about 22 MB). Fonts are Noto Sans and Noto Sans Kannada, variable TTFs from the google/fonts repo
+  (OFL, licences beside them, `fetch-fonts.sh`), read from `QR_FONTS_DIR` (`/var/task/fonts`).
+  `harfbuzzjs` is `nodejs.install`ed because `hb.js` reads `hb.wasm` from disk.
+- **Layouts** (`src/layout.ts`): sticker 100 mm, four to an A4 sheet in a 2 by 2 block with crop
+  marks at every grid line; table tent is one A4 sheet folded across, the upper half turned 180
+  degrees so both faces read upright, fold ticks and corner ticks; poster is A4. QR is error
+  correction M with a 4 module quiet zone, drawn as one path (`qr-path.ts`). Strings are verbatim
+  from copy.md (`src/copy.ts`). A test decodes every code back from its matrix with `jsqr`.
+- **Measured locally** (Apple silicon, 200 codes): sticker 3.4 s, table tent 10.7 s, poster 5.1 s.
+  The limit is 60 s. `pnpm --filter @rasika/qr sample <format> <count> <out.pdf>` renders a sample.
+- **Venue QR panel** on `/venues/:venueid` (`components/VenueQrPanel.tsx`), moderators only. The
+  loader asks `qr.statsByVenue` only for a moderator, so the signed-out page that is cached for
+  everyone carries no panel data. A moderator's document is `private` already. Actions link to the
+  admin forms (`panelActionUrl`). Columns follow the spec table. Retired codes are listed, muted.
+- **ChangeHistory** is written by core on assign, bulk assign (one per code), relabel, reassign and
+  retire (`venue-qr/index.test.ts`).
+
+Owner steps:
+
+1. Deploy creates the `admin.` site, the queue, the renderer and the `PrivateFiles` bucket. The new
+   site needs DNS: the stage domain helper already points `admin.<stage>` at the zone, so no manual
+   record is expected. Check `admin.rasika.life` loads and that a moderator account is let in.
+2. First print run checklist. Have a native Kannada speaker review both Kannada lines (`copy.md`,
+   `packages/qr/src/copy.ts`). Print one sticker sheet and one tent at 100 percent, no "fit to
+   page", and check the Kannada at sticker size, the crop marks and the fold. Scan from 1 m on a
+   mid-range Android phone. The sticker QR has a 64 mm box and about 50 mm of data area, so 1 m is
+   the limit. If it fails, use the tent or poster at counters and keep stickers for close doors.
+   Download the batch PDF only through the admin page (the link lasts 5 minutes).
 
 ### Importing from `@rasika/core` in web routes
 

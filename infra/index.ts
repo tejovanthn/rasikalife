@@ -13,3 +13,5 @@ export * from './instagram';
 export * from './artist-denorm';
 export * from './venue-organiser-enrich';
 export * from './notify';
+export * from './qr';
+export * from './admin';

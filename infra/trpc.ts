@@ -6,6 +6,7 @@ import { email } from './email';
 import { eventPostersBucket, eventPostersCdn, geminiApiKey } from './event-posters';
 import { instagramImageFetcherFunction, instagramScraperFunction } from './instagram';
 import { unsubscribeSecret } from './notify';
+import { privateFilesBucket, qrRenderQueue } from './qr';
 import { searchBucket, searchReindexFunction } from './search';
 import { siteCacheEnvironment, siteCachePermissions } from './site-cache';
 
@@ -22,6 +23,8 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     classUploadsBucket,
     email,
     unsubscribeSecret,
+    privateFilesBucket,
+    qrRenderQueue,
   ],
   handler: './packages/trpc/src/index.handler',
   timeout: '5 minutes',
@@ -40,6 +43,9 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     INSTAGRAM_SCRAPER_FUNCTION_NAME: instagramScraperFunction.name,
     INSTAGRAM_IMAGE_FETCHER_FUNCTION_NAME: instagramImageFetcherFunction.name,
     CLASS_UPLOADS_BUCKET: classUploadsBucket.name,
+    // QR batch PDFs: the queue the renderer listens on, and the bucket it writes to.
+    QR_RENDER_QUEUE_URL: qrRenderQueue.url,
+    PRIVATE_FILES_BUCKET: privateFilesBucket.name,
     EMAIL_SENDER: email.sender,
     // Verifies `/unsubscribe/:token` links (`notify.checkUnsubscribe`, `notify.unsubscribe`).
     UNSUBSCRIBE_SECRET: unsubscribeSecret.value,

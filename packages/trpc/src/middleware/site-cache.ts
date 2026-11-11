@@ -6,11 +6,20 @@ import { invalidateSiteCache } from '@rasika/core/site-cache';
  * "my concerts"; `user` holds preferences and roles; `shortLink` adds `/l/` redirects, which
  * no page shows, and is called while a page renders, so clearing on it would empty the cache
  * from inside a cache miss. `rsvp` is not here: the event page shows the count. `notify` holds
- * a user's own preferences and WhatsApp number. `qr` is not here: its writes (phase 4) change
- * the venue page's QR panel only for moderators, but the scan page is never cached anyway, and
- * a retire or assign should refresh the venue page, so it clears like any write.
+ * a user's own preferences and WhatsApp number. `qr` and `space` are here since phase 4: the scan
+ * page is `no-store`, and the only place a code shows on a cached page is the venue QR panel,
+ * which renders for moderators only and so sits in a private document. Assigning 50 stickers on
+ * site would otherwise clear the whole CDN 50 times. `qr.resolve` is a query and never clears.
  */
-const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink', 'notify']);
+const PRIVATE_ROUTERS = new Set([
+  'classes',
+  'concertLog',
+  'user',
+  'shortLink',
+  'notify',
+  'qr',
+  'space',
+]);
 
 /**
  * Single procedures, inside a router that is otherwise public, that change no page. `follow`

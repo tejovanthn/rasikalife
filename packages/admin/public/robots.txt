@@ -1,0 +1,4 @@
+# Internal tool. Nothing here is ever indexed. The noindex meta tag and header on every route are
+# the belt; this is the braces. Neither is a permission system: tRPC refuses non-moderators.
+User-agent: *
+Disallow: /

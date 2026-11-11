@@ -1,0 +1,31 @@
+{
+  "name": "@rasika/qr",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Lambda that renders print-ready QR sticker, table tent and poster PDFs",
+  "main": "src/handler.ts",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "sample": "tsx scripts/sample.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1000.0",
+    "@rasika/core": "workspace:*",
+    "harfbuzzjs": "^0.4.0",
+    "pdf-lib": "^1.17.1",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.161",
+    "@types/node": "^20.19.35",
+    "@types/pngjs": "^6.0.5",
+    "@types/qrcode": "^1.5.5",
+    "jsqr": "^1.4.0",
+    "pngjs": "^7.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3",
+    "vitest": "^1.6.1"
+  }
+}

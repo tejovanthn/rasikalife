@@ -18,6 +18,7 @@ export default $config({
     return {
       site: infra.site.url,
       classes: infra.classesSite.url,
+      admin: infra.adminSite.url,
       talapettige: infra.talapettigeSite.url,
       trpc: infra.trpc.url,
       search: infra.searchReindexFunction.url,
