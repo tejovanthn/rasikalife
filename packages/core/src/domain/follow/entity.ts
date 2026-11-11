@@ -34,6 +34,9 @@ export const FollowEntity = new Entity(
       shareConsentAt: { type: 'string', required: false },
       // Version id of the consent text shown (CONSENT_VERSIONS.share).
       shareConsentVersion: { type: 'string', required: false },
+      // Set when sharing goes from true to false, removed when it is granted again. Feeds the
+      // sabha dashboard's "Stopped sharing this month" count. Owner decision (phase 8).
+      shareWithdrawnAt: { type: 'string', required: false },
       createdAt: {
         type: 'string',
         required: true,

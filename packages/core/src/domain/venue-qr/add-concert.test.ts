@@ -31,5 +31,11 @@ describe('add concert rules', () => {
     expect(mayAutoApprove({ role: 'viewer' }, { verifiedAt: '2026-11-01' })).toBe(false);
     expect(mayAutoApprove({ role: 'owner' }, {})).toBe(false);
     expect(mayAutoApprove(null, { verifiedAt: '2026-11-01' })).toBe(false);
+    expect(
+      mayAutoApprove({ role: 'owner' }, { verifiedAt: '2026-11-01', requireEventReview: true })
+    ).toBe(false);
+    expect(
+      mayAutoApprove({ role: 'owner' }, { verifiedAt: '2026-11-01', requireEventReview: false })
+    ).toBe(true);
   });
 });

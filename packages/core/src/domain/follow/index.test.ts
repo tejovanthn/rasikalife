@@ -311,6 +311,7 @@ describe('sharing', () => {
     await followTarget(FOLLOW);
     const patch = {
       set: vi.fn().mockReturnThis(),
+      remove: vi.fn().mockReturnThis(),
       go: vi.fn().mockResolvedValue({ data: { shareWithTarget: true } }),
     };
     vi.mocked(FollowEntity.patch).mockReturnValue(patch as never);
@@ -324,16 +325,56 @@ describe('sharing', () => {
     );
   });
 
-  it('withdraws sharing with a patch that keeps the follow', async () => {
+  it('withdraws sharing, keeps the follow and records when', async () => {
+    addTarget('venue', 'venue1');
+    await followTarget({ ...FOLLOW, share: true });
     const patch = {
       set: vi.fn().mockReturnThis(),
+      remove: vi.fn().mockReturnThis(),
       go: vi.fn().mockResolvedValue({ data: { shareWithTarget: false } }),
     };
+    vi.mocked(FollowEntity.patch).mockReturnValue(patch as never);
+    const now = new Date('2026-11-20T10:00:00Z');
+
+    await setFollowShare(
+      { userId: 'u1', targetType: 'venue', targetId: 'venue1', share: false },
+      now
+    );
+
+    expect(patch.set).toHaveBeenCalledWith({
+      shareWithTarget: false,
+      shareWithdrawnAt: '2026-11-20T10:00:00.000Z',
+    });
+  });
+
+  it('does not stamp a withdrawal when sharing was already off', async () => {
+    addTarget('venue', 'venue1');
+    await followTarget(FOLLOW);
+    const patch = { set: vi.fn().mockReturnThis(), go: vi.fn() };
     vi.mocked(FollowEntity.patch).mockReturnValue(patch as never);
 
     await setFollowShare({ userId: 'u1', targetType: 'venue', targetId: 'venue1', share: false });
 
-    expect(patch.set).toHaveBeenCalledWith({ shareWithTarget: false });
+    expect(patch.set).not.toHaveBeenCalled();
+  });
+
+  it('removes shareWithdrawnAt when sharing is granted again (rule 8)', async () => {
+    const patch = {
+      set: vi.fn().mockReturnThis(),
+      remove: vi.fn().mockReturnThis(),
+      go: vi.fn().mockResolvedValue({ data: { shareWithTarget: true } }),
+    };
+    vi.mocked(FollowEntity.patch).mockReturnValue(patch as never);
+
+    await setFollowShare({ userId: 'u1', targetType: 'venue', targetId: 'venue1', share: true });
+
+    expect(patch.remove).toHaveBeenCalledWith(['shareWithdrawnAt']);
+  });
+
+  it('refuses to withdraw from a follow that does not exist', async () => {
+    await expect(
+      setFollowShare({ userId: 'u1', targetType: 'venue', targetId: 'nope', share: false })
+    ).rejects.toMatchObject({ code: ErrorCode.FOLLOW_TARGET_NOT_FOUND });
   });
 
   it('refuses setShare for an artist', async () => {

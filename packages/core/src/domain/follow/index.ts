@@ -191,10 +191,10 @@ export async function unfollowTarget(
 
 /**
  * Grants or withdraws sharing with a venue or organiser. Granting stores the time and the
- * version of the consent text. Withdrawing leaves those two fields as the record of the earlier
- * consent.
- * TODO(spec): the Followers screen counts "sharing withdrawn this month", but the Follow model
- * has no `shareWithdrawnAt`. Add it, or say where that count comes from.
+ * version of the consent text, and removes `shareWithdrawnAt` (`.remove`, rule 8). Withdrawing
+ * leaves those two fields as the record of the earlier consent and sets `shareWithdrawnAt`, but
+ * only when sharing was on: switching off what was already off must not start a new month's
+ * count. The sabha dashboard counts follows whose `shareWithdrawnAt` is in the current month.
  */
 export async function setFollowShare(
   input: { userId: string; targetType: FollowTargetType; targetId: string; share: boolean },
@@ -208,19 +208,32 @@ export async function setFollowShare(
   }
   const { userId, targetType, targetId } = input;
   try {
+    if (input.share) {
+      const granted = await FollowEntity.patch({ userId, targetType, targetId })
+        .set({
+          shareWithTarget: true,
+          shareConsentAt: now.toISOString(),
+          shareConsentVersion: CONSENT_VERSIONS.share,
+        })
+        .remove(['shareWithdrawnAt'])
+        .go({ response: 'all_new' });
+      return granted.data as Follow;
+    }
+    // Withdrawing: only a follow that was sharing records the time.
+    const current = await getFollow(userId, targetType, targetId);
+    if (!current) {
+      throw new ApplicationError(
+        ErrorCode.FOLLOW_TARGET_NOT_FOUND,
+        `Not following ${targetType} ${targetId}`
+      );
+    }
+    if (current.shareWithTarget !== true) return current;
     const result = await FollowEntity.patch({ userId, targetType, targetId })
-      .set(
-        input.share
-          ? {
-              shareWithTarget: true,
-              shareConsentAt: now.toISOString(),
-              shareConsentVersion: CONSENT_VERSIONS.share,
-            }
-          : { shareWithTarget: false }
-      )
+      .set({ shareWithTarget: false, shareWithdrawnAt: now.toISOString() })
       .go({ response: 'all_new' });
     return result.data as Follow;
   } catch (error) {
+    if (error instanceof ApplicationError) throw error;
     const message = (error as { message?: string }).message ?? '';
     if (message.includes(CONDITION_FAILED) || (error as { code?: number }).code === 4001) {
       throw new ApplicationError(
@@ -460,6 +473,7 @@ export async function moveFollows(
         shareWithTarget: row.shareWithTarget,
         shareConsentAt: row.shareConsentAt,
         shareConsentVersion: row.shareConsentVersion,
+        shareWithdrawnAt: row.shareWithdrawnAt,
         createdAt: row.createdAt,
       }).params() as unknown as TransactItem['Put'];
       await dynamoClient.send(

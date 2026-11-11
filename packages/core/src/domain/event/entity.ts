@@ -97,6 +97,9 @@ export const EventEntity = new Entity(
       moderatorNote: { type: 'string', required: false },
       submittedAt: { type: 'string', required: false },
       processedAt: { type: 'string', required: false },
+      // Set when a verified organiser owner published this event without review (sabha
+      // dashboard). The moderator spot-check feed lists events that carry it.
+      ownerPublishedAt: { type: 'string', required: false },
 
       // Extraction metadata
       extractionConfidence: { type: 'number', required: false },

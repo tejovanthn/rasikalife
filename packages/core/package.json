@@ -466,6 +466,16 @@
       "import": "./src/domain/partner-invite/client.ts",
       "default": "./src/domain/partner-invite/client.ts"
     },
+    "./domain/sabha": {
+      "types": "./src/domain/sabha/index.ts",
+      "import": "./src/domain/sabha/index.ts",
+      "default": "./src/domain/sabha/index.ts"
+    },
+    "./domain/sabha/client": {
+      "types": "./src/domain/sabha/client.ts",
+      "import": "./src/domain/sabha/client.ts",
+      "default": "./src/domain/sabha/client.ts"
+    },
     "./domain/push-subscription": {
       "types": "./src/domain/push-subscription/index.ts",
       "import": "./src/domain/push-subscription/index.ts",

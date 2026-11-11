@@ -24,9 +24,19 @@ const PRIVATE_ROUTERS = new Set([
 /**
  * Single procedures, inside a router that is otherwise public, that change no page. `follow`
  * is not a private router: a follow moves `followerCount`, which venue, organiser and artist
- * pages show. Turning sharing on or off changes only the follower's own flag.
+ * pages show. Turning sharing on or off changes only the follower's own flag. `partner` is not
+ * private either: `updateProfile`, `createEvent`, `updateEvent` and `setEventReview` change
+ * public pages, and the Verified badge is stored data that those pages read.
  */
-const PRIVATE_PATHS = new Set(['follow.setShare']);
+const PRIVATE_PATHS = new Set([
+  'follow.setShare',
+  // Dashboard access and files change no public page. `partner.acceptInvites` clears the cache
+  // itself, and only when an owner was accepted (that turns the Verified badge on).
+  'partner.invite',
+  'partner.revoke',
+  'partner.exportFollowers',
+  'partner.acceptInvites',
+]);
 
 /** Whether a finished call may have changed a public page, so the CDN copy must go. */
 export function changesPublicPage(type: string, path: string, ok: boolean): boolean {

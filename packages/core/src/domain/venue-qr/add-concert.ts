@@ -40,11 +40,14 @@ export function concertStart(date: string, startTime: string, zone = DEFAULT_TIM
 
 /**
  * Auto-approval: only an owner grant on that organiser, and only once the organiser is verified.
- * A viewer, a member of another organiser, or an unverified organiser goes to review.
+ * A viewer, a member of another organiser, or an unverified organiser goes to review. So does
+ * an organiser a moderator has put on review (`requireEventReview`, phase 8).
  */
 export function mayAutoApprove(
   membership: { role: string } | null | undefined,
-  organiser: { verifiedAt?: string | null } | null | undefined
+  organiser: { verifiedAt?: string | null; requireEventReview?: boolean | null } | null | undefined
 ): boolean {
-  return membership?.role === 'owner' && Boolean(organiser?.verifiedAt);
+  return (
+    membership?.role === 'owner' && Boolean(organiser?.verifiedAt) && !organiser?.requireEventReview
+  );
 }
