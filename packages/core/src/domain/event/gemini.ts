@@ -182,11 +182,15 @@ async function fetchImageAsBase64(url: string): Promise<ImageData> {
   return { data, mimeType: contentType };
 }
 
+/** What the hint is, as told to the model. Callers with a non-Instagram source pass their own. */
+const DEFAULT_HINT_LABEL = 'Instagram auto-generated caption';
+
 async function callGemini(
   ai: GoogleGenAI,
   prompt: string,
   imageData: ImageData,
-  hint?: string
+  hint?: string,
+  hintLabel = DEFAULT_HINT_LABEL
 ): Promise<string> {
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
@@ -195,7 +199,7 @@ async function callGemini(
         role: 'user',
         parts: [
           ...(hint
-            ? [{ text: `ADDITIONAL CONTEXT (Instagram auto-generated caption):\n${hint}\n\n` }]
+            ? [{ text: `ADDITIONAL CONTEXT (${hintLabel}):\n${hint}\n\n` }]
             : []),
           { text: prompt },
           { inlineData: { data: imageData.data, mimeType: imageData.mimeType } },
@@ -221,9 +225,10 @@ async function callGemini(
 async function classifyPoster(
   ai: GoogleGenAI,
   imageData: ImageData,
-  hint?: string
+  hint?: string,
+  hintLabel?: string
 ): Promise<ClassificationResult> {
-  const text = await callGemini(ai, CLASSIFICATION_PROMPT, imageData, hint);
+  const text = await callGemini(ai, CLASSIFICATION_PROMPT, imageData, hint, hintLabel);
   const raw = JSON.parse(text);
   return ClassificationResultSchema.parse(raw);
 }
@@ -245,11 +250,12 @@ async function extractByType(
   ai: GoogleGenAI,
   imageData: ImageData,
   classification: ClassificationResult,
-  hint?: string
+  hint?: string,
+  hintLabel?: string
 ): Promise<ExtractionResult> {
   const prompt = getPromptForType(classification.posterType, extractionToday());
 
-  const text = await callGemini(ai, prompt, imageData, hint);
+  const text = await callGemini(ai, prompt, imageData, hint, hintLabel);
   const raw = JSON.parse(text);
   return ExtractionResultSchema.parse(raw);
 }
@@ -331,14 +337,15 @@ export async function extractFromSocialPost(input: SocialPostInput): Promise<Ext
 
 export async function extractFromPoster(
   posterUrl: string,
-  hint?: string
+  hint?: string,
+  hintLabel?: string
 ): Promise<ExtractionResult> {
   const ai = getGeminiClient();
   const imageData = await fetchImageAsBase64(posterUrl);
 
   let classification: ClassificationResult;
   try {
-    classification = await classifyPoster(ai, imageData, hint);
+    classification = await classifyPoster(ai, imageData, hint, hintLabel);
   } catch (error) {
     console.error('[Gemini] ERROR: Classification failed:', error);
     throw error;
@@ -346,7 +353,7 @@ export async function extractFromPoster(
 
   let result: ExtractionResult;
   try {
-    result = await extractByType(ai, imageData, classification, hint);
+    result = await extractByType(ai, imageData, classification, hint, hintLabel);
   } catch (error) {
     console.error('[Gemini] ERROR: Extraction failed:', error);
     throw error;

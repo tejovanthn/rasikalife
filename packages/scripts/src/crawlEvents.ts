@@ -141,7 +141,11 @@ export async function crawlExtract(opts: {
   mkdirSync(out, { recursive: true });
   for (const e of batch) {
     try {
-      const result = await extractFromPoster(e.posterUrl as string, mdndHint(e));
+      const result = await extractFromPoster(
+        e.posterUrl as string,
+        mdndHint(e),
+        'event listing from mdnd.in: title, date, time and venue as listed; the poster is the source for performers'
+      );
       writeFileSync(path.join(out, `${e.sourceId}.json`), JSON.stringify(result, null, 2));
       console.log(
         `  ✅ ${e.sourceId} ${result.events.length} event(s), confidence ${result.confidence}`

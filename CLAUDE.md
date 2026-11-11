@@ -878,7 +878,8 @@ adapter and register it in `crawl/index.ts`.
    and organisers (`event.matchEntities`, `event.nearDuplicates`) before `submitVerified`. It has
    no dry run. `crawl-extract` runs only the first half, the Gemini read, and saves the result
    to `mdnd/extractions/<id>.json`: no draft, no S3 upload, no database. The listing goes in as
-   the extractor's one `hint` (the extractor labels it a caption). It needs `GEMINI_API_KEY`, and
+   the extractor's one `hint`, labelled as an mdnd.in listing (`hintLabel`; the default label,
+   for the Instagram path, is "caption"). It needs `GEMINI_API_KEY`, and
    it sends each public poster URL to Google, so run it with the owner's key. It skips events
    already read. `load` then applies each file (`applyPosterExtraction`): people and organiser
    come from the poster (first person billed is `main`, a later person on an accompanying
