@@ -3,6 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react
 import { data, useFetcher, useLoaderData } from 'react-router';
 import { toast } from 'sonner';
 import { createServerClient } from '~/api.server';
+import { usePushState } from '~/components/push/use-push-state';
 import { Button } from '~/components/ui/button';
 import { requireUser } from '~/lib/auth.server';
 import {
@@ -14,6 +15,8 @@ import {
   whatsappError,
   whatsappUnconfirmed,
 } from '~/lib/notifications';
+import { PUSH_COPY, parseSubscriptionForm } from '~/lib/push';
+import { disablePush, enablePush } from '~/lib/push-client';
 
 export const meta: MetaFunction = () => [
   { title: `${NOTIFY_COPY.pageTitle} - Rasika.life` },
@@ -23,11 +26,16 @@ export const meta: MetaFunction = () => [
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
   const client = await createServerClient(request);
-  return data(await client.notify.getPrefs.query());
+  const prefs = await client.notify.getPrefs.query();
+  // The public VAPID key. Null (unset) turns the push toggle into plain text.
+  return data({ ...prefs, vapidKey: process.env.VAPID_PUBLIC_KEY || null });
 }
 
 type ActionResult =
-  | { ok: true; intent: 'pref' | 'removeWhatsapp' | 'setWhatsapp' }
+  | {
+      ok: true;
+      intent: 'pref' | 'removeWhatsapp' | 'setWhatsapp' | 'subscribePush' | 'unsubscribePush';
+    }
   | { ok: false; error: string };
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -43,6 +51,23 @@ export async function action({ request }: ActionFunctionArgs) {
         return data<ActionResult>({ ok: false, error: 'Invalid request' }, { status: 400 });
       await client.notify.setPrefs.mutate(change);
       return data<ActionResult>({ ok: true, intent: 'pref' });
+    }
+    if (intent === 'subscribePush') {
+      const subscription = parseSubscriptionForm(form);
+      if (!subscription)
+        return data<ActionResult>({ ok: false, error: 'Invalid request' }, { status: 400 });
+      await client.notify.subscribePush.mutate(subscription);
+      return data<ActionResult>({ ok: true, intent: 'subscribePush' });
+    }
+    if (intent === 'unsubscribePush') {
+      const endpoint = form.get('endpoint');
+      if (typeof endpoint === 'string' && endpoint) {
+        await client.notify.unsubscribePush.mutate({ endpoint });
+      } else {
+        // This browser had no subscription (cleared site data). Only the preference is left.
+        await client.notify.setPrefs.mutate({ notifyPush: false });
+      }
+      return data<ActionResult>({ ok: true, intent: 'unsubscribePush' });
     }
     if (intent === 'removeWhatsapp') {
       await client.notify.removeWhatsapp.mutate();
@@ -66,6 +91,28 @@ export async function action({ request }: ActionFunctionArgs) {
     return data<ActionResult>({ ok: false, error: 'Request failed' }, { status: 500 });
   }
   return data<ActionResult>({ ok: false, error: 'Invalid request' }, { status: 400 });
+}
+
+const SWITCH_TRACK =
+  'relative inline-flex h-11 w-14 shrink-0 items-center justify-center md:h-6 md:w-11';
+
+function SwitchFace({ on }: { on: boolean }) {
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        className={`absolute inset-x-0 top-1/2 h-6 -translate-y-1/2 rounded-full border transition-colors ${
+          on ? 'bg-primary border-primary' : 'bg-muted border-input'
+        }`}
+      />
+      <span
+        aria-hidden="true"
+        className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-background shadow transition-all ${
+          on ? 'right-2.5 md:right-1.5' : 'left-2.5 md:left-1.5'
+        }`}
+      />
+    </>
+  );
 }
 
 function Toggle({
@@ -93,22 +140,83 @@ function Toggle({
         role="switch"
         aria-checked={on}
         aria-labelledby={`pref-${prefKey}`}
-        className="relative inline-flex h-11 w-14 shrink-0 items-center justify-center md:h-6 md:w-11"
+        className={SWITCH_TRACK}
       >
-        <span
-          aria-hidden="true"
-          className={`absolute inset-x-0 top-1/2 h-6 -translate-y-1/2 rounded-full border transition-colors ${
-            on ? 'bg-primary border-primary' : 'bg-muted border-input'
-          }`}
-        />
-        <span
-          aria-hidden="true"
-          className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-background shadow transition-all ${
-            on ? 'right-2.5 md:right-1.5' : 'left-2.5 md:left-1.5'
-          }`}
-        />
+        <SwitchFace on={on} />
       </button>
     </fetcher.Form>
+  );
+}
+
+/**
+ * "Push notifications on this device". Unlike the other toggles this one is about this browser:
+ * turning it on asks permission and registers the device, turning it off unregisters it. When
+ * this browser cannot do push, the row shows why in place of a switch.
+ */
+function PushToggle({ vapidKey, notifyPush }: { vapidKey: string | null; notifyPush: boolean }) {
+  const [state, setState] = usePushState(vapidKey);
+  const fetcher = useFetcher<ActionResult>();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data?.ok) toast(NOTIFY_COPY.saved);
+  }, [fetcher.state, fetcher.data]);
+
+  // Before mount, show the saved preference; after, what this device really has.
+  const on = state === null ? notifyPush : state === 'enabled';
+
+  const turnOn = async () => {
+    if (!vapidKey) return;
+    setBusy(true);
+    const result = await enablePush(vapidKey);
+    setBusy(false);
+    if (!result.ok) {
+      if (result.reason === 'denied') setState('blocked');
+      return;
+    }
+    setState('enabled');
+    fetcher.submit(
+      {
+        intent: 'subscribePush',
+        endpoint: result.subscription.endpoint,
+        p256dh: result.subscription.keys.p256dh,
+        auth: result.subscription.keys.auth,
+      },
+      { method: 'post' }
+    );
+  };
+
+  const turnOff = async () => {
+    setBusy(true);
+    const endpoint = await disablePush();
+    setBusy(false);
+    setState('available');
+    fetcher.submit({ intent: 'unsubscribePush', endpoint: endpoint ?? '' }, { method: 'post' });
+  };
+
+  const note =
+    state === 'ios-install' ? PUSH_COPY.iosInstall : state === 'blocked' ? PUSH_COPY.blocked : null;
+
+  return (
+    <div className="py-3">
+      <div className="flex items-center justify-between gap-3">
+        <span id="pref-notifyPush">{NOTIFY_COPY.push}</span>
+        {state !== 'unsupported' && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            aria-labelledby="pref-notifyPush"
+            disabled={busy || state === null || state === 'ios-install' || state === 'blocked'}
+            onClick={on ? turnOff : turnOn}
+            className={`${SWITCH_TRACK} disabled:opacity-60`}
+          >
+            <SwitchFace on={on} />
+          </button>
+        )}
+      </div>
+      {note && <p className="pt-2 text-sm text-muted-foreground">{note}</p>}
+    </div>
   );
 }
 
@@ -193,11 +301,13 @@ export default function MeNotifications() {
     <main className="container mx-auto px-4 py-8 max-w-3xl space-y-6">
       <h1 className="page-title">{NOTIFY_COPY.pageTitle}</h1>
       <div className="divide-y rounded-lg border bg-card px-4">
-        {PREF_ROWS.map(row => (
-          <Toggle key={row.key} prefKey={row.key} label={row.label} checked={prefs[row.key]} />
-        ))}
-        {/* TODO(phase 7): the push toggle only records `notifyPush`. Phase 7 asks the browser
-            for permission and registers the subscription. */}
+        {PREF_ROWS.map(row =>
+          row.key === 'notifyPush' ? (
+            <PushToggle key={row.key} vapidKey={prefs.vapidKey} notifyPush={prefs.notifyPush} />
+          ) : (
+            <Toggle key={row.key} prefKey={row.key} label={row.label} checked={prefs[row.key]} />
+          )
+        )}
         <WhatsappRow whatsapp={prefs.whatsapp} />
       </div>
     </main>

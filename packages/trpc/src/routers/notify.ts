@@ -1,5 +1,9 @@
-import { Notification, User } from '@rasika/core';
+import { Notification, PushSubscription, User } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
+import {
+  SubscribePushSchema,
+  UnsubscribePushSchema,
+} from '@rasika/core/domain/push-subscription/client';
 import { NotifyPrefsSchema, SetWhatsappSchema } from '@rasika/core/domain/user/client';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -40,9 +44,43 @@ export const notifyRouter = createTRPCRouter({
 
   setPrefs: protectedProcedure
     .input(NotifyPrefsSchema)
-    // TODO(phase 7): `notifyPush` only records the choice. Phase 7 asks the browser for
-    // permission and registers the subscription.
     .mutation(({ input, ctx }) => User.setNotifyPrefs(ctx.user.id, input)),
+
+  /**
+   * Registers this browser and turns `notifyPush` on. The row is keyed by the endpoint hash, so
+   * subscribing twice from one browser replaces the keys and stays one row. A bad endpoint or
+   * missing keys is `PUSH_SUBSCRIPTION_INVALID` (BAD_REQUEST).
+   */
+  subscribePush: protectedProcedure.input(SubscribePushSchema).mutation(async ({ input, ctx }) => {
+    try {
+      await PushSubscription.putPushSubscription(
+        ctx.user.id,
+        input,
+        ctx.event?.headers?.['user-agent']
+      );
+    } catch (error) {
+      if (error instanceof ApplicationError && error.code === ErrorCode.PUSH_SUBSCRIPTION_INVALID) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: error.message, cause: error });
+      }
+      throw error;
+    }
+    await User.setNotifyPrefs(ctx.user.id, { notifyPush: true });
+    return { subscribed: true as const };
+  }),
+
+  /**
+   * Removes this browser. `notifyPush` means "push on my devices", so when the last device goes
+   * it is turned off too; otherwise the toggle would read on with nothing to send to. Other
+   * devices are untouched. Reminders then go by email.
+   */
+  unsubscribePush: protectedProcedure
+    .input(UnsubscribePushSchema)
+    .mutation(async ({ input, ctx }) => {
+      await PushSubscription.deletePushSubscription(ctx.user.id, input.endpoint);
+      const remaining = await PushSubscription.listPushSubscriptions(ctx.user.id);
+      if (remaining.length === 0) await User.setNotifyPrefs(ctx.user.id, { notifyPush: false });
+      return { remaining: remaining.length };
+    }),
 
   setWhatsapp: protectedProcedure.input(SetWhatsappSchema).mutation(async ({ input, ctx }) => {
     try {

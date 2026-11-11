@@ -1,6 +1,7 @@
 import { Email, Notification, User } from '@rasika/core';
 import { deliverDigests, deliverReminders } from '@rasika/email';
 import type { DeliverDeps } from '@rasika/email';
+import webpush from 'web-push';
 
 /**
  * Cron and SNS entry points for the Venue QR Follow notifications (phase 5). Thin on purpose:
@@ -11,7 +12,29 @@ import type { DeliverDeps } from '@rasika/email';
  * own zone inside core, never from this Lambda's clock.
  */
 
-function deps(): DeliverDeps {
+/**
+ * Web push sender, or undefined when the VAPID keys are not set (then a push plan goes by email).
+ * Only the reminder cron is linked to the private key. The subject is a contact for push services.
+ */
+function pushDeps(): Notification.PushDeps | undefined {
+  const publicKey = process.env.VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!publicKey || !privateKey) {
+    console.warn('Reminders: VAPID keys are not set, so push is off and reminders go by email');
+    return undefined;
+  }
+  webpush.setVapidDetails('mailto:hello@rasika.life', publicKey, privateKey);
+  return Notification.defaultPushDeps(async (target, payload) => {
+    await webpush.sendNotification(
+      { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
+      JSON.stringify(payload),
+      // Reminders are for tomorrow evening: a message not delivered within 12 hours is stale.
+      { TTL: 12 * 60 * 60, urgency: 'normal' }
+    );
+  });
+}
+
+function deps(withPush = false): DeliverDeps {
   const secret = process.env.UNSUBSCRIBE_SECRET;
   if (!secret) throw new Error('UNSUBSCRIBE_SECRET is unset');
   return {
@@ -23,6 +46,7 @@ function deps(): DeliverDeps {
         ? Promise.resolve(user.unsubscribeToken)
         : User.getOrCreateUnsubscribeToken(user.id),
     markDigestSent: userId => User.setDigestLastSentAt(userId),
+    push: withPush ? pushDeps() : undefined,
   };
 }
 
@@ -37,12 +61,12 @@ export async function digestHandler(): Promise<void> {
   console.log(`Digest: sent ${result.sent}, failed ${result.failed}`);
 }
 
-/** Daily 18:00 IST. Email only for now; `plan.channel === 'push'` is a phase 7 seam. */
+/** Daily 18:00 IST. Push for users with a subscription (fallback to email), else email. */
 export async function reminderHandler(): Promise<void> {
   const plans = await Notification.planReminders(new Date());
   console.log(`Reminders: ${plans.length} users have events tomorrow`);
   if (plans.length === 0) return;
-  const result = await deliverReminders(plans, deps());
+  const result = await deliverReminders(plans, deps(true));
   console.log(`Reminders: sent ${result.sent}, failed ${result.failed}`);
 }
 

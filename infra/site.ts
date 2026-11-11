@@ -2,6 +2,7 @@ import { auth } from './auth';
 import { getCookieDomain, getDomain } from './domain';
 import { blockBadBots } from './edge-security';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
+import { vapidPublicKey } from './notify';
 import { ogImageFunction } from './og-image';
 import { scanWebAclArn } from './scan-rate-limit';
 import { siteDistributionParam } from './site-cache';
@@ -81,6 +82,8 @@ const site = new sst.aws.React('RasikaWeb', {
     EVENT_POSTERS_BUCKET: eventPostersBucket.name,
     EVENT_POSTERS_CDN_URL: eventPostersCdn.url,
     OG_IMAGE_URL: ogImageFunction.url,
+    // Public by design: the browser needs it for `PushManager.subscribe` (phase 7).
+    VAPID_PUBLIC_KEY: vapidPublicKey.value,
     // Scopes `rasika_session` to the stage root so classes.rasika.life shares the sign-in.
     SESSION_COOKIE_DOMAIN: getCookieDomain(),
   },

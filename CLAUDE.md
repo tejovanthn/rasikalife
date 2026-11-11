@@ -1972,7 +1972,7 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
 ### Venue QR Follow: email
 
 Phase 5: the weekly digest, the day-before reminder, preferences and unsubscribe. Email only.
-Push is phase 7.
+Push is phase 7 (next section).
 
 - **Matching** is pure, in `domain/notification/match.ts`; `run.ts` loads data and builds plans
   (`planDigests`, `planReminders`), with every read injected (`NotifyDeps`) so tests need no
@@ -1988,8 +1988,7 @@ Push is phase 7.
   cap, **for reminders only** (the Spec asks for it there). Preferences: `notifyDigest` or
   `notifyReminder`, and `notifyEmail`.
 - **Push seam.** `reminderChannel(user, hasPushSubscription)` is the one place that picks
-  `email` or `push`. `NotifyDeps.loadPushUserIds` returns nobody until phase 7. `deliverReminders`
-  skips a `push` plan. Phase 7 fills both.
+  `email` or `push`. `NotifyDeps.loadPushUserIds` and `deliverReminders` handle push since phase 7.
 - **Sender.** `NotifyEmail` in `infra/notify.ts` is a second `sst.aws.Email` on the root domain
   (`rasika.life`, or `<stage>.rasika.life`), with its own configuration set and SNS topics for
   bounce and complaint. Mail is `rasika.life <concerts@rasika.life>`, reply-to
@@ -2022,7 +2021,7 @@ Push is phase 7.
   gets a plain page back. The response is `private, no-store`.
 - **`/me/notifications`** (`routes/me.notifications.tsx`): four toggles, the WhatsApp row (Add,
   "{number} (not yet confirmed)", Remove number) and the "Settings saved." toast. The push toggle
-  only sets `notifyPush`; phase 7 wires the browser subscription. `notify` is in `PRIVATE_ROUTERS`.
+  subscribes or unsubscribes this device (phase 7). `notify` is in `PRIVATE_ROUTERS`.
   The Add form calls `notify.setWhatsapp`, which phase 3 builds; the route casts the client until
   the two `routers/notify.ts` files are merged.
 - **Owner runbook** (before the first send):
@@ -2035,8 +2034,51 @@ Push is phase 7.
   5. Send a test digest to a Gmail address and check the Unsubscribe button in Gmail.
 - `TODO(copy)`: the button on the unsubscribe confirm step; the reason line for one followed name;
   the reminder subject when the venue has no name.
-- `TODO(spec)`: "reminders" unsubscribe clears `notifyReminder`, which also stops push reminders in
-  phase 7, while Copy says "by email".
+- `TODO(spec)`: "reminders" unsubscribe clears `notifyReminder`, which also stops push reminders,
+  while Copy says "by email".
+
+### Venue QR Follow: web push
+
+Phase 7: the day-before reminder goes by web push for users who subscribed, else by email.
+
+- **Service worker.** `packages/web/public/sw.js` gained `push` and `notificationclick` handlers
+  and nothing else. The payload is `{title, body, url, tag}`; a click opens `url` on our own
+  origin only. Caching is unchanged. The pre-commit hook bumps `CACHE_NAME`.
+- **Payload** (`domain/notification/push.ts`, `buildReminderPush`). Copy strings. One event: title
+  `Tomorrow at {time}`, body `{title}, {venue}`, opens `/events/<id>` with `utm_source=push`. Two
+  or more: `{count} concerts tomorrow`, `{t1}, {t2} and more`, opens `/me/following`. Times are
+  in the event's own zone. The same `tag` replaces an earlier reminder on the device.
+- **Sending** (`sendPushToUser`, all outside calls injected). It sends to every subscription the
+  user has. `410 Gone` and `404` delete that `PushSubscription`. Any other error keeps the row
+  and counts as failed. The cron handler (`notifyCrons.ts`) supplies `web-push`, TTL 12 hours.
+  If the VAPID keys are missing, push is off and reminders go by email.
+- **Channel.** `reminderChannel` is unchanged. `loadPushUserIds` now reads `PushSubscription`
+  rows (one query per user, 8 at a time). `deliverReminders` sends a `push` plan by push. If no
+  device took it (all failed, or the last one was just deleted) it falls back to email when the
+  user has `notifyEmail` on and an address. If email is off, nothing is sent and the run counts a
+  failure. This is a decision, not in the Spec: a dead subscription should not cost the reminder.
+- **tRPC.** `notify.subscribePush` stores the endpoint (`put`, so the same browser stays one row)
+  and sets `notifyPush = true`. Bad endpoint or keys is `PUSH_SUBSCRIPTION_INVALID`, returned as
+  BAD_REQUEST. `notify.unsubscribePush` deletes this endpoint. If the user then has no
+  subscription left, it sets `notifyPush = false`; with other devices left it stays on. The
+  preference means "push on my devices", so it must not read on with nothing to send to.
+  "Reminders" unsubscribe from an email link clears `notifyReminder`, which also stops push.
+- **UI.** `components/push/push-button.tsx` on `/q/:code/done` and `PushToggle` on
+  `/me/notifications`. Permission is asked only on a tap. `lib/push.ts` has the pure parts
+  (`pushUiState`, iOS detection, key decoding, tested); `lib/push-client.ts` touches `navigator`.
+  States: hidden (no key or no browser push), iOS not installed (Home Screen helper, no button),
+  blocked, available, enabled. The state is read after mount, because the server cannot know it.
+  The loaders pass `VAPID_PUBLIC_KEY` (public by design); unset hides the push UI.
+- **Secrets** (`infra/notify.ts`). `VapidPublicKey` goes to RasikaWeb and the reminder cron as
+  environment. `VapidPrivateKey` is linked only to the reminder cron.
+- **Owner steps** (once per stage, before the first push):
+  1. `npx web-push generate-vapid-keys`.
+  2. `sst secret set VapidPublicKey <public key> --stage prod` and
+     `sst secret set VapidPrivateKey <private key> --stage prod`.
+  3. Deploy. Changing the keys later orphans every stored subscription (they are bound to the
+     old public key). They then fail and are deleted, and users fall back to email.
+  4. Subscribe on your own phone from a scan confirmation and check the next 18:00 IST reminder.
+- `TODO(copy)`: the push body when the event has no venue name (only the title is shown).
 
 ### Importing from `@rasika/core` in web routes
 

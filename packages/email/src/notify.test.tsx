@@ -113,12 +113,41 @@ describe('deliver', () => {
     expect(d.send.mock.calls[0]?.[0].unsubscribeUrl).toMatch(/\/unsubscribe\//);
   });
 
-  it('does not email a push plan', async () => {
-    const d = deps();
-    await deliverReminders(
-      [{ user: user as never, entries: [entry('e1', 'A') as never], channel: 'push' }],
-      d
-    );
+  const pushPlan = (u: object = user) => [
+    { user: u as never, entries: [entry('e1', 'A') as never], channel: 'push' as const },
+  ];
+  const target = { endpoint: 'https://p/1', endpointHash: 'h1', p256dh: 'k', auth: 'a' };
+  const pushDeps = (send: ReturnType<typeof vi.fn>, targets = [target]) => ({
+    listSubscriptions: vi.fn().mockResolvedValue(targets),
+    send,
+    removeSubscription: vi.fn().mockResolvedValue(undefined),
+  });
+
+  it('sends a push plan by push and sends no email', async () => {
+    const send = vi.fn().mockResolvedValue(undefined);
+    const push = pushDeps(send);
+    const d = { ...deps(), push: push as never };
+    const result = await deliverReminders(pushPlan(), d);
+    expect(result).toEqual({ sent: 1, failed: 0 });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0]?.[1].title).toBe('Tomorrow at 6:00 pm');
+    expect(d.send).not.toHaveBeenCalled();
+  });
+
+  it('falls back to email when every push fails', async () => {
+    const gone = Object.assign(new Error('gone'), { statusCode: 410 });
+    const push = pushDeps(vi.fn().mockRejectedValue(gone));
+    const d = { ...deps(), push: push as never };
+    const result = await deliverReminders(pushPlan(), d);
+    expect(result).toEqual({ sent: 1, failed: 0 });
+    expect(push.removeSubscription).toHaveBeenCalledWith('u1', 'h1');
+    expect(d.send).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fall back when the user turned email off', async () => {
+    const d = { ...deps(), push: pushDeps(vi.fn().mockRejectedValue(new Error('x'))) as never };
+    const result = await deliverReminders(pushPlan({ ...user, notifyEmail: false }), d);
+    expect(result).toEqual({ sent: 0, failed: 1 });
     expect(d.send).not.toHaveBeenCalled();
   });
 });

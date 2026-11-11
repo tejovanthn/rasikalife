@@ -7,6 +7,15 @@ import { getDomain } from './domain';
 /** Signs unsubscribe links (decisions.md #3). Set with `sst secret set UnsubscribeSecret <value>`. */
 export const unsubscribeSecret = new sst.Secret('UnsubscribeSecret');
 
+/**
+ * Web push (phase 7). Generate the pair with `npx web-push generate-vapid-keys`, then
+ * `sst secret set VapidPublicKey <public>` and `sst secret set VapidPrivateKey <private>`.
+ * The public key is not secret: it goes to the browser for `PushManager.subscribe` (RasikaWeb
+ * reads it through its environment). The private key is linked only to the reminder cron.
+ */
+export const vapidPublicKey = new sst.Secret('VapidPublicKey');
+export const vapidPrivateKey = new sst.Secret('VapidPrivateKey');
+
 const { name: sender, dns } = getDomain();
 
 const bounceTopic = new sst.aws.SnsTopic('NotifyEmailBounceTopic');
@@ -89,9 +98,13 @@ new sst.aws.Cron('NotifyReminderCron', {
   schedule: 'cron(30 12 * * ? *)',
   job: {
     handler: 'packages/scripts/src/notifyCrons.reminderHandler',
-    link: [database, notifyEmail, unsubscribeSecret],
+    link: [database, notifyEmail, unsubscribeSecret, vapidPrivateKey],
     memory: '1024 MB',
     timeout: '600 seconds',
-    environment: notifyEnvironment,
+    environment: {
+      ...notifyEnvironment,
+      VAPID_PUBLIC_KEY: vapidPublicKey.value,
+      VAPID_PRIVATE_KEY: vapidPrivateKey.value,
+    },
   },
 });
