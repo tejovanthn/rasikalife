@@ -13,7 +13,10 @@ export const ogImageFunction = new sst.aws.Function('OgImage', {
   nodejs: {
     install: ['sharp', '@img/sharp-linux-x64', '@img/sharp-libvips-linux-x64'],
   },
+  // The Lambda image has no fonts: without these every card's text rendered as boxes.
+  copyFiles: [{ from: 'packages/og-image/fonts', to: 'fonts' }],
   environment: {
+    FONTCONFIG_PATH: '/var/task/fonts',
     EVENT_POSTERS_BUCKET: eventPostersBucket.name,
     EVENT_POSTERS_CDN_URL: eventPostersCdn.url,
     TRPC_URL: trpc.url,

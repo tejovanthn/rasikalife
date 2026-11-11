@@ -38,7 +38,7 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - **packages/web**: React Router v7 frontend application
 - **packages/search**: Lambda handler for periodic search index refresh
 - **packages/image-processor**: S3-triggered Lambda for image processing (Sharp)
-- **packages/og-image**: Lambda that renders OG share images (Sharp); kept separate from the web Lambda because `sst.aws.React` does not bundle `node_modules/` so native modules like Sharp can't live in the React server function
+- **packages/og-image**: Lambda that renders OG share images (Sharp); kept separate from the web Lambda because `sst.aws.React` does not bundle `node_modules/` so native modules like Sharp can't live in the React server function. **The Lambda image has no fonts**: `packages/og-image/fonts/` (DejaVu Sans regular and bold, plus `fonts.conf`) is copied in by `copyFiles` and `FONTCONFIG_PATH` points at it. Without it every card's text rendered as boxes, and it looked fine locally because the Mac has fonts. A card font change needs its file added there and `CARD_VERSION` bumped, since broken cards are cached in S3 by content hash
 
 ### Poster-less events: text card and share image
 
