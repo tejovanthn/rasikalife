@@ -5,6 +5,7 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { ApplicationError, ErrorCode } from '../../constants';
+import { batchGetAll } from '../../shared/batch-get';
 import { EventEntity } from '../event/entity';
 import type { Event } from '../event/entity';
 import { listAllFollowersOfTarget } from '../follow';
@@ -156,8 +157,11 @@ async function loadExportUsers(ids: string[]): Promise<Map<string, ExportUser>> 
   const users = new Map<string, ExportUser>();
   for (let i = 0; i < unique.length; i += USER_BATCH) {
     const batch = unique.slice(i, i + USER_BATCH);
-    const result = await UserEntity.get(batch.map(id => ({ id }))).go();
-    for (const user of (result.data ?? []) as ExportUser[]) users.set(user.id, user);
+    // Unprocessed keys are retried, and the export throws rather than drop a consented row.
+    const rows = await batchGetAll(batch.map(id => ({ id })), keys =>
+      UserEntity.get(keys).go()
+    );
+    for (const user of rows as ExportUser[]) users.set(user.id, user);
   }
   return users;
 }
