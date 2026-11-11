@@ -56,6 +56,9 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     // The approval email's links, for the same reason: rasika.life in prod, <stage>.rasika.life
     // otherwise.
     SITE_URL: `https://${getDomain().name}`,
+    // The partner invite email's link: sabha.rasika.life in prod, sabha.<stage>.rasika.life
+    // otherwise.
+    SABHA_URL: `https://${getDomain('sabha').name}`,
   },
 });
 
