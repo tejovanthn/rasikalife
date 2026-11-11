@@ -322,6 +322,18 @@ function previouslyApplied(manifest: string): Set<string> {
   return keys;
 }
 
+/** Event ids this manifest's earlier apply runs created. */
+function previouslyCreatedEventIds(manifest: string): Set<string> {
+  const dir = path.dirname(manifest);
+  const prefix = `${path.basename(manifest)}.applied-`;
+  const ids = new Set<string>();
+  for (const f of readdirSync(dir).filter(n => n.startsWith(prefix))) {
+    const run = JSON.parse(readFileSync(path.join(dir, f), 'utf8'));
+    for (const e of run.applied ?? []) if (e.eventId) ids.add(e.eventId);
+  }
+  return ids;
+}
+
 export async function crawlApply(opts: {
   manifest: string;
   userId: string;
@@ -343,6 +355,10 @@ export async function crawlApply(opts: {
   const { uploadPosterFromBuffer } = await import('@rasika/core/domain/event/s3');
   const candidates = await core.Artist.listAllArtistsForMatching();
   const applied: AppliedEntry[] = [];
+  // The run-time duplicate check uses the verify step's rule (same venue within 3 hours). A
+  // sabha runs back-to-back concerts, so the crawl's own earlier writes must not count: the
+  // dry run already compared every row with the stored events and with each other.
+  const ownEventIds = previouslyCreatedEventIds(opts.manifest);
   const failed: Array<{ key: string; error: string }> = [];
   const file = `${opts.manifest}.applied-${stamp()}.json`;
   const save = () => writeFileSync(file, JSON.stringify({ applied, failed }, null, 2));
@@ -362,8 +378,9 @@ export async function crawlApply(opts: {
           venueId: venue.id,
           startDateTime: e.startDateTime,
         });
-        if (dup.length) {
-          failed.push({ key: entry.key, error: `duplicate appeared: ${dup[0].id}` });
+        const others = dup.filter(d => !ownEventIds.has(d.id));
+        if (others.length) {
+          failed.push({ key: entry.key, error: `duplicate appeared: ${others[0].id}` });
           continue;
         }
       }
@@ -435,6 +452,7 @@ export async function crawlApply(opts: {
         createdArtistIds,
         posterUrl: poster?.posterUrl,
       });
+      ownEventIds.add(created.id);
       console.log(`  ✅ ${entry.key} -> ${created.id}`);
     } catch (error) {
       failed.push({ key: entry.key, error: (error as Error).message });
