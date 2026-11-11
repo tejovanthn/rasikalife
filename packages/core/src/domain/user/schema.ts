@@ -24,3 +24,18 @@ export const UserPreferencesSchema = z
     // Add preferences as needed
   })
   .optional();
+
+export const NotifyPrefsSchema = z.object({
+  notifyDigest: z.boolean().optional(),
+  notifyReminder: z.boolean().optional(),
+  notifyEmail: z.boolean().optional(),
+  notifyPush: z.boolean().optional(),
+});
+
+/** Ten national digits, starting 6 to 9. Consent must be given, never implied. */
+export const SetWhatsappSchema = z.object({
+  number: z.string().regex(/^[6-9]\d{9}$/),
+  consent: z.literal(true),
+});
+
+export type NotifyPrefsInput = z.infer<typeof NotifyPrefsSchema>;

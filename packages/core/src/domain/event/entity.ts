@@ -34,6 +34,9 @@ export const EventEntity = new Entity(
 
       // Venue (denormalized + linked)
       venueId: { type: 'string', required: false },
+      // A hall inside the venue (VenueSpace). Optional: a venue with one hall never needs one.
+      spaceId: { type: 'string', required: false },
+      spaceName: { type: 'string', required: false },
       venueName: { type: 'string', required: false },
       venueCity: { type: 'string', required: false },
       // The hall's address as this poster printed it. Evidence, not the venue's address: it

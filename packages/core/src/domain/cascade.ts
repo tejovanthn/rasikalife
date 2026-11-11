@@ -155,7 +155,15 @@ export async function cascadeRagaNameUpdate(ragaId: string, newName: string): Pr
 
 export async function cascadeVenueNameUpdate(venueId: string, newName: string): Promise<void> {
   const { EventEntity } = await import('./event/entity');
+  const { refreshQrVenueName } = await import('./venue-qr');
+  const { refreshFollowTargetName } = await import('./follow');
+  const { refreshPartnerTargetName } = await import('./partner-member');
   const now = new Date().toISOString();
+
+  // Venue QR Follow: codes, follows and dashboard grants hold the name too.
+  await refreshQrVenueName(venueId, newName);
+  await refreshFollowTargetName('venue', venueId, newName);
+  await refreshPartnerTargetName('venue', venueId, newName);
 
   let cursor: string | null = null;
   do {
@@ -187,7 +195,13 @@ export async function cascadeOrganiserNameUpdate(
   const { EventEntity } = await import('./event/entity');
   const { AwardEntity } = await import('./award/entity');
   const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
+  const { refreshFollowTargetName } = await import('./follow');
+  const { refreshPartnerTargetName } = await import('./partner-member');
   const now = new Date().toISOString();
+
+  // Venue QR Follow: follows and dashboard grants hold the name too.
+  await refreshFollowTargetName('organiser', organiserId, newName);
+  await refreshPartnerTargetName('organiser', organiserId, newName);
 
   // Awards are a small set — fetch all at once
   const awardResult = await AwardEntity.query
@@ -464,7 +478,11 @@ export async function cascadeArtistMerge(
   const { ArtistPhotoEntity } = await import('./artist-photo/entity');
   const { ArtistClaimEntity } = await import('./artist-claim/entity');
   const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
+  const { moveFollows } = await import('./follow');
   const now = new Date().toISOString();
+
+  // Venue QR Follow: followers move to the canonical artist, deduped, counts recomputed.
+  await moveFollows('artist', loserId, canonicalId, canonicalName);
 
   // Migrate EventArtist records from loser to canonical
   let eaCursor: string | null = null;
@@ -1026,6 +1044,10 @@ export async function cascadeArtistNameUpdate(artistId: string, newName: string)
   // artist name, so they belong here rather than at the call site.
   await cascadeComposerNameUpdate(artistId, newName);
 
+  // Venue QR Follow: follows hold the artist's name.
+  const { refreshFollowTargetName } = await import('./follow');
+  await refreshFollowTargetName('artist', artistId, newName);
+
   // NOTE: three denormalized name copies are deliberately NOT refreshed here — gurus[].name
   // and collaborators[].name on other artists' records, and ArtistPhoto.photographerName.
   // None is indexed by the artist being renamed: photos are keyed by the artist they depict,
@@ -1248,7 +1270,19 @@ export async function cascadeVenueMerge(
   canonicalName: string
 ): Promise<void> {
   const { EventEntity } = await import('./event/entity');
+  const { repointQrsToVenue } = await import('./venue-qr');
+  const { moveFollows } = await import('./follow');
+  const { moveSpaces } = await import('./venue-space');
+  const { movePartnerMembers } = await import('./partner-member');
   const now = new Date().toISOString();
+
+  // Venue QR Follow. Spaces move first, keeping their ids, so an event's `spaceId` and a code's
+  // stay valid under the canonical venue. Followers are deduped per user and both counters
+  // recomputed. Dashboard grants move with the highest role winning.
+  await moveSpaces(loserId, canonicalId);
+  await repointQrsToVenue(loserId, canonicalId, canonicalName);
+  await moveFollows('venue', loserId, canonicalId, canonicalName);
+  await movePartnerMembers('venue', loserId, canonicalId, canonicalName);
 
   let cursor: string | null = null;
   do {
@@ -1286,7 +1320,14 @@ export async function cascadeOrganiserMerge(
 ): Promise<void> {
   const { EventEntity } = await import('./event/entity');
   const { ArtistAffiliationEntity } = await import('./artist-affiliation/entity');
+  const { moveFollows } = await import('./follow');
+  const { movePartnerMembers } = await import('./partner-member');
   const now = new Date().toISOString();
+
+  // Venue QR Follow: followers move (deduped, counts recomputed) and dashboard grants follow
+  // the organiser.
+  await moveFollows('organiser', loserId, canonicalId, canonicalName);
+  await movePartnerMembers('organiser', loserId, canonicalId, canonicalName);
 
   let cursor: string | null = null;
   do {
@@ -1875,4 +1916,26 @@ export async function cascadeEventMergeToSetlist(
   } while (cursor);
 
   await Promise.all([deleteAllEventSetlistRows(fromEventId), recomputeEventSetlist(toEventId)]);
+}
+
+/**
+ * Account deletion, Venue QR Follow part: removes every `Follow` (each decrements its target's
+ * counter once), every `PushSubscription` and every `PartnerMember` grant of the user.
+ *
+ * There is no user-deletion path in the codebase yet. Whatever adds one must call this, beside
+ * `cascadeUserDeleteToSetlistItems`.
+ */
+export async function cascadeUserDeleteToFollowData(userId: string): Promise<{
+  follows: number;
+  pushSubscriptions: number;
+  partnerMemberships: number;
+}> {
+  const { deleteUserFollows } = await import('./follow');
+  const { deleteUserPushSubscriptions } = await import('./push-subscription');
+  const { deleteUserPartnerMemberships } = await import('./partner-member');
+
+  const follows = await deleteUserFollows(userId);
+  const pushSubscriptions = await deleteUserPushSubscriptions(userId);
+  const partnerMemberships = await deleteUserPartnerMemberships(userId);
+  return { follows, pushSubscriptions, partnerMemberships };
 }

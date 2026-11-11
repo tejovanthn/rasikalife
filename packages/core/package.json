@@ -395,6 +395,76 @@
       "types": "./src/db/keys.ts",
       "import": "./src/db/keys.ts",
       "default": "./src/db/keys.ts"
+    },
+    "./domain/venue-qr": {
+      "types": "./src/domain/venue-qr/index.ts",
+      "import": "./src/domain/venue-qr/index.ts",
+      "default": "./src/domain/venue-qr/index.ts"
+    },
+    "./domain/venue-qr/client": {
+      "types": "./src/domain/venue-qr/client.ts",
+      "import": "./src/domain/venue-qr/client.ts",
+      "default": "./src/domain/venue-qr/client.ts"
+    },
+    "./domain/qr-batch": {
+      "types": "./src/domain/qr-batch/index.ts",
+      "import": "./src/domain/qr-batch/index.ts",
+      "default": "./src/domain/qr-batch/index.ts"
+    },
+    "./domain/qr-batch/client": {
+      "types": "./src/domain/qr-batch/client.ts",
+      "import": "./src/domain/qr-batch/client.ts",
+      "default": "./src/domain/qr-batch/client.ts"
+    },
+    "./domain/follow": {
+      "types": "./src/domain/follow/index.ts",
+      "import": "./src/domain/follow/index.ts",
+      "default": "./src/domain/follow/index.ts"
+    },
+    "./domain/follow/client": {
+      "types": "./src/domain/follow/client.ts",
+      "import": "./src/domain/follow/client.ts",
+      "default": "./src/domain/follow/client.ts"
+    },
+    "./domain/venue-space": {
+      "types": "./src/domain/venue-space/index.ts",
+      "import": "./src/domain/venue-space/index.ts",
+      "default": "./src/domain/venue-space/index.ts"
+    },
+    "./domain/venue-space/client": {
+      "types": "./src/domain/venue-space/client.ts",
+      "import": "./src/domain/venue-space/client.ts",
+      "default": "./src/domain/venue-space/client.ts"
+    },
+    "./domain/partner-member": {
+      "types": "./src/domain/partner-member/index.ts",
+      "import": "./src/domain/partner-member/index.ts",
+      "default": "./src/domain/partner-member/index.ts"
+    },
+    "./domain/partner-member/client": {
+      "types": "./src/domain/partner-member/client.ts",
+      "import": "./src/domain/partner-member/client.ts",
+      "default": "./src/domain/partner-member/client.ts"
+    },
+    "./domain/partner-invite": {
+      "types": "./src/domain/partner-invite/index.ts",
+      "import": "./src/domain/partner-invite/index.ts",
+      "default": "./src/domain/partner-invite/index.ts"
+    },
+    "./domain/partner-invite/client": {
+      "types": "./src/domain/partner-invite/client.ts",
+      "import": "./src/domain/partner-invite/client.ts",
+      "default": "./src/domain/partner-invite/client.ts"
+    },
+    "./domain/push-subscription": {
+      "types": "./src/domain/push-subscription/index.ts",
+      "import": "./src/domain/push-subscription/index.ts",
+      "default": "./src/domain/push-subscription/index.ts"
+    },
+    "./domain/push-subscription/client": {
+      "types": "./src/domain/push-subscription/client.ts",
+      "import": "./src/domain/push-subscription/client.ts",
+      "default": "./src/domain/push-subscription/client.ts"
     }
   },
   "scripts": {

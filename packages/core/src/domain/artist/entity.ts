@@ -325,6 +325,12 @@ export const ArtistEntity = new Entity(
         },
         required: false,
       },
+      // Denormalized follower counter. Maintained with an atomic ADD inside the same transaction
+      // as the Follow write (see domain/follow). Read as `followerCount ?? 0`.
+      followerCount: {
+        type: 'number',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,
