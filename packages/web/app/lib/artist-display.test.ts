@@ -267,3 +267,12 @@ describe('historical artists', () => {
     expect(lifeSpan({})).toBeUndefined();
   });
 });
+
+describe('roleLabel generic roles', () => {
+  it('hides billing positions and keeps instruments', () => {
+    expect(roleLabel('main')).toBe('');
+    expect(roleLabel('Accompanist')).toBe('');
+    expect(roleLabel('mridangam')).toBe('mridangam');
+    expect(castLine([{ name: 'Sandeep Narayan', role: 'main' }])).toBe('Sandeep Narayan');
+  });
+});

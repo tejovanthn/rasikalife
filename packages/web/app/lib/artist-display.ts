@@ -227,8 +227,15 @@ export function artistMetaDescription(artist: {
  * a caller that wants a heading can capitalise it with CSS.
  */
 export function roleLabel(role: string): string {
-  return role.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  const label = role.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  // Billing positions, not instruments: the event crawl stores "main" and "accompanist" when a
+  // listing names no instrument. "Sandeep Narayan (main)" tells a reader nothing.
+  return GENERIC_ROLES.has(label) ? '' : label;
 }
+
+/** Roles that say where someone was billed, not what they played. Kept in step with core's
+ * `shared/event-card.ts`. */
+export const GENERIC_ROLES = new Set(['main', 'accompanist', 'performer', 'artist', 'artiste']);
 
 /**
  * An event's cast on one line, each with what they played: "Vid. Sunil Gargyan (vocal),

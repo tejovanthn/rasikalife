@@ -69,8 +69,13 @@ export function truncate(text: string, max: number): string {
         .trimEnd()}…`;
 }
 
-const roleText = (role?: string | null) =>
-  clean(role?.replace(/[-_]+/g, ' ')).toLowerCase() || undefined;
+/** Billing positions, not instruments; kept in step with web's `GENERIC_ROLES`. */
+const GENERIC_ROLES = new Set(['main', 'accompanist', 'performer', 'artist', 'artiste']);
+
+const roleText = (role?: string | null) => {
+  const text = clean(role?.replace(/[-_]+/g, ' ')).toLowerCase();
+  return text && !GENERIC_ROLES.has(text) ? text : undefined;
+};
 
 function displayName(a: { title?: string | null; name: string }): string {
   return clean(`${a.title ? `${clean(a.title)} ` : ''}${a.name}`);

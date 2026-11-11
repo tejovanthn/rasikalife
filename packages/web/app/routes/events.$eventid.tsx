@@ -851,7 +851,7 @@ function EventDetail() {
                       artist.name
                     )}
                   </span>
-                  {artist.role && (
+                  {artist.role && roleLabel(artist.role) && (
                     <span className="block mt-0.5 text-sm text-muted-foreground capitalize">
                       {roleLabel(artist.role)}
                     </span>
