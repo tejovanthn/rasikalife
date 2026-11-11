@@ -584,10 +584,22 @@ export async function listEventsByFestival(
 
 export async function listEventsByVenue(
   venueId: string,
-  params?: { limit?: number; nextToken?: string }
+  params?: {
+    limit?: number;
+    nextToken?: string;
+    /** `byVenue` sort-key range (date strings, padded by the caller; see `scanQueryRange`). */
+    range?: { from: string; to: string };
+    /** Everything from this date on, soonest first. */
+    from?: string;
+  }
 ): Promise<{ items: Event[]; nextToken?: string; hasMore: boolean }> {
-  const result = await EventEntity.query
-    .byVenue({ venueId })
+  const query = EventEntity.query.byVenue({ venueId });
+  const ranged = params?.range
+    ? query.between({ startDateTime: params.range.from }, { startDateTime: params.range.to })
+    : params?.from
+      ? query.gte({ startDateTime: params.from })
+      : query;
+  const result = await ranged
     .where((attr, op) => op.notExists(attr.deletedAt))
     .go({ limit: params?.limit || 20, cursor: params?.nextToken });
 

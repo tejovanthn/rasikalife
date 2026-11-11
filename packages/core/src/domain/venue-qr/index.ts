@@ -21,7 +21,10 @@ export type { QrScanDay, VenueQr } from './entity';
 export { generateQrCode, mintQrCodes } from './mint';
 export * from './constants';
 export * from './keys';
+export * from './resolve';
 export * from './schema';
+export { resolveScan } from './scan';
+export type { ScanEventView, ScanOutcomeView, ScanResolution } from './scan';
 
 const AUDITED_FIELDS = ['status', 'venueId', 'venueName', 'spaceId', 'label', 'note'] as const;
 

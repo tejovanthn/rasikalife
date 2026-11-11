@@ -5,9 +5,12 @@ import { invalidateSiteCache } from '@rasika/core/site-cache';
  * classes.rasika.life, which caches nothing; `concertLog` is the signed-in reader's own
  * "my concerts"; `user` holds preferences and roles; `shortLink` adds `/l/` redirects, which
  * no page shows, and is called while a page renders, so clearing on it would empty the cache
- * from inside a cache miss. `rsvp` is not here: the event page shows the count.
+ * from inside a cache miss. `rsvp` is not here: the event page shows the count. `notify` holds
+ * a user's own preferences and WhatsApp number. `qr` is not here: its writes (phase 4) change
+ * the venue page's QR panel only for moderators, but the scan page is never cached anyway, and
+ * a retire or assign should refresh the venue page, so it clears like any write.
  */
-const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink']);
+const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink', 'notify']);
 
 /**
  * Single procedures, inside a router that is otherwise public, that change no page. `follow`

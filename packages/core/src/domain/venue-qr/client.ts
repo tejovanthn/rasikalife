@@ -4,5 +4,7 @@
  */
 export * from './constants';
 export * from './keys';
+export * from './resolve';
+export type { ScanEventView, ScanOutcomeView, ScanResolution } from './scan';
 export * from './schema';
 export type { QrScanDay, VenueQr } from './entity';
