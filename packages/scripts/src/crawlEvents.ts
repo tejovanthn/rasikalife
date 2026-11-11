@@ -120,10 +120,13 @@ export async function crawlExtract(opts: {
   limit?: number;
   only?: string[];
   dryRun?: boolean;
+  /** Pause between posters. Each poster is two Gemini calls; the free tier allows 5 a minute. */
+  delaySeconds?: number;
 }): Promise<void> {
   const base = opts.dir ?? DEFAULT_CRAWL_DIR;
   const dir = path.join(base, 'mdnd');
   const out = path.join(dir, 'extractions');
+  const delayMs = (opts.delaySeconds ?? 1) * 1000;
   const events = getCrawlAdapter('mdnd')
     .load(dir)
     .filter(e => e.posterUrl && (!opts.only || opts.only.includes(e.sourceId)));
@@ -139,22 +142,57 @@ export async function crawlExtract(opts: {
   if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
   const { extractFromPoster } = await import('@rasika/core/domain/event/gemini');
   mkdirSync(out, { recursive: true });
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+  let read = 0;
   for (const e of batch) {
-    try {
-      const result = await extractFromPoster(
-        e.posterUrl as string,
-        mdndHint(e),
-        'event listing from mdnd.in: title, date, time and venue as listed; the poster is the source for performers'
-      );
-      writeFileSync(path.join(out, `${e.sourceId}.json`), JSON.stringify(result, null, 2));
-      console.log(
-        `  ✅ ${e.sourceId} ${result.events.length} event(s), confidence ${result.confidence}`
-      );
-    } catch (error) {
-      console.log(`  ❌ ${e.sourceId}: ${(error as Error).message}`);
+    let stop = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const result = await extractFromPoster(
+          e.posterUrl as string,
+          mdndHint(e),
+          'event listing from mdnd.in: title, date, time and venue as listed; the poster is the source for performers'
+        );
+        writeFileSync(path.join(out, `${e.sourceId}.json`), JSON.stringify(result, null, 2));
+        read++;
+        console.log(
+          `  ✅ ${e.sourceId} ${result.events.length} event(s), confidence ${result.confidence} (${read}/${batch.length})`
+        );
+        break;
+      } catch (error) {
+        const limit = geminiRateLimit((error as Error).message);
+        if (limit?.perDay) {
+          console.log(`  ⏸  daily Gemini quota reached at ${e.sourceId}; rerun later to continue`);
+          stop = true;
+          break;
+        }
+        if (limit && attempt < 3) {
+          console.log(`  ⏳ ${e.sourceId}: rate limited, waiting ${limit.retrySeconds}s`);
+          await sleep((limit.retrySeconds + 2) * 1000);
+          continue;
+        }
+        console.log(`  ❌ ${e.sourceId}: ${(error as Error).message.slice(0, 200)}`);
+        break;
+      }
     }
-    await new Promise(r => setTimeout(r, 1000));
+    if (stop) break;
+    await sleep(delayMs);
   }
+}
+
+/**
+ * Reads a Gemini 429 message: how long it asks us to wait, and whether the per-day quota (not
+ * the per-minute one) is spent, in which case waiting a minute will not help.
+ */
+export function geminiRateLimit(
+  message: string
+): { retrySeconds: number; perDay: boolean } | undefined {
+  if (!/RESOURCE_EXHAUSTED|"code":\s*429/.test(message)) return undefined;
+  const retry = /retry in ([\d.]+)s/i.exec(message) ?? /"retryDelay":"(\d+)s"/.exec(message);
+  return {
+    retrySeconds: retry ? Math.ceil(Number(retry[1])) : 60,
+    perDay: /PerDay/.test(message),
+  };
 }
 
 type Core = typeof import('@rasika/core');

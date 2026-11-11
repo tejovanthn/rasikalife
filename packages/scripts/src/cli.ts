@@ -248,10 +248,23 @@ program
     v.split(',')
   )
   .option('-n, --dry-run', 'List the posters that would be sent, call nothing')
-  .action(async (opts: { dir?: string; limit?: number; only?: string[]; dryRun?: boolean }) => {
-    const { crawlExtract } = await import('./crawlEvents.js');
-    await crawlExtract(opts);
-  });
+  .option(
+    '--delay <seconds>',
+    'Pause between posters (each is 2 Gemini calls; free tier: use 25)',
+    (v: string) => Number.parseFloat(v)
+  )
+  .action(
+    async (opts: {
+      dir?: string;
+      limit?: number;
+      only?: string[];
+      dryRun?: boolean;
+      delay?: number;
+    }) => {
+      const { crawlExtract } = await import('./crawlEvents.js');
+      await crawlExtract({ ...opts, delaySeconds: opts.delay });
+    }
+  );
 
 program
   .command('crawl-match')

@@ -881,7 +881,9 @@ adapter and register it in `crawl/index.ts`.
    the extractor's one `hint`, labelled as an mdnd.in listing (`hintLabel`; the default label,
    for the Instagram path, is "caption"). It needs `GEMINI_API_KEY`, and
    it sends each public poster URL to Google, so run it with the owner's key. It skips events
-   already read. `load` then applies each file (`applyPosterExtraction`): people and organiser
+   already read. `--delay <seconds>` pauses between posters: each poster is two Gemini calls, and
+   the prod key is on the free tier (5 calls a minute), so use `--delay 25` there. A per-minute
+   429 waits as told and retries; a per-day 429 stops the run, and a rerun continues. `load` then applies each file (`applyPosterExtraction`): people and organiser
    come from the poster (first person billed is `main`, a later person on an accompanying
    instrument is `accompanist`, a chief guest is dropped); the listing keeps title, date, time
    and venue. A poster that disagrees on day, time (over 30 minutes) or venue, or holds more
