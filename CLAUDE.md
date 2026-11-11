@@ -52,6 +52,7 @@ An event with no poster shows a text card in the poster slot, and its share imag
 - **packages/classes**: React Router v7 PWA for Rasika Classes, deployed to `classes.rasika.life` as its own SST site
 - **packages/talapettige**: Talapettige, a tanpura drone and Carnatic tala metronome. A static, prerendered React Router v7 PWA at `talapettige.rasika.life` that works offline
 - **packages/admin**: React Router v7 app for moderators at `admin.rasika.life` (QR codes and batches; see "Venue QR Follow: admin")
+- **packages/sabha**: React Router v7 dashboard for sabha and venue managers at `sabha.rasika.life` (see "Venue QR Follow: sabha dashboard")
 - **packages/qr**: SQS-driven Lambda that renders QR sticker, table tent and poster PDFs (HarfBuzz-shaped text, pdf-lib)
 - **packages/ui**: Shared Tailwind preset, design tokens and the primitives Classes needs. Browser-only; never imports `@rasika/core` outside a `/client` subpath
 - **infra/**: SST infrastructure definitions
@@ -1870,15 +1871,15 @@ Domains in `packages/core/src/domain/`, each with `/client` and index subpaths i
 - **User.** New notification and WhatsApp fields. The model version stays `2`: ElectroDB filters
   by version, so a bump would hide every existing user. Defaults apply at create, and
   `effectiveNotifyPrefs` applies them to older rows on read.
-- **Invites.** `acceptInvitesForUser` runs after `findOrCreateUser` (phase 8 wires it): membership
+- **Invites.** `acceptInvitesForUser` runs after `findOrCreateUser` (the issuer calls it since phase 8): membership
   first, then `verifiedAt` (only for an owner, only if unset), then the invite is marked accepted.
   Each step is safe to repeat.
 - **Account deletion.** There is no user-deletion path yet. `cascadeUserDeleteToFollowData(userId)`
   removes follows (each decrements once), push subscriptions and memberships. Whatever adds
   deletion must call it.
-- Open questions are marked `TODO(spec)` in code: no `shareWithdrawnAt` for the "withdrawn this
-  month" count, no cursor on the unfiltered code list, and organiser-owner verification of managed
-  venues.
+- Open questions are marked `TODO(spec)` in code: no cursor on the unfiltered code list, and
+  organiser-owner verification of managed venues. Phase 8 added `shareWithdrawnAt` (see the sabha
+  section) and left the managed-venues question open.
 
 ### Venue QR Follow: follow everywhere
 
@@ -2106,7 +2107,8 @@ QR panel. Copy is in `packages/admin/app/lib/copy.ts` (`ADMIN_COPY` is verbatim 
 - **`qr` router** adds `createBatch`, `rerenderBatch`, `listBatches`, `getBatch` (with a 5 minute
   presigned PDF url when ready), `list`, `get`, `assign`, `bulkAssign`, `updateLabel`, `reassign`,
   `retire`, `statsByVenue`; the `space` router has `list`, `create`, `update`. All are
-  `moderatorProcedure`. `TODO(phase 8)`: `statsByVenue` and `space.*` also admit a partner. Core
+  `moderatorProcedure`, except that `statsByVenue` and `space.*` also admit a member of the venue
+  since phase 8 (see the sabha section). Core
   `ApplicationError`s map to NOT_FOUND, CONFLICT or BAD_REQUEST (`toQrTrpcError`). The `cause` does not
   cross HTTP, so the admin app branches on the loaded code status and shows the tRPC message.
   `rerenderBatch` and `qr.get` are not in the spec table: the "PDF failed. Try again" button and the
@@ -2156,6 +2158,153 @@ Owner steps:
    mid-range Android phone. The sticker QR has a 64 mm box and about 50 mm of data area, so 1 m is
    the limit. If it fails, use the tent or poster at counters and keep stickers for close doors.
    Download the batch PDF only through the admin page (the link lasts 5 minutes).
+
+### Venue QR Follow: sabha dashboard
+
+Phase 8: `sabha.rasika.life`, the `partner` router, invite acceptance, the Verified badge and the
+follower export. Copy is in `packages/sabha/app/lib/copy.ts` (`SABHA_COPY` verbatim from
+`copy.md`; `SABHA_EXTRA_COPY` holds strings copy.md lacks, each a `TODO(copy)`).
+
+**Owner decisions made by the orchestrator for this phase** (not in the Spec):
+
+- "Stopped sharing this month" needs data the model lacked. `Follow.shareWithdrawnAt` is optional.
+  `setFollowShare` sets it when sharing goes from true to false, and removes it with `.remove()`
+  when sharing is granted again (rule 8). Switching off what was already off writes nothing, so it
+  cannot start a new month's count. The count is the follows of that target whose
+  `shareWithdrawnAt` is in the current IST month. It is a number, never names. An unfollow deletes
+  the row, so that follower drops out of the count. `moveFollows` carries the field on a merge.
+- The per-organiser review switch is `Organiser.requireEventReview` (optional boolean). Only
+  moderators set it (`partner.setEventReview`, on the admin partners page). With it on, an
+  owner's new events wait for a moderator. `mayAutoApprove` reads it, so the scan page's "Add a
+  concert" follows the same rule.
+- "`verifiedAt` on each venue an organiser manages": the model has no such link. Left as
+  `TODO(spec)` in `acceptPartnerInvite`. Only the invited target is verified.
+
+**Access** (`packages/trpc/src/partner-access.ts`, `trpc.ts`). `checkPartnerAccess` is one pure
+function, tested as a matrix (owner, viewer, non-member, moderator, admin, signed out). Three
+procedures wrap it, and each reads `targetType` and `targetId` from the call's input
+(`getRawInput`), so a procedure that names no target is a BAD_REQUEST:
+
+| Procedure | Admits |
+|---|---|
+| `partnerProcedure` | a member (viewer or owner), or a moderator or admin |
+| `partnerOwnerProcedure` | an owner, or a moderator or admin |
+| `partnerStrictOwnerProcedure` | an owner only. Not a moderator |
+
+`PARTNER_FORBIDDEN` is the error code, on a FORBIDDEN error (the formatter copies it from the
+`cause`). `partner.exportFollowers` and `partner.updateProfile` use the strict variant: followers
+consented to share with the sabha, not with staff, and "verified owners edit". `qr.statsByVenue`
+and `space.*` take a `venueId` and not a target pair, so they call `requireVenueAccess`
+(`partner-guard.ts`): `space.list` and `statsByVenue` admit any member, `space.create` and
+`space.update` an owner. A member of an organiser has no right to a venue's halls.
+
+**`partner` router.** Moderators: `invite`, `revoke`, `members`, `setEventReview`,
+`ownerPublishedEvents`. Any signed-in user: `mine`, `acceptInvites`. Members: `overview`,
+`profile`, `events`, `spacesForVenue`. Owners: `createEvent`, `updateEvent`. Strict owner:
+`updateProfile`, `exportFollowers`. Not in the Spec table, added because a screen needs them:
+`members`, `acceptInvites`, `profile`, `events`, `spacesForVenue`, `createEvent`, `updateEvent`,
+`setEventReview`, `ownerPublishedEvents`.
+
+- **Invite email** (`packages/email/emails/partner-invite.tsx`, `partnerInviteEmail`,
+  `trpc/src/partner-invite-email.ts`). One person's invite from the transactional identity
+  ("Rasika.life" from `noreply@mail.rasika.life`), like the approval email, not the digest
+  sender. Strings are verbatim from Copy. The button opens `SABHA_URL/invite?email=<invitee>`.
+  A failed send is logged and returned as `emailSent: false`. The invite row is stored first, and
+  sending again renews it for 14 days. There is no list of pending invites per target (invites
+  are keyed by email), so the admin page shows the result of the send and the members.
+- **Acceptance on sign-in.** The issuer (`packages/auth/src/issuer.ts`) calls
+  `PartnerInvite.acceptInvitesForUser` after `findOrCreateUser`, on every sign-in, non-fatal like
+  the artist-claim and class-invite steps. The first `owner` acceptance sets `verifiedAt`
+  (core, phase 1). `partner.acceptInvites` does the same for someone who was already signed in
+  when the invite was sent, and returns the expired invites. The `/invite` page calls it. The
+  mismatch state cannot be found from the server (the invite is keyed by the invited address), so
+  `/invite` compares the address in the link with the signed-in one (`inviteOutcome`) and shows
+  the Copy mismatch line without accepting anything. Expired invites show a `TODO(copy)` line.
+- **Verified badge** (`web/app/components/VerifiedBadge.tsx`, `lib/verified.ts`) on the public
+  organiser and venue pages: "Verified", tooltip "Managed by {name} on rasika.life". It reads the
+  stored `verifiedAt`, so the cached page is the same for every reader. The writes that set it
+  clear the site cache: the issuer calls `invalidateSiteCache` when an owner invite is accepted
+  (`infra/auth.ts` gives the issuer `siteCachePermissions` and `siteCacheEnvironment`), and
+  `partner.acceptInvites` does the same.
+- **Cache.** `partner` is not a private router: `updateProfile`, `createEvent`, `updateEvent` and
+  `setEventReview` change public pages and clear the cache. `partner.invite`, `revoke`,
+  `exportFollowers` and `acceptInvites` are in `PRIVATE_PATHS` (`acceptInvites` clears it itself,
+  only when an owner was accepted).
+- **Profile** (`core/src/domain/sabha/profile.ts`). Verified owners only (`PARTNER_FORBIDDEN`
+  when the target has no `verifiedAt`). The input is checked against
+  `PartnerOrganiserProfileSchema` or `PartnerVenueProfileSchema`, both `.strict()`: a field outside
+  the schema is refused, not dropped. The organiser's `venueId` and `venueName` are left out,
+  because they decide which venue's QR numbers an organiser dashboard shows. Only changed fields
+  are written (compared as JSON, so an unchanged address is not a change), and each real save
+  writes one `ChangeHistory` row (`computeDiff` over the changed fields; entity type `organiser`
+  or `venue`). A save that changes nothing writes nothing. The form cannot clear a field: a blank
+  is left alone (core has no way to blank an optional field from it; rule 8).
+- **Events.** `createOwnerEvent` and `updateOwnerEvent` are for an organiser's own events. A
+  venue dashboard lists events and cannot add them. The event is stored with the venue and space
+  chosen, in the hall's zone (`concertStart`, default `Asia/Kolkata`), under the organiser. It
+  publishes at once through `approveEvent` when `mayAutoApprove` says so (owner, organiser has
+  `verifiedAt`, review switch off), and then carries `Event.ownerPublishedAt`, which is what the
+  moderator spot-check feed lists (`events/spot-check` in the admin app, `listOwnerPublishedEvents`:
+  approved events from the last 30 days on, newest publish first). Otherwise it is `submitted`
+  for the normal queue. A billed artist is linked only when one with that exact name exists; an
+  artist is never created here. An event is edited only through its own organiser (a foreign id is
+  `EVENT_NOT_FOUND`). `TODO(spec)`: an edit to an approved event is not sent back to review when
+  the switch is on, and the blocking duplicate rule (`findLikelyDuplicates`) does not run on
+  owner events, like `submitFromQr`.
+- **Overview numbers** (`core/src/domain/sabha/rules.ts`, pure, tested). Months and days are IST
+  (`istMonth`). Followers: total, new this month, sharing now, stopped sharing this month. The
+  30 day trend is read from the follows that exist, so it is a view of today's followers and an
+  unfollow lowers every day's total. Scans this week and the code table come from
+  `statsByVenue`. A venue dashboard shows its own codes. An organiser dashboard shows the codes
+  at its home venue (`Organiser.venueId`) and none without one. `TODO(spec)`: the Spec says
+  "linked venues" and the model has only that one id.
+- **Export** (`core/src/domain/sabha/dashboard.ts`, `exportFollowers`). Reads follows of the
+  target, keeps only `shareWithTarget = true`, loads those users, and writes
+  `exports/{targetType}/{targetId}/{timestamp}.csv` (timestamp like `20261116T093000Z`) to the
+  `PrivateFiles` bucket. Header exactly
+  `name,email,whatsapp_number,whatsapp_verified,followed_at,source,followed`.
+  `whatsapp_number` is `+91` and the stored 10 digits. `whatsapp_verified` is `Yes` or
+  `Unverified`, blank with no number. `followed_at` is the IST date. `followed` is `venue` or
+  `organiser`. A name or email that starts with `=`, `+`, `-`, `@`, a tab or CR gets a leading `'`
+  so a spreadsheet does not run it as a formula. The link is a 5 minute presigned GET with
+  `attachment` disposition. The audit row is written after the file is stored and before the link
+  is returned. **Audit store:** a small entity, `PartnerExport` (pk `PARTNER_EXPORT#type#id`, sk
+  `createdAt#userId`; user, row count and key; no GSI), not `ChangeHistory`. That log is read
+  back as field diffs by rollback and state-at-time, and an export changes no field. The object
+  expires after 7 days (lifecycle rule in `infra/qr.ts`); the audit row stays. There is no
+  screen for the audit rows yet (`listExportAudit` reads them). Artists get no export.
+- **Admin app.** `/partners` searches organisers and venues by name (GET form, no JavaScript
+  needed). `/partners/:targetType/:id` has the invite form (Email, Role (Owner, Viewer), Send
+  invite, verbatim), the member list with revoke, the verified status, and for an organiser the
+  review switch. `/events/spot-check` is the owner-events feed. Extra strings are `TODO(copy)`.
+
+**`packages/sabha`.** React Router v7, same setup as `packages/admin`: fs-routes, `@rasika/ui`,
+the shared `rasika_session` cookie, `noindex`, `private, no-store` on every document,
+`robots.txt` that disallows all. Not linked to the table or the bucket: every read and write goes
+through `RasikaTRPC`. Routes: `/` resolves (no dashboard shows "No access", one redirects into
+it, several list), `/switch` (the header "Managing" select posts here), `/invite`,
+`/:targetType/:id` (layout: one `partner.overview` call is also the access check, 403 or 404 on
+failure) with `/profile`, `/events` (`/new`, `/:eventId`), `/spaces` (venue only), `/codes`,
+`/followers` and `/export`. Tabs and what a person may change come from `lib/sabha.ts`. An
+organiser has no Spaces tab. A viewer and a moderator see every screen read-only; Export shows
+"Only owners can download followers." to anyone but an owner. The export button is a form
+posted with `reloadDocument`, so the browser follows the redirect to the file.
+
+Owner steps:
+
+1. Deploy. This creates `sabha.<stage domain>` (`infra/sabha.ts`; prod `sabha.rasika.life`) and
+   gives the tRPC function `SABHA_URL`. The issuer function is redeployed with the site cache
+   permissions. Check `sabha.rasika.life` loads and a signed-in moderator sees "No access" (a
+   moderator manages nothing until invited).
+2. No new secret and no new bucket. `PrivateFiles` and its 7 day `exports/` rule came with the
+   admin phase.
+3. Invite yourself as an `owner` of one organiser from `admin.rasika.life/partners`, open the
+   link in the email, and check: the dashboard opens, the Verified badge shows on the public
+   organiser page (the cache clears on acceptance), a profile save writes a history row, a
+   concert you add appears on `/events` and in the spot-check feed, and Export downloads a file
+   with the right header.
+4. A moderator can see an owner's profile edit in the entity's change history. There is no
+   automatic undo.
 
 ### Importing from `@rasika/core` in web routes
 

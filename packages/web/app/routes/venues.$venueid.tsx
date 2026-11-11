@@ -8,6 +8,7 @@ import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
 import { FollowButton } from '~/components/FollowButton';
 import { VenueQrPanel } from '~/components/VenueQrPanel';
+import { VerifiedBadge } from '~/components/VerifiedBadge';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/structured-data';
@@ -21,6 +22,7 @@ import { directionsUrl, exactVenueCoordinates } from '~/lib/structured-data';
 import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
 import type { PanelStat } from '~/lib/venue-qr-panel';
 import { loadVenueQrPanel } from '~/lib/venue-qr.server';
+import { isVerified } from '~/lib/verified';
 
 interface VenueDetail {
   lat?: number;
@@ -47,6 +49,8 @@ interface VenueDetail {
   amenities?: string[];
   nearestTransit?: string;
   socialLinks?: Array<{ platform: string; url: string }>;
+  /** Set when an owner accepted a moderator's invite. Drives the Verified badge. */
+  verifiedAt?: string;
 }
 
 interface EventItem {
@@ -226,14 +230,17 @@ export default function VenueDetailPage() {
         title={venue.name}
         subtitle="Venue"
         actions={
-          <FollowButton
-            targetType="venue"
-            targetId={venue.id}
-            pagePath={generateVenueUrl(venue.name, venue.id)}
-            isSignedIn={!!user}
-            isFollowing={following}
-            followerCount={followerCount}
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <FollowButton
+              targetType="venue"
+              targetId={venue.id}
+              pagePath={generateVenueUrl(venue.name, venue.id)}
+              isSignedIn={!!user}
+              isFollowing={following}
+              followerCount={followerCount}
+            />
+            {isVerified(venue) && <VerifiedBadge name={venue.name} />}
+          </div>
         }
         shareUrl={shareUrl}
         shareTitle={`${venue.name} - Rasika.life`}

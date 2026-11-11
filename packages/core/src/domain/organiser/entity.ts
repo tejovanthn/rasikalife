@@ -102,6 +102,12 @@ export const OrganiserEntity = new Entity(
         type: 'string',
         required: false,
       },
+      // When true, a verified owner's events wait for a moderator instead of publishing at once.
+      // Set by moderators only (`partner.setEventReview`); absent means events auto-approve.
+      requireEventReview: {
+        type: 'boolean',
+        required: false,
+      },
       deletedAt: {
         type: 'string',
         required: false,

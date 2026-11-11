@@ -8,6 +8,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
 import { FollowButton } from '~/components/FollowButton';
+import { VerifiedBadge } from '~/components/VerifiedBadge';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, OrganiserStructuredData } from '~/components/structured-data';
@@ -24,6 +25,7 @@ import {
   generateVenueUrl,
   parseSlug,
 } from '~/lib/url-slug';
+import { isVerified } from '~/lib/verified';
 
 interface OrganiserDetail {
   id: string;
@@ -47,6 +49,8 @@ interface OrganiserDetail {
   venueId?: string;
   venueName?: string;
   socialLinks?: Array<{ platform: string; url: string }>;
+  /** Set when an owner accepted a moderator's invite. Drives the Verified badge. */
+  verifiedAt?: string;
 }
 
 interface EventItem {
@@ -233,14 +237,17 @@ export default function OrganiserDetailPage() {
             title={organiser.name}
             subtitle="Event Organiser"
             actions={
-              <FollowButton
-                targetType="organiser"
-                targetId={organiser.id}
-                pagePath={generateOrganiserUrl(organiser.name, organiser.id)}
-                isSignedIn={!!user}
-                isFollowing={following}
-                followerCount={followerCount}
-              />
+              <div className="flex flex-wrap items-center gap-3">
+                <FollowButton
+                  targetType="organiser"
+                  targetId={organiser.id}
+                  pagePath={generateOrganiserUrl(organiser.name, organiser.id)}
+                  isSignedIn={!!user}
+                  isFollowing={following}
+                  followerCount={followerCount}
+                />
+                {isVerified(organiser) && <VerifiedBadge name={organiser.name} />}
+              </div>
             }
             shareUrl={shareUrl}
             shareTitle={`${organiser.name} - Rasika.life`}

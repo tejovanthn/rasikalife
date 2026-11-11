@@ -44,6 +44,7 @@ export * as Notification from './domain/notification';
 export * as VenueSpace from './domain/venue-space';
 export * as PartnerMember from './domain/partner-member';
 export * as PartnerInvite from './domain/partner-invite';
+export * as Sabha from './domain/sabha';
 export * as PushSubscription from './domain/push-subscription';
 export * as Email from './email';
 export * as Image from './domain/image/s3';

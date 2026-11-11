@@ -3,8 +3,9 @@ import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import type { TRPC_ERROR_CODE_KEY } from '@trpc/server';
 import { z } from 'zod';
+import { requireVenueAccess } from '../partner-guard';
 import { enqueueBatchRender } from '../qr-render-queue';
-import { createTRPCRouter, moderatorProcedure, publicProcedure } from '../trpc';
+import { createTRPCRouter, moderatorProcedure, protectedProcedure, publicProcedure } from '../trpc';
 
 const CODE_BY_ERROR: Partial<Record<ErrorCode, TRPC_ERROR_CODE_KEY>> = {
   [ErrorCode.QR_NOT_FOUND]: 'NOT_FOUND',
@@ -60,8 +61,9 @@ async function queueRender(batchId: string): Promise<QrBatch.QrBatch> {
  * QR routes. `resolve` is public: a scan comes from anyone, and it never throws for an unknown,
  * unassigned or retired code (the state says which). Everything else is a moderator or admin.
  *
- * `statsByVenue` is "moderator or partner" in the spec. Phase 4 allows moderators only.
- * TODO(phase 8): let a `partnerProcedure` member of the venue (or its organiser) read it too.
+ * `statsByVenue` is open to a moderator or any member (viewer or owner) of that venue. A member
+ * of an organiser does not read it here: the organiser dashboard gets its home venue's numbers
+ * through `partner.overview`.
  */
 export const qrRouter = createTRPCRouter({
   resolve: publicProcedure
@@ -151,7 +153,8 @@ export const qrRouter = createTRPCRouter({
       mapQrErrors(() => VenueQr.retireQr({ code: input.code, userId: ctx.user.id }))
     ),
 
-  statsByVenue: moderatorProcedure
-    .input(VenueIdSchema)
-    .query(({ input }) => mapQrErrors(() => VenueQr.statsByVenue(input.venueId))),
+  statsByVenue: protectedProcedure.input(VenueIdSchema).query(async ({ ctx, input }) => {
+    await requireVenueAccess(ctx.user, input.venueId, 'viewer');
+    return mapQrErrors(() => VenueQr.statsByVenue(input.venueId));
+  }),
 });

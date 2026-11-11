@@ -1,6 +1,7 @@
 import type { ClassLearnerAccess } from '@rasika/core';
 import { render } from '@react-email/render';
 import EventApprovedEmail from '../emails/event-approved';
+import PartnerInviteEmail from '../emails/partner-invite';
 import StudentAddedEmail from '../emails/student-added';
 
 export interface EmailContent {
@@ -79,3 +80,35 @@ export async function eventApprovedEmail(input: EventApprovedEmailInput): Promis
   };
 }
 export * from './notify';
+
+export interface PartnerInviteEmailInput {
+  inviterName: string;
+  targetName: string;
+  inviteeEmail: string;
+  /** The sabha dashboard's origin, e.g. `https://sabha.rasika.life`. */
+  sabhaUrl: string;
+  /** The main site's origin, for the footer. */
+  siteUrl: string;
+}
+
+/**
+ * A moderator's invite to manage a sabha or venue. The button opens the dashboard's `/invite`
+ * page with the invited address, which signs the reader in and says so if they used another
+ * account.
+ */
+export async function partnerInviteEmail(input: PartnerInviteEmailInput): Promise<EmailContent> {
+  const sabha = input.sabhaUrl.replace(/\/+$/, '');
+  const acceptUrl = `${sabha}/invite?email=${encodeURIComponent(input.inviteeEmail)}`;
+  return {
+    subject: `You're invited to manage ${input.targetName} on rasika.life`,
+    ...(await renderBoth(
+      <PartnerInviteEmail
+        inviterName={input.inviterName}
+        targetName={input.targetName}
+        inviteeEmail={input.inviteeEmail}
+        acceptUrl={acceptUrl}
+        siteUrl={input.siteUrl.replace(/\/+$/, '')}
+      />
+    )),
+  };
+}

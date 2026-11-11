@@ -18,6 +18,7 @@ const core = vi.hoisted(() => ({
   listSpaces: vi.fn(),
   createSpace: vi.fn(),
   updateSpace: vi.fn(),
+  getPartnerMember: vi.fn(),
 }));
 const queue = vi.hoisted(() => ({ enqueueBatchRender: vi.fn() }));
 
@@ -46,6 +47,7 @@ vi.mock('@rasika/core', async importOriginal => {
       retireQr: core.retireQr,
       statsByVenue: core.statsByVenue,
     },
+    PartnerMember: { ...actual.PartnerMember, getPartnerMember: core.getPartnerMember },
     VenueSpace: {
       ...actual.VenueSpace,
       listSpaces: core.listSpaces,
@@ -71,6 +73,7 @@ const spacesEditor = spaceRouter.createCaller(ctx('editor'));
 
 beforeEach(() => {
   for (const fn of [...Object.values(core), ...Object.values(queue)]) fn.mockReset();
+  core.getPartnerMember.mockResolvedValue(null);
 });
 
 describe('access', () => {

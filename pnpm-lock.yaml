@@ -438,6 +438,85 @@ importers:
         specifier: ^1.6.1
         version: 1.6.1(@types/node@20.19.35)(supports-color@7.2.0)
 
+  packages/sabha:
+    dependencies:
+      '@openauthjs/openauth':
+        specifier: ^0.4.3
+        version: 0.4.3(arctic@3.7.0)(hono@4.12.3)
+      '@rasika/core':
+        specifier: workspace:*
+        version: link:../core
+      '@rasika/trpc':
+        specifier: workspace:*
+        version: link:../trpc
+      '@rasika/ui':
+        specifier: workspace:*
+        version: link:../ui
+      '@react-router/fs-routes':
+        specifier: ^7.13.1
+        version: 7.13.1(@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3))(@types/node@20.19.35)(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.35)))(typescript@5.9.3)
+      '@react-router/node':
+        specifier: ^7.13.1
+        version: 7.13.1(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
+      '@react-router/serve':
+        specifier: ^7.13.1
+        version: 7.13.1(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3)
+      '@trpc/client':
+        specifier: ^11.11.0
+        version: 11.11.0(@trpc/server@11.11.0(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server':
+        specifier: ^11.11.0
+        version: 11.11.0(typescript@5.9.3)
+      isbot:
+        specifier: ^4.4.0
+        version: 4.4.0
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      react-router:
+        specifier: ^7.13.1
+        version: 7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@react-router/dev':
+        specifier: ^7.13.1
+        version: 7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3))(@types/node@20.19.35)(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.35))
+      '@types/react':
+        specifier: ^18.3.28
+        version: 18.3.28
+      '@types/react-dom':
+        specifier: ^18.3.7
+        version: 18.3.7(@types/react@18.3.28)
+      autoprefixer:
+        specifier: ^10.4.27
+        version: 10.4.27(postcss@8.5.6)
+      postcss:
+        specifier: ^8.5.6
+        version: 8.5.6
+      tailwindcss:
+        specifier: ^3.4.19
+        version: 3.4.19(tsx@4.21.0)
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.19(tsx@4.21.0))
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.21
+        version: 5.4.21(@types/node@20.19.35)
+      vite-tsconfig-paths:
+        specifier: ^4.3.2
+        version: 4.3.2(supports-color@7.2.0)(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.35))
+      vitest:
+        specifier: ^1.6.1
+        version: 1.6.1(@types/node@20.19.35)(supports-color@7.2.0)
+
   packages/scraper:
     dependencies:
       '@aws-sdk/client-lambda':

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { eventApprovedEmail, studentAddedEmail } from './index';
+import { eventApprovedEmail, partnerInviteEmail, studentAddedEmail } from './index';
 
 const base = {
   learnerName: 'Meera',
@@ -81,5 +81,35 @@ describe('eventApprovedEmail', () => {
     const email = await eventApprovedEmail(event);
     expect(email.html).toContain('Rasika.life');
     expect(email.html).not.toContain('Rasika Classes');
+  });
+});
+
+describe('partnerInviteEmail', () => {
+  const input = {
+    inviterName: 'Tejovanth',
+    targetName: 'Bangalore Gayana Samaja',
+    inviteeEmail: 'secretary@example.org',
+    sabhaUrl: 'https://sabha.rasika.life/',
+    siteUrl: 'https://rasika.life',
+  };
+
+  it('uses the Copy subject, body, button and footnote', async () => {
+    const email = await partnerInviteEmail(input);
+    expect(email.subject).toBe("You're invited to manage Bangalore Gayana Samaja on rasika.life");
+    expect(email.text).toContain(
+      "Tejovanth has invited you to manage Bangalore Gayana Samaja on rasika.life. You'll see who follows Bangalore Gayana Samaja, how your QR codes are doing, and you can keep your details and concerts up to date. Sign in with Google using secretary@example.org to accept."
+    );
+    expect(email.html).toContain('Accept invite');
+    expect(email.text).toContain('This invite expires in 14 days.');
+  });
+
+  it('links to the dashboard invite page with the address encoded', async () => {
+    const email = await partnerInviteEmail(input);
+    expect(email.html).toContain('https://sabha.rasika.life/invite?email=secretary%40example.org');
+  });
+
+  it('has no em dash', async () => {
+    const email = await partnerInviteEmail(input);
+    expect(email.html + email.text).not.toContain('\u2014');
   });
 });

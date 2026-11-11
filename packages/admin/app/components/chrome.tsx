@@ -15,6 +15,12 @@ export function Chrome({ children }: { children: ReactNode }) {
             <Link to="/qr" className="text-muted-foreground hover:text-foreground">
               {ADMIN_COPY.batches.title}
             </Link>
+            <Link to="/partners" className="text-muted-foreground hover:text-foreground">
+              {ADMIN_EXTRA_COPY.partners}
+            </Link>
+            <Link to="/events/spot-check" className="text-muted-foreground hover:text-foreground">
+              {ADMIN_EXTRA_COPY.spotCheck}
+            </Link>
           </nav>
           <Form method="post" action="/auth/logout">
             <button

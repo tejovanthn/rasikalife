@@ -47,6 +47,23 @@ export async function loadVenueOptions(
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/** Every organiser as `{ id, name, city }`. Same paging rule as `loadVenueOptions`. */
+export async function loadOrganiserOptions(
+  trpc: ServerClient
+): Promise<Array<{ id: string; name: string; city: string | null }>> {
+  const out: Array<{ id: string; name: string; city: string | null }> = [];
+  let nextToken: string | undefined;
+  for (let page = 0; page < 30; page += 1) {
+    const result = await trpc.organiser.list.query({ limit: 100, nextToken });
+    for (const organiser of result.items) {
+      out.push({ id: organiser.id, name: organiser.name, city: organiser.city ?? null });
+    }
+    if (!result.nextToken) break;
+    nextToken = result.nextToken;
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 /** The `cause.code` of a tRPC failure that came from core's `ApplicationError`, if any. */
 export function errorCode(error: unknown): string | undefined {
   const cause = (error as { cause?: { code?: string } } | undefined)?.cause;

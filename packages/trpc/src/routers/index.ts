@@ -15,6 +15,7 @@ import { festivalRouter } from './festival';
 import { followRouter } from './follow';
 import { notifyRouter } from './notify';
 import { organiserRouter } from './organiser';
+import { partnerRouter } from './partner';
 import { qrRouter } from './qr';
 import { ragaRouter } from './raga';
 import { rsvpRouter } from './rsvp';
@@ -44,6 +45,7 @@ export const appRouter = createTRPCRouter({
   follow: followRouter,
   notify: notifyRouter,
   organiser: organiserRouter,
+  partner: partnerRouter,
   qr: qrRouter,
   raga: ragaRouter,
   rsvp: rsvpRouter,
