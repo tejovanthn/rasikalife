@@ -13,6 +13,7 @@ import {
 } from '.';
 import { ErrorCode } from '../../constants';
 import { PushSubscriptionEntity } from './entity';
+import { isAllowedPushEndpoint } from './schema';
 
 const ENDPOINT = 'https://fcm.googleapis.com/fcm/send/abc123';
 const KEYS = { p256dh: 'p256-key', auth: 'auth-key' };
@@ -49,6 +50,10 @@ describe('putPushSubscription', () => {
 
   it.each([
     ['not a url', { endpoint: 'nope', keys: KEYS }],
+    ['internal host', { endpoint: 'https://169.254.169.254/latest', keys: KEYS }],
+    ['lookalike host', { endpoint: 'https://fcm.googleapis.com.evil.com/x', keys: KEYS }],
+    ['suffix trick', { endpoint: 'https://evilpush.apple.com.example.org/x', keys: KEYS }],
+    ['other https host', { endpoint: 'https://push.example.com/x', keys: KEYS }],
     ['http endpoint', { endpoint: 'http://push.example.com/x', keys: KEYS }],
     ['missing keys', { endpoint: ENDPOINT }],
     ['empty keys', { endpoint: ENDPOINT, keys: { p256dh: '', auth: '' } }],
@@ -89,5 +94,22 @@ describe('deleteUserPushSubscriptions', () => {
       userId: 'u1',
       endpointHash: 'h2',
     });
+  });
+});
+
+describe('isAllowedPushEndpoint', () => {
+  it.each([
+    'https://fcm.googleapis.com/fcm/send/abc',
+    'https://web.push.apple.com/QL3',
+    'https://updates.push.services.mozilla.com/wpush/v2/abc',
+    'https://wns2-par02p.notify.windows.com/w/?token=x',
+  ])('allows %s', url => {
+    expect(isAllowedPushEndpoint(url)).toBe(true);
+  });
+
+  it('refuses a bare parent domain for the wildcard hosts and any other port', () => {
+    expect(isAllowedPushEndpoint('https://push.apple.com/x')).toBe(false);
+    expect(isAllowedPushEndpoint('https://fcm.googleapis.com:8443/x')).toBe(false);
+    expect(isAllowedPushEndpoint('https://u:p@fcm.googleapis.com/x')).toBe(false);
   });
 });
