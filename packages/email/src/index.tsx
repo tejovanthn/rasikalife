@@ -78,3 +78,4 @@ export async function eventApprovedEmail(input: EventApprovedEmailInput): Promis
     )),
   };
 }
+export * from './notify';

@@ -21,6 +21,8 @@ interface LayoutProps {
   /** The product the email is from, named in the header and footer. */
   appName?: string;
   children: React.ReactNode;
+  /** Shown above the product line in the footer, e.g. why the reader got this email. */
+  footer?: React.ReactNode;
 }
 
 /** Regex rather than `new URL`, so a malformed base URL degrades the footer instead of throwing. */
@@ -33,6 +35,7 @@ export function EmailLayout({
   appUrl,
   appName = 'Rasika Classes',
   children,
+  footer,
 }: LayoutProps) {
   return (
     <Html lang="en">
@@ -43,6 +46,7 @@ export function EmailLayout({
           <Text style={brand}>{appName}</Text>
           <Section>{children}</Section>
           <Hr style={hr} />
+          {footer}
           <Text style={footerText}>
             {appName} ·{' '}
             <Link href={appUrl} style={footerLink}>
