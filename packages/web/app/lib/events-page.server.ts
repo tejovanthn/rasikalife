@@ -1,5 +1,6 @@
 import { data, redirect } from 'react-router';
 import type { LoaderFunctionArgs } from 'react-router';
+import { presetFromSegment } from '~/lib/event-filters';
 import {
   type EventListingData,
   ListingRedirect,
@@ -22,4 +23,36 @@ export async function eventsLoader({ request }: LoaderFunctionArgs, presetSegmen
   });
   if (result instanceof ListingRedirect) throw redirect(result.location, 301);
   return data({ ...result.data, first: firstConcert(result.data) }, { headers: result.headers });
+}
+
+/**
+ * The loader of `/events/<city>` and `/events/<city>/<preset>`. The first is reached through
+ * `events.$eventid.tsx`, which hands over when the segment is not an event id; the second is
+ * `events.$city.$preset.tsx`. An unknown preset segment is a 404, like an unknown city.
+ */
+export async function cityListingLoader(
+  { request }: LoaderFunctionArgs,
+  city: string,
+  presetSegment?: string
+) {
+  if (presetSegment !== undefined && !presetFromSegment(presetSegment)) {
+    throw new Response('Not Found', { status: 404 });
+  }
+  const result = await loadEventListing(request, { city, presetSegment }).catch(error => {
+    if (error instanceof Response) throw error;
+    console.error(`Failed to load concerts for ${city}:`, error);
+    throw new Response('Failed to load events', { status: 500 });
+  });
+  if (result instanceof ListingRedirect) throw redirect(result.location, 301);
+  return data(
+    {
+      ...result.data,
+      kind: 'city' as const,
+      first: firstConcert(result.data),
+      hasAny: result.data.calendar.lastMonth !== null,
+      /** Set on `/events/<city>/<preset>` only, not for `?when=` on the city page. */
+      datePage: presetSegment ? (presetFromSegment(presetSegment) ?? null) : null,
+    },
+    { headers: result.headers }
+  );
 }

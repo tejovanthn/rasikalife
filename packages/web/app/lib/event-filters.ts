@@ -222,10 +222,11 @@ export function shiftMonth(month: string, delta: number): string {
 }
 
 /**
- * Where a listing lives. The date presets of the whole listing are pages of their own
- * (`/events/today`, `/events/this-weekend`, `/events/this-week`); a city page carries every
- * filter, presets included, as a query parameter. Per-city date pages were dropped: Keyword
- * Planner shows no searches for "… in bangalore this weekend" (Oct 2026).
+ * Where a listing lives. The date presets are pages of their own, for the whole listing
+ * (`/events/today`, `/events/this-weekend`, `/events/this-week`) and for a city
+ * (`/events/<city>/today`, ...). Every other filter is a query parameter. The city date pages
+ * exist to be shared, not searched for: Keyword Planner shows no searches for "… in bangalore
+ * this weekend" (Oct 2026), so they are `noindex` and out of the sitemap.
  */
 export type ListingScope = { kind: 'all' } | { kind: 'city'; slug: string };
 
@@ -261,14 +262,9 @@ export function listingHref(scope: ListingScope, state: ListingState): string {
   let path = '/events';
   const preset = DATE_PRESETS.find(p => p.value === state.when)?.value;
 
-  if (scope.kind === 'city') {
-    path = `/${scope.slug}/concerts`;
-    if (state.when) query.set('when', state.when);
-  } else if (preset) {
-    path = `/events/${PRESET_SEGMENTS[preset]}`;
-  } else if (state.when) {
-    query.set('when', state.when);
-  }
+  if (scope.kind === 'city') path = `/events/${scope.slug}`;
+  if (preset) path += `/${PRESET_SEGMENTS[preset]}`;
+  else if (state.when) query.set('when', state.when);
 
   if (state.free) query.set('free', '1');
   if (state.sort === 'near') query.set('sort', 'near');

@@ -78,7 +78,7 @@ export const Footer = () => {
     { href: '/events/today', label: 'Concerts today' },
     { href: '/events/this-weekend', label: 'This weekend' },
     { href: '/events/this-week', label: 'This week' },
-    { href: '/bengaluru/concerts', label: 'Concerts in Bengaluru' },
+    { href: '/events/bengaluru', label: 'Concerts in Bengaluru' },
   ];
 
   const aboutLinks = [

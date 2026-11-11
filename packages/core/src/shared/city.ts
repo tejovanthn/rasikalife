@@ -1,5 +1,5 @@
 /**
- * City slugs for the `/<city>/concerts` landing pages. Browser-safe.
+ * City slugs for the `/events/<city>` landing pages. Browser-safe.
  *
  * A city is whatever a venue's address stores, so the slug is read from the data rather than
  * from a fixed list. The old names people still search by ("bangalore") resolve to the stored

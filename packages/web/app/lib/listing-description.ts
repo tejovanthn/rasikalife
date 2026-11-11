@@ -135,7 +135,7 @@ export function eventsIndexMeta({
 
 /**
  * Title and description for a dated or city listing: `/events/today`, `/events/this-weekend`,
- * `/events/this-week`, and `/<city>/concerts` ("carnatic concerts in bangalore"). Names the
+ * `/events/this-week`, and `/events/<city>` ("carnatic concerts in bangalore"). Names the
  * count and the next concert, the fact a searcher came for, rather than describing the kind of
  * page; when the range is empty it says so and names the next concert after it, which the page
  * also lists.

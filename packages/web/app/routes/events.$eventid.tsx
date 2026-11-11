@@ -17,13 +17,14 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link, data, redirect, useFetcher, useLoaderData } from 'react-router';
-import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
+import type { ActionFunction, HeadersFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
 import { EventTextCard } from '~/components/EventTextCard';
 import { PosterImage } from '~/components/PosterImage';
+import { CityListingPage } from '~/components/events/city-listing-page';
 import { EventTime } from '~/components/events/event-time';
 import { BreadcrumbStructuredData, EventStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
@@ -31,14 +32,19 @@ import { Button } from '~/components/ui/button';
 import { Card, CardContent } from '~/components/ui/card';
 import { roleLabel } from '~/lib/artist-display';
 import { getUser } from '~/lib/auth.server';
+import { type CityListingPageData, cityListingMeta } from '~/lib/city-listing-meta';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import {
   type ContactDetails,
   type ResolvedEventContact,
   resolveEventContact,
 } from '~/lib/event-contact';
+import { listingHref } from '~/lib/event-filters';
 import { eventZone, formatEventDate } from '~/lib/event-time';
+import { cityListingLoader } from '~/lib/events-page.server';
+import { resolveEventsSegment } from '~/lib/events-route';
 import { eventOgImage } from '~/lib/og';
+import { SIGNED_IN_CACHE_CONTROL } from '~/lib/page-cache';
 import type { StructuredAddress } from '~/lib/structured-data';
 import {
   generateArtistUrl,
@@ -105,11 +111,18 @@ interface EventDetail {
   sponsors?: Array<{ name: string; type?: string }>;
 }
 
-export const loader: LoaderFunction = async ({ request, params }) => {
+// `/events/<x>` is an event, or a city's listing when `<x>` is not an event id
+// (lib/events-route.ts). Everything below `isCityListing` is the event page, unchanged.
+const isCityListing = (d: unknown): d is CityListingPageData =>
+  (d as { kind?: string } | undefined)?.kind === 'city';
+
+export const loader: LoaderFunction = async args => {
+  const { request, params } = args;
   const { eventid } = params;
   if (!eventid) {
     throw new Response('Event ID is required', { status: 400 });
   }
+  if (resolveEventsSegment(eventid) === 'city') return cityListingLoader(args, eventid);
 
   const parsed = parseSlug(eventid);
   if (!parsed) {
@@ -342,7 +355,17 @@ export const action: ActionFunction = async ({ request, params }) => {
   return data({ error: 'Invalid action' }, { status: 400 });
 };
 
+// An event sets no Cache-Control (the default in entry.server.tsx applies); a city listing sets
+// its own, until midnight.
+export const headers: HeadersFunction = ({ loaderHeaders }) => {
+  const headers: Record<string, string> = {};
+  const cacheControl = loaderHeaders.get('Cache-Control');
+  if (cacheControl) headers['Cache-Control'] = cacheControl;
+  return headers;
+};
+
 export const meta: MetaFunction = ({ data: loaderData }) => {
+  if (isCityListing(loaderData)) return cityListingMeta(loaderData);
   const ld = loaderData as { event: EventDetail; festivalPosterUrl?: string } | undefined;
   const event = ld?.event;
   if (!event) {
@@ -649,7 +672,11 @@ function AttendedButton({
   );
 }
 
-export default function EventDetail() {
+export default function EventsSegmentPage() {
+  return isCityListing(useLoaderData()) ? <CityListingPage /> : <EventDetail />;
+}
+
+function EventDetail() {
   const {
     event,
     user,
@@ -723,7 +750,10 @@ export default function EventDetail() {
   const venueCity = venueAddressParts?.city?.trim();
   const cardContent = buildEventCardContent({ ...event, city: venueCity });
   const listCrumb = venueCity
-    ? { label: `Concerts in ${venueCity}`, path: `/${canonicalCitySlug(venueCity)}/concerts` }
+    ? {
+        label: `Concerts in ${venueCity}`,
+        path: listingHref({ kind: 'city', slug: canonicalCitySlug(venueCity) }, {}),
+      }
     : { label: 'Events', path: '/events' };
 
   return (

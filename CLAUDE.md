@@ -127,7 +127,7 @@ The core package uses a domain-driven design with:
 - `event-contact.ts` — `resolveEventContact(eventContact, organiserContact)` decides whose contact details an event page shows. 515 of 739 events store no `contactInfo` at all, so the section simply did not render; the organiser record usually knows, having been seeded on approval. The fallback is **whole-block, not per-field** — a phone off this poster beside a website off the organiser's record is one list the reader cannot take apart, and they are entitled to know whether a number is "ring this about this concert" or "this is the sabha's office line". It returns a `source`, and the page says so. Nothing is copied onto the event record: the organiser is the canonical home, and a copy taken at approval goes stale the moment they change a number. The loader only fetches the organiser when the event states nothing, since otherwise the result is discarded.
 - `listing-description.ts` — `eventListingDescription({name, events, preposition, fallback, location})` builds the meta description for a page that is really a listing (a venue, an organiser). It names the count and the next event rather than restating what kind of page it is: "Events and performances at X. Indian classical arts venue." took 196 impressions at position 9.8 for "chowdiah memorial hall events" and no clicks at all. Falls back to past events before the generic line, because a hall with only past concerts is still the right answer for that query.
 - `listing-description.ts` also has `eventsIndexMeta({count, cities, city})` for `/events`: "Carnatic Concerts and Classical Music Events" plus the upcoming count and the three busiest cities. The old title, "Upcoming Events - Indian Classical Arts", held none of the searched words ("carnatic music" 22,200/month, "classical music concerts near me" 1,300) and the page sat at position 20. A `?city=` filter changes the title; the canonical stays `/events`.
-- `listing-description.ts` also has `concertsMeta` for `/<city>/concerts` and `decemberSeasonYear(city, dates)`. Only a Chennai page that lists a December concert gets the title "Carnatic Concerts in Chennai: December Season <year> Schedule" (no brand, to fit 60 characters); an empty Chennai keeps the plain title and `noindex`. `featured-cities.ts` — `featuredCityLinks(cities)`: Chennai and Bengaluru, linked from the home page and the `/events` sidebar even with no concert listed. A city with none is not in the sitemap.
+- `listing-description.ts` also has `concertsMeta` for `/events/<city>` and its date pages and `decemberSeasonYear(city, dates)`. Only a Chennai page that lists a December concert gets the title "Carnatic Concerts in Chennai: December Season <year> Schedule" (no brand, to fit 60 characters); an empty Chennai keeps the plain title and `noindex`. `featured-cities.ts` — `featuredCityLinks(cities)`: Chennai and Bengaluru, linked from the home page and the `/events` sidebar even with no concert listed. A city with none is not in the sitemap.
 - `hub-lists.ts` — builders for the list pages behind the 2026-11 keyword research (`docs/seo/keyword-research-2026-11.md`). `melakartaRows(MELAKARTA_LINKS)` gives the 72 rows (number, name, chakra, arohanam, record id) for `/carnatic/ragas/melakarta`; `groupJanyaByParent(rows, links)` groups `raga.janyaList` under the 72 parents for `/carnatic/ragas/janya` (a parent outside the 72 is dropped); `varnamListMeta`, `janyaListMeta`, `melakartaListMeta` and `composerCompositionsMeta` build the titles. `/carnatic/compositions/varnams` reads `composition.byType` (a filtered scan of the list index, no GSI, so keep it behind the page cache). A composer's page is `/artists/<slug>/compositions`, titled "<Name> Compositions and Lyrics", `noindex` when empty; the artist page's "View all compositions" link used to point at a `/carnatic/artists/...` URL that does not exist. The three new list pages are in `sitemap-static.xml`; composer pages are not (they would need the list of composers that have compositions).
 - `raga-description.ts` — `ragaMetaDescription` and `ragaMetaTitle`. The title leads with "<Name> Raga", the form these pages are found by ("bindumalini raga", "rasika ranjani ragam"), then names only what the page shows: "Arohanam, Avarohanam" when the scale is stored, "Compositions" when any are listed, and the melakarta number for a melakarta only. It must fit 60 characters, so detail and the brand are dropped first, never the name. The description drops whole trailing sentences past 155 characters, and when no performance is logged it names two listed compositions. Composition titles reach it converted with `fromItrans`; the page cards still use the raw title for their links.
 - `raga-description.ts` also takes `compositionCount` (the page total, "12 compositions, including A and B") and puts "(Janya of <parent>)" in a janya's title when it fits in 60 characters.
@@ -1628,18 +1628,34 @@ compiles them and the app does not load Faust.
 
 ### Event listings: filters, city pages, WhatsApp text, distance
 
-`/events`, its date pages (`/events/today`, `/events/this-weekend`, `/events/this-week`) and
-`/<city>/concerts` are one page (`components/events/event-listing.tsx`) over one loader
+`/events`, its date pages (`/events/today`, `/events/this-weekend`, `/events/this-week`),
+`/events/<city>` and the city date pages (`/events/<city>/today|this-weekend|this-week`) are one page (`components/events/event-listing.tsx`) over one loader
 (`lib/event-listing.server.ts`), which loads **every** upcoming event (`event.upcomingListings`,
 23 in Oct 2026, projected fields) and filters in memory. Revisit with a pre-built snapshot past
 ~1,000 upcoming events. Plan: `docs/plans/261023-01-listing-features.md`.
 
 - **Every filter is a query parameter or a path segment, never client state.** The page works
   without JavaScript and each view is its own cached, shareable URL (the CloudFront policy keys on
-  all query strings). Build links with `listingHref`. Only the three date presets of the whole
-  listing are pages of their own; on a city page every filter is a query parameter and the
-  canonical is the city page. Keyword Planner (Oct 2026): "carnatic concerts in bangalore"
-  260/month, "… this weekend" and "… this week" 0, so per-city date pages were dropped.
+  all query strings). Build links with `listingHref`. The three date presets are pages of their
+  own, for the whole listing and for a city; every other filter (month, day, free, sort, view,
+  cal) is a query parameter. The city page `/events/<city>` is the one that ranks (Keyword
+  Planner, Oct 2026: "carnatic concerts in bangalore" 260/month); its canonical is itself, and a
+  `?when=` on it is a view of it. The city date pages are for sharing (WhatsApp), since "… this
+  weekend" and "… this week" have 0 searches: `noindex, follow`, a self canonical, **not in the
+  sitemap** (`lib/city-listing-meta.ts`).
+- **`/events/<x>` is an event or a city, told apart in `routes/events.$eventid.tsx`.** React
+  Router cannot rank two `$param` routes at one path, so that one route's loader asks
+  `resolveEventsSegment` (`lib/events-route.ts`): a segment ending in a 27-character KSUID
+  (`parseSlug`) is an event, anything else goes to `cityListingLoader`, which 404s for an unknown
+  city. The id test runs first, so a city slug can never shadow an event; static segments
+  (`today`, `new`, `tags`, ...) are their own route files and outrank `$eventid`. The route's
+  `meta`, `headers` and default export dispatch on `kind: 'city'` in the loader data; the event
+  branch is unchanged and sets no Cache-Control. `/events/<city>/<preset>` is
+  `events.$city.$preset.tsx` (`/events/<id>/edit` is static and wins). Non-event junk such as
+  `/events/foo` is now 404, not 410.
+- **Old `/<city>/concerts` is a permanent 301 to `/events/<city>`**, query string kept, an old
+  city name folded in the same hop (`legacyConcertsRedirect`; route `$city.concerts._index.tsx`).
+  Keep it forever: the URL is indexed and was shared, and stored short links still point at it.
 - **Date-relative pages are cached until midnight in India** (`cacheUntilMidnight`), not for the
   week. Otherwise a quiet day serves yesterday's "Today".
 - **An event's city is its venue's** (`EventListings.listUpcomingListings`). `event.venueCity`

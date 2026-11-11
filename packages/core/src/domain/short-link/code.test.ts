@@ -26,10 +26,15 @@ describe('isShortLinkTarget', () => {
         '/events/ashtanayika-3L7jpdTnD2Grxr4HS8ycF7wCgsz?utm_source=whatsapp&utm_medium=social&utm_campaign=listing_share&utm_content=event'
       )
     ).toBe(true);
-    expect(isShortLinkTarget('/bengaluru/concerts?when=weekend&free=1&utm_content=listing')).toBe(
+    expect(isShortLinkTarget('/events/bengaluru?when=2026-11&free=1&utm_content=listing')).toBe(
       true
     );
     expect(isShortLinkTarget('/events/this-weekend')).toBe(true);
+    expect(isShortLinkTarget('/events/bengaluru/this-weekend?free=1&utm_content=listing')).toBe(
+      true
+    );
+    // Links stored before the move still resolve, and then 301 to the new path.
+    expect(isShortLinkTarget('/bengaluru/concerts?when=weekend')).toBe(true);
   });
 
   it('refuses anything that could leave the site', () => {

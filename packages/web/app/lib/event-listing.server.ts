@@ -34,7 +34,7 @@ import {
 } from '~/lib/whatsapp-digest';
 
 /**
- * Everything `/events` and `/<city>/concerts[/<preset>]` render, from one load of every
+ * Everything `/events` and `/events/<city>[/<preset>]` render, from one load of every
  * upcoming event. Filtering happens here, in memory; see `listAllUpcomingEvents` for why that
  * is right at this size.
  */

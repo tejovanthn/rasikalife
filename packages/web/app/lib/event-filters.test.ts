@@ -156,11 +156,20 @@ describe('listingHref', () => {
     expect(listingHref({ kind: 'all' }, {})).toBe('/events');
   });
 
-  it('keeps every filter in the query on a city page', () => {
+  it('gives a city its own path, and a city preset a path under it', () => {
     const city = { kind: 'city', slug: 'bengaluru' } as const;
-    expect(listingHref(city, { when: 'weekend' })).toBe('/bengaluru/concerts?when=weekend');
+    expect(listingHref(city, {})).toBe('/events/bengaluru');
+    expect(listingHref(city, { when: 'weekend' })).toBe('/events/bengaluru/this-weekend');
+    expect(listingHref(city, { when: 'today', free: true })).toBe('/events/bengaluru/today?free=1');
+    expect(listingHref(city, { when: 'week', view: 'whatsapp' })).toBe(
+      '/events/bengaluru/this-week?view=whatsapp'
+    );
+  });
+
+  it('keeps a month or a day in the query on a city page', () => {
+    const city = { kind: 'city', slug: 'bengaluru' } as const;
     expect(listingHref(city, { when: '2026-11', free: true })).toBe(
-      '/bengaluru/concerts?when=2026-11&free=1'
+      '/events/bengaluru?when=2026-11&free=1'
     );
   });
 
@@ -219,7 +228,7 @@ describe('cal', () => {
     expect(listingHref({ kind: 'all' }, state)).toBe('/events/today?cal=2026-12');
     const city = { kind: 'city', slug: 'bengaluru' } as const;
     expect(listingHref(city, { when: '2026-11', cal: '2027-01' })).toBe(
-      '/bengaluru/concerts?when=2026-11&cal=2027-01'
+      '/events/bengaluru?when=2026-11&cal=2027-01'
     );
   });
 

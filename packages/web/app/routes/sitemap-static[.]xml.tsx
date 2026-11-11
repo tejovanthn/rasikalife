@@ -5,7 +5,7 @@ import { client } from '~/api.server';
 import { DATE_PRESETS, listingHref } from '~/lib/event-filters';
 
 /**
- * `/<city>/concerts` for every city with a concert coming up (a city with none carries
+ * `/events/<city>` for every city with a concert coming up (a city with none carries
  * `noindex`, so listing it would contradict the page), and the `/events/<preset>` date pages.
  */
 async function cityConcertPages(): Promise<

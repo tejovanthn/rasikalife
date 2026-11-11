@@ -34,7 +34,7 @@ export interface SearchDocument {
   avarohanam?: string;
   /** Artists only: `claimStatus === 'verified'`. */
   verified?: boolean;
-  /** Venues only: the stored city, for the `/<city>/concerts` pages (`listVenueCities`). */
+  /** Venues only: the stored city, for the `/events/<city>` pages (`listVenueCities`). */
   city?: string;
 }
 

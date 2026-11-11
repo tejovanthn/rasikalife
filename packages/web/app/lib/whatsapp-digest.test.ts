@@ -11,7 +11,7 @@ import type { DigestEvent } from './whatsapp-digest';
 
 const base = {
   heading: 'Concerts in Bengaluru · This weekend',
-  listingUrl: 'https://rasika.life/bengaluru/concerts/this-weekend',
+  listingUrl: 'https://rasika.life/events/bengaluru/this-weekend',
   eventUrl: (e: DigestEvent) => `https://rasika.life/events/${e.id}`,
   campaign: 'listing_share',
 };
@@ -45,7 +45,7 @@ describe('formatWhatsAppDigest', () => {
         '🎟 https://example.com/tickets',
         `https://rasika.life/events/e1?${UTM}&utm_content=event`,
         '',
-        `More on Rasika.life: https://rasika.life/bengaluru/concerts/this-weekend?${UTM}&utm_content=listing`,
+        `More on Rasika.life: https://rasika.life/events/bengaluru/this-weekend?${UTM}&utm_content=listing`,
       ].join('\n')
     );
   });
@@ -95,7 +95,7 @@ describe('formatWhatsAppDigest', () => {
     const many = Array.from({ length: 3 }, (_, i) => ({ ...concert, id: `e${i}` }));
     const text = formatWhatsAppDigest(many, { ...base, max: 2 });
     expect(text.match(/Sunil Gargyan - Carnatic Vocal/g)).toHaveLength(2);
-    expect(text).toMatch(/…and 1 more: https:\/\/rasika\.life\/bengaluru/);
+    expect(text).toMatch(/…and 1 more: https:\/\/rasika\.life\/events\/bengaluru/);
   });
 
   it('names the zone of a concert outside India, and only then', () => {
@@ -118,7 +118,7 @@ describe('formatWhatsAppDigest', () => {
 });
 
 describe('short links', () => {
-  const listing = `https://rasika.life/bengaluru/concerts/this-weekend?${UTM}&utm_content=listing`;
+  const listing = `https://rasika.life/events/bengaluru/this-weekend?${UTM}&utm_content=listing`;
   const event = `https://rasika.life/events/e1?${UTM}&utm_content=event`;
 
   it('lists the tagged links the text will hold', () => {
@@ -219,7 +219,7 @@ describe('whatsAppOpenLink', () => {
     const short = decodeURIComponent(link?.url.replace('https://wa.me/?text=', '') ?? '');
     const kept = short.match(/Sunil Gargyan - Carnatic Vocal/g)?.length ?? 0;
     expect(kept).toBeGreaterThan(0);
-    expect(short).toContain(`…and ${30 - kept} more: https://rasika.life/bengaluru`);
+    expect(short).toContain(`…and ${30 - kept} more: https://rasika.life/events/bengaluru`);
     // No day header is left with nothing under it.
     expect(short).not.toMatch(/──\n\n…and/);
   });

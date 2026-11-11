@@ -3,10 +3,7 @@ import { featuredCityLinks } from './featured-cities';
 
 describe('featuredCityLinks', () => {
   it('links Chennai and Bengaluru to their concert pages', () => {
-    expect(featuredCityLinks().map(c => c.href)).toEqual([
-      '/chennai/concerts',
-      '/bengaluru/concerts',
-    ]);
+    expect(featuredCityLinks().map(c => c.href)).toEqual(['/events/chennai', '/events/bengaluru']);
   });
 
   it('carries the live count, and none for a city with no concert', () => {

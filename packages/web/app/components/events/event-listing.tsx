@@ -23,7 +23,7 @@ import { featuredCityLinks } from '~/lib/featured-cities';
 import { cn } from '~/lib/utils';
 
 /**
- * The body of `/events` and every `/<city>/concerts` page. Every control is a link built by
+ * The body of `/events` and every `/events/<city>` page. Every control is a link built by
  * `listingHref`, so the page needs no JavaScript to filter and each filtered view is its own
  * cached, shareable URL. Filters are buttons, not chips: a chip in this design system labels a
  * thing and never toggles (DESIGN.md).
