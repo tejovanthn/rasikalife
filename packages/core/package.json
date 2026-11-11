@@ -216,6 +216,11 @@
       "import": "./src/domain/event/crawl.ts",
       "default": "./src/domain/event/crawl.ts"
     },
+    "./domain/event/gemini": {
+      "types": "./src/domain/event/gemini.ts",
+      "import": "./src/domain/event/gemini.ts",
+      "default": "./src/domain/event/gemini.ts"
+    },
     "./domain/event/crawl-robots": {
       "types": "./src/domain/event/crawl-robots.ts",
       "import": "./src/domain/event/crawl-robots.ts",

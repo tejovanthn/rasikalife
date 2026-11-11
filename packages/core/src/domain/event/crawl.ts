@@ -30,6 +30,15 @@ export interface CrawledPerformer {
   variants?: string[];
 }
 
+export interface PosterExtractionNote {
+  confidence: number;
+  /** The poster's own start, as read. mdnd's listing stays the time of record. */
+  startDateTime?: string;
+  venueName?: string;
+  /** Where the poster disagrees with the listing (date, time, venue). Empty when it agrees. */
+  mismatches: string[];
+}
+
 /** A listing from another source that is the same concert, folded into this row. */
 export interface MergedListing {
   /** `source:sourceId`, as a manifest key. */
@@ -68,6 +77,8 @@ export interface CrawledEvent {
   posterUrl?: string;
   /** Set by the adapter once the poster is on disk. */
   posterFile?: string;
+  /** What the existing poster extractor (Gemini) read off the poster, when `crawl-extract` ran. */
+  posterExtraction?: PosterExtractionNote;
 }
 
 // ---------------------------------------------------------------------------
@@ -297,7 +308,7 @@ function dedupePerformers(list: CrawledPerformer[]): CrawledPerformer[] {
 
 /** "Carnatic Vocal Concert by Sunil Gargyan" -> ["Sunil Gargyan"], when nothing else names them. */
 export function performersFromTitle(title: string): CrawledPerformer[] {
-  const m = /\bby\s+(.+)$/i.exec(title);
+  const m = /\bby\s+(.+)$/i.exec(title.split('|')[0]);
   if (!m) return [];
   return parsePerformers([m[1]], 'main');
 }
@@ -590,6 +601,244 @@ export function mergeCrawled(apps4u: CrawledEvent[], mdnd: CrawledEvent[]): Craw
 }
 
 // ---------------------------------------------------------------------------
+// mdnd, month by month
+
+/**
+ * mdnd's own calendar filter (`events/get_events_by_filterdata`, the call its "custom dates"
+ * picker makes): one category and a date range, thin rows (title, day, time, venue, poster, no
+ * artists). The 30-day call (`get_todays_event`) has full rows but stops 30 days out.
+ */
+export interface MdndListRow {
+  event_id: number | string;
+  event_title: string;
+  /** "Wed, 11th Nov 2026" */
+  event_date: string;
+  event_time?: string | null;
+  event_mode?: string | null;
+  ticketing_option?: string | null;
+  venue_name?: string | null;
+  event_image?: string | null;
+}
+
+/** The categories seen for Chennai (country 101, city 3659) on 2026-11-11. */
+export const MDND_CATEGORIES: Record<number, string> = {
+  4: 'Devotional',
+  6: 'Dance',
+  7: 'Bollywood',
+  8: 'Carnatic',
+  10: 'Other',
+};
+
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+/** "Wed, 11th Nov 2026" -> "2026-11-11". */
+export function parseMdndDisplayDate(raw: string): string | null {
+  const m = /(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3})[a-z]*\.?\s+(\d{4})/.exec(raw ?? '');
+  if (!m) return null;
+  const month = MONTHS.indexOf(m[2].toLowerCase());
+  return month < 0 ? null : ymd(Number(m[3]), month + 1, Number(m[1]));
+}
+
+/** Calendar months from `from` to `through` (both `YYYY-MM-DD`): one request window each. */
+export function mdndMonthWindows(
+  from: string,
+  through: string
+): Array<{ label: string; from: string; to: string }> {
+  const out: Array<{ label: string; from: string; to: string }> = [];
+  let y = Number(from.slice(0, 4));
+  let mo = Number(from.slice(5, 7));
+  const endY = Number(through.slice(0, 4));
+  const endMo = Number(through.slice(5, 7));
+  while (y < endY || (y === endY && mo <= endMo)) {
+    const label = `${y}-${String(mo).padStart(2, '0')}`;
+    const last = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+    const start = label === from.slice(0, 7) ? from : `${label}-01`;
+    const stop =
+      label === through.slice(0, 7) ? through : `${label}-${String(last).padStart(2, '0')}`;
+    out.push({ label, from: start, to: stop });
+    mo += 1;
+    if (mo > 12) {
+      mo = 1;
+      y += 1;
+    }
+  }
+  return out;
+}
+
+/** Thin filter rows into crawled events. The title often names the artists; the poster names the rest. */
+export function parseMdndListRows(
+  rows: MdndListRow[],
+  categoryId?: number,
+  city = 'Chennai'
+): CrawledEvent[] {
+  const events: CrawledEvent[] = [];
+  for (const row of rows) {
+    const date = parseMdndDisplayDate(row.event_date);
+    const id = String(row.event_id ?? '');
+    if (!date || !id || !row.event_title) continue;
+    const time = parseClock(row.event_time);
+    const venue = splitVenue(row.venue_name ?? '', city);
+    const title = row.event_title.replace(/\s+/g, ' ').trim();
+    const url = mdndEventUrl(Number(id), title);
+    const image = row.event_image?.trim();
+    events.push({
+      source: 'mdnd',
+      sourceId: `mdnd-${id}`,
+      sourceUrl: url,
+      alsoListedBy: [],
+      title,
+      date,
+      time,
+      startDateTime: toStartDateTime(date, time),
+      venueName: venue.name,
+      venueRaw: venue.raw,
+      city: venue.city,
+      performers: performersFromTitle(title),
+      ticketUrl: url,
+      entryType: /^free$/i.test(row.ticketing_option ?? '') ? 'free' : 'ticketed',
+      category:
+        categoryId !== undefined
+          ? (MDND_CATEGORIES[categoryId] ?? `mdnd category ${categoryId}`)
+          : undefined,
+      ...(image && /^[\w.-]+\.(jpe?g|png|webp)$/i.test(image)
+        ? { posterUrl: `${MDND_IMAGE_BASE}${image}` }
+        : {}),
+    });
+  }
+  return events;
+}
+
+/** Union by id. A full row (artists, organiser, description) beats a thin one. */
+export function unionMdnd(full: CrawledEvent[], thin: CrawledEvent[]): CrawledEvent[] {
+  const byId = new Map(thin.map(e => [e.sourceId, e]));
+  for (const e of full) {
+    const t = byId.get(e.sourceId);
+    byId.set(e.sourceId, { ...e, category: e.category ?? t?.category });
+  }
+  return [...byId.values()];
+}
+
+/**
+ * Context for the existing poster extractor (`extractFromPoster(url, hint)`), which accepts one
+ * text hint. The poster stays the source; the listing only helps with the year and the venue.
+ */
+export function mdndHint(e: CrawledEvent): string {
+  return [
+    'mdnd.in listing for this poster (hint only; the poster wins if they differ):',
+    `title: ${e.title}`,
+    `date: ${e.date}`,
+    e.time ? `time: ${e.time} IST` : null,
+    e.venueRaw ? `venue: ${e.venueRaw}` : null,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+/** The slice of the extractor's result this step reads. */
+export interface PosterExtractionLike {
+  confidence?: number;
+  events: Array<{
+    startDateTime?: string | null;
+    venue?: { name: string } | null;
+    organiser?: { name: string } | null;
+    description?: string | null;
+    artists?: Array<{ name: string; title?: string | null; role?: string | null }>;
+  }>;
+}
+
+const NOT_PERFORMING_ROLE = /guest|chief|president|inaugur|release|award|convenor|compere|anchor/i;
+const SUPPORT_ROLE =
+  /mridang|mrudang|ghat|kanjira|morsing|tabla|percussion|tambura|tanpura|violin|harmonium|keyboard|thavil|nadaswaram|flute/i;
+
+/**
+ * Fills a listing from what the poster extractor read. People come from the poster (the first
+ * is the billed artist; later ones playing an accompanying instrument are accompanists), as does
+ * the organiser. The listing keeps its title, date, time and venue; where the poster disagrees
+ * the difference is recorded in `posterExtraction.mismatches` and the row is held for review.
+ * A festival or multi-event poster (more than one event) is not applied: it needs a person.
+ */
+export function applyPosterExtraction(
+  event: CrawledEvent,
+  extraction: PosterExtractionLike
+): CrawledEvent {
+  const note: PosterExtractionNote = { confidence: extraction.confidence ?? 0, mismatches: [] };
+  if (extraction.events.length !== 1) {
+    note.mismatches.push(`poster holds ${extraction.events.length} events; not applied`);
+    return { ...event, posterExtraction: note };
+  }
+  const x = extraction.events[0];
+  note.startDateTime = x.startDateTime ?? undefined;
+  note.venueName = x.venue?.name;
+  if (x.startDateTime) {
+    const at = Date.parse(x.startDateTime);
+    const listed = event.startDateTime ? Date.parse(event.startDateTime) : Number.NaN;
+    if (!Number.isNaN(at) && !Number.isNaN(listed) && Math.abs(at - listed) > 30 * 60000) {
+      note.mismatches.push(`poster time ${x.startDateTime} vs listing ${event.startDateTime}`);
+    } else if (!Number.isNaN(at) && istDate(x.startDateTime) !== event.date) {
+      note.mismatches.push(`poster date ${istDate(x.startDateTime)} vs listing ${event.date}`);
+    }
+  }
+  if (x.venue?.name && event.venueName && !venuesAgree(x.venue.name, event.venueName)) {
+    note.mismatches.push(`poster venue "${x.venue.name}" vs listing "${event.venueName}"`);
+  }
+  const people = (x.artists ?? []).filter(a => a.name && !NOT_PERFORMING_ROLE.test(a.role ?? ''));
+  const performers: CrawledPerformer[] = people.map((a, i) => ({
+    name: a.name.replace(/\s+/g, ' ').trim(),
+    ...(a.role ? { role: a.role } : {}),
+    kind: i > 0 && SUPPORT_ROLE.test(a.role ?? '') ? 'accompanist' : 'main',
+  }));
+  return {
+    ...event,
+    performers: performers.length ? dedupePerformers(performers) : event.performers,
+    ...(x.organiser?.name && !event.organiser ? { organiser: x.organiser.name } : {}),
+    ...(x.description && !event.description ? { description: x.description } : {}),
+    posterExtraction: note,
+  };
+}
+
+export interface CoverageReport {
+  mdnd: {
+    total: number;
+    withPoster: number;
+    byMonth: Record<string, { events: number; posters: number }>;
+  };
+  apps4u: { total: number; covered: number; gaps: number; gapsByMonth: Record<string, number> };
+  /** apps4u rows mdnd lacks, as `date time venue title`. */
+  gapList: string[];
+}
+
+/**
+ * How much of the season mdnd holds, and which apps4u rows it lacks. A row is covered when
+ * `mergeCrawled` folds it into an mdnd row (same id, or same day, time within 30 minutes and
+ * venue), so the gap list is exactly what would be added as plain listings.
+ */
+export function coverageReport(apps4u: CrawledEvent[], mdnd: CrawledEvent[]): CoverageReport {
+  const merged = mergeCrawled(apps4u, mdnd);
+  const gaps = merged.filter(e => e.source !== 'mdnd');
+  const byMonth: CoverageReport['mdnd']['byMonth'] = {};
+  for (const e of mdnd) {
+    const month = e.date.slice(0, 7);
+    const m = byMonth[month] ?? { events: 0, posters: 0 };
+    m.events += 1;
+    if (e.posterUrl) m.posters += 1;
+    byMonth[month] = m;
+  }
+  const gapsByMonth: Record<string, number> = {};
+  for (const e of gaps)
+    gapsByMonth[e.date.slice(0, 7)] = (gapsByMonth[e.date.slice(0, 7)] ?? 0) + 1;
+  return {
+    mdnd: { total: mdnd.length, withPoster: mdnd.filter(e => e.posterUrl).length, byMonth },
+    apps4u: {
+      total: apps4u.length,
+      covered: apps4u.length - gaps.length,
+      gaps: gaps.length,
+      gapsByMonth,
+    },
+    gapList: gaps.map(e => `${e.date} ${e.time ?? '?'} ${e.venueName} | ${e.title}`),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Scope
 
 const OUT_OF_SCOPE_CATEGORY =
@@ -857,6 +1106,11 @@ export function planCrawl(
     if (!event.venueName) skipReasons.push('no venue');
     if (venue.tier === 'close') skipReasons.push(`venue close to "${venue.name}"; pick one`);
     if (!performers.some(p => p.kind === 'main')) skipReasons.push('no billed artist');
+    if (event.posterExtraction?.mismatches.length) {
+      skipReasons.push(
+        `poster disagrees with the listing: ${event.posterExtraction.mismatches.join('; ')}`
+      );
+    }
 
     return {
       key: `${event.source}:${event.sourceId}`,

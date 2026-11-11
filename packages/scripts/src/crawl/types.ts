@@ -21,4 +21,7 @@ export interface CrawlOptions {
   year?: number;
   /** Skip poster downloads. */
   noPosters?: boolean;
+  /** mdnd month paging: first day (default today in India) and last day (default 2027-01-31). */
+  from?: string;
+  through?: string;
 }

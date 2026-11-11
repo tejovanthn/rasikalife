@@ -5,6 +5,8 @@ import {
   type CrawlStoredData,
   type CrawledEvent,
   type StoredEventLite,
+  coverageReport,
+  mdndHint,
   mergeCrawled,
   planCrawl,
   renderReviewSheet,
@@ -34,6 +36,8 @@ export async function crawlFetch(opts: {
   dir?: string;
   year?: number;
   noPosters?: boolean;
+  from?: string;
+  through?: string;
 }): Promise<void> {
   const base = opts.dir ?? DEFAULT_CRAWL_DIR;
   const names = opts.sources?.length ? opts.sources : Object.keys(CRAWL_ADAPTERS);
@@ -45,7 +49,12 @@ export async function crawlFetch(opts: {
     const fetcher = createFetcher(dir, MIN_INTERVAL_MS);
     console.log(`🌐 ${name}`);
     try {
-      await adapter.fetch(dir, fetcher, { year: opts.year, noPosters: opts.noPosters });
+      await adapter.fetch(dir, fetcher, {
+        year: opts.year,
+        noPosters: opts.noPosters,
+        from: opts.from,
+        through: opts.through,
+      });
       const events = adapter.load(dir);
       console.log(`  ✅ ${events.length} events, ${fetcher.requests} request(s)`);
       report[name] = { status: 'ok', events: events.length, robots: fetcher.robots };
@@ -70,6 +79,78 @@ export function loadCrawled(base: string, sources?: string[]): CrawledEvent[] {
     bySource.set(name, getCrawlAdapter(name).load(dir));
   }
   return mergeCrawled(bySource.get('apps4u') ?? [], bySource.get('mdnd') ?? []);
+}
+
+function loadBySource(base: string): { apps4u: CrawledEvent[]; mdnd: CrawledEvent[] } {
+  const read = (name: string) =>
+    existsSync(path.join(base, name)) ? getCrawlAdapter(name).load(path.join(base, name)) : [];
+  return { apps4u: read('apps4u'), mdnd: read('mdnd') };
+}
+
+/** How much of the season mdnd holds and which apps4u rows it lacks. Reads the folder only. */
+export function crawlCoverage(opts: { dir?: string; json?: boolean }): void {
+  const { apps4u, mdnd } = loadBySource(opts.dir ?? DEFAULT_CRAWL_DIR);
+  const report = coverageReport(apps4u, mdnd);
+  if (opts.json) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
+  console.log(`mdnd: ${report.mdnd.total} events, ${report.mdnd.withPoster} with a poster`);
+  for (const [month, m] of Object.entries(report.mdnd.byMonth).sort()) {
+    console.log(`  ${month}: ${m.events} events, ${m.posters} posters`);
+  }
+  console.log(
+    `apps4u: ${report.apps4u.total} rows, ${report.apps4u.covered} also on mdnd, ${report.apps4u.gaps} not on mdnd`
+  );
+  for (const [month, n] of Object.entries(report.apps4u.gapsByMonth).sort()) {
+    console.log(`  ${month}: ${n} gaps`);
+  }
+}
+
+/**
+ * Runs the repo's poster extractor (`extractFromPoster`, the Gemini step behind "Upload poster"
+ * in the web app) over each mdnd poster and saves the result under `mdnd/extractions/`. It is
+ * the first half of `event.extractAndCreateDrafts` without the database half: no draft, no S3
+ * upload, no artist or venue lookup. Needs GEMINI_API_KEY and sends the poster URL (a public
+ * mdnd image) and a short listing hint to Google's API, so the owner runs it. Results are
+ * cached; a rerun skips events already read.
+ */
+export async function crawlExtract(opts: {
+  dir?: string;
+  limit?: number;
+  only?: string[];
+  dryRun?: boolean;
+}): Promise<void> {
+  const base = opts.dir ?? DEFAULT_CRAWL_DIR;
+  const dir = path.join(base, 'mdnd');
+  const out = path.join(dir, 'extractions');
+  const events = getCrawlAdapter('mdnd')
+    .load(dir)
+    .filter(e => e.posterUrl && (!opts.only || opts.only.includes(e.sourceId)));
+  const todo = events.filter(e => !existsSync(path.join(out, `${e.sourceId}.json`)));
+  const batch = opts.limit ? todo.slice(0, opts.limit) : todo;
+  console.log(
+    `${events.length} mdnd events with a poster; ${events.length - todo.length} already read; ${batch.length} to read`
+  );
+  if (opts.dryRun) {
+    for (const e of batch) console.log(`  would read ${e.sourceId} ${e.posterUrl}`);
+    return;
+  }
+  if (!process.env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not set');
+  const { extractFromPoster } = await import('@rasika/core/domain/event/gemini');
+  mkdirSync(out, { recursive: true });
+  for (const e of batch) {
+    try {
+      const result = await extractFromPoster(e.posterUrl as string, mdndHint(e));
+      writeFileSync(path.join(out, `${e.sourceId}.json`), JSON.stringify(result, null, 2));
+      console.log(
+        `  ✅ ${e.sourceId} ${result.events.length} event(s), confidence ${result.confidence}`
+      );
+    } catch (error) {
+      console.log(`  ❌ ${e.sourceId}: ${(error as Error).message}`);
+    }
+    await new Promise(r => setTimeout(r, 1000));
+  }
 }
 
 type Core = typeof import('@rasika/core');

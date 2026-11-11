@@ -5,22 +5,30 @@ import {
   type Apps4uRow,
   type CrawlStoredData,
   type MdndEvent,
+  type MdndListRow,
+  applyPosterExtraction,
+  coverageReport,
   matchArtist,
   matchPlace,
   mdndEventId,
   mdndEventUrl,
+  mdndHint,
+  mdndMonthWindows,
   mergeCrawled,
   parseApps4uDate,
   parseApps4uRows,
   parseClock,
   parseMdndDate,
+  parseMdndDisplayDate,
   parseMdndEvents,
+  parseMdndListRows,
   parsePerformers,
   placeKey,
   planCrawl,
   renderReviewSheet,
   splitVenue,
   summarizeCrawl,
+  unionMdnd,
   venuesAgree,
 } from './crawl';
 
@@ -318,5 +326,176 @@ describe('cross-source merge by day, time and venue', () => {
       venuesAgree('Music Academy Mini Hall (Kasthuri Srinivasan Hall)', 'The Music Academy')
     ).toBe(false);
     expect(venuesAgree('Narada Gana Sabha - Main Hall', 'Narada Gana Sabha')).toBe(true);
+  });
+});
+
+describe('mdnd month paging', () => {
+  it('splits a season into calendar months with the ends kept', () => {
+    expect(mdndMonthWindows('2026-11-11', '2027-01-31')).toEqual([
+      { label: '2026-11', from: '2026-11-11', to: '2026-11-30' },
+      { label: '2026-12', from: '2026-12-01', to: '2026-12-31' },
+      { label: '2027-01', from: '2027-01-01', to: '2027-01-31' },
+    ]);
+    expect(mdndMonthWindows('2026-12-05', '2026-12-20')).toHaveLength(1);
+  });
+
+  it('reads the display date', () => {
+    expect(parseMdndDisplayDate('Wed, 11th Nov 2026')).toBe('2026-11-11');
+    expect(parseMdndDisplayDate('Sat, 2nd Jan 2027')).toBe('2027-01-02');
+    expect(parseMdndDisplayDate('soon')).toBeNull();
+  });
+
+  const thin: MdndListRow[] = [
+    {
+      event_id: '10900',
+      event_title: 'Carnatic Vocal Concert by Sandeep Narayan | Music Academy',
+      event_date: 'Sun, 6th Dec 2026',
+      event_time: '6:30 PM',
+      ticketing_option: 'ticketed',
+      venue_name: 'The Music Academy, Chennai',
+      event_image: 'event_photo_1.jpeg',
+    },
+    { event_id: 1, event_title: 'No date', event_date: '' },
+  ];
+
+  it('reads thin rows, with the poster and the artist named in the title', () => {
+    const [e, ...rest] = parseMdndListRows(thin, 8);
+    expect(rest).toHaveLength(0);
+    expect(e).toMatchObject({
+      sourceId: 'mdnd-10900',
+      date: '2026-12-06',
+      startDateTime: '2026-12-06T18:30:00+05:30',
+      category: 'Carnatic',
+    });
+    expect(e.posterUrl).toContain('event_photo_1.jpeg');
+    expect(e.performers.map(p => p.name)).toEqual(['Sandeep Narayan']);
+  });
+
+  it('keeps a full row over a thin one for the same id', () => {
+    const [full] = mdnd;
+    const thinOfFull = { ...full, performers: [], category: 'Carnatic' };
+    const out = unionMdnd([full], [thinOfFull]);
+    expect(out).toHaveLength(1);
+    expect(out[0].performers.length).toBeGreaterThan(0);
+  });
+});
+
+describe('apps4u as a gap-filler', () => {
+  const rows: Apps4uRow[] = [
+    {
+      Date: '2026-11-11 Wed',
+      Time: '4:30 pm',
+      Location: 'Arkay Convention Center',
+      Type: 'Vocal - Violin',
+      'Who?': 'V. Deepika and V. Nandika',
+      Link: '',
+    },
+    {
+      Date: '2026-11-13 Fri',
+      Time: '6:00 pm',
+      Location: 'Ragasudha Hall',
+      Type: 'Vocal',
+      'Who?': 'Delhi P. Sunder Rajan',
+      Link: '',
+    },
+    {
+      Date: '2026-12-06 Sun',
+      Time: '6:30 pm',
+      Location: 'Music Academy',
+      Type: 'Vocal',
+      'Who?': 'Sanjay Subrahmanyan',
+      Link: '',
+    },
+  ];
+
+  it('drops the pairs mdnd has and keeps the one it lacks', () => {
+    const report = coverageReport(parseApps4uRows(rows), mdnd);
+    expect(report.apps4u).toMatchObject({ total: 3, covered: 2, gaps: 1 });
+    expect(report.gapList).toHaveLength(1);
+    expect(report.gapList[0]).toContain('Sanjay Subrahmanyan');
+    expect(report.mdnd.total).toBe(mdnd.length);
+    expect(report.mdnd.byMonth['2026-11'].events).toBeGreaterThan(0);
+  });
+
+  it('puts the gap into the plan as a plain listing with no poster', () => {
+    const plan = planCrawl(
+      mergeCrawled(parseApps4uRows(rows), mdnd),
+      {
+        artists: [],
+        venues: [],
+        organisers: [],
+        events: [],
+      },
+      '2026-11-11'
+    );
+    const gap = plan.find(p => p.event.source === 'apps4u');
+    expect(gap?.event.posterUrl).toBeUndefined();
+    expect(plan.filter(p => p.event.source === 'apps4u')).toHaveLength(1);
+  });
+});
+
+describe('poster extraction applied to a listing', () => {
+  const [base] = parseMdndListRows(
+    [
+      {
+        event_id: 7,
+        event_title: 'Evening Concert',
+        event_date: 'Sun, 6th Dec 2026',
+        event_time: '6:30 PM',
+        venue_name: 'The Music Academy, Chennai',
+        event_image: 'p.jpeg',
+      },
+    ],
+    8
+  );
+  const extraction = (start: string, venue = 'Music Academy') => ({
+    confidence: 0.9,
+    events: [
+      {
+        startDateTime: start,
+        venue: { name: venue },
+        organiser: { name: 'Madhuradhwani' },
+        artists: [
+          { name: 'Sandeep Narayan', role: 'vocal' },
+          { name: 'R Raghul', role: 'violin' },
+          { name: 'Some Dignitary', role: 'chief-guest' },
+        ],
+      },
+    ],
+  });
+
+  it('takes people and organiser from the poster, keeps the listing time', () => {
+    const e = applyPosterExtraction(base, extraction('2026-12-06T18:30:00+05:30'));
+    expect(e.performers).toEqual([
+      { name: 'Sandeep Narayan', role: 'vocal', kind: 'main' },
+      { name: 'R Raghul', role: 'violin', kind: 'accompanist' },
+    ]);
+    expect(e.organiser).toBe('Madhuradhwani');
+    expect(e.startDateTime).toBe(base.startDateTime);
+    expect(e.posterExtraction?.mismatches).toEqual([]);
+  });
+
+  it('holds the row when the poster disagrees', () => {
+    const e = applyPosterExtraction(base, extraction('2026-12-07T18:30:00+05:30'));
+    expect(e.posterExtraction?.mismatches[0]).toContain('poster');
+    const plan = planCrawl(
+      [e],
+      { artists: [], venues: [], organisers: [], events: [] },
+      '2026-11-11'
+    );
+    expect(plan[0].decision).toBe('skip');
+    expect(plan[0].skipReasons.join(' ')).toContain('poster disagrees');
+  });
+
+  it('does not apply a poster with several events', () => {
+    const two = { confidence: 1, events: [...extraction('x').events, ...extraction('y').events] };
+    const e = applyPosterExtraction(base, two);
+    expect(e.performers).toEqual(base.performers);
+    expect(e.posterExtraction?.mismatches[0]).toContain('2 events');
+  });
+
+  it('builds a hint that names the listing as a hint', () => {
+    expect(mdndHint(base)).toContain('hint only');
+    expect(mdndHint(base)).toContain('date: 2026-12-06');
   });
 });

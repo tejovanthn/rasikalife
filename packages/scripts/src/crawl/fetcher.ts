@@ -18,6 +18,7 @@ import type { RobotsRule } from '@rasika/core/domain/event/crawl-robots';
 export const CRAWL_USER_AGENT = 'Mozilla/5.0 (compatible; EventResearchBot/1.0)';
 export const MIN_INTERVAL_MS = 1100;
 const MAX_BYTES = 12 * 1024 * 1024;
+const MAX_RETRIES = 3;
 
 export class CrawlBlockedError extends Error {
   constructor(
@@ -98,14 +99,25 @@ export function createFetcher(dir: string, minIntervalMs = MIN_INTERVAL_MS): Fet
     if (existsSync(file)) return readFileSync(file);
 
     await checkRobots(target);
-    const res = await paced(url, {
-      method: opts.method ?? 'GET',
-      ...(opts.json !== undefined ? { body: JSON.stringify(opts.json) } : {}),
-      headers: {
-        ...(opts.json !== undefined ? { 'content-type': 'application/json' } : {}),
-        ...opts.headers,
-      },
-    });
+    // A timeout or 5xx is retried slowly (2 s, 4 s, 8 s on top of the 1.1 s pacing). A 401, 403
+    // or 429 is a stop, never retried.
+    let res: Response | undefined;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        res = await paced(url, {
+          method: opts.method ?? 'GET',
+          ...(opts.json !== undefined ? { body: JSON.stringify(opts.json) } : {}),
+          headers: {
+            ...(opts.json !== undefined ? { 'content-type': 'application/json' } : {}),
+            ...opts.headers,
+          },
+        });
+        if (res.status < 500 || attempt >= MAX_RETRIES) break;
+      } catch (error) {
+        if (attempt >= MAX_RETRIES) throw error;
+      }
+      await new Promise(r => setTimeout(r, 2000 * 2 ** attempt));
+    }
     if (res.status === 401 || res.status === 403 || res.status === 429) {
       throw new CrawlBlockedError(target.host, `${res.status} on ${target.pathname}`);
     }

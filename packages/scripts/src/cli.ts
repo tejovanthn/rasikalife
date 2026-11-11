@@ -204,14 +204,53 @@ program
   .option('--dir <path>', 'Where downloads go (default: data/crawl). Use a new empty directory')
   .option('--year <n>', 'apps4u season year', (v: string) => Number.parseInt(v, 10))
   .option('--no-posters', 'Skip poster downloads')
-  .action(async (opts: { source?: string[]; dir?: string; year?: number; posters: boolean }) => {
-    const { crawlFetch } = await import('./crawlEvents.js');
-    await crawlFetch({
-      sources: opts.source,
-      dir: opts.dir,
-      year: opts.year,
-      noPosters: !opts.posters,
-    });
+  .option('--from <date>', 'mdnd month paging: first day, YYYY-MM-DD (default today, India)')
+  .option('--through <date>', 'mdnd month paging: last day (default 2027-01-31)')
+  .action(
+    async (opts: {
+      source?: string[];
+      dir?: string;
+      year?: number;
+      posters: boolean;
+      from?: string;
+      through?: string;
+    }) => {
+      const { crawlFetch } = await import('./crawlEvents.js');
+      await crawlFetch({
+        sources: opts.source,
+        dir: opts.dir,
+        year: opts.year,
+        noPosters: !opts.posters,
+        from: opts.from,
+        through: opts.through,
+      });
+    }
+  );
+
+program
+  .command('crawl-coverage')
+  .description('Show how much of the season mdnd holds and which apps4u rows it lacks (no network)')
+  .option('--dir <path>', 'The crawl-fetch directory')
+  .option('--json', 'Print the whole report as JSON')
+  .action(async (opts: { dir?: string; json?: boolean }) => {
+    const { crawlCoverage } = await import('./crawlEvents.js');
+    crawlCoverage(opts);
+  });
+
+program
+  .command('crawl-extract')
+  .description(
+    'Read each mdnd poster with the repo poster extractor (Gemini); saves JSON, writes no database'
+  )
+  .option('--dir <path>', 'The crawl-fetch directory')
+  .option('--limit <n>', 'Read at most n posters this run', (v: string) => Number.parseInt(v, 10))
+  .option('--only <ids>', 'Comma-separated mdnd source ids, e.g. mdnd-10773', (v: string) =>
+    v.split(',')
+  )
+  .option('-n, --dry-run', 'List the posters that would be sent, call nothing')
+  .action(async (opts: { dir?: string; limit?: number; only?: string[]; dryRun?: boolean }) => {
+    const { crawlExtract } = await import('./crawlEvents.js');
+    await crawlExtract(opts);
   });
 
 program
