@@ -72,12 +72,13 @@ export const Footer = () => {
   const [concertsOpen, setConcertsOpen] = useState(false);
 
   // The date pages and the busiest city page, linked from every page so crawlers reach them.
-  // Bengaluru is named outright: it holds nearly every listed concert (Oct 2026). Add a city
-  // here when it has a steady listing of its own.
+  // Chennai and Bengaluru are named outright. Chennai now lists the most concerts (381 against
+  // 74 in Nov 2026, the December season). Add a city here when it has a steady listing.
   const concertLinks = [
     { href: '/events/today', label: 'Concerts today' },
     { href: '/events/this-weekend', label: 'This weekend' },
     { href: '/events/this-week', label: 'This week' },
+    { href: '/events/chennai', label: 'Concerts in Chennai' },
     { href: '/events/bengaluru', label: 'Concerts in Bengaluru' },
   ];
 

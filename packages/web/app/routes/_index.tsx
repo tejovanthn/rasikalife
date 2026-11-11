@@ -1,3 +1,5 @@
+import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
+import { startOfDayInstant, todayInTimeZone } from '@rasika/core/shared/timezone';
 import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
@@ -8,13 +10,14 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EventList } from '~/components/EventCard';
 import { SectionHeader } from '~/components/shared';
 import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
-import { featuredCityLinks } from '~/lib/featured-cities';
+import { type CityLink, homeCityLinks } from '~/lib/featured-cities';
 
 interface UpcomingEvent {
   id: string;
   title: string;
   startDateTime: string;
   venueName?: string;
+  city?: string;
   organiserName?: string;
   artists?: Array<{ title?: string; name: string; role?: string }>;
   tags?: string[];
@@ -26,6 +29,7 @@ type LoaderData = {
   popularCompositions: CompositionWithRelations[];
   featuredArtists: ArtistType[];
   upcomingEvents: UpcomingEvent[];
+  cityLinks: CityLink[];
 };
 
 export const meta: MetaFunction = () => {
@@ -62,16 +66,21 @@ export const meta: MetaFunction = () => {
 
 export const loader: LoaderFunction = async () => {
   try {
-    const [popularCompositions, featuredArtists, upcomingEvents] = await Promise.all([
+    const zone = DEFAULT_EVENT_TIMEZONE;
+    const [popularCompositions, featuredArtists, listings] = await Promise.all([
       client.composition.list.query({ limit: 6 }),
       client.artist.list.query({ limit: 4 }),
-      client.event.listUpcoming.query({ limit: 6 }),
+      // Already sorted by start time. Carries each event's city, from its venue.
+      client.event.upcomingListings.query({
+        from: startOfDayInstant(todayInTimeZone(zone), zone),
+      }),
     ]);
 
     return data<LoaderData>({
       popularCompositions: popularCompositions.items,
       featuredArtists: featuredArtists.items,
-      upcomingEvents: upcomingEvents.items,
+      upcomingEvents: listings.slice(0, 6),
+      cityLinks: homeCityLinks(listings),
     });
   } catch (error) {
     console.error('Error loading homepage data:', error);
@@ -79,12 +88,14 @@ export const loader: LoaderFunction = async () => {
       popularCompositions: [],
       featuredArtists: [],
       upcomingEvents: [],
+      cityLinks: homeCityLinks([]),
     });
   }
 };
 
 export default function HomePage() {
-  const { popularCompositions, featuredArtists, upcomingEvents } = useLoaderData<LoaderData>();
+  const { popularCompositions, featuredArtists, upcomingEvents, cityLinks } =
+    useLoaderData<LoaderData>();
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-6xl">
@@ -123,7 +134,7 @@ export default function HomePage() {
           </div>
           <p className="mt-5 text-sm text-muted-foreground">
             Concerts in{' '}
-            {featuredCityLinks().map((city, i) => (
+            {cityLinks.map((city, i) => (
               <span key={city.slug}>
                 {i > 0 && ' · '}
                 <Link to={city.href} className="underline underline-offset-4 hover:text-foreground">
