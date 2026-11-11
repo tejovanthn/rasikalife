@@ -169,7 +169,8 @@ export function readEventForm(
       startTime,
       venueId,
       ...(text('spaceId') ? { spaceId: text('spaceId') } : {}),
-      ...(text('artists') ? { artists: text('artists') } : {}),
+      // A blank field is sent as '' (the owner emptied the cast); a missing one leaves it alone.
+      ...(form.has('artists') ? { artists: text('artists') } : {}),
       ...(text('notes') ? { notes: text('notes') } : {}),
     },
   };

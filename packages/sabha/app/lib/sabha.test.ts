@@ -179,6 +179,13 @@ describe('readEventForm', () => {
     });
   });
 
+  it('sends a blank artists field as empty, and leaves a missing one out', () => {
+    const blank = readEventForm(form({ ...ok, artists: '' }));
+    expect(blank.ok && blank.values.artists).toBe('');
+    const missing = readEventForm(form(ok));
+    expect(missing.ok && 'artists' in missing.values).toBe(false);
+  });
+
   it('names the first missing field', () => {
     expect(readEventForm(form({ ...ok, title: '' }))).toEqual({ ok: false, error: 'title' });
     expect(readEventForm(form({ ...ok, date: '5/12' }))).toEqual({ ok: false, error: 'date' });
