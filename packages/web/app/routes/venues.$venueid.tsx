@@ -15,6 +15,7 @@ import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/stru
 import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { safeHttpUrl } from '~/lib/safe-http-url';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
 import { adminOrigin } from '~/lib/qr-scan';
@@ -220,9 +221,9 @@ export default function VenueDetailPage() {
       />
 
       {/* Hero photo */}
-      {venue.photoUrl && (
+      {safeHttpUrl(venue.photoUrl) && (
         <div className="mb-6 rounded-xl overflow-hidden bg-muted">
-          <img src={venue.photoUrl} alt={venue.name} className="w-full max-h-64 object-cover" />
+          <img src={safeHttpUrl(venue.photoUrl)} alt={venue.name} className="w-full max-h-64 object-cover" />
         </div>
       )}
 
@@ -299,9 +300,9 @@ export default function VenueDetailPage() {
         )}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          {venue.website && (
+          {safeHttpUrl(venue.website) && (
             <a
-              href={venue.website}
+              href={safeHttpUrl(venue.website)}
               target="_blank"
               rel="noopener noreferrer"
               className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"
@@ -321,9 +322,9 @@ export default function VenueDetailPage() {
               Directions
             </a>
           )}
-          {venue.mapLink && (
+          {safeHttpUrl(venue.mapLink) && (
             <a
-              href={venue.mapLink}
+              href={safeHttpUrl(venue.mapLink)}
               target="_blank"
               rel="noopener noreferrer"
               className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"

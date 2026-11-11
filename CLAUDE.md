@@ -2371,3 +2371,12 @@ For auth-gated mutations, use `protectedProcedure` (defined in `packages/trpc/sr
 - **Biome**: Formatting and linting
 - **React Router v7**: Frontend framework (in web package, using `@react-router/fs-routes`)
 - **Sharp**: Image processing (in image-processor package)
+### Venue QR Follow: review fixes
+
+Fixes from the review after all eight phases.
+
+- **Owner links must be http or https.** `httpUrlSchema` (`core/src/shared/http-url.ts`) is used
+  for `website`, `logoUrl`, `photoUrl` and `mapLink` in the partner profile schemas, because
+  `z.string().url()` accepts `javascript:`. Public venue and organiser pages also pass these
+  values through `safeHttpUrl` (`web/app/lib/safe-http-url.ts`), since older data or another write
+  path may hold a bad value.
