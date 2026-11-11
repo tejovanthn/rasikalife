@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from 'react-router';
 
-const VALID_TYPES = ['raga', 'composition', 'artist'] as const;
+const VALID_TYPES = ['raga', 'composition', 'artist', 'event'] as const;
 type OgType = (typeof VALID_TYPES)[number];
 
 // Thin redirect to the dedicated OG image Lambda. Sharp + native binaries

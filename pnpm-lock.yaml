@@ -284,6 +284,9 @@ importers:
       '@img/sharp-linux-x64':
         specifier: 0.34.5
         version: 0.34.5
+      '@rasika/core':
+        specifier: workspace:*
+        version: link:../core
       '@rasika/trpc':
         specifier: workspace:*
         version: link:../trpc
