@@ -315,6 +315,10 @@ describe('cascade', () => {
   beforeEach(() => {
     vi.mocked(dynamoClient.send).mockReset();
     vi.mocked(dynamoClient.send).mockResolvedValue({});
+    // A merge reads both records to carry verifiedAt across; by default there is nothing to copy.
+    const nothing = () => ({ go: vi.fn().mockResolvedValue({ data: {} }) });
+    vi.mocked(VenueEntity.get).mockImplementation(nothing as never);
+    vi.mocked(OrganiserEntity.get).mockImplementation(nothing as never);
     // Default to "nothing found" for the artist-merge sweeps every test doesn't care about.
     ArtistAwardEntity.query.primary = pagedQuery([{ data: [], cursor: null }]);
     ArtistAwardEntity.get = vi
@@ -1951,6 +1955,9 @@ describe('cascade', () => {
 describe('cascade: Venue QR Follow', () => {
   beforeEach(() => {
     vi.mocked(dynamoClient.send).mockReset();
+    const nothing = () => ({ go: vi.fn().mockResolvedValue({ data: {} }) });
+    vi.mocked(VenueEntity.get).mockImplementation(nothing as never);
+    vi.mocked(OrganiserEntity.get).mockImplementation(nothing as never);
     vi.mocked(dynamoClient.send).mockResolvedValue({});
     EventEntity.query.byVenue = pagedQuery([{ data: [], cursor: null }]);
     EventEntity.query.byOrganiser = pagedQuery([{ data: [], cursor: null }]);
@@ -1967,6 +1974,43 @@ describe('cascade: Venue QR Follow', () => {
     expect(repointQrsToVenue).toHaveBeenCalledWith('loser', 'canon', 'Canon Hall');
     expect(moveFollows).toHaveBeenCalledWith('venue', 'loser', 'canon', 'Canon Hall');
     expect(movePartnerMembers).toHaveBeenCalledWith('venue', 'loser', 'canon', 'Canon Hall');
+  });
+
+  it('merging copies verifiedAt (and the review switch for an organiser) onto a canonical that lacks them', async () => {
+    const patchSet = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+    const get = (rows: Record<string, unknown>) => (key: { id: string }) => ({
+      go: vi.fn().mockResolvedValue({ data: rows[key.id] }),
+    });
+    vi.mocked(VenueEntity.get).mockImplementation(
+      get({ loser: { verifiedAt: '2026-11-01T00:00:00.000Z' }, canon: {} }) as never
+    );
+    vi.mocked(VenueEntity.patch).mockReturnValue({ set: patchSet } as never);
+    await cascade.cascadeVenueMerge('loser', 'canon', 'Canon Hall');
+    expect(VenueEntity.patch).toHaveBeenCalledWith({ id: 'canon' });
+    expect(patchSet).toHaveBeenCalledWith({ verifiedAt: '2026-11-01T00:00:00.000Z' });
+
+    patchSet.mockClear();
+    vi.mocked(OrganiserEntity.get).mockImplementation(
+      get({
+        loser: { verifiedAt: '2026-11-01T00:00:00.000Z', requireEventReview: true },
+        canon: {},
+      }) as never
+    );
+    vi.mocked(OrganiserEntity.patch).mockReturnValue({ set: patchSet } as never);
+    await cascade.cascadeOrganiserMerge('loser', 'canon', 'Canon Sabha');
+    expect(patchSet).toHaveBeenCalledWith({
+      verifiedAt: '2026-11-01T00:00:00.000Z',
+      requireEventReview: true,
+    });
+  });
+
+  it('never overwrites what the canonical already has', () => {
+    expect(
+      cascade.partnerFlagsFill({ verifiedAt: 'a', requireEventReview: true }, { verifiedAt: 'b' }, [
+        'verifiedAt',
+        'requireEventReview',
+      ])
+    ).toEqual({ requireEventReview: true });
   });
 
   it('merging an organiser moves followers and dashboard grants', async () => {
