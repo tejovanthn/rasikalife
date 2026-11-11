@@ -1,5 +1,5 @@
 import { Button, Field, Input, Select, Textarea } from '@rasika/ui';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Form, useFetcher, useNavigation } from 'react-router';
 import { SABHA_COPY, SABHA_EXTRA_COPY } from '~/lib/copy';
 import type { EventFormValues } from '~/lib/sabha';
@@ -32,6 +32,13 @@ export function EventForm({
 }) {
   const uid = useId();
   const navigation = useNavigation();
+  const busy = navigation.state !== 'idle';
+  // Blocks a second click that lands before the navigation state updates. Reset once idle, so a
+  // validation error lets the owner try again.
+  const sending = useRef(false);
+  useEffect(() => {
+    if (navigation.state === 'idle') sending.current = false;
+  }, [navigation.state]);
   const [venueId, setVenueId] = useState(initial?.venueId ?? '');
   const fetcher = useFetcher<{ spaces: SpaceOption[] }>();
 
@@ -49,7 +56,14 @@ export function EventForm({
   const f = SABHA_COPY.addConcert.fields;
 
   return (
-    <Form method="post" className="max-w-xl space-y-4">
+    <Form
+      method="post"
+      className="max-w-xl space-y-4"
+      onSubmit={event => {
+        if (sending.current) event.preventDefault();
+        else sending.current = true;
+      }}
+    >
       <Field label={f.title} htmlFor={`${uid}-title`}>
         <Input id={`${uid}-title`} name="title" defaultValue={initial?.title} required />
       </Field>
@@ -108,7 +122,7 @@ export function EventForm({
         <Textarea id={`${uid}-notes`} name="notes" defaultValue={initial?.notes} />
       </Field>
       <FormError>{error}</FormError>
-      <Button type="submit" pending={navigation.state === 'submitting'}>
+      <Button type="submit" pending={busy} disabled={busy}>
         {submitLabel}
       </Button>
     </Form>
