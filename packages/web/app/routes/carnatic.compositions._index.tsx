@@ -98,7 +98,11 @@ export default function CompositionsIndex() {
           <p className="text-xl text-muted-foreground">Search results for "{searchQuery}"</p>
         ) : (
           <p className="text-xl text-muted-foreground">
-            Explore traditional Indian classical music compositions
+            Explore traditional Indian classical music compositions, or go straight to the{' '}
+            <Link to="/carnatic/compositions/varnams" className="text-primary hover:underline">
+              varnam lyrics
+            </Link>
+            .
           </p>
         )}
       </header>

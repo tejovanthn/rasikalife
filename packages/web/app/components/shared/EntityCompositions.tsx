@@ -38,7 +38,11 @@ export function EntityCompositions({
         </h2>
         {showViewMore && (
           <Link
-            to={`/carnatic/${entityType}s/${entitySlug}/compositions`}
+            to={
+              entityType === 'artist'
+                ? `/artists/${entitySlug}/compositions`
+                : `/carnatic/${entityType}s/${entitySlug}/compositions`
+            }
             className="text-sm text-primary hover:underline"
           >
             View all compositions →

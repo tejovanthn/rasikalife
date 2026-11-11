@@ -10,6 +10,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { composerCompositionsMeta } from '~/lib/hub-lists';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
 // This page's own content is identical for every viewer, but the document it ships in is
@@ -21,16 +22,22 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => ({
 });
 
 export const meta: MetaFunction = ({ data }) => {
-  const loaderData = data as { artist: { id: string; name: string } } | undefined;
+  const loaderData = data as
+    | {
+        artist: { id: string; name: string };
+        compositions: unknown[];
+        hasMore: boolean;
+      }
+    | undefined;
   if (!loaderData) return [{ title: 'Compositions - Rasika.life' }];
-  const { artist } = loaderData;
+  const { artist, compositions, hasMore } = loaderData;
   const canonicalUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/compositions`;
+  const { title, description } = composerCompositionsMeta(artist, compositions.length, hasMore);
   return [
-    { title: `Compositions by ${artist.name} - Rasika.life` },
-    {
-      name: 'description',
-      content: `Browse all compositions by ${artist.name} in Indian classical music.`,
-    },
+    { title },
+    { name: 'description', content: description },
+    // A composer with nothing listed is a thin page.
+    ...(compositions.length === 0 ? [{ name: 'robots', content: 'noindex, follow' }] : []),
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
@@ -113,8 +120,10 @@ export default function ArtistCompositions() {
         >
           ← Back to {artist.name}
         </Link>
-        <h1 className="text-3xl font-bold">Compositions by {artist.name}</h1>
-        <p className="text-muted-foreground mt-2">All compositions composed by {artist.name}</p>
+        <h1 className="text-3xl font-bold">{artist.name} Compositions and Lyrics</h1>
+        <p className="text-muted-foreground mt-2">
+          Compositions by {artist.name}, with lyrics, raga and tala
+        </p>
       </div>
       {!compositions.length ? (
         <EmptyState

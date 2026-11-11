@@ -452,6 +452,31 @@ export async function getCompositionsByName(name: string): Promise<CompositionWi
   return compositionsWithRelations;
 }
 
+/**
+ * Every live composition of one type, as slim rows. The type has no index, so this pages
+ * through the list index and filters; the pages that call it are cached.
+ */
+export async function listCompositionsByType(
+  compositionType: string
+): Promise<Array<{ id: string; title: string; composer: { id: string; name: string } }>> {
+  const rows: Array<{ id: string; title: string; composer: { id: string; name: string } }> = [];
+  let cursor: string | undefined;
+  do {
+    const result = await CompositionEntity.query
+      .list({})
+      .where(
+        (attr, op) =>
+          `${op.notExists(attr.deletedAt)} AND ${op.eq(attr.compositionType, compositionType)}`
+      )
+      .go({ limit: 500, cursor });
+    for (const c of result.data || []) {
+      rows.push({ id: c.id, title: c.title, composer: c.composer });
+    }
+    cursor = result.cursor || undefined;
+  } while (cursor);
+  return rows;
+}
+
 export async function listCompositions(params?: { limit?: number; nextToken?: string }): Promise<{
   items: CompositionWithRelations[];
   nextToken?: string;

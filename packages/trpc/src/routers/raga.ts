@@ -60,6 +60,9 @@ export const ragaRouter = createTRPCRouter({
     .input(z.object({ id: z.string().min(1), limit: z.number().int().min(1).max(12).optional() }))
     .query(({ input }) => Search.ragaRelatives(input.id, input.limit)),
 
+  /** Every raga that names a parent, for the janya list. */
+  janyaList: publicProcedure.query(() => Raga.listJanyaRagas()),
+
   byMela: publicProcedure
     .input(
       z.object({ melaNumber: z.number().int().min(1).max(72), excludeId: z.string().optional() })

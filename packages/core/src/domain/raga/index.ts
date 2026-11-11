@@ -166,6 +166,28 @@ export async function listJanyaOf(parentId: string): Promise<Raga[]> {
   return children;
 }
 
+/**
+ * Every live raga that names a parent, as the slim rows the janya list needs. There is no
+ * index on the parent, so this pages through every raga (about 1,500 rows); the janya page
+ * is cached, so it runs rarely.
+ */
+export async function listJanyaRagas(): Promise<
+  Array<{ id: string; name: string; parentRaga: { id: string; name: string } }>
+> {
+  const rows: Array<{ id: string; name: string; parentRaga: { id: string; name: string } }> = [];
+  let nextToken: string | undefined;
+  do {
+    const page = await listRagas({ limit: 500, nextToken });
+    for (const r of page.items) {
+      if (r.parentRaga) {
+        rows.push({ id: r.id, name: r.name, parentRaga: r.parentRaga });
+      }
+    }
+    nextToken = page.nextToken;
+  } while (nextToken);
+  return rows;
+}
+
 export async function mergeRaga(loserId: string, canonicalId: string): Promise<void> {
   const canonical = await getRaga(canonicalId);
   if (!canonical) throw notFoundError('raga', canonicalId);

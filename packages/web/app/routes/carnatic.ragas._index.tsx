@@ -74,7 +74,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'All Carnatic Ragas: Melakarta and Janya Ragas | Rasika.life' },
+    { title: 'Carnatic Ragas List: Melakarta and Janya Ragas | Rasika.life' },
     {
       name: 'description',
       content:
@@ -108,7 +108,15 @@ export default function RagasIndex() {
           <p className="text-xl text-muted-foreground">Search results for "{searchQuery}"</p>
         ) : (
           <p className="text-xl text-muted-foreground">
-            The 72 melakarta ragas and their janya ragas
+            A list of Carnatic ragas: the{' '}
+            <Link to="/carnatic/ragas/melakarta" className="text-primary hover:underline">
+              72 melakarta ragas
+            </Link>{' '}
+            and their{' '}
+            <Link to="/carnatic/ragas/janya" className="text-primary hover:underline">
+              janya ragas
+            </Link>
+            .
           </p>
         )}
       </header>

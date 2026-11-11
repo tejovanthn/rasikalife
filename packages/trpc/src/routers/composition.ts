@@ -58,6 +58,23 @@ export const compositionRouter = createTRPCRouter({
       })
     ),
 
+  /** Every composition of one type (the varnam list). */
+  byType: publicProcedure
+    .input(
+      z.object({
+        compositionType: z.enum([
+          'kriti',
+          'varnam',
+          'tillana',
+          'javali',
+          'padam',
+          'keertanam',
+          'other',
+        ]),
+      })
+    )
+    .query(({ input }) => Composition.listCompositionsByType(input.compositionType)),
+
   byRaga: publicProcedure
     .input(
       z.object({

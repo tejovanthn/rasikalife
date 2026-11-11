@@ -65,6 +65,9 @@ export const loader: LoaderFunction = async () => {
 const CATEGORIES = [
   { href: '/carnatic/compositions', label: 'Compositions', subtitle: 'Krithis & Varnams' },
   { href: '/carnatic/ragas', label: 'Ragas', subtitle: 'Melodic Frameworks' },
+  { href: '/carnatic/ragas/melakarta', label: 'Melakarta Ragas', subtitle: 'The 72 Parent Scales' },
+  { href: '/carnatic/ragas/janya', label: 'Janya Ragas', subtitle: 'By Parent Melakarta' },
+  { href: '/carnatic/compositions/varnams', label: 'Varnams', subtitle: 'Lyrics & Ragas' },
   { href: '/carnatic/talas', label: 'Talas', subtitle: 'Rhythmic Cycles' },
   { href: '/carnatic/languages', label: 'Languages', subtitle: 'Classical Languages' },
   { href: '/artists', label: 'Artists', subtitle: 'Master Musicians' },
