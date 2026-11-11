@@ -10,7 +10,9 @@ import {
   useNavigation,
 } from 'react-router';
 import { createServerClient } from '~/api.server';
+import { PushButton } from '~/components/push/push-button';
 import { getUser } from '~/lib/auth.server';
+import { parseSubscriptionForm } from '~/lib/push';
 import { QR_COPY, normaliseWhatsapp, parseDoneKeys, summaryLine } from '~/lib/qr-scan';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
@@ -56,6 +58,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
     {
       code,
       eventId: eventId ?? null,
+      // Public by design. Null (unset) hides the push button.
+      vapidKey: process.env.VAPID_PUBLIC_KEY || null,
       summary: summaryLine(names),
       inBook: Boolean(logged),
       showWhatsapp: Boolean(meRow) && !meRow?.whatsappNumber && !meRow?.whatsappPromptDismissedAt,
@@ -65,7 +69,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 }
 
 type ActionResult =
-  | { ok: true; intent: 'book' | 'whatsapp' | 'dismiss' }
+  | { ok: true; intent: 'book' | 'whatsapp' | 'dismiss' | 'push' }
   | { ok: false; intent: 'whatsapp'; error: 'invalid' | 'consent' | 'failed' }
   | { ok: false; intent: 'book'; error: 'failed' };
 
@@ -87,6 +91,19 @@ export async function action({ params, request }: ActionFunctionArgs) {
       return data<ActionResult>({ ok: true, intent: 'book' });
     } catch (error) {
       console.error('Failed to add to concert book:', error);
+      return data<ActionResult>({ ok: false, intent: 'book', error: 'failed' }, { status: 500 });
+    }
+  }
+
+  if (intent === 'push') {
+    const subscription = parseSubscriptionForm(form);
+    if (!subscription)
+      return data<ActionResult>({ ok: false, intent: 'book', error: 'failed' }, { status: 400 });
+    try {
+      await client.notify.subscribePush.mutate(subscription);
+      return data<ActionResult>({ ok: true, intent: 'push' });
+    } catch (error) {
+      console.error('Failed to save push subscription:', error);
       return data<ActionResult>({ ok: false, intent: 'book', error: 'failed' }, { status: 500 });
     }
   }
@@ -145,8 +162,7 @@ export default function QrDone() {
       <h1 className="text-3xl font-bold leading-tight">{QR_COPY.done.title}</h1>
       {d.summary && <p>{d.summary}</p>}
 
-      {/* PHASE 7 SLOT: the web push button ("Remind me the day before"), its helper, the
-          enabled and blocked states and the iOS Safari helper go here. Phase 3 renders nothing. */}
+      <PushButton vapidKey={d.vapidKey} />
 
       {d.eventId &&
         (booked ? (

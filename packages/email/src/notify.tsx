@@ -140,6 +140,8 @@ export interface DeliverDeps {
   /** The user's stored token; creates one for a row from before the field existed. */
   tokenFor(user: { id: string; unsubscribeToken?: string }): Promise<string>;
   markDigestSent?(userId: string): Promise<void>;
+  /** Web push, from the cron handler. Without it a `push` plan goes by email. */
+  push?: NotificationTypes.PushDeps;
 }
 
 export interface DeliverResult {
@@ -201,9 +203,13 @@ export function deliverReminders(
   deps: DeliverDeps
 ): Promise<DeliverResult> {
   return inBatches(plans, 5, async plan => {
-    // Phase 7 seam: `plan.channel === 'push'` is sent through web push there. Until push exists
-    // the planner never returns it, and a push plan is skipped here rather than sent as email.
-    if (plan.channel !== 'email') return true;
+    if (plan.channel === 'push') {
+      const pushed = await tryPush(plan, deps);
+      if (pushed) return true;
+      // Every device failed or none was left (a 410 just deleted the last one). Fall back to
+      // email when the user allows it, so a dead subscription never costs them the reminder.
+      if (Notification.reminderChannel(plan.user, false) !== 'email') return false;
+    }
     try {
       const content = await dayBeforeReminderEmail({
         ...(await links(plan.user, 'reminders', deps)),
@@ -216,4 +222,17 @@ export function deliverReminders(
       return false;
     }
   });
+}
+
+/** True when at least one of the user's devices took the push. */
+async function tryPush(plan: NotificationTypes.ReminderPlan, deps: DeliverDeps): Promise<boolean> {
+  const payload = Notification.buildReminderPush(plan.entries);
+  if (!deps.push || !payload) return false;
+  try {
+    const result = await Notification.sendPushToUser(plan.user.id, payload, deps.push);
+    return result.delivered > 0;
+  } catch (error) {
+    console.error(`[reminder] push failed for user ${plan.user.id}`, error);
+    return false;
+  }
 }

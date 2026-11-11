@@ -19,9 +19,11 @@
     "@rasika/core": "workspace:*",
     "@rasika/email": "workspace:*",
     "commander": "^14.0.3",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "web-push": "^4.0.0"
   },
   "devDependencies": {
+    "@types/web-push": "^3.6.4",
     "tsx": "^4.21.0"
   },
   "keywords": [],

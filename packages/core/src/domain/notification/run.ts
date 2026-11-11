@@ -12,6 +12,7 @@ import {
   loadEventsInRange,
   loadFollowerIds,
   loadLoggedKeys,
+  loadPushUserIds,
   loadRsvpUsers,
   loadUsers,
   mapLimit,
@@ -55,10 +56,7 @@ export interface NotifyDeps {
   loadRsvpUsers(eventIds: string[]): Promise<Map<string, string[]>>;
   loadUsers(ids: string[]): Promise<NotifyUser[]>;
   loadLoggedKeys(pairs: Array<{ userId: string; eventId: string }>): Promise<Set<string>>;
-  /**
-   * Users with a push subscription. TODO(phase 7): read `PushSubscription` rows. Until then
-   * nobody has one, so every reminder goes by email.
-   */
+  /** Users with at least one push subscription (`PushSubscription` rows). */
   loadPushUserIds(userIds: string[]): Promise<Set<string>>;
 }
 
@@ -69,7 +67,7 @@ export const defaultDeps: NotifyDeps = {
   loadRsvpUsers,
   loadUsers,
   loadLoggedKeys,
-  loadPushUserIds: async () => new Set(),
+  loadPushUserIds,
 };
 
 /** Digest: email only, and only for a user who has not turned off the digest or email. */
@@ -83,8 +81,7 @@ export type ReminderChannel = 'email' | 'push';
 
 /**
  * The one place that decides how a reminder travels. Push when the user turned it on and has a
- * subscription, else email, else nothing. Phase 7 only has to supply `hasPushSubscription`;
- * until then `loadPushUserIds` is empty and this always answers `email`.
+ * subscription, else email, else nothing. `hasPushSubscription` comes from `loadPushUserIds`.
  */
 export function reminderChannel(
   user: NotifyUser,

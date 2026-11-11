@@ -1,4 +1,4 @@
-const CACHE_NAME = 'rasika-v3';
+const CACHE_NAME = 'rasika-v4';
 
 const APP_SHELL = ['/manifest.json', '/android-chrome-192x192.png', '/android-chrome-512x512.png'];
 
@@ -98,4 +98,39 @@ self.addEventListener('fetch', event => {
 
   // Cache-first for static assets
   event.respondWith(caches.match(request).then(cached => cached ?? fetch(request)));
+});
+
+// ---------- Web push (day-before reminders) ----------
+// Payload from the reminder cron: { title, body, url, tag }. `url` is a site path.
+
+self.addEventListener('push', event => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    // A payload that is not JSON still shows something.
+  }
+  const title = payload.title || 'rasika.life';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: payload.body || '',
+      tag: payload.tag || 'rasika',
+      icon: '/android-chrome-192x192.png',
+      data: { url: payload.url || '/me/following' },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || '/me/following', self.location.origin);
+  // Only ever open our own origin, whatever the payload says.
+  if (target.origin !== self.location.origin) return;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+      const open = windows[0];
+      if (open && 'navigate' in open) return open.navigate(target.href).then(c => c?.focus());
+      return self.clients.openWindow(target.href);
+    })
+  );
 });

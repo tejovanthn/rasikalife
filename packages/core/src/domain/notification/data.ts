@@ -9,6 +9,7 @@ import { ConcertLogEntity } from '../concert-log/entity';
 import { getEventArtists } from '../event-artist';
 import { EventEntity } from '../event/entity';
 import { listAllFollowersOfTarget } from '../follow';
+import { listPushSubscriptions } from '../push-subscription';
 import { RsvpEntity } from '../rsvp/entity';
 import { UserEntity } from '../user/entity';
 import type { User } from '../user/entity';
@@ -112,4 +113,16 @@ export async function loadLoggedKeys(
     return (result.data ?? []).map(row => `${row.userId}:${row.eventId}`);
   });
   return new Set(batches.flat());
+}
+
+/**
+ * Which of these users have at least one push subscription. One key-only query per user, at most
+ * `READ_CONCURRENCY` at a time: the primary key is the user, so there is no index to scan.
+ */
+export async function loadPushUserIds(userIds: string[]): Promise<Set<string>> {
+  const found = await mapLimit([...new Set(userIds)], READ_CONCURRENCY, async id => {
+    const rows = await listPushSubscriptions(id);
+    return rows.length > 0 ? id : null;
+  });
+  return new Set(found.filter((id): id is string => id !== null));
 }
