@@ -1911,6 +1911,65 @@ admin yet.
   without JavaScript the form posts directly. Linked from the header menu.
 - `TODO(copy)`: the label for the public follower count (`followerCountLabel`, shown only above 0).
 
+### Venue QR Follow: scan page
+
+Phase 3: `/q/:code`, its follow screen, sign-in carryover, confirmation, add a concert, privacy
+page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
+
+- **Resolution is core and pure.** `venue-qr/resolve.ts` classifies events (live, later today,
+  upcoming) from `LIVE_WINDOW_*`. Live is an instant window, so a concert that crosses midnight
+  still resolves, and "later today" is the date in the event's own zone. With a code `spaceId`,
+  events of that space plus events with no space are candidates. `venue-qr/scan.ts` (`resolveScan`)
+  reads the code, follows a merged venue, reads events (`listEventsByVenue` now takes `range` or
+  `from`) and returns a trimmed view. `qr.resolve` is public and returns a state, never an error,
+  for an unknown, unassigned or retired code.
+- **Scans.** `resolveScan` counts every existing code, retired ones too. The count starts first,
+  runs beside the other reads and is awaited with errors swallowed (a Lambda can freeze after the
+  response, so a truly detached promise may never run).
+- **Route** `routes/q.$code.tsx`. Always `Cache-Control: private, no-store`, redirects too. No
+  site header or footer on `/q/` (`root.tsx`). An unassigned code sends a moderator to
+  `admin.rasika.life/qr/{code}/assign` (`adminAssignUrl`, built from the request host, so a stage
+  gets `admin.dev.rasika.life`). A retired code redirects to the venue page, else `/events`.
+  `?event=<id>` opens one event's follow screen from the picker or the later list, `?venue=1`
+  opens the venue-only screen.
+- **Follow form works without JavaScript.** Toggles are checkboxes, the share box of a venue or
+  organiser shows through the CSS `peer-checked` rule, and "Follow all" is a submit button that
+  JavaScript turns into "tick every row". `buildSelection` makes the `follow.bulkSet` targets:
+  nothing is followed or shared unless ticked, "Follow all" never ticks a share box, share is sent
+  only for a followed venue or organiser and only when it changed (so an old consent is not
+  stamped again), and a followed row that is now unticked is an unfollow. A signed-in reader who
+  already follows every row goes straight to confirmation.
+- **Sign-in carryover.** A signed-out submit stores `qr_intent` (`lib/qr-intent.server.ts`,
+  react-router cookie signed with the `QrIntentSecret` SST secret, `exp` inside the payload,
+  HttpOnly, SameSite Lax, 15 minutes) and goes to `/auth/login?redirectTo=/q/{code}`.
+  `auth.callback.tsx` calls `finishQrIntent`: it applies `follow.bulkSet` with the new access
+  token, clears the cookie and lands on `/q/{code}/done`. A missing or expired cookie falls back
+  to `post_login_redirect`, which is `/q/{code}`. A cancelled sign-in goes to
+  `/q/{code}?signin=cancelled`, a failed save to `?error=save`; both keep the cookie so the ticks
+  come back. **CloudFront forwards only whitelisted cookies**, so `qr_intent` is in the cache
+  policy list (`infra/site.ts`). That adds it to the cache key. `/q` is `no-store`, so no cached
+  page depends on it; only a reader who is mid sign-in gets a separate cache key for 15 minutes.
+  Set the secret with `sst secret set QrIntentSecret <random>` on each stage before deploy.
+- **Confirmation** `routes/q.$code_.done.tsx`. What was followed travels as `?t=type:id,...`
+  (ids only; names are read from `follow.mine`). Concert book calls `concertLog.upsert`. The
+  WhatsApp card has its own unticked consent (`whatsapp-v1`), validates 10 digits, and "Not now"
+  calls `notify.dismissWhatsappPrompt` so it never shows again. `notify.ts` holds only
+  `setWhatsapp` and `dismissWhatsappPrompt` for now. `notify` is in `PRIVATE_ROUTERS`. Phase 7
+  has a marked slot for the push button.
+- **In-app browsers** (`lib/in-app-browser.ts`): a signed-out reader in WhatsApp, Instagram,
+  Facebook and similar sees "Open in your browser to continue". The WhatsApp webview on iOS sends
+  a plain Safari agent and cannot be detected.
+- **Add a concert** `routes/q.$code_.add.tsx`, `event.submitFromQr`. Needs sign-in. Creates a
+  draft, submits it, and approves it only for an owner grant on the named organiser when the
+  organiser has `verifiedAt` (`mayAutoApprove`). The organiser is matched by exact name; an
+  unknown name stays as text on the event. The poster option links to `/events/new`, which cannot
+  take a venue, space or date yet.
+- **Rate limit** `infra/scan-rate-limit.ts` (prod only): WAF rate rule on paths starting `/q/`,
+  300 requests per 5 minutes per IP. A block returns 429 with the "Too many scans" page as a WAF
+  custom response body. The ACL is in us-east-1 and attached to the web distribution.
+- `TODO(spec)`: "Publish concert" for a verified owner cannot be shown before submit; the button
+  always reads "Submit for review" and the result page says which happened.
+
 ### Importing from `@rasika/core` in web routes
 
 **Never import from the bare `@rasika/core` entry in web route files.** The main entry re-exports everything including ElectroDB and AWS SDK, which use Node.js-only APIs (e.g. `util.promisify`). React Router v7 bundles the top-level imports of every route module for the client, so this crashes the browser.

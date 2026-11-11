@@ -7,8 +7,11 @@ import {
   EventListings,
   Festival,
   Organiser,
+  PartnerMember,
   Search,
   Venue,
+  VenueQr,
+  VenueSpace,
 } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
@@ -412,6 +415,62 @@ export const eventRouter = createTRPCRouter({
       );
       return { ...result, posterUrl };
     }),
+
+  // "Add a concert happening here" on the scan page. A submitted event at the code's venue,
+  // approved at once only for a verified owner of the named organiser (venue-qr/add-concert).
+  submitFromQr: editorProcedure.input(VenueQr.AddConcertSchema).mutation(async ({ ctx, input }) => {
+    const qr = await VenueQr.getQr(input.code);
+    if (!qr || qr.status !== 'active' || !qr.venueId) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'QR code is not active' });
+    }
+    const venue = await Venue.getVenue(qr.venueId);
+    const canonical = venue?.mergedIntoId ? await Venue.getVenue(venue.mergedIntoId) : venue;
+    if (!canonical || canonical.deletedAt) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Venue not found' });
+    }
+    const space = input.spaceId ? await VenueSpace.getSpace(canonical.id, input.spaceId) : null;
+    if (input.spaceId && !space) {
+      throw new TRPCError({ code: 'NOT_FOUND', message: 'Space not found' });
+    }
+    const organiser = input.organiserName
+      ? await Organiser.getOrganiserByName(input.organiserName)
+      : null;
+    const startDateTime = VenueQr.concertStart(input.date, input.startTime);
+
+    const draft = await Event.createEvent(
+      {
+        title: input.title,
+        startDateTime,
+        timezone: VenueQr.DEFAULT_TIMEZONE,
+        venueId: canonical.id,
+        venueName: canonical.name,
+        ...(canonical.city ? { venueCity: canonical.city } : {}),
+        ...(space ? { spaceId: space.spaceId, spaceName: space.name } : {}),
+        ...(organiser
+          ? { organiserId: organiser.id, organiserName: organiser.name }
+          : input.organiserName
+            ? { organiserName: input.organiserName }
+            : {}),
+        artists: VenueQr.parseArtistNames(input.artists),
+        ...(input.notes ? { description: input.notes } : {}),
+        tags: [],
+        entryType: 'free',
+      },
+      ctx.user.id,
+      { status: 'draft' }
+    );
+    const submitted = await Event.submitEvent(draft.id, {}, ctx.user.id);
+
+    const membership = organiser
+      ? await PartnerMember.getPartnerMember(ctx.user.id, 'organiser', organiser.id)
+      : null;
+    if (VenueQr.mayAutoApprove(membership, organiser)) {
+      const approved = await Event.approveEvent(submitted.id, ctx.user.id);
+      triggerReindex();
+      return { eventId: approved.id, published: true as const };
+    }
+    return { eventId: submitted.id, published: false as const };
+  }),
 
   submitVerified: editorProcedure
     .input(

@@ -13,7 +13,9 @@ import { eventRouter } from './event';
 import { eventSetlistRouter } from './event-setlist';
 import { festivalRouter } from './festival';
 import { followRouter } from './follow';
+import { notifyRouter } from './notify';
 import { organiserRouter } from './organiser';
+import { qrRouter } from './qr';
 import { ragaRouter } from './raga';
 import { rsvpRouter } from './rsvp';
 import { searchRouter } from './search';
@@ -39,7 +41,9 @@ export const appRouter = createTRPCRouter({
   event: eventRouter,
   festival: festivalRouter,
   follow: followRouter,
+  notify: notifyRouter,
   organiser: organiserRouter,
+  qr: qrRouter,
   raga: ragaRouter,
   rsvp: rsvpRouter,
   shortLink: shortLinkRouter,

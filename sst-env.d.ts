@@ -31,6 +31,10 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
+    "QrIntentSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
     "InstagramDLQ": {
       "type": "sst.aws.Queue"
       "url": string
