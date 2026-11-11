@@ -1,0 +1,291 @@
+{
+ "mdnd-10393": {
+  "listing": {
+   "event_id": 10393,
+   "event_title": "4.00 PM | Mambalam S Santhanam | 6.30 PM | Malladi Suribabu - Charsur Arts Foundation",
+   "event_date": "Tue, 15th Dec 2026",
+   "event_time": "4:00 PM",
+   "venue_name": "My Bungalow, Teynampet, Chennai",
+   "event_image": "event_photo_1791438541790.jpeg"
+  },
+  "extraction": {
+   "isFestival": false,
+   "confidence": 0.9,
+   "events": [
+    {
+     "startDateTime": "2026-12-15T16:00:00+05:30",
+     "venue": {
+      "name": "My Bungalow"
+     },
+     "organiser": {
+      "name": "Charsur Arts Foundation"
+     },
+     "artists": [
+      {
+       "name": "Mambalam S Santhanam",
+       "title": null,
+       "role": null
+      }
+     ]
+    },
+    {
+     "startDateTime": "2026-12-15T18:30:00+05:30",
+     "venue": {
+      "name": "My Bungalow"
+     },
+     "organiser": {
+      "name": "Charsur Arts Foundation"
+     },
+     "artists": [
+      {
+       "name": "Malladi Suribabu",
+       "title": null,
+       "role": null
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "mdnd-10925": {
+  "listing": {
+   "event_id": 10925,
+   "event_title": "Carnatic Veena Concert by Charulatha Chandrasekar | Carnatic Vocal by Bharath Narayanan | Deepika & V Nandhika | Carnatica Brothers",
+   "event_date": "Sun, 10th Jan 2027",
+   "event_time": "10:30 AM",
+   "venue_name": "YGP Auditorium, T nagar",
+   "event_image": "event_photo_1794380429434.jpeg"
+  },
+  "extraction": {
+   "isFestival": false,
+   "confidence": 0.7,
+   "events": [
+    {
+     "startDateTime": "2027-01-10T10:30:00+05:30",
+     "venue": {
+      "name": "YGP Auditorium"
+     },
+     "organiser": {
+      "name": "Bharat Kalachar"
+     },
+     "artists": [
+      {
+       "name": "Charulatha Chandrasekar",
+       "title": "",
+       "role": "veena"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2027-01-10T10:30:00+05:30",
+     "venue": {
+      "name": "YGP Auditorium"
+     },
+     "organiser": {
+      "name": "Bharat Kalachar"
+     },
+     "artists": [
+      {
+       "name": "Bharath Narayanan",
+       "title": "",
+       "role": "vocal"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2027-01-10T14:00:00+05:30",
+     "venue": {
+      "name": "YGP Auditorium"
+     },
+     "organiser": {
+      "name": "Bharat Kalachar"
+     },
+     "artists": [
+      {
+       "name": "V Deepika",
+       "title": "",
+       "role": "vocal"
+      },
+      {
+       "name": "V Nandhika",
+       "title": "",
+       "role": "vocal"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2027-01-10T16:30:00+05:30",
+     "venue": {
+      "name": "YGP Auditorium"
+     },
+     "organiser": {
+      "name": "Bharat Kalachar"
+     },
+     "artists": [
+      {
+       "name": "Carnatica Brothers",
+       "title": "",
+       "role": "vocal"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "mdnd-9797": {
+  "listing": {
+   "event_id": 9797,
+   "event_title": "Season Pass | 73rd Annual Arts Festival | Kalakshetra Foundation",
+   "event_date": "Fri, 18th Dec 2026",
+   "event_time": "5:30 PM",
+   "venue_name": "Bharata Kalakshetra Auditorium, Chennai",
+   "event_image": "event_photo_1788431693924.jpeg"
+  },
+  "extraction": {
+   "isFestival": true,
+   "confidence": 0.85,
+   "events": [
+    {
+     "startDateTime": "2026-12-18T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": []
+    },
+    {
+     "startDateTime": "2026-12-19T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": []
+    },
+    {
+     "startDateTime": "2026-12-20T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": [
+      {
+       "name": "Sandeep Narayanan",
+       "title": "Shri",
+       "role": "vocal"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2026-12-21T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": [
+      {
+       "name": "Meenakshi Sreenivasan",
+       "title": "Smt.",
+       "role": "bharatanatyam"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2026-12-22T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": []
+    },
+    {
+     "startDateTime": "2026-12-23T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": []
+    },
+    {
+     "startDateTime": "2026-12-24T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": [
+      {
+       "name": "Ananda Shankar Jayanth",
+       "title": "Smt.",
+       "role": "dance"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2026-12-24T19:45:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": [
+      {
+       "name": "Anitha Guha",
+       "title": "Smt.",
+       "role": "dance"
+      }
+     ]
+    },
+    {
+     "startDateTime": "2026-12-25T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": []
+    },
+    {
+     "startDateTime": "2026-12-26T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": []
+    },
+    {
+     "startDateTime": "2026-12-27T18:00:00+05:30",
+     "venue": {
+      "name": "Bharata Kalakshetra Auditorium"
+     },
+     "organiser": {
+      "name": "Kalakshetra Foundation"
+     },
+     "artists": [
+      {
+       "name": "Ranjini Gayatri",
+       "title": "Smt.",
+       "role": "vocal"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -886,8 +886,14 @@ adapter and register it in `crawl/index.ts`.
    429 waits as told and retries; a per-day 429 stops the run, and a rerun continues. `load` then applies each file (`applyPosterExtraction`): people and organiser
    come from the poster (first person billed is `main`, a later person on an accompanying
    instrument is `accompanist`, a chief guest is dropped); the listing keeps title, date, time
-   and venue. A poster that disagrees on day, time (over 30 minutes) or venue, or holds more
-   than one event, is recorded in `posterExtraction.mismatches` and the row is held.
+   and venue. A poster that disagrees on day, time (over 30 minutes) or venue is recorded in
+   `posterExtraction.mismatches` and the row is held. **A poster with several events** (one
+   poster for the day, or a festival) is matched to the listing: the one event on the same
+   day, within 30 minutes of the listing's time and at an agreeing venue (`venuesAgree`) is
+   applied like a single-event poster. No match ("poster holds 3 events; none at 18:15"), two
+   or more ("... 2 at 10:30") or a listing with no time holds the row. On 2026-11-11, 69 of
+   the 71 held rows resolved this way (offline check); the 2 left were a 3-event poster with
+   none at 22:30 and a 4-event poster with 2 concerts at 10:30.
 3. `crawl-coverage --dir <dir> [--json]` (no network) prints mdnd events and posters per month
    and the apps4u rows mdnd lacks. A row is covered when `mergeCrawled` folds it into an mdnd
    row, so the gap list is exactly what step 4 adds. `crawl-match --dir <dir> [--out manifest.json]

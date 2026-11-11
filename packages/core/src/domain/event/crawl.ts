@@ -755,18 +755,47 @@ const SUPPORT_ROLE =
  * is the billed artist; later ones playing an accompanying instrument are accompanists), as does
  * the organiser. The listing keeps its title, date, time and venue; where the poster disagrees
  * the difference is recorded in `posterExtraction.mismatches` and the row is held for review.
- * A festival or multi-event poster (more than one event) is not applied: it needs a person.
+ * A poster with several events (one poster per day, or a festival) is matched to the listing:
+ * the one event on the same day, within 30 minutes and at an agreeing venue is applied like a
+ * single-event poster. No match, several matches, or a listing with no time holds the row.
  */
 export function applyPosterExtraction(
   event: CrawledEvent,
   extraction: PosterExtractionLike
 ): CrawledEvent {
   const note: PosterExtractionNote = { confidence: extraction.confidence ?? 0, mismatches: [] };
+  let x = extraction.events[0];
   if (extraction.events.length !== 1) {
-    note.mismatches.push(`poster holds ${extraction.events.length} events; not applied`);
-    return { ...event, posterExtraction: note };
+    const n = extraction.events.length;
+    if (!x) {
+      note.mismatches.push('poster holds no events; not applied');
+      return { ...event, posterExtraction: note };
+    }
+    const listed = event.startDateTime ? Date.parse(event.startDateTime) : Number.NaN;
+    if (Number.isNaN(listed)) {
+      note.mismatches.push(`poster holds ${n} events; listing has no time`);
+      return { ...event, posterExtraction: note };
+    }
+    const hits = extraction.events.filter(c => {
+      const at = c.startDateTime ? Date.parse(c.startDateTime) : Number.NaN;
+      return (
+        !Number.isNaN(at) &&
+        Math.abs(at - listed) <= 30 * 60000 &&
+        istDate(c.startDateTime as string) === event.date &&
+        (!c.venue?.name || !event.venueName || venuesAgree(c.venue.name, event.venueName))
+      );
+    });
+    if (hits.length !== 1) {
+      const clock = event.time ?? event.startDateTime?.slice(11, 16);
+      note.mismatches.push(
+        hits.length === 0
+          ? `poster holds ${n} events; none at ${clock}`
+          : `poster holds ${n} events; ${hits.length} at ${clock}`
+      );
+      return { ...event, posterExtraction: note };
+    }
+    x = hits[0];
   }
-  const x = extraction.events[0];
   note.startDateTime = x.startDateTime ?? undefined;
   note.venueName = x.venue?.name;
   if (x.startDateTime) {

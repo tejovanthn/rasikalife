@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import apps4uRows from './__fixtures__/apps4u-rows.json';
 import mdndRows from './__fixtures__/mdnd-events.json';
+import multiPosters from './__fixtures__/mdnd-multi-event-posters.json';
 import {
   type Apps4uRow,
   type CrawlStoredData,
   type MdndEvent,
   type MdndListRow,
+  type PosterExtractionLike,
   applyPosterExtraction,
   coverageReport,
   matchArtist,
@@ -492,6 +494,53 @@ describe('poster extraction applied to a listing', () => {
     const e = applyPosterExtraction(base, two);
     expect(e.performers).toEqual(base.performers);
     expect(e.posterExtraction?.mismatches[0]).toContain('2 events');
+  });
+
+  describe('poster with several events', () => {
+    type Fx = { listing: MdndListRow; extraction: PosterExtractionLike };
+    const fx = multiPosters as unknown as Record<string, Fx>;
+    const listed = (id: string) => parseMdndListRows([fx[id].listing], 8)[0];
+
+    it('picks the 4 pm concert of a two-concert day poster', () => {
+      const e = applyPosterExtraction(listed('mdnd-10393'), fx['mdnd-10393'].extraction);
+      expect(e.posterExtraction?.mismatches).toEqual([]);
+      expect(e.performers.map(p => p.name)).toEqual(['Mambalam S Santhanam']);
+      expect(e.organiser).toBe('Charsur Arts Foundation');
+      expect(e.startDateTime).toBe(listed('mdnd-10393').startDateTime);
+    });
+
+    it('picks one day of an 11-event festival, 30 minutes off', () => {
+      const e = applyPosterExtraction(listed('mdnd-9797'), fx['mdnd-9797'].extraction);
+      expect(e.posterExtraction?.mismatches).toEqual([]);
+      expect(e.posterExtraction?.startDateTime).toBe('2026-12-18T18:00:00+05:30');
+      expect(e.organiser).toBe('Kalakshetra Foundation');
+    });
+
+    it('holds when two events share the listing time', () => {
+      const e = applyPosterExtraction(listed('mdnd-10925'), fx['mdnd-10925'].extraction);
+      expect(e.posterExtraction?.mismatches).toEqual(['poster holds 4 events; 2 at 10:30']);
+      expect(e.performers).toEqual(listed('mdnd-10925').performers);
+    });
+
+    it('holds when no event is at the listing time', () => {
+      const row = { ...fx['mdnd-10393'].listing, event_time: '8:15 PM' };
+      const e = applyPosterExtraction(parseMdndListRows([row], 8)[0], fx['mdnd-10393'].extraction);
+      expect(e.posterExtraction?.mismatches).toEqual(['poster holds 2 events; none at 20:15']);
+    });
+
+    it('holds when the listing has no time', () => {
+      const row = { ...fx['mdnd-10393'].listing, event_time: '' };
+      const e = applyPosterExtraction(parseMdndListRows([row], 8)[0], fx['mdnd-10393'].extraction);
+      expect(e.posterExtraction?.mismatches).toEqual([
+        'poster holds 2 events; listing has no time',
+      ]);
+    });
+
+    it('still checks venue for the chosen event', () => {
+      const row = { ...fx['mdnd-10393'].listing, venue_name: 'Narada Gana Sabha, Chennai' };
+      const e = applyPosterExtraction(parseMdndListRows([row], 8)[0], fx['mdnd-10393'].extraction);
+      expect(e.posterExtraction?.mismatches[0]).toContain('none at');
+    });
   });
 
   it('builds a hint that names the listing as a hint', () => {
