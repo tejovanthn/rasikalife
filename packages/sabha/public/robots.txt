@@ -1,0 +1,5 @@
+# A private dashboard. Nothing here is ever indexed. The noindex meta tag and header on every
+# route are the belt; this is the braces. Neither is a permission system: tRPC checks that the
+# signed-in person manages the organiser or venue they ask about.
+User-agent: *
+Disallow: /

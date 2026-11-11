@@ -13,6 +13,7 @@ import type { PartnerTargetType } from '../partner-member/schema';
 import { UserEntity } from '../user/entity';
 import { statsByVenue } from '../venue-qr';
 import { PRESIGNED_URL_TTL_SEC } from '../venue-qr/constants';
+import { listSpaces } from '../venue-space';
 import { VenueEntity } from '../venue/entity';
 import { PartnerExportEntity } from './export-entity';
 import type { PartnerExport } from './export-entity';
@@ -124,11 +125,17 @@ export async function getPartnerOverview(
     );
   }
   const venueId = codesVenueId(targetType, target);
-  const [follows, events, codes] = await Promise.all([
+  const [follows, events, rawCodes, spaces] = await Promise.all([
     listFollowRows(targetType, targetId),
     listTargetEvents(targetType, targetId, now, { pastLimit: 0 }),
     venueId ? statsByVenue(venueId, now) : Promise.resolve([]),
+    venueId ? listSpaces(venueId) : Promise.resolve([]),
   ]);
+  const spaceNames = new Map(spaces.map(space => [space.spaceId, space.name]));
+  const codes = rawCodes.map(code => ({
+    ...code,
+    spaceName: code.spaceId ? spaceNames.get(code.spaceId) : undefined,
+  }));
   return {
     target: {
       id: target.id,

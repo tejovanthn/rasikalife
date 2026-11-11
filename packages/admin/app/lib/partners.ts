@@ -20,7 +20,7 @@ export function partnerPath(targetType: PartnerTargetType, id: string): string {
   return `/partners/${targetType}/${encodeURIComponent(id)}`;
 }
 
-const fold = (text: string) => text.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+const fold = (text: string) => text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().trim();
 
 /**
  * Organisers and venues whose name (or city) holds the query, names that start with it first.

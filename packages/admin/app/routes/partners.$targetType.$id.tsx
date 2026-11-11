@@ -102,9 +102,7 @@ export default function PartnerTarget() {
 
       {result?.message ? (
         result.ok ? (
-          <p role="status" className="mb-6 text-sm">
-            {result.message}
-          </p>
+          <output className="block mb-6 text-sm">{result.message}</output>
         ) : (
           <div className="mb-6">
             <FormError>{result.message}</FormError>

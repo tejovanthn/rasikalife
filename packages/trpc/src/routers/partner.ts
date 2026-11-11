@@ -1,4 +1,12 @@
-import { Organiser, PartnerInvite, PartnerMember, Sabha, User, Venue } from '@rasika/core';
+import {
+  Organiser,
+  PartnerInvite,
+  PartnerMember,
+  Sabha,
+  User,
+  Venue,
+  VenueSpace,
+} from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import {
   InvitePartnerSchema,
@@ -276,6 +284,22 @@ export const partnerRouter = createTRPCRouter({
       return { upcoming: upcoming.map(toEventView), past: past.map(toEventView) };
     })
   ),
+
+  /**
+   * Halls of any venue, for the event form's Space list. An organiser's owner is not a member of
+   * the hall they hire, so `space.list` would refuse; the names of halls are on public event
+   * pages already, so any member of the dashboard may read them here.
+   */
+  spacesForVenue: partnerProcedure
+    .input(TargetSchema.extend({ venueId: z.string().min(1) }))
+    .query(({ input }) =>
+      mapPartnerErrors(async () =>
+        (await VenueSpace.listSpaces(input.venueId)).map(space => ({
+          spaceId: space.spaceId,
+          name: space.name,
+        }))
+      )
+    ),
 
   createEvent: partnerOwnerProcedure.input(SaveEventSchema).mutation(({ ctx, input }) =>
     mapPartnerErrors(async () => {

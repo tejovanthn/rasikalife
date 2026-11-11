@@ -172,6 +172,18 @@ describe('events', () => {
   });
 });
 
+describe('spacesForVenue', () => {
+  it('lets any member read halls of a venue and trims the rows', async () => {
+    core.listSpaces.mockResolvedValue([{ spaceId: 's1', name: 'Mini hall', capacity: 80 }]);
+    await expect(caller(viewer).spacesForVenue({ ...target, venueId: 'v9' })).resolves.toEqual([
+      { spaceId: 's1', name: 'Mini hall' },
+    ]);
+    await expect(
+      caller(stranger).spacesForVenue({ ...target, venueId: 'v9' })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+  });
+});
+
 describe('moderator routes', () => {
   it('invite sends the email and reports whether it went', async () => {
     core.createPartnerInvite.mockResolvedValue({
