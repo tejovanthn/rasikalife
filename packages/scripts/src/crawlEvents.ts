@@ -256,8 +256,14 @@ export async function crawlApply(opts: {
       }
       const createdArtistIds: string[] = [];
       const artists = [];
-      for (const p of e.performers) {
-        const { artist, created } = await core.Artist.findOrCreateArtist(p.name, { candidates });
+      for (const p of entry.performers) {
+        // A stored artist the dry run matched exactly is used by id. The repo's own finder
+        // rejects spellings the crawl's name key accepts ("Delhi P. Sunder Rajan").
+        const matched =
+          p.match?.tier === 'exact' && p.match.id ? await core.Artist.getArtist(p.match.id) : null;
+        const { artist, created } = matched
+          ? { artist: matched, created: false }
+          : await core.Artist.findOrCreateArtist(p.name, { candidates });
         if (created) {
           createdArtistIds.push(artist.id);
           candidates.push(artist);

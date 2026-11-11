@@ -21,6 +21,7 @@ import {
   renderReviewSheet,
   splitVenue,
   summarizeCrawl,
+  venuesAgree,
 } from './crawl';
 
 const apps4u = parseApps4uRows(apps4uRows as Apps4uRow[]);
@@ -224,5 +225,98 @@ describe('plan', () => {
 describe('non-people in a billing', () => {
   it('drops "Students"', () => {
     expect(parsePerformers(['Students - P. S. School'], 'main')).toEqual([]);
+  });
+});
+
+describe('cross-source merge by day, time and venue', () => {
+  const rows: Apps4uRow[] = [
+    {
+      Date: '2026-11-11 Wed',
+      Time: '4:30 pm',
+      Location: 'Arkay Convention Center, Chennai',
+      Type: 'Vocal - Violin',
+      'Who?': 'V. Deepika and V. Nandika',
+      Link: 'https://events.apps4u.net/',
+    },
+    {
+      Date: '2026-11-13 Fri',
+      Time: '6:00 pm',
+      Location: 'Ragasudha Hall, Chennai',
+      Type: 'Vocal',
+      'Who?': 'Delhi P. Sunder Rajan',
+      Link: '',
+    },
+    {
+      Date: '2026-11-13 Fri',
+      Time: '6:00 pm',
+      Location: 'Some Other Hall',
+      Type: 'Vocal',
+      'Who?': 'Unrelated Singer',
+      Link: '',
+    },
+  ];
+  const merged = mergeCrawled(parseApps4uRows(rows), mdnd);
+  const find = (id: string) => merged.find(e => e.sourceId === id);
+
+  it('keeps mdnd for Deepika and Nandika, with fuller names and the apps4u key', () => {
+    const e = find('mdnd-10773');
+    expect(e?.source).toBe('mdnd');
+    expect(e?.title).toBe('Carnatic Violin Duet Concert by Deepika & Nandhika');
+    expect(e?.mergedWith?.[0]).toMatchObject({ source: 'apps4u', by: 'slot' });
+    expect(e?.mergedWith?.[0].key).toMatch(/^apps4u:/);
+    expect(e?.alsoListedBy).toEqual(['apps4u']);
+    const mains = e?.performers.filter(p => p.kind === 'main').map(p => p.name);
+    expect(mains).toEqual(['V. Deepika', 'V. Nandika']);
+    expect(e?.performers.find(p => p.name === 'V. Deepika')?.variants).toContain('Deepika');
+    expect(e?.performers.some(p => p.kind === 'accompanist')).toBe(true);
+  });
+
+  it('keeps mdnd for Delhi Sunder Rajan', () => {
+    const e = find('mdnd-10745');
+    expect(e?.source).toBe('mdnd');
+    expect(e?.title).toBe('Carnatic Vocal Concert by Delhi Sunder Rajan');
+    expect(e?.mergedWith).toHaveLength(1);
+    expect(e?.performers[0].name).toBe('Delhi P. Sunder Rajan');
+  });
+
+  it('leaves a different concert alone, even at the same hour', () => {
+    expect(merged.filter(e => e.source === 'apps4u')).toHaveLength(1);
+    expect(merged).toHaveLength(mdnd.length + 1);
+  });
+
+  it('does not merge when the start is more than 30 minutes apart', () => {
+    const late = parseApps4uRows([{ ...rows[1], Time: '7:00 pm' }]);
+    expect(mergeCrawled(late, mdnd)).toHaveLength(mdnd.length + 1);
+  });
+
+  it('plans one new artist per person and shows the merge in the sheet', () => {
+    const stored: CrawlStoredData = { artists: [], venues: [], organisers: [], events: [] };
+    const plan = planCrawl(merged, stored, '2026-11-11');
+    const names = plan.flatMap(p => p.performers.map(x => x.name));
+    expect(names).not.toContain('Deepika');
+    expect(names).not.toContain('Delhi Sunder Rajan');
+    const summary = summarizeCrawl(plan);
+    expect(summary.merged.bySlot).toBe(2);
+    expect(summary.eventsBeforeMerge).toBe(summary.total + 2);
+    const sheet = renderReviewSheet(plan, summary, {
+      generatedAt: '2026-11-11T00:00:00Z',
+      sources: ['mdnd', 'apps4u'],
+    });
+    expect(sheet).toContain('merged with apps4u:');
+    expect(sheet).toContain('V. Deepika <- ');
+  });
+
+  it('matches a stored artist spelled with an initial', () => {
+    const m = matchArtist('Delhi Sunder Rajan', [{ id: 'a1', name: 'Delhi P. Sunder Rajan' }]);
+    expect(m).toMatchObject({ tier: 'exact', id: 'a1' });
+  });
+
+  it('holds a venue that differs only by a suffix, and keeps mini and main halls apart', () => {
+    const venues = [{ id: 'v1', name: 'Bharatiya Vidya Bhavan (Main Auditorium)' }];
+    expect(matchPlace('Bharathiya Vidya Bhavan Main Hall', venues).tier).toBe('close');
+    expect(
+      venuesAgree('Music Academy Mini Hall (Kasthuri Srinivasan Hall)', 'The Music Academy')
+    ).toBe(false);
+    expect(venuesAgree('Narada Gana Sabha - Main Hall', 'Narada Gana Sabha')).toBe(true);
   });
 });

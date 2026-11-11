@@ -1,4 +1,11 @@
 import { artistNameSimilarity, normalizeArtistName } from '../artist/dedup';
+import {
+  type NameComparison,
+  clusterArtistNames,
+  compareArtistNames,
+  foldToken,
+  pickDisplayName,
+} from './crawl-names';
 import { DUPLICATE_WINDOW_HOURS } from './duplicates';
 
 /**
@@ -19,6 +26,19 @@ export interface CrawledPerformer {
   role?: string;
   /** `main` for the billed artist, `accompanist` for the supporting players. */
   kind: 'main' | 'accompanist';
+  /** Other spellings of this person seen in the crawl (another source, another event). */
+  variants?: string[];
+}
+
+/** A listing from another source that is the same concert, folded into this row. */
+export interface MergedListing {
+  /** `source:sourceId`, as a manifest key. */
+  key: string;
+  source: string;
+  url: string;
+  title: string;
+  /** `id` = the mdnd event id in the link; `slot` = same day, time, venue or artists. */
+  by: 'id' | 'slot';
 }
 
 export interface CrawledEvent {
@@ -29,6 +49,8 @@ export interface CrawledEvent {
   sourceUrl: string;
   /** Other sources that listed the same event (apps4u lists what mdnd sells). */
   alsoListedBy: string[];
+  /** The other listings merged into this row. The manifest keeps their URLs. */
+  mergedWith?: MergedListing[];
   title: string;
   /** `YYYY-MM-DD` and 24-hour `HH:mm`, as printed, in the event's own zone (IST). */
   date: string;
@@ -156,6 +178,73 @@ export function placeKey(raw: string): string {
     .split(/\s+/)
     .filter(t => t && !CITY_WORDS.has(t) && t !== 'the')
     .join(' ');
+}
+
+const VENUE_SUFFIX_WORDS = new Set([
+  'hall',
+  'auditorium',
+  'main',
+  'mandapam',
+  'mandapa',
+  'centre',
+  'center',
+  'trust',
+  'foundation',
+  'society',
+  'association',
+  'pvt',
+  'ltd',
+  'private',
+  'limited',
+  'sri',
+  'shri',
+  'sree',
+  'of',
+  'and',
+]);
+
+/** Known short names of one place, applied to the folded key (city words are already gone). */
+const VENUE_ALIASES: Array<[string, string]> = [['af', 'alliance francaise']];
+
+export interface VenueKey {
+  tokens: string[];
+  /** A mini hall is another room of the same sabha. It never agrees with the main hall. */
+  mini: boolean;
+}
+
+/**
+ * A looser key for a venue than `placeKey`: parentheses and text after " - " are kept as extra
+ * words, "Hall"/"Auditorium"/"Main"/"Trust" and "Sri" are dropped, spellings are folded
+ * (Bharathiya/Bharatiya), and known aliases applied. Used to join the same concert across
+ * sources and to hold (never auto-accept) a stored venue it matches.
+ */
+export function venueKey(raw: string): VenueKey {
+  const text = raw.toLowerCase();
+  const mini = /\bmini\b/.test(text);
+  const base = text
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(t => t && !CITY_WORDS.has(t) && t !== 'the' && t !== 'mini')
+    .map(foldToken)
+    .filter(t => !VENUE_SUFFIX_WORDS.has(t));
+  let joined = base.join(' ');
+  for (const [from, to] of VENUE_ALIASES) {
+    if (joined === from) joined = to;
+  }
+  return { tokens: joined.split(' ').filter(Boolean), mini };
+}
+
+/** Same place, by `venueKey`: equal words, or the shorter (two words or more) inside the longer. */
+export function venuesAgree(a: string, b: string): boolean {
+  const ka = venueKey(a);
+  const kb = venueKey(b);
+  if (!ka.tokens.length || !kb.tokens.length || ka.mini !== kb.mini) return false;
+  const [small, large] = ka.tokens.length <= kb.tokens.length ? [ka, kb] : [kb, ka];
+  const inside = small.tokens.every(t => large.tokens.includes(t));
+  return inside && (small.tokens.length >= 2 || small.tokens.length === large.tokens.length);
 }
 
 const NOT_A_PERSON = /^(team|and team|party|group|ensemble|speaker|students?|others?)$/i;
@@ -372,24 +461,130 @@ export function parseMdndEvents(rows: MdndEvent[], city = 'Chennai'): CrawledEve
   return events;
 }
 
+export const SLOT_WINDOW_MINUTES = 30;
+
+const minuteOf = (e: CrawledEvent) =>
+  e.startDateTime ? Date.parse(e.startDateTime) / 60000 : Number.NaN;
+
+const mainsOf = (e: CrawledEvent) => e.performers.filter(p => p.kind === 'main');
+
+const listing = (e: CrawledEvent, by: MergedListing['by']): MergedListing => ({
+  key: `${e.source}:${e.sourceId}`,
+  source: e.source,
+  url: e.sourceUrl,
+  title: e.title,
+  by,
+});
+
+const tierRank: Record<NameComparison['tier'], number> = { exact: 2, close: 1, none: 0 };
+
 /**
- * apps4u lists what mdnd sells, with the mdnd link. Where both have the event, mdnd's record
- * wins (it has the poster and the organiser) and notes that apps4u listed it too. Rows that
- * only apps4u has stay, with the fields apps4u has.
+ * Pairs the people of two listings of one concert. Where both name a person, the fuller
+ * spelling is kept ("V. Deepika" over "Deepika") and the other is recorded as a variant.
+ * A person only the other listing names is added.
+ */
+export function mergePerformers(
+  base: CrawledPerformer[],
+  other: CrawledPerformer[]
+): CrawledPerformer[] {
+  const used = new Set<number>();
+  const out = base.map(p => {
+    let bestIdx = -1;
+    let bestRank = 0;
+    other.forEach((o, i) => {
+      if (used.has(i)) return;
+      const rank = tierRank[compareArtistNames(p.name, o.name).tier];
+      if (rank > bestRank) {
+        bestRank = rank;
+        bestIdx = i;
+      }
+    });
+    if (bestIdx < 0) return { ...p };
+    used.add(bestIdx);
+    const o = other[bestIdx];
+    const display = pickDisplayName([p.name, o.name]);
+    const variants = [...new Set([...(p.variants ?? []), ...(o.variants ?? []), p.name, o.name])];
+    return { ...p, name: display, variants: variants.filter(v => v !== display) };
+  });
+  other.forEach((o, i) => {
+    if (!used.has(i)) out.push({ ...o });
+  });
+  return out;
+}
+
+/** Folds `other` into `base` (mdnd wins every field; only people and sources are combined). */
+function absorb(base: CrawledEvent, other: CrawledEvent, by: MergedListing['by']): void {
+  if (!base.alsoListedBy.includes(other.source)) base.alsoListedBy.push(other.source);
+  base.mergedWith = [...(base.mergedWith ?? []), listing(other, by)];
+  base.performers = mergePerformers(base.performers, other.performers);
+  if (!base.category && other.category) base.category = other.category;
+}
+
+/**
+ * Same concert on two sites without a shared id: the same day, a start within
+ * `SLOT_WINDOW_MINUTES`, and the same venue (`venuesAgree`) with at least one artist in
+ * common, or, at an unknown venue spelling, every billed artist matching. Where the venue
+ * agrees but the billed artists disagree entirely, the rows stay apart (two halls of one sabha).
+ * One apps4u row folds into at most one mdnd row; the best score goes first.
+ */
+export function mergeBySlot(base: CrawledEvent[], extras: CrawledEvent[]): CrawledEvent[] {
+  const pairs: Array<{ m: number; a: number; score: number }> = [];
+  extras.forEach((a, ai) => {
+    const at = minuteOf(a);
+    if (Number.isNaN(at)) return;
+    base.forEach((m, mi) => {
+      if (m.source === a.source || m.date !== a.date) return;
+      const dt = Math.abs(minuteOf(m) - at);
+      if (Number.isNaN(dt) || dt > SLOT_WINDOW_MINUTES) return;
+      const ma = mainsOf(a);
+      const mm = mainsOf(m);
+      const names = m.performers;
+      const ranks = ma.map(p =>
+        Math.max(0, ...names.map(n => tierRank[compareArtistNames(p.name, n.name).tier]))
+      );
+      const matched = ranks.filter(r => r > 0).length;
+      const exact = ranks.filter(r => r === 2).length;
+      const venueOk = venuesAgree(a.venueName, m.venueName);
+      const noArtists = ma.length === 0 || mm.length === 0;
+      const ok = venueOk
+        ? matched > 0 || noArtists
+        : exact >= 1 && matched === ma.length && ma.length > 0;
+      if (ok) pairs.push({ m: mi, a: ai, score: matched * 2 + (venueOk ? 2 : 0) - dt / 60 });
+    });
+  });
+  pairs.sort((x, y) => y.score - x.score);
+  const takenA = new Set<number>();
+  const takenM = new Set<number>();
+  for (const p of pairs) {
+    if (takenA.has(p.a) || takenM.has(p.m)) continue;
+    takenA.add(p.a);
+    takenM.add(p.m);
+    absorb(base[p.m], extras[p.a], 'slot');
+  }
+  return [...base, ...extras.filter((_, i) => !takenA.has(i))];
+}
+
+/**
+ * apps4u lists what mdnd sells, usually with the mdnd link. Where both have the event, mdnd's
+ * record wins (poster, title, time, link, organiser) and notes that apps4u listed it too. Rows
+ * with no link are joined by day, time and venue (`mergeBySlot`). Names come from whichever
+ * listing is fuller. Rows that only apps4u has stay, with the fields apps4u has.
  */
 export function mergeCrawled(apps4u: CrawledEvent[], mdnd: CrawledEvent[]): CrawledEvent[] {
-  const byId = new Map(mdnd.map(e => [e.sourceId, e]));
-  const merged = [...mdnd.map(e => ({ ...e, alsoListedBy: [...e.alsoListedBy] }))];
+  const merged = mdnd.map(e => ({
+    ...e,
+    alsoListedBy: [...e.alsoListedBy],
+    performers: e.performers.map(p => ({ ...p })),
+    ...(e.mergedWith ? { mergedWith: [...e.mergedWith] } : {}),
+  }));
   const mergedById = new Map(merged.map(e => [e.sourceId, e]));
+  const rest: CrawledEvent[] = [];
   for (const event of apps4u) {
-    const twin = byId.get(event.sourceId) && mergedById.get(event.sourceId);
-    if (twin) {
-      if (!twin.alsoListedBy.includes('apps4u')) twin.alsoListedBy.push('apps4u');
-      continue;
-    }
-    merged.push(event);
+    const twin = mergedById.get(event.sourceId);
+    if (twin && twin.source !== event.source) absorb(twin, event, 'id');
+    else rest.push(event);
   }
-  return merged.sort((a, b) =>
+  return mergeBySlot(merged, rest).sort((a, b) =>
     (a.startDateTime ?? a.date).localeCompare(b.startDateTime ?? b.date)
   );
 }
@@ -466,6 +661,11 @@ export function matchPlace(raw: string, stored: StoredName[]): NameMatch {
       if ((contains || (shared >= 2 && score >= 0.6)) && score > (best.score ?? 0)) {
         best = { tier: 'close', id: candidate.id, name: candidate.name, score };
       }
+      // Same place under another suffix, spelling or alias ("Bharatiya Vidya Bhavan (Main
+      // Auditorium)"): held for a person, never taken as exact.
+      if (best.tier === 'none' && venuesAgree(raw, name)) {
+        best = { tier: 'close', id: candidate.id, name: candidate.name, score: 0.7 };
+      }
     }
   }
   return best;
@@ -474,26 +674,39 @@ export function matchPlace(raw: string, stored: StoredName[]): NameMatch {
 export const ARTIST_EXACT_FLOOR = 0.95;
 export const ARTIST_CLOSE_FLOOR = 0.85;
 
-/** Artist by name, with the repo's own scorer (`artistNameSimilarity`, initials and spelling). */
+/**
+ * Artist by name. Two scorers, the better tier wins: the repo's own (`artistNameSimilarity`,
+ * initials and spelling) and the crawl's name key (`compareArtistNames`: titles, initials,
+ * spacing, transliteration). `close` is for review and never taken automatically.
+ */
 export function matchArtist(
   raw: string,
   stored: Array<StoredName & { alternateNames?: string[] | null }>
 ): NameMatch {
   if (!normalizeArtistName(raw)) return { tier: 'none' };
   let best: NameMatch = { tier: 'none' };
+  let bestRank = 0;
   let bestScore = 0;
   for (const candidate of stored) {
     for (const name of [candidate.name, ...(candidate.alternateNames ?? [])]) {
-      const score = artistNameSimilarity(raw, name);
-      if (score > bestScore) {
+      const repo = artistNameSimilarity(raw, name);
+      const mine = compareArtistNames(raw, name);
+      const repoRank = repo >= ARTIST_EXACT_FLOOR ? 2 : repo >= ARTIST_CLOSE_FLOOR ? 1 : 0;
+      const rank = Math.max(repoRank, tierRank[mine.tier]);
+      const score = Math.max(repo, mine.score);
+      if (rank > bestRank || (rank === bestRank && rank > 0 && score > bestScore)) {
+        bestRank = rank;
         bestScore = score;
-        best = { tier: 'none', id: candidate.id, name: candidate.name, score };
+        best = {
+          tier: rank === 2 ? 'exact' : 'close',
+          id: candidate.id,
+          name: candidate.name,
+          score,
+        };
       }
     }
   }
-  if (bestScore >= ARTIST_EXACT_FLOOR) return { ...best, tier: 'exact' };
-  if (bestScore >= ARTIST_CLOSE_FLOOR) return { ...best, tier: 'close' };
-  return { tier: 'none' };
+  return best;
 }
 
 export interface DuplicateHit {
@@ -558,6 +771,12 @@ export interface PlannedPerformer extends CrawledPerformer {
   match: NameMatch;
 }
 
+/** One person who is spelled more than one way in the crawl. */
+export interface ArtistCluster {
+  display: string;
+  variants: string[];
+}
+
 export interface CrawlPlanEntry {
   key: string;
   decision: CrawlDecision;
@@ -588,15 +807,36 @@ export function planCrawl(
   stored: CrawlStoredData,
   today: string
 ): CrawlPlanEntry[] {
+  // One display name per person across the crawl, so a person spelled three ways becomes one new
+  // artist. The apply step reads `name`, which is now the cluster's fullest spelling.
+  const spellings = events.flatMap(e => e.performers.flatMap(p => [p.name, ...(p.variants ?? [])]));
+  const { displayOf } = clusterArtistNames(spellings);
+  const matchBest = (names: string[]): NameMatch => {
+    let best: NameMatch = { tier: 'none' };
+    for (const n of names) {
+      const m = matchArtist(n, stored.artists);
+      if (tierRank[m.tier] > tierRank[best.tier]) best = m;
+      else if (m.tier === best.tier && (m.score ?? 0) > (best.score ?? 0)) best = m;
+    }
+    return best;
+  };
   return events.map(event => {
     const venue = event.venueName
       ? matchPlace(event.venueName, stored.venues)
       : { tier: 'none' as const };
     const organiser = event.organiser ? matchPlace(event.organiser, stored.organisers) : undefined;
-    const performers = event.performers.map(p => ({
-      ...p,
-      match: matchArtist(p.name, stored.artists),
-    }));
+    const performers = event.performers.map(p => {
+      const display = displayOf.get(p.name) ?? p.name;
+      const all = [...new Set([p.name, ...(p.variants ?? [])])];
+      const variants = all.filter(v => v !== display);
+      const { variants: _old, ...rest } = p;
+      return {
+        ...rest,
+        name: display,
+        ...(variants.length ? { variants } : {}),
+        match: matchBest([display, ...variants]),
+      };
+    });
     const duplicates = findCrawlDuplicates(
       {
         startDateTime: event.startDateTime,
@@ -642,6 +882,12 @@ export interface CrawlSummary {
   artists: { exact: number; close: number; new: number };
   venues: { exact: number; close: number; new: number };
   organisers: { exact: number; close: number; new: number };
+  /** Listings folded into another row, by how they were joined. */
+  merged: { byId: number; bySlot: number };
+  /** Rows before the merge: `total` plus every folded listing. */
+  eventsBeforeMerge: number;
+  /** Spellings seen, people they came down to, and people with more than one spelling. */
+  artistNames: { spellings: number; people: number; clustered: number };
 }
 
 const tally = (tiers: MatchTier[]) => ({
@@ -675,6 +921,19 @@ export function summarizeCrawl(entries: CrawlPlanEntry[]): CrawlSummary {
         .filter(e => e.event.venueName)
         .map(e => [placeKey(e.event.venueName), e.venue.tier] as [string, MatchTier])
     ),
+    merged: {
+      byId: entries.reduce(
+        (n, e) => n + (e.event.mergedWith ?? []).filter(m => m.by === 'id').length,
+        0
+      ),
+      bySlot: entries.reduce(
+        (n, e) => n + (e.event.mergedWith ?? []).filter(m => m.by === 'slot').length,
+        0
+      ),
+    },
+    eventsBeforeMerge:
+      entries.length + entries.reduce((n, e) => n + (e.event.mergedWith?.length ?? 0), 0),
+    artistNames: artistNameCounts(entries),
     organisers: distinct(
       entries
         .filter(e => e.organiser)
@@ -683,6 +942,32 @@ export function summarizeCrawl(entries: CrawlPlanEntry[]): CrawlSummary {
             [placeKey(e.event.organiser ?? ''), e.organiser?.tier ?? 'none'] as [string, MatchTier]
         )
     ),
+  };
+}
+
+/** Every person in the plan with the spellings the crawl used for them. */
+export function artistClusters(entries: CrawlPlanEntry[]): ArtistCluster[] {
+  const byName = new Map<string, Set<string>>();
+  for (const e of entries) {
+    for (const p of e.performers) {
+      const set = byName.get(p.name) ?? new Set<string>([p.name]);
+      for (const v of p.variants ?? []) set.add(v);
+      byName.set(p.name, set);
+    }
+  }
+  return [...byName.entries()].map(([display, set]) => ({
+    display,
+    variants: [display, ...[...set].filter(v => v !== display)],
+  }));
+}
+
+function artistNameCounts(entries: CrawlPlanEntry[]) {
+  const clusters = artistClusters(entries);
+  const spellings = new Set(clusters.flatMap(c => c.variants.map(v => normalizeArtistName(v))));
+  return {
+    spellings: spellings.size,
+    people: clusters.length,
+    clustered: clusters.filter(c => c.variants.length > 1).length,
   };
 }
 
@@ -714,6 +999,8 @@ export function renderReviewSheet(
   }
   lines.push(
     `- Events: ${summary.total} (Chennai ${summary.chennai}, December ${summary.december}), posters ${summary.withPoster}`,
+    `- Merged across sites: ${summary.merged.byId + summary.merged.bySlot} (${summary.merged.byId} by mdnd id, ${summary.merged.bySlot} by day, time and venue). Rows before merge ${summary.eventsBeforeMerge}, after ${summary.total}`,
+    `- Artist spellings ${summary.artistNames.spellings}, people after clustering ${summary.artistNames.people} (${summary.artistNames.clustered} with more than one spelling)`,
     `- Would create: ${summary.create}. Held (skip): ${summary.skip}. Possible duplicates: ${summary.duplicates}`,
     `- Artists: ${summary.artists.exact} exact, ${summary.artists.close} close, ${summary.artists.new} new`,
     `- Venues: ${summary.venues.exact} exact, ${summary.venues.close} close, ${summary.venues.new} new`,
@@ -742,7 +1029,8 @@ export function renderReviewSheet(
         )
         .join(', ');
       const venue = `${e.event.venueName}${e.venue.tier === 'none' ? ' (new)' : e.venue.tier === 'close' ? ` (close: ${e.venue.name})` : ''}`;
-      const why = e.skipReasons.concat(
+      const merged = (e.event.mergedWith ?? []).map(m => `merged with ${m.key}`);
+      const why = [...merged, ...e.skipReasons].concat(
         e.duplicates.map(d => `dup: ${d.title} @ ${d.startDateTime.slice(0, 16)} [${d.id}]`)
       );
       lines.push(
@@ -764,5 +1052,42 @@ export function renderReviewSheet(
     'Held: other reasons',
     entries.filter(e => e.decision === 'skip' && !e.duplicates.length)
   );
+
+  const mergedRows = entries.filter(e => e.event.mergedWith?.length);
+  lines.push(`## Merged listings (${mergedRows.length} rows)`, '');
+  lines.push(
+    'The mdnd row is kept (title, poster, time, link). The other listing is a secondary source.',
+    ''
+  );
+  for (const e of mergedRows) {
+    for (const m of e.event.mergedWith ?? []) {
+      lines.push(
+        `- ${e.key} "${cell(e.event.title)}" ${e.event.date} ${e.event.time ?? '?'} <- ${m.key} "${cell(m.title)}" (${m.by}) ${m.url}`
+      );
+    }
+  }
+  lines.push('');
+
+  const clusters = artistClusters(entries).filter(c => c.variants.length > 1);
+  lines.push(
+    `## Artist clusters (${clusters.length})`,
+    '',
+    'One artist is made per line (display name first).',
+    ''
+  );
+  for (const c of clusters.sort((a, b) => a.display.localeCompare(b.display))) {
+    lines.push(`- ${cell(c.display)} <- ${c.variants.slice(1).map(cell).join(', ')}`);
+  }
+  lines.push('');
+
+  const closeNames = clusterArtistNames(artistClusters(entries).map(c => c.display)).close;
+  lines.push(
+    `## Close artist names inside the crawl, not merged (${closeNames.length})`,
+    '',
+    'Possibly one person. Each is made a separate new artist unless you merge them later.',
+    ''
+  );
+  for (const c of closeNames) lines.push(`- ${cell(c.a)} ~ ${cell(c.b)} (${c.reason})`);
+  lines.push('');
   return lines.join('\n');
 }
