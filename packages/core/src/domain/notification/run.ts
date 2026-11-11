@@ -17,7 +17,7 @@ import {
   loadUsers,
   mapLimit,
 } from './data';
-import { formatDay } from './format';
+import { formatDay, formatTime } from './format';
 import {
   buildUserEntries,
   digestRecentlySent,
@@ -29,6 +29,7 @@ import {
   startsTomorrow,
   targetKey,
   targetsOfEvent,
+  tomorrowIn,
   withoutLogged,
 } from './match';
 import type { FollowType, NotifyEvent, TargetRef, UserEntry } from './match';
@@ -44,6 +45,7 @@ export type NotifyUser = Pick<
   | 'notifyPush'
   | 'unsubscribeToken'
   | 'digestLastSentAt'
+  | 'reminderLastSentOn'
 >;
 
 /** Every read the jobs make. Tests pass fakes; the default is the real table. */
@@ -69,6 +71,19 @@ export const defaultDeps: NotifyDeps = {
   loadLoggedKeys,
   loadPushUserIds,
 };
+
+/**
+ * Runs one per-event step. One bad stored event (a broken zone, a missing field) is logged and
+ * skipped, and never aborts the run for everybody else. `fallback` is what the event yields.
+ */
+function isolated<T>(event: { id: string }, step: string, fn: () => T, fallback?: T): T {
+  try {
+    return fn();
+  } catch (error) {
+    console.error(`[notify] skipping event ${event.id} (${step})`, error);
+    return fallback as T;
+  }
+}
 
 /** Digest: email only, and only for a user who has not turned off the digest or email. */
 export function eligibleForDigest(user: NotifyUser, now: Date): boolean {
@@ -108,7 +123,12 @@ export async function gatherUserEntries(
   const targetsByEvent = new Map<string, TargetRef[]>();
   const distinct = new Map<string, TargetRef>();
   for (const event of events) {
-    const targets = targetsOfEvent(event, artistsByEvent.get(event.id) ?? []);
+    const targets = isolated(
+      event,
+      'targets',
+      () => targetsOfEvent(event, artistsByEvent.get(event.id) ?? []),
+      [] as TargetRef[]
+    );
     targetsByEvent.set(event.id, targets);
     for (const target of targets) distinct.set(targetKey(target), target);
   }
@@ -149,7 +169,14 @@ export async function planDigests(now: Date, deps: NotifyDeps = defaultDeps): Pr
     plans: [],
   };
 
-  const events = (await deps.loadEvents(window.from, window.to)).filter(e => inWindow(e, window));
+  const events = (await deps.loadEvents(window.from, window.to)).filter(e =>
+    isolated(e, 'digest window', () => {
+      // The email formats each event in its own zone; an event that cannot be formatted would
+      // fail that user's whole digest, so it is skipped here.
+      formatTime(e.startDateTime, e.timezone);
+      return inWindow(e, window);
+    })
+  );
   if (events.length === 0) return run;
 
   const entries = await gatherUserEntries(events, deps);
@@ -164,6 +191,8 @@ export async function planDigests(now: Date, deps: NotifyDeps = defaultDeps): Pr
 }
 
 export interface ReminderPlan {
+  /** The IST day the reminder is about (tomorrow); stored as `reminderLastSentOn` once sent. */
+  targetDay: string;
   user: NotifyUser;
   entries: UserEntry[];
   channel: ReminderChannel;
@@ -180,15 +209,19 @@ export async function planReminders(
 ): Promise<ReminderPlan[]> {
   const window = reminderQueryWindow(now);
   const events = (await deps.loadEvents(window.from, window.to)).filter(e =>
-    startsTomorrow(e, now)
+    isolated(e, 'starts tomorrow', () => startsTomorrow(e, now))
   );
   if (events.length === 0) return [];
+  // The reminder's target day, an IST calendar day. A user already sent this day is skipped, so a
+  // retried or doubled run cannot remind the same person twice.
+  const targetDay = tomorrowIn(DEFAULT_TIMEZONE, now);
 
   const entries = await gatherUserEntries(events, deps);
   const users = await deps.loadUsers([...entries.keys()]);
   const pushUsers = await deps.loadPushUserIds(users.map(u => u.id));
 
   const eligible = users
+    .filter(user => user.reminderLastSentOn !== targetDay)
     .map(user => ({ user, channel: reminderChannel(user, pushUsers.has(user.id)) }))
     .filter((u): u is { user: NotifyUser; channel: ReminderChannel } => u.channel !== null);
 
@@ -201,7 +234,7 @@ export async function planReminders(
   for (const { user, channel } of eligible) {
     const kept = withoutLogged(user.id, entries.get(user.id) ?? [], logged);
     const selected = selectForReminder(kept);
-    if (selected.length > 0) plans.push({ user, entries: selected, channel });
+    if (selected.length > 0) plans.push({ user, entries: selected, channel, targetDay });
   }
   return plans;
 }

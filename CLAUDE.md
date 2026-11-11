@@ -2380,3 +2380,10 @@ Fixes from the review after all eight phases.
   `z.string().url()` accepts `javascript:`. Public venue and organiser pages also pass these
   values through `safeHttpUrl` (`web/app/lib/safe-http-url.ts`), since older data or another write
   path may hold a bad value.
+- **Reminders are idempotent and isolated (orchestrator decision).** `User.reminderLastSentOn`
+  (optional `YYYY-MM-DD`, IST) holds the target day of the last reminder sent, the way
+  `digestLastSentAt` holds the digest. `planReminders` puts `targetDay` (tomorrow in IST) on each
+  plan and skips a user whose `reminderLastSentOn` equals it. `deliverReminders` records it
+  through `markReminderSent` after a push or an email goes out; a failed record is logged and
+  does not fail the send. Event times use `event.timezone || DEFAULT_TIMEZONE`. One bad stored
+  event is logged and skipped in `planReminders` and `planDigests`, never aborting the run.

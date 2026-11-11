@@ -46,6 +46,7 @@ function deps(withPush = false): DeliverDeps {
         ? Promise.resolve(user.unsubscribeToken)
         : User.getOrCreateUnsubscribeToken(user.id),
     markDigestSent: userId => User.setDigestLastSentAt(userId),
+    markReminderSent: (userId, day) => User.setReminderLastSentOn(userId, day),
     push: withPush ? pushDeps() : undefined,
   };
 }

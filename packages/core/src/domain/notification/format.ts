@@ -22,13 +22,13 @@ function parts(
 
 /** `Sat 16 Nov`. */
 export function formatDay(iso: string | Date, timeZone: string = DEFAULT_TIMEZONE): string {
-  const p = parts(new Date(iso), timeZone, { weekday: 'short', day: 'numeric', month: 'short' });
+  const p = parts(new Date(iso), timeZone || DEFAULT_TIMEZONE, { weekday: 'short', day: 'numeric', month: 'short' });
   return `${p.weekday} ${p.day} ${p.month}`;
 }
 
 /** `6:00 pm`. */
 export function formatTime(iso: string | Date, timeZone: string = DEFAULT_TIMEZONE): string {
-  const p = parts(new Date(iso), timeZone, {
+  const p = parts(new Date(iso), timeZone || DEFAULT_TIMEZONE, {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,

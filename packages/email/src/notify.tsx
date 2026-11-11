@@ -140,6 +140,8 @@ export interface DeliverDeps {
   /** The user's stored token; creates one for a row from before the field existed. */
   tokenFor(user: { id: string; unsubscribeToken?: string }): Promise<string>;
   markDigestSent?(userId: string): Promise<void>;
+  /** Stores the plan's target day on the user, so a repeat run skips them. */
+  markReminderSent?(userId: string, targetDay: string): Promise<void>;
   /** Web push, from the cron handler. Without it a `push` plan goes by email. */
   push?: NotificationTypes.PushDeps;
 }
@@ -205,7 +207,10 @@ export function deliverReminders(
   return inBatches(plans, 5, async plan => {
     if (plan.channel === 'push') {
       const pushed = await tryPush(plan, deps);
-      if (pushed) return true;
+      if (pushed) {
+        await markReminder(plan, deps);
+        return true;
+      }
       // Every device failed or none was left (a 410 just deleted the last one). Fall back to
       // email when the user allows it, so a dead subscription never costs them the reminder.
       if (Notification.reminderChannel(plan.user, false) !== 'email') return false;
@@ -216,12 +221,22 @@ export function deliverReminders(
         entries: plan.entries,
       });
       await deps.send({ to: plan.user.email, ...content });
+      await markReminder(plan, deps);
       return true;
     } catch (error) {
       console.error(`[reminder] failed for user ${plan.user.id}`, error);
       return false;
     }
   });
+}
+
+/** A failed mark is logged only: the reminder went out, and a repeat is the lesser harm. */
+async function markReminder(plan: NotificationTypes.ReminderPlan, deps: DeliverDeps) {
+  try {
+    await deps.markReminderSent?.(plan.user.id, plan.targetDay);
+  } catch (error) {
+    console.error(`[reminder] could not record send for user ${plan.user.id}`, error);
+  }
 }
 
 /** True when at least one of the user's devices took the push. */

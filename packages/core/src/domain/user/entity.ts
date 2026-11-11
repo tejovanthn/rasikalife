@@ -83,6 +83,8 @@ export const UserEntity = new Entity(
       // Random, rotated on use; carried inside an HMAC-signed unsubscribe link.
       unsubscribeToken: { type: 'string', required: false, default: () => newUnsubscribeToken() },
       digestLastSentAt: { type: 'string', required: false },
+      // The IST day (`YYYY-MM-DD`) of the last reminder sent: the day it was about.
+      reminderLastSentOn: { type: 'string', required: false },
       // WhatsApp number as 10 national digits (^[6-9]\d{9}$). Collected and stored only.
       whatsappNumber: { type: 'string', required: false },
       whatsappConsentAt: { type: 'string', required: false },
