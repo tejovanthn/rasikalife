@@ -194,6 +194,78 @@ program
   });
 
 program
+  .command('crawl-fetch')
+  .description(
+    'Download event listings and posters from the crawl sites (robots.txt checked; no AWS)'
+  )
+  .option('--source <names>', 'Comma-separated: apps4u,mdnd (default: all)', (v: string) =>
+    v.split(',')
+  )
+  .option('--dir <path>', 'Where downloads go (default: data/crawl). Use a new empty directory')
+  .option('--year <n>', 'apps4u season year', (v: string) => Number.parseInt(v, 10))
+  .option('--no-posters', 'Skip poster downloads')
+  .action(async (opts: { source?: string[]; dir?: string; year?: number; posters: boolean }) => {
+    const { crawlFetch } = await import('./crawlEvents.js');
+    await crawlFetch({
+      sources: opts.source,
+      dir: opts.dir,
+      year: opts.year,
+      noPosters: !opts.posters,
+    });
+  });
+
+program
+  .command('crawl-match')
+  .description(
+    'Match crawled events to stored records and write a dry-run manifest (reads, never writes)'
+  )
+  .option('--dir <path>', 'The crawl-fetch directory')
+  .option('--out <path>', 'Manifest JSON to write (default: <dir>/crawl-manifest.json)')
+  .option('--offline', 'Do not read the database: nothing is matched and every row is held')
+  .action(async (opts: { dir?: string; out?: string; offline?: boolean }) => {
+    if (!opts.offline) setup();
+    const { crawlMatch } = await import('./crawlEvents.js');
+    await crawlMatch(opts);
+  });
+
+program
+  .command('crawl-apply')
+  .description('Create the events marked "create" in a reviewed manifest, as submitted events')
+  .requiredOption('--manifest <path>', 'Reviewed manifest from crawl-match')
+  .requiredOption('--user <id>', 'Admin user id (the run acts as this user)')
+  .option('-n, --dry-run', 'List what would be created, write nothing')
+  .option('--only <keys>', 'Comma-separated manifest keys', (v: string) => v.split(','))
+  .action(async (opts: { manifest: string; user: string; dryRun?: boolean; only?: string[] }) => {
+    setup();
+    try {
+      const { Resource } = await import('sst');
+      const res = Resource as unknown as Record<string, { name?: string; url?: string }>;
+      process.env.EVENT_POSTERS_BUCKET = res.EventPosters?.name ?? '';
+      process.env.EVENT_POSTERS_CDN_URL = res.EventPostersCdn?.url ?? '';
+    } catch {
+      // A dry run needs neither.
+    }
+    const { crawlApply } = await import('./crawlEvents.js');
+    await crawlApply({
+      manifest: opts.manifest,
+      userId: opts.user,
+      dryRun: opts.dryRun,
+      only: opts.only,
+    });
+  });
+
+program
+  .command('crawl-undo')
+  .description('Soft-delete the events a crawl-apply run created')
+  .requiredOption('--manifest <path>', 'The .applied-*.json that crawl-apply wrote')
+  .option('-n, --dry-run', 'Report without writing')
+  .action(async (opts: { manifest: string; dryRun?: boolean }) => {
+    setup();
+    const { crawlUndo } = await import('./crawlEvents.js');
+    await crawlUndo(opts);
+  });
+
+program
   .command('admin-csv-export')
   .description('Export a domain to the admin CSV, the same shape /admin/data/<domain> downloads')
   .requiredOption('--domain <name>', 'artist, raga, tala, composition, venue, organiser, ...')

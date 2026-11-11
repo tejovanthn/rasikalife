@@ -842,6 +842,49 @@ artist named **`Unknown`**, since `composerId` keys an index and cannot be blank
    only once nothing uses it. It marks what it undid in the manifest, so a rerun is a no-op.
    Reindex after apply and after undo.
 
+### Crawling event listing sites for posters and events (`crawl-*`)
+
+Branch work of 2026-11 for the Chennai December season. Two sites so far: `apps4u`
+(events.apps4u.net, "The Margazhi Guide": date, time, venue, type, artist, one link per concert,
+no poster) and `mdnd` (mdnd.in calendar for Chennai: full detail, organiser, ticketing, poster).
+apps4u links to mdnd event pages, so the two are joined on the mdnd event id; mdnd wins and notes
+`alsoListedBy: ['apps4u']`. Rules and parsers are in `domain/event/crawl.ts` and
+`crawl-robots.ts` (pure, tested on fixtures in `domain/event/__fixtures__/`); each site is an
+adapter in `packages/scripts/src/crawl/`, and `crawlEvents.ts` is the shared fetch, match, apply
+and undo. To add a site: write an adapter and register it in `crawl/index.ts`.
+
+1. `crawl-fetch [--source apps4u,mdnd] --dir <new empty dir> [--no-posters]`. No AWS. One folder
+   per site under `--dir` (default `data/crawl`, gitignored). Everything goes through `Fetcher`
+   (`crawl/fetcher.ts`): robots.txt is read for each host first (404 = no rules; 401/403/5xx or a
+   Disallow = stop for that site, `fetch-report.json` says why), at most one request per 1.1 s, a
+   generic User-Agent, every response cached under `_cache/`. Posters are checked by magic bytes
+   (jpeg, png, webp) and saved as `posters/<id>.<ext>`. Downloads are only parsed as text or JSON,
+   never run. mdnd's page is a React app: the adapter reads the public JSON its own front end
+   loads from `api.mdnd.in` (`get_todays_event`, flag 3 = the next 30 days; the host has no
+   robots.txt and needs no login). Its event-detail endpoint did not answer, so events past the
+   30-day window exist only as apps4u rows (no poster, no organiser).
+2. `crawl-match --dir <dir> [--out manifest.json] [--offline]` reads artists, venues, organisers
+   and upcoming events (approved and submitted) and writes `crawl-manifest.json` plus
+   `.review.md`. It never writes. Artists use `artistNameSimilarity` (exact at 0.95, close at
+   0.85, the repo's own matcher); venues and organisers use `placeKey` (locality, "the" and
+   punctuation dropped; one shared word never counts; a `close` venue is held, since two halls of
+   one sabha are two venues). Duplicates: the same venue within 3 hours (the verify step's rule),
+   or the same day with a billed artist named in a stored title. `--offline` skips the database;
+   every row is then held and the sheet says so. The sources print no ragas, so none are matched.
+3. Review: edit `decision` (`create` or `skip`) per row in the manifest. Default `create` needs
+   a classical category, a start time, a future day, no duplicate, no `close` venue and a billed
+   artist.
+4. `crawl-apply --manifest <file> --user <id> --dry-run`, then without `--dry-run`. Creates events
+   with status `submitted` (a moderator approves them), a venue, organiser or artist only when
+   none matches at run time, and uploads each poster through `uploadPosterFromBuffer`. It
+   re-checks the venue for a near duplicate. Writes `<manifest>.applied-<time>.json` and skips
+   keys applied before, so a rerun is safe.
+5. `crawl-undo --manifest <file>.applied-<time>.json [--dry-run]` soft-deletes the events. Venues,
+   organisers and artists it created are listed, not removed.
+
+Not done on purpose: no Gemini or OCR pass over the posters. Both sites already give structured
+fields, so the poster is stored as the picture only. Reindex search after an apply.
+
 ### Deduplicating ragas (`pnpm cli dedup-ragas`, two steps)
 
 The corpus holds two import generations and the same raga appears in both under different

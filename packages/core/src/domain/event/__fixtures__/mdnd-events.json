@@ -1,0 +1,275 @@
+[
+ {
+  "event_day": "Wednesday",
+  "event_id": 10773,
+  "event_date": "11-11-2026",
+  "event_title": "Carnatic Violin Duet Concert by Deepika & Nandhika",
+  "country_id": 101,
+  "city_id": 3659,
+  "category_id": 8,
+  "main_cat_name": "Carnatic",
+  "sub_category_id": 3,
+  "sub_cat_name": "Violin",
+  "event_image": "event_photo_1793769642759.jpeg",
+  "display_time": "4:30 PM",
+  "event_mode": "offline",
+  "seating_option": "",
+  "venue_name": "Arkay Convention Center, Mylapore",
+  "event_type": "single",
+  "event_description": "",
+  "ticketing_option": "free",
+  "artist_details": [],
+  "organiser_details": [
+   {
+    "role_id": 2290,
+    "organiser_id": 5,
+    "profile_name": "madhuradhwani",
+    "profile_photo": "organizer-profile-171601281564.webp",
+    "organiser_name": "Madhuradhwani",
+    "organiser_loginid": 2287
+   }
+  ],
+  "accompanist_details": [],
+  "quickadd_artists": "[\"Deepika & Nandhika - Violin Duet\"]",
+  "quickadd_accompanists": "[\"Kishore Ramesh - Mridangam, Venkatramanan - Kanjira\"]",
+  "quickadd_organisers": "[null]"
+ },
+ {
+  "event_day": "Thursday",
+  "event_id": 10740,
+  "event_date": "12-11-2026",
+  "event_title": "Carnatic Vocal Concert by Shakthi Muralidharan & Dhanush Anantharaman",
+  "country_id": 101,
+  "city_id": 3659,
+  "category_id": 8,
+  "main_cat_name": "Carnatic",
+  "sub_category_id": 1,
+  "sub_cat_name": "Vocal",
+  "event_image": "event_photo_1793682865451.jpeg",
+  "display_time": "6:15 PM",
+  "event_mode": "offline",
+  "seating_option": "",
+  "venue_name": "Ragasudha Hall, Chennai",
+  "event_type": "single",
+  "event_description": "",
+  "ticketing_option": "free",
+  "artist_details": [
+   {
+    "role_id": 42358,
+    "artist_id": 2910,
+    "artist_name": "Shakthi Muralidaran",
+    "profile_name": "Sha180",
+    "profile_photo": null,
+    "artist_loginid": 39727
+   }
+  ],
+  "organiser_details": [
+   {
+    "role_id": 28503,
+    "organiser_id": 367,
+    "profile_name": "Naa806",
+    "profile_photo": "profile_photo_1745907915946.jpeg",
+    "organiser_name": "Naada Inbam",
+    "organiser_loginid": 28314
+   }
+  ],
+  "accompanist_details": [
+   {
+    "role_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "accompanist_id": null,
+    "accompanist_name": null,
+    "accompanist_loginid": null
+   }
+  ],
+  "quickadd_artists": "[\"Dhanush Anantharaman\", null, null]",
+  "quickadd_accompanists": "[\"Madan Mohan - Violin\", \"S Kavichelvan - Mridangam\", \"Sai Subramanian - Morsing\"]",
+  "quickadd_organisers": "[null, null, null]"
+ },
+ {
+  "event_day": "Friday",
+  "event_id": 10745,
+  "event_date": "13-11-2026",
+  "event_title": "Carnatic Vocal Concert by Delhi Sunder Rajan",
+  "country_id": 101,
+  "city_id": 3659,
+  "category_id": 8,
+  "main_cat_name": "Carnatic",
+  "sub_category_id": 1,
+  "sub_cat_name": "Vocal",
+  "event_image": "event_photo_1793688597837.jpeg",
+  "display_time": "6:00 PM",
+  "event_mode": "offline",
+  "seating_option": "",
+  "venue_name": "Ragasudha Hall, Chennai",
+  "event_type": "single",
+  "event_description": "",
+  "ticketing_option": "free",
+  "artist_details": [
+   {
+    "role_id": null,
+    "artist_id": null,
+    "artist_name": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "artist_loginid": null
+   }
+  ],
+  "organiser_details": [
+   {
+    "role_id": null,
+    "organiser_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "organiser_name": null,
+    "organiser_loginid": null
+   }
+  ],
+  "accompanist_details": [
+   {
+    "role_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "accompanist_id": null,
+    "accompanist_name": null,
+    "accompanist_loginid": null
+   }
+  ],
+  "quickadd_artists": "[\"Delhi Sunder Rajan - Vocal\"]",
+  "quickadd_accompanists": "[\"R Raghul - Violin, Srimushnam Raja Rao - Mridangam, S.V. Ramani - Ghatam\"]",
+  "quickadd_organisers": "[\"Ramapriya Arts Foundation\"]"
+ },
+ {
+  "event_day": "Saturday",
+  "event_id": 10799,
+  "event_date": "14-11-2026",
+  "event_title": "Villupattu at Victoria Public Hall",
+  "country_id": 101,
+  "city_id": 3659,
+  "category_id": 24,
+  "main_cat_name": "Folk Music",
+  "sub_category_id": 201,
+  "sub_cat_name": "Viillupaattu",
+  "event_image": "event_photo_1793858600729.jpeg",
+  "display_time": "5:30 PM",
+  "event_mode": "offline",
+  "seating_option": "",
+  "venue_name": "Victoria Public Hall, Chennai",
+  "event_type": "single",
+  "event_description": "<p>Dear Friends,</p><p><br></p><p>We are delighted to invite you to an evening celebrating the rich tradition of Tamil folk storytelling at the historic Victoria Public Hall.</p><p><br></p><p>The fourth instalment in our music series at VPH will focus on Villupattu, a traditional Tamil musical storytelling art form that beautifully blends music, humour and folklore.</p><p><br></p><p>Join us for an engaging evening featuring a special Villupattu performance by Kalaimamani Bharathi Thirumagan and Team, with commentary by Sriram V.</p><p><br></p><p>Talk: V. Sriram</p><p><br></p><p>Villupattu Performance: Kalaimamani Bharathi Thirumagan &amp; Team</p><p><br></p><p><br></p>",
+  "ticketing_option": "Ticketed",
+  "artist_details": [],
+  "organiser_details": [],
+  "accompanist_details": [],
+  "quickadd_artists": "[\"Kalaimamani Bharathi Thirumagan and Team; commentary by V. Sriram\"]",
+  "quickadd_accompanists": "[null]",
+  "quickadd_organisers": "[null]"
+ },
+ {
+  "event_day": "Saturday",
+  "event_id": 10670,
+  "event_date": "14-11-2026",
+  "event_title": "Hiphop Tamizha: The Sing-Along Night",
+  "country_id": 101,
+  "city_id": 3659,
+  "category_id": 22,
+  "main_cat_name": "Film Music",
+  "sub_category_id": 183,
+  "sub_cat_name": "Tamil",
+  "event_image": "event_photo_1793095347122.jpeg",
+  "display_time": "5:40 PM",
+  "event_mode": "offline",
+  "seating_option": "",
+  "venue_name": "IDAM - The Art & Cultural Space, Vadapalani & Kodambakkam",
+  "event_type": "single",
+  "event_description": "<p><span style=\"background-color: rgb(255, 255, 255); font-family: Geist, ui-sans-serif, system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif; font-size: 16px; color: rgb(59, 52, 46);\">Hiphop Tamizha - The Sing-Along Night is held at IDAM - The Art &amp; Cultural Space, Viswanathapuram 2nd Street, Kodambakkam, Chennai, on Saturday, 14 November 2026 from 5:40 PM.</span></p><p><span style=\"background-color: rgb(255, 255, 255); font-family: Geist, ui-sans-serif, system-ui, -apple-system, &quot;Segoe UI&quot;, sans-serif; font-size: 16px; color: rgb(59, 52, 46);\">Hiphop Tamizha: The Sing-Along Night is a music event at IDAM - The Art &amp; Cultural Space in Vadapalani &amp; Kodambakkam, on Saturday, 14 November 2026 from 5:40 PM.</span></p><p><br></p>",
+  "ticketing_option": "Ticketed",
+  "artist_details": [
+   {
+    "role_id": null,
+    "artist_id": null,
+    "artist_name": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "artist_loginid": null
+   }
+  ],
+  "organiser_details": [
+   {
+    "role_id": null,
+    "organiser_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "organiser_name": null,
+    "organiser_loginid": null
+   }
+  ],
+  "accompanist_details": [
+   {
+    "role_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "accompanist_id": null,
+    "accompanist_name": null,
+    "accompanist_loginid": null
+   }
+  ],
+  "quickadd_artists": "[null]",
+  "quickadd_accompanists": "[null]",
+  "quickadd_organisers": "[\"Regal Studios\"]"
+ },
+ {
+  "event_day": "Sunday",
+  "event_id": 10699,
+  "event_date": "15-11-2026",
+  "event_title": "Teen Prahar — A Unique Musical Experience",
+  "country_id": 101,
+  "city_id": 3659,
+  "category_id": 31,
+  "main_cat_name": "Hindustani",
+  "sub_category_id": 11,
+  "sub_cat_name": "Vocal",
+  "event_image": "event_photo_1793266634379.jpeg",
+  "display_time": "4:00 PM",
+  "event_mode": "offline",
+  "seating_option": "",
+  "venue_name": "Bharata Kalakshetra, Chennai",
+  "event_type": "single",
+  "event_description": "<p>About the Event</p><p><br></p><p>TEEN PRAHAR – A unique musical experience</p><p><br></p><p>Time-Theory of Raagas: Evening &amp; Night Raagas</p><p><br></p><p>- Pravin Godkhindi (Flute)</p><p>- Rahul Shivkumar Sharma (Santoor)</p><p>- Sanjeev Abhyankar (Hindustani Vocal)</p><p><br></p><p>From the Bhakti-fuelled moods of the morning to the contemplative melodies of dusk, Teen Prahar is a day-long festival celebrating the Time Theory of Raagas, a characteristic feature of Indian Classical Music.</p><p><br></p><p>After an 18-year journey celebrating India&#39;s rich musical traditions, Teen Prahar arrives in Chennai for the very first time.</p><p><br></p><p>Conceived by Banyan Tree Events in 2006, Teen Prahar began as a thematic festival showcasing ragas associated with three different time zones of the day in a single concert. Built on the tradition of dividing the day into prahars, each with its own ragas suited to its mood and hour, the festival has evolved into a larger celebration of Indian Classical Music, bringing together great maestros, young prodigies, and upcoming star performers on one stage.</p><p><br></p><p>Over the years, Teen Prahar has also showcased rare instruments such as the Sarangi, Sur Bahar, Clarinet, and Cello alongside traditional art forms such as Haveli Sangeet and Dhrupad. The festival has brought together artists and art forms in beautiful, never-before-seen combinations and ensembles.</p><p><br></p><p>We invite audiences in Chennai to join us for this special presentation of Teen Prahar and experience the richness and diversity of India&#39;s musical traditions.</p>",
+  "ticketing_option": "Ticketed",
+  "artist_details": [
+   {
+    "role_id": null,
+    "artist_id": null,
+    "artist_name": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "artist_loginid": null
+   }
+  ],
+  "organiser_details": [
+   {
+    "role_id": null,
+    "organiser_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "organiser_name": null,
+    "organiser_loginid": null
+   }
+  ],
+  "accompanist_details": [
+   {
+    "role_id": null,
+    "profile_name": null,
+    "profile_photo": null,
+    "accompanist_id": null,
+    "accompanist_name": null,
+    "accompanist_loginid": null
+   }
+  ],
+  "quickadd_artists": "[\"Pravin Godkhindi - Flute\", \"Rahul Shivkumar Sharma - Santoor\", \"Sanjeev Abhyankar - Hindustani Vocal\"]",
+  "quickadd_accompanists": "[null, null, null]",
+  "quickadd_organisers": "[\"Banyan Tree Events\", null, null]"
+ }
+]

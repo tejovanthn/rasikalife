@@ -211,6 +211,21 @@
       "import": "./src/domain/search/client.ts",
       "default": "./src/domain/search/client.ts"
     },
+    "./domain/event/crawl": {
+      "types": "./src/domain/event/crawl.ts",
+      "import": "./src/domain/event/crawl.ts",
+      "default": "./src/domain/event/crawl.ts"
+    },
+    "./domain/event/crawl-robots": {
+      "types": "./src/domain/event/crawl-robots.ts",
+      "import": "./src/domain/event/crawl-robots.ts",
+      "default": "./src/domain/event/crawl-robots.ts"
+    },
+    "./domain/event/s3": {
+      "types": "./src/domain/event/s3.ts",
+      "import": "./src/domain/event/s3.ts",
+      "default": "./src/domain/event/s3.ts"
+    },
     "./domain/event/client": {
       "types": "./src/domain/event/client.ts",
       "import": "./src/domain/event/client.ts",
