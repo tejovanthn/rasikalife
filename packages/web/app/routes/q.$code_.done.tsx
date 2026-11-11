@@ -161,7 +161,9 @@ export default function QrDone() {
           </Form>
         ))}
 
-      {result?.intent === 'whatsapp' && result.ok && <output className="block">{QR_COPY.whatsapp.saved}</output>}
+      {result?.intent === 'whatsapp' && result.ok && (
+        <output className="block">{QR_COPY.whatsapp.saved}</output>
+      )}
       {d.showWhatsapp && !whatsappDone && (
         <section className="space-y-4 rounded-xl border bg-card p-4">
           <h2 className="text-2xl font-bold">{QR_COPY.whatsapp.heading}</h2>
