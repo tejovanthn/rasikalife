@@ -19,6 +19,7 @@ import {
 } from '~/lib/event-filters';
 import type { EventListingData } from '~/lib/event-listing.server';
 import { formatDayLabel, groupByEventDate } from '~/lib/event-time';
+import { featuredCityLinks } from '~/lib/featured-cities';
 import { cn } from '~/lib/utils';
 
 /**
@@ -285,6 +286,11 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
   const isDigest = state.view === 'whatsapp';
   const dates = range ? rangeDates(range) : undefined;
   const cityState = { when: state.when, free: state.free, sort: state.sort };
+  // Chennai and Bengaluru stay linked from the sidebar even with no concert listed.
+  const sidebarCities: Array<{ slug: string; name: string; count?: number }> = [
+    ...cities,
+    ...featuredCityLinks(cities).filter(f => !cities.some(c => c.slug === f.slug)),
+  ];
   const fallbackGroups = groupByEventDate(upcomingFallback);
 
   return (
@@ -460,7 +466,7 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
         <aside className="md:order-first space-y-8">
           <Calendar scope={scope} state={state} calendar={calendar} today={today} />
           {/* From md up only; on a phone the city row in the filters stands in for it. */}
-          {cities.length > 1 && (
+          {sidebarCities.length > 1 && (
             <section aria-labelledby="cities-heading" className="hidden md:block space-y-2">
               <h2 id="cities-heading" className="text-sm font-semibold">
                 Cities
@@ -471,17 +477,17 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
                     <Link to={listingHref({ kind: 'all' }, cityState)}>All cities</Link>
                   </li>
                 )}
-                {cities.map(city => (
+                {sidebarCities.map(city => (
                   <li key={city.slug}>
                     {scope.kind === 'city' && scope.slug === city.slug ? (
                       <span aria-current="page" className="font-semibold">
                         {city.name}
-                        <Count n={city.count} />
+                        {city.count !== undefined && <Count n={city.count} />}
                       </span>
                     ) : (
                       <Link to={listingHref({ kind: 'city', slug: city.slug }, cityState)}>
                         {city.name}
-                        <Count n={city.count} />
+                        {city.count !== undefined && <Count n={city.count} />}
                       </Link>
                     )}
                   </li>

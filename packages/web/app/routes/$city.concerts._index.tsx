@@ -9,7 +9,7 @@ import {
   firstConcert,
   loadEventListing,
 } from '~/lib/event-listing.server';
-import { concertsMeta } from '~/lib/listing-description';
+import { concertsMeta, decemberSeasonYear } from '~/lib/listing-description';
 import { SIGNED_IN_CACHE_CONTROL } from '~/lib/page-cache';
 import { eventListItems } from '~/lib/structured-data';
 import { generateEventUrl } from '~/lib/url-slug';
@@ -58,6 +58,12 @@ export const meta: MetaFunction<typeof loader> = ({ data: raw }) => {
     city: d.cityName,
     count: d.count,
     next: d.first,
+    seasonYear: d.range
+      ? undefined
+      : decemberSeasonYear(
+          d.cityName,
+          d.groups.map(g => g.date)
+        ),
   });
   // Every filter is a view of the one city page.
   const url = `${SITE}${listingHref(d.scope, {})}`;

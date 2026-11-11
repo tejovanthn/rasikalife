@@ -145,17 +145,24 @@ export function concertsMeta({
   range,
   count,
   next,
+  seasonYear,
 }: {
   city?: string;
   /** "Today", "This weekend", "This week", or absent for all upcoming. */
   range?: string;
+  /** From `decemberSeasonYear`: names the December season in the title. */
+  seasonYear?: number;
   count: number;
   /** The first concert the page shows. */
   next?: { name: string; day: string; venue?: string };
 }): { title: string; description: string } {
   const where = city ? ` in ${city}` : '';
   const when = range ? ` ${range.replace(/\b\w/g, c => c.toUpperCase())}` : '';
-  const title = `Carnatic Concerts${where}${when} | Rasika.life`;
+  // The season title is 59 characters already; the brand would push it past what a result shows.
+  const title =
+    seasonYear && !range
+      ? `Carnatic Concerts${where}: December Season ${seasonYear} Schedule`
+      : `Carnatic Concerts${where}${when} | Rasika.life`;
   const scope = range ? range.toLowerCase() : 'coming up';
   const lead =
     count > 0
@@ -165,4 +172,18 @@ export function concertsMeta({
     ? ` ${count > 0 ? 'First' : 'Next'}: ${next.name}, ${next.day}${next.venue ? ` at ${next.venue}` : ''}.`
     : '';
   return { title, description: clamp(`${lead}${nextLine} Date, venue and artists for each.`) };
+}
+
+/**
+ * The year of the December season, for a Chennai page that lists a concert in December; else
+ * `undefined`. The title says "December Season" only when the data does: an empty Chennai page
+ * must not claim a schedule. `dates` are the listing's `YYYY-MM-DD` day keys.
+ */
+export function decemberSeasonYear(
+  city: string | undefined,
+  dates: readonly string[]
+): number | undefined {
+  if (city !== 'Chennai') return undefined;
+  const december = dates.filter(d => d.slice(5, 7) === '12').sort();
+  return december.length > 0 ? Number(december[0].slice(0, 4)) : undefined;
 }

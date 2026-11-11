@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { concertsMeta, eventListingDescription, eventsIndexMeta } from './listing-description';
+import {
+  concertsMeta,
+  decemberSeasonYear,
+  eventListingDescription,
+  eventsIndexMeta,
+} from './listing-description';
 
 const NOW = new Date('2026-08-04T00:00:00Z');
 
@@ -175,5 +180,30 @@ describe('concertsMeta', () => {
       title: 'Carnatic Concerts in Chennai | Rasika.life',
       description: '1 concert in Chennai coming up. Date, venue and artists for each.',
     });
+  });
+});
+
+describe('December season title', () => {
+  it('names the season only when a December concert is listed', () => {
+    const year = decemberSeasonYear('Chennai', ['2026-11-20', '2026-12-16']);
+    expect(year).toBe(2026);
+    const { title } = concertsMeta({ city: 'Chennai', count: 2, seasonYear: year });
+    expect(title).toBe('Carnatic Concerts in Chennai: December Season 2026 Schedule');
+    expect(title.length).toBeLessThanOrEqual(60);
+  });
+
+  it('stays plain for an empty Chennai, other months and other cities', () => {
+    expect(decemberSeasonYear('Chennai', [])).toBeUndefined();
+    expect(decemberSeasonYear('Chennai', ['2026-11-20'])).toBeUndefined();
+    expect(decemberSeasonYear('Bengaluru', ['2026-12-16'])).toBeUndefined();
+    expect(concertsMeta({ city: 'Chennai', count: 0 }).title).toBe(
+      'Carnatic Concerts in Chennai | Rasika.life'
+    );
+  });
+
+  it('keeps the plain title for a date range', () => {
+    expect(
+      concertsMeta({ city: 'Chennai', range: 'Today', count: 1, seasonYear: 2026 }).title
+    ).toBe('Carnatic Concerts in Chennai Today | Rasika.life');
   });
 });

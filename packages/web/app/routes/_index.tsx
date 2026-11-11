@@ -8,6 +8,7 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EventList } from '~/components/EventCard';
 import { SectionHeader } from '~/components/shared';
 import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
+import { featuredCityLinks } from '~/lib/featured-cities';
 
 interface UpcomingEvent {
   id: string;
@@ -120,6 +121,17 @@ export default function HomePage() {
               Compositions
             </Link>
           </div>
+          <p className="mt-5 text-sm text-muted-foreground">
+            Concerts in{' '}
+            {featuredCityLinks().map((city, i) => (
+              <span key={city.slug}>
+                {i > 0 && ' · '}
+                <Link to={city.href} className="underline underline-offset-4 hover:text-foreground">
+                  {city.name}
+                </Link>
+              </span>
+            ))}
+          </p>
         </div>
         <aside
           className="hidden md:flex flex-col items-end gap-3 text-right shrink-0"
