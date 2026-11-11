@@ -1820,6 +1820,64 @@ row, so "the caller supplied this field" says nothing about whether it changed.
 
 To add a domain: add its column list to `ADMIN_CSV_DOMAINS` and a registry entry (with a `prepare` hook if it has linked names) to `bulk-data.ts`.
 
+### Venue QR Follow: data layer
+
+A printed QR code turns a concert attendee into a follower of a venue, organiser or artist. Spec,
+copy, build notes and owner decisions: `docs/plans/261112-01-venue-qr-follow/` (`decisions.md` wins
+where the tabs disagree). This section covers phase 1 only: entities and core operations, no
+routers, routes or UI.
+
+Domains in `packages/core/src/domain/`, each with `/client` and index subpaths in `package.json`:
+`venue-qr` (`VenueQr`, `QrScanDay`, `constants.ts`), `qr-batch`, `follow`, `venue-space`,
+`partner-member`, `partner-invite`, `push-subscription`. `notification` is phase 5.
+
+- **Rule 9 on `VenueQr.byVenue`.** `venueId` is optional, so the index is keyed on a required
+  `venueRef` instead: the venue id once assigned, `batch#<batchId>` before (`venueRefFor`). An
+  unassigned code sits in a partition of its own batch, and no venue id can address it. Every
+  other index key in these domains is built from required attributes. `venue-qr/keys.test.ts`
+  reads the real keys off `.params()`.
+- **Rule 7 on `VenueQr` patches.** A patch that changes `venueRef` also sets `createdAt`, and one
+  that changes `status` also sets `batchId`, or ElectroDB skips the GSI sort key. So `createdAt`
+  and `batchId` are not `readOnly`. Clearing `spaceId` uses `.remove` (rule 8).
+- **Counters.** `followerCount` is on `Venue`, `Organiser` and `Artist`, read as `?? 0`. Follow and
+  unfollow are one raw `TransactWrite`: the `Follow` put (condition not exists) or delete
+  (condition exists) plus `ADD followerCount` on the target, guarded by `attribute_exists` so a
+  missing target is refused, not created. A second follow cancels the whole transaction, so the
+  counter cannot move twice. The target key comes from `keyOfEntity`. The follow put and delete
+  come from `FollowEntity.create(...).params()` so keys and conditions are ElectroDB's own. A raw
+  transaction is used, not `Service.transaction`, so a follow does not bump the target's
+  `updatedAt`.
+- **Targets.** `resolveFollowTarget` follows `mergedIntoId` (up to 5 hops). Missing or
+  soft-deleted with no pointer is `FOLLOW_TARGET_NOT_FOUND`. Merges move follows with
+  `moveFollows`: write under the canonical and delete the loser's in one transaction, drop the
+  loser's row for a user who already follows the canonical, then recompute both counters from the
+  rows. The merge cascades in `cascade.ts` call it, move `PartnerMember` grants (higher role
+  wins), and for venues also repoint codes and move spaces (ids kept). Rename cascades refresh
+  `targetName` and `venueName`.
+- **Share.** Never on by default. `share` is refused for an artist (`FOLLOW_SHARE_NOT_ALLOWED`),
+  even `share: false`. Consent stores `shareConsentAt` and `CONSENT_VERSIONS.share`.
+- **Scans.** `recordScan` counts retired codes too (decisions.md). The code row is patched first
+  (condition: exists), then `QrScanDay` is written with `update().add()`, which creates the row.
+  Days are `yyyy-mm-dd` in `DEFAULT_TIMEZONE`. `bulkSetFollows` adds only new follows to
+  `followCount` and `QrScanDay.follows`.
+- **Codes.** `generateQrCode` takes the low 5 bits of CSPRNG bytes (unbiased). `mintQrCodes` does
+  a conditional create per code and retries on collision (`QR_CODE_COLLISION` after 8 tries).
+  `assignQr` is conditional on `status = unassigned`, so two moderators cannot both win. Assign,
+  relabel, reassign and retire write `ChangeHistory` (`venueQr`; `organiser` and `venue` are added
+  to `ChangeEntityType` for phase 8).
+- **User.** New notification and WhatsApp fields. The model version stays `2`: ElectroDB filters
+  by version, so a bump would hide every existing user. Defaults apply at create, and
+  `effectiveNotifyPrefs` applies them to older rows on read.
+- **Invites.** `acceptInvitesForUser` runs after `findOrCreateUser` (phase 8 wires it): membership
+  first, then `verifiedAt` (only for an owner, only if unset), then the invite is marked accepted.
+  Each step is safe to repeat.
+- **Account deletion.** There is no user-deletion path yet. `cascadeUserDeleteToFollowData(userId)`
+  removes follows (each decrements once), push subscriptions and memberships. Whatever adds
+  deletion must call it.
+- Open questions are marked `TODO(spec)` in code: no `shareWithdrawnAt` for the "withdrawn this
+  month" count, no cursor on the unfiltered code list, and organiser-owner verification of managed
+  venues.
+
 ### Importing from `@rasika/core` in web routes
 
 **Never import from the bare `@rasika/core` entry in web route files.** The main entry re-exports everything including ElectroDB and AWS SDK, which use Node.js-only APIs (e.g. `util.promisify`). React Router v7 bundles the top-level imports of every route module for the client, so this crashes the browser.
