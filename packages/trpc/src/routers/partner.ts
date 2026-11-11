@@ -4,6 +4,7 @@ import {
   PartnerMember,
   Sabha,
   User,
+  VenueQr,
   Venue,
   VenueSpace,
 } from '@rasika/core';
@@ -66,8 +67,8 @@ const TargetSchema = z.object({
 /** The owner's event form, plus the target the call is gated on. */
 const SaveEventSchema = TargetSchema.extend({
   title: z.string().trim().min(1).max(300),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  date: VenueQr.CalendarDateSchema,
+  startTime: VenueQr.ClockTimeSchema,
   venueId: z.string().optional(),
   spaceId: z.string().optional(),
   artists: z.string().max(1000).optional(),

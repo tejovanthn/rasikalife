@@ -1,5 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { AddConcertSchema, concertStart, mayAutoApprove, parseArtistNames } from './add-concert';
+import {
+  AddConcertSchema,
+  CalendarDateSchema,
+  ClockTimeSchema,
+  concertStart,
+  isRealDate,
+  mayAutoApprove,
+  parseArtistNames,
+} from './add-concert';
+
+describe('calendar validation', () => {
+  it('refuses days that do not exist', () => {
+    expect(isRealDate('2026-02-31')).toBe(false);
+    expect(isRealDate('2026-13-01')).toBe(false);
+    expect(isRealDate('2026-04-31')).toBe(false);
+    expect(isRealDate('2026-02-29')).toBe(false);
+    expect(isRealDate('2028-02-29')).toBe(true);
+    expect(CalendarDateSchema.safeParse('2026-02-31').success).toBe(false);
+    expect(CalendarDateSchema.safeParse('2026-12-05').success).toBe(true);
+    expect(ClockTimeSchema.safeParse('25:00').success).toBe(false);
+    expect(ClockTimeSchema.safeParse('18:30').success).toBe(true);
+  });
+  it('gives the add-a-concert form a validation error, not a throw', () => {
+    const result = AddConcertSchema.safeParse({
+      code: 'ABCDEFGH',
+      title: 'x',
+      date: '2026-02-31',
+      startTime: '18:30',
+    });
+    expect(result.success).toBe(false);
+  });
+});
 
 describe('add concert rules', () => {
   it('parses artist names from lines and commas', () => {

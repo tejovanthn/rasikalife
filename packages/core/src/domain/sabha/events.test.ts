@@ -30,7 +30,7 @@ import { EventEntity } from '../event/entity';
 import { getOrganiser } from '../organiser';
 import { getPartnerMember } from '../partner-member';
 import { getVenue } from '../venue';
-import { createOwnerEvent, updateOwnerEvent } from './events';
+import { OwnerEventSchema, createOwnerEvent, updateOwnerEvent } from './events';
 
 const input = {
   organiserId: 'o1',
@@ -67,6 +67,14 @@ beforeEach(() => {
   vi.mocked(submitEvent).mockResolvedValue({ id: 'e1' } as never);
   vi.mocked(approveEvent).mockResolvedValue({ id: 'e1' } as never);
   vi.mocked(EventEntity.patch).mockReturnValue(patch as never);
+});
+
+describe('OwnerEventSchema', () => {
+  it('refuses a date that is not on the calendar', () => {
+    expect(OwnerEventSchema.safeParse({ ...input, date: '2026-02-31' }).success).toBe(false);
+    expect(OwnerEventSchema.safeParse({ ...input, startTime: '24:30' }).success).toBe(false);
+    expect(OwnerEventSchema.safeParse(input).success).toBe(true);
+  });
 });
 
 describe('createOwnerEvent', () => {

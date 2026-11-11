@@ -14,7 +14,13 @@ import type { Event } from '../event/entity';
 import { getOrganiser } from '../organiser';
 import { getPartnerMember } from '../partner-member';
 import { getVenue } from '../venue';
-import { concertStart, mayAutoApprove, parseArtistNames } from '../venue-qr/add-concert';
+import {
+  CalendarDateSchema,
+  ClockTimeSchema,
+  concertStart,
+  mayAutoApprove,
+  parseArtistNames,
+} from '../venue-qr/add-concert';
 import { DEFAULT_TIMEZONE } from '../venue-qr/constants';
 import { getSpace } from '../venue-space';
 
@@ -26,9 +32,9 @@ export const OwnerEventSchema = z.object({
   organiserId: z.string(),
   title: z.string().trim().min(1).max(300),
   /** `YYYY-MM-DD`, the day at the hall. */
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: CalendarDateSchema,
   /** `HH:mm` on the hall's wall clock. */
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  startTime: ClockTimeSchema,
   venueId: z.string().optional(),
   spaceId: z.string().optional(),
   /** One name per line or comma-separated. */

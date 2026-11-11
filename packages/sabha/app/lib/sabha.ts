@@ -3,6 +3,7 @@
  * profile form, the trend line and event times. No React, no network, so each is tested in
  * `sabha.test.ts`.
  */
+import { isRealDate, isRealTime } from '@rasika/core/domain/venue-qr/client';
 import { zonedDateTimeInputValue } from '@rasika/core/shared/timezone';
 import { SABHA_COPY } from './copy';
 
@@ -157,8 +158,8 @@ export function readEventForm(
   const startTime = text('startTime');
   const venueId = text('venueId');
   if (!title) return { ok: false, error: 'title' };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'date' };
-  if (!/^\d{2}:\d{2}$/.test(startTime)) return { ok: false, error: 'time' };
+  if (!isRealDate(date)) return { ok: false, error: 'date' };
+  if (!isRealTime(startTime)) return { ok: false, error: 'time' };
   if (!venueId) return { ok: false, error: 'venue' };
   return {
     ok: true,
