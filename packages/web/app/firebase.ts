@@ -1,7 +1,8 @@
 // Import the functions you need from the SDKs you need
-import { getAnalytics, isSupported, logEvent } from 'firebase/analytics';
+import { getAnalytics, initializeAnalytics, isSupported, logEvent } from 'firebase/analytics';
 import { initializeApp } from 'firebase/app';
 import { onCLS, onFCP, onLCP, onTTFB } from 'web-vitals';
+import { botTrafficConfig } from './lib/bot-fingerprint';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBMTvQChxd0-1o4zjEyy1pbjUQhavFTwWQ',
@@ -36,7 +37,13 @@ function isAutomatedBrowser(): boolean {
 // Initialize Analytics conditionally
 export const analytics = isSupported().then(yes => {
   if (yes && import.meta.env.VITE_STAGE === 'prod' && !isAutomatedBrowser()) {
-    const analyticsInstance = getAnalytics(app);
+    // A browser matching the known bot fingerprint gets `traffic_type: suspected_bot` on the
+    // gtag config, which runs before the first page_view, so a GA4 data filter can exclude
+    // it. Everyone else takes the unchanged `getAnalytics` path. Nothing is blocked.
+    const botConfig = botTrafficConfig();
+    const analyticsInstance = botConfig
+      ? initializeAnalytics(app, { config: botConfig })
+      : getAnalytics(app);
 
     // Track Core Web Vitals
     onCLS(metric =>

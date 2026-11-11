@@ -385,6 +385,18 @@ Rules:
 - The scripts check each payload against the artist schema and hold the row if a field is not in
   it, rather than writing a patch the schema would drop.
 
+### GA4 bot traffic: `traffic_type = suspected_bot`
+
+GA4 "Direct" was about 90% bots: Chrome on Windows, screen 1280x1200, Singapore timezone, 0.2 second sessions, bursts of 100 to 600 a day. The edge cannot see screen size, so `packages/web/app/lib/bot-fingerprint.ts` matches in the browser: `isSuspectedBot` is true only for screen 1280x1200 **and** `Intl` timezone `Asia/Singapore`. `firebase.ts` then calls `initializeAnalytics(app, { config: { traffic_type: 'suspected_bot' } })` in place of `getAnalytics(app)`, so the parameter is on the gtag config before the first `page_view`. Nobody is blocked and nobody else's setup changes. `navigator.webdriver` browsers are still dropped earlier (`isAutomatedBrowser`).
+
+The tag only labels the sessions. The owner then excludes them in GA4, in this order:
+1. Admin → Data collection and modification → **Data filters** → Create filter → **Internal traffic**. (Not "Define internal traffic" under Data streams → Configure tag settings: that rule matches by IP and sets `traffic_type = internal`. Our tag sets the same parameter by fingerprint, so the filter can use it with a different value.)
+2. Name it "Suspected bot". Set **Internal traffic parameter value** to `suspected_bot`. Operation: Exclude.
+3. Filter state: **Testing**. Test-state data is kept and labelled in the "Test data filter name" dimension. Compare it in Explore for a few days against the Direct bursts.
+4. When the match looks right, set the state to **Active**. Active filtering drops those events for good and cannot be undone for past data.
+
+The rule is a guess from observed bots. If a real visitor in Singapore on a 1280x1200 display shows up in the Testing data, loosen nothing: tighten `isSuspectedBot`. Remove the tag when the bursts stop.
+
 ### Thin raga pages: `noindex`, decided from the record
 
 `isThinRaga` (`@rasika/core/domain/raga/client`, pure) marks a raga page thin when it has no

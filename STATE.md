@@ -3,6 +3,18 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-11-11: SEO backlog branch `seo/backlog-2026-11`, not pushed or deployed
+
+Built: `/carnatic/ragas/melakarta`, `/carnatic/ragas/janya`, `/carnatic/compositions/varnams`, composer
+compositions title "<Name> Compositions and Lyrics", fixed the artist "View all compositions" link, static
+sitemap entries. GA4 bot tag (`traffic_type = suspected_bot`, `bot-fingerprint.ts`).
+
+Next, in order:
+1. Merge and deploy. Open the three list pages and Purandara Dasa's `/artists/<slug>/compositions` in a
+   browser. `janya` and `varnams` scan the whole table on a cold cache; check the response time.
+2. Owner: GA4 data filter, Testing state first (CLAUDE.md, "GA4 bot traffic"). Check Testing data after a few days.
+3. Not done: composer compositions pages are not in the sitemap; varnam type is only as complete as the data.
+
 ## 2026-10-27: raga sources and depth, deployed to prod 2026-11-11, not yet checked in a browser
 
 Plan: `docs/plans/261027-01-raga-depth.md`. Built: the `source` domain, `citations` on raga,
