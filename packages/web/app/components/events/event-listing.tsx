@@ -32,8 +32,10 @@ import { cn } from '~/lib/utils';
 const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'] as const;
 
 /** One sideways-scrolling line on a phone, wrapping from md up. Bleeds to the screen edge. */
+// `relative` matters: the `sr-only` count inside each button is absolutely positioned, and
+// without a positioned ancestor here it escapes the scroll box and widens the whole page.
 const SCROLL_ROW =
-  '-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0';
+  'relative -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 md:pb-0';
 
 /** Where the sidebar's PIN form sits, for the jump link above the list. */
 const HOME_FORM_ID = 'home-location';
@@ -429,6 +431,7 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
                   date={group.date}
                   events={group.events}
                   first={i === 0}
+                  showCity={scope.kind !== 'city'}
                 />
               ))}
             </div>
@@ -455,6 +458,7 @@ export function EventListing({ data, intro }: { data: EventListingData; intro?: 
                         date={group.date}
                         events={group.events}
                         first={i === 0}
+                        showCity={scope.kind !== 'city'}
                       />
                     ))}
                   </div>

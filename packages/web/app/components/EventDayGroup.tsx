@@ -6,9 +6,16 @@ interface EventDayGroupProps {
   events: Array<EventCardEvent & { isGeneric: boolean }>;
   /** This is the first group on the page, so its first poster gets load priority. */
   first?: boolean;
+  /** Off on a city page, where every row is in that city. */
+  showCity?: boolean;
 }
 
-export function EventDayGroup({ date, events, first = false }: EventDayGroupProps) {
+export function EventDayGroup({
+  date,
+  events,
+  first = false,
+  showCity = true,
+}: EventDayGroupProps) {
   return (
     <section>
       {/* Sticks below the site nav (h-14, md:h-16), which is itself sticky at top-0 and above
@@ -27,7 +34,7 @@ export function EventDayGroup({ date, events, first = false }: EventDayGroupProp
         </h2>
       </div>
       {/* The header says the day, so each row leads with the time alone. */}
-      <EventList events={events} priorityFirst={first} showDate={false} />
+      <EventList events={events} priorityFirst={first} showDate={false} showCity={showCity} />
     </section>
   );
 }

@@ -8,6 +8,7 @@ import { castLine } from '~/lib/artist-display';
 import { formatDistance } from '~/lib/distance';
 import { eventDateKey, eventZone, formatDayLabel } from '~/lib/event-time';
 import { generateEventUrl } from '~/lib/url-slug';
+import { venueLine } from '~/lib/venue-line';
 
 export interface EventCardEvent {
   id: string;
@@ -15,6 +16,8 @@ export interface EventCardEvent {
   startDateTime: string;
   timezone?: string | null;
   venueName?: string;
+  /** The venue's city, from the listing loader. */
+  city?: string;
   /** From the signed-in reader's saved location, computed by the listing loader. */
   distanceKm?: number;
   artists?: Array<{ title?: string; name: string; role?: string }>;
@@ -32,6 +35,8 @@ interface EventCardProps {
    * says it; anywhere else a row with a time and no date cannot be acted on.
    */
   showDate?: boolean;
+  /** Print the venue's city after the venue. Off on a city page, where it is redundant. */
+  showCity?: boolean;
 }
 
 const entryTypeLabel: Record<string, string> = {
@@ -76,6 +81,7 @@ export function EventCard({
   isGeneric = false,
   priority = false,
   showDate = true,
+  showCity = true,
 }: EventCardProps) {
   const artists = event.artists?.length ? event.artists : null;
   const heading = isGeneric ? (event.venueName ?? event.title) : event.title;
@@ -104,8 +110,8 @@ export function EventCard({
           {heading}
         </h3>
         {showVenue && (
-          <p className="text-sm leading-snug text-muted-foreground line-clamp-1">
-            {event.venueName}
+          <p className="text-sm leading-snug text-muted-foreground line-clamp-2">
+            {venueLine(event.venueName ?? '', showCity ? event.city : undefined)}
           </p>
         )}
         {artists && (
@@ -147,12 +153,14 @@ export function EventList({
   events,
   priorityFirst = false,
   showDate = true,
+  showCity = true,
   className = '',
 }: {
   events: Array<EventCardEvent & { isGeneric?: boolean }>;
   /** The list is the first thing on the page, so its first poster loads at once. */
   priorityFirst?: boolean;
   showDate?: boolean;
+  showCity?: boolean;
   className?: string;
 }) {
   return (
@@ -164,6 +172,7 @@ export function EventList({
             isGeneric={event.isGeneric}
             priority={priorityFirst && i === 0}
             showDate={showDate}
+            showCity={showCity}
           />
         </li>
       ))}
