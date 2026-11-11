@@ -7,7 +7,7 @@ import { invalidateSiteCache } from '@rasika/core/site-cache';
  * no page shows, and is called while a page renders, so clearing on it would empty the cache
  * from inside a cache miss. `rsvp` is not here: the event page shows the count.
  */
-const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink']);
+const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink', 'notify']);
 
 /**
  * Single procedures, inside a router that is otherwise public, that change no page. `follow`

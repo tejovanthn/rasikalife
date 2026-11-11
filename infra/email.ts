@@ -23,6 +23,17 @@ import { getDomain } from './domain';
  * Verifying the subdomain also puts DMARC at `_dmarc.mail.rasika.life`, clear of the root
  * domain that already serves the live site.
  */
+/*
+ * Second identity: `NotifyEmail` in `infra/notify.ts` sends the follow digest and day-before
+ * reminder from the root domain (`concerts@rasika.life`), with its own configuration set and
+ * bounce and complaint topics. This one stays transactional.
+ *
+ * The two identities have separate DKIM and reputation, but they do NOT have separate
+ * suppression lists: that list is per AWS account. A complaint on a digest suppresses that
+ * address here too, so the same person's Classes invite or approval email is silently dropped.
+ * The notify handler also sets `notifyEmail = false` on the user, which stops the digests, but
+ * nothing un-suppresses the address in SES. Watch the complaint rate.
+ */
 const { name: sender, dns } = getDomain('mail');
 
 export const email = new sst.aws.Email('Email', {
