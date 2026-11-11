@@ -23,6 +23,8 @@ export function ragaMetaDescription(raga: {
   topCompositions?: Array<{ title: string }>;
   /** Compositions listed on the page, used when no performance is logged. */
   compositions?: Array<{ title: string }>;
+  /** Total compositions the page lists (the list above is only a sample). */
+  compositionCount?: number;
 }): string {
   const isJanya = !!raga.parentRaga;
   const sentences = [`${raga.name} raga in Carnatic music.`];
@@ -59,7 +61,12 @@ export function ragaMetaDescription(raga: {
       .slice(0, 2)
       .map(c => c.title)
       .join(' and ');
-    sentences.push(`Compositions include ${compNames}.`);
+    const total = raga.compositionCount ?? 0;
+    sentences.push(
+      total > (raga.compositions ?? []).length || total > 2
+        ? `${total} compositions, including ${compNames}.`
+        : `Compositions include ${compNames}.`
+    );
   }
 
   // Google cuts near 155 characters. Drop whole trailing sentences rather
@@ -101,6 +108,9 @@ export function ragaMetaTitle(raga: {
   // Only a melakarta owns its mela number; a janya stores its parent's.
   const mela = !raga.parentRaga && raga.melaNumber ? ` (Melakarta ${raga.melaNumber})` : '';
 
+  // A janya names its parent in place of a mela number, when it fits.
+  const parent = raga.parentRaga ? ` (Janya of ${raga.parentRaga.name})` : '';
+
   const facts: string[] = [];
   if (raga.arohanam || raga.avarohanam) facts.push('Arohanam, Avarohanam');
   if (raga.hasCompositions) facts.push('Compositions');
@@ -110,6 +120,7 @@ export function ragaMetaTitle(raga: {
   const candidates: string[] = [];
   for (let n = facts.length; n >= 0; n--) {
     const tail = n > 0 ? `: ${facts.slice(0, n).join(', ')}` : '';
+    if (parent) candidates.push(`${head}${parent}${tail}${BRAND}`, `${head}${parent}${tail}`);
     if (mela) candidates.push(`${head}${mela}${tail}${BRAND}`, `${head}${mela}${tail}`);
     candidates.push(`${head}${tail}${BRAND}`, `${head}${tail}`);
   }

@@ -155,6 +155,7 @@ export async function loader({
       metaCompositions: compositions.items
         .slice(0, 2)
         .map(c => ({ title: titleCaseName(fromItrans(c.title, script)) })),
+      metaCompositionCount: compositions.total,
       // Decided from the record on every request; the sitemap applies the same rule.
       noindex: isThinRaga({
         id: raga.id,
@@ -187,8 +188,15 @@ export async function loader({
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const { raga, rawName, performanceCount, metaTopCompositions, metaCompositions, noindex } =
-    data ?? {};
+  const {
+    raga,
+    rawName,
+    performanceCount,
+    metaTopCompositions,
+    metaCompositions,
+    metaCompositionCount,
+    noindex,
+  } = data ?? {};
   if (!raga) return [{ title: 'Raga not found | Rasika.life' }];
 
   const canonicalName = rawName ?? raga.name;
@@ -211,6 +219,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     performanceCount,
     topCompositions: metaTopCompositions,
     compositions: metaCompositions,
+    compositionCount: metaCompositionCount,
   });
 
   const canonicalUrl = `https://rasika.life${generateRagaUrl(canonicalName, raga.id)}`;

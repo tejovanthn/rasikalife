@@ -154,3 +154,23 @@ describe('ragaMetaTitle', () => {
     }
   });
 });
+
+describe('raga meta with composition count and parent', () => {
+  it('states the total number of compositions', () => {
+    const d = ragaMetaDescription({
+      name: 'Kurinji',
+      compositions: [{ title: 'A' }, { title: 'B' }],
+      compositionCount: 12,
+    });
+    expect(d).toContain('12 compositions, including A and B.');
+  });
+
+  it('names the parent of a janya in the title when it fits', () => {
+    const t = ragaMetaTitle({
+      name: 'Kurinji',
+      parentRaga: { name: 'Harikambhoji' },
+      arohanam: 'S R2 M1 P D2 S',
+    });
+    expect(t).toBe('Kurinji Raga (Janya of Harikambhoji): Arohanam, Avarohanam');
+  });
+});

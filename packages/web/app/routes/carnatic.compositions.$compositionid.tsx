@@ -13,6 +13,7 @@ import {
   BreadcrumbStructuredData,
   MusicCompositionStructuredData,
 } from '~/components/structured-data';
+import { compositionMeta } from '~/lib/composition-meta';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { compositionOgImageUrl } from '~/lib/og';
@@ -174,32 +175,15 @@ export const meta: MetaFunction = ({ data }) => {
   if (!composition) return [{ title: 'Composition not found | Rasika.life' }];
 
   const canonicalTitle = rawTitle ?? composition.title;
-  const primaryRaga = composition.ragas[0]?.name;
-  const primaryTala = composition.talas[0]?.name;
-  const ragaTalaSuffix = [
-    primaryRaga && `${primaryRaga} Raga`,
-    primaryTala && `${primaryTala} Tala`,
-  ]
-    .filter(Boolean)
-    .join(', ');
-
-  // "<name> lyrics" is how this page is searched for — 106 such queries in 28
-  // days — and the word appeared nowhere in the title. It is only claimed when
-  // the lyrics are actually stored; the description used to promise them
-  // unconditionally, including on the records that have none.
-  const hasLyrics = (composition.lyricsV1?.length ?? 0) > 0;
-  const lyricsSuffix = hasLyrics ? ' Lyrics' : '';
-
-  const title = ragaTalaSuffix
-    ? `${composition.title}${lyricsSuffix} – ${composition.composer.name} | ${ragaTalaSuffix}`
-    : `${composition.title}${lyricsSuffix} – ${composition.composer.name} | Carnatic Composition`;
-
-  const descParts = [`"${composition.title}" by ${composition.composer.name}`];
-  if (primaryRaga) descParts.push(`in ${primaryRaga} raga`);
-  if (primaryTala) descParts.push(`${primaryTala} tala`);
-  const description = `${descParts.join(', ')}. ${composition.language} Carnatic composition${
-    hasLyrics ? ' with full lyrics' : ''
-  }.`;
+  const { title, description } = compositionMeta({
+    title: composition.title,
+    composer: composition.composer.name,
+    raga: composition.ragas[0]?.name,
+    tala: composition.talas[0]?.name,
+    language: composition.language,
+    hasLyrics: (composition.lyricsV1?.length ?? 0) > 0,
+    hasMeaning: !!composition.meaning,
+  });
 
   const canonicalUrl = `https://rasika.life${generateCompositionUrl(canonicalTitle, composition.id)}`;
 

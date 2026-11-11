@@ -6,6 +6,7 @@ import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { artistEventsMeta } from '~/lib/composition-meta';
 import { roleLabel } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
@@ -30,16 +31,19 @@ interface ArtistEvent {
 }
 
 export const meta: MetaFunction = ({ data }) => {
-  const loaderData = data as { artist: { id: string; name: string } } | undefined;
+  const loaderData = data as
+    | { artist: { id: string; name: string }; upcoming?: ArtistEvent[] }
+    | undefined;
   if (!loaderData) return [{ title: 'Events - Rasika.life' }];
   const { artist } = loaderData;
   const canonicalUrl = `https://rasika.life${generateArtistUrl(artist.name, artist.id)}/events`;
+  const { title, description } = artistEventsMeta({
+    name: artist.name,
+    upcomingDates: (loaderData.upcoming ?? []).map(e => e.eventStartDateTime),
+  });
   return [
-    { title: `Events featuring ${artist.name} - Rasika.life` },
-    {
-      name: 'description',
-      content: `Browse all past and upcoming events featuring ${artist.name} in Indian classical music.`,
-    },
+    { title },
+    { name: 'description', content: description },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
   ];
 };
