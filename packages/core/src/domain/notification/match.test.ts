@@ -44,7 +44,11 @@ describe('targetsOfEvent', () => {
       { artistId: 'a1', artistName: 'TMK' },
       { artistId: 'a1', artistName: 'TMK' },
     ]);
-    expect(targets.map(t => `${t.type}:${t.id}`)).toEqual(['venue:v1', 'organiser:o1', 'artist:a1']);
+    expect(targets.map(t => `${t.type}:${t.id}`)).toEqual([
+      'venue:v1',
+      'organiser:o1',
+      'artist:a1',
+    ]);
   });
 
   it('skips a missing venue or organiser', () => {
@@ -88,9 +92,11 @@ describe('buildUserEntries', () => {
 describe('selectForDigest', () => {
   it('sorts by date and keeps the best 15 with the total', () => {
     const entries = Array.from({ length: 20 }, (_, i) =>
-      entry(`e${String(i).padStart(2, '0')}`, `2026-11-${String(10 + i).padStart(2, '0')}T12:00:00Z`, [
-        follow(i === 19 ? 'artist' : 'venue', 'X'),
-      ])
+      entry(
+        `e${String(i).padStart(2, '0')}`,
+        `2026-11-${String(10 + i).padStart(2, '0')}T12:00:00Z`,
+        [follow(i === 19 ? 'artist' : 'venue', 'X')]
+      )
     );
     const { shown, total } = selectForDigest(entries);
     expect(total).toBe(20);
@@ -135,7 +141,12 @@ describe('reasonLine', () => {
   });
   it('counts the rest from three follows', () => {
     expect(
-      reasonLine([follow('artist', 'A'), follow('artist', 'B'), follow('organiser', 'C'), follow('venue', 'D')])
+      reasonLine([
+        follow('artist', 'A'),
+        follow('artist', 'B'),
+        follow('organiser', 'C'),
+        follow('venue', 'D'),
+      ])
     ).toBe('Because you follow A, B and 2 more');
   });
 });

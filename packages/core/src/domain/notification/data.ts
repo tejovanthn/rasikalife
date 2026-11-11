@@ -6,8 +6,8 @@
  * event, then batch gets for users and concert-book rows. Nothing runs once per follower.
  */
 import { ConcertLogEntity } from '../concert-log/entity';
-import { EventEntity } from '../event/entity';
 import { getEventArtists } from '../event-artist';
+import { EventEntity } from '../event/entity';
 import { listAllFollowersOfTarget } from '../follow';
 import { RsvpEntity } from '../rsvp/entity';
 import { UserEntity } from '../user/entity';

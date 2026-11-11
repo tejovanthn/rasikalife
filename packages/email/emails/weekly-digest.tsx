@@ -45,9 +45,7 @@ export default function WeeklyDigestEmail({
           </Link>
         </div>
       ))}
-      {more ? (
-        <Button href={more.url}>{more.label}</Button>
-      ) : null}
+      {more ? <Button href={more.url}>{more.label}</Button> : null}
     </EmailLayout>
   );
 }

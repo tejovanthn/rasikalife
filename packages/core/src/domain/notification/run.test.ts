@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { addressesToSuppress } from './bounce';
+import type { NotifyEvent } from './match';
 import { planDigests, planReminders, reminderChannel } from './run';
 import type { NotifyDeps, NotifyUser } from './run';
-import type { NotifyEvent } from './match';
 
 const user = (id: string, extra: Partial<NotifyUser> = {}): NotifyUser =>
   ({ id, email: `${id}@x.com`, name: id, ...extra }) as NotifyUser;
@@ -94,7 +94,12 @@ describe('planReminders', () => {
     const { d } = deps({
       users: [user('u1')],
       events,
-      loadRsvpUsers: async () => new Map([['e0', ['u1']], ['e1', ['u1']], ['e2', ['u1']]]),
+      loadRsvpUsers: async () =>
+        new Map([
+          ['e0', ['u1']],
+          ['e1', ['u1']],
+          ['e2', ['u1']],
+        ]),
     });
     const plans = await planReminders(NOW, d);
     expect(plans[0]?.entries).toHaveLength(6);

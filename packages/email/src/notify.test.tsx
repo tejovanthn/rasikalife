@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { dayBeforeReminderEmail, deliverDigests, deliverReminders, weeklyDigestEmail } from './notify';
+import {
+  dayBeforeReminderEmail,
+  deliverDigests,
+  deliverReminders,
+  weeklyDigestEmail,
+} from './notify';
 
 const link = { siteUrl: 'https://rasika.life', turnOffToken: 'T1', unsubscribeAllToken: 'T2' };
 const event = (id: string, title: string, venueName = 'Narada Gana Sabha') => ({
@@ -35,7 +40,7 @@ describe('weeklyDigestEmail', () => {
     expect(mail.html).toContain('Coming up in the next two weeks');
     expect(mail.html).toContain('Mon 16 Nov, 6:00 pm');
     expect(mail.html).toContain('Narada Gana Sabha');
-    expect(mail.html).toContain("You said you&#x27;re going");
+    expect(mail.html).toContain('You said you&#x27;re going');
     expect(mail.html).toContain('View concert');
     expect(mail.html).toContain('utm_campaign=weekly_digest');
     expect(mail.html).toContain('Manage what you follow');
@@ -62,7 +67,10 @@ describe('weeklyDigestEmail', () => {
 
 describe('dayBeforeReminderEmail', () => {
   it('has the one-event subject and preheader', async () => {
-    const mail = await dayBeforeReminderEmail({ ...link, entries: [entry('e1', 'Vocal') as never] });
+    const mail = await dayBeforeReminderEmail({
+      ...link,
+      entries: [entry('e1', 'Vocal') as never],
+    });
     expect(mail.subject).toBe('Tomorrow: Vocal at Narada Gana Sabha');
     expect(mail.html).toContain('Starts 6:00 pm at Narada Gana Sabha');
     expect(mail.html).toContain('Vocal, 6:00 pm at Narada Gana Sabha.');
@@ -107,7 +115,10 @@ describe('deliver', () => {
 
   it('does not email a push plan', async () => {
     const d = deps();
-    await deliverReminders([{ user: user as never, entries: [entry('e1', 'A') as never], channel: 'push' }], d);
+    await deliverReminders(
+      [{ user: user as never, entries: [entry('e1', 'A') as never], channel: 'push' }],
+      d
+    );
     expect(d.send).not.toHaveBeenCalled();
   });
 });

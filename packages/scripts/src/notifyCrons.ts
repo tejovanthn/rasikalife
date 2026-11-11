@@ -18,7 +18,10 @@ function deps(): DeliverDeps {
     siteUrl: process.env.SITE_URL || 'https://rasika.life',
     secret,
     send: input => Email.sendBulk(input),
-    tokenFor: user => (user.unsubscribeToken ? Promise.resolve(user.unsubscribeToken) : User.getOrCreateUnsubscribeToken(user.id)),
+    tokenFor: user =>
+      user.unsubscribeToken
+        ? Promise.resolve(user.unsubscribeToken)
+        : User.getOrCreateUnsubscribeToken(user.id),
     markDigestSent: userId => User.setDigestLastSentAt(userId),
   };
 }
@@ -26,7 +29,9 @@ function deps(): DeliverDeps {
 /** Sunday 18:00 IST. Not sent when a user has no events: the plan list is empty then. */
 export async function digestHandler(): Promise<void> {
   const run = await Notification.planDigests(new Date());
-  console.log(`Digest: ${run.plans.length} users have events for ${run.startDate} to ${run.endDate}`);
+  console.log(
+    `Digest: ${run.plans.length} users have events for ${run.startDate} to ${run.endDate}`
+  );
   if (run.plans.length === 0) return;
   const result = await deliverDigests(run, deps());
   console.log(`Digest: sent ${result.sent}, failed ${result.failed}`);
@@ -54,7 +59,9 @@ export async function emailEventsHandler(event: { Records?: SnsRecord[] }): Prom
   for (const record of event.Records ?? []) {
     for (const address of Notification.addressesToSuppress(record.Sns?.Message ?? '')) {
       const found = await Notification.suppressEmail(address);
-      console.log(`Email event: notifyEmail off for ${address}: ${found ? 'user found' : 'no user'}`);
+      console.log(
+        `Email event: notifyEmail off for ${address}: ${found ? 'user found' : 'no user'}`
+      );
     }
   }
 }

@@ -2,6 +2,7 @@ import * as SheetPrimitive from '@radix-ui/react-dialog';
 import {
   Activity,
   BadgeCheck,
+  Bell,
   Calendar,
   CalendarPlus,
   ChevronDown,
@@ -190,6 +191,12 @@ export const Header = () => {
                     <Link to="/me/following" className="flex items-center gap-2">
                       <Heart className="h-4 w-4" />
                       Following
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/me/notifications" className="flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      Notifications
                     </Link>
                   </DropdownMenuItem>
                   {(user.role === 'moderator' || user.role === 'admin') && (
@@ -428,6 +435,14 @@ export const Header = () => {
                         >
                           <Heart className="h-4 w-4" />
                           Following
+                        </Link>
+                        <Link
+                          to="/me/notifications"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <Bell className="h-4 w-4" />
+                          Notifications
                         </Link>
                         {(user.role === 'moderator' || user.role === 'admin') && (
                           <>

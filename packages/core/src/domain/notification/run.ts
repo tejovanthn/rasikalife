@@ -143,10 +143,7 @@ export interface DigestRun {
 }
 
 /** Weekly digest: events in the next 14 days. A user with nothing gets no plan. */
-export async function planDigests(
-  now: Date,
-  deps: NotifyDeps = defaultDeps
-): Promise<DigestRun> {
+export async function planDigests(now: Date, deps: NotifyDeps = defaultDeps): Promise<DigestRun> {
   const window = digestWindow(now);
   const today = todayInTimeZone(DEFAULT_TIMEZONE, now);
   const run: DigestRun = {

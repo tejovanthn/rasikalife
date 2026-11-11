@@ -33,7 +33,9 @@ describe('unsubscribe link', () => {
     expect(verifyUnsubscribeSignature(link, 'other')).toBeNull();
     const [body, sig] = link.split('.');
     const edited = Buffer.from(
-      Buffer.from(body as string, 'base64url').toString().replace('digest', 'all')
+      Buffer.from(body as string, 'base64url')
+        .toString()
+        .replace('digest', 'all')
     ).toString('base64url');
     expect(verifyUnsubscribeSignature(`${edited}.${sig}`, SECRET)).toBeNull();
     expect(verifyUnsubscribeSignature('junk', SECRET)).toBeNull();
