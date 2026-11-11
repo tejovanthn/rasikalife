@@ -46,7 +46,17 @@ export const CARD_TITLE_MAX = 90;
 export const CARD_ARTIST_MAX = 4;
 export const CARD_NAME_MAX = 44;
 
-const clean = (s?: string | null) => (s ?? '').replace(/\s+/g, ' ').trim();
+/**
+ * The `roman` display script: letters with their combining marks removed (`Śrīvidyā` becomes
+ * `Srividya`). It is what DEFAULT_DISPLAY_SCRIPT gives every shared and indexed surface, and how
+ * people spell and search these names. Event text is stored as typed, not as ITRANS, so this is
+ * the strip step of `toRoman` in `utils/transliteration.ts` without the ITRANS conversion.
+ */
+export function romanize(text: string): string {
+  return text.normalize('NFKD').replace(/\p{M}/gu, '').normalize('NFC');
+}
+
+const clean = (s?: string | null) => romanize((s ?? '').replace(/\s+/g, ' ').trim());
 
 /** Cut at a limit with an ellipsis, so the cut shows. */
 export function truncate(text: string, max: number): string {

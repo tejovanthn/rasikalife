@@ -51,14 +51,15 @@ describe('buildEventSvg', () => {
     expect(svg.match(/<text /g)).toHaveLength(3); // wordmark, date line, title
   });
 
-  it('escapes markup and keeps diacritics', () => {
+  it('escapes markup and draws no diacritics', () => {
     const svg = buildEventSvg(
       buildEventCardContent({
         title: 'A & B <Śrī>',
         startDateTime: '2026-12-12T12:30:00.000Z',
       })
     );
-    expect(svg).toContain('A &amp; B &lt;Śrī&gt;');
+    expect(svg).toContain('A &amp; B &lt;Sri&gt;');
+    expect(svg).not.toMatch(/[\p{M}\u0100-\u024F\u1E00-\u1EFF]/u);
   });
 
   it('counts the artists cut', () => {

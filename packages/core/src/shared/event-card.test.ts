@@ -62,9 +62,27 @@ describe('buildEventCardContent', () => {
     ]);
   });
 
-  it('keeps diacritics', () => {
-    const c = buildEventCardContent({ ...base, artists: [{ name: 'Śrīvidyā Rāmaṇ' }] });
-    expect(c.artists[0].name).toBe('Śrīvidyā Rāmaṇ');
+  it('shows names in the roman script: no diacritics or combining marks anywhere', () => {
+    const c = buildEventCardContent({
+      title: 'Śrī Tyāgarāja Ārādhanā',
+      startDateTime: base.startDateTime,
+      artists: [{ title: 'Vid.', name: 'Śrīvidyā Rāmaṇ', role: 'vīṇā' }],
+      venueName: 'Kṛṣṇa Gāna Sabhā',
+      city: 'Cennai\u0301',
+    });
+    expect(c.title).toBe('Sri Tyagaraja Aradhana');
+    expect(c.artists).toEqual([{ name: 'Vid. Srividya Raman', role: 'vina' }]);
+    expect(c.place).toBe('Krsna Gana Sabha, Cennai');
+    expect(JSON.stringify(c)).not.toMatch(/[\p{M}\u0100-\u024F\u1E00-\u1EFF]/u);
+  });
+
+  it('romanizes a generic title that falls back to the lead artist', () => {
+    const c = buildEventCardContent({
+      ...base,
+      title: 'Carnatic Music Concert',
+      artists: [{ name: 'Śrīvidyā Rāmaṇ' }],
+    });
+    expect(c.title).toBe('Srividya Raman');
   });
 
   it('caps the cast and counts the rest', () => {

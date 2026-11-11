@@ -5,8 +5,8 @@ import { createHash } from 'node:crypto';
 
 // Bump when the card's appearance changes (palette, geometry, the fitting rules). Cached
 // objects are written `immutable` for a year, so without this every card rendered before a
-// redesign keeps serving the old layout until someone empties the S3 prefix by hand.
-export const CARD_VERSION = 'v2';
+// redesign (v3: event cards print names in the roman script) keeps serving the old layout until someone empties the S3 prefix by hand.
+export const CARD_VERSION = 'v3';
 
 export const CARD_WIDTH = 1200;
 export const CARD_HEIGHT = 630;
