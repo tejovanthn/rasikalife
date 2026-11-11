@@ -134,6 +134,7 @@ export const links: LinksFunction = () => [
 
 function Layout({ children, theme }: { children: React.ReactNode; theme: string }) {
   const location = useLocation();
+  const bare = location.pathname.startsWith('/q/');
 
   useEffect(() => {
     logAnalyticsEvent('page_view', {
@@ -160,11 +161,12 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
           Skip to main content
         </a>
         <GlobalLoader />
-        <Header />
-        <div className="-mt-4 md:mt-0" id="main-content">
+        {/* The scan pages (/q/...) are one phone screen with no site chrome. */}
+        {!bare && <Header />}
+        <div className={bare ? undefined : '-mt-4 md:mt-0'} id="main-content">
           {children}
         </div>
-        <Footer />
+        {!bare && <Footer />}
         <ScrollRestoration />
         <Scripts />
       </body>

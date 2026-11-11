@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { authClient, commitSession, getSession } from '~/lib/auth.server';
+import { cancelledQrLocation, finishQrIntent } from '~/lib/qr-callback.server';
 import { safeRedirectPath } from '~/lib/safe-redirect';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -16,7 +17,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const session = await getSession(request);
     session.unset('pkce_challenge');
     session.unset('pkce_timestamp');
-    return redirect(`/?error=${error}`, {
+    // A scanner who chose things before sign-in goes back to them (qr_intent kept).
+    const qrBack = await cancelledQrLocation(request);
+    return redirect(qrBack ?? `/?error=${error}`, {
       headers: {
         'Set-Cookie': await commitSession(session),
       },
@@ -71,11 +74,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // came from a query parameter.
     const back = safeRedirectPath(session.get('post_login_redirect')) ?? '/';
     session.unset('post_login_redirect');
-    return redirect(back, {
-      headers: {
-        'Set-Cookie': await commitSession(session),
-      },
-    });
+
+    // A scanner's choices from before sign-in (qr_intent): apply them and land on the end.
+    const qr = await finishQrIntent(request, exchanged.tokens.access);
+    const headers = new Headers();
+    headers.append('Set-Cookie', await commitSession(session));
+    if (qr?.setCookie) headers.append('Set-Cookie', qr.setCookie);
+    return redirect(qr?.location ?? back, { headers });
   } catch (error) {
     console.error('[auth.callback] Unexpected error:', error);
     return redirect('/?error=unexpected');

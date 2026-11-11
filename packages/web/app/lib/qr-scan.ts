@@ -23,7 +23,11 @@ export const QR_COPY = {
     listHeading: 'Coming up here',
   },
   rateLimited: { title: 'Too many scans', body: 'Please wait a minute and try again.' },
-  error: { title: 'Something went wrong', body: 'Please try again in a moment.', action: 'Try again' },
+  error: {
+    title: 'Something went wrong',
+    body: 'Please try again in a moment.',
+    action: 'Try again',
+  },
   inApp: {
     title: 'Open in your browser to continue',
     body: "Google sign-in doesn't work inside this app. Copy the link and open it in Chrome or Safari.",
@@ -69,7 +73,8 @@ export const QR_COPY = {
   add: {
     link: 'Add a concert happening here',
     optionA: 'Upload a poster',
-    optionAHelper: "We'll read the details from the poster. You can fix anything before submitting.",
+    optionAHelper:
+      "We'll read the details from the poster. You can fix anything before submitting.",
     optionB: 'Fill in the details',
     labels: {
       title: 'Title',
@@ -289,4 +294,9 @@ export function parseDoneKeys(t: string | null): string[] {
     .split(',')
     .filter(k => parseRowKey(k) !== null)
     .slice(0, 20);
+}
+
+/** Moderators and admins set up unassigned codes. */
+export function isModeratorRole(role: string | null | undefined): boolean {
+  return role === 'moderator' || role === 'admin';
 }

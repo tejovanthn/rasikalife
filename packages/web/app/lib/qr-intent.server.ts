@@ -1,5 +1,9 @@
-import { QR_INTENT_COOKIE, QR_INTENT_TTL_SEC, QrCodeSchema } from '@rasika/core/domain/venue-qr/client';
 import { BulkSetFollowSchema } from '@rasika/core/domain/follow/client';
+import {
+  QR_INTENT_COOKIE,
+  QR_INTENT_TTL_SEC,
+  QrCodeSchema,
+} from '@rasika/core/domain/venue-qr/client';
 import { createCookie } from 'react-router';
 import { Resource } from 'sst';
 import { z } from 'zod';
@@ -27,7 +31,10 @@ const IntentSchema = z.object({
 
 export type QrIntent = Omit<z.infer<typeof IntentSchema>, 'exp'>;
 
-export function createQrIntentCookie(secret: string, secure = process.env.NODE_ENV === 'production') {
+export function createQrIntentCookie(
+  secret: string,
+  secure = process.env.NODE_ENV === 'production'
+) {
   return createCookie(QR_INTENT_COOKIE, {
     secrets: [secret],
     httpOnly: true,

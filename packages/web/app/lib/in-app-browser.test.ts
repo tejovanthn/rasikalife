@@ -22,9 +22,9 @@ describe('isInAppBrowser', () => {
         'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36'
       )
     ).toBe(false);
-    expect(isInAppBrowser('Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Version/17 Safari/604.1')).toBe(
-      false
-    );
+    expect(
+      isInAppBrowser('Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Version/17 Safari/604.1')
+    ).toBe(false);
     expect(isInAppBrowser(null)).toBe(false);
   });
 });

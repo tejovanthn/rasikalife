@@ -4,7 +4,12 @@ import { vi } from 'vitest';
 vi.mock('sst', () => ({ Resource: {} }));
 
 import { QR_INTENT_TTL_SEC } from '@rasika/core/domain/venue-qr/client';
-import { clearQrIntent, createQrIntentCookie, readQrIntent, serializeQrIntent } from './qr-intent.server';
+import {
+  clearQrIntent,
+  createQrIntentCookie,
+  readQrIntent,
+  serializeQrIntent,
+} from './qr-intent.server';
 import type { QrIntent } from './qr-intent.server';
 
 const cookie = createQrIntentCookie('test-key', false);

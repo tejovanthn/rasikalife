@@ -3,9 +3,15 @@ import { AddConcertSchema, concertStart, mayAutoApprove, parseArtistNames } from
 
 describe('add concert rules', () => {
   it('parses artist names from lines and commas', () => {
-    expect(parseArtistNames('A  B, C\n\n D ,')).toEqual([{ name: 'A B' }, { name: 'C' }, { name: 'D' }]);
+    expect(parseArtistNames('A  B, C\n\n D ,')).toEqual([
+      { name: 'A B' },
+      { name: 'C' },
+      { name: 'D' },
+    ]);
     expect(parseArtistNames(undefined)).toEqual([]);
-    expect(parseArtistNames(Array.from({ length: 20 }, (_, i) => `n${i}`).join(','))).toHaveLength(12);
+    expect(parseArtistNames(Array.from({ length: 20 }, (_, i) => `n${i}`).join(','))).toHaveLength(
+      12
+    );
   });
 
   it('keeps the hall wall clock and adds the offset', () => {

@@ -19,7 +19,9 @@ import { QrScanDayEntity, VenueQrEntity } from './entity';
 import { resolveScan } from './scan';
 
 const get = (row: unknown) =>
-  vi.mocked(VenueQrEntity.get).mockReturnValue({ go: vi.fn().mockResolvedValue({ data: row }) } as never);
+  vi
+    .mocked(VenueQrEntity.get)
+    .mockReturnValue({ go: vi.fn().mockResolvedValue({ data: row }) } as never);
 
 function countScans() {
   const patch = { add: vi.fn(), set: vi.fn(), go: vi.fn().mockResolvedValue({}) };

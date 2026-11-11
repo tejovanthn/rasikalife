@@ -3,9 +3,14 @@ import { getCookieDomain, getDomain } from './domain';
 import { blockBadBots } from './edge-security';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
 import { ogImageFunction } from './og-image';
+import { scanWebAclArn } from './scan-rate-limit';
 import { siteDistributionParam } from './site-cache';
 import { bucket } from './storage';
 import { trpc } from './trpc';
+
+// Signs the `qr_intent` cookie (packages/web/app/lib/qr-intent.server.ts). Set with
+// `sst secret set QrIntentSecret <random 32+ bytes>` on every stage.
+export const qrIntentSecret = new sst.Secret('QrIntentSecret');
 
 // SST's own server cache policy leaves every cookie out of the key, so one cached copy would be
 // served to signed-in readers and to every script and theme choice alike. These three are the
@@ -20,7 +25,10 @@ const serverCachePolicy = new aws.cloudfront.CachePolicy('RasikaWebServerCachePo
   parametersInCacheKeyAndForwardedToOrigin: {
     cookiesConfig: {
       cookieBehavior: 'whitelist',
-      cookies: { items: ['rasika_session', 'theme', 'script_preference'] },
+      // `qr_intent` is a scanner's choices held across Google sign-in (15 minutes). It has to
+      // be forwarded or /auth/callback never sees it. /q/* is `no-store`, so it changes no
+      // cached page; it only splits the cache key for a reader who is mid sign-in.
+      cookies: { items: ['rasika_session', 'theme', 'script_preference', 'qr_intent'] },
     },
     headersConfig: {
       headerBehavior: 'whitelist',
@@ -60,7 +68,7 @@ if ($app.stage === 'prod') {
 }
 
 const site = new sst.aws.React('RasikaWeb', {
-  link: [bucket, trpc, auth, eventPostersBucket],
+  link: [bucket, trpc, auth, eventPostersBucket, qrIntentSecret],
   path: 'packages/web/',
   domain: getDomain(''),
   cachePolicy: serverCachePolicy.id,
@@ -81,12 +89,16 @@ const site = new sst.aws.React('RasikaWeb', {
   },
   transform: {
     cdn: args => {
-      if (!cdnLogsDomain) return;
       const bucket = cdnLogsDomain;
+      if (!bucket && !scanWebAclArn) return;
       args.transform = {
         ...args.transform,
         distribution: distribution => {
-          distribution.loggingConfig = { bucket, prefix: 'rasika-web/', includeCookies: false };
+          if (bucket) {
+            distribution.loggingConfig = { bucket, prefix: 'rasika-web/', includeCookies: false };
+          }
+          // Rate limit on /q/* (infra/scan-rate-limit.ts), prod only.
+          if (scanWebAclArn) distribution.webAclId = scanWebAclArn;
         },
       };
     },

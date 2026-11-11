@@ -109,17 +109,13 @@ describe('classifyScanEvents and outcomeFor', () => {
 
   it('keeps a concert that crossed midnight live after midnight', () => {
     const late = ev('2026-11-16T22:30:00+05:30', { endDateTime: '2026-11-17T00:45:00+05:30' });
-    const out = outcomeFor(
-      classifyScanEvents([late], { now: at('2026-11-17T00:10:00+05:30') })
-    );
+    const out = outcomeFor(classifyScanEvents([late], { now: at('2026-11-17T00:10:00+05:30') }));
     expect(out).toMatchObject({ state: 'live', event: { id: late.id } });
   });
 
   it('a concert that crosses midnight on the default 3 hours also resolves', () => {
     const late = ev('2026-11-16T22:30:00+05:30');
-    const out = outcomeFor(
-      classifyScanEvents([late], { now: at('2026-11-17T01:00:00+05:30') })
-    );
+    const out = outcomeFor(classifyScanEvents([late], { now: at('2026-11-17T01:00:00+05:30') }));
     expect(out.state).toBe('live');
   });
 
