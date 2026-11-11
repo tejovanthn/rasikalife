@@ -1893,11 +1893,11 @@ admin yet.
   `FOLLOW_SHARE_NOT_ALLOWED` to BAD_REQUEST, keeping the `ApplicationError` as `cause`.
   `mine` and `setShare` return only `targetType`, `targetId`, `targetName`, `shareWithTarget`,
   `createdAt`.
-- **Cache.** `follow` is not in `PRIVATE_ROUTERS`: a follow moves `followerCount`, which the
-  venue, organiser and artist pages show, so `toggle` and `bulkSet` clear the site cache.
-  `follow.setShare` only changes the follower's own flag, so it is in `PRIVATE_PATHS`
-  (`middleware/site-cache.ts`). Cost to watch: a burst of QR follows is one full invalidation
-  each. If that bites, show the count from a client fetch instead of the cached page.
+- **Cache.** `follow.toggle`, `follow.bulkSet` and `follow.setShare` are in `PRIVATE_PATHS`
+  (`middleware/site-cache.ts`) and do not clear the site cache. A concert with hundreds of QR
+  follows would otherwise purge the whole CDN hundreds of times. The trade: the public
+  `followerCount` on a cached venue, organiser or artist page can lag until the next clear (at
+  most a week). If that matters, show the count from a client fetch instead of the cached page.
 - **Button** `components/FollowButton.tsx`, placed through the new `actions` prop of
   `DetailPageHeader`. Signed in: a form posting to `/api/follow` (`routes/api.follow.tsx`). A
   browser form post (Accept has `text/html`) gets a redirect back; a fetcher gets data. The state
