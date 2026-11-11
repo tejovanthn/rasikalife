@@ -7,6 +7,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
+import { FollowButton } from '~/components/FollowButton';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, OrganiserStructuredData } from '~/components/structured-data';
@@ -14,6 +15,7 @@ import { Badge } from '~/components/ui/badge';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
 import {
   generateArtistUrl,
@@ -112,9 +114,20 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
+    await completePendingFollow({
+      request,
+      client: serverClient,
+      user,
+      type: 'organiser',
+      id: organiser.id,
+    });
+    const following = await isFollowing(serverClient, user, 'organiser', organiser.id);
+
     return data({
       organiser,
       events: eventsResult.items,
+      following,
+      followerCount: (organiser as { followerCount?: number }).followerCount ?? 0,
       affiliatedArtists,
       user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
@@ -169,13 +182,16 @@ function formatAddress(address: OrganiserDetail['address']): string | null {
 }
 
 export default function OrganiserDetailPage() {
-  const { organiser, events, affiliatedArtists, user, isModerator } = useLoaderData<{
-    organiser: OrganiserDetail;
-    events: EventItem[];
-    affiliatedArtists: AffiliatedArtist[];
-    user: { id: string } | null;
-    isModerator: boolean;
-  }>();
+  const { organiser, events, affiliatedArtists, user, isModerator, following, followerCount } =
+    useLoaderData<{
+      organiser: OrganiserDetail;
+      following: boolean;
+      followerCount: number;
+      events: EventItem[];
+      affiliatedArtists: AffiliatedArtist[];
+      user: { id: string } | null;
+      isModerator: boolean;
+    }>();
 
   const shareUrl = `https://rasika.life${generateOrganiserUrl(organiser.name, organiser.id)}`;
   const typeLabel = organiser.organisationType
@@ -216,6 +232,16 @@ export default function OrganiserDetailPage() {
           <DetailPageHeader
             title={organiser.name}
             subtitle="Event Organiser"
+            actions={
+              <FollowButton
+                targetType="organiser"
+                targetId={organiser.id}
+                pagePath={generateOrganiserUrl(organiser.name, organiser.id)}
+                isSignedIn={!!user}
+                isFollowing={following}
+                followerCount={followerCount}
+              />
+            }
             shareUrl={shareUrl}
             shareTitle={`${organiser.name} - Rasika.life`}
             shareDescription={`Events organised by ${organiser.name}`}

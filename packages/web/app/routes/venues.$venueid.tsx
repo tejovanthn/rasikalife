@@ -6,12 +6,14 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
+import { FollowButton } from '~/components/FollowButton';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/structured-data';
 import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
 import { directionsUrl, exactVenueCoordinates } from '~/lib/structured-data';
 import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
@@ -97,9 +99,20 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       }
     }
 
+    await completePendingFollow({
+      request,
+      client: serverClient,
+      user,
+      type: 'venue',
+      id: venue.id,
+    });
+    const following = await isFollowing(serverClient, user, 'venue', venue.id);
+
     return data({
       venue,
       events: eventsResult.items,
+      following,
+      followerCount: (venue as { followerCount?: number }).followerCount ?? 0,
       user,
       isModerator: user?.role === 'moderator' || user?.role === 'admin',
     });
@@ -153,9 +166,11 @@ function formatAddress(address: VenueDetail['address']): string | null {
 }
 
 export default function VenueDetailPage() {
-  const { venue, events, user, isModerator } = useLoaderData<{
+  const { venue, events, user, isModerator, following, followerCount } = useLoaderData<{
     venue: VenueDetail;
     events: EventItem[];
+    following: boolean;
+    followerCount: number;
     user: { id: string } | null;
     isModerator: boolean;
   }>();
@@ -198,6 +213,16 @@ export default function VenueDetailPage() {
       <DetailPageHeader
         title={venue.name}
         subtitle="Venue"
+        actions={
+          <FollowButton
+            targetType="venue"
+            targetId={venue.id}
+            pagePath={generateVenueUrl(venue.name, venue.id)}
+            isSignedIn={!!user}
+            isFollowing={following}
+            followerCount={followerCount}
+          />
+        }
         shareUrl={shareUrl}
         shareTitle={`${venue.name} - Rasika.life`}
         shareDescription={`Events and performances at ${venue.name}`}

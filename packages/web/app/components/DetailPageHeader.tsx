@@ -28,6 +28,8 @@ interface DetailPageHeaderProps {
   requestDeletionUrl?: string;
   mergeUrl?: string;
   isModerator?: boolean;
+  /** Rendered under the subtitle, e.g. the Follow button. */
+  actions?: ReactNode;
 }
 
 export function DetailPageHeader({
@@ -42,6 +44,7 @@ export function DetailPageHeader({
   requestDeletionUrl,
   mergeUrl,
   isModerator,
+  actions,
 }: DetailPageHeaderProps) {
   const handleShare = async () => {
     if (navigator.share) {
@@ -138,6 +141,7 @@ export function DetailPageHeader({
         </div>
       </div>
       <p className="text-lg text-muted-foreground">{subtitle}</p>
+      {actions ? <div className="mt-3">{actions}</div> : null}
 
       {/* Mobile speed-dial FABs — visible only on mobile */}
       <div className="md:hidden fixed bottom-6 right-6 flex flex-col items-center gap-3 z-40">

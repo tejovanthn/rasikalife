@@ -12,6 +12,7 @@ import { editRouter } from './edit';
 import { eventRouter } from './event';
 import { eventSetlistRouter } from './event-setlist';
 import { festivalRouter } from './festival';
+import { followRouter } from './follow';
 import { organiserRouter } from './organiser';
 import { ragaRouter } from './raga';
 import { rsvpRouter } from './rsvp';
@@ -37,6 +38,7 @@ export const appRouter = createTRPCRouter({
   eventSetlist: eventSetlistRouter,
   event: eventRouter,
   festival: festivalRouter,
+  follow: followRouter,
   organiser: organiserRouter,
   raga: ragaRouter,
   rsvp: rsvpRouter,
