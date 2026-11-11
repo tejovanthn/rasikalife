@@ -22,6 +22,7 @@ import { searchRouter } from './search';
 import { setlistModerationRouter } from './setlist-moderation';
 import { shortLinkRouter } from './short-link';
 import { sourceRouter } from './source';
+import { spaceRouter } from './space';
 import { talaRouter } from './tala';
 import { userRouter } from './user';
 import { venueRouter } from './venue';
@@ -48,6 +49,7 @@ export const appRouter = createTRPCRouter({
   rsvp: rsvpRouter,
   shortLink: shortLinkRouter,
   source: sourceRouter,
+  space: spaceRouter,
   search: searchRouter,
   setlistModeration: setlistModerationRouter,
   tala: talaRouter,

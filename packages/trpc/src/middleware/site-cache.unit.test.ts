@@ -22,6 +22,10 @@ describe('changesPublicPage', () => {
     expect(changesPublicPage('mutation', 'concertLog.upsert', true)).toBe(false);
     expect(changesPublicPage('mutation', 'user.updatePreferences', true)).toBe(false);
     expect(changesPublicPage('mutation', 'shortLink.ensure', true)).toBe(false);
+    // The QR panel is moderator-only, and the scan page is no-store.
+    expect(changesPublicPage('mutation', 'qr.assign', true)).toBe(false);
+    expect(changesPublicPage('mutation', 'qr.retire', true)).toBe(false);
+    expect(changesPublicPage('mutation', 'space.create', true)).toBe(false);
   });
 
   it('clears for a follow, which moves the count public pages show, but not for sharing', () => {

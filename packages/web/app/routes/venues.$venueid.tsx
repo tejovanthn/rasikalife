@@ -7,6 +7,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
 import { FollowButton } from '~/components/FollowButton';
+import { VenueQrPanel } from '~/components/VenueQrPanel';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/structured-data';
@@ -15,8 +16,11 @@ import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
+import { adminOrigin } from '~/lib/qr-scan';
 import { directionsUrl, exactVenueCoordinates } from '~/lib/structured-data';
 import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
+import type { PanelStat } from '~/lib/venue-qr-panel';
+import { loadVenueQrPanel } from '~/lib/venue-qr.server';
 
 interface VenueDetail {
   lat?: number;
@@ -107,6 +111,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       id: venue.id,
     });
     const following = await isFollowing(serverClient, user, 'venue', venue.id);
+    const isModerator = user?.role === 'moderator' || user?.role === 'admin';
+    // Moderators only: a signed-out page is cached for everyone and must carry no panel data.
+    const qrRows = await loadVenueQrPanel(serverClient, isModerator, venue.id);
 
     return data({
       venue,
@@ -114,7 +121,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
       following,
       followerCount: (venue as { followerCount?: number }).followerCount ?? 0,
       user,
-      isModerator: user?.role === 'moderator' || user?.role === 'admin',
+      isModerator,
+      qrRows,
+      adminBase: adminOrigin(request.url),
     });
   } catch (error) {
     if (error instanceof Response) throw error;
@@ -166,14 +175,17 @@ function formatAddress(address: VenueDetail['address']): string | null {
 }
 
 export default function VenueDetailPage() {
-  const { venue, events, user, isModerator, following, followerCount } = useLoaderData<{
-    venue: VenueDetail;
-    events: EventItem[];
-    following: boolean;
-    followerCount: number;
-    user: { id: string } | null;
-    isModerator: boolean;
-  }>();
+  const { venue, events, user, isModerator, following, followerCount, qrRows, adminBase } =
+    useLoaderData<{
+      venue: VenueDetail;
+      events: EventItem[];
+      following: boolean;
+      followerCount: number;
+      user: { id: string } | null;
+      isModerator: boolean;
+      qrRows: PanelStat[];
+      adminBase: string;
+    }>();
 
   // The list arrives unsorted and mixes past with future, so an "events at this
   // hall" visitor was landing on concerts from years ago. Upcoming first, soonest
@@ -384,6 +396,8 @@ export default function VenueDetailPage() {
           </div>
         </section>
       )}
+
+      {isModerator && <VenueQrPanel rows={qrRows} adminBase={adminBase} />}
 
       <section className="mt-6">
         <h2 className="text-2xl font-bold mb-6">Events at this venue</h2>

@@ -5,6 +5,7 @@ import { getDomain } from './domain';
 import { email } from './email';
 import { eventPostersBucket, eventPostersCdn, geminiApiKey } from './event-posters';
 import { instagramImageFetcherFunction, instagramScraperFunction } from './instagram';
+import { privateFilesBucket, qrRenderQueue } from './qr';
 import { searchBucket, searchReindexFunction } from './search';
 import { siteCacheEnvironment, siteCachePermissions } from './site-cache';
 
@@ -20,6 +21,8 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     instagramImageFetcherFunction,
     classUploadsBucket,
     email,
+    privateFilesBucket,
+    qrRenderQueue,
   ],
   handler: './packages/trpc/src/index.handler',
   timeout: '5 minutes',
@@ -38,6 +41,9 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     INSTAGRAM_SCRAPER_FUNCTION_NAME: instagramScraperFunction.name,
     INSTAGRAM_IMAGE_FETCHER_FUNCTION_NAME: instagramImageFetcherFunction.name,
     CLASS_UPLOADS_BUCKET: classUploadsBucket.name,
+    // QR batch PDFs: the queue the renderer listens on, and the bucket it writes to.
+    QR_RENDER_QUEUE_URL: qrRenderQueue.url,
+    PRIVATE_FILES_BUCKET: privateFilesBucket.name,
     EMAIL_SENDER: email.sender,
     // The invite email's sign-in link. Built here rather than in the app because only infra
     // knows the stage's real domain (classes.rasika.life in prod, classes.<stage>.rasika.life

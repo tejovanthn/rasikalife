@@ -7,6 +7,7 @@ import type { QrBatch } from './entity';
 import type { QrFormat, SetBatchPdfInput } from './schema';
 
 export type { QrBatch } from './entity';
+export { getQrBatchPdfUrl, qrBatchPdfKey } from './pdf-url';
 export { PDF_STATUSES, SetBatchPdfSchema } from './schema';
 export type { PdfStatus, QrFormat, SetBatchPdfInput } from './schema';
 
