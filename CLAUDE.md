@@ -1969,6 +1969,74 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   custom response body. The ACL is in us-east-1 and attached to the web distribution.
 - `TODO(spec)`: "Publish concert" for a verified owner cannot be shown before submit; the button
   always reads "Submit for review" and the result page says which happened.
+### Venue QR Follow: email
+
+Phase 5: the weekly digest, the day-before reminder, preferences and unsubscribe. Email only.
+Push is phase 7.
+
+- **Matching** is pure, in `domain/notification/match.ts`; `run.ts` loads data and builds plans
+  (`planDigests`, `planReminders`), with every read injected (`NotifyDeps`) so tests need no
+  table. Events in the window come from `byStatus` (`data.ts`, a day wider each way, cut on
+  instants). Targets per event are venue, organiser and each `EventArtist`. Followers are read
+  once per distinct target per run. RSVPs come from the `Rsvp` primary index. Users, concert-book
+  rows and artists are batch reads. Nothing runs once per follower.
+- **Rules.** `REASON_WEIGHTS` score an event. Digest: next 14 days, at most 15 events (highest
+  score kept, then sorted by date), "See all N" link past that, nothing sent when empty, and a
+  user mailed in the last 5 days is skipped so a retried run cannot send twice. Reminder: events
+  that start tomorrow by the event's own clock (`startsTomorrow`, never Lambda time), at most 3
+  by score, RSVPed events always sent outside the cap. A concert-book event is dropped before the
+  cap, **for reminders only** (the Spec asks for it there). Preferences: `notifyDigest` or
+  `notifyReminder`, and `notifyEmail`.
+- **Push seam.** `reminderChannel(user, hasPushSubscription)` is the one place that picks
+  `email` or `push`. `NotifyDeps.loadPushUserIds` returns nobody until phase 7. `deliverReminders`
+  skips a `push` plan. Phase 7 fills both.
+- **Sender.** `NotifyEmail` in `infra/notify.ts` is a second `sst.aws.Email` on the root domain
+  (`rasika.life`, or `<stage>.rasika.life`), with its own configuration set and SNS topics for
+  bounce and complaint. Mail is `rasika.life <concerts@rasika.life>`, reply-to
+  `hello@rasika.life`. `Email.sendBulk` (core) uses SESv2 `Content.Simple.Headers` for
+  `List-Unsubscribe` (mailto and https) and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
+  The SES suppression list is per AWS account, so a complaint on a digest also suppresses that
+  address for Classes and approval mail. `infra/email.ts` says so.
+- **Bounce and complaint.** `notifyCrons.emailEventsHandler` reads the SNS message
+  (`addressesToSuppress`: permanent bounces and complaints only) and sets `notifyEmail = false`
+  for the user with that address.
+- **Crons** (`infra/notify.ts`, handlers in `packages/scripts/src/notifyCrons.ts`): digest
+  `cron(30 12 ? * SUN *)`, reminder `cron(30 12 * * ? *)`, both UTC, both 18:00 IST. Each batch
+  of 5 sends in parallel, one failure never stops the run, and `digestLastSentAt` is set after a
+  send.
+- **Templates** `packages/email/emails/weekly-digest.tsx`, `day-before-reminder.tsx`, built by
+  `weeklyDigestEmail` and `dayBeforeReminderEmail`. Event links are `/events/<id>` with UTM
+  (`utm_source=email`, `utm_campaign=weekly_digest` or `day_before_reminder`, `utm_content` the
+  event id). Dates are `Sat 16 Nov`, times `6:00 pm`, in the event's zone.
+- **Unsubscribe token** (decisions.md #3). The link is `/unsubscribe/<base64url(userId.kind.token)>.<hmac>`,
+  signed with `UnsubscribeSecret`. The HMAC binds the kind, so a digest link cannot become an "all"
+  link. `User.unsubscribeToken` is rotated on use, so a used link, and the other links in the
+  same email, stop working. The user id is in the link, so no index on the token is needed.
+  Verification runs in tRPC (`notify.checkUnsubscribe`, `notify.unsubscribe`, both public),
+  because web has no database access. So `UnsubscribeSecret` is linked to tRPC and the two crons,
+  not to web.
+- **GET shows, POST acts.** Link scanners open links before the reader does, so a GET that
+  unsubscribed would unsubscribe people who did nothing. `/unsubscribe/:token` shows a button on
+  GET and does the work on POST. Gmail's one-click is a POST to that same URL with
+  `List-Unsubscribe=One-Click`: it lands in the route action, needs no session or CSRF token and
+  gets a plain page back. The response is `private, no-store`.
+- **`/me/notifications`** (`routes/me.notifications.tsx`): four toggles, the WhatsApp row (Add,
+  "{number} (not yet confirmed)", Remove number) and the "Settings saved." toast. The push toggle
+  only sets `notifyPush`; phase 7 wires the browser subscription. `notify` is in `PRIVATE_ROUTERS`.
+  The Add form calls `notify.setWhatsapp`, which phase 3 builds; the route casts the client until
+  the two `routers/notify.ts` files are merged.
+- **Owner runbook** (before the first send):
+  1. Deploy. SST writes the DKIM CNAMEs and `_dmarc.rasika.life` for the root domain. If a
+     `_dmarc.rasika.life` record already exists, remove it first or the deploy fails.
+  2. Check in the SES console that the `rasika.life` identity shows Verified and DKIM Successful.
+  3. Request SES production access (us-east-1). In the sandbox mail goes only to verified
+     addresses.
+  4. `sst secret set UnsubscribeSecret <long random value> --stage prod`, then redeploy.
+  5. Send a test digest to a Gmail address and check the Unsubscribe button in Gmail.
+- `TODO(copy)`: the button on the unsubscribe confirm step; the reason line for one followed name;
+  the reminder subject when the venue has no name.
+- `TODO(spec)`: "reminders" unsubscribe clears `notifyReminder`, which also stops push reminders in
+  phase 7, while Copy says "by email".
 
 ### Importing from `@rasika/core` in web routes
 

@@ -1,2 +1,2 @@
-export { getFromAddress, sendTransactional } from './send';
-export type { SendEmailInput } from './send';
+export { getFromAddress, getNotifyFromAddress, sendBulk, sendTransactional } from './send';
+export type { SendBulkInput, SendEmailInput } from './send';

@@ -65,3 +65,56 @@ export async function sendTransactional(input: SendEmailInput): Promise<void> {
     })
   );
 }
+
+/** Digest and reminder mail send as this display name from `concerts@<NOTIFY_EMAIL_SENDER>`. */
+const NOTIFY_FROM_NAME = 'rasika.life';
+/** Replies go to a real mailbox on the root domain, whatever stage sends. */
+export const NOTIFY_REPLY_TO = 'hello@rasika.life';
+
+export function getNotifyFromAddress(): string {
+  const sender = process.env.NOTIFY_EMAIL_SENDER;
+  if (!sender) {
+    throw new Error('NOTIFY_EMAIL_SENDER is unset: link the NotifyEmail resource to this function');
+  }
+  const address = sender.includes('@') ? sender : `concerts@${sender}`;
+  return `${NOTIFY_FROM_NAME} <${address}>`;
+}
+
+export interface SendBulkInput {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  /** The https one-click link. Also goes in the `List-Unsubscribe` header beside a mailto. */
+  unsubscribeUrl: string;
+}
+
+/**
+ * Digest and reminder mail, from the root-domain identity (never the `mail.` one: see
+ * `infra/email.ts`). Every message carries `List-Unsubscribe` (mailto and https) and
+ * `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, which Gmail needs from a bulk sender.
+ * SESv2 `Content.Simple.Headers` carries them without building raw MIME.
+ */
+export async function sendBulk(input: SendBulkInput): Promise<void> {
+  await sesClient.send(
+    new SendEmailCommand({
+      FromEmailAddress: getNotifyFromAddress(),
+      Destination: { ToAddresses: [input.to] },
+      ReplyToAddresses: [NOTIFY_REPLY_TO],
+      ConfigurationSetName: process.env.NOTIFY_EMAIL_CONFIG_SET || undefined,
+      Content: {
+        Simple: {
+          Subject: { Data: input.subject },
+          Body: { Html: { Data: input.html }, Text: { Data: input.text } },
+          Headers: [
+            {
+              Name: 'List-Unsubscribe',
+              Value: `<mailto:${NOTIFY_REPLY_TO}?subject=unsubscribe>, <${input.unsubscribeUrl}>`,
+            },
+            { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
+          ],
+        },
+      },
+    })
+  );
+}

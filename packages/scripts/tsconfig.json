@@ -7,7 +7,9 @@
     // exported flat) reached a commit. Nothing builds this package; tsx transpiles it, so this
     // config only has to serve the typecheck.
     "module": "ES2020",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    // `@rasika/email` is TSX and is typechecked through the cron handler that imports it.
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts"]
