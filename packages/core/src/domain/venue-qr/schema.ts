@@ -19,7 +19,14 @@ export const QR_ERROR_CODES = {
   SPACE_NOT_FOUND: ErrorCode.SPACE_NOT_FOUND,
 } as const;
 
-export const ResolveQrSchema = z.object({ code: QrCodeSchema });
+export const ResolveQrSchema = z.object({
+  code: QrCodeSchema,
+  /**
+   * Count this read as a scan. Only the `/q/:code` document loader sets it. The add-a-concert
+   * and done pages read the same code without adding to the day's scan count.
+   */
+  count: z.boolean().optional(),
+});
 
 export const CreateQrBatchSchema = z.object({
   count: z.number().int().min(1).max(QR_BATCH_MAX),

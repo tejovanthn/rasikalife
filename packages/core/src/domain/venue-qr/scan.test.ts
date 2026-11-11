@@ -85,6 +85,20 @@ describe('resolveScan', () => {
     expect(r).toMatchObject({ state: 'active', venue: { id: 'new' }, label: 'Main entrance' });
   });
 
+  it('records no scan when count is false, and one when it is not', async () => {
+    get({ code: 'ABCDEFGH', status: 'active', venueId: 'v1' });
+    const { patch, day } = countScans();
+    vi.mocked(resolveFollowTarget).mockResolvedValue({ type: 'venue', id: 'v1', name: 'Hall' });
+    vi.mocked(listEventsByVenue).mockResolvedValue({ items: [], hasMore: false });
+
+    await resolveScan('ABCDEFGH', NOW, { count: false });
+    expect(patch.go).not.toHaveBeenCalled();
+    expect(day.go).not.toHaveBeenCalled();
+
+    await resolveScan('ABCDEFGH', NOW);
+    expect(patch.go).toHaveBeenCalled();
+  });
+
   it('a scan failure never fails the page', async () => {
     get({ code: 'ABCDEFGH', status: 'active', venueId: 'v1' });
     const patch = { add: vi.fn().mockReturnThis(), set: vi.fn().mockReturnThis(), go: vi.fn() };

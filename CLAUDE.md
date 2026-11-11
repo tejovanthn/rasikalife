@@ -1928,7 +1928,8 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   for an unknown, unassigned or retired code.
 - **Scans.** `resolveScan` counts every existing code, retired ones too. The count starts first,
   runs beside the other reads and is awaited with errors swallowed (a Lambda can freeze after the
-  response, so a truly detached promise may never run).
+  response, so a truly detached promise may never run). Only a call with `count: true` counts:
+  the `/q/:code` document loader sends it, and the add-a-concert page reads without it.
 - **Route** `routes/q.$code.tsx`. Always `Cache-Control: private, no-store`, redirects too. No
   site header or footer on `/q/` (`root.tsx`). An unassigned code sends a moderator to
   `admin.rasika.life/qr/{code}/assign` (`adminAssignUrl`, built from the request host, so a stage
@@ -2249,8 +2250,8 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   for the normal queue. A billed artist is linked only when one with that exact name exists; an
   artist is never created here. An event is edited only through its own organiser (a foreign id is
   `EVENT_NOT_FOUND`). `TODO(spec)`: an edit to an approved event is not sent back to review when
-  the switch is on, and the blocking duplicate rule (`findLikelyDuplicates`) does not run on
-  owner events, like `submitFromQr`.
+  the switch is on. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
+  `submitFromQr`); a likely duplicate stays `submitted` for the moderator queue.
 - **Overview numbers** (`core/src/domain/sabha/rules.ts`, pure, tested). Months and days are IST
   (`istMonth`). Followers: total, new this month, sharing now, stopped sharing this month. The
   30 day trend is read from the follows that exist, so it is a view of today's followers and an
@@ -2387,3 +2388,24 @@ Fixes from the review after all eight phases.
   through `markReminderSent` after a push or an email goes out; a failed record is logged and
   does not fail the send. Event times use `event.timezone || DEFAULT_TIMEZONE`. One bad stored
   event is logged and skipped in `planReminders` and `planDigests`, never aborting the run.
+- **Owner event edit.** `updateOwnerEvent` sends `artists` only when the form sent the field and
+  its names differ from the stored cast (`mergeOwnerCast`, `sabha/cast.ts`). Stored entries keep
+  their id, role and title, new names are added, and only names the owner removed are dropped.
+  The sabha form sends a blank field as `''` (cast emptied) and a missing one as absent (cast
+  untouched). A cleared space and a city the new venue lacks are removed with `.remove()`
+  (rule 8).
+- **Batch gets.** `batchGetAll` (`core/src/shared/batch-get.ts`) retries `unprocessed` keys with
+  backoff and throws if any remain. The follower export and the notification user and
+  concert-book reads use it, so a consented row is never dropped silently.
+- **Push endpoints** must be on `fcm.googleapis.com`, `*.push.apple.com`,
+  `updates.push.services.mozilla.com` or `*.notify.windows.com` (https, no port, no credentials).
+  Anything else is `PUSH_SUBSCRIPTION_INVALID`, so a stored endpoint cannot aim the sender at an
+  internal address.
+- **Merges** (`cascadeVenueMerge`, `cascadeOrganiserMerge`) copy `verifiedAt` (and an
+  organiser's `requireEventReview`) onto the canonical when it lacks them, blanks only.
+  `acceptPartnerInvite` follows `mergedIntoId` to the canonical target (up to 5 hops).
+- **Follow attribution.** `bulkSetFollows` drops `qrCode` unless the code exists and is active,
+  so `followCount` cannot be inflated for an arbitrary code. The follows still go through.
+- **Dates.** `CalendarDateSchema` and `ClockTimeSchema` (`venue-qr/add-concert.ts`) check a real
+  calendar day and a 24 hour time. The owner event, partner router and add-a-concert schemas use
+  them, so `2026-02-31` is a validation error.

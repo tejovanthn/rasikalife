@@ -5,7 +5,7 @@ import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { keyOfEntity } from '../../db/keys';
 import { ArtistEntity } from '../artist/entity';
 import { OrganiserEntity } from '../organiser/entity';
-import { recordQrFollows } from '../venue-qr';
+import { getQr, recordQrFollows } from '../venue-qr';
 import { CONSENT_VERSIONS } from '../venue-qr/constants';
 import { VenueEntity } from '../venue/entity';
 import { FollowEntity } from './entity';
@@ -252,6 +252,12 @@ export type BulkSetResult = {
   error?: ErrorCode;
 };
 
+async function usableQrCode(code: string | undefined): Promise<string | undefined> {
+  if (!code) return undefined;
+  const qr = await getQr(code);
+  return qr && qr.status === 'active' ? code : undefined;
+}
+
 /**
  * Applies the follow screen's choices. `share` on an artist is refused for the whole call before
  * anything is written. A target that cannot be found is reported in its own result (`error`)
@@ -272,6 +278,10 @@ export async function bulkSetFollows(
     }
   }
 
+  // Attribute follows to a code only when it exists and is active, so `followCount` cannot be
+  // inflated for an arbitrary or retired code. A bad code is dropped; the follows still go through.
+  const qrCode = await usableQrCode(input.qrCode);
+
   const results: BulkSetResult[] = [];
   let newFollows = 0;
   for (const target of input.targets) {
@@ -290,7 +300,7 @@ export async function bulkSetFollows(
           userId,
           targetType: target.type,
           targetId: target.id,
-          qrCode: input.qrCode,
+          qrCode,
           eventId: input.eventId,
           share: target.share,
         },
@@ -311,9 +321,9 @@ export async function bulkSetFollows(
     }
   }
 
-  if (input.qrCode && newFollows > 0) {
+  if (qrCode && newFollows > 0) {
     try {
-      await recordQrFollows(input.qrCode, newFollows, now);
+      await recordQrFollows(qrCode, newFollows, now);
     } catch (error) {
       // The follows are saved; a code that vanished costs only the attribution.
       if (!(error instanceof ApplicationError && error.code === ErrorCode.QR_NOT_FOUND)) {

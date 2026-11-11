@@ -121,7 +121,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const client = await createServerClient(request);
   let resolution: Awaited<ReturnType<typeof client.qr.resolve.query>>;
   try {
-    resolution = await client.qr.resolve.query({ code });
+    resolution = await client.qr.resolve.query({ code, count: true });
   } catch (error) {
     console.error('Failed to resolve QR code:', error);
     return data<LoaderData>({ kind: 'error' }, { status: 500, headers: NO_STORE });

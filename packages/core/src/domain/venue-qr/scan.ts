@@ -101,13 +101,21 @@ async function loadVenueEvents(venueId: string, now: Date): Promise<ScanEvent[]>
  * swallowed: a Lambda can freeze once the response is sent, so a truly detached promise may
  * never finish. It costs no extra time, and a failed count never fails a scan.
  */
-export async function resolveScan(code: string, now: Date = new Date()): Promise<ScanResolution> {
+export async function resolveScan(
+  code: string,
+  now: Date = new Date(),
+  options: { count?: boolean } = {}
+): Promise<ScanResolution> {
   const qr = await getQr(code);
   if (!qr) return { state: 'not-found' };
 
-  const counted = recordScan(code, now).catch(error => {
-    console.error('Failed to record scan:', error);
-  });
+  // `count: false` is a plain read (the add-a-concert and done pages): no scan is recorded.
+  const counted =
+    options.count === false
+      ? Promise.resolve()
+      : recordScan(code, now).catch(error => {
+          console.error('Failed to record scan:', error);
+        });
 
   try {
     if (qr.status === 'unassigned') return { state: 'unassigned', code };

@@ -51,9 +51,10 @@ export function toMyFollow(row: Follow.Follow) {
  * Follow routes. All are `protectedProcedure`: a signed-out reader goes through sign-in first
  * (the web app turns `?follow=1` into a call here on return).
  *
- * Cache: these are NOT in `PRIVATE_ROUTERS`. A follow moves `followerCount`, which public pages
- * show, so `toggle` and `bulkSet` clear the site cache like any write. `setShare` changes only
- * a private flag and is listed in `PRIVATE_PATHS` (`middleware/site-cache.ts`).
+ * Cache: `toggle`, `bulkSet` and `setShare` are listed in `PRIVATE_PATHS`
+ * (`middleware/site-cache.ts`) and never clear the site cache, so a burst of QR follows cannot
+ * purge the CDN once per follower. The public `followerCount` on a cached page can lag until the
+ * next clear (at most a week).
  */
 export const followRouter = createTRPCRouter({
   bulkSet: protectedProcedure
