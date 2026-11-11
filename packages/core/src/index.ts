@@ -40,6 +40,7 @@ export * as ClassInvite from './domain/class-invite';
 export * as VenueQr from './domain/venue-qr';
 export * as QrBatch from './domain/qr-batch';
 export * as Follow from './domain/follow';
+export * as Notification from './domain/notification';
 export * as VenueSpace from './domain/venue-space';
 export * as PartnerMember from './domain/partner-member';
 export * as PartnerInvite from './domain/partner-invite';

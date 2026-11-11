@@ -416,6 +416,16 @@
       "import": "./src/domain/qr-batch/client.ts",
       "default": "./src/domain/qr-batch/client.ts"
     },
+    "./domain/notification": {
+      "types": "./src/domain/notification/index.ts",
+      "import": "./src/domain/notification/index.ts",
+      "default": "./src/domain/notification/index.ts"
+    },
+    "./domain/notification/client": {
+      "types": "./src/domain/notification/client.ts",
+      "import": "./src/domain/notification/client.ts",
+      "default": "./src/domain/notification/client.ts"
+    },
     "./domain/follow": {
       "types": "./src/domain/follow/index.ts",
       "import": "./src/domain/follow/index.ts",
