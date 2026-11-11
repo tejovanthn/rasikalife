@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Database,
   FileImage,
+  Heart,
   ListChecks,
   LogOut,
   Menu,
@@ -183,6 +184,12 @@ export const Header = () => {
                     <Link to="/my-events" className="flex items-center gap-2">
                       <CalendarPlus className="h-4 w-4" />
                       My Events
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/me/following" className="flex items-center gap-2">
+                      <Heart className="h-4 w-4" />
+                      Following
                     </Link>
                   </DropdownMenuItem>
                   {(user.role === 'moderator' || user.role === 'admin') && (
@@ -413,6 +420,14 @@ export const Header = () => {
                         >
                           <CalendarPlus className="h-4 w-4" />
                           My Events
+                        </Link>
+                        <Link
+                          to="/me/following"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-accent"
+                          onClick={() => setIsSidebarOpen(false)}
+                        >
+                          <Heart className="h-4 w-4" />
+                          Following
                         </Link>
                         {(user.role === 'moderator' || user.role === 'admin') && (
                           <>

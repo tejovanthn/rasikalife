@@ -23,6 +23,7 @@ import { createServerClient } from '~/api.server';
 import { ArtistGalleryHero } from '~/components/ArtistGalleryHero';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { FollowButton } from '~/components/FollowButton';
 import { SocialIconLink } from '~/components/SocialIconLink';
 import { Cite, RagaReferences, type SourceInfo } from '~/components/raga/raga-sources';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
@@ -48,6 +49,7 @@ import {
 import { artistMetaDescription, artistMetaTitle } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { artistOgImageUrl } from '~/lib/og';
 import {
   generateArtistUrl,
@@ -105,6 +107,8 @@ export async function loader({
     }
 
     const user = await userPromise;
+    await completePendingFollow({ request, client, user, type: 'artist', id: artist.id });
+    const following = await isFollowing(client, user, 'artist', artist.id);
     const isGroup = !!artist.isGroup;
 
     const [
@@ -239,6 +243,8 @@ export async function loader({
         repertoire,
         activeEdit,
         isLoggedIn: !!user,
+        following,
+        followerCount: (artist as { followerCount?: number }).followerCount ?? 0,
         myClaimStatus: myClaim?.status,
         isModerator: user?.role === 'moderator' || user?.role === 'admin',
       },
@@ -747,6 +753,8 @@ export default function ArtistDetails() {
     repertoire,
     activeEdit,
     isLoggedIn,
+    following,
+    followerCount,
     isModerator,
     myClaimStatus,
   } = useLoaderData<typeof loader>();
@@ -926,6 +934,16 @@ export default function ArtistDetails() {
           ) : undefined
         }
         subtitle={identityLine}
+        actions={
+          <FollowButton
+            targetType="artist"
+            targetId={artist.id}
+            pagePath={artistUrl}
+            isSignedIn={isLoggedIn}
+            isFollowing={following}
+            followerCount={followerCount}
+          />
+        }
         shareUrl={shareUrl}
         shareTitle={`${artist.name} - ${subtitle}`}
         shareDescription={`Learn about ${artist.name} and their contributions to Indian classical music`}

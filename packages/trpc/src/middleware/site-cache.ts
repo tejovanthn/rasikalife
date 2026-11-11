@@ -9,9 +9,17 @@ import { invalidateSiteCache } from '@rasika/core/site-cache';
  */
 const PRIVATE_ROUTERS = new Set(['classes', 'concertLog', 'user', 'shortLink']);
 
+/**
+ * Single procedures, inside a router that is otherwise public, that change no page. `follow`
+ * is not a private router: a follow moves `followerCount`, which venue, organiser and artist
+ * pages show. Turning sharing on or off changes only the follower's own flag.
+ */
+const PRIVATE_PATHS = new Set(['follow.setShare']);
+
 /** Whether a finished call may have changed a public page, so the CDN copy must go. */
 export function changesPublicPage(type: string, path: string, ok: boolean): boolean {
   if (type !== 'mutation' || !ok) return false;
+  if (PRIVATE_PATHS.has(path)) return false;
   return !PRIVATE_ROUTERS.has(path.split('.')[0] ?? '');
 }
 

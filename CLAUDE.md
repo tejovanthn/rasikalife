@@ -1878,6 +1878,39 @@ Domains in `packages/core/src/domain/`, each with `/client` and index subpaths i
   month" count, no cursor on the unfiltered code list, and organiser-owner verification of managed
   venues.
 
+### Venue QR Follow: follow everywhere
+
+Phase 2: the `follow` router, Follow buttons and `/me/following`. No scan page, notifications or
+admin yet.
+
+- **Router** `packages/trpc/src/routers/follow.ts`: `bulkSet`, `toggle`, `status`, `mine`,
+  `setShare`, all `protectedProcedure`, inputs are the core `follow/schema.ts` schemas.
+  `bulkSet` calls `bulkSetFollows`, which already adds new follows to the QR code's `followCount`
+  and `QrScanDay.follows`. `toTrpcError` maps `FOLLOW_TARGET_NOT_FOUND` to NOT_FOUND and
+  `FOLLOW_SHARE_NOT_ALLOWED` to BAD_REQUEST, keeping the `ApplicationError` as `cause`.
+  `mine` and `setShare` return only `targetType`, `targetId`, `targetName`, `shareWithTarget`,
+  `createdAt`.
+- **Cache.** `follow` is not in `PRIVATE_ROUTERS`: a follow moves `followerCount`, which the
+  venue, organiser and artist pages show, so `toggle` and `bulkSet` clear the site cache.
+  `follow.setShare` only changes the follower's own flag, so it is in `PRIVATE_PATHS`
+  (`middleware/site-cache.ts`). Cost to watch: a burst of QR follows is one full invalidation
+  each. If that bites, show the count from a client fetch instead of the cached page.
+- **Button** `components/FollowButton.tsx`, placed through the new `actions` prop of
+  `DetailPageHeader`. Signed in: a form posting to `/api/follow` (`routes/api.follow.tsx`). A
+  browser form post (Accept has `text/html`) gets a redirect back; a fetcher gets data. The state
+  flips at once (`optimisticFollow`). Signed out: a link to
+  `/auth/login?redirectTo=<page>?follow=1`. On return the page loader calls
+  `completePendingFollow` (`lib/follow.server.ts`), which follows (idempotent) and redirects to
+  the page without `follow`. A failure is logged and the page still loads.
+- **No leak between readers.** A signed-out page always renders "Follow" and is cached for
+  everyone. `isFollowing` is read only for a signed-in viewer, whose document is `private`
+  (the cache key holds `rasika_session`). The count is a number, never names.
+- **`/me/following`** (`routes/me.following.tsx`, `noindex`): groups Artists, Sabhas and
+  organisers, Venues (`groupFollows`). Unfollow shows the toast with Undo; Undo re-follows and
+  restores the share choice (`refollowTarget`). Turning sharing off asks first in a dialog;
+  without JavaScript the form posts directly. Linked from the header menu.
+- `TODO(copy)`: the label for the public follower count (`followerCountLabel`, shown only above 0).
+
 ### Importing from `@rasika/core` in web routes
 
 **Never import from the bare `@rasika/core` entry in web route files.** The main entry re-exports everything including ElectroDB and AWS SDK, which use Node.js-only APIs (e.g. `util.promisify`). React Router v7 bundles the top-level imports of every route module for the client, so this crashes the browser.
