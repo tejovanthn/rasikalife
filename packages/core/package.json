@@ -341,6 +341,16 @@
       "import": "./src/shared/roles.ts",
       "default": "./src/shared/roles.ts"
     },
+    "./shared/event-card": {
+      "types": "./src/shared/event-card.ts",
+      "import": "./src/shared/event-card.ts",
+      "default": "./src/shared/event-card.ts"
+    },
+    "./shared/generic-title": {
+      "types": "./src/shared/generic-title.ts",
+      "import": "./src/shared/generic-title.ts",
+      "default": "./src/shared/generic-title.ts"
+    },
     "./shared/timezone": {
       "types": "./src/shared/timezone.ts",
       "import": "./src/shared/timezone.ts",

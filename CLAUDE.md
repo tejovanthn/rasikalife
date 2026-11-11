@@ -39,6 +39,15 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - **packages/search**: Lambda handler for periodic search index refresh
 - **packages/image-processor**: S3-triggered Lambda for image processing (Sharp)
 - **packages/og-image**: Lambda that renders OG share images (Sharp); kept separate from the web Lambda because `sst.aws.React` does not bundle `node_modules/` so native modules like Sharp can't live in the React server function
+
+### Poster-less events: text card and share image
+
+An event with no poster shows a text card in the poster slot, and its share image is a generated card. Both are built from one pure function, `buildEventCardContent` (`@rasika/core/shared/event-card`): title (generic titles become the lead artist, then the venue), up to 4 artists with roles, `+N more`, date and time in the event's own zone, `venue, city`. An empty field is absent, never guessed.
+
+- **Page**: `components/EventTextCard.tsx` is HTML (bordered card, labelled "Concert details"), not an image. The moderator "Replace Poster" uploader stays under it. Listing rows are unchanged.
+- **Share image**: `/og/event/{id}` redirects to the og-image Lambda, which renders 1200x630 with `src/event-card.ts` (DejaVu Sans, which has the IAST diacritics; DESIGN.md dark tokens, AA checked in `event-card.test.ts`). S3 key `og-images/event/{id}-{hash of CARD_VERSION + card content}.jpg`, so an unchanged event costs one HEAD and a title, cast, time or venue edit gets a new key. The city comes from the venue record.
+- **og:image order** (`eventOgImage`, `lib/og.ts`): `posterOgUrl`, `posterUrl`, festival poster, the text card, the generic `og-image.png`. Change `CARD_VERSION` in `card.ts` when the card's look changes.
+
 - **packages/scraper**: Data scraping utilities
 - **packages/classes**: React Router v7 PWA for Rasika Classes, deployed to `classes.rasika.life` as its own SST site
 - **packages/talapettige**: Talapettige, a tanpura drone and Carnatic tala metronome. A static, prerendered React Router v7 PWA at `talapettige.rasika.life` that works offline
@@ -109,7 +118,7 @@ The core package uses a domain-driven design with:
 
 ### Web Package Utilities (`packages/web/app/lib/`)
 
-- `generic-title.ts` — `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
+- `generic-title.ts` — re-exports `isGenericTitle` from `@rasika/core/shared/generic-title` (moved so the og-image Lambda can use it). `isGenericTitle(title, artists?, artForm?)` detects uninformative event titles like "Carnatic Music Concert" or "Concert by Sri X" so the UI can substitute a more descriptive display name. Uses regex patterns plus artist/artForm matching.
 - `artist-display.ts` — `artistTagline({instrument, city})` builds the "Vocal · Chennai" line the artist profile hero and `ArtistCard` both lead with. Trims both fields, drops blanks so no stray separator is emitted, capitalizes only the instrument, and returns `undefined` when neither is set so callers can fall back with `??`.
 - `form-fields.ts` — `readClearableField` / `readOptionalInt` for resource-route actions. `readClearableField` keeps "not submitted" (`undefined`, preserve) apart from "submitted empty" (`''`, clear); `readOptionalInt` parses with `Number` rather than `parseInt` so `'12.7'` is rejected instead of silently read as 12, and a legitimate `0` survives. `readRepeatedRows(formData, {required, strings, numbers})` reads a variable-length list submitted as parallel repeated field names — rows correlate **by index**, so a row that renders must always emit every one of its inputs even when blank, and a row whose required field is empty is dropped.
 - `affiliation-display.ts` — `affiliationPeriod({startYear, endYear, isCurrent})` renders "2017–present", "1998–2015", "since 2017" or `''`. Used by both the artist profile and the organiser page. `isCurrent` is stored apart from `endYear` because a blank end year alone cannot say whether a role is current or merely undated.

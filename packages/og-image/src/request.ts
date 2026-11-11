@@ -1,6 +1,6 @@
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 
-export const VALID_TYPES = ['raga', 'composition', 'artist'] as const;
+export const VALID_TYPES = ['raga', 'composition', 'artist', 'event'] as const;
 export type OgType = (typeof VALID_TYPES)[number];
 
 /**

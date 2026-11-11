@@ -1,4 +1,5 @@
 import { canonicalCitySlug } from '@rasika/core/shared/city';
+import { buildEventCardContent } from '@rasika/core/shared/event-card';
 import {
   Calendar,
   CalendarPlus,
@@ -21,6 +22,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
+import { EventTextCard } from '~/components/EventTextCard';
 import { PosterImage } from '~/components/PosterImage';
 import { EventTime } from '~/components/events/event-time';
 import { BreadcrumbStructuredData, EventStructuredData } from '~/components/structured-data';
@@ -36,6 +38,7 @@ import {
   resolveEventContact,
 } from '~/lib/event-contact';
 import { eventZone, formatEventDate } from '~/lib/event-time';
+import { eventOgImage } from '~/lib/og';
 import type { StructuredAddress } from '~/lib/structured-data';
 import {
   generateArtistUrl,
@@ -83,6 +86,7 @@ interface EventDetail {
   artists?: Array<{ id?: string; title?: string; name: string; role?: string }>;
   tags?: string[];
   entryType?: string;
+  artForm?: string;
   posterUrl?: string;
   posterOgUrl?: string;
   ticketing?: {
@@ -353,13 +357,9 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
 
   const canonicalUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
 
-  // Prefer the pre-generated 1200x630 landscape crop (posterOgUrl, created by image-processor).
-  // Fall back to the original poster (may be portrait but better than nothing) or the generic image.
-  const ogImage =
-    event.posterOgUrl ||
-    event.posterUrl ||
-    ld?.festivalPosterUrl ||
-    'https://rasika.life/og-image.png';
+  // Poster crop, poster, festival poster, then the generated text card (packages/og-image) for
+  // an event with no picture of its own. Order and the generic last resort: lib/og.ts.
+  const ogImage = eventOgImage(event, ld?.festivalPosterUrl);
 
   return [
     { title: `${event.title} - ${dateStr} - Rasika.life` },
@@ -721,6 +721,7 @@ export default function EventDetail() {
   // The middle crumb names the city when the venue's address knows it: "Concerts in Chennai"
   // is where a reader on this page goes next, and the bare "Events" list lost where they were.
   const venueCity = venueAddressParts?.city?.trim();
+  const cardContent = buildEventCardContent({ ...event, city: venueCity });
   const listCrumb = venueCity
     ? { label: `Concerts in ${venueCity}`, path: `/${canonicalCitySlug(venueCity)}/concerts` }
     : { label: 'Events', path: '/events' };
@@ -773,22 +774,23 @@ export default function EventDetail() {
       />
 
       <div className="grid md:grid-cols-[300px_1fr] gap-8">
-        {/* Poster */}
-        {(displayPosterUrl || isModerator) && (
-          <div>
-            {displayPosterUrl && (
-              <PosterImage
-                posterUrl={displayPosterUrl}
-                alt={`${event.title} poster`}
-                className="w-full rounded-lg shadow-md"
-                loading="eager"
-                width={300}
-                height={400}
-              />
-            )}
-            {isModerator && <PosterUploader />}
-          </div>
-        )}
+        {/* The poster, or a text card when there is none. The column is always present, so the
+            details never fall into the 300px track. */}
+        <div className="space-y-4">
+          {displayPosterUrl ? (
+            <PosterImage
+              posterUrl={displayPosterUrl}
+              alt={`${event.title} poster`}
+              className="w-full rounded-lg shadow-md"
+              loading="eager"
+              width={300}
+              height={400}
+            />
+          ) : (
+            <EventTextCard content={cardContent} />
+          )}
+          {isModerator && <PosterUploader />}
+        </div>
 
         {/* Details */}
         <div className="space-y-4">

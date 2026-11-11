@@ -1,9 +1,11 @@
 import { HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { buildEventCardContent } from '@rasika/core/shared/event-card';
 import type { AppRouter } from '@rasika/trpc';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import type { APIGatewayProxyHandlerV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import sharp from 'sharp';
 import { CARD_HEIGHT, CARD_VERSION, PHOTO_PANEL_WIDTH, buildSvg, contentHash } from './card';
+import { buildEventSvg, eventCardKey } from './event-card';
 import type { OgType } from './request';
 import { isAllowedPhotoUrl, parsePath } from './request';
 
@@ -24,6 +26,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (
 
   const bucket = process.env.EVENT_POSTERS_BUCKET ?? '';
   const cdn = process.env.EVENT_POSTERS_CDN_URL ?? '';
+
+  if (type === 'event') return handleEvent(id, bucket, cdn);
 
   // Content-keyed cache: the key folds in a hash of everything that changes the rendered card,
   // so a rename, a newly added photo, or a redesign (CARD_VERSION) lands on a fresh key instead
@@ -73,6 +77,69 @@ export const handler: APIGatewayProxyHandlerV2 = async (
     body: jpeg.toString('base64'),
   };
 };
+
+// The share card for an event with no poster. Same content-keyed cache as above, keyed on the
+// built card content: a title, cast, time, venue or city edit moves to a new key; anything else
+// (a description edit, an RSVP) hashes the same and costs one HEAD.
+async function handleEvent(
+  id: string,
+  bucket: string,
+  cdn: string
+): Promise<APIGatewayProxyResultV2> {
+  let content: ReturnType<typeof buildEventCardContent>;
+  try {
+    const event = await trpc.event.get.query({ id });
+    const venue = event.venueId ? await trpc.venue.get.query({ id: event.venueId }) : null;
+    content = buildEventCardContent({
+      title: event.title,
+      startDateTime: event.startDateTime,
+      endDateTime: event.endDateTime,
+      timezone: event.timezone,
+      artForm: event.artForm,
+      artists: event.artists,
+      venueName: event.venueName ?? venue?.name,
+      city: venue?.city,
+    });
+  } catch (err) {
+    // Unknown or unpublished event: send the crawler to the generic image, uncached.
+    console.error(`[og] event lookup failed for ${id}:`, err);
+    return {
+      statusCode: 302,
+      headers: {
+        Location: 'https://rasika.life/og-image.png',
+        'Cache-Control': 'public, max-age=300',
+      },
+    };
+  }
+
+  const cacheKey = eventCardKey(id, content);
+  try {
+    await s3.send(new HeadObjectCommand({ Bucket: bucket, Key: cacheKey }));
+    return { statusCode: 302, headers: { Location: `${cdn}/${cacheKey}` } };
+  } catch {
+    // Not cached — render
+  }
+
+  const jpeg = await sharp(Buffer.from(buildEventSvg(content)))
+    .jpeg({ quality: 90 })
+    .toBuffer();
+  s3.send(
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: cacheKey,
+      Body: jpeg,
+      ContentType: 'image/jpeg',
+      CacheControl: 'public, max-age=31536000, immutable',
+    })
+  ).catch((err: unknown) => console.error('[og] S3 put failed:', err));
+
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' },
+    isBase64Encoded: true,
+    body: jpeg.toString('base64'),
+  };
+}
 
 function notFound(): APIGatewayProxyResultV2 {
   return { statusCode: 404, body: 'Not Found' };
@@ -124,6 +191,7 @@ async function resolveEntity(type: OgType, id: string, cdnUrl: string): Promise<
       raga: 'Raga',
       composition: 'Composition',
       artist: 'Artist',
+      event: 'Event',
     };
     return { title: 'Rasika.life', subtitle: 'Indian Classical Music', typeLabel: labels[type] };
   }
