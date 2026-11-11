@@ -231,6 +231,11 @@
       "import": "./src/domain/event/s3.ts",
       "default": "./src/domain/event/s3.ts"
     },
+    "./domain/event/sweep": {
+      "types": "./src/domain/event/sweep.ts",
+      "import": "./src/domain/event/sweep.ts",
+      "default": "./src/domain/event/sweep.ts"
+    },
     "./domain/event/client": {
       "types": "./src/domain/event/client.ts",
       "import": "./src/domain/event/client.ts",

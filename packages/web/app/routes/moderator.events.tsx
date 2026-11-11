@@ -1,16 +1,17 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { Check, Clock, Eye, X } from 'lucide-react';
-import { useMemo } from 'react';
+import { Check, Clock, Eye, GitMerge, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
-import { Form, data, useLoaderData, useNavigation } from 'react-router';
+import { Form, Link, data, useActionData, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { DataTable } from '~/components/data-table';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { requireModerator } from '~/lib/auth.server';
+import { generateEventUrl } from '~/lib/url-slug';
 
 dayjs.extend(relativeTime);
 
@@ -23,6 +24,13 @@ interface SubmittedEvent {
   posterUrl?: string;
   submittedAt?: string;
   createdAt: string;
+  /** Events this one probably repeats: same venue, within 30 minutes, same programme. */
+  likelyDuplicates?: Array<{
+    id: string;
+    title: string;
+    startDateTime: string;
+    status?: string | null;
+  }>;
 }
 
 export const meta: MetaFunction = () => {
@@ -55,14 +63,26 @@ export async function action({ request }: { request: Request }) {
   const intent = formData.get('intent') as string;
   const eventId = formData.get('eventId') as string;
 
-  if (intent === 'approve') {
-    await serverClient.event.approveEvent.mutate({ eventId });
-  } else if (intent === 'reject') {
-    const moderatorNote = formData.get('moderatorNote') as string;
-    await serverClient.event.rejectEvent.mutate({ eventId, moderatorNote });
+  try {
+    if (intent === 'approve') {
+      // Present only when the moderator ticked "different event" for a likely duplicate.
+      const notDuplicateOf = formData.getAll('notDuplicateOf').map(String).filter(Boolean);
+      await serverClient.event.approveEvent.mutate({ eventId, notDuplicateOf });
+    } else if (intent === 'reject') {
+      const moderatorNote = formData.get('moderatorNote') as string;
+      await serverClient.event.rejectEvent.mutate({ eventId, moderatorNote });
+    } else if (intent === 'merge') {
+      const keeperId = formData.get('keeperId') as string;
+      await serverClient.event.merge.mutate({ loserId: eventId, keeperId });
+    }
+  } catch (error) {
+    return data(
+      { success: false, error: error instanceof Error ? error.message : 'Action failed' },
+      { status: 400 }
+    );
   }
 
-  return data({ success: true });
+  return data({ success: true, error: null as string | null });
 }
 
 function EventActions({ event }: { event: SubmittedEvent }) {
@@ -71,16 +91,61 @@ function EventActions({ event }: { event: SubmittedEvent }) {
   const isThisEvent =
     navigation.state === 'submitting' && navigation.formData?.get('eventId') === event.id;
 
+  const duplicates = event.likelyDuplicates ?? [];
+  const [confirmed, setConfirmed] = useState(false);
+  // With a likely duplicate, Approve works only once "different event" is ticked; the ids then
+  // travel with the request and are stored on the event, so nobody is asked again.
+  const needsAnswer = duplicates.length > 0 && !confirmed;
+
   return (
-    <Form method="post" className="flex items-center justify-end gap-2">
+    <Form method="post" className="flex flex-wrap items-center justify-end gap-2">
       <input type="hidden" name="eventId" value={event.id} />
+      {duplicates.length > 0 && (
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 text-xs">
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={e => setConfirmed(e.target.checked)}
+            />
+            Different event
+          </label>
+          {confirmed &&
+            duplicates.map(d => (
+              <input key={d.id} type="hidden" name="notDuplicateOf" value={d.id} />
+            ))}
+          <select
+            name="keeperId"
+            aria-label="Merge into"
+            className="h-8 max-w-40 rounded border bg-background text-xs"
+          >
+            {duplicates.map(d => (
+              <option key={d.id} value={d.id}>
+                {d.title}
+              </option>
+            ))}
+          </select>
+          <Button
+            type="submit"
+            name="intent"
+            value="merge"
+            size="sm"
+            variant="outline"
+            disabled={isBusy}
+          >
+            <GitMerge className="mr-1 h-4 w-4" aria-hidden="true" />
+            Merge into…
+          </Button>
+        </div>
+      )}
       <Button
         type="submit"
         name="intent"
         value="approve"
         size="sm"
         className="bg-success hover:bg-success/90"
-        disabled={isBusy}
+        disabled={isBusy || needsAnswer}
+        title={needsAnswer ? 'Possible duplicate: tick "Different event", or merge' : undefined}
       >
         {isThisEvent && navigation.formData?.get('intent') === 'approve' ? (
           <Clock className="h-4 w-4 animate-spin" />
@@ -119,6 +184,7 @@ function EventActions({ event }: { event: SubmittedEvent }) {
 
 export default function ModeratorEvents() {
   const { events, userRole, error } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
 
   const columns = useMemo<ColumnDef<SubmittedEvent>[]>(
     () => [
@@ -128,6 +194,23 @@ export default function ModeratorEvents() {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-foreground">{row.getValue('title')}</span>
+            {(row.original.likelyDuplicates ?? []).length > 0 && (
+              <span className="text-xs text-warning">
+                Possible duplicate of{' '}
+                {(row.original.likelyDuplicates ?? []).map((d, i) => (
+                  <span key={d.id}>
+                    {i > 0 && ', '}
+                    <Link
+                      to={generateEventUrl(d.title, d.id)}
+                      target="_blank"
+                      className="underline"
+                    >
+                      {d.title}
+                    </Link>
+                  </span>
+                ))}
+              </span>
+            )}
             {row.original.posterUrl && (
               <a
                 href={row.original.posterUrl}
@@ -204,6 +287,15 @@ export default function ModeratorEvents() {
         <h1 className="text-2xl font-bold text-foreground">Pending Events</h1>
         <span className="text-sm text-muted-foreground">Moderator: {userRole}</span>
       </div>
+
+      {actionData?.error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm"
+        >
+          {actionData.error}
+        </div>
+      )}
 
       {events.length === 0 ? (
         <div className="bg-card rounded-lg shadow-sm border p-8 text-center">

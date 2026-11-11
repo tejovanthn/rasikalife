@@ -69,4 +69,12 @@ export const festivalRouter = createTRPCRouter({
         posterUploadId: input.posterUploadId,
       });
     }),
+
+  /** Retire `loserId` into `keeperId`: its events move and its page answers 301. */
+  merge: moderatorProcedure
+    .input(z.object({ loserId: z.string().min(1), keeperId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const moved = await Festival.mergeFestival(input.loserId, input.keeperId);
+      return { merged: true, moved };
+    }),
 });

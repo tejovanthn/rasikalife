@@ -582,6 +582,34 @@ program
   });
 
 program
+  .command('event-duplicates')
+  .description(
+    'Find likely duplicate upcoming events and festivals for review, then merge the rows marked'
+  )
+  .option('--apply', 'Merge the rows marked "merge" in --file, instead of reporting')
+  .option('--file <path>', 'Reviewed CSV to apply', 'event-duplicates.csv')
+  .option('--out <path>', 'Where to write the report', 'event-duplicates.csv')
+  .option('--from <date>', 'Only events and festivals from this day (YYYY-MM-DD); default today')
+  .option('-n, --dry-run', 'With --apply, list the merges without writing')
+  .action(
+    async (opts: {
+      apply?: boolean;
+      file: string;
+      out: string;
+      from?: string;
+      dryRun?: boolean;
+    }) => {
+      setup();
+      const mod = await import('./dedupEvents.js');
+      if (opts.apply) {
+        await mod.applyDuplicateEventMerges({ file: opts.file, dryRun: opts.dryRun });
+      } else {
+        await mod.reportDuplicateEvents({ out: opts.out, from: opts.from });
+      }
+    }
+  );
+
+program
   .command('merge-artists')
   .description('Merge reviewed artist duplicates, copying blank fields onto the kept record first')
   .requiredOption('--file <path>', 'CSV with keep_id and merge_id columns')

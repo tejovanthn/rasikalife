@@ -109,6 +109,10 @@ export const EventEntity = new Entity(
       deletedAt: { type: 'string', required: false },
       mergedIntoId: { type: 'string', required: false },
 
+      // Ids a person confirmed are different events from this one, so the blocking duplicate
+      // check (`findLikelyDuplicates`) does not ask again.
+      notDuplicateOf: { type: 'list', items: { type: 'string' }, required: false },
+
       // Denormalized RSVP counter — atomically maintained via toggleRsvp
       rsvpCount: { type: 'number', required: false },
 

@@ -2,7 +2,7 @@ import * as Auth from '@rasika/core/auth';
 import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
 import { zonedDateTimeToIso } from '@rasika/core/shared/timezone';
 import { ArrowLeft, ArrowRight, Check, Loader2, Plus, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { MetaFunction } from 'react-router';
 import { Link, data, useLoaderData, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -1082,6 +1082,38 @@ interface DuplicateMatch {
   timezone?: string | null;
   venueName?: string | null;
   status?: string | null;
+  /** Passes the blocking rule (same programme, within 30 minutes), not just the 3-hour window. */
+  likely?: boolean;
+}
+
+interface SimilarFestival {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  status?: string | null;
+}
+
+function MatchList({ matches }: { matches: DuplicateMatch[] }) {
+  return (
+    <ul className="text-sm space-y-1">
+      {matches.map(m => (
+        <li key={m.id}>
+          {m.status === 'approved' ? (
+            <Link to={generateEventUrl(m.title, m.id)} target="_blank">
+              {m.title}
+            </Link>
+          ) : (
+            <span>{m.title} (waiting for review)</span>
+          )}
+          <span className="text-muted-foreground">
+            {' '}
+            · {formatEventTime(m.startDateTime, m.timezone || DEFAULT_EVENT_TIMEZONE)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 /**
@@ -1093,12 +1125,17 @@ function DuplicateCheck({
   events,
   matches,
   skipped,
+  acknowledged,
   onToggle,
+  onKeep,
 }: {
   events: DraftEvent[];
   matches: Record<string, DuplicateMatch[]>;
   skipped: string[];
+  /** Drafts whose likely duplicates the submitter said are different events. */
+  acknowledged: Record<string, string[]>;
   onToggle: (id: string) => void;
+  onKeep: (id: string, likelyIds: string[]) => void;
 }) {
   const flagged = events.filter(e => matches[e.id]?.length);
   if (flagged.length === 0) return null;
@@ -1112,49 +1149,134 @@ function DuplicateCheck({
       </h2>
       {flagged.map(e => {
         const isSkipped = skipped.includes(e.id);
+        const all = matches[e.id];
+        const likely = all.filter(m => m.likely);
+        const near = all.filter(m => !m.likely);
+        const kept = likely.length > 0 && !isSkipped && !!acknowledged[e.id]?.length;
         return (
           <div key={e.id} className="space-y-2">
-            <p className="text-sm">
-              <span className="font-medium">{e.title || 'Untitled'}</span> is at the same venue,
-              close in time, as:
-            </p>
-            <ul className="text-sm space-y-1">
-              {matches[e.id].map(m => (
-                <li key={m.id}>
-                  {m.status === 'approved' ? (
-                    <Link to={generateEventUrl(m.title, m.id)} target="_blank">
-                      {m.title}
-                    </Link>
+            {likely.length > 0 ? (
+              <>
+                <p className="text-sm">
+                  <span className="font-medium">{e.title || 'Untitled'}</span> looks like the same
+                  event as:
+                </p>
+                <MatchList matches={likely} />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isSkipped ? 'default' : 'outline'}
+                    onClick={() => !isSkipped && onToggle(e.id)}
+                    aria-pressed={isSkipped}
+                    className="min-h-11 md:min-h-9"
+                  >
+                    {isSkipped && <Check className="mr-2 h-4 w-4" aria-hidden="true" />}
+                    This is the same event → skip it
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={kept ? 'default' : 'outline'}
+                    onClick={() =>
+                      onKeep(
+                        e.id,
+                        likely.map(m => m.id)
+                      )
+                    }
+                    aria-pressed={kept}
+                    className="min-h-11 md:min-h-9"
+                  >
+                    {kept && <Check className="mr-2 h-4 w-4" aria-hidden="true" />}
+                    Different event → keep
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm">
+                  <span className="font-medium">{e.title || 'Untitled'}</span> is at the same venue,
+                  close in time, as:
+                </p>
+                <MatchList matches={near} />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={isSkipped ? 'default' : 'outline'}
+                  onClick={() => onToggle(e.id)}
+                  aria-pressed={isSkipped}
+                  className="min-h-11 md:min-h-9"
+                >
+                  {isSkipped ? (
+                    <>
+                      <Check className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Same concert: left out
+                    </>
                   ) : (
-                    <span>{m.title} (waiting for review)</span>
+                    'Same concert, leave mine out'
                   )}
-                  <span className="text-muted-foreground">
-                    {' '}
-                    · {formatEventTime(m.startDateTime, m.timezone || DEFAULT_EVENT_TIMEZONE)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <Button
-              type="button"
-              size="sm"
-              variant={isSkipped ? 'default' : 'outline'}
-              onClick={() => onToggle(e.id)}
-              aria-pressed={isSkipped}
-              className="min-h-11 md:min-h-9"
-            >
-              {isSkipped ? (
-                <>
-                  <Check className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Same concert: left out
-                </>
-              ) : (
-                'Same concert, leave mine out'
-              )}
-            </Button>
+                </Button>
+              </>
+            )}
+            {likely.length > 0 && near.length > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground">Also close in time:</p>
+                <MatchList matches={near} />
+              </>
+            )}
           </div>
         );
       })}
+    </section>
+  );
+}
+
+/** The festival being created looks like one already listed: offer to join it instead. */
+function SimilarFestivalCheck({
+  festival,
+  similar,
+  chosen,
+  onChoose,
+}: {
+  festival: DraftFestival;
+  similar: SimilarFestival[];
+  chosen: string | null;
+  onChoose: (id: string | null) => void;
+}) {
+  if (similar.length === 0) return null;
+  return (
+    <section
+      aria-labelledby="similar-festival-heading"
+      className="mb-6 rounded-lg border border-warning/40 bg-warning/10 p-4 space-y-3"
+    >
+      <h2 id="similar-festival-heading" className="font-semibold">
+        This festival may already be listed
+      </h2>
+      <p className="text-sm">
+        <span className="font-medium">{festival.name}</span> looks like:
+      </p>
+      <ul className="text-sm space-y-2">
+        {similar.map(f => (
+          <li key={f.id} className="flex flex-wrap items-center gap-2">
+            <Link to={generateFestivalUrl(f.name, f.id)} target="_blank">
+              {f.name}
+            </Link>
+            <span className="text-muted-foreground">
+              · {f.startDate.slice(0, 10)} to {f.endDate.slice(0, 10)}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant={chosen === f.id ? 'default' : 'outline'}
+              onClick={() => onChoose(chosen === f.id ? null : f.id)}
+              aria-pressed={chosen === f.id}
+              className="min-h-11 md:min-h-9"
+            >
+              {chosen === f.id ? 'Adding to this festival' : 'Add these events to it'}
+            </Button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -1301,6 +1423,11 @@ export default function VerifyEvents() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [duplicates, setDuplicates] = useState<Record<string, DuplicateMatch[]>>({});
   const [skipped, setSkipped] = useState<string[]>([]);
+  const [acknowledged, setAcknowledged] = useState<Record<string, string[]>>({});
+  const [similarFestivals, setSimilarFestivals] = useState<SimilarFestival[]>([]);
+  const [intoFestivalId, setIntoFestivalId] = useState<string | null>(null);
+  // Drafts whose "same event" default has been applied, so a later refetch does not undo a choice.
+  const defaulted = useRef(new Set<string>());
   // Tracks whether the one-time restore from sessionStorage has run
   const [hasRestored, setHasRestored] = useState(false);
 
@@ -1345,7 +1472,17 @@ export default function VerifyEvents() {
     if (!isReviewStep) return;
     const drafts = events.flatMap(e => {
       const startDateTime = normalizeDateTime(e.startDateTime);
-      return e.venue?.id && startDateTime ? [{ id: e.id, venueId: e.venue.id, startDateTime }] : [];
+      return e.venue?.id && startDateTime
+        ? [
+            {
+              id: e.id,
+              venueId: e.venue.id,
+              startDateTime,
+              title: e.title,
+              artists: e.artists.map(a => ({ id: a.id, name: a.name })),
+            },
+          ]
+        : [];
     });
     if (drafts.length === 0) return;
     let cancelled = false;
@@ -1356,13 +1493,56 @@ export default function VerifyEvents() {
     })
       .then(res => (res.ok ? res.json() : { matches: {} }))
       .then(result => {
-        if (!cancelled) setDuplicates(result.matches ?? {});
+        if (cancelled) return;
+        const matches: Record<string, DuplicateMatch[]> = result.matches ?? {};
+        setDuplicates(matches);
+        // A likely duplicate defaults to "same event, skip it". Once only per draft.
+        const fresh = Object.entries(matches)
+          .filter(([id, m]) => m.some(x => x.likely) && !defaulted.current.has(id))
+          .map(([id]) => id);
+        for (const id of fresh) defaulted.current.add(id);
+        if (fresh.length > 0) setSkipped(prev => [...new Set([...prev, ...fresh])]);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, [isReviewStep, events]);
+
+  // A festival this submission would create: is it already listed under a longer or shorter name?
+  useEffect(() => {
+    if (!isReviewStep || !festival || isExistingFestival) return;
+    let cancelled = false;
+    fetch('/events/new/api', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        intent: 'similarFestivals',
+        id: festival.id,
+        name: festival.name,
+        startDate: festival.startDate,
+        endDate: festival.endDate,
+      }),
+    })
+      .then(res => (res.ok ? res.json() : { festivals: [] }))
+      .then(result => {
+        if (!cancelled) setSimilarFestivals(result.festivals ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isReviewStep, festival, isExistingFestival]);
+
+  const keepDespiteDuplicate = (id: string, likelyIds: string[]) => {
+    setAcknowledged(prev => ({ ...prev, [id]: likelyIds }));
+    setSkipped(prev => prev.filter(x => x !== id));
+  };
+
+  const toggleSkip = (id: string) => {
+    setSkipped(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+    setAcknowledged(prev => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== id)));
+  };
 
   const toSubmit = events.filter(e => !skipped.includes(e.id));
 
@@ -1398,6 +1578,7 @@ export default function VerifyEvents() {
         body: JSON.stringify({
           intent: 'submit',
           festivalId: festival?.id,
+          intoFestivalId: intoFestivalId ?? undefined,
           festivalData:
             festival && !isExistingFestival
               ? {
@@ -1427,6 +1608,7 @@ export default function VerifyEvents() {
             contactInfo: e.contactInfo,
             sponsors: e.sponsors,
             posterUrl: loaderData.posterUrl,
+            notDuplicateOf: acknowledged[e.id],
           })),
         }),
       });
@@ -1513,10 +1695,18 @@ export default function VerifyEvents() {
               events={events}
               matches={duplicates}
               skipped={skipped}
-              onToggle={id =>
-                setSkipped(curr => (curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id]))
-              }
+              acknowledged={acknowledged}
+              onToggle={toggleSkip}
+              onKeep={keepDespiteDuplicate}
             />
+            {festival && !isExistingFestival && (
+              <SimilarFestivalCheck
+                festival={festival}
+                similar={similarFestivals}
+                chosen={intoFestivalId}
+                onChoose={setIntoFestivalId}
+              />
+            )}
             <ReviewStep festival={festival} events={toSubmit} posterUrl={loaderData.posterUrl} />
           </>
         )}

@@ -1,16 +1,23 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
-import { cascadeEventMerge, cascadeEventMetadataToArtists } from '../cascade';
+import {
+  cascadeEventMerge,
+  cascadeEventMergeToSetlist,
+  cascadeEventMetadataToArtists,
+} from '../cascade';
 import { deleteEventArtist } from '../event-artist';
 import { EventArtistEntity } from '../event-artist/entity';
 import { createFestival } from '../festival';
 import { createFailedError, notFoundError } from '../helpers';
 import { printedVenueAddress } from '../venue/address';
-import { duplicateSearchRange, nearDuplicates } from './duplicates';
+import { duplicateSearchRange, findLikelyDuplicates, nearDuplicates } from './duplicates';
+import type { LikelyTarget } from './duplicates';
 import { EventEntity } from './entity';
 import type { Event } from './entity';
 import type { ExtractionResult } from './extraction';
 import { extractFromPoster } from './gemini';
+import { eventMergeFillPatch } from './merge-fill';
+import { moveConcertLogs, moveRsvps } from './merge-junctions';
 import { savePosterHash } from './poster-hash';
 import type { CreateEventSchema, UpdateEventSchema } from './schema';
 
@@ -519,6 +526,28 @@ export async function listAllUpcomingEvents(from: Date = new Date()): Promise<Ev
     .sort((a, b) => Date.parse(a.startDateTime) - Date.parse(b.startDateTime));
 }
 
+/**
+ * Approved and submitted events from `from` on, full rows, for the duplicate sweep. Like
+ * `listAllUpcomingEvents` it starts the key range a day early and cuts on parsed instants.
+ */
+export async function listUpcomingForDuplicateSweep(from: Date): Promise<Event[]> {
+  const margin = new Date(from.getTime() - 24 * 60 * 60 * 1000).toISOString();
+  const all: Event[] = [];
+  for (const status of ['approved', 'submitted']) {
+    let cursor: string | undefined;
+    do {
+      const result = await EventEntity.query
+        .byStatus({ status })
+        .gt({ startDateTime: margin })
+        .where((attr, op) => op.notExists(attr.deletedAt))
+        .go({ limit: 100, cursor });
+      all.push(...((result.data || []) as Event[]));
+      cursor = result.cursor || undefined;
+    } while (cursor);
+  }
+  return all.filter(e => Date.parse(e.startDateTime) >= from.getTime());
+}
+
 export async function listPastEvents(params?: {
   limit?: number;
   nextToken?: string;
@@ -575,6 +604,7 @@ export async function listEventsByVenue(
  * `duplicateSearchRange` for why the key range alone cannot be trusted.
  */
 export async function findNearDuplicateEvents(params: {
+  id?: string;
   venueId: string;
   startDateTime: string;
   excludeIds?: string[];
@@ -585,7 +615,52 @@ export async function findNearDuplicateEvents(params: {
     .byVenue({ venueId: params.venueId })
     .between({ startDateTime: range.from }, { startDateTime: range.to })
     .go({ limit: 100 });
-  return nearDuplicates((result.data || []) as Event[], params);
+  return nearDuplicates((result.data || []) as Event[], {
+    startDateTime: params.startDateTime,
+    excludeIds: [...(params.excludeIds ?? []), ...(params.id ? [params.id] : [])],
+  });
+}
+
+/**
+ * The blocking check: events at this venue that are probably the same programme (see
+ * `findLikelyDuplicates`). Same read as `findNearDuplicateEvents`. Returns nothing when the
+ * venue is unresolved, since there is then no venue to compare.
+ */
+export async function findLikelyDuplicateEvents(
+  target: LikelyTarget & { venueId?: string | null }
+): Promise<Event[]> {
+  if (!target.venueId) return [];
+  const range = duplicateSearchRange(target.startDateTime);
+  if (!range) return [];
+  const result = await EventEntity.query
+    .byVenue({ venueId: target.venueId })
+    .between({ startDateTime: range.from }, { startDateTime: range.to })
+    .go({ limit: 100 });
+  return findLikelyDuplicates((result.data || []) as Event[], target);
+}
+
+/** The stored event's own likely duplicates, honouring what a person already confirmed. */
+export async function findLikelyDuplicatesOfEvent(
+  event: Event,
+  extraNotDuplicateOf: string[] = []
+): Promise<Event[]> {
+  return findLikelyDuplicateEvents({
+    id: event.id,
+    venueId: event.venueId,
+    startDateTime: event.startDateTime,
+    title: event.title,
+    artists: event.artists,
+    notDuplicateOf: [...(event.notDuplicateOf ?? []), ...extraNotDuplicateOf],
+  });
+}
+
+/** Record that a person confirmed these are different events, so nobody is asked again. */
+export async function acknowledgeNotDuplicate(id: string, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const existing = await EventEntity.get({ id }).go();
+  if (!existing.data) throw notFoundError('event', id);
+  const merged = [...new Set([...(existing.data.notDuplicateOf ?? []), ...ids])];
+  await EventEntity.patch({ id }).set({ notDuplicateOf: merged }).go();
 }
 
 /**
@@ -833,13 +908,51 @@ export async function listApprovedEventsByMonth(yearMonth: string): Promise<Even
   return all;
 }
 
+/**
+ * Retire `loserId` into `canonicalId`: cast, RSVPs, concert logs and setlists move over, blanks on
+ * the survivor are filled from the loser (`eventMergeFillPatch`), and the loser is soft-deleted
+ * with `mergedIntoId`, which the event route turns into a 301. Nothing is deleted outright.
+ *
+ * Refused: an event into itself, either side already merged or deleted, and a live loser into a
+ * keeper that is not live (the URL people hold would stop working).
+ */
 export async function mergeEvent(loserId: string, canonicalId: string): Promise<void> {
+  if (loserId === canonicalId)
+    throw createFailedError('event', 'cannot merge an event into itself');
   const canonical = await getEvent(canonicalId);
-  if (!canonical) throw notFoundError('event', canonicalId);
+  if (!canonical || canonical.mergedIntoId) throw notFoundError('event', canonicalId);
   const loser = await EventEntity.get({ id: loserId }).go();
   if (!loser.data) throw notFoundError('event', loserId);
+  if (loser.data.deletedAt || loser.data.mergedIntoId) {
+    throw createFailedError('event', `Event ${loserId} is already deleted or merged`);
+  }
+  if (loser.data.status === 'approved' && canonical.status !== 'approved') {
+    throw createFailedError(
+      'event',
+      `Event ${canonicalId} is not approved; merging a live event into it would break the live URL`
+    );
+  }
+
+  const patch = eventMergeFillPatch(
+    canonical as unknown as Record<string, unknown>,
+    loser.data as unknown as Record<string, unknown>
+  );
+  if (Object.keys(patch).length > 0) {
+    // `patch`, not `update`: a composite attribute (festivalId, artForm) in the set recomputes
+    // its index keys (rule 7).
+    await EventEntity.patch({ id: canonicalId })
+      .set(patch as never)
+      .go();
+  }
 
   await cascadeEventMerge(loserId, canonicalId);
+  await moveRsvps(loserId, canonicalId);
+  await moveConcertLogs(loserId, canonicalId, {
+    title: canonical.title,
+    startDateTime: canonical.startDateTime,
+    venueName: canonical.venueName ?? undefined,
+  });
+  await cascadeEventMergeToSetlist(loserId, canonicalId);
   await EventEntity.update({ id: loserId })
     .set({ deletedAt: new Date().toISOString(), mergedIntoId: canonicalId })
     .go();

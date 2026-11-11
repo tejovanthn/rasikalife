@@ -1,6 +1,6 @@
 import { Calendar, MapPin, Upload } from 'lucide-react';
 import { useState } from 'react';
-import { Link, data, useLoaderData } from 'react-router';
+import { Link, data, redirect, useLoaderData } from 'react-router';
 import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
@@ -70,6 +70,14 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
     if (!festival) {
       throw new Response('Festival not found', { status: 410 });
+    }
+
+    // A festival merged into another (`Festival.mergeFestival`) answers 301 to the keeper.
+    if (festival.mergedIntoId) {
+      const keeper = await serverClient.festival.get.query({ id: festival.mergedIntoId });
+      if (keeper && !keeper.mergedIntoId) {
+        throw redirect(generateFestivalUrl(keeper.name, keeper.id), 301);
+      }
     }
 
     const events = await serverClient.event.byFestival.query({

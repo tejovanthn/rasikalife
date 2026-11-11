@@ -67,6 +67,9 @@ export const FestivalEntity = new Entity(
       moderatorNote: { type: 'string', required: false },
       submittedAt: { type: 'string', required: false },
       processedAt: { type: 'string', required: false },
+      // Soft delete. `mergedIntoId` makes the festival route answer 301 to the keeper.
+      deletedAt: { type: 'string', required: false },
+      mergedIntoId: { type: 'string', required: false },
       createdBy: {
         type: 'string',
         required: true,

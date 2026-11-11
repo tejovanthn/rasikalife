@@ -93,3 +93,90 @@ describe('the byVenue range on the real entity', () => {
     expect(params.ExpressionAttributeValues[':startDateTime0']).toBe('2026-11-03');
   });
 });
+
+import { chowdiahFirst, chowdiahSecond } from './__fixtures__/chowdiah-pair';
+import { findLikelyDuplicates } from './duplicates';
+
+describe('findLikelyDuplicates', () => {
+  const base = {
+    id: 'new',
+    venueId: 'v1',
+    startDateTime: '2026-11-01T18:00:00+05:30',
+    title: 'Vocal concert',
+    artists: [{ name: 'Sri T. M. Krishna' }],
+  };
+  const other = (extra: Record<string, unknown> = {}) => ({
+    id: 'old',
+    venueId: 'v1',
+    status: 'approved',
+    startDateTime: '2026-11-01T18:10:00+05:30',
+    title: 'Evening',
+    artists: [{ name: 'T M Krishna' }],
+    ...extra,
+  });
+
+  it('matches a shared billed artist by normalised name', () => {
+    expect(findLikelyDuplicates([other()], base).map(c => c.id)).toEqual(['old']);
+  });
+  it('matches a shared artist by id', () => {
+    const found = findLikelyDuplicates([other({ artists: [{ id: 'a1', name: 'Someone Else' }] })], {
+      ...base,
+      artists: [{ id: 'a1', name: 'X Y' }],
+    });
+    expect(found).toHaveLength(1);
+  });
+  it('matches when one title holds the other main artist', () => {
+    const found = findLikelyDuplicates(
+      [other({ artists: [{ name: 'Ranjani Gayatri' }], title: 'Duo' })],
+      { ...base, title: 'Concert by Ranjani Gayatri', artists: [{ name: 'Other Person' }] }
+    );
+    expect(found).toHaveLength(1);
+  });
+  it('matches when either side names no artist', () => {
+    expect(findLikelyDuplicates([other({ artists: [] })], base)).toHaveLength(1);
+    expect(findLikelyDuplicates([other()], { ...base, artists: [] })).toHaveLength(1);
+  });
+  it('does not match two different casts in one hall', () => {
+    const found = findLikelyDuplicates(
+      [other({ artists: [{ name: 'Unrelated Artist' }], title: 'Different' })],
+      base
+    );
+    expect(found).toEqual([]);
+  });
+  it('needs the same venue and a start within 30 minutes', () => {
+    expect(findLikelyDuplicates([other({ venueId: 'v2' })], base)).toEqual([]);
+    expect(
+      findLikelyDuplicates([other({ startDateTime: '2026-11-01T18:45:00+05:30' })], base)
+    ).toEqual([]);
+    expect(
+      findLikelyDuplicates([other({ startDateTime: '2026-11-01T18:30:00+05:30' })], base)
+    ).toHaveLength(1);
+  });
+  it('skips itself, merged, deleted, draft rows and acknowledged ids (either side)', () => {
+    const rows = [
+      other({ id: 'new' }),
+      other({ id: 'm', mergedIntoId: 'z' }),
+      other({ id: 'd', deletedAt: '2026-01-01' }),
+      other({ id: 'dr', status: 'draft' }),
+      other({ id: 'ack' }),
+      other({ id: 'theirs', notDuplicateOf: ['new'] }),
+    ];
+    expect(findLikelyDuplicates(rows, { ...base, notDuplicateOf: ['ack'] })).toEqual([]);
+  });
+
+  it('flags the Chowdiah pair, both ways round', () => {
+    const asTarget = (e: typeof chowdiahSecond) => ({ ...e, notDuplicateOf: undefined });
+    expect(findLikelyDuplicates([chowdiahFirst], asTarget(chowdiahSecond))).toHaveLength(1);
+    expect(findLikelyDuplicates([chowdiahSecond], asTarget(chowdiahFirst as never))).toHaveLength(
+      1
+    );
+  });
+  it('stops asking once the second event holds the acknowledgement', () => {
+    expect(
+      findLikelyDuplicates([chowdiahFirst], {
+        ...chowdiahSecond,
+        notDuplicateOf: [chowdiahFirst.id],
+      })
+    ).toEqual([]);
+  });
+});

@@ -14,6 +14,7 @@ import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { sendEventApprovedEmail } from '../event-approved-email';
+import { assertNoLikelyDuplicates, likelyDuplicatesOfDrafts } from '../event-duplicates';
 import { triggerReindex } from '../reindex';
 import { createTRPCRouter, editorProcedure, moderatorProcedure, publicProcedure } from '../trpc';
 
@@ -264,6 +265,11 @@ export const eventRouter = createTRPCRouter({
               id: z.string().min(1),
               venueId: z.string().min(1),
               startDateTime: z.string().min(1),
+              // With a title, the rule that blocks a submission is run too, and the matches it
+              // finds come back with `likely: true`. Without one, only the 3-hour warning.
+              title: z.string().optional(),
+              artists: z.array(z.object({ id: z.string().nullish(), name: z.string() })).optional(),
+              notDuplicateOf: z.array(z.string()).optional(),
             })
           )
           .max(50),
@@ -273,21 +279,62 @@ export const eventRouter = createTRPCRouter({
       const excludeIds = input.drafts.map(d => d.id);
       const found = await Promise.all(
         input.drafts.map(async d => {
-          const matches = await Event.findNearDuplicateEvents({ ...d, excludeIds });
+          const matches = await Event.findNearDuplicateEvents({
+            id: d.id,
+            venueId: d.venueId,
+            startDateTime: d.startDateTime,
+            excludeIds,
+          });
+          const likely = new Set(
+            d.title === undefined
+              ? []
+              : (await Event.findLikelyDuplicateEvents({ ...d, title: d.title, excludeIds })).map(
+                  m => m.id
+                )
+          );
+          // Likely first: the blocking matches must not fall off the three shown.
+          const ordered = [...matches].sort(
+            (a, b) => Number(likely.has(b.id)) - Number(likely.has(a.id))
+          );
           return [
             d.id,
-            matches.slice(0, 3).map(m => ({
+            ordered.slice(0, 3).map(m => ({
               id: m.id,
               title: m.title,
               startDateTime: m.startDateTime,
               timezone: m.timezone,
               venueName: m.venueName,
               status: m.status,
+              likely: likely.has(m.id),
             })),
           ] as const;
         })
       );
       return Object.fromEntries(found.filter(([, matches]) => matches.length > 0));
+    }),
+
+  /**
+   * "Is this festival already listed?" for the verify step: approved or submitted festivals with
+   * a similar name and overlapping dates. Read-only; the submitter chooses.
+   */
+  similarFestivals: editorProcedure
+    .input(
+      z.object({
+        id: z.string().optional(),
+        name: z.string().min(1),
+        startDate: z.string().min(1),
+        endDate: z.string().min(1),
+      })
+    )
+    .query(async ({ input }) => {
+      const found = await Festival.findSimilarFestivalsFor(input);
+      return found.slice(0, 3).map(f => ({
+        id: f.id,
+        name: f.name,
+        startDate: f.startDate,
+        endDate: f.endDate,
+        status: f.status,
+      }));
     }),
 
   getUploadUrl: editorProcedure
@@ -371,6 +418,9 @@ export const eventRouter = createTRPCRouter({
       z.object({
         festivalId: z.string().optional(),
         festivalData: Festival.CreateFestivalSchema.optional(),
+        // The submitter chose "add these events to the existing festival" instead of creating
+        // the draft one. The draft festival is retired into it.
+        intoFestivalId: z.string().optional(),
         events: z.array(
           Event.CreateEventSchema.extend({
             id: z.string().min(1),
@@ -379,14 +429,6 @@ export const eventRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Update festival if provided
-      if (input.festivalId && input.festivalData) {
-        await Festival.updateFestival(input.festivalId, {
-          ...input.festivalData,
-        } as Festival.UpdateFestivalInput);
-        await Festival.submitFestival(input.festivalId).catch(() => {});
-      }
-
       // Auto-create venues/organisers/artists that don't have IDs
       const venueCache = new Map<string, string>();
       const organiserCache = new Map<string, string>();
@@ -477,6 +519,39 @@ export const eventRouter = createTRPCRouter({
       const isModerator =
         ctx.user.role === Auth.ROLE.MODERATOR || ctx.user.role === Auth.ROLE.ADMIN;
 
+      // Venues are resolved for the whole batch first, so a venue matched or created here is
+      // the one the duplicate check reads, and a refusal comes before anything is written.
+      // The caches make the second look in the loop below free.
+      const venues = await Promise.all(
+        input.events.map(e => resolveVenue(e.venueName ?? undefined, e.venueId ?? undefined))
+      );
+      assertNoLikelyDuplicates(
+        await likelyDuplicatesOfDrafts(
+          input.events.map((e, i) => ({
+            id: e.id,
+            venueId: venues[i].venueId,
+            startDateTime: e.startDateTime,
+            title: e.title,
+            artists: e.artists,
+            notDuplicateOf: e.notDuplicateOf,
+          }))
+        )
+      );
+
+      const festivalId = input.intoFestivalId ?? input.festivalId;
+      if (input.intoFestivalId) {
+        const target = await Festival.getFestival(input.intoFestivalId);
+        if (!target || target.deletedAt || target.mergedIntoId) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Festival not found' });
+        }
+        if (input.festivalId) await Festival.retireDraftFestival(input.festivalId, target.id);
+      } else if (input.festivalId && input.festivalData) {
+        await Festival.updateFestival(input.festivalId, {
+          ...input.festivalData,
+        } as Festival.UpdateFestivalInput);
+        await Festival.submitFestival(input.festivalId).catch(() => {});
+      }
+
       // Update each draft event with verified data and submit for review.
       // Outer loop is sequential to keep venueCache/organiserCache/artistCache consistent.
       const results = [];
@@ -511,7 +586,7 @@ export const eventRouter = createTRPCRouter({
           id,
           {
             ...eventData,
-            festivalId: input.festivalId,
+            festivalId,
             ...venue,
             ...organiser,
             artists: resolvedArtists,
@@ -532,8 +607,32 @@ export const eventRouter = createTRPCRouter({
   // === MODERATOR PROCEDURES ===
 
   approveEvent: moderatorProcedure
-    .input(z.object({ eventId: z.string().min(1) }))
+    .input(
+      z.object({
+        eventId: z.string().min(1),
+        // Likely duplicates the moderator confirmed are different events. Without it an event
+        // with a likely duplicate is refused; with it, the answer is stored on the event.
+        notDuplicateOf: z.array(z.string()).optional(),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
+      const existing = await Event.getEvent(input.eventId);
+      // An approved event is an idempotent retry, not a new listing: nothing to check.
+      if (existing && existing.status === 'submitted') {
+        assertNoLikelyDuplicates(
+          await likelyDuplicatesOfDrafts([
+            {
+              id: existing.id,
+              venueId: existing.venueId,
+              startDateTime: existing.startDateTime,
+              title: existing.title,
+              artists: existing.artists,
+              notDuplicateOf: [...(existing.notDuplicateOf ?? []), ...(input.notDuplicateOf ?? [])],
+            },
+          ])
+        );
+        await Event.acknowledgeNotDuplicate(existing.id, input.notDuplicateOf ?? []);
+      }
       const result = await Event.approveEvent(input.eventId, ctx.user.id);
       triggerReindex();
       await sendEventApprovedEmail(result, ctx.user.id);
@@ -641,7 +740,38 @@ export const eventRouter = createTRPCRouter({
         })
         .optional()
     )
-    .query(({ input }) => Event.listSubmittedEvents(input)),
+    .query(async ({ input }) => {
+      const page = await Event.listSubmittedEvents(input);
+      // "Possible duplicate of ..." on each waiting event that has one. Events with an
+      // acknowledgement already stored find nothing, so the flag clears once a person answered.
+      const items = await Promise.all(
+        page.items.map(async event => {
+          const found = await Event.findLikelyDuplicatesOfEvent(event).catch(() => []);
+          return {
+            ...event,
+            likelyDuplicates: found.map(f => ({
+              id: f.id,
+              title: f.title,
+              startDateTime: f.startDateTime,
+              status: f.status,
+            })),
+          };
+        })
+      );
+      return { ...page, items };
+    }),
+
+  /**
+   * Retire `loserId` into `keeperId`. The loser's page then answers 301 to the keeper.
+   * See `Event.mergeEvent` for what moves and what is filled.
+   */
+  merge: moderatorProcedure
+    .input(z.object({ loserId: z.string().min(1), keeperId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await Event.mergeEvent(input.loserId, input.keeperId);
+      triggerReindex();
+      return { merged: true };
+    }),
 
   getForReview: moderatorProcedure
     .input(z.object({ id: z.string().min(1) }))

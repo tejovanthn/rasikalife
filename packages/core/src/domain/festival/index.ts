@@ -1,6 +1,8 @@
 import type { z } from 'zod';
 import { generateId } from '../../utils';
+import { EventEntity } from '../event/entity';
 import { createFailedError, notFoundError } from '../helpers';
+import { findSimilarFestivals } from './duplicates';
 import { FestivalEntity } from './entity';
 import type { Festival } from './entity';
 import type { CreateFestivalSchema, UpdateFestivalSchema } from './schema';
@@ -90,7 +92,7 @@ export async function listApprovedFestivalsByMonth(yearMonth: string): Promise<F
       .byStatus({ status: 'approved' })
       .begins({ startDate: yearMonth })
       .go({ limit: 100, cursor });
-    all.push(...((result.data || []) as Festival[]));
+    all.push(...((result.data || []) as Festival[]).filter(f => !f.deletedAt));
     cursor = result.cursor || undefined;
   } while (cursor);
   return all;
@@ -111,7 +113,9 @@ export async function listUpcomingFestivals(params?: {
     .gte({ startDate: cutoffDate })
     .go({ limit: 200, cursor: params?.nextToken });
 
-  const upcoming = ((result.data || []) as Festival[]).filter(f => f.endDate >= today);
+  const upcoming = ((result.data || []) as Festival[]).filter(
+    f => f.endDate >= today && !f.deletedAt
+  );
   const page = upcoming.slice(0, limit);
 
   return {
@@ -136,11 +140,131 @@ export async function listFestivals(params?: {
     .go({ limit, cursor: params?.nextToken });
 
   return {
-    items: (result.data || []) as Festival[],
+    // A merged festival is gone from the list; its URL redirects.
+    items: ((result.data || []) as Festival[]).filter(f => !f.deletedAt),
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
 }
 
+/**
+ * Approved and submitted festivals that look like the one being created (see
+ * `findSimilarFestivals`). Reads both status partitions over the dates that can overlap: a
+ * festival starting up to 60 days before this one's start and no later than its end.
+ */
+export async function findSimilarFestivalsFor(target: {
+  id?: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+}): Promise<Festival[]> {
+  const from = new Date(Date.parse(`${target.startDate.slice(0, 10)}T00:00:00Z`) - 60 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const to = `${target.endDate.slice(0, 10)}~`;
+  const found = await Promise.all(
+    (['approved', 'submitted'] as const).map(status =>
+      FestivalEntity.query
+        .byStatus({ status })
+        .between({ startDate: from }, { startDate: to })
+        .go({ limit: 200 })
+    )
+  );
+  return findSimilarFestivals(
+    found.flatMap(r => (r.data || []) as Festival[]),
+    target
+  );
+}
+
+const isBlank = (v: unknown) =>
+  v === undefined ||
+  v === null ||
+  (typeof v === 'string' && v.trim() === '') ||
+  (Array.isArray(v) && v.length === 0);
+
+/**
+ * Retire `loserId` into `keeperId`: every event of the loser moves to the keeper (festivalId and
+ * festivalName, through `patch` so the `byFestival` key is recomputed, rule 7), the keeper's
+ * blank fields are filled from the loser and its date range widens to cover the moved events,
+ * and the loser is soft-deleted with `mergedIntoId`, which the festival route turns into a 301.
+ * Nothing is deleted. Returns how many events moved.
+ */
+export async function mergeFestival(loserId: string, keeperId: string): Promise<number> {
+  if (loserId === keeperId) throw createFailedError('festival', 'cannot merge into itself');
+  const keeper = await getFestival(keeperId);
+  if (!keeper || keeper.deletedAt) throw notFoundError('festival', keeperId);
+  const loser = await getFestival(loserId);
+  if (!loser) throw notFoundError('festival', loserId);
+  if (loser.deletedAt || loser.mergedIntoId) {
+    throw createFailedError('festival', `Festival ${loserId} is already deleted or merged`);
+  }
+  if (loser.status === 'approved' && keeper.status !== 'approved') {
+    throw createFailedError(
+      'festival',
+      `Festival ${keeperId} is not approved; merging a live festival into it would break the live URL`
+    );
+  }
+
+  let moved = 0;
+  let cursor: string | undefined;
+  do {
+    const page = await EventEntity.query
+      .byFestival({ festivalId: loserId })
+      .go({ limit: 100, cursor });
+    for (const event of page.data || []) {
+      await EventEntity.patch({ id: event.id })
+        .set({ festivalId: keeperId, festivalName: keeper.name })
+        .go();
+      moved++;
+    }
+    cursor = page.cursor || undefined;
+  } while (cursor);
+
+  const patch: Record<string, unknown> = {};
+  for (const field of ['description', 'posterUrl', 'posterUploadId', 'tags', 'sponsors'] as const) {
+    if (isBlank(keeper[field]) && !isBlank(loser[field])) patch[field] = loser[field];
+  }
+  if (isBlank(keeper.organiserId) && !isBlank(loser.organiserId)) {
+    patch.organiserId = loser.organiserId;
+    if (!isBlank(loser.organiserName)) patch.organiserName = loser.organiserName;
+  }
+  if (loser.startDate < keeper.startDate) patch.startDate = loser.startDate;
+  if (loser.endDate > keeper.endDate) patch.endDate = loser.endDate;
+  if (Object.keys(patch).length > 0) {
+    await FestivalEntity.patch({ id: keeperId })
+      .set(patch as never)
+      .go();
+  }
+
+  await FestivalEntity.patch({ id: loserId })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: keeperId })
+    .go();
+  return moved;
+}
+
+/** Approved and submitted festivals not yet over on `fromDate` (YYYY-MM-DD), for the sweep. */
+export async function listFestivalsForDuplicateSweep(fromDate: string): Promise<Festival[]> {
+  const all: Festival[] = [];
+  for (const status of ['approved', 'submitted'] as const) {
+    let cursor: string | undefined;
+    do {
+      const result = await FestivalEntity.query.byStatus({ status }).go({ limit: 200, cursor });
+      all.push(...((result.data || []) as Festival[]));
+      cursor = result.cursor || undefined;
+    } while (cursor);
+  }
+  return all.filter(f => f.endDate.slice(0, 10) >= fromDate && !f.deletedAt);
+}
+
+/** A draft festival the submitter replaced with an existing one. Drafts only. */
+export async function retireDraftFestival(id: string, intoId: string): Promise<void> {
+  const festival = await getFestival(id);
+  if (!festival || festival.status !== 'draft' || festival.deletedAt) return;
+  await FestivalEntity.patch({ id })
+    .set({ deletedAt: new Date().toISOString(), mergedIntoId: intoId })
+    .go();
+}
+
+export { findSimilarFestivals, suggestFestivalKeeper } from './duplicates';
 export type { Festival } from './entity';
 export { CreateFestivalSchema, UpdateFestivalSchema } from './schema';

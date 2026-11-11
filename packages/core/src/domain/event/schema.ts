@@ -59,6 +59,8 @@ export const CreateEventSchema = z.object({
   sourcePlatform: z.enum(['instagram']).optional(),
   sourcePostId: z.string().optional(),
   sourcePostUrl: z.string().optional(),
+  /** Likely duplicates the submitter or moderator confirmed are different events. */
+  notDuplicateOf: z.array(z.string()).optional(),
 });
 
 export const UpdateEventSchema = CreateEventSchema.partial();

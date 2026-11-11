@@ -46,6 +46,21 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
+  if (body.intent === 'similarFestivals') {
+    try {
+      const festivals = await serverClient.event.similarFestivals.query({
+        id: body.id,
+        name: body.name,
+        startDate: body.startDate,
+        endDate: body.endDate,
+      });
+      return data({ festivals });
+    } catch (error) {
+      console.error('Failed to check for similar festivals:', error);
+      return data({ festivals: [] });
+    }
+  }
+
   if (body.intent === 'extract') {
     try {
       const result = await serverClient.event.extractFromPoster.mutate({
@@ -96,10 +111,15 @@ export const action: ActionFunction = async ({ request }) => {
       const results = await serverClient.event.submitVerified.mutate({
         festivalId: body.festivalId,
         festivalData: body.festivalData,
+        intoFestivalId: body.intoFestivalId,
         events: body.events,
       });
       return data({ success: true, eventIds: results.map((e: { id: string }) => e.id) });
     } catch (error) {
+      // The server refused a likely duplicate the verify step did not catch. Say which.
+      if (error instanceof Error && error.message.startsWith('Likely duplicate')) {
+        return data({ error: error.message }, { status: 409 });
+      }
       console.error('Failed to submit events:', error);
       return data({ error: 'Failed to submit events' }, { status: 500 });
     }
