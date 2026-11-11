@@ -3,7 +3,7 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
-## 2026-10-27: raga sources and depth, built, not deployed
+## 2026-10-27: raga sources and depth, deployed to prod 2026-11-11, not yet checked in a browser
 
 Plan: `docs/plans/261027-01-raga-depth.md`. Built: the `source` domain, `citations` on raga,
 the show-only-cited rule (rasa, time and season hide until cited), the new raga fields, phrase
@@ -30,7 +30,7 @@ Next, in order:
    Tirunal, Ramadasa, Ponnayya and the loose matches), then Phase C, compositions.
    Compositions and people (phases B and C of `docs/plans/261103-01-ssp-import.md`) are not built.
 
-## 2026-10-24: self-serve event listing, built, not deployed
+## 2026-10-24: self-serve event listing, deployed to prod 2026-11-11, not yet checked in a browser
 
 Built: the after-submit page, "List your event" entry points, the same-venue ±3h duplicate
 check, `/my-events`, the approval email, and the verify step's "Please check" list. None of
