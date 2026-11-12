@@ -2161,13 +2161,31 @@ QR panel. Copy is in `packages/admin/app/lib/copy.ts` (`ADMIN_COPY` is verbatim 
   about 22 MB). Fonts are Noto Sans and Noto Sans Kannada, variable TTFs from the google/fonts repo
   (OFL, licences beside them, `fetch-fonts.sh`), read from `QR_FONTS_DIR` (`/var/task/fonts`).
   `harfbuzzjs` is `nodejs.install`ed because `hb.js` reads `hb.wasm` from disk.
-- **Layouts** (`src/layout.ts`): sticker 100 mm, four to an A4 sheet in a 2 by 2 block with crop
-  marks at every grid line; table tent is one A4 sheet folded across, the upper half turned 180
-  degrees so both faces read upright, fold ticks and corner ticks; poster is A4. QR is error
-  correction M with a 4 module quiet zone, drawn as one path (`qr-path.ts`). Strings are verbatim
-  from copy.md (`src/copy.ts`). A test decodes every code back from its matrix with `jsqr`.
-- **Measured locally** (Apple silicon, 200 codes): sticker 3.4 s, table tent 10.7 s, poster 5.1 s.
-  The limit is 60 s. `pnpm --filter @rasika/qr sample <format> <count> <out.pdf>` renders a sample.
+- **Layouts** (`src/layout.ts`): sticker 100 mm, four to a sheet in a 2 by 2 block; table tent is
+  one A4 trim folded across, the upper half turned 180 degrees so both faces read upright; poster
+  is A4. QR is error correction M with a 4 module quiet zone, drawn as one path (`qr-path.ts`).
+  Strings are verbatim from copy.md (`src/copy.ts`). A test decodes every code back from its
+  matrix with `jsqr`.
+- **Look** (`src/palette.ts`, the DESIGN.md tokens): the whole face is `hall-light`, full bleed. A
+  `fired-earthenware` band runs to the top and side edges and is sized to the headline, which is
+  `warm-white`. Body, Kannada line and "Free. No app needed." are `ink`. "Code ..." and
+  `rasika.life` are `fired-earthenware`. The QR sits on a `warm-white` panel (the quiet zone is
+  inside it) with `lamp-black` modules, never coloured. No gradients, no ornaments. A test checks
+  QR contrast (ratio 15 or more) and text contrast. On the tent, the top of each face is the fold,
+  so the two bands meet there as one band and the fold carries no white line.
+- **Bleed**: every face runs 3 mm past trim on every side. Text and the QR panel stay at least
+  5 mm inside trim. Each page sets `TrimBox` and `BleedBox`, so a vendor reads the trim from the
+  file. Pages have a 9 mm slug outside the bleed with crop marks (1.5 mm clear of the bleed, 4 mm
+  long). Tent and poster pages are 228 x 315 mm (A4 trim plus slug); the tent also has fold ticks.
+  The sticker sheet is 224 x 224 mm, not A4: two 100 mm stickers with 3 mm bleed on the outer
+  sides need 206 mm plus a 6 mm gutter, so four bleeding stickers cannot fit A4 width (212 mm
+  before any mark). Trims sit at 9 to 109 mm and 115 to 215 mm on both axes; the 6 mm gutter lets
+  neighbouring bleeds meet without overlap; marks sit on all four trim lines of each axis.
+- **Colour for the vendor**: the PDF is RGB, as the design tokens are. A vendor converts to CMYK,
+  and the orange may shift slightly. Order a proof print before a big run.
+- **Measured locally** (Apple silicon, 200 codes): sticker 3.1 s (7.6 MB), table tent 10.4 s
+  (22 MB), poster 5.1 s (11 MB). The limit is 60 s.
+  `pnpm --filter @rasika/qr sample <format> <count> <out.pdf>` renders a sample.
 - **Venue QR panel** on `/venues/:venueid` (`components/VenueQrPanel.tsx`), moderators only. The
   loader asks `qr.statsByVenue` only for a moderator, so the signed-out page that is cached for
   everyone carries no panel data. A moderator's document is `private` already. Actions link to the
