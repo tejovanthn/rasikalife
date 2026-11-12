@@ -1969,7 +1969,11 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   unknown name stays as text on the event. The poster option links to `/events/new`, which cannot
   take a venue, space or date yet.
 - **Rate limit** `infra/scan-rate-limit.ts` (prod only): WAF rate rule on paths starting `/q/`,
-  300 requests per 5 minutes per IP. A block returns 429 with the "Too many scans" page as a WAF
+  1,500 requests per 5 minutes per IP (300 a minute, `SCAN_RATE_LIMIT_PER_MIN`; carrier-grade NAT
+  puts a hall's phones behind one IP). `follow.bulkSet` is also limited to 30 calls a minute per
+  user (`FOLLOW_BULK_LIMIT_PER_MIN`), counted by `hitRateLimit` (`core/src/shared/rate-limit.ts`,
+  an atomic `ADD` on a per-user per-minute item, `expiresAt` set for TTL, fails open); over the
+  limit it is `TOO_MANY_REQUESTS`. A block returns 429 with the "Too many scans" page as a WAF
   custom response body. The ACL is in us-east-1 and attached to the web distribution.
 - `TODO(spec)`: "Publish concert" for a verified owner cannot be shown before submit; the button
   always reads "Submit for review" and the result page says which happened.
@@ -1997,7 +2001,7 @@ Push is phase 7 (next section).
   (`rasika.life`, or `<stage>.rasika.life`), with its own configuration set and SNS topics for
   bounce and complaint. Mail is `rasika.life <concerts@rasika.life>`, reply-to
   `hello@rasika.life`. `Email.sendBulk` (core) uses SESv2 `Content.Simple.Headers` for
-  `List-Unsubscribe` (mailto and https) and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
+  `List-Unsubscribe` (https only, no mailto: nothing processes one) and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
   The SES suppression list is per AWS account, so a complaint on a digest also suppresses that
   address for Classes and approval mail. `infra/email.ts` says so.
 - **Bounce and complaint.** `notifyCrons.emailEventsHandler` reads the SNS message

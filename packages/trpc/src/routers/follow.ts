@@ -6,6 +6,8 @@ import {
   SetShareSchema,
   ToggleFollowSchema,
 } from '@rasika/core/domain/follow/client';
+import { FOLLOW_BULK_LIMIT_PER_MIN } from '@rasika/core/domain/venue-qr/client';
+import { hitRateLimit } from '@rasika/core/shared/rate-limit';
 import { TRPCError } from '@trpc/server';
 import type { TRPC_ERROR_CODE_KEY } from '@trpc/server';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -61,7 +63,18 @@ export const followRouter = createTRPCRouter({
     .input(BulkSetFollowSchema)
     // `bulkSetFollows` also adds the new follows to the code's `followCount` and the day's
     // `QrScanDay.follows` when `qrCode` is given.
-    .mutation(({ input, ctx }) => mapErrors(() => Follow.bulkSetFollows(ctx.user.id, input))),
+    .mutation(async ({ input, ctx }) => {
+      // 30 a minute per user, counted on the table so it holds across Lambdas.
+      const { allowed } = await hitRateLimit({
+        key: `follow-bulk#${ctx.user.id}`,
+        limit: FOLLOW_BULK_LIMIT_PER_MIN,
+        windowSec: 60,
+      });
+      if (!allowed) {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many follow requests' });
+      }
+      return mapErrors(() => Follow.bulkSetFollows(ctx.user.id, input));
+    }),
 
   toggle: protectedProcedure.input(ToggleFollowSchema).mutation(({ input, ctx }) =>
     mapErrors(async () => {

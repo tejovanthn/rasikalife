@@ -356,6 +356,11 @@
       "import": "./src/shared/generic-title.ts",
       "default": "./src/shared/generic-title.ts"
     },
+    "./shared/rate-limit": {
+      "types": "./src/shared/rate-limit.ts",
+      "import": "./src/shared/rate-limit.ts",
+      "default": "./src/shared/rate-limit.ts"
+    },
     "./shared/timezone": {
       "types": "./src/shared/timezone.ts",
       "import": "./src/shared/timezone.ts",
