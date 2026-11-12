@@ -256,20 +256,23 @@ describe('assignQr', () => {
 });
 
 describe('bulkAssignQr', () => {
-  it('numbers labels in the order given', async () => {
+  it('keeps each code its own label', async () => {
     qrIs(UNASSIGNED);
     const patch = chain({ data: ACTIVE });
     vi.mocked(VenueQrEntity.patch).mockReturnValue(patch as never);
 
     await bulkAssignQr({
-      codes: ['AAAAAAAA', 'BBBBBBBB', 'CCCCCCCC'],
+      items: [
+        { code: 'AAAAAAAA', label: 'Entrance' },
+        { code: 'BBBBBBBB', label: 'Register table' },
+        { code: 'CCCCCCCC', label: 'Ticket desk' },
+      ],
       venueId: 'v1',
-      labelPrefix: 'Entrance',
       userId: 'mod1',
     });
 
     const labels = patch.set.mock.calls.map(([fields]) => fields.label);
-    expect(labels).toEqual(['Entrance 1', 'Entrance 2', 'Entrance 3']);
+    expect(labels).toEqual(['Entrance', 'Register table', 'Ticket desk']);
   });
 
   it('changes nothing when one code cannot be assigned', async () => {
@@ -279,9 +282,11 @@ describe('bulkAssignQr', () => {
 
     const outcome = await codeOf(
       bulkAssignQr({
-        codes: ['AAAAAAAA', 'BBBBBBBB'],
+        items: [
+          { code: 'AAAAAAAA', label: 'Entrance' },
+          { code: 'BBBBBBBB', label: 'Desk' },
+        ],
         venueId: 'v1',
-        labelPrefix: 'Entrance',
         userId: 'mod1',
       })
     );

@@ -78,3 +78,12 @@ and win where those tabs disagree.
     `/q/`. The limit is now in the app: a per-IP limit through `hitRateLimit`, keyed
     `scan-ip#<ip>`, 300 a minute (decision 6), applied in `qr.resolve` on the counting page load
     only. A flood still invokes Lambda. The WAF is backlog.
+
+## Owner decision on bulk assign labels (2026-11-12)
+
+18. **Bulk assign takes a label per code.** The label is shown to rasikas on the follow screen
+    ("You're at ..."), and one batch is usually spread over different spots (entrance, register
+    table, ticket desk), so each code needs its own label. `qr.bulkAssign` takes
+    `items: [{ code, label }]` (1 to 50, codes unique) with `venueId` and `spaceId?`. The prefix
+    with numbers is gone from the API. It survives in the admin page only as a "Fill labels"
+    helper that numbers the empty labels of ticked rows.

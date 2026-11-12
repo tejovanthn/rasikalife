@@ -180,9 +180,12 @@ describe('code management', () => {
     });
 
     core.bulkAssignQr.mockResolvedValue([]);
-    await moderator.bulkAssign({ codes: ['ABCDEFGH'], venueId: 'v1', labelPrefix: 'Entrance' });
+    await moderator.bulkAssign({
+      items: [{ code: 'ABCDEFGH', label: 'Entrance' }],
+      venueId: 'v1',
+    });
     expect(core.bulkAssignQr).toHaveBeenCalledWith(
-      expect.objectContaining({ labelPrefix: 'Entrance', userId: 'u1' })
+      expect.objectContaining({ items: [{ code: 'ABCDEFGH', label: 'Entrance' }], userId: 'u1' })
     );
 
     core.updateQrLabel.mockResolvedValue({});
@@ -205,9 +208,21 @@ describe('code management', () => {
   });
 
   it('refuses more than 50 codes and a bad code before reaching core', async () => {
-    const codes = Array.from({ length: 51 }, () => 'ABCDEFGH');
+    const items = Array.from({ length: 51 }, (_, i) => ({
+      code: `ABCDEF${Math.floor(i / 10)}${i % 10}`,
+      label: 'Entrance',
+    }));
+    await expect(moderator.bulkAssign({ items, venueId: 'v1' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
     await expect(
-      moderator.bulkAssign({ codes, venueId: 'v1', labelPrefix: 'Entrance' })
+      moderator.bulkAssign({
+        items: [
+          { code: 'ABCDEFGH', label: 'A' },
+          { code: 'ABCDEFGH', label: 'B' },
+        ],
+        venueId: 'v1',
+      })
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
     await expect(moderator.retire({ code: 'abc' })).rejects.toMatchObject({ code: 'BAD_REQUEST' });
     expect(core.bulkAssignQr).not.toHaveBeenCalled();

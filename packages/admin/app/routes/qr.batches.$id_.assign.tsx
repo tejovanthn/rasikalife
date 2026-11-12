@@ -9,7 +9,8 @@ import { createServerClient, errorMessage, loadVenueOptions, siteUrl } from '~/l
 import { requireModerator } from '~/lib/auth.server';
 import { ADMIN_COPY, ADMIN_EXTRA_COPY } from '~/lib/copy';
 import { pageMeta } from '~/lib/meta';
-import { numberedLabels, selectedCodes } from '~/lib/qr-admin';
+import { assignItems, fillLabels, readAssignRows } from '~/lib/qr-admin';
+import type { AssignRow } from '~/lib/qr-admin';
 
 export const meta = () => pageMeta(ADMIN_COPY.assign.submit);
 
@@ -37,26 +38,36 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const form = await request.formData();
   const venueId = String(form.get('venueId') ?? '');
   const spaceId = String(form.get('spaceId') ?? '');
-  const labelPrefix = String(form.get('labelPrefix') ?? '').trim();
 
   const pageOrder = await unassignedCodes(request, batchId);
-  const codes = selectedCodes(form.getAll('codes').map(String), pageOrder, QR_BULK_ASSIGN_MAX);
-  if (codes.length === 0)
-    return data({ error: ADMIN_EXTRA_COPY.bulkNone, count: 0 }, { status: 400 });
-  if (!venueId) return data({ error: ADMIN_COPY.assign.venue, count: 0 }, { status: 400 });
-  if (!labelPrefix) return data({ error: ADMIN_COPY.assign.label, count: 0 }, { status: 400 });
+  let rows = readAssignRows(form, pageOrder);
+  const base = { count: 0, venueId, rows, missing: [] as string[] };
+
+  // The no-JavaScript path of the "Fill labels" button: send the form back with labels filled.
+  if (form.get('intent') === 'fill') {
+    rows = fillLabels(rows, String(form.get('fillText') ?? ''));
+    return data({ ...base, rows, error: null, filled: true });
+  }
+
+  const { items, missing, ticked } = assignItems(rows, QR_BULK_ASSIGN_MAX);
+  if (ticked === 0) {
+    return data({ ...base, error: ADMIN_EXTRA_COPY.bulkNone }, { status: 400 });
+  }
+  if (!venueId) return data({ ...base, error: ADMIN_COPY.assign.venue }, { status: 400 });
+  if (missing.length > 0) {
+    return data({ ...base, missing, error: ADMIN_EXTRA_COPY.bulkRowMissing }, { status: 400 });
+  }
 
   const trpc = await createServerClient(request);
   try {
     const assigned = await trpc.qr.bulkAssign.mutate({
-      codes,
+      items,
       venueId,
       spaceId: spaceId || undefined,
-      labelPrefix,
     });
-    return data({ error: null, count: assigned.length });
+    return data({ ...base, error: null, count: assigned.length });
   } catch (error) {
-    return data({ error: errorMessage(error), count: 0 }, { status: 400 });
+    return data({ ...base, error: errorMessage(error) }, { status: 400 });
   }
 }
 
@@ -67,16 +78,18 @@ export default function BulkAssign() {
   const pending = navigation.state === 'submitting';
 
   // Everything up to the cap starts ticked, so the button already says the right count on the
-  // server-rendered page.
-  const [chosen, setChosen] = useState<string[]>(() => codes.slice(0, QR_BULK_ASSIGN_MAX));
-  const [prefix, setPrefix] = useState('');
-  const preview = numberedLabels(prefix || ADMIN_COPY.assign.labelPlaceholder, chosen.length);
+  // server-rendered page. After a no-JavaScript fill the server sends the rows back.
+  const [rows, setRows] = useState<AssignRow[]>(
+    () =>
+      result?.rows ??
+      codes.map((code, index) => ({ code, label: '', ticked: index < QR_BULK_ASSIGN_MAX }))
+  );
+  const [fillText, setFillText] = useState('');
+  const tickedCount = rows.filter(row => row.ticked).length;
+  const missing = new Set(result?.missing ?? []);
 
-  function toggle(code: string, on: boolean) {
-    setChosen(current => {
-      const next = on ? [...current, code] : current.filter(c => c !== code);
-      return codes.filter(c => next.includes(c));
-    });
+  function update(code: string, change: Partial<AssignRow>) {
+    setRows(current => current.map(row => (row.code === code ? { ...row, ...change } : row)));
   }
 
   if (result && !result.error) {
@@ -104,54 +117,84 @@ export default function BulkAssign() {
       <PageTitle className="mb-2">{ADMIN_EXTRA_COPY.assignSelected}</PageTitle>
       <p className="mb-6 text-sm text-muted-foreground">{ADMIN_EXTRA_COPY.bulkLimit}</p>
       <Form method="post" className="max-w-md space-y-4">
-        <VenuePicker venues={venues} createVenueUrl={createVenueUrl} />
+        <VenuePicker
+          venues={venues}
+          createVenueUrl={createVenueUrl}
+          initialVenueId={result?.venueId || undefined}
+        />
+        <p className="text-sm text-muted-foreground">{ADMIN_EXTRA_COPY.bulkLabelsHint}</p>
+
         <Field
-          label={ADMIN_EXTRA_COPY.bulkPrefix}
-          htmlFor="labelPrefix"
-          hint={ADMIN_EXTRA_COPY.bulkPrefixHint}
+          label={ADMIN_EXTRA_COPY.bulkFillLabel}
+          htmlFor="fillText"
+          hint={ADMIN_EXTRA_COPY.bulkFillHint}
         >
-          <Input
-            id="labelPrefix"
-            name="labelPrefix"
-            maxLength={55}
-            required
-            value={prefix}
-            onChange={event => setPrefix(event.target.value)}
-            placeholder={ADMIN_COPY.assign.labelPlaceholder}
-          />
+          <div className="flex gap-2">
+            <Input
+              id="fillText"
+              name="fillText"
+              maxLength={55}
+              value={fillText}
+              onChange={event => setFillText(event.target.value)}
+              placeholder={ADMIN_COPY.assign.labelPlaceholder}
+            />
+            <Button
+              type="submit"
+              variant="outline"
+              name="intent"
+              value="fill"
+              formNoValidate
+              onClick={event => {
+                // With JavaScript fill in the page. Without it the form posts and the server fills.
+                event.preventDefault();
+                setRows(current => fillLabels(current, fillText));
+              }}
+            >
+              {ADMIN_EXTRA_COPY.bulkFill}
+            </Button>
+          </div>
         </Field>
 
         <fieldset className="space-y-1">
           <legend className="sr-only">{ADMIN_EXTRA_COPY.tableCode}</legend>
           <ul className="divide-y divide-border rounded-md border border-border">
-            {codes.map(code => {
-              const index = chosen.indexOf(code);
-              return (
-                <li key={code} className="flex min-h-tap items-center gap-3 px-3">
+            {rows.map(row => (
+              <li key={row.code} className="px-3 py-2">
+                <div className="flex min-h-tap items-center gap-3">
                   <input
-                    id={`c-${code}`}
+                    id={`c-${row.code}`}
                     type="checkbox"
                     name="codes"
-                    value={code}
+                    value={row.code}
                     className="h-5 w-5"
-                    checked={index >= 0}
-                    onChange={event => toggle(code, event.target.checked)}
+                    checked={row.ticked}
+                    onChange={event => update(row.code, { ticked: event.target.checked })}
                   />
-                  <label htmlFor={`c-${code}`} className="flex flex-1 justify-between gap-3">
-                    <span className="font-mono">{code}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {index >= 0 ? preview[index] : ''}
-                    </span>
+                  <label htmlFor={`c-${row.code}`} className="font-mono">
+                    {row.code}
                   </label>
-                </li>
-              );
-            })}
+                  <Input
+                    name={`label-${row.code}`}
+                    aria-label={ADMIN_EXTRA_COPY.bulkRowLabel(row.code)}
+                    aria-invalid={missing.has(row.code) || undefined}
+                    maxLength={60}
+                    className="flex-1"
+                    value={row.label}
+                    onChange={event => update(row.code, { label: event.target.value })}
+                    placeholder={ADMIN_COPY.assign.labelPlaceholder}
+                  />
+                </div>
+                {missing.has(row.code) && row.ticked && !row.label.trim() ? (
+                  <FormError>{ADMIN_EXTRA_COPY.bulkRowMissing}</FormError>
+                ) : null}
+              </li>
+            ))}
           </ul>
         </fieldset>
 
-        <FormError>{result?.error}</FormError>
-        <Button type="submit" pending={pending} disabled={chosen.length === 0}>
-          {ADMIN_COPY.bulkAssign.submit(chosen.length)}
+        {missing.size === 0 ? <FormError>{result?.error}</FormError> : null}
+        <Button type="submit" pending={pending} disabled={tickedCount === 0}>
+          {ADMIN_COPY.bulkAssign.submit(tickedCount)}
         </Button>
       </Form>
     </Chrome>

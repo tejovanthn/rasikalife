@@ -93,13 +93,48 @@ export function formatWhen(iso: string | null | undefined): string {
     .replace(/\bpm\b/i, 'pm');
 }
 
-/** Labels for a bulk assign: `${prefix} 1`, `${prefix} 2`, in the order given (core does this). */
-export function numberedLabels(prefix: string, count: number): string[] {
-  return Array.from({ length: count }, (_, index) => `${prefix.trim()} ${index + 1}`);
+/** One row of the bulk assign form: a code, its label and whether it is ticked. */
+export type AssignRow = { code: string; label: string; ticked: boolean };
+
+/**
+ * Fills the empty labels of ticked rows with `${text} 1`, `${text} 2`, numbered by position among
+ * the ticked rows. A label already typed stays, and so does an unticked row.
+ */
+export function fillLabels(rows: AssignRow[], text: string): AssignRow[] {
+  const base = text.trim();
+  if (!base) return rows;
+  let position = 0;
+  return rows.map(row => {
+    if (!row.ticked) return row;
+    position += 1;
+    return row.label.trim() ? row : { ...row, label: `${base} ${position}` };
+  });
 }
 
-/** Picks the checked codes from a form, in page order, at most `max`. */
-export function selectedCodes(formValues: string[], pageOrder: string[], max: number): string[] {
-  const chosen = new Set(formValues);
-  return pageOrder.filter(code => chosen.has(code)).slice(0, max);
+/** Reads the bulk assign form: ticked codes and the label typed for each, in page order. */
+export function readAssignRows(
+  form: { getAll(name: string): unknown[]; get(name: string): unknown },
+  pageOrder: string[]
+): AssignRow[] {
+  const ticked = new Set(form.getAll('codes').map(String));
+  return pageOrder.map(code => ({
+    code,
+    label: String(form.get(`label-${code}`) ?? ''),
+    ticked: ticked.has(code),
+  }));
+}
+
+/** The ticked rows (at most `max`, in page order) split into ready items and codes with no label. */
+export function assignItems(
+  rows: AssignRow[],
+  max: number
+): { items: { code: string; label: string }[]; missing: string[]; ticked: number } {
+  const ticked = rows.filter(row => row.ticked).slice(0, max);
+  return {
+    items: ticked
+      .filter(row => row.label.trim())
+      .map(row => ({ code: row.code, label: row.label.trim() })),
+    missing: ticked.filter(row => !row.label.trim()).map(row => row.code),
+    ticked: ticked.length,
+  };
 }
