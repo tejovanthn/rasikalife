@@ -37,7 +37,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   }
 }
 
-/** "PDF failed. Try again": same codes, a new render. */
+/** "PDF failed. Try again" and "Render PDF again": same codes, a new render (Spec: re-render on
+ * demand, for example after a design change). */
 export async function action({ request, params }: ActionFunctionArgs) {
   await requireModerator(request);
   const trpc = await createServerClient(request);
@@ -81,9 +82,16 @@ export default function BatchPage() {
 
       <div className="mb-8 flex flex-wrap items-center gap-3" aria-live="polite">
         {batch.pdfStatus === 'ready' && downloadUrl ? (
-          <a className={buttonVariants()} href={downloadUrl}>
-            {ADMIN_COPY.batch.ready}
-          </a>
+          <>
+            <a className={buttonVariants()} href={downloadUrl}>
+              {ADMIN_COPY.batch.ready}
+            </a>
+            <Form method="post">
+              <Button type="submit" variant="outline" pending={navigation.state !== 'idle'}>
+                {ADMIN_EXTRA_COPY.pdfRerender}
+              </Button>
+            </Form>
+          </>
         ) : batch.pdfStatus === 'failed' ? (
           <Form method="post">
             <Button type="submit" variant="destructive" pending={navigation.state !== 'idle'}>

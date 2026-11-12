@@ -109,6 +109,8 @@ export const ADMIN_EXTRA_COPY = {
   retiredNotice: 'This code is retired and cannot be changed.',
   unassignedNotice: 'This code is not assigned yet.',
   pdfRetry: 'Try again',
+  // Not in the Copy tab yet (added 12 Nov for re-rendering a ready batch).
+  pdfRerender: 'Render PDF again',
   codeNotFound: 'No code with that value.',
   invalidCode: 'Codes are 8 characters: digits and letters, without I, L, O or U.',
   // Partners (sabha dashboard access).
