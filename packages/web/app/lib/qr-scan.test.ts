@@ -10,8 +10,37 @@ import {
   parseDoneKeys,
   rowKey,
   scanEventTitle,
+  shareAllState,
+  shareEligibleKeys,
+  showShareAll,
   summaryLine,
 } from './qr-scan';
+
+describe('share with all of these (owner decision 19)', () => {
+  const rows = ['venue:v', 'organiser:o', 'artist:a'];
+
+  it('counts only toggled venues and organisers', () => {
+    expect(shareEligibleKeys(rows, ['venue:v', 'artist:a'])).toEqual(['venue:v']);
+    expect(shareEligibleKeys(rows, ['venue:v', 'organiser:o', 'artist:a'])).toEqual([
+      'venue:v',
+      'organiser:o',
+    ]);
+    expect(shareEligibleKeys(rows, [])).toEqual([]);
+  });
+
+  it('shows from two eligible targets', () => {
+    expect(showShareAll(['venue:v'])).toBe(false);
+    expect(showShareAll(['venue:v', 'organiser:o'])).toBe(true);
+  });
+
+  it('is a tri-state of the boxes', () => {
+    const e = ['venue:v', 'organiser:o'];
+    expect(shareAllState(e, [])).toBe('unchecked');
+    expect(shareAllState(e, ['venue:v'])).toBe('mixed');
+    expect(shareAllState(e, ['venue:v', 'organiser:o'])).toBe('checked');
+    expect(shareAllState(e, ['artist:a'])).toBe('unchecked');
+  });
+});
 
 const event: ScanEventView = {
   id: 'e1',

@@ -1965,6 +1965,13 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   only for a followed venue or organiser and only when it changed (so an old consent is not
   stamped again), and a followed row that is now unticked is an unfollow. A signed-in reader who
   already follows every row goes straight to confirmation.
+- **"Share with all of these"** (decisions.md 19) is a client-only shortcut above the rows. It
+  renders after hydration, so it is absent without JavaScript. It shows only when two or more
+  venue or organiser rows are toggled on, and is never pre-ticked. Ticking it ticks every visible
+  share box, unticking clears them, and its state follows the boxes (`indeterminate` for some).
+  It has no `name`, so it posts nothing: consent is still per target. The rules are pure in
+  `lib/qr-scan.ts` (`shareEligibleKeys`, `shareAllState`, `showShareAll`). The label is not in
+  the Copy tab yet.
 - **Sign-in carryover.** A signed-out submit stores `qr_intent` (`lib/qr-intent.server.ts`,
   react-router cookie signed with the `QrIntentSecret` SST secret, `exp` inside the payload,
   HttpOnly, SameSite Lax, 15 minutes) and goes to `/auth/login?redirectTo=/q/{code}`.

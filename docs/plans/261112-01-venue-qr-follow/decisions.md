@@ -87,3 +87,12 @@ and win where those tabs disagree.
     `items: [{ code, label }]` (1 to 50, codes unique) with `venueId` and `spaceId?`. The prefix
     with numbers is gone from the API. It survives in the admin page only as a "Fill labels"
     helper that numbers the empty labels of ticked rows.
+
+## Owner decision on sharing (2026-11-12)
+
+19. **"Share with all of these" shortcut.** On the follow screen, a checkbox above the rows ticks
+    every visible per-target share box for this scan only. It shows only when two or more venue or
+    organiser rows are toggled on, is never pre-ticked, and is hidden without JavaScript. It is
+    checked when all boxes are ticked, unchecked when none, indeterminate when some. It posts
+    nothing. Consent is still one checkbox per target (decision 1), stored per target with the
+    share consent version. It never covers hidden targets, artists or future follows.
