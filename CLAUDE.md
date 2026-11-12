@@ -2210,7 +2210,9 @@ procedures wrap it, and each reads `targetType` and `targetId` from the call's i
 
 `PARTNER_FORBIDDEN` is the error code, on a FORBIDDEN error (the formatter copies it from the
 `cause`). `partner.exportFollowers` and `partner.updateProfile` use the strict variant: followers
-consented to share with the sabha, not with staff, and "verified owners edit". `qr.statsByVenue`
+consented to share with the sabha, not with staff, and "verified owners edit". This refusal is deliberate (owner decision 11, 2026-11-12): consent named the sabha, so
+moderators get no export and no profile edit here. They edit through the existing admin and Edit
+paths, and a sabha that wants help invites a moderator as a viewer. `qr.statsByVenue`
 and `space.*` take a `venueId` and not a target pair, so they call `requireVenueAccess`
 (`partner-guard.ts`): `space.list` and `statsByVenue` admit any member, `space.create` and
 `space.update` an owner. A member of an organiser has no right to a venue's halls.
