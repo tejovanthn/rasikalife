@@ -195,7 +195,8 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const signin = url.searchParams.get('signin');
   const failed = url.searchParams.get('error') === 'save';
   let initial = { follow: followed, share: shared };
-  if (signin === 'cancelled' || failed) {
+  const restoring = signin === 'cancelled' || failed;
+  if (restoring) {
     const intent = await readQrIntent(request);
     if (intent && intent.code === code) {
       const ok = intent.targets.filter(t => t.follow);
@@ -221,6 +222,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
         }
       : undefined,
   };
+  // The choices were read once above; the sign-in is over, so the cookie goes.
+  const pageHeaders = new Headers(NO_STORE);
+  if (restoring) pageHeaders.append('Set-Cookie', await clearQrIntent());
   return data<LoaderData>(
     {
       kind: 'follow',
@@ -233,7 +237,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       upcoming: outcome.state === 'venue' ? outcome.upcoming.map(lineOf) : [],
       screen,
     },
-    { headers: NO_STORE }
+    { headers: pageHeaders }
   );
 }
 

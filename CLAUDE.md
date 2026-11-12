@@ -1947,10 +1947,14 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   react-router cookie signed with the `QrIntentSecret` SST secret, `exp` inside the payload,
   HttpOnly, SameSite Lax, 15 minutes) and goes to `/auth/login?redirectTo=/q/{code}`.
   `auth.callback.tsx` calls `finishQrIntent`: it applies `follow.bulkSet` with the new access
-  token, clears the cookie and lands on `/q/{code}/done`. A missing or expired cookie falls back
-  to `post_login_redirect`, which is `/q/{code}`. A cancelled sign-in goes to
-  `/q/{code}?signin=cancelled`, a failed save to `?error=save`; both keep the cookie so the ticks
-  come back. **CloudFront forwards only whitelisted cookies**, so `qr_intent` is in the cache
+  token and lands on `/q/{code}/done`. A missing or expired cookie falls back to
+  `post_login_redirect`, which is `/q/{code}`. A cancelled sign-in goes to
+  `/q/{code}?signin=cancelled`, a failed save to `?error=save`; the scan page reads the cookie
+  once to put the ticks back and clears it. **The cookie is bound to the sign-in attempt**: it
+  holds a random `nonce`. The openauth client makes its own OAuth `state` and cannot take ours,
+  so `/auth/login` copies the cookie's nonce into the session it already writes for the PKCE
+  challenge (`qr_nonce`), and the callback applies the intent only when the two match. The
+  callback clears the cookie at the end of every sign-in, applied or not. **CloudFront forwards only whitelisted cookies**, so `qr_intent` is in the cache
   policy list (`infra/site.ts`). That adds it to the cache key. `/q` is `no-store`, so no cached
   page depends on it; only a reader who is mid sign-in gets a separate cache key for 15 minutes.
   Set the secret with `sst secret set QrIntentSecret <random>` on each stage before deploy.

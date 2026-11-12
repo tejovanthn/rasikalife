@@ -7,13 +7,14 @@ import { QR_INTENT_TTL_SEC } from '@rasika/core/domain/venue-qr/client';
 import {
   clearQrIntent,
   createQrIntentCookie,
+  intentMatchesAttempt,
   readQrIntent,
   serializeQrIntent,
 } from './qr-intent.server';
 import type { QrIntent } from './qr-intent.server';
 
 const cookie = createQrIntentCookie('test-key', false);
-const intent: QrIntent = {
+const intent: Omit<QrIntent, 'nonce'> = {
   code: 'ABCDEFGH',
   eventId: 'e1',
   targets: [
@@ -32,7 +33,7 @@ describe('qr_intent cookie', () => {
     expect(header).toMatch(/HttpOnly/i);
     expect(header).toMatch(/SameSite=Lax/i);
     expect(header).toContain(`Max-Age=${QR_INTENT_TTL_SEC}`);
-    expect(await readQrIntent(requestWith(header), 2_000, cookie)).toEqual(intent);
+    expect(await readQrIntent(requestWith(header), 2_000, cookie)).toMatchObject(intent);
   });
 
   it('expires after 15 minutes', async () => {
@@ -63,5 +64,27 @@ describe('qr_intent cookie', () => {
 
   it('clearing sets an expired cookie', async () => {
     expect(await clearQrIntent(cookie)).toMatch(/Max-Age=0/);
+  });
+
+  it('carries a random nonce, new for each cookie', async () => {
+    const a = await readQrIntent(
+      requestWith(await serializeQrIntent(intent, 0, cookie)),
+      1,
+      cookie
+    );
+    const b = await readQrIntent(
+      requestWith(await serializeQrIntent(intent, 0, cookie)),
+      1,
+      cookie
+    );
+    expect(a?.nonce).toHaveLength(36);
+    expect(a?.nonce).not.toBe(b?.nonce);
+  });
+
+  it('applies only for the sign-in attempt that stored the same nonce', () => {
+    expect(intentMatchesAttempt({ nonce: 'n'.repeat(16) }, 'n'.repeat(16))).toBe(true);
+    expect(intentMatchesAttempt({ nonce: 'n'.repeat(16) }, 'm'.repeat(16))).toBe(false);
+    expect(intentMatchesAttempt({ nonce: 'n'.repeat(16) }, undefined)).toBe(false);
+    expect(intentMatchesAttempt(null, 'n'.repeat(16))).toBe(false);
   });
 });

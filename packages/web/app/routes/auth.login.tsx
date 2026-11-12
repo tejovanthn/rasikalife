@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from 'react-router';
 import { redirect } from 'react-router';
 import { authClient, commitSession, getSession } from '~/lib/auth.server';
+import { readQrIntent } from '~/lib/qr-intent.server';
 import { safeRedirectPath } from '~/lib/safe-redirect';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -35,6 +36,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const back = safeRedirectPath(url.searchParams.get('redirectTo'));
   if (back) session.set('post_login_redirect', back);
   else session.unset('post_login_redirect');
+
+  // Bind a scanner's `qr_intent` cookie to this attempt. The openauth client makes its own OAuth
+  // `state` and has no way to take ours, so the cookie's nonce is copied into this session (which
+  // the callback already trusts for the PKCE challenge) and compared there.
+  const intent = await readQrIntent(request);
+  if (intent) session.set('qr_nonce', intent.nonce);
+  else session.unset('qr_nonce');
 
   return redirect(authUrl, {
     headers: {

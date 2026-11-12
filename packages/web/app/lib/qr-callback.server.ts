@@ -1,7 +1,7 @@
 import type { AppRouter } from '@rasika/trpc';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { Resource } from 'sst';
-import { clearQrIntent, readQrIntent } from '~/lib/qr-intent.server';
+import { clearQrIntent, intentMatchesAttempt, readQrIntent } from '~/lib/qr-intent.server';
 import { doneHref, rowKey } from '~/lib/qr-scan';
 
 /**
@@ -10,15 +10,19 @@ import { doneHref, rowKey } from '~/lib/qr-scan';
  * `finishQrIntent` applies the choices with the new access token (the request holds no session
  * yet) and says where to land and which `Set-Cookie` to add. A missing, tampered or expired
  * cookie returns `null`: the callback then sends the reader back to `/q/{code}` through the
- * ordinary `post_login_redirect`, and only the ticks are lost. A failed save keeps the cookie so
- * the scan page can put the ticks back.
+ * ordinary `post_login_redirect`, and only the ticks are lost. The callback clears the cookie at
+ * the end of every sign-in, applied or not. After a failed save or a cancelled sign-in the scan
+ * page reads it once to put the ticks back, then clears it itself.
  */
 export async function finishQrIntent(
   request: Request,
-  accessToken: string
-): Promise<{ location: string; setCookie?: string } | null> {
+  accessToken: string,
+  attemptNonce: unknown
+): Promise<{ location: string } | null> {
   const intent = await readQrIntent(request);
-  if (!intent) return null;
+  // The cookie must belong to this sign-in attempt. A cookie from another attempt, or one set
+  // after this one began, is ignored (and the callback clears it).
+  if (!intent || !intentMatchesAttempt(intent, attemptNonce)) return null;
 
   const client = createTRPCClient<AppRouter>({
     links: [
@@ -44,7 +48,6 @@ export async function finishQrIntent(
       intent.eventId,
       intent.targets.filter(t => t.follow).map(t => rowKey(t.type, t.id))
     ),
-    setCookie: await clearQrIntent(),
   };
 }
 
