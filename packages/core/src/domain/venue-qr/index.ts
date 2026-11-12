@@ -200,22 +200,24 @@ export async function assignQr(
 }
 
 /**
- * Assigns up to 50 codes to one venue with numbered labels (`Entrance 1`, `Entrance 2`) in the
- * order given. Every code is checked before the first write, so a bad code stops the whole call
+ * Assigns up to 50 codes to one venue with one label per code, in the order given. Every code is checked before the first write, so a bad code stops the whole call
  * with nothing changed. A race that lands mid-way still throws, leaving earlier codes assigned.
  */
 export async function bulkAssignQr(
   input: BulkAssignQrInput & { userId: string },
   now: Date = new Date()
 ): Promise<VenueQr[]> {
-  if (input.codes.length > QR_BULK_ASSIGN_MAX) {
+  if (input.items.length > QR_BULK_ASSIGN_MAX) {
     throw new ApplicationError(
       ErrorCode.VALIDATION_ERROR,
       `Bulk assign takes at most ${QR_BULK_ASSIGN_MAX} codes`
     );
   }
+  if (new Set(input.items.map(item => item.code)).size !== input.items.length) {
+    throw new ApplicationError(ErrorCode.VALIDATION_ERROR, 'Each code can appear once');
+  }
   await requireVenueAndSpace(input.venueId, input.spaceId);
-  for (const code of input.codes) {
+  for (const { code } of input.items) {
     const qr = await requireQr(code);
     if (qr.status === 'retired') {
       throw new ApplicationError(ErrorCode.QR_RETIRED, `QR code ${code} is retired`);
@@ -229,14 +231,14 @@ export async function bulkAssignQr(
   }
 
   const assigned: VenueQr[] = [];
-  for (const [index, code] of input.codes.entries()) {
+  for (const { code, label } of input.items) {
     assigned.push(
       await assignQr(
         {
           code,
           venueId: input.venueId,
           spaceId: input.spaceId,
-          label: `${input.labelPrefix} ${index + 1}`,
+          label,
           userId: input.userId,
         },
         now

@@ -2128,10 +2128,18 @@ QR panel. Copy is in `packages/admin/app/lib/copy.ts` (`ADMIN_COPY` is verbatim 
   admin routes stay in `packages/web`.
 - **Routes.** `/qr` (codes, filters, "Assign code" box, batches), `/qr/batches/new`,
   `/qr/batches/:id` (polls every 3 s while `pdfStatus` is `pending`), `/qr/batches/:id/assign` (bulk,
-  up to 50, numbered labels), `/qr/:code/assign`, `/qr/:code/edit?intent=label|reassign`,
+  up to 50, a label per code), `/qr/:code/assign`, `/qr/:code/edit?intent=label|reassign`,
   `/qr/:code/retire` (a confirm page, so it works without JavaScript). The venue typeahead loads
   every venue once (`loadVenueOptions`) and filters in the browser (`filterVenues`); spaces load per
   venue from `/api/spaces`. Pure helpers are in `lib/qr-admin.ts` with tests.
+- **Bulk assign takes a label per code** (owner decision 18). The label is what a rasika reads as
+  "You're at ...", and one batch is spread over several spots. `qr.bulkAssign` and
+  `bulkAssignQr` take `items: [{ code, label }]` (1 to `QR_BULK_ASSIGN_MAX`, codes unique), and
+  core checks every code before the first write as before. The page shows a label input beside each
+  checkbox. Submit refuses a ticked row with no label and marks that row. "Fill labels" gives
+  empty labels of ticked rows `${text} 1`, `${text} 2` (`fillLabels`, numbered by position among
+  ticked rows; typed labels stay). It works without JavaScript: the button posts `intent=fill` and
+  the action returns the rows, which seed the form state. With JavaScript it fills in the page.
 - **`qr` router** adds `createBatch`, `rerenderBatch`, `listBatches`, `getBatch` (with a 5 minute
   presigned PDF url when ready), `list`, `get`, `assign`, `bulkAssign`, `updateLabel`, `reassign`,
   `retire`, `statsByVenue`; the `space` router has `list`, `create`, `update`. All are

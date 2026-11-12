@@ -93,8 +93,14 @@ export const ADMIN_EXTRA_COPY = {
   batchBack: 'Back to QR codes',
   assignSelected: 'Assign these codes to a venue',
   bulkVenue: 'Venue',
-  bulkPrefix: 'Label prefix',
-  bulkPrefixHint: 'Labels become Entrance 1, Entrance 2 and so on, in the order shown.',
+  // Not in the Copy tab yet: per-code labels (owner decision 18).
+  bulkLabelsHint:
+    'Give each code its own label, such as Main entrance. Rasikas see it on the follow screen.',
+  bulkFillLabel: 'Label to fill in',
+  bulkFill: 'Fill labels',
+  bulkFillHint: 'Fills empty labels of ticked codes with this text and a number.',
+  bulkRowLabel: (code: string) => `Label for ${code}`,
+  bulkRowMissing: 'Add a label for this code.',
   bulkLimit: 'Up to 50 codes at a time.',
   bulkNone: 'Tick at least one code.',
   noUnassigned: 'Every code in this batch is assigned or retired.',

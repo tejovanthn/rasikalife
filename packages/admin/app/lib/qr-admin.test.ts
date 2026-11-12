@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { ADMIN_COPY, ADMIN_EXTRA_COPY } from './copy';
 import { isModeratorRole } from './gate';
 import {
+  assignItems,
   assignPath,
+  fillLabels,
   filterVenues,
   formatWhen,
-  numberedLabels,
   parseCodeInput,
   parseListFilters,
-  selectedCodes,
+  readAssignRows,
   shouldPollBatch,
   testScanUrl,
 } from './qr-admin';
@@ -88,13 +89,56 @@ describe('small helpers', () => {
     expect(formatWhen('nonsense')).toBe('');
   });
 
-  it('numbers labels in order, trimming the prefix', () => {
-    expect(numberedLabels(' Entrance ', 3)).toEqual(['Entrance 1', 'Entrance 2', 'Entrance 3']);
+  it('fills empty labels of ticked rows, numbered by ticked position', () => {
+    const rows = [
+      { code: 'A', label: '', ticked: true },
+      { code: 'B', label: '', ticked: false },
+      { code: 'C', label: 'Ticket desk', ticked: true },
+      { code: 'D', label: '  ', ticked: true },
+    ];
+    expect(fillLabels(rows, ' Entrance ').map(r => r.label)).toEqual([
+      'Entrance 1',
+      '',
+      'Ticket desk',
+      'Entrance 3',
+    ]);
+    expect(fillLabels(rows, '  ')).toBe(rows);
   });
 
-  it('keeps page order and the cap when reading ticked codes', () => {
-    expect(selectedCodes(['C', 'A', 'X'], ['A', 'B', 'C'], 50)).toEqual(['A', 'C']);
-    expect(selectedCodes(['A', 'B', 'C'], ['A', 'B', 'C'], 2)).toEqual(['A', 'B']);
+  it('reads rows in page order with their own labels', () => {
+    const form = new FormData();
+    form.append('codes', 'C');
+    form.append('codes', 'A');
+    form.append('label-A', 'Door');
+    form.append('label-B', 'Unticked');
+    expect(readAssignRows(form, ['A', 'B', 'C'])).toEqual([
+      { code: 'A', label: 'Door', ticked: true },
+      { code: 'B', label: 'Unticked', ticked: false },
+      { code: 'C', label: '', ticked: true },
+    ]);
+  });
+
+  it('splits ticked rows into items and codes with no label, capped', () => {
+    const rows = [
+      { code: 'A', label: ' Door ', ticked: true },
+      { code: 'B', label: '', ticked: true },
+      { code: 'C', label: 'Desk', ticked: false },
+      { code: 'D', label: 'Hall', ticked: true },
+    ];
+    expect(assignItems(rows, 50)).toEqual({
+      items: [
+        { code: 'A', label: 'Door' },
+        { code: 'D', label: 'Hall' },
+      ],
+      missing: ['B'],
+      ticked: 3,
+    });
+    expect(assignItems(rows, 1)).toEqual({
+      items: [{ code: 'A', label: 'Door' }],
+      missing: [],
+      ticked: 1,
+    });
+    expect(assignItems([], 50).ticked).toBe(0);
   });
 });
 

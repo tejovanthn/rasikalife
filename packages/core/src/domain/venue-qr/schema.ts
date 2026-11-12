@@ -42,12 +42,19 @@ export const AssignQrSchema = z.object({
   note: QrNoteSchema,
 });
 
+export const BulkAssignItemSchema = z.object({ code: QrCodeSchema, label: QrLabelSchema });
+
 export const BulkAssignQrSchema = z.object({
-  codes: z.array(QrCodeSchema).min(1).max(QR_BULK_ASSIGN_MAX),
+  // Each code carries its own label: one batch is spread over different spots.
+  items: z
+    .array(BulkAssignItemSchema)
+    .min(1)
+    .max(QR_BULK_ASSIGN_MAX)
+    .refine(items => new Set(items.map(item => item.code)).size === items.length, {
+      message: 'Each code can appear once',
+    }),
   venueId: z.string(),
   spaceId: z.string().optional(),
-  // Labels become `${labelPrefix} 1`, `${labelPrefix} 2` in the order given.
-  labelPrefix: QrLabelSchema,
 });
 
 export const UpdateQrLabelSchema = z.object({ code: QrCodeSchema, label: QrLabelSchema });
