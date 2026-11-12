@@ -23,6 +23,8 @@ Next, in order:
    - Check `/me/following` and `/me/notifications`.
    - Invite yourself as an owner and open the sabha dashboard. Run an export.
    - Check the untested query paths named in the sabha section of `CLAUDE.md`.
+   - Scan once and confirm the web Lambda receives `x-rasika-client-ip` (the per-IP limit relies
+     on it; it falls back to `X-Forwarded-For`, which a client can spoof).
 5. Still open:
    - **Digest time:** Sunday 18:00 IST, to be checked with the pilot sabhas.
    - Owner decisions 11 to 16 are settled and built (`decisions.md`).
