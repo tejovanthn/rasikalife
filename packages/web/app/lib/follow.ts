@@ -169,3 +169,40 @@ export function refollowTarget(row: Pick<MyFollow, 'targetType' | 'targetId' | '
   const base = { type: row.targetType, id: row.targetId, follow: true as const };
   return row.targetType === 'artist' ? base : { ...base, share: row.shareWithTarget };
 }
+
+export const FOLLOW_TAB_KEYS = ['artists', 'organisers', 'venues'] as const;
+export type FollowTabKey = (typeof FOLLOW_TAB_KEYS)[number];
+
+const TAB_KEY_BY_TYPE: Record<FollowTargetType, FollowTabKey> = {
+  artist: 'artists',
+  organiser: 'organisers',
+  venue: 'venues',
+};
+
+export type FollowTab = { key: FollowTabKey; type: FollowTargetType; label: string; count: number };
+
+/**
+ * The tab bar of `/me/following`: one tab per non-empty group, labelled "Venues (1)". The
+ * selected tab is the requested one when it names a shown tab, else the first. `groups` come from
+ * `groupFollows`, so they are already in order. No groups gives no selection.
+ */
+export function followingTabs(
+  groups: FollowGroup[],
+  requested?: string | null
+): { tabs: FollowTab[]; selected: FollowTabKey | null } {
+  const tabs = groups
+    .filter(g => g.rows.length > 0)
+    .map(g => ({
+      key: TAB_KEY_BY_TYPE[g.type],
+      type: g.type,
+      label: `${g.heading} (${g.rows.length})`,
+      count: g.rows.length,
+    }));
+  const selected = tabs.find(t => t.key === requested)?.key ?? tabs[0]?.key ?? null;
+  return { tabs, selected };
+}
+
+/** The page link for a tab, also the action URL of its forms so a post returns to the same tab. */
+export function followingTabHref(tab: FollowTabKey | null): string {
+  return tab ? `/me/following?tab=${tab}` : '/me/following';
+}

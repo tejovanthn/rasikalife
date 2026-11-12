@@ -1929,6 +1929,15 @@ admin yet.
   hover or keyboard focus. Its aria-label is `unfollowLabel(name)`. A tap on a touch screen
   unfollows at once; the Undo toast is the safety net. The share switch (venue and organiser rows)
   sits small under the lines.
+- **`/me/following` has tabs, not stacked groups.** `followingTabs(groups, requested)` (`lib/follow.ts`)
+  returns one tab per non-empty group, labelled with the group heading and its count ("Venues
+  (1)"), and the selected key. The selected tab is `?tab=artists|organisers|venues`, a query
+  parameter and not client state, so it works without JavaScript and is linkable. A missing or
+  invalid value, or a tab with no follows, selects the first non-empty group. With one group there
+  is no tab bar. Tabs are `Link`s in a row that scrolls sideways (`overflow-x-auto`), 44px tall,
+  with a 2px `primary` bottom border and `aria-current="page"` on the active one. The unfollow,
+  Undo and share forms post to `followingTabHref(selected)`, so they return to the same tab. The
+  group heading stays as an `sr-only` `h2`.
 - **Row data is one batch read.** `follow.mine` calls `Follow.getFollowTargetCards(follows)`
   (`core/domain/follow`): one `batchGetAll` per type, so unprocessed keys are retried, never
   dropped. It returns image, city and instrument only. A missing or soft-deleted target has no
