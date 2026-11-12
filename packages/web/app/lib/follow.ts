@@ -1,4 +1,5 @@
 import type { FollowTargetType } from '@rasika/core/domain/follow/client';
+import { artistTagline } from '~/lib/artist-display';
 import { generateArtistUrl, generateOrganiserUrl, generateVenueUrl } from '~/lib/url-slug';
 
 /**
@@ -21,6 +22,12 @@ export const FOLLOW_COPY = {
     "They won't get your details in future exports. Copies they've already downloaded stay with them.",
   stopSharing: 'Stop sharing',
   cancel: 'Cancel',
+  // Type labels for the second line of a `/me/following` row (Copy, typeLabel).
+  typeLabel: {
+    artist: 'Artist',
+    organiser: 'Organiser',
+    venue: 'Venue',
+  },
   groups: {
     artist: 'Artists',
     organiser: 'Sabhas and organisers',
@@ -30,6 +37,8 @@ export const FOLLOW_COPY = {
 
 export const unfollowedToast = (name: string) => `Unfollowed ${name}.`;
 export const shareLabel = (name: string) => `Share my details with ${name}`;
+/** Accessible name of the row's Following button: "Unfollow" then the name. */
+export const unfollowLabel = (name: string) => `${FOLLOW_COPY.unfollow} ${name}`;
 export const stopSharingTitle = (name: string) => `Stop sharing with ${name}?`;
 
 /**
@@ -86,6 +95,9 @@ export type MyFollow = {
   targetName: string;
   shareWithTarget: boolean;
   createdAt: string;
+  imageUrl?: string | null;
+  city?: string | null;
+  instrument?: string | null;
 };
 
 export type FollowRow = MyFollow & { url: string; canShare: boolean };
@@ -102,6 +114,32 @@ export function followUrl(type: FollowTargetType, id: string, name: string): str
   if (type === 'artist') return generateArtistUrl(name, id);
   if (type === 'organiser') return generateOrganiserUrl(name, id);
   return generateVenueUrl(name, id);
+}
+
+/** Up to two initials for the avatar fallback: first letters of the first two words. */
+export function followInitials(name: string): string {
+  const words = name
+    .split(/\s+/)
+    .map(w => w.replace(/^[^\p{L}\p{N}]+/u, ''))
+    .filter(Boolean);
+  return words
+    .slice(0, 2)
+    .map(w => Array.from(w)[0]?.toLocaleUpperCase() ?? '')
+    .join('');
+}
+
+/**
+ * The muted line under a name: "Venue · Chennai", "Organiser", "Vocal · Chennai". An artist shows
+ * the instrument when set, else "Artist". The city is added only when known.
+ */
+export function followSecondLine(
+  row: Pick<MyFollow, 'targetType' | 'instrument' | 'city'>
+): string {
+  const type =
+    row.targetType === 'artist'
+      ? (artistTagline({ instrument: row.instrument }) ?? FOLLOW_COPY.typeLabel.artist)
+      : FOLLOW_COPY.typeLabel[row.targetType];
+  return [type, row.city?.trim() || null].filter(Boolean).join(' · ');
 }
 
 /**

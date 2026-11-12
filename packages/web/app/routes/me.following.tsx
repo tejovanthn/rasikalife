@@ -18,10 +18,13 @@ import { requireUser } from '~/lib/auth.server';
 import {
   FOLLOW_COPY,
   type FollowRow,
+  followInitials,
+  followSecondLine,
   groupFollows,
   refollowTarget,
   shareLabel,
   stopSharingTitle,
+  unfollowLabel,
   unfollowedToast,
 } from '~/lib/follow';
 
@@ -120,81 +123,115 @@ export default function MeFollowing() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-3xl space-y-8">
-      <h1 className="page-title">{FOLLOW_COPY.pageTitle}</h1>
+    <main className="container mx-auto px-4 py-8 max-w-xl">
+      <h1 className="page-title mb-6">{FOLLOW_COPY.pageTitle}</h1>
 
       {groups.length === 0 && <EmptyState message={FOLLOW_COPY.empty} />}
 
       {groups.map(group => (
-        <section key={group.type} className="space-y-3">
-          <h2 className="section-heading">{group.heading}</h2>
-          <ul className="divide-y rounded-lg border bg-card">
+        <section key={group.type} className="mb-8">
+          <h2 className="border-b pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {group.heading}
+          </h2>
+          <ul>
             {group.rows.map(row => {
               const sharing = isSharing(row);
               return (
-                <li key={`${row.targetType}:${row.targetId}`} className="p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <Link to={row.url} className="font-medium">
+                <li
+                  key={`${row.targetType}:${row.targetId}`}
+                  className="flex items-start gap-3 border-b py-3"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-accent-foreground"
+                  >
+                    {row.imageUrl ? (
+                      <img
+                        src={row.imageUrl}
+                        alt=""
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      followInitials(row.targetName)
+                    )}
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <Link to={row.url} className="block truncate font-bold hover:underline">
                       {row.targetName}
                     </Link>
-                    <unfollow.Form method="post">
-                      <input type="hidden" name="intent" value="unfollow" />
-                      <input type="hidden" name="type" value={row.targetType} />
-                      <input type="hidden" name="id" value={row.targetId} />
-                      <input type="hidden" name="name" value={row.targetName} />
-                      <input type="hidden" name="wasShared" value={String(row.shareWithTarget)} />
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className="min-h-11 md:min-h-9"
+                    <p className="truncate text-sm text-muted-foreground">
+                      {followSecondLine(row)}
+                    </p>
+
+                    {row.canShare && (
+                      <share.Form
+                        method="post"
+                        className="mt-1 flex items-center gap-1"
+                        onSubmit={event => {
+                          // Turning sharing off asks first. Without JavaScript the form just posts.
+                          if (sharing) {
+                            event.preventDefault();
+                            setConfirming(row);
+                          }
+                        }}
                       >
-                        {FOLLOW_COPY.unfollow}
-                      </Button>
-                    </unfollow.Form>
+                        <input type="hidden" name="intent" value="setShare" />
+                        <input type="hidden" name="type" value={row.targetType} />
+                        <input type="hidden" name="id" value={row.targetId} />
+                        <input type="hidden" name="share" value={String(!sharing)} />
+                        <span
+                          id={`share-${row.targetId}`}
+                          className="text-xs text-muted-foreground"
+                        >
+                          {shareLabel(row.targetName)}
+                        </span>
+                        <button
+                          type="submit"
+                          role="switch"
+                          aria-checked={sharing}
+                          aria-labelledby={`share-${row.targetId}`}
+                          className="relative -my-2.5 inline-flex h-11 w-11 shrink-0 items-center justify-center md:my-0 md:h-6 md:w-9"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className={`absolute inset-x-0 top-1/2 h-5 -translate-y-1/2 rounded-full border transition-colors ${
+                              sharing ? 'bg-primary border-primary' : 'bg-muted border-input'
+                            }`}
+                          />
+                          <span
+                            aria-hidden="true"
+                            className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-background shadow transition-all ${
+                              sharing ? 'right-2 md:right-0.5' : 'left-2 md:left-0.5'
+                            }`}
+                          />
+                        </button>
+                      </share.Form>
+                    )}
                   </div>
 
-                  {row.canShare && (
-                    <share.Form
-                      method="post"
-                      className="flex items-center justify-between gap-3"
-                      onSubmit={event => {
-                        // Turning sharing off asks first. Without JavaScript the form just posts.
-                        if (sharing) {
-                          event.preventDefault();
-                          setConfirming(row);
-                        }
-                      }}
+                  <unfollow.Form method="post" className="shrink-0">
+                    <input type="hidden" name="intent" value="unfollow" />
+                    <input type="hidden" name="type" value={row.targetType} />
+                    <input type="hidden" name="id" value={row.targetId} />
+                    <input type="hidden" name="name" value={row.targetName} />
+                    <input type="hidden" name="wasShared" value={String(row.shareWithTarget)} />
+                    {/* "Following" at rest, "Unfollow" on hover or focus, as on X. A tap on a
+                        touch screen unfollows at once; the Undo toast is the safety net. */}
+                    <button
+                      type="submit"
+                      aria-label={unfollowLabel(row.targetName)}
+                      className="group inline-flex min-h-11 min-w-[7rem] items-center justify-center rounded-full border border-input bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:border-destructive hover:text-destructive focus-visible:border-destructive focus-visible:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:min-h-9"
                     >
-                      <input type="hidden" name="intent" value="setShare" />
-                      <input type="hidden" name="type" value={row.targetType} />
-                      <input type="hidden" name="id" value={row.targetId} />
-                      <input type="hidden" name="share" value={String(!sharing)} />
-                      <span id={`share-${row.targetId}`} className="text-sm">
-                        {shareLabel(row.targetName)}
+                      <span className="group-hover:hidden group-focus-visible:hidden">
+                        {FOLLOW_COPY.following}
                       </span>
-                      <button
-                        type="submit"
-                        role="switch"
-                        aria-checked={sharing}
-                        aria-labelledby={`share-${row.targetId}`}
-                        className="relative inline-flex h-11 w-14 shrink-0 items-center justify-center md:h-6 md:w-11"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className={`absolute inset-x-0 top-1/2 h-6 -translate-y-1/2 rounded-full border transition-colors ${
-                            sharing ? 'bg-primary border-primary' : 'bg-muted border-input'
-                          }`}
-                        />
-                        <span
-                          aria-hidden="true"
-                          className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-background shadow transition-all ${
-                            sharing ? 'right-2.5 md:right-1.5' : 'left-2.5 md:left-1.5'
-                          }`}
-                        />
-                      </button>
-                    </share.Form>
-                  )}
+                      <span className="hidden group-hover:inline group-focus-visible:inline">
+                        {FOLLOW_COPY.unfollow}
+                      </span>
+                    </button>
+                  </unfollow.Form>
                 </li>
               );
             })}

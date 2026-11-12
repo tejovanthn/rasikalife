@@ -3,6 +3,7 @@ import type { TransactWriteCommandInput } from '@aws-sdk/lib-dynamodb';
 import { ApplicationError, ErrorCode } from '../../constants';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { keyOfEntity } from '../../db/keys';
+import { batchGetAll } from '../../shared/batch-get';
 import { ArtistEntity } from '../artist/entity';
 import { OrganiserEntity } from '../organiser/entity';
 import { getQr, recordQrFollows } from '../venue-qr';
@@ -339,6 +340,92 @@ export async function bulkSetFollows(
 export async function listMyFollows(userId: string): Promise<Follow[]> {
   const result = await FollowEntity.query.primary({ userId }).go({ pages: 'all' });
   return (result.data as Follow[]) ?? [];
+}
+
+/** What a `/me/following` row shows about its target. All fields are optional. */
+export type FollowTargetCard = {
+  imageUrl?: string;
+  city?: string;
+  instrument?: string;
+};
+
+type CardRow = {
+  id: string;
+  photoUrl?: string;
+  logoUrl?: string;
+  city?: string;
+  instrument?: string;
+  deletedAt?: string;
+};
+
+type BatchEntity = {
+  get: (keys: Array<{ id: string }>) => {
+    go: (options?: { attributes?: string[] }) => Promise<{
+      data?: unknown[] | null;
+      unprocessed?: Array<{ id: string }> | null;
+    }>;
+  };
+};
+
+async function readCards(
+  entity: BatchEntity,
+  ids: string[],
+  attributes: string[]
+): Promise<CardRow[]> {
+  if (ids.length === 0) return [];
+  return batchGetAll(
+    ids.map(id => ({ id })),
+    keys => entity.get(keys).go({ attributes })
+  ) as Promise<CardRow[]>;
+}
+
+/**
+ * The image, city and instrument of every followed target, in one batch read per type (not one
+ * get per row). Keys are `${type}:${id}`. A missing or soft-deleted target has no entry, so its
+ * row falls back to the stored name. A merged target keeps its own record, which is still there.
+ */
+export async function getFollowTargetCards(
+  follows: Array<Pick<Follow, 'targetType' | 'targetId'>>
+): Promise<Record<string, FollowTargetCard>> {
+  const idsOf = (type: FollowTargetType) => [
+    ...new Set(follows.filter(f => f.targetType === type).map(f => f.targetId)),
+  ];
+  const [venues, organisers, artists] = await Promise.all([
+    readCards(VenueEntity as unknown as BatchEntity, idsOf('venue'), [
+      'id',
+      'photoUrl',
+      'city',
+      'deletedAt',
+    ]),
+    readCards(OrganiserEntity as unknown as BatchEntity, idsOf('organiser'), [
+      'id',
+      'logoUrl',
+      'city',
+      'deletedAt',
+    ]),
+    readCards(ArtistEntity as unknown as BatchEntity, idsOf('artist'), [
+      'id',
+      'photoUrl',
+      'city',
+      'instrument',
+      'deletedAt',
+    ]),
+  ]);
+  const out: Record<string, FollowTargetCard> = {};
+  const add = (type: FollowTargetType, rows: CardRow[]) => {
+    for (const row of rows) {
+      if (row.deletedAt) continue;
+      out[`${type}:${row.id}`] = {
+        imageUrl: (type === 'organiser' ? row.logoUrl : row.photoUrl) || undefined,
+        city: row.city?.trim() || undefined,
+        instrument: type === 'artist' ? row.instrument?.trim() || undefined : undefined,
+      };
+    }
+  };
+  add('venue', venues);
+  add('organiser', organisers);
+  add('artist', artists);
+  return out;
 }
 
 /** Which of these targets the user follows. Keys are `${type}:${id}`. */
