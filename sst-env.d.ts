@@ -51,14 +51,35 @@ declare module "sst" {
       "name": string
       "type": "sst.aws.Function"
     }
+    "NotifyEmail": {
+      "configSet": string
+      "sender": string
+      "type": "sst.aws.Email"
+    }
+    "NotifyEmailBounceTopic": {
+      "arn": string
+      "type": "sst.aws.SnsTopic"
+    }
+    "NotifyEmailComplaintTopic": {
+      "arn": string
+      "type": "sst.aws.SnsTopic"
+    }
     "OgImage": {
       "name": string
       "type": "sst.aws.Function"
       "url": string
     }
+    "PrivateFiles": {
+      "name": string
+      "type": "sst.aws.Bucket"
+    }
     "QrIntentSecret": {
       "type": "sst.sst.Secret"
       "value": string
+    }
+    "QrRenderQueue": {
+      "type": "sst.aws.Queue"
+      "url": string
     }
     "RasikaAdmin": {
       "type": "sst.aws.React"
