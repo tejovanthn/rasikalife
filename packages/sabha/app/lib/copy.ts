@@ -3,8 +3,8 @@
  * `docs/plans/261112-01-venue-qr-follow/copy.md` ("Sabha dashboard, invite, export" and
  * "Add a concert"). Placeholders are functions, so braces never reach the screen.
  *
- * `SABHA_EXTRA_COPY` holds what the screens need and copy.md does not list. Each is a
- * `TODO(copy)`, kept plain, to be replaced once copy.md has them. No em dashes anywhere.
+ * `SABHA_EXTRA_COPY` is verbatim from copy.md's "Strings added after the build (12 Nov)".
+ * No em dashes anywhere.
  */
 export const SABHA_COPY = {
   switcherLabel: 'Managing',
@@ -58,9 +58,9 @@ export const SABHA_COPY = {
   venue: 'Venue',
 } as const;
 
-/** TODO(copy): none of these are in copy.md. */
+/** Copy tab, "Strings added after the build (12 Nov)", Sabha dashboard. */
 export const SABHA_EXTRA_COPY = {
-  brand: 'rasika.life',
+  brand: 'rasika.life for sabhas',
   signIn: 'Sign in with Google',
   signOut: 'Sign out',
   signInLead: 'Sign in with the Google account your invite was sent to.',
@@ -68,7 +68,7 @@ export const SABHA_EXTRA_COPY = {
   errorBody: 'Try again in a moment.',
   notFoundTitle: 'Not found',
   forbiddenTitle: 'No access',
-  forbiddenBody: "You don't manage this one.",
+  forbiddenBody: "You don't have access to this sabha or venue.",
   home: 'Back to your dashboards',
   chooseHeading: 'Pick one to open',
   typeLabel: { organiser: 'Organiser', venue: 'Venue' },
@@ -85,7 +85,7 @@ export const SABHA_EXTRA_COPY = {
     `Followers over the last 30 days: from ${from} to ${to}.`,
   trendNew: 'New followers',
   // Profile
-  profileReadOnly: 'Only verified owners can change these details.',
+  profileReadOnly: 'Only owners can change these details.',
   profileSave: 'Save changes',
   profileFields: {
     name: 'Name',
@@ -114,7 +114,7 @@ export const SABHA_EXTRA_COPY = {
   eventsSave: 'Save concert',
   eventsReviewWait: 'Waiting for review',
   eventsView: 'View on rasika.life',
-  eventsBack: 'Back to events',
+  eventsBack: 'Back to concerts',
   eventsArtistsHint: 'One name per line, or separated by commas.',
   eventsNoSpace: 'No space',
   eventsSubmitted: 'Thanks. A moderator will review it shortly.',
@@ -145,9 +145,10 @@ export const SABHA_EXTRA_COPY = {
   codeScansWeek: 'Scans, 7 days',
   codeFollows: 'Follows',
   codeRetired: 'Retired',
-  codeNoHome: 'This organiser has no home venue, so no codes are shown.',
+  codeNoHome: 'QR codes belong to venues. This organiser has no home venue set, so none are shown.',
   // Followers
-  followersNote: 'Counts only. Names are never shown here.',
+  followersNote:
+    'Counts only. Names appear only in the export, for followers who chose to share them.',
   // Export
   exportHistory: 'Recent downloads',
 } as const;

@@ -108,8 +108,7 @@ export async function dayBeforeReminderEmail(
   const firstTime = first ? Notification.formatTime(first.startDateTime, first.timezone) : '';
   const subject =
     input.entries.length === 1 && first
-      ? // TODO(copy): subject when the event has no venue name.
-        `Tomorrow: ${first.title}${first.venueName ? ` at ${first.venueName}` : ''}`
+      ? `Tomorrow: ${first.title}${first.venueName ? ` at ${first.venueName}` : ''}`
       : `Tomorrow: ${input.entries.length} concerts you follow`;
   const element = (
     <DayBeforeReminderEmail

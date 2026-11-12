@@ -26,7 +26,6 @@ export function VenueQrPanel({
         </a>
       </div>
       {sorted.length === 0 ? (
-        // TODO(copy): empty state is not in copy.md.
         <p className="text-sm text-muted-foreground">No QR codes at this venue yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-border">

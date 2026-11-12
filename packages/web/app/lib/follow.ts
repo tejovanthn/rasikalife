@@ -33,8 +33,7 @@ export const shareLabel = (name: string) => `Share my details with ${name}`;
 export const stopSharingTitle = (name: string) => `Stop sharing with ${name}?`;
 
 /**
- * The count line under a Follow button. Copy has no string for it.
- * TODO(copy): the label for the public follower count on venue, organiser and artist pages.
+ * The count line under a Follow button on venue, organiser and artist pages (Copy, 12 Nov).
  */
 export function followerCountLabel(count: number): string | null {
   if (count <= 0) return null;

@@ -2,8 +2,7 @@
  * Admin strings. The first block is verbatim from `docs/plans/261112-01-venue-qr-follow/copy.md`
  * ("Admin app copy"). Placeholders are functions, so braces never reach the screen.
  *
- * The second block is strings the screens need that copy.md does not list. They are marked
- * `TODO(copy)` and kept plain; replace them once copy.md has them.
+ * The second block is verbatim from copy.md's "Strings added after the build (12 Nov)".
  */
 export const ADMIN_COPY = {
   batches: {
@@ -56,7 +55,7 @@ export const ADMIN_COPY = {
   },
 } as const;
 
-/** TODO(copy): none of these are in copy.md. */
+/** Copy tab, "Strings added after the build (12 Nov)", Admin app. */
 export const ADMIN_EXTRA_COPY = {
   brand: 'rasika.life admin',
   signOut: 'Sign out',
@@ -112,7 +111,7 @@ export const ADMIN_EXTRA_COPY = {
   pdfRetry: 'Try again',
   codeNotFound: 'No code with that value.',
   invalidCode: 'Codes are 8 characters: digits and letters, without I, L, O or U.',
-  // Partners (sabha dashboard access). All TODO(copy): copy.md only has the invite form.
+  // Partners (sabha dashboard access).
   partners: 'Partners',
   partnersSearch: 'Search organisers and venues',
   partnersSearchSubmit: 'Search',
@@ -134,14 +133,14 @@ export const ADMIN_EXTRA_COPY = {
   partnersVerified: 'Verified',
   partnersNotVerified: 'Not verified yet. The first owner to accept an invite verifies it.',
   partnersOpenPage: 'Open public page',
-  partnersReviewHeading: 'Review of owner events',
-  partnersReviewOff: 'Events added by owners are published at once.',
-  partnersReviewOn: 'Events added by owners wait for a moderator.',
+  partnersReviewHeading: 'Review of owner concerts',
+  partnersReviewOff: 'Concerts added or edited by owners are published right away.',
+  partnersReviewOn: 'Concerts added or edited by owners wait for a moderator.',
   partnersReviewTurnOn: 'Turn review on',
   partnersReviewTurnOff: 'Turn review off',
-  spotCheck: 'Owner events',
+  spotCheck: 'Owner concerts',
   spotCheckHint: 'Concerts that owners published without review, newest first.',
-  spotCheckNone: 'No owner events yet.',
+  spotCheckNone: 'No owner concerts yet.',
   spotCheckPublished: 'Published',
   spotCheckEvent: 'Concert',
   spotCheckWhen: 'When',

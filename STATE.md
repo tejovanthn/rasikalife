@@ -25,9 +25,6 @@ Next, in order:
    - Check the untested query paths named in the sabha section of `CLAUDE.md`.
 5. Still open:
    - **Digest time:** Sunday 18:00 IST, to be checked with the pilot sabhas.
-   - **Strings:** 177 placeholder strings are listed in
-     `docs/plans/261112-01-venue-qr-follow/copy-todo.md`. The owner writes them into the Copy tab,
-     then an agent replaces them word for word.
    - **Linked venues:** an organiser dashboard shows QR codes for its home venue only
      (`TODO(spec)` in `sabha/dashboard.ts`).
    - **Reminder unsubscribe:** the "reminders" link also stops push reminders, but Copy says

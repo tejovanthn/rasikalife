@@ -1920,7 +1920,7 @@ admin yet.
   organisers, Venues (`groupFollows`). Unfollow shows the toast with Undo; Undo re-follows and
   restores the share choice (`refollowTarget`). Turning sharing off asks first in a dialog;
   without JavaScript the form posts directly. Linked from the header menu.
-- `TODO(copy)`: the label for the public follower count (`followerCountLabel`, shown only above 0).
+- The public follower count label (`followerCountLabel`) is from Copy; it is hidden at 0.
 
 ### Venue QR Follow: scan page
 
@@ -2052,8 +2052,6 @@ Push is phase 7 (next section).
      addresses.
   4. `sst secret set UnsubscribeSecret <long random value> --stage prod`, then redeploy.
   5. Send a test digest to a Gmail address and check the Unsubscribe button in Gmail.
-- `TODO(copy)`: the button on the unsubscribe confirm step; the reason line for one followed name;
-  the reminder subject when the venue has no name.
 - `TODO(spec)`: "reminders" unsubscribe clears `notifyReminder`, which also stops push reminders,
   while Copy says "by email".
 
@@ -2098,13 +2096,12 @@ Phase 7: the day-before reminder goes by web push for users who subscribed, else
   3. Deploy. Changing the keys later orphans every stored subscription (they are bound to the
      old public key). They then fail and are deleted, and users fall back to email.
   4. Subscribe on your own phone from a scan confirmation and check the next 18:00 IST reminder.
-- `TODO(copy)`: the push body when the event has no venue name (only the title is shown).
 
 ### Venue QR Follow: admin
 
 Phase 4: the admin app, batch minting, PDF rendering, the `qr` and `space` routers, and the venue
 QR panel. Copy is in `packages/admin/app/lib/copy.ts` (`ADMIN_COPY` is verbatim from `copy.md`;
-`ADMIN_EXTRA_COPY` holds strings copy.md lacks, each a `TODO(copy)`).
+`ADMIN_EXTRA_COPY` is copy.md's "Strings added after the build (12 Nov)").
 
 - **`packages/admin`** is a React Router v7 app at `admin.rasika.life` (`admin.<stage>.rasika.life`
   off prod), `infra/admin.ts`. Same setup as Classes: fs-routes, `@rasika/ui` preset and tokens,
@@ -2180,7 +2177,7 @@ Owner steps:
 
 Phase 8: `sabha.rasika.life`, the `partner` router, invite acceptance, the Verified badge and the
 follower export. Copy is in `packages/sabha/app/lib/copy.ts` (`SABHA_COPY` verbatim from
-`copy.md`; `SABHA_EXTRA_COPY` holds strings copy.md lacks, each a `TODO(copy)`).
+`copy.md`; `SABHA_EXTRA_COPY` is copy.md's "Strings added after the build (12 Nov)").
 
 **Owner decisions made by the orchestrator for this phase** (not in the Spec):
 
@@ -2239,7 +2236,7 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   when the invite was sent, and returns the expired invites. The `/invite` page calls it. The
   mismatch state cannot be found from the server (the invite is keyed by the invited address), so
   `/invite` compares the address in the link with the signed-in one (`inviteOutcome`) and shows
-  the Copy mismatch line without accepting anything. Expired invites show a `TODO(copy)` line.
+  the Copy mismatch line without accepting anything. Expired invites show the Copy `inviteExpired` line.
 - **Verified badge** (`web/app/components/VerifiedBadge.tsx`, `lib/verified.ts`) on the public
   organiser and venue pages: "Verified", tooltip "Managed by {name} on rasika.life". It reads the
   stored `verifiedAt`, so the cached page is the same for every reader. The writes that set it
@@ -2309,7 +2306,7 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
 - **Admin app.** `/partners` searches organisers and venues by name (GET form, no JavaScript
   needed). `/partners/:targetType/:id` has the invite form (Email, Role (Owner, Viewer), Send
   invite, verbatim), the member list with revoke, the verified status, and for an organiser the
-  review switch. `/events/spot-check` is the owner-events feed. Extra strings are `TODO(copy)`.
+  review switch. `/events/spot-check` is the owner-events feed. Its strings are in Copy (12 Nov).
 
 **`packages/sabha`.** React Router v7, same setup as `packages/admin`: fs-routes, `@rasika/ui`,
 the shared `rasika_session` cookie, `noindex`, `private, no-store` on every document,

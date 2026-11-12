@@ -191,8 +191,6 @@ export function reasonLine(reasons: Reason[]): string | undefined {
     .sort((a, b) => REASON_WEIGHTS[b.type] - REASON_WEIGHTS[a.type]);
   const [first, second] = follows;
   if (!first) return undefined;
-  // TODO(copy): the one-name line is not in Copy. This is the two-name line with the second
-  // name left out.
   if (!second) return `Because you follow ${first.name}`;
   if (follows.length === 2) return `Because you follow ${first.name} and ${second.name}`;
   return `Because you follow ${first.name}, ${second.name} and ${follows.length - 2} more`;

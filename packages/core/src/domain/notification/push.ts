@@ -35,7 +35,7 @@ export function buildReminderPush(entries: UserEntry[]): PushPayload | null {
   if (entries.length === 1) {
     return {
       title: `Tomorrow at ${formatTime(first.startDateTime, first.timezone)}`,
-      // TODO(copy): body when the event has no venue name. Only the title is shown.
+      // Copy: with no venue name, the body is the title alone.
       body: first.venueName ? `${first.title}, ${first.venueName}` : first.title,
       url: `/events/${first.id}?${utm(first.id)}`,
       tag: 'day-before-reminder',

@@ -34,8 +34,8 @@ export const UNSUBSCRIBE_COPY = {
   changedMind: 'Changed your mind?',
   manage: 'Manage notifications',
   expired: 'This link has expired. Sign in to manage notifications.',
-  // TODO(copy): the button on the confirm step. A GET must not unsubscribe, because a link
-  // scanner can open the link, so the page asks first and Copy has no wording for it.
+  // The button on the confirm step. A GET must not unsubscribe, because a link scanner can
+  // open the link, so the page asks first.
   confirm: 'Unsubscribe',
 } as const;
 
