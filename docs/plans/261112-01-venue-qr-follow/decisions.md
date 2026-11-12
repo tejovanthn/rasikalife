@@ -70,3 +70,11 @@ and win where those tabs disagree.
 16. **Reminders unsubscribe**: keeps stopping push too. Copy now reads "You won't get day-before
     reminders any more." Tapping "Remind me the day before" or turning on push sets
     `notifyReminder` back on.
+
+## Owner decision on cost (2026-11-12)
+
+17. **Scan rate limit, WAF dropped for the pilot on cost.** The WAF costs about $6 a month fixed
+    plus $0.60 per million requests, and every request to the distribution is billed, not only
+    `/q/`. The limit is now in the app: a per-IP limit through `hitRateLimit`, keyed
+    `scan-ip#<ip>`, 300 a minute (decision 6), applied in `qr.resolve` on the counting page load
+    only. A flood still invokes Lambda. The WAF is backlog.

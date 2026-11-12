@@ -4,7 +4,6 @@ import { blockBadBots } from './edge-security';
 import { eventPostersBucket, eventPostersCdn } from './event-posters';
 import { vapidPublicKey } from './notify';
 import { ogImageFunction } from './og-image';
-import { scanWebAclArn } from './scan-rate-limit';
 import { siteDistributionParam } from './site-cache';
 import { bucket } from './storage';
 import { trpc } from './trpc';
@@ -50,6 +49,14 @@ const tagBuild = `
 event.request.headers['x-rasika-build'] = { value: '${buildId}' };
 `;
 
+// The viewer's address, for the per-IP limit on /q/:code (packages/web/app/lib/client-ip.ts).
+// The function sets it, so a value the client sent is overwritten. Unlike x-rasika-build it is
+// not in the cache policy's header list, so it is forwarded to the origin (the origin request
+// policy sends every viewer header but Host) without joining the cache key.
+const tagClientIp = `
+event.request.headers['x-rasika-client-ip'] = { value: event.viewer.ip };
+`;
+
 // CloudFront access logs, prod only, kept 30 days. Lambda logs carry no path or user agent, so
 // these are the only record of which pages crawlers hit and how often the cache answers.
 let cdnLogsDomain: $util.Output<string> | undefined;
@@ -74,7 +81,7 @@ const site = new sst.aws.React('RasikaWeb', {
   domain: getDomain(''),
   cachePolicy: serverCachePolicy.id,
   edge: {
-    viewerRequest: { injection: blockBadBots + tagBuild },
+    viewerRequest: { injection: blockBadBots + tagBuild + tagClientIp },
   },
   environment: {
     STAGE: $app.stage,
@@ -93,15 +100,11 @@ const site = new sst.aws.React('RasikaWeb', {
   transform: {
     cdn: args => {
       const bucket = cdnLogsDomain;
-      if (!bucket && !scanWebAclArn) return;
+      if (!bucket) return;
       args.transform = {
         ...args.transform,
         distribution: distribution => {
-          if (bucket) {
-            distribution.loggingConfig = { bucket, prefix: 'rasika-web/', includeCookies: false };
-          }
-          // Rate limit on /q/* (infra/scan-rate-limit.ts), prod only.
-          if (scanWebAclArn) distribution.webAclId = scanWebAclArn;
+          distribution.loggingConfig = { bucket, prefix: 'rasika-web/', includeCookies: false };
         },
       };
     },

@@ -18,6 +18,8 @@ vi.mock('@rasika/core', async importOriginal => {
     },
   };
 });
+const limiter = vi.hoisted(() => ({ hitRateLimit: vi.fn() }));
+vi.mock('@rasika/core/shared/rate-limit', () => limiter);
 vi.mock('@rasika/core/site-cache', () => ({ invalidateSiteCache: vi.fn() }));
 
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
@@ -30,6 +32,8 @@ const notifyUser = notifyRouter.createCaller({ event: {} as never, user: { id: '
 
 beforeEach(() => {
   for (const fn of Object.values(core)) fn.mockReset();
+  limiter.hitRateLimit.mockReset();
+  limiter.hitRateLimit.mockResolvedValue({ allowed: true, hits: 1 });
 });
 
 describe('qr.resolve', () => {
@@ -87,5 +91,46 @@ describe('notify whatsapp', () => {
   it('dismisses the prompt', async () => {
     await notifyUser.dismissWhatsappPrompt();
     expect(core.dismissWhatsappPrompt).toHaveBeenCalledWith('u1');
+  });
+});
+
+describe('qr.resolve per-IP limit', () => {
+  it('returns rate-limited and skips core when the IP is over the limit', async () => {
+    limiter.hitRateLimit.mockResolvedValue({ allowed: false, hits: 301 });
+    expect(await anon.resolve({ code: 'ABCDEFGH', count: true, clientIp: '203.0.113.9' })).toEqual({
+      state: 'rate-limited',
+    });
+    expect(limiter.hitRateLimit).toHaveBeenCalledWith({
+      key: 'scan-ip#203.0.113.9',
+      limit: 300,
+      windowSec: 60,
+    });
+    expect(core.resolveScan).not.toHaveBeenCalled();
+  });
+
+  it('resolves normally under the limit', async () => {
+    core.resolveScan.mockResolvedValue({ state: 'not-found' });
+    await anon.resolve({ code: 'ABCDEFGH', count: true, clientIp: '203.0.113.9' });
+    expect(core.resolveScan).toHaveBeenCalled();
+  });
+
+  it('applies no limit without an IP', async () => {
+    core.resolveScan.mockResolvedValue({ state: 'not-found' });
+    await anon.resolve({ code: 'ABCDEFGH', count: true });
+    expect(limiter.hitRateLimit).not.toHaveBeenCalled();
+  });
+
+  it('does not count a read without count (done and add pages)', async () => {
+    core.resolveScan.mockResolvedValue({ state: 'not-found' });
+    await anon.resolve({ code: 'ABCDEFGH', clientIp: '203.0.113.9' });
+    await anon.resolve({ code: 'ABCDEFGH', count: false, clientIp: '203.0.113.9' });
+    expect(limiter.hitRateLimit).not.toHaveBeenCalled();
+    expect(core.resolveScan).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects an oversized clientIp', async () => {
+    await expect(
+      anon.resolve({ code: 'ABCDEFGH', count: true, clientIp: 'x'.repeat(46) })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
   });
 });
