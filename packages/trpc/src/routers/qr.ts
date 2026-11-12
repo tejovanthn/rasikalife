@@ -1,5 +1,6 @@
 import { QrBatch, VenueQr } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
+import { hitRateLimit } from '@rasika/core/shared/rate-limit';
 import { TRPCError } from '@trpc/server';
 import type { TRPC_ERROR_CODE_KEY } from '@trpc/server';
 import { z } from 'zod';
@@ -40,6 +41,11 @@ export async function mapQrErrors<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
+const ResolveScanInputSchema = VenueQr.ResolveQrSchema.extend({
+  /** The scanner's address, set by the web server from the edge. Optional; max IPv6 length. */
+  clientIp: z.string().min(1).max(45).optional(),
+});
+
 const BatchIdSchema = z.object({ batchId: z.string().min(1) });
 const VenueIdSchema = z.object({ venueId: z.string().min(1) });
 
@@ -66,11 +72,20 @@ async function queueRender(batchId: string): Promise<QrBatch.QrBatch> {
  * through `partner.overview`.
  */
 export const qrRouter = createTRPCRouter({
-  resolve: publicProcedure
-    .input(VenueQr.ResolveQrSchema)
-    .query(({ input }) =>
-      VenueQr.resolveScan(input.code, new Date(), { count: input.count === true })
-    ),
+  resolve: publicProcedure.input(ResolveScanInputSchema).query(async ({ input }) => {
+    // Per-IP limit on the counting `/q/:code` document load only (decisions.md 17). No IP, no
+    // limit. A caller of the public tRPC URL can lie about `clientIp`; that only changes which
+    // bucket their own requests land in. `hitRateLimit` fails open.
+    if (input.count === true && input.clientIp) {
+      const { allowed } = await hitRateLimit({
+        key: `scan-ip#${input.clientIp}`,
+        limit: VenueQr.SCAN_RATE_LIMIT_PER_MIN,
+        windowSec: 60,
+      });
+      if (!allowed) return { state: 'rate-limited' as const };
+    }
+    return VenueQr.resolveScan(input.code, new Date(), { count: input.count === true });
+  }),
 
   createBatch: moderatorProcedure.input(VenueQr.CreateQrBatchSchema).mutation(({ ctx, input }) =>
     mapQrErrors(async () => {

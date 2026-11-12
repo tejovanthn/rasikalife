@@ -1,6 +1,11 @@
 import { QrCodeSchema } from '@rasika/core/domain/venue-qr/client';
 import { useRef, useState } from 'react';
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
+import type {
+  ActionFunctionArgs,
+  HeadersArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from 'react-router';
 import {
   Form,
   Link,
@@ -12,6 +17,7 @@ import {
 } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { getUser } from '~/lib/auth.server';
+import { clientIpFromHeaders } from '~/lib/client-ip';
 import { eventDateKey, eventZone, formatDayLabel, formatEventTime } from '~/lib/event-time';
 import { isInAppBrowser } from '~/lib/in-app-browser';
 import { clearQrIntent, readQrIntent, serializeQrIntent } from '~/lib/qr-intent.server';
@@ -37,8 +43,12 @@ const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
 // Every scan is read live (event state changes through the day) and the page holds a reader's
 // own follow state. Never cached by the CDN or the browser.
-export function headers() {
-  return NO_STORE;
+// The loader's own headers are kept (`Retry-After` on a 429, a cleared `qr_intent` cookie);
+// only the caching is forced.
+export function headers({ loaderHeaders }: HeadersArgs) {
+  const merged = new Headers(loaderHeaders);
+  merged.set('Cache-Control', NO_STORE['Cache-Control']);
+  return merged;
 }
 
 export const meta: MetaFunction = () => [
@@ -66,6 +76,7 @@ type LoaderData =
   | { kind: 'not-found' }
   | { kind: 'unassigned' }
   | { kind: 'error' }
+  | { kind: 'rate-limited' }
   | { kind: 'in-app'; url: string }
   | {
       kind: 'picker' | 'later';
@@ -121,13 +132,23 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   const client = await createServerClient(request);
   let resolution: Awaited<ReturnType<typeof client.qr.resolve.query>>;
   try {
-    resolution = await client.qr.resolve.query({ code, count: true });
+    // Only this counting document load carries the IP. The tRPC side applies the per-IP limit.
+    resolution = await client.qr.resolve.query({
+      code,
+      count: true,
+      clientIp: clientIpFromHeaders(request.headers),
+    });
   } catch (error) {
     console.error('Failed to resolve QR code:', error);
     return data<LoaderData>({ kind: 'error' }, { status: 500, headers: NO_STORE });
   }
 
   switch (resolution.state) {
+    case 'rate-limited':
+      return data<LoaderData>(
+        { kind: 'rate-limited' },
+        { status: 429, headers: { ...NO_STORE, 'Retry-After': '60' } }
+      );
     case 'not-found':
       return data<LoaderData>({ kind: 'not-found' }, { status: 404, headers: NO_STORE });
     case 'unassigned':
@@ -534,6 +555,8 @@ export default function ScanPage() {
           action={{ label: QR_COPY.error.action, to: '.' }}
         />
       );
+    case 'rate-limited':
+      return <Message title={QR_COPY.rateLimited.title} body={QR_COPY.rateLimited.body} />;
     case 'in-app':
       return <InApp url={d.url} />;
     case 'picker':

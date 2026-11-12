@@ -11,7 +11,7 @@ export const DEFAULT_EVENT_DURATION_MIN = 180;
 export const VENUE_MODE_UPCOMING_LIMIT = 3;
 /**
  * Per IP on `/q/*`. Carrier-grade NAT (Jio, Airtel) puts a hall's phones behind one IP, so this
- * is generous. WAF's smallest window is 5 minutes, so the rule is 5x this (infra/scan-rate-limit.ts).
+ * is generous. Applied in `qr.resolve` through `hitRateLimit`, keyed `scan-ip#<ip>`.
  */
 export const SCAN_RATE_LIMIT_PER_MIN = 300;
 /** `follow.bulkSet` calls per user per minute. */

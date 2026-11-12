@@ -1980,13 +1980,25 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   organiser has `verifiedAt` (`mayAutoApprove`). The organiser is matched by exact name; an
   unknown name stays as text on the event. The poster option links to `/events/new`, which cannot
   take a venue, space or date yet.
-- **Rate limit** `infra/scan-rate-limit.ts` (prod only): WAF rate rule on paths starting `/q/`,
-  1,500 requests per 5 minutes per IP (300 a minute, `SCAN_RATE_LIMIT_PER_MIN`; carrier-grade NAT
-  puts a hall's phones behind one IP). `follow.bulkSet` is also limited to 30 calls a minute per
-  user (`FOLLOW_BULK_LIMIT_PER_MIN`), counted by `hitRateLimit` (`core/src/shared/rate-limit.ts`,
-  an atomic `ADD` on a per-user per-minute item, `expiresAt` set for TTL, fails open); over the
-  limit it is `TOO_MANY_REQUESTS`. A block returns 429 with the "Too many scans" page as a WAF
-  custom response body. The ACL is in us-east-1 and attached to the web distribution.
+- **Rate limit** is in the app, not at the edge (decisions.md 17; the WAF was dropped for cost).
+  `qr.resolve` takes an optional `clientIp`. On a call with `count: true` and an IP it counts
+  `scan-ip#<ip>` through `hitRateLimit` (`core/src/shared/rate-limit.ts`, an atomic `ADD` on a
+  per-key per-minute item, `expiresAt` set for TTL, fails open): over `SCAN_RATE_LIMIT_PER_MIN`
+  (300 a minute; carrier-grade NAT puts a hall's phones behind one IP) it returns
+  `{ state: 'rate-limited' }`, and the `/q/:code` loader sends HTTP 429 with `Retry-After: 60` and
+  the "Too many scans" state. No IP means no limit. `/done` and `/add` read without `count`, so
+  they are never counted. The web server reads the IP with `clientIpFromHeaders`
+  (`lib/client-ip.ts`): `x-rasika-client-ip`, then `CloudFront-Viewer-Address`, then the first
+  `X-Forwarded-For` entry. The first header is set by the CloudFront viewer-request function from
+  `event.viewer.ip` (`infra/site.ts`, `tagClientIp`), which overwrites any client value and is
+  forwarded without joining the cache key (the origin request policy sends all viewer headers
+  but Host). A caller of the public tRPC URL can lie about `clientIp`; that only moves their own
+  requests to another bucket. **Trade-off:** a flood still invokes the web Lambda and tRPC before
+  it is refused, so this caps DynamoDB writes and scan counts, not Lambda cost. A WAF rule would
+  stop it at the edge; it is on the backlog.
+  `follow.bulkSet` is also limited to 30 calls a minute per user (`FOLLOW_BULK_LIMIT_PER_MIN`),
+  over the limit it is `TOO_MANY_REQUESTS`. The page's `headers` export forwards the loader's
+  headers (`Retry-After`, the cleared `qr_intent` cookie) and forces `no-store`.
 - `TODO(spec)`: "Publish concert" for a verified owner cannot be shown before submit; the button
   always reads "Submit for review" and the result page says which happened.
 ### Venue QR Follow: email
@@ -2406,6 +2418,10 @@ For auth-gated mutations, use `protectedProcedure` (defined in `packages/trpc/sr
 ### Venue QR Follow: review fixes
 
 Fixes from the review after all eight phases.
+
+- **Scan rate limit moved from WAF to the app (decision 17).** `infra/scan-rate-limit.ts` is
+  gone and the distribution carries no web ACL. See "Venue QR Follow: scan page" for the per-IP
+  limit and its Lambda-cost trade-off.
 
 - **Owner links must be http or https.** `httpUrlSchema` (`core/src/shared/http-url.ts`) is used
   for `website`, `logoUrl`, `photoUrl` and `mapLink` in the partner profile schemas, because
