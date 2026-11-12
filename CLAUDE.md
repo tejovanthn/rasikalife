@@ -2279,6 +2279,11 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   merged cast. The sabha form redirects with `?done=review`, which shows `eventsSubmitted`. Switch
   off, or event not yet approved: edits stay instant. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
   `submitFromQr`); a likely duplicate stays `submitted` for the moderator queue.
+- **Hall renames** (owner decision 14, 2026-11-12). `updateSpace` (used by `space.update`) calls
+  `cascadeSpaceNameUpdate` (`cascade.ts`) only when the name really changed. Events in that space
+  whose start is still in the future take the new `spaceName`; past events keep the name the hall
+  had then. Starts are compared as instants. It reads `byVenue` (no space in the key) and writes
+  with `Event` patch (rule 7). A failure is logged and does not undo the rename.
 - **Overview numbers** (`core/src/domain/sabha/rules.ts`, pure, tested). Months and days are IST
   (`istMonth`). Followers: total, new this month, sharing now, stopped sharing this month. The
   30 day trend is read from the follows that exist, so it is a view of today's followers and an

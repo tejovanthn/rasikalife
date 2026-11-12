@@ -188,6 +188,51 @@ export async function cascadeVenueNameUpdate(venueId: string, newName: string): 
   } while (cursor);
 }
 
+/**
+ * A hall was renamed: events in that space that have not started yet take the new `spaceName`.
+ * Past events keep the name the hall had at the time (owner decision 14). Starts are compared as
+ * instants, never as strings, because stored times carry their own offsets. `byVenue` has no
+ * space in its key, so it reads the venue's events and filters in memory. The write is an
+ * `Event` patch, so every GSI key stays correct (rule 7). Returns the number of events changed.
+ */
+export async function cascadeSpaceNameUpdate(
+  venueId: string,
+  spaceId: string,
+  newName: string,
+  now: Date = new Date()
+): Promise<number> {
+  const { EventEntity } = await import('./event/entity');
+  const nowMs = now.getTime();
+  let changed = 0;
+
+  let cursor: string | null = null;
+  do {
+    const result = (await EventEntity.query
+      .byVenue({ venueId })
+      .go({ limit: CASCADE_BATCH_SIZE, cursor })) as Page;
+    const items =
+      (result.data as Array<{
+        id: string;
+        spaceId?: string;
+        spaceName?: string;
+        startDateTime: string;
+      }>) || [];
+    cursor = result.cursor;
+
+    const due = items.filter(item => {
+      if (item.spaceId !== spaceId || item.spaceName === newName) return false;
+      const start = Date.parse(item.startDateTime);
+      return !Number.isNaN(start) && start > nowMs;
+    });
+    await Promise.all(
+      due.map(item => EventEntity.patch({ id: item.id }).set({ spaceName: newName }).go())
+    );
+    changed += due.length;
+  } while (cursor);
+
+  return changed;
+}
+
 export async function cascadeOrganiserNameUpdate(
   organiserId: string,
   newName: string
