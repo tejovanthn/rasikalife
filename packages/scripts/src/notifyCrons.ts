@@ -1,7 +1,7 @@
 import { Email, Notification, User } from '@rasika/core';
 import { deliverDigests, deliverReminders } from '@rasika/email';
 import type { DeliverDeps } from '@rasika/email';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 
 /**
  * Cron and SNS entry points for the Venue QR Follow notifications (phase 5). Thin on purpose:
