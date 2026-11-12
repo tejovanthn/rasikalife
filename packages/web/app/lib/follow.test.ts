@@ -6,6 +6,8 @@ import {
   followSecondLine,
   followUrl,
   followerCountLabel,
+  followingTabHref,
+  followingTabs,
   groupFollows,
   hasPendingFollow,
   optimisticFollow,
@@ -160,5 +162,51 @@ describe('link and label', () => {
 
   it('composes the accessible name from Unfollow and the name', () => {
     expect(unfollowLabel('Hall')).toBe('Unfollow Hall');
+  });
+});
+
+describe('followingTabs', () => {
+  const mk = (type: 'artist' | 'organiser' | 'venue', n: number) =>
+    groupFollows(
+      Array.from({ length: n }, (_, i) => ({
+        targetType: type,
+        targetId: `${type}${i}`,
+        targetName: `Name ${i}`,
+        shareWithTarget: false,
+        createdAt: '2026-11-01T00:00:00.000Z',
+      }))
+    );
+  const all = [...mk('artist', 2), ...mk('organiser', 1), ...mk('venue', 3)];
+
+  it('labels each tab with its count and picks the requested one', () => {
+    const r = followingTabs(all, 'venues');
+    expect(r.tabs.map(t => t.label)).toEqual([
+      'Artists (2)',
+      'Sabhas and organisers (1)',
+      'Venues (3)',
+    ]);
+    expect(r.selected).toBe('venues');
+  });
+
+  it('defaults to the first non-empty group', () => {
+    expect(followingTabs(all).selected).toBe('artists');
+    expect(followingTabs([...mk('organiser', 1), ...mk('venue', 1)], null).selected).toBe(
+      'organisers'
+    );
+  });
+
+  it('falls back when the tab is invalid or has no follows', () => {
+    expect(followingTabs(all, 'nope').selected).toBe('artists');
+    expect(followingTabs(mk('venue', 1), 'artists').selected).toBe('venues');
+  });
+
+  it('returns one tab for a single group and none when empty', () => {
+    expect(followingTabs(mk('venue', 1)).tabs).toHaveLength(1);
+    expect(followingTabs([])).toEqual({ tabs: [], selected: null });
+  });
+
+  it('builds the tab link', () => {
+    expect(followingTabHref('venues')).toBe('/me/following?tab=venues');
+    expect(followingTabHref(null)).toBe('/me/following');
   });
 });

@@ -20,6 +20,8 @@ import {
   type FollowRow,
   followInitials,
   followSecondLine,
+  followingTabHref,
+  followingTabs,
   groupFollows,
   refollowTarget,
   shareLabel,
@@ -37,7 +39,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   await requireUser(request);
   const client = await createServerClient(request);
   const follows = await client.follow.mine.query();
-  return data({ groups: groupFollows(follows) });
+  const groups = groupFollows(follows);
+  const requested = new URL(request.url).searchParams.get('tab');
+  return data({ groups, ...followingTabs(groups, requested) });
 }
 
 type ActionResult =
@@ -90,7 +94,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function MeFollowing() {
-  const { groups } = useLoaderData<typeof loader>();
+  const { groups, tabs, selected } = useLoaderData<typeof loader>();
+  // Forms post to the same tab, so a round trip without JavaScript comes back to it.
+  const tabAction = followingTabHref(selected);
+  const shown = groups.filter(group => tabs.find(t => t.type === group.type)?.key === selected);
   const unfollow = useFetcher<ActionResult>();
   const undo = useFetcher<ActionResult>();
   const share = useFetcher<ActionResult>();
@@ -108,7 +115,7 @@ export default function MeFollowing() {
         onClick: () =>
           undo.submit(
             { intent: 'refollow', type: result.type, id: result.id, share: String(result.share) },
-            { method: 'post' }
+            { method: 'post', action: tabAction }
           ),
       },
     });
@@ -128,11 +135,34 @@ export default function MeFollowing() {
 
       {groups.length === 0 && <EmptyState message={FOLLOW_COPY.empty} />}
 
-      {groups.map(group => (
+      {tabs.length > 1 && (
+        <nav aria-label={FOLLOW_COPY.pageTitle} className="mb-2 overflow-x-auto border-b">
+          <ul className="flex min-w-max">
+            {tabs.map(tab => {
+              const active = tab.key === selected;
+              return (
+                <li key={tab.key}>
+                  <Link
+                    to={followingTabHref(tab.key)}
+                    aria-current={active ? 'page' : undefined}
+                    className={`inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-4 text-sm font-semibold ${
+                      active
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
+
+      {shown.map(group => (
         <section key={group.type} className="mb-8">
-          <h2 className="border-b pb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {group.heading}
-          </h2>
+          <h2 className="sr-only">{group.heading}</h2>
           <ul>
             {group.rows.map(row => {
               const sharing = isSharing(row);
@@ -168,6 +198,7 @@ export default function MeFollowing() {
                     {row.canShare && (
                       <share.Form
                         method="post"
+                        action={tabAction}
                         className="mt-1 flex items-center gap-1"
                         onSubmit={event => {
                           // Turning sharing off asks first. Without JavaScript the form just posts.
@@ -211,7 +242,7 @@ export default function MeFollowing() {
                     )}
                   </div>
 
-                  <unfollow.Form method="post" className="shrink-0">
+                  <unfollow.Form method="post" action={tabAction} className="shrink-0">
                     <input type="hidden" name="intent" value="unfollow" />
                     <input type="hidden" name="type" value={row.targetType} />
                     <input type="hidden" name="id" value={row.targetId} />
@@ -259,7 +290,7 @@ export default function MeFollowing() {
                       id: confirming.targetId,
                       share: 'false',
                     },
-                    { method: 'post' }
+                    { method: 'post', action: tabAction }
                   );
                 }
                 setConfirming(null);
