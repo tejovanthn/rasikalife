@@ -31,10 +31,6 @@ declare module "sst" {
       "type": "sst.sst.Secret"
       "value": string
     }
-    "QrIntentSecret": {
-      "type": "sst.sst.Secret"
-      "value": string
-    }
     "InstagramDLQ": {
       "type": "sst.aws.Queue"
       "url": string
@@ -60,6 +56,14 @@ declare module "sst" {
       "type": "sst.aws.Function"
       "url": string
     }
+    "QrIntentSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "RasikaAdmin": {
+      "type": "sst.aws.React"
+      "url": string
+    }
     "RasikaAuth": {
       "type": "sst.aws.Auth"
       "url": string
@@ -69,6 +73,10 @@ declare module "sst" {
       "type": "sst.aws.Bucket"
     }
     "RasikaClasses": {
+      "type": "sst.aws.React"
+      "url": string
+    }
+    "RasikaSabha": {
       "type": "sst.aws.React"
       "url": string
     }
@@ -97,6 +105,18 @@ declare module "sst" {
     "Talapettige": {
       "type": "sst.aws.StaticSite"
       "url": string
+    }
+    "UnsubscribeSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "VapidPrivateKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "VapidPublicKey": {
+      "type": "sst.sst.Secret"
+      "value": string
     }
   }
 }
