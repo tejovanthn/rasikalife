@@ -7,10 +7,10 @@
  */
 import { addDaysToDate, dateInTimeZone, todayInTimeZone } from '../../shared/timezone';
 import {
+  DEFAULT_TIMEZONE,
   DIGEST_MAX_EVENTS,
   DIGEST_WINDOW_DAYS,
   REASON_WEIGHTS,
-  DEFAULT_TIMEZONE,
   REMINDER_MAX_PER_DAY,
 } from '../venue-qr/constants';
 

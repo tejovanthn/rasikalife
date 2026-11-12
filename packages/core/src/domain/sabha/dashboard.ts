@@ -158,8 +158,9 @@ async function loadExportUsers(ids: string[]): Promise<Map<string, ExportUser>> 
   for (let i = 0; i < unique.length; i += USER_BATCH) {
     const batch = unique.slice(i, i + USER_BATCH);
     // Unprocessed keys are retried, and the export throws rather than drop a consented row.
-    const rows = await batchGetAll(batch.map(id => ({ id })), keys =>
-      UserEntity.get(keys).go()
+    const rows = await batchGetAll(
+      batch.map(id => ({ id })),
+      keys => UserEntity.get(keys).go()
     );
     for (const user of rows as ExportUser[]) users.set(user.id, user);
   }

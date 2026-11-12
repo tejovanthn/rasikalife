@@ -189,7 +189,10 @@ describe('readEventForm', () => {
   it('names the first missing field', () => {
     expect(readEventForm(form({ ...ok, title: '' }))).toEqual({ ok: false, error: 'title' });
     expect(readEventForm(form({ ...ok, date: '5/12' }))).toEqual({ ok: false, error: 'date' });
-    expect(readEventForm(form({ ...ok, date: '2026-02-31' }))).toEqual({ ok: false, error: 'date' });
+    expect(readEventForm(form({ ...ok, date: '2026-02-31' }))).toEqual({
+      ok: false,
+      error: 'date',
+    });
     expect(readEventForm(form({ ...ok, startTime: '6pm' }))).toEqual({ ok: false, error: 'time' });
     expect(readEventForm(form({ ...ok, venueId: '' }))).toEqual({ ok: false, error: 'venue' });
   });

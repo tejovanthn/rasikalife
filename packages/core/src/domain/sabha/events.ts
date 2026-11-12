@@ -160,7 +160,11 @@ export async function updateOwnerEvent(
   const cast =
     input.artists === undefined
       ? null
-      : await mergeOwnerCast(existing.artists ?? [], parseArtistNames(input.artists), resolveArtist);
+      : await mergeOwnerCast(
+          existing.artists ?? [],
+          parseArtistNames(input.artists),
+          resolveArtist
+        );
 
   const changes = {
     title: input.title,

@@ -16,9 +16,9 @@ import { Badge } from '~/components/ui/badge';
 import { affiliationPeriod } from '~/lib/affiliation-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { safeHttpUrl } from '~/lib/safe-http-url';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
+import { safeHttpUrl } from '~/lib/safe-http-url';
 import {
   generateArtistUrl,
   generateEventUrl,

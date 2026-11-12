@@ -4,8 +4,8 @@ import {
   PartnerMember,
   Sabha,
   User,
-  VenueQr,
   Venue,
+  VenueQr,
   VenueSpace,
 } from '@rasika/core';
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';

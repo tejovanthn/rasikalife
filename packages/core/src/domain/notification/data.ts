@@ -99,7 +99,10 @@ export async function loadRsvpUsers(eventIds: string[]): Promise<Map<string, str
 
 export async function loadUsers(ids: string[]): Promise<User[]> {
   const batches = await mapLimit(chunk([...new Set(ids)], BATCH_SIZE), 4, async batch => {
-    const rows = await batchGetAll(batch.map(id => ({ id })), keys => UserEntity.get(keys).go());
+    const rows = await batchGetAll(
+      batch.map(id => ({ id })),
+      keys => UserEntity.get(keys).go()
+    );
     return rows as User[];
   });
   return batches.flat();

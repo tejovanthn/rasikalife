@@ -97,7 +97,10 @@ describe('planReminders', () => {
 
   it('skips a broken event in the digest too', async () => {
     const broken = { ...event('broken', '2026-11-17T13:00:00Z'), timezone: 'Not/AZone' };
-    const { d } = deps({ users: [user('u1')], events: [broken, event('ok', '2026-11-17T13:00:00Z')] });
+    const { d } = deps({
+      users: [user('u1')],
+      events: [broken, event('ok', '2026-11-17T13:00:00Z')],
+    });
     const run = await planDigests(NOW, d);
     expect(run.plans[0]?.shown.map(e => e.event.id)).toEqual(['ok']);
   });

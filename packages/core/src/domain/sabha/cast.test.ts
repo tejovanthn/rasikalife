@@ -9,7 +9,9 @@ const make = async (name: string) => ({ name });
 
 describe('mergeOwnerCast', () => {
   it('writes nothing when the names are the ones already stored', async () => {
-    expect(await mergeOwnerCast(stored, [{ name: 'asha  rao' }, { name: 'Ravi' }], make)).toBeNull();
+    expect(
+      await mergeOwnerCast(stored, [{ name: 'asha  rao' }, { name: 'Ravi' }], make)
+    ).toBeNull();
   });
 
   it('keeps stored entries whole, adds new names, drops only removed ones', async () => {

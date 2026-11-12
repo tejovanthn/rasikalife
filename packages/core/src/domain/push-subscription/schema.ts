@@ -36,7 +36,7 @@ export function isAllowedPushEndpoint(endpoint: string): boolean {
   if (url.protocol !== 'https:' || url.username || url.password) return false;
   if (url.port && url.port !== '443') return false;
   const host = url.hostname.toLowerCase();
-  return PUSH_HOSTS.some(
-    entry => (entry.subdomains ? host.endsWith(`.${entry.host}`) : host === entry.host)
+  return PUSH_HOSTS.some(entry =>
+    entry.subdomains ? host.endsWith(`.${entry.host}`) : host === entry.host
   );
 }

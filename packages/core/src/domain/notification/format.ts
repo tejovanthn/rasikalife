@@ -22,7 +22,11 @@ function parts(
 
 /** `Sat 16 Nov`. */
 export function formatDay(iso: string | Date, timeZone: string = DEFAULT_TIMEZONE): string {
-  const p = parts(new Date(iso), timeZone || DEFAULT_TIMEZONE, { weekday: 'short', day: 'numeric', month: 'short' });
+  const p = parts(new Date(iso), timeZone || DEFAULT_TIMEZONE, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
   return `${p.weekday} ${p.day} ${p.month}`;
 }
 

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { ApplicationError, ErrorCode } from '../../constants';
+import { httpUrlSchema } from '../../shared/http-url';
 import { computeDiff, createChangeHistory } from '../change-history/service';
 import { OrganiserEntity } from '../organiser/entity';
 import { UpdateOrganiserSchema } from '../organiser/schema';
-import { httpUrlSchema } from '../../shared/http-url';
 import { PartnerTargetTypeSchema } from '../partner-member/schema';
 import type { PartnerTargetType } from '../partner-member/schema';
 import { UpdateVenueSchema } from '../venue/schema';

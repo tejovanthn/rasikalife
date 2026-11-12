@@ -15,10 +15,10 @@ import { BreadcrumbStructuredData, VenueStructuredData } from '~/components/stru
 import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
-import { safeHttpUrl } from '~/lib/safe-http-url';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
 import { adminOrigin } from '~/lib/qr-scan';
+import { safeHttpUrl } from '~/lib/safe-http-url';
 import { directionsUrl, exactVenueCoordinates } from '~/lib/structured-data';
 import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
 import type { PanelStat } from '~/lib/venue-qr-panel';
@@ -223,7 +223,11 @@ export default function VenueDetailPage() {
       {/* Hero photo */}
       {safeHttpUrl(venue.photoUrl) && (
         <div className="mb-6 rounded-xl overflow-hidden bg-muted">
-          <img src={safeHttpUrl(venue.photoUrl)} alt={venue.name} className="w-full max-h-64 object-cover" />
+          <img
+            src={safeHttpUrl(venue.photoUrl)}
+            alt={venue.name}
+            className="w-full max-h-64 object-cover"
+          />
         </div>
       )}
 

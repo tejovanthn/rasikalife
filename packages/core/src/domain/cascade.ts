@@ -1305,7 +1305,10 @@ async function fillPartnerFlags(
     fields
   );
   if (Object.keys(patch).length === 0) return;
-  await entity.patch({ id: canonicalId }).set(patch as never).go();
+  await entity
+    .patch({ id: canonicalId })
+    .set(patch as never)
+    .go();
 }
 
 export async function cascadeVenueMerge(
