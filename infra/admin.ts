@@ -25,6 +25,11 @@ export const adminSite = new sst.aws.React('RasikaAdmin', {
   link: [trpc, auth],
   path: 'packages/admin/',
   domain: getDomain('admin'),
+  // AWS managed "CachingDisabled". Every document here is `private, no-store`, so a policy of
+  // our own would cache nothing and would count toward the account's limit of 20 cache policies
+  // (the first prod deploy failed with TooManyCachePolicies). Cookies still reach the server: the
+  // origin request policy forwards every viewer header but Host.
+  cachePolicy: '4135ea2d-6df8-44a3-9df3-4b5a84be39ad',
   edge: {
     viewerRequest: { injection: blockBadBots },
   },
