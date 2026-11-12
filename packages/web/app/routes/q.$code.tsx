@@ -604,31 +604,31 @@ export default function ScanPage() {
               <p className="text-muted-foreground">{QR_COPY.venue.body}</p>
             </section>
           )}
+          {/* Venue mode offers the organisers of these concerts, so they come first: an organiser
+              row with no concert above it reads as unexplained. */}
+          {d.mode === 'venue' && d.upcoming.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-2xl font-bold">{QR_COPY.venue.listHeading}</h2>
+              <ul className="space-y-3">
+                {d.upcoming.map(e => (
+                  <li key={e.id}>
+                    <Link
+                      to={`/events/${e.id}`}
+                      className="block min-h-14 rounded-xl border bg-card p-4 hover:bg-accent"
+                    >
+                      <span className="block text-xl font-semibold">{e.title}</span>
+                      <span className="block text-base text-muted-foreground">{e.when}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           <FollowForm d={d} />
           {d.mode === 'venue' && (
-            <>
-              {d.upcoming.length > 0 && (
-                <section className="space-y-3">
-                  <h2 className="text-2xl font-bold">{QR_COPY.venue.listHeading}</h2>
-                  <ul className="space-y-3">
-                    {d.upcoming.map(e => (
-                      <li key={e.id}>
-                        <Link
-                          to={`/events/${e.id}`}
-                          className="block min-h-14 rounded-xl border bg-card p-4 hover:bg-accent"
-                        >
-                          <span className="block text-xl font-semibold">{e.title}</span>
-                          <span className="block text-base text-muted-foreground">{e.when}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-              <Link to={`/q/${d.code}/add`} className={linkButton}>
-                {QR_COPY.venue.action}
-              </Link>
-            </>
+            <Link to={`/q/${d.code}/add`} className={linkButton}>
+              {QR_COPY.venue.action}
+            </Link>
           )}
         </main>
       );
