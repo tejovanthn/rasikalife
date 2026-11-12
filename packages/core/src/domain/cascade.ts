@@ -1290,10 +1290,13 @@ async function fillPartnerFlags(
   loserId: string,
   canonicalId: string
 ): Promise<void> {
-  const entity =
-    targetType === 'venue'
-      ? (await import('./venue/entity')).VenueEntity
-      : (await import('./organiser/entity')).OrganiserEntity;
+  // Both entities expose the same `get`/`patch`; the union of their types is not callable.
+  const entity = (targetType === 'venue'
+    ? (await import('./venue/entity')).VenueEntity
+    : (await import('./organiser/entity')).OrganiserEntity) as unknown as {
+    get(key: { id: string }): { go(): Promise<{ data: unknown }> };
+    patch(key: { id: string }): { set(value: never): { go(): Promise<unknown> } };
+  };
   const fields = targetType === 'venue' ? ['verifiedAt'] : ['verifiedAt', 'requireEventReview'];
   const [loser, canonical] = await Promise.all([
     entity.get({ id: loserId }).go(),

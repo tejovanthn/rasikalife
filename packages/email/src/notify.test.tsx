@@ -127,7 +127,12 @@ describe('deliver', () => {
   });
 
   const pushPlan = (u: object = user) => [
-    { user: u as never, entries: [entry('e1', 'A') as never], channel: 'push' as const },
+    {
+      user: u as never,
+      entries: [entry('e1', 'A') as never],
+      channel: 'push' as const,
+      targetDay: '2026-11-16',
+    },
   ];
   const target = { endpoint: 'https://p/1', endpointHash: 'h1', p256dh: 'k', auth: 'a' };
   const pushDeps = (send: ReturnType<typeof vi.fn>, targets = [target]) => ({
