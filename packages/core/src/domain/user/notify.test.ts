@@ -75,13 +75,34 @@ describe('notification defaults', () => {
   });
 
   it('writes only the preferences that were sent', async () => {
-    const patch = patchChain({ data: { notifyPush: true } });
+    const patch = patchChain({ data: { notifyDigest: false } });
     vi.mocked(UserEntity.patch).mockReturnValue(patch as never);
 
-    const prefs = await setNotifyPrefs('u1', { notifyPush: true });
+    const prefs = await setNotifyPrefs('u1', { notifyDigest: false });
 
-    expect(patch.set).toHaveBeenCalledWith({ notifyPush: true });
-    expect(prefs).toEqual({ ...NOTIFY_DEFAULTS, notifyPush: true });
+    expect(patch.set).toHaveBeenCalledWith({ notifyDigest: false });
+    expect(prefs).toEqual({ ...NOTIFY_DEFAULTS, notifyDigest: false });
+  });
+
+  it('turns reminders back on when push is turned on', async () => {
+    const patch = patchChain({ data: { notifyPush: true, notifyReminder: true } });
+    vi.mocked(UserEntity.patch).mockReturnValue(patch as never);
+
+    await setNotifyPrefs('u1', { notifyPush: true });
+
+    expect(patch.set).toHaveBeenCalledWith({ notifyPush: true, notifyReminder: true });
+  });
+
+  it('leaves reminders alone when push is turned off, or when both are sent', async () => {
+    const off = patchChain({ data: { notifyPush: false } });
+    vi.mocked(UserEntity.patch).mockReturnValue(off as never);
+    await setNotifyPrefs('u1', { notifyPush: false });
+    expect(off.set).toHaveBeenCalledWith({ notifyPush: false });
+
+    const both = patchChain({ data: { notifyPush: true, notifyReminder: false } });
+    vi.mocked(UserEntity.patch).mockReturnValue(both as never);
+    await setNotifyPrefs('u1', { notifyPush: true, notifyReminder: false });
+    expect(both.set).toHaveBeenCalledWith({ notifyPush: true, notifyReminder: false });
   });
 });
 

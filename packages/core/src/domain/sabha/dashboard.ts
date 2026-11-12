@@ -106,8 +106,8 @@ export async function listFollowRows(
 
 /**
  * The venue whose codes belong on this dashboard. A venue sees its own. An organiser sees the
- * codes at its home venue (`Organiser.venueId`) and none otherwise.
- * TODO(spec): "linked venues" of an organiser has no source in the model beyond that one id.
+ * codes at its home venue (`Organiser.venueId`) and none otherwise. Codes belong to venues, so a
+ * sabha renting a hall never sees scans from other sabhas' concerts there (owner decision 15).
  */
 export function codesVenueId(targetType: PartnerTargetType, target: TargetRecord): string | null {
   return targetType === 'venue' ? target.id : (target.venueId ?? null);

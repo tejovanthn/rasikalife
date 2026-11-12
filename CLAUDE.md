@@ -2052,8 +2052,10 @@ Push is phase 7 (next section).
      addresses.
   4. `sst secret set UnsubscribeSecret <long random value> --stage prod`, then redeploy.
   5. Send a test digest to a Gmail address and check the Unsubscribe button in Gmail.
-- `TODO(spec)`: "reminders" unsubscribe clears `notifyReminder`, which also stops push reminders,
-  while Copy says "by email".
+- The "reminders" unsubscribe clears `notifyReminder`, which stops push reminders too; Copy says
+  "You won't get day-before reminders any more." Turning push on (`setNotifyPrefs` with
+  `notifyPush: true`, which `notify.subscribePush` calls) turns `notifyReminder` back on, so
+  nobody is stuck (owner decision 16).
 
 ### Venue QR Follow: web push
 
@@ -2286,8 +2288,8 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   30 day trend is read from the follows that exist, so it is a view of today's followers and an
   unfollow lowers every day's total. Scans this week and the code table come from
   `statsByVenue`. A venue dashboard shows its own codes. An organiser dashboard shows the codes
-  at its home venue (`Organiser.venueId`) and none without one. `TODO(spec)`: the Spec says
-  "linked venues" and the model has only that one id.
+  at its home venue (`Organiser.venueId`) and none without one, by owner decision 15: codes belong
+  to venues, so a sabha renting a hall never sees other sabhas' scans there.
 - **Export** (`core/src/domain/sabha/dashboard.ts`, `exportFollowers`). Reads follows of the
   target, keeps only `shareWithTarget = true`, loads those users, and writes
   `exports/{targetType}/{targetId}/{timestamp}.csv` (timestamp like `20261116T093000Z`) to the

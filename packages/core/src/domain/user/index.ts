@@ -266,6 +266,12 @@ export async function setNotifyPrefs(id: string, input: NotifyPrefsInput): Promi
   for (const key of Object.keys(NOTIFY_DEFAULTS) as Array<keyof NotifyPrefs>) {
     if (input[key] !== undefined) changes[key] = input[key];
   }
+  // Turning push on means "remind me the day before", so it also turns reminders back on. Without
+  // this, someone who used the reminders unsubscribe link could enable push and still get nothing
+  // (owner decision 16).
+  if (changes.notifyPush === true && changes.notifyReminder === undefined) {
+    changes.notifyReminder = true;
+  }
   if (Object.keys(changes).length === 0) return getNotifyPrefs(id);
   const result = await UserEntity.patch({ id }).set(changes).go({ response: 'all_new' });
   return effectiveNotifyPrefs(result.data as User);

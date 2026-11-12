@@ -17,9 +17,7 @@ const form = (entries: Record<string, string>) => {
 describe('unsubscribeMessage', () => {
   it('uses the Copy text for each kind', () => {
     expect(unsubscribeMessage('digest')).toBe("You won't get the weekly list any more.");
-    expect(unsubscribeMessage('reminders')).toBe(
-      "You won't get day-before reminders by email any more."
-    );
+    expect(unsubscribeMessage('reminders')).toBe("You won't get day-before reminders any more.");
     expect(unsubscribeMessage('all')).toBe("You're unsubscribed from all rasika.life email.");
   });
 });

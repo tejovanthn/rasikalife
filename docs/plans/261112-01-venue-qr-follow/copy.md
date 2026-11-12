@@ -152,7 +152,7 @@ One checkbox per venue or organiser the user has toggled on, each naming that ta
 | Case | Text |
 | --- | --- |
 | Digest | You won't get the weekly list any more. |
-| Reminders | You won't get day-before reminders by email any more. |
+| Reminders | You won't get day-before reminders any more. |
 | All email | You're unsubscribed from all rasika.life email. |
 | Follow-up link | Changed your mind? Manage notifications |
 | Bad or used token | This link has expired. Sign in to manage notifications. |

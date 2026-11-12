@@ -69,8 +69,8 @@ export async function checkUnsubscribeToken(
 }
 
 /**
- * What each kind turns off. TODO(spec): `reminders` clears `notifyReminder`, which also stops
- * push reminders in phase 7, while Copy says "by email". There is no email-only reminder flag.
+ * What each kind turns off. `reminders` clears `notifyReminder`, which stops push reminders
+ * too, as Copy says. Turning push on sets it back (owner decision 16).
  */
 export function unsubscribePatch(kind: UnsubscribeKind) {
   if (kind === 'digest') return { notifyDigest: false };

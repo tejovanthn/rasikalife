@@ -64,3 +64,9 @@ and win where those tabs disagree.
     approves. With the switch off, edits stay instant.
 14. **Hall renames**: cascade the new `spaceName` to events that have not started yet. Past events
     keep the name the hall had at the time.
+15. **Organiser dashboard codes**: home venue only. Codes belong to venues; a sabha renting a hall
+    would otherwise see scans from other sabhas' concerts there. Codes at a rented hall show on
+    that venue's dashboard.
+16. **Reminders unsubscribe**: keeps stopping push too. Copy now reads "You won't get day-before
+    reminders any more." Tapping "Remind me the day before" or turning on push sets
+    `notifyReminder` back on.

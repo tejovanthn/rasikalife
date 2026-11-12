@@ -29,7 +29,7 @@ export const whatsappUnconfirmed = (number: string) => `${number} (not yet confi
 
 export const UNSUBSCRIBE_COPY = {
   digest: "You won't get the weekly list any more.",
-  reminders: "You won't get day-before reminders by email any more.",
+  reminders: "You won't get day-before reminders any more.",
   all: "You're unsubscribed from all rasika.life email.",
   changedMind: 'Changed your mind?',
   manage: 'Manage notifications',

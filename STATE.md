@@ -25,11 +25,7 @@ Next, in order:
    - Check the untested query paths named in the sabha section of `CLAUDE.md`.
 5. Still open:
    - **Digest time:** Sunday 18:00 IST, to be checked with the pilot sabhas.
-   - **Linked venues:** an organiser dashboard shows QR codes for its home venue only
-     (`TODO(spec)` in `sabha/dashboard.ts`).
-   - **Reminder unsubscribe:** the "reminders" link also stops push reminders, but Copy says
-     "by email" (`TODO(spec)`).
-   - Owner decisions 11 to 14 are settled and built (`decisions.md`).
+   - Owner decisions 11 to 16 are settled and built (`decisions.md`).
 6. Before the first print run: a native speaker reviews the Kannada, and you scan a sticker from
    1 m (the QR box is 64 mm).
 
