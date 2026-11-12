@@ -117,6 +117,15 @@ export default function BulkAssign() {
       <PageTitle className="mb-2">{ADMIN_EXTRA_COPY.assignSelected}</PageTitle>
       <p className="mb-6 text-sm text-muted-foreground">{ADMIN_EXTRA_COPY.bulkLimit}</p>
       <Form method="post" className="max-w-md space-y-4">
+        {/* Enter in a field presses the form's first submit button. Without this, that is "Fill
+            labels"; this keeps Enter meaning "Activate". Off screen rather than display:none,
+            which Safari skips for implicit submission. */}
+        <button
+          type="submit"
+          tabIndex={-1}
+          aria-hidden="true"
+          className="absolute -left-[9999px] h-px w-px overflow-hidden"
+        />
         <VenuePicker
           venues={venues}
           createVenueUrl={createVenueUrl}
