@@ -14,7 +14,7 @@ Next, in order:
 1. Set secrets on prod: `QrIntentSecret`, `UnsubscribeSecret` (random strings), and the VAPID keys
    from `npx web-push generate-vapid-keys` (`VapidPublicKey`, `VapidPrivateKey`).
 2. Deploy. This creates `admin.rasika.life`, `sabha.rasika.life`, the root `rasika.life` SES
-   identity, the PDF queue, the crons and the WAF ACL.
+   identity, the PDF queue and the crons.
 3. SES: verify DKIM for `rasika.life`. Request production access before the pilot.
 4. Smoke test in this order:
    - In admin, make a batch of 4 stickers and check the PDF, including the Kannada line at
@@ -28,6 +28,15 @@ Next, in order:
    - Owner decisions 11 to 16 are settled and built (`decisions.md`).
 6. Before the first print run: a native speaker reviews the Kannada, and you scan a sticker from
    1 m (the QR box is 64 mm).
+
+Backlog:
+- **WAF on `/q/*`**, dropped for the pilot on cost (decision 17). Pricing as of 2026-11-12: $5 a
+  month per web ACL, $1 per rule, $0.60 per million requests, and every request to the
+  distribution is billed, not only `/q/`. That is about $7 to $10 a month here. The scan page
+  now uses an app-level per-IP limit (`hitRateLimit`), but a flood still invokes Lambda. Bring
+  WAF back if `/q` sees abuse: the rule was `infra/scan-rate-limit.ts` (in git history, 1,500
+  requests per 5 minutes per IP, 429 with the "Too many scans" body). Also compare CloudFront's
+  flat-rate plans, which include WAF (Pro is $15 a month for 10M requests).
 
 ## 2026-11-11: SEO backlog branch `seo/backlog-2026-11`, not pushed or deployed
 
