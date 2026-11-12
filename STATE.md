@@ -3,6 +3,39 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-11-12: Venue QR Follow, all phases on local `main`, not pushed or deployed
+
+Spec, copy, build notes and owner decisions: `docs/plans/261112-01-venue-qr-follow/`. Each phase has
+a `### Venue QR Follow` section in `CLAUDE.md`. Tests pass (core 2239, web 518, trpc unit 115,
+admin 27, sabha 32, qr 10, email 19). Typecheck counts are unchanged (core 7, web 21). The web,
+admin and sabha builds succeed. Nothing has run against AWS, and no page has been opened in a browser.
+
+Next, in order:
+1. Set secrets on prod: `QrIntentSecret`, `UnsubscribeSecret` (random strings), and the VAPID keys
+   from `npx web-push generate-vapid-keys` (`VapidPublicKey`, `VapidPrivateKey`).
+2. Deploy. This creates `admin.rasika.life`, `sabha.rasika.life`, the root `rasika.life` SES
+   identity, the PDF queue, the crons and the WAF ACL.
+3. SES: verify DKIM for `rasika.life`. Request production access before the pilot.
+4. Smoke test in this order:
+   - In admin, make a batch of 4 stickers and check the PDF, including the Kannada line at
+     sticker size.
+   - Assign a code and scan it signed out: Google, then the confirmation screen.
+   - Check `/me/following` and `/me/notifications`.
+   - Invite yourself as an owner and open the sabha dashboard. Run an export.
+   - Check the untested query paths named in the sabha section of `CLAUDE.md`.
+5. Owner decisions still open:
+   - **Owner-only actions:** export and profile edit refuse moderators.
+   - **Venues an organiser manages:** this is `TODO(spec)`, so only the invited target gets
+     `verifiedAt`.
+   - **Edits to approved events:** an edit to an approved owner event does not go back to review
+     when the review switch is on.
+   - **Hall renames:** renaming a `VenueSpace` does not update `Event.spaceName`.
+   - **Digest time:** Sunday 18:00 IST, to be checked with the pilot sabhas.
+   - **Placeholder strings:** several `TODO(copy)` strings, in `packages/admin/app/lib/copy.ts`,
+     `packages/sabha/app/lib/copy.ts` and the follower-count label.
+6. Before the first print run: a native speaker reviews the Kannada, and you scan a sticker from
+   1 m (the QR box is 64 mm).
+
 ## 2026-11-11: SEO backlog branch `seo/backlog-2026-11`, not pushed or deployed
 
 Built: `/carnatic/ragas/melakarta`, `/carnatic/ragas/janya`, `/carnatic/compositions/varnams`, composer
