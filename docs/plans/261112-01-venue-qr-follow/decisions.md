@@ -34,3 +34,19 @@ and win where those tabs disagree.
    `admin.rasika.life/qr/{code}/assign`. No inline form on rasika.life.
 5. **Venue QR panel**: shown to moderators on the public venue page `rasika.life/venues/:venueid`
    (not in the admin app). Columns and actions as in the Spec.
+
+## Owner decisions after the code review (2026-11-12)
+
+6. **Scan rate limit**: carrier-grade NAT (Jio, Airtel) puts a hall's phones behind one IP.
+   `/q/*` is 300 per minute per IP (WAF: 1,500 per 5 minutes). `SCAN_RATE_LIMIT_PER_MIN = 300`.
+   Add a per-user limit on `follow.bulkSet` of 30 per minute.
+7. **List-Unsubscribe**: https only, with `List-Unsubscribe-Post` (RFC 8058). No `mailto`, since
+   nothing processes it.
+8. **`qr_intent` cookie**: bound to the sign-in attempt. A random nonce goes in the cookie and in
+   the OAuth `state`; the callback applies the intent only when they match. The cookie is cleared
+   at the end of every sign-in, applied or not.
+9. **Admin user list**: `unsubscribeToken` never appears in any API response (only the
+   unsubscribe flow reads it). WhatsApp numbers are masked in lists (`+91 ••••• •2345`); the full
+   number shows only on the user detail page, to admins, and each view writes an audit row.
+10. **Follower counts and the page cache**: follows do not purge `/*`. Purge only the followed
+    entity's page paths, debounced to at most once per 30 minutes per target.
