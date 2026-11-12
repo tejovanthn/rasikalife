@@ -4,7 +4,16 @@ import { PDFDocument } from 'pdf-lib';
 import { describe, expect, it, vi } from 'vitest';
 import { renderBatchJob } from './job';
 import type { RenderDeps } from './job';
-import { A4, STICKERS_PER_SHEET, pageCount, renderBatchPdf } from './layout';
+import {
+  FACE_PAGE,
+  STICKERS_PER_SHEET,
+  STICKER_SHEET,
+  mm,
+  pageCount,
+  renderBatchPdf,
+  stickerRect,
+} from './layout';
+import { PALETTE, contrastRatio } from './palette';
 import { qrMatrix, qrPath, qrUrl } from './qr-path';
 import { Typesetter, flipPathY } from './typesetter';
 
@@ -59,6 +68,32 @@ describe('flipPathY', () => {
   });
 });
 
+describe('sticker sheet', () => {
+  it('keeps at least 6 mm between trims, so 3 mm bleeds do not overlap', () => {
+    const gapX = stickerRect(1).x - (stickerRect(0).x + stickerRect(0).w);
+    const gapY = stickerRect(0).y - (stickerRect(2).y + stickerRect(2).h);
+    expect(gapX).toBeGreaterThanOrEqual(mm(6) - 1e-6);
+    expect(gapY).toBeGreaterThanOrEqual(mm(6) - 1e-6);
+    // Outer bleed plus a clear slug for the marks fits the page.
+    expect(stickerRect(0).x).toBeGreaterThanOrEqual(mm(8.5));
+    expect(stickerRect(3).x + stickerRect(3).w + mm(8.5)).toBeLessThanOrEqual(
+      STICKER_SHEET.w + 1e-6
+    );
+  });
+});
+
+describe('print colours', () => {
+  it('keeps QR modules far darker than their panel', () => {
+    expect(contrastRatio(PALETTE.lampBlack, PALETTE.warmWhite)).toBeGreaterThanOrEqual(15);
+  });
+
+  it('keeps text readable on its ground', () => {
+    expect(contrastRatio(PALETTE.warmWhite, PALETTE.firedEarthenware)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(PALETTE.firedEarthenware, PALETTE.hallLight)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(PALETTE.ink, PALETTE.hallLight)).toBeGreaterThanOrEqual(15);
+  });
+});
+
 describe('page counts', () => {
   it('packs four stickers per sheet and one tent or poster per code', () => {
     expect(STICKERS_PER_SHEET).toBe(4);
@@ -72,8 +107,9 @@ describe('page counts', () => {
 });
 
 describe('renderBatchPdf', () => {
-  it('renders A4 pages for every format with the expected page count', async () => {
+  it('renders full bleed pages with trim and bleed boxes for every format', async () => {
     const typesetter = await Typesetter.create();
+    const expected = { sticker: STICKER_SHEET, 'table-tent': FACE_PAGE, poster: FACE_PAGE };
     for (const format of ['sticker', 'table-tent', 'poster'] as const) {
       const bytes = await renderBatchPdf({
         format,
@@ -83,9 +119,25 @@ describe('renderBatchPdf', () => {
       });
       const doc = await PDFDocument.load(bytes);
       expect(doc.getPageCount()).toBe(pageCount(format, CODES.length));
-      const { width, height } = doc.getPage(0).getSize();
-      expect(width).toBeCloseTo(A4.w, 1);
-      expect(height).toBeCloseTo(A4.h, 1);
+      const page = doc.getPage(0);
+      const { width, height } = page.getSize();
+      expect(width).toBeCloseTo(expected[format].w, 1);
+      expect(height).toBeCloseTo(expected[format].h, 1);
+      const trim = page.getTrimBox();
+      const bleed = page.getBleedBox();
+      // The bleed box is the trim box grown 3 mm on every side, and sits inside the page.
+      expect(trim.x - bleed.x).toBeCloseTo(mm(3), 1);
+      expect(trim.y - bleed.y).toBeCloseTo(mm(3), 1);
+      expect(bleed.width - trim.width).toBeCloseTo(mm(6), 1);
+      expect(bleed.height - trim.height).toBeCloseTo(mm(6), 1);
+      expect(bleed.x).toBeGreaterThan(0);
+      expect(bleed.x + bleed.width).toBeLessThan(width);
+      expect(bleed.y).toBeGreaterThan(0);
+      expect(bleed.y + bleed.height).toBeLessThan(height);
+      if (format !== 'sticker') {
+        expect(trim.width).toBeCloseTo(mm(210), 1);
+        expect(trim.height).toBeCloseTo(mm(297), 1);
+      }
     }
     typesetter.destroy();
   });

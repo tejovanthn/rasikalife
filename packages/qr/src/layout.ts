@@ -8,6 +8,8 @@ import {
 } from 'pdf-lib';
 import type { PDFPage } from 'pdf-lib';
 import { PANEL_COPY, STICKER_COPY, codeLine } from './copy';
+import { COLOR } from './palette';
+import type { Rgb } from './palette';
 import { qrMatrix, qrPath, qrUrl } from './qr-path';
 import type { Typesetter } from './typesetter';
 
@@ -19,14 +21,27 @@ export const A4 = { w: mm(210), h: mm(297) };
 /** Quiet zone, in modules, on every side of the symbol (spec: 4). */
 export const QUIET_ZONE_MODULES = 4;
 
-const GRAY: [number, number, number] = [0.3, 0.3, 0.3];
+/** Every face runs 3 mm past its trim line. Text and the QR panel stay 5 mm inside it. */
+export const BLEED_MM = 3;
+export const SAFE_MM = 5;
+/**
+ * Paper outside the bleed, on every side of a tent or poster page and of the sticker block.
+ * Crop marks live here: 1.5 mm clear of the bleed, 4 mm long, so 8.5 mm of the 9.
+ */
+export const SLUG_MM = 9;
+const MARK_GAP_MM = 1.5;
+const MARK_LEN_MM = 4;
 
 type Rect = { x: number; y: number; w: number; h: number };
+/** How far the background and band run past each trim edge, in points. */
+type Bleed = { left: number; right: number; top: number; bottom: number };
+
+const fill = (c: Rgb) => rgb(c[0], c[1], c[2]);
 
 /**
- * Draws the symbol inside a square box that includes the quiet zone. The box is white, so the
- * quiet zone stays clear even on a coloured sheet. `box` is the side in points; `x`, `top` is the
- * box's top left in PDF coordinates (`top` is measured up from the page bottom).
+ * Draws the symbol on a warm white panel. The panel is the box, and the 4 module quiet zone lies
+ * inside it. Modules are lamp black and never take any other colour. `box` is the side in points;
+ * `x`, `top` is the panel's top left in PDF coordinates.
  */
 export function drawQr(
   page: PDFPage,
@@ -42,13 +57,13 @@ export function drawQr(
     y: at.top - at.box,
     width: at.box,
     height: at.box,
-    color: rgb(1, 1, 1),
+    color: fill(COLOR.warmWhite),
   });
   page.drawSvgPath(qrPath(matrix), {
     x: at.x + QUIET_ZONE_MODULES * unit,
     y: at.top - QUIET_ZONE_MODULES * unit,
     scale: unit,
-    color: rgb(0, 0, 0),
+    color: fill(COLOR.lampBlack),
     borderWidth: 0,
   });
 }
@@ -59,14 +74,14 @@ type Paragraph = {
   size: number;
   /** Line height as a multiple of size. Kannada needs more room than Latin. */
   leading: number;
-  color?: [number, number, number];
+  color?: Rgb;
 };
 
 const LEADING = { latin: 1.3, latinBold: 1.25, kannada: 1.6 } as const;
 
 /**
  * Draws wrapped, aligned lines from `top` downward and returns the top of the next block.
- * The first baseline sits one ascent (about 0.8 of the size) below `top`.
+ * The first baseline sits one ascent (about 0.8 of the size) below `top`. Text is ink unless told.
  */
 function paragraph(
   page: PDFPage,
@@ -85,7 +100,7 @@ function paragraph(
       x: area.align === 'center' ? area.x + area.width / 2 : area.x,
       y: top - p.size * 0.82,
       align: area.align,
-      color: p.color,
+      color: p.color ?? COLOR.ink,
     });
     top -= p.size * p.leading;
   }
@@ -94,56 +109,136 @@ function paragraph(
 
 export type FaceInput = { code: string; baseUrl: string };
 
-/** Sticker face, 100 x 100 mm. `rect` is its position on the sheet. */
-function stickerFace(page: PDFPage, type: Typesetter, input: FaceInput, rect: Rect): void {
-  const pad = mm(4);
+/** Fills the whole face, bleed included, with hall light. */
+function paintBackground(page: PDFPage, rect: Rect, bleed: Bleed): void {
+  page.drawRectangle({
+    x: rect.x - bleed.left,
+    y: rect.y - bleed.bottom,
+    width: rect.w + bleed.left + bleed.right,
+    height: rect.h + bleed.top + bleed.bottom,
+    color: fill(COLOR.hallLight),
+  });
+}
+
+/**
+ * The fired earthenware band across the top of a face, with the headline in warm white. The band
+ * is sized to the headline: `topPad` above its first line, `bottomPad` under its last. It runs to
+ * the top and side bleed. Returns the band's bottom edge (PDF y) so body text can start below it.
+ */
+function headlineBand(
+  page: PDFPage,
+  type: Typesetter,
+  rect: Rect,
+  bleed: Bleed,
+  head: {
+    p: Paragraph;
+    x: number;
+    width: number;
+    align: 'left' | 'center';
+    topPad: number;
+    bottomPad: number;
+  }
+): number {
+  const lines = type.wrap(head.p.text, head.p.face, head.p.size, head.width).length;
+  const textTop = rect.y + rect.h - head.topPad;
+  const textHeight = (lines - 1) * head.p.size * head.p.leading + head.p.size;
+  const bottom = textTop - textHeight - head.bottomPad;
+  const top = rect.y + rect.h + bleed.top;
+  page.drawRectangle({
+    x: rect.x - bleed.left,
+    y: bottom,
+    width: rect.w + bleed.left + bleed.right,
+    height: top - bottom,
+    color: fill(COLOR.fired),
+  });
+  paragraph(
+    page,
+    type,
+    { ...head.p, color: COLOR.warmWhite },
+    { x: head.x, width: head.width, top: textTop, align: head.align }
+  );
+  return bottom;
+}
+
+/** Sticker face, 100 x 100 mm trim. */
+function stickerFace(
+  page: PDFPage,
+  type: Typesetter,
+  input: FaceInput,
+  rect: Rect,
+  bleed: Bleed
+): void {
+  const pad = mm(SAFE_MM + 1);
   const innerW = rect.w - pad * 2;
   const x = rect.x + pad;
-  const top = rect.y + rect.h;
+  const mid = rect.x + rect.w / 2;
+  paintBackground(page, rect, bleed);
 
-  let cursor = paragraph(
+  const bandBottom = headlineBand(page, type, rect, bleed, {
+    p: { text: STICKER_COPY.headline, face: 'latinBold', size: 15.5, leading: LEADING.latinBold },
+    x,
+    width: innerW,
+    align: 'center',
+    topPad: mm(SAFE_MM + 1),
+    bottomPad: mm(3.5),
+  });
+
+  const cursor = paragraph(
     page,
     type,
-    { text: STICKER_COPY.headline, face: 'latinBold', size: 17, leading: LEADING.latinBold },
-    { x, width: innerW, top: top - mm(4.5), align: 'center' }
-  );
-  cursor = paragraph(
-    page,
-    type,
-    { text: STICKER_COPY.kannada, face: 'kannada', size: 11.5, leading: LEADING.kannada },
-    { x, width: innerW, top: cursor - mm(0.5), align: 'center' }
+    { text: STICKER_COPY.kannada, face: 'kannada', size: 11, leading: LEADING.kannada },
+    { x, width: innerW, top: bandBottom - mm(2), align: 'center' }
   );
 
-  const box = mm(64);
+  const box = mm(61);
   const qrTop = cursor - mm(0.5);
   drawQr(page, input.code, input.baseUrl, { x: rect.x + (rect.w - box) / 2, top: qrTop, box });
 
-  const codeBaseline = qrTop - box - mm(0.5);
+  // Code above footer on the last rows, inside the safe area.
+  const footerBaseline = rect.y + mm(SAFE_MM + 1.5);
   type.draw(page, codeLine(input.code), {
     face: 'latinBold',
     size: 11,
-    x: rect.x + rect.w / 2,
-    y: codeBaseline - 9,
+    x: mid,
+    y: footerBaseline + 9 + mm(0.5),
     align: 'center',
     tracking: 0.5,
+    color: COLOR.fired,
   });
   type.draw(page, STICKER_COPY.footer, {
     face: 'latin',
     size: 9,
-    x: rect.x + rect.w / 2,
-    y: rect.y + mm(4.5),
+    x: mid,
+    y: footerBaseline,
     align: 'center',
-    color: GRAY,
+    color: COLOR.fired,
   });
 }
 
 /** Table tent face: A5 landscape on a half of A4 (210 x 148.5 mm). QR left, words right. */
-function tentFace(page: PDFPage, type: Typesetter, input: FaceInput, rect: Rect): void {
+function tentFace(
+  page: PDFPage,
+  type: Typesetter,
+  input: FaceInput,
+  rect: Rect,
+  bleed: Bleed
+): void {
   const pad = mm(10);
-  const top = rect.y + rect.h;
-  const box = mm(94);
+  paintBackground(page, rect, bleed);
+
+  // The face top is the fold, so there is no trim edge above the headline to keep clear of.
+  const bandBottom = headlineBand(page, type, rect, bleed, {
+    p: { text: PANEL_COPY.headline, face: 'latinBold', size: 27, leading: 1.2 },
+    x: rect.x + pad,
+    width: rect.w - pad * 2,
+    align: 'left',
+    topPad: mm(8),
+    bottomPad: mm(6),
+  });
+
+  const box = mm(88);
   const qrX = rect.x + pad;
-  const qrTop = top - mm(14);
+  const qrTop = bandBottom - mm(6);
   drawQr(page, input.code, input.baseUrl, { x: qrX, top: qrTop, box });
   type.draw(page, codeLine(input.code), {
     face: 'latinBold',
@@ -152,95 +247,101 @@ function tentFace(page: PDFPage, type: Typesetter, input: FaceInput, rect: Rect)
     y: qrTop - box - 14,
     align: 'center',
     tracking: 0.6,
+    color: COLOR.fired,
   });
   type.draw(page, PANEL_COPY.footer, {
     face: 'latin',
     size: 10,
     x: qrX + box / 2,
-    y: rect.y + mm(8),
+    y: rect.y + mm(SAFE_MM + 2),
     align: 'center',
-    color: GRAY,
+    color: COLOR.fired,
   });
 
-  const colX = qrX + box + mm(6);
+  const colX = qrX + box + mm(8);
   const colW = rect.x + rect.w - pad - colX;
-  let cursor = top - mm(16);
+  let cursor = bandBottom - mm(6);
   cursor = paragraph(
     page,
     type,
-    { text: PANEL_COPY.headline, face: 'latinBold', size: 24, leading: 1.2 },
+    { text: PANEL_COPY.body, face: 'latin', size: 12.5, leading: LEADING.latin },
     { x: colX, width: colW, top: cursor, align: 'left' }
   );
   cursor = paragraph(
     page,
     type,
-    { text: PANEL_COPY.body, face: 'latin', size: 11.5, leading: LEADING.latin },
-    { x: colX, width: colW, top: cursor - mm(2), align: 'left' }
-  );
-  cursor = paragraph(
-    page,
-    type,
     { text: PANEL_COPY.kannada, face: 'kannada', size: 12, leading: LEADING.kannada },
-    { x: colX, width: colW, top: cursor - mm(2), align: 'left' }
+    { x: colX, width: colW, top: cursor - mm(3), align: 'left' }
   );
   paragraph(
     page,
     type,
-    { text: PANEL_COPY.reassurance, face: 'latinBold', size: 13, leading: LEADING.latinBold },
-    { x: colX, width: colW, top: cursor - mm(2), align: 'left' }
+    { text: PANEL_COPY.reassurance, face: 'latinBold', size: 14, leading: LEADING.latinBold },
+    { x: colX, width: colW, top: cursor - mm(3), align: 'left' }
   );
 }
 
 /** Poster face, A4 portrait, everything centred. */
-function posterFace(page: PDFPage, type: Typesetter, input: FaceInput, rect: Rect): void {
+function posterFace(
+  page: PDFPage,
+  type: Typesetter,
+  input: FaceInput,
+  rect: Rect,
+  bleed: Bleed
+): void {
   const pad = mm(16);
   const width = rect.w - pad * 2;
   const x = rect.x + pad;
-  const top = rect.y + rect.h;
+  paintBackground(page, rect, bleed);
+
+  const bandBottom = headlineBand(page, type, rect, bleed, {
+    p: { text: PANEL_COPY.headline, face: 'latinBold', size: 40, leading: 1.2 },
+    x,
+    width,
+    align: 'center',
+    topPad: mm(14),
+    bottomPad: mm(9),
+  });
 
   let cursor = paragraph(
     page,
     type,
-    { text: PANEL_COPY.headline, face: 'latinBold', size: 40, leading: 1.2 },
-    { x, width, top: top - mm(18), align: 'center' }
+    { text: PANEL_COPY.body, face: 'latin', size: 16, leading: LEADING.latin },
+    { x, width, top: bandBottom - mm(7), align: 'center' }
   );
   cursor = paragraph(
     page,
     type,
-    { text: PANEL_COPY.body, face: 'latin', size: 17, leading: LEADING.latin },
-    { x, width, top: cursor - mm(4), align: 'center' }
-  );
-  cursor = paragraph(
-    page,
-    type,
-    { text: PANEL_COPY.kannada, face: 'kannada', size: 18, leading: LEADING.kannada },
+    { text: PANEL_COPY.kannada, face: 'kannada', size: 17, leading: LEADING.kannada },
     { x, width, top: cursor - mm(3), align: 'center' }
   );
 
-  const box = mm(120);
-  const qrTop = cursor - mm(6);
-  drawQr(page, input.code, input.baseUrl, { x: rect.x + (rect.w - box) / 2, top: qrTop, box });
+  const box = mm(132);
+  const qrTop = cursor - mm(4);
+  const mid = rect.x + rect.w / 2;
+  drawQr(page, input.code, input.baseUrl, { x: mid - box / 2, top: qrTop, box });
   type.draw(page, codeLine(input.code), {
     face: 'latinBold',
     size: 20,
-    x: rect.x + rect.w / 2,
+    x: mid,
     y: qrTop - box - 20,
     align: 'center',
     tracking: 1,
+    color: COLOR.fired,
   });
   paragraph(
     page,
     type,
     { text: PANEL_COPY.reassurance, face: 'latinBold', size: 20, leading: LEADING.latinBold },
-    { x, width, top: qrTop - box - mm(14), align: 'center' }
+    { x, width, top: qrTop - box - mm(13), align: 'center' }
   );
   type.draw(page, PANEL_COPY.footer, {
     face: 'latin',
     size: 14,
-    x: rect.x + rect.w / 2,
-    y: rect.y + mm(12),
+    x: mid,
+    y: rect.y + mm(SAFE_MM + 4),
     align: 'center',
-    color: GRAY,
+    color: COLOR.fired,
   });
 }
 
@@ -254,91 +355,133 @@ function rotated180(page: PDFPage, rect: Rect, fn: () => void): void {
   page.pushOperators(popGraphicsState());
 }
 
-const MARK_LEN = mm(4);
-const MARK_GAP = mm(1.5);
-const MARK_COLOR = rgb(0, 0, 0);
-
 function line(page: PDFPage, x1: number, y1: number, x2: number, y2: number): void {
   page.drawLine({
     start: { x: x1, y: y1 },
     end: { x: x2, y: y2 },
     thickness: 0.4,
-    color: MARK_COLOR,
-  });
-}
-
-/** Marks at every grid line, outside the block, so one straight cut serves two stickers. */
-function stickerCropMarks(page: PDFPage, grid: Rect, cell: number, cols: number, rows: number) {
-  for (let c = 0; c <= cols; c += 1) {
-    const x = grid.x + c * cell;
-    line(page, x, grid.y - MARK_GAP, x, grid.y - MARK_GAP - MARK_LEN);
-    line(page, x, grid.y + grid.h + MARK_GAP, x, grid.y + grid.h + MARK_GAP + MARK_LEN);
-  }
-  for (let r = 0; r <= rows; r += 1) {
-    const y = grid.y + r * cell;
-    line(page, grid.x - MARK_GAP, y, grid.x - MARK_GAP - MARK_LEN, y);
-    line(page, grid.x + grid.w + MARK_GAP, y, grid.x + grid.w + MARK_GAP + MARK_LEN, y);
-  }
-}
-
-/** Stickers per A4 sheet: a 2 x 2 block, centred, with crop marks. */
-export const STICKERS_PER_SHEET = 4;
-
-function stickerSheet(doc: PDFDocument, type: Typesetter, codes: string[], baseUrl: string) {
-  const cell = mm(100);
-  const grid: Rect = {
-    x: (A4.w - cell * 2) / 2,
-    y: (A4.h - cell * 2) / 2,
-    w: cell * 2,
-    h: cell * 2,
-  };
-  const page = doc.addPage([A4.w, A4.h]);
-  stickerCropMarks(page, grid, cell, 2, 2);
-  codes.forEach((code, index) => {
-    const col = index % 2;
-    const row = Math.floor(index / 2);
-    // Row 0 is the top row of the block.
-    const rect: Rect = {
-      x: grid.x + col * cell,
-      y: grid.y + (1 - row) * cell,
-      w: cell,
-      h: cell,
-    };
-    stickerFace(page, type, { code, baseUrl }, rect);
+    color: rgb(0, 0, 0),
   });
 }
 
 /**
- * Table tent: one A4 sheet folded across its width. The upper half is turned half a circle so
- * that, once folded and stood up, both faces read the right way up and carry the same face.
+ * One mark in the slug, starting clear of the bleed and running outward from the trim point
+ * (x, y). `dir` points away from the trim: -1 is left or down, 1 is right or up.
  */
-function tentSheet(doc: PDFDocument, type: Typesetter, code: string, baseUrl: string) {
-  const page = doc.addPage([A4.w, A4.h]);
-  const half = A4.h / 2;
-  const lower: Rect = { x: 0, y: 0, w: A4.w, h: half };
-  const upper: Rect = { x: 0, y: half, w: A4.w, h: half };
-  tentFace(page, type, { code, baseUrl }, lower);
-  rotated180(page, upper, () => tentFace(page, type, { code, baseUrl }, upper));
+function markAt(page: PDFPage, x: number, y: number, horizontal: boolean, dir: 1 | -1): void {
+  const from = mm(BLEED_MM + MARK_GAP_MM) * dir;
+  const to = mm(BLEED_MM + MARK_GAP_MM + MARK_LEN_MM) * dir;
+  if (horizontal) line(page, x + from, y, x + to, y);
+  else line(page, x, y + from, x, y + to);
+}
 
-  // Fold ticks at both edges, and trim ticks in the four corners.
-  line(page, 0, half, mm(6), half);
-  line(page, A4.w - mm(6), half, A4.w, half);
-  const inset = mm(4);
-  const tick = mm(4);
-  for (const [cx, cy, dx, dy] of [
-    [inset, inset, 1, 1],
-    [A4.w - inset, inset, -1, 1],
-    [inset, A4.h - inset, 1, -1],
-    [A4.w - inset, A4.h - inset, -1, -1],
-  ] as const) {
-    line(page, cx, cy, cx + dx * tick, cy);
-    line(page, cx, cy, cx, cy + dy * tick);
+/** Crop marks at the four corners of a trim box, outside the bleed. */
+function cornerMarks(page: PDFPage, trim: Rect): void {
+  for (const x of [trim.x, trim.x + trim.w]) {
+    markAt(page, x, trim.y, false, -1);
+    markAt(page, x, trim.y + trim.h, false, 1);
+  }
+  for (const y of [trim.y, trim.y + trim.h]) {
+    markAt(page, trim.x, y, true, -1);
+    markAt(page, trim.x + trim.w, y, true, 1);
   }
 }
 
+/** Sets the boxes a vendor reads: the trim, and the bleed 3 mm outside it. */
+function setBoxes(page: PDFPage, trim: Rect): void {
+  const b = mm(BLEED_MM);
+  page.setTrimBox(trim.x, trim.y, trim.w, trim.h);
+  page.setBleedBox(trim.x - b, trim.y - b, trim.w + b * 2, trim.h + b * 2);
+}
+
+const ALL_BLEED: Bleed = {
+  left: mm(BLEED_MM),
+  right: mm(BLEED_MM),
+  top: mm(BLEED_MM),
+  bottom: mm(BLEED_MM),
+};
+
+/** Sticker side and the gap between trims. Six millimetres lets two bleeds meet, not overlap. */
+export const STICKER_MM = 100;
+export const STICKER_GUTTER_MM = 6;
+const SHEET_MM = STICKER_MM * 2 + STICKER_GUTTER_MM + SLUG_MM * 2;
+/** The sticker sheet is square, 224 x 224 mm. Four bleeding stickers do not fit A4. */
+export const STICKER_SHEET = { w: mm(SHEET_MM), h: mm(SHEET_MM) };
+/** Tent and poster pages: A4 plus the slug on every side, 228 x 315 mm. */
+export const FACE_PAGE = { w: mm(210 + SLUG_MM * 2), h: mm(297 + SLUG_MM * 2) };
+
+/** Stickers per sheet: a 2 x 2 block, with crop marks on every trim line. */
+export const STICKERS_PER_SHEET = 4;
+
+/** Trim box of sticker `index` (0 top left, 1 top right, 2 bottom left, 3 bottom right). */
+export function stickerRect(index: number): Rect {
+  const col = index % 2;
+  const row = Math.floor(index / 2);
+  const step = mm(STICKER_MM + STICKER_GUTTER_MM);
+  return {
+    x: mm(SLUG_MM) + col * step,
+    y: mm(SLUG_MM) + (1 - row) * step,
+    w: mm(STICKER_MM),
+    h: mm(STICKER_MM),
+  };
+}
+
+function stickerSheet(doc: PDFDocument, type: Typesetter, codes: string[], baseUrl: string) {
+  const page = doc.addPage([STICKER_SHEET.w, STICKER_SHEET.h]);
+  codes.forEach((code, index) => {
+    stickerFace(page, type, { code, baseUrl }, stickerRect(index), ALL_BLEED);
+  });
+
+  // A mark on every trim line, past the block: both edges of each gutter, so each cut is shown.
+  const topLeft = stickerRect(0);
+  const bottomRight = stickerRect(3);
+  const left = topLeft.x;
+  const bottom = bottomRight.y;
+  const right = bottomRight.x + bottomRight.w;
+  const top = topLeft.y + topLeft.h;
+  const xs = [left, left + topLeft.w, bottomRight.x, right];
+  const ys = [bottom, bottom + bottomRight.h, topLeft.y, top];
+  for (const x of xs) {
+    markAt(page, x, bottom, false, -1);
+    markAt(page, x, top, false, 1);
+  }
+  for (const y of ys) {
+    markAt(page, left, y, true, -1);
+    markAt(page, right, y, true, 1);
+  }
+  setBoxes(page, { x: left, y: bottom, w: right - left, h: top - bottom });
+}
+
+/**
+ * Table tent: one A4 trim folded across its width. The upper half is turned half a circle so
+ * that, once folded and stood up, both faces read the right way up and carry the same face. The
+ * top of each face is the fold, so the two bands meet there and the fold shows no white line.
+ */
+function tentSheet(doc: PDFDocument, type: Typesetter, code: string, baseUrl: string) {
+  const page = doc.addPage([FACE_PAGE.w, FACE_PAGE.h]);
+  const slug = mm(SLUG_MM);
+  const half = mm(297) / 2;
+  const lower: Rect = { x: slug, y: slug, w: mm(210), h: half };
+  const upper: Rect = { x: slug, y: slug + half, w: mm(210), h: half };
+  // Both faces run a hair past the fold, so the join cannot print as a gap.
+  const bleed: Bleed = { ...ALL_BLEED, top: mm(0.3) };
+  tentFace(page, type, { code, baseUrl }, lower, bleed);
+  rotated180(page, upper, () => tentFace(page, type, { code, baseUrl }, upper, bleed));
+
+  const trim: Rect = { x: slug, y: slug, w: mm(210), h: mm(297) };
+  cornerMarks(page, trim);
+  // Fold ticks, in the slug on both sides.
+  markAt(page, trim.x, slug + half, true, -1);
+  markAt(page, trim.x + trim.w, slug + half, true, 1);
+  setBoxes(page, trim);
+}
+
 function posterSheet(doc: PDFDocument, type: Typesetter, code: string, baseUrl: string) {
-  const page = doc.addPage([A4.w, A4.h]);
-  posterFace(page, type, { code, baseUrl }, { x: 0, y: 0, w: A4.w, h: A4.h });
+  const page = doc.addPage([FACE_PAGE.w, FACE_PAGE.h]);
+  const trim: Rect = { x: mm(SLUG_MM), y: mm(SLUG_MM), w: mm(210), h: mm(297) };
+  posterFace(page, type, { code, baseUrl }, trim, ALL_BLEED);
+  cornerMarks(page, trim);
+  setBoxes(page, trim);
 }
 
 /** Pages a batch of `count` codes takes in a format. */
