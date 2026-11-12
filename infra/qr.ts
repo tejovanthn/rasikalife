@@ -45,7 +45,9 @@ qrRenderQueue.subscribe(
     memory: '2048 MB',
     timeout: '5 minutes',
     // hb.js reads hb.wasm from its own directory, so it must stay a real module on disk and not
-    // be inlined by the bundler.
+    // be inlined by the bundler. SST installs it with the version from the ROOT package.json, or
+    // `*` when it is not there: the first deploy got harfbuzzjs 1.x, which is ESM only, and the
+    // renderer crashed on require(). Keep it pinned to 0.4.15 in both package.json files.
     nodejs: { install: ['harfbuzzjs'] },
     // Noto Sans and Noto Sans Kannada (OFL), read at /var/task/fonts. See packages/qr/fonts.
     copyFiles: [{ from: 'packages/qr/fonts', to: 'fonts' }],

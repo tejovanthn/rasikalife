@@ -12,7 +12,9 @@
     "lint": "biome lint --write .",
     "check": "biome check ."
   },
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -20,6 +22,7 @@
     "@openauthjs/openauth": "^0.4.3",
     "@uidotdev/usehooks": "^2.4.1",
     "arctic": "^3.7.0",
+    "harfbuzzjs": "0.4.15",
     "hono": "^4.12.3",
     "sst": "^3.19.3"
   },

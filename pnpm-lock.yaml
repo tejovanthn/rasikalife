@@ -17,6 +17,9 @@ importers:
       arctic:
         specifier: ^3.7.0
         version: 3.7.0
+      harfbuzzjs:
+        specifier: 0.4.15
+        version: 0.4.15
       hono:
         specifier: ^4.12.3
         version: 4.12.3
@@ -401,7 +404,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       harfbuzzjs:
-        specifier: ^0.4.0
+        specifier: 0.4.15
         version: 0.4.15
       pdf-lib:
         specifier: ^1.17.1
