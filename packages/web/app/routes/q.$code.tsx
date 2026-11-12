@@ -1,3 +1,4 @@
+import type { ScanEventView } from '@rasika/core/domain/venue-qr/client';
 import { QrCodeSchema } from '@rasika/core/domain/venue-qr/client';
 import { useRef, useState } from 'react';
 import type {
@@ -16,6 +17,7 @@ import {
   useNavigation,
 } from 'react-router';
 import { createServerClient } from '~/api.server';
+import { type EventCardEvent, EventList as EventRows } from '~/components/EventCard';
 import { getUser } from '~/lib/auth.server';
 import { clientIpFromHeaders } from '~/lib/client-ip';
 import { eventDateKey, eventZone, formatDayLabel, formatEventTime } from '~/lib/event-time';
@@ -92,7 +94,7 @@ type LoaderData =
       mode: 'event' | 'venue';
       signedIn: boolean;
       notice: 'cancelled' | 'save-failed' | null;
-      upcoming: EventLine[];
+      upcoming: EventCardEvent[];
       screen: FollowScreen;
     };
 
@@ -113,6 +115,26 @@ function lineOf(e: {
     title: scanEventTitle(e as Parameters<typeof scanEventTitle>[0]),
     when: `${day}, ${formatEventTime(e.startDateTime, eventZone(e))}`,
     spaceName: e.spaceName ?? null,
+  };
+}
+
+/**
+ * A venue-mode concert as the site's own event row (`EventList`), so it carries its date, cast and
+ * poster like everywhere else. No venue name: every row is at this venue, under "Coming up here".
+ */
+function cardOf(e: ScanEventView): EventCardEvent {
+  return {
+    id: e.id,
+    title: scanEventTitle(e),
+    startDateTime: e.startDateTime,
+    timezone: e.timezone,
+    artists: (e.artists ?? []).map(a => ({
+      name: a.name,
+      title: a.title ?? undefined,
+      role: a.role ?? undefined,
+    })),
+    posterUrl: e.posterUrl ?? undefined,
+    entryType: e.entryType ?? undefined,
   };
 }
 
@@ -255,7 +277,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       mode: picked ? 'event' : 'venue',
       signedIn: Boolean(user),
       notice: signin === 'cancelled' ? 'cancelled' : failed ? 'save-failed' : null,
-      upcoming: outcome.state === 'venue' ? outcome.upcoming.map(lineOf) : [],
+      upcoming: outcome.state === 'venue' ? outcome.upcoming.map(cardOf) : [],
       screen,
     },
     { headers: pageHeaders }
@@ -609,19 +631,7 @@ export default function ScanPage() {
           {d.mode === 'venue' && d.upcoming.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-2xl font-bold">{QR_COPY.venue.listHeading}</h2>
-              <ul className="space-y-3">
-                {d.upcoming.map(e => (
-                  <li key={e.id}>
-                    <Link
-                      to={`/events/${e.id}`}
-                      className="block min-h-14 rounded-xl border bg-card p-4 hover:bg-accent"
-                    >
-                      <span className="block text-xl font-semibold">{e.title}</span>
-                      <span className="block text-base text-muted-foreground">{e.when}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <EventRows events={d.upcoming} showCity={false} />
             </section>
           )}
           <FollowForm d={d} />

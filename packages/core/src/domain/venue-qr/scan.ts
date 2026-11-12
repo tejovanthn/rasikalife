@@ -19,6 +19,8 @@ export type ScanEventView = Pick<
   | 'venueName'
   | 'artForm'
   | 'artists'
+  | 'posterUrl'
+  | 'entryType'
 >;
 
 export type ScanOutcomeView =
@@ -56,6 +58,8 @@ function toView(e: ScanEvent): ScanEventView {
     organiserName: e.organiserName ?? null,
     venueName: e.venueName ?? null,
     artForm: e.artForm ?? null,
+    posterUrl: e.posterUrl ?? null,
+    entryType: e.entryType ?? null,
     artists: (e.artists ?? []).map(a => ({
       id: a.id ?? null,
       title: a.title ?? null,

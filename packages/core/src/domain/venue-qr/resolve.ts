@@ -30,6 +30,8 @@ export interface ScanEvent {
   organiserName?: string | null;
   venueName?: string | null;
   artForm?: string | null;
+  posterUrl?: string | null;
+  entryType?: string | null;
   artists?: Array<{
     id?: string | null;
     title?: string | null;
