@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getFromAddress, sendTransactional } from './send';
+import { getFromAddress, listUnsubscribeHeaders, sendBulk, sendTransactional } from './send';
 
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 
@@ -64,5 +64,28 @@ describe('sendTransactional', () => {
     await sendTransactional(base);
 
     expect(sendMock.mock.calls[0][0].input.ReplyToAddresses).toBeUndefined();
+  });
+});
+
+describe('List-Unsubscribe', () => {
+  it('is the https URL alone, with the one-click Post marker and no mailto', () => {
+    expect(listUnsubscribeHeaders('https://rasika.life/unsubscribe/tok')).toEqual([
+      { Name: 'List-Unsubscribe', Value: '<https://rasika.life/unsubscribe/tok>' },
+      { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
+    ]);
+  });
+
+  it('sendBulk sends exactly those headers', async () => {
+    vi.stubEnv('NOTIFY_EMAIL_SENDER', 'mail.rasika.life');
+    await sendBulk({
+      to: 'a@x.com',
+      subject: 's',
+      html: 'h',
+      text: 't',
+      unsubscribeUrl: 'https://rasika.life/unsubscribe/tok',
+    });
+    const headers = sendMock.mock.calls[0]?.[0].input.Content.Simple.Headers;
+    expect(JSON.stringify(headers)).not.toContain('mailto');
+    expect(headers).toHaveLength(2);
   });
 });

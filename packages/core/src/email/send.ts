@@ -85,14 +85,25 @@ export interface SendBulkInput {
   subject: string;
   html: string;
   text: string;
-  /** The https one-click link. Also goes in the `List-Unsubscribe` header beside a mailto. */
+  /** The https one-click link. It is the whole `List-Unsubscribe` header. */
   unsubscribeUrl: string;
+}
+
+/** The one-click unsubscribe headers (RFC 8058): the https URL alone, and the Post marker. */
+export function listUnsubscribeHeaders(
+  unsubscribeUrl: string
+): Array<{ Name: string; Value: string }> {
+  return [
+    { Name: 'List-Unsubscribe', Value: `<${unsubscribeUrl}>` },
+    { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
+  ];
 }
 
 /**
  * Digest and reminder mail, from the root-domain identity (never the `mail.` one: see
- * `infra/email.ts`). Every message carries `List-Unsubscribe` (mailto and https) and
- * `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, which Gmail needs from a bulk sender.
+ * `infra/email.ts`). Every message carries `List-Unsubscribe` (https only; nothing processes a
+ * mailto) and `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058), which Gmail needs
+ * from a bulk sender.
  * SESv2 `Content.Simple.Headers` carries them without building raw MIME.
  */
 export async function sendBulk(input: SendBulkInput): Promise<void> {
@@ -106,13 +117,7 @@ export async function sendBulk(input: SendBulkInput): Promise<void> {
         Simple: {
           Subject: { Data: input.subject },
           Body: { Html: { Data: input.html }, Text: { Data: input.text } },
-          Headers: [
-            {
-              Name: 'List-Unsubscribe',
-              Value: `<mailto:${NOTIFY_REPLY_TO}?subject=unsubscribe>, <${input.unsubscribeUrl}>`,
-            },
-            { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
-          ],
+          Headers: listUnsubscribeHeaders(input.unsubscribeUrl),
         },
       },
     })
