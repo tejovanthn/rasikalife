@@ -296,6 +296,31 @@ export function parseDoneKeys(t: string | null): string[] {
     .slice(0, 20);
 }
 
+// Not in the Copy tab yet (owner decision 19)
+export const SHARE_ALL_LABEL = 'Share with all of these';
+
+/** Keys of the rows whose share box is on screen: a venue or organiser that is toggled on. */
+export function shareEligibleKeys(rowKeys: string[], ticked: Iterable<string>): string[] {
+  const on = new Set(ticked);
+  return rowKeys.filter(k => {
+    const row = parseRowKey(k);
+    return row !== null && row.type !== 'artist' && on.has(k);
+  });
+}
+
+export type ShareAllState = 'checked' | 'unchecked' | 'mixed';
+
+/** The shortcut follows the boxes: all ticked, none ticked, or some. */
+export function shareAllState(eligible: string[], shared: Iterable<string>): ShareAllState {
+  const on = new Set(shared);
+  const count = eligible.filter(k => on.has(k)).length;
+  if (count === 0) return 'unchecked';
+  return count === eligible.length ? 'checked' : 'mixed';
+}
+
+/** The shortcut shows only when two or more share boxes are on screen. */
+export const showShareAll = (eligible: string[]): boolean => eligible.length >= 2;
+
 /** Moderators and admins set up unassigned codes. */
 export function isModeratorRole(role: string | null | undefined): boolean {
   return role === 'moderator' || role === 'admin';

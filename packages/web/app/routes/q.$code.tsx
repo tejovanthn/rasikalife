@@ -1,6 +1,6 @@
 import type { ScanEventView } from '@rasika/core/domain/venue-qr/client';
 import { QrCodeSchema } from '@rasika/core/domain/venue-qr/client';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   ActionFunctionArgs,
   HeadersArgs,
@@ -25,6 +25,7 @@ import { isInAppBrowser } from '~/lib/in-app-browser';
 import { clearQrIntent, readQrIntent, serializeQrIntent } from '~/lib/qr-intent.server';
 import {
   QR_COPY,
+  SHARE_ALL_LABEL,
   adminAssignUrl,
   buildFollowRows,
   buildSelection,
@@ -35,10 +36,13 @@ import {
   laterTitle,
   rowKey,
   scanEventTitle,
+  shareAllState,
   shareConsentLabel,
+  shareEligibleKeys,
+  showShareAll,
   venueModeTitle,
 } from '~/lib/qr-scan';
-import type { FollowRowModel } from '~/lib/qr-scan';
+import type { FollowRowModel, ShareAllState } from '~/lib/qr-scan';
 import { generateVenueUrl } from '~/lib/url-slug';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
@@ -442,13 +446,48 @@ function FollowForm({ d }: { d: Extract<LoaderData, { kind: 'follow' }> }) {
           ? QR_COPY.follow.signInCancelled
           : null;
 
+  // The "share with all of these" shortcut is a client-only helper. It reads the boxes, never
+  // posts, and is absent without JavaScript (`ready` is false until after hydration).
+  const [ready, setReady] = useState(false);
+  const [eligible, setEligible] = useState<string[]>([]);
+  const [allState, setAllState] = useState<ShareAllState>('unchecked');
+
+  function checkedValues(name: string): string[] {
+    const boxes = formRef.current?.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`);
+    return [...(boxes ?? [])].filter(b => b.checked).map(b => b.value);
+  }
+
+  function syncShareAll() {
+    const keys = shareEligibleKeys(
+      screen.rows.map(r => r.key),
+      checkedValues('follow')
+    );
+    setEligible(keys);
+    setAllState(shareAllState(keys, checkedValues('share')));
+  }
+
+  function toggleShareAll(on: boolean) {
+    const boxes = formRef.current?.querySelectorAll<HTMLInputElement>('input[name="share"]');
+    for (const box of boxes ?? []) {
+      if (eligible.includes(box.value)) box.checked = on;
+    }
+    syncShareAll();
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once, after hydration
+  useEffect(() => {
+    setReady(true);
+    syncShareAll();
+  }, []);
+
   function tickAll() {
     const boxes = formRef.current?.querySelectorAll<HTMLInputElement>('input[name="follow"]');
     for (const box of boxes ?? []) box.checked = true;
+    syncShareAll();
   }
 
   return (
-    <Form method="post" ref={formRef} className="space-y-5">
+    <Form method="post" ref={formRef} className="space-y-5" onChange={syncShareAll}>
       {screen.eventId && <input type="hidden" name="eventId" value={screen.eventId} />}
       {screen.rows.map(r => (
         <input key={`r-${r.key}`} type="hidden" name="rows" value={r.key} />
@@ -476,6 +515,22 @@ function FollowForm({ d }: { d: Extract<LoaderData, { kind: 'follow' }> }) {
           {QR_COPY.follow.followAll}
         </button>
       </div>
+
+      {ready && showShareAll(eligible) && (
+        <label className="flex min-h-11 items-center gap-3 rounded-xl border bg-card p-4 text-base">
+          <input
+            ref={el => {
+              if (el) el.indeterminate = allState === 'mixed';
+            }}
+            type="checkbox"
+            checked={allState === 'checked'}
+            aria-checked={allState === 'mixed' ? 'mixed' : allState === 'checked'}
+            onChange={event => toggleShareAll(event.target.checked)}
+            className="h-6 w-6 shrink-0"
+          />
+          <span>{SHARE_ALL_LABEL}</span>
+        </label>
+      )}
 
       <ul className="space-y-3">
         {screen.rows.map(r => {
