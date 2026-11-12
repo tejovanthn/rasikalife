@@ -16,13 +16,26 @@ const preferencesSchema = z.object({
 });
 
 export const userRouter = createTRPCRouter({
+  // The caller's own record, without the unsubscribe token (a bearer secret).
   me: protectedProcedure.query(async ({ ctx }) => {
-    return ctx.user;
+    return User.withoutSecrets(ctx.user);
   }),
 
+  // Explicit row shape, WhatsApp masked. Never the token, never a full number.
   list: adminProcedure.query(async () => {
-    return User.listAllUsers();
+    return (await User.listAllUsers()).map(User.toAdminListRow);
   }),
+
+  // The only place a full WhatsApp number leaves the server, for admins. Each view is audited
+  // (ChangeHistory, entityType `user`, action `view`) before the number is returned.
+  adminDetail: adminProcedure
+    .input(z.object({ userId: z.string().min(1) }))
+    .query(async ({ input, ctx }) => {
+      const user = await User.getUser(input.userId);
+      if (!user) throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+      await User.recordAdminUserView(ctx.user.id, user.id);
+      return User.toAdminDetail(user);
+    }),
 
   updateRole: adminProcedure
     .input(
@@ -33,7 +46,7 @@ export const userRouter = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       const user = await User.updateUserRole(input.userId, input.role);
-      return user;
+      return User.toAdminListRow(user);
     }),
 
   getMyPreferences: protectedProcedure.query(({ ctx }) => User.getEffectivePreferences(ctx.user)),

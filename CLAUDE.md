@@ -2417,3 +2417,10 @@ Fixes from the review after all eight phases.
 - **Dates.** `CalendarDateSchema` and `ClockTimeSchema` (`venue-qr/add-concert.ts`) check a real
   calendar day and a 24 hour time. The owner event, partner router and add-a-concert schemas use
   them, so `2026-02-31` is a validation error.
+- **User records in API responses.** `unsubscribeToken` is a bearer secret and never appears in a
+  response. `user.me` returns `withoutSecrets(ctx.user)`. `user.list` and `user.updateRole` return
+  `toAdminListRow` (an explicit shape, WhatsApp masked as `+91 ••••• •2345` by `maskWhatsapp`).
+  The full number leaves the server only through `user.adminDetail` (admin role), shown on
+  `/admin/users/:userid`. Each call writes an audit row first, in the existing `ChangeHistory`
+  store (`entityType: 'user'`, `action: 'view'`, the admin as `userId`), and a failed audit write
+  means nothing is served. All in `core/src/domain/user/admin-view.ts`.

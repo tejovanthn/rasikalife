@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useMemo } from 'react';
 import type { MetaFunction } from 'react-router';
-import { data, useFetcher, useLoaderData } from 'react-router';
+import { Link, data, useFetcher, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { DataTable } from '~/components/data-table';
 import { Badge } from '~/components/ui/badge';
@@ -19,6 +19,7 @@ interface UserRow {
   picture?: string;
   role: string;
   lastSignedInAt: string;
+  whatsappMasked: string | null;
 }
 
 export const meta: MetaFunction = () => {
@@ -104,7 +105,9 @@ export default function ModeratorUsers() {
                 decoding="async"
               />
             ) : null}
-            <span className="text-sm font-medium">{row.original.name}</span>
+            <Link to={`/admin/users/${row.original.id}`} className="text-sm font-medium underline">
+              {row.original.name}
+            </Link>
           </div>
         ),
       },
@@ -113,6 +116,13 @@ export default function ModeratorUsers() {
         header: 'Email',
         cell: ({ row }) => (
           <span className="text-sm text-muted-foreground">{row.getValue('email')}</span>
+        ),
+      },
+      {
+        id: 'whatsapp',
+        header: 'WhatsApp',
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.whatsappMasked ?? ''}</span>
         ),
       },
       {

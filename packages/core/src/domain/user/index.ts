@@ -358,4 +358,11 @@ export {
 } from './schema';
 export type { NotifyPrefsInput } from './schema';
 export { homeLocationLabel, resolveHomeLocation } from './home-location';
+export {
+  maskWhatsapp,
+  recordAdminUserView,
+  toAdminDetail,
+  toAdminListRow,
+  withoutSecrets,
+} from './admin-view';
 export type { HomeLocation, HomeLocationInput, HomeLocationResult } from './home-location';

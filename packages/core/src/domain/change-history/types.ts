@@ -6,11 +6,12 @@ export const CHANGE_ENTITY_TYPE = {
   VENUE_QR: 'venueQr',
   ORGANISER: 'organiser',
   VENUE: 'venue',
+  USER: 'user',
 } as const;
 
 export type ChangeEntityType = (typeof CHANGE_ENTITY_TYPE)[keyof typeof CHANGE_ENTITY_TYPE];
 
-export type ChangeAction = 'create' | 'update' | 'delete' | 'rollback';
+export type ChangeAction = 'create' | 'update' | 'delete' | 'rollback' | 'view';
 
 export interface ChangeHistoryInput {
   entityType: ChangeEntityType;
