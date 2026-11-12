@@ -23,16 +23,16 @@ Next, in order:
    - Check `/me/following` and `/me/notifications`.
    - Invite yourself as an owner and open the sabha dashboard. Run an export.
    - Check the untested query paths named in the sabha section of `CLAUDE.md`.
-5. Owner decisions still open:
-   - **Owner-only actions:** export and profile edit refuse moderators.
-   - **Venues an organiser manages:** this is `TODO(spec)`, so only the invited target gets
-     `verifiedAt`.
-   - **Edits to approved events:** an edit to an approved owner event does not go back to review
-     when the review switch is on.
-   - **Hall renames:** renaming a `VenueSpace` does not update `Event.spaceName`.
+5. Still open:
    - **Digest time:** Sunday 18:00 IST, to be checked with the pilot sabhas.
-   - **Placeholder strings:** several `TODO(copy)` strings, in `packages/admin/app/lib/copy.ts`,
-     `packages/sabha/app/lib/copy.ts` and the follower-count label.
+   - **Strings:** 177 placeholder strings are listed in
+     `docs/plans/261112-01-venue-qr-follow/copy-todo.md`. The owner writes them into the Copy tab,
+     then an agent replaces them word for word.
+   - **Linked venues:** an organiser dashboard shows QR codes for its home venue only
+     (`TODO(spec)` in `sabha/dashboard.ts`).
+   - **Reminder unsubscribe:** the "reminders" link also stops push reminders, but Copy says
+     "by email" (`TODO(spec)`).
+   - Owner decisions 11 to 14 are settled and built (`decisions.md`).
 6. Before the first print run: a native speaker reviews the Kannada, and you scan a sticker from
    1 m (the QR box is 64 mm).
 
