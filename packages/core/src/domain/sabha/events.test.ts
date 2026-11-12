@@ -8,6 +8,7 @@ vi.mock('../event', () => ({
   getEvent: vi.fn(),
   updateEvent: vi.fn(),
   updateApprovedEvent: vi.fn(),
+  findLikelyDuplicatesOfEvent: vi.fn(),
 }));
 vi.mock('../event/entity', () => ({ EventEntity: { patch: vi.fn() } }));
 vi.mock('../organiser', () => ({ getOrganiser: vi.fn() }));
@@ -21,6 +22,7 @@ import { getArtistByName } from '../artist';
 import {
   approveEvent,
   createEvent,
+  findLikelyDuplicatesOfEvent,
   getEvent,
   submitEvent,
   updateApprovedEvent,
@@ -30,7 +32,7 @@ import { EventEntity } from '../event/entity';
 import { getOrganiser } from '../organiser';
 import { getPartnerMember } from '../partner-member';
 import { getVenue } from '../venue';
-import { createOwnerEvent, updateOwnerEvent } from './events';
+import { OwnerEventSchema, createOwnerEvent, updateOwnerEvent } from './events';
 
 const input = {
   organiserId: 'o1',
@@ -41,7 +43,11 @@ const input = {
   artists: 'Asha Rao, New Person',
 };
 
-const patch = { set: vi.fn().mockReturnThis(), go: vi.fn().mockResolvedValue({}) };
+const patch = {
+  set: vi.fn().mockReturnThis(),
+  remove: vi.fn().mockReturnThis(),
+  go: vi.fn().mockResolvedValue({}),
+};
 const NOW = new Date('2026-11-20T10:00:00.000Z');
 
 function setup(opts: {
@@ -67,6 +73,17 @@ beforeEach(() => {
   vi.mocked(submitEvent).mockResolvedValue({ id: 'e1' } as never);
   vi.mocked(approveEvent).mockResolvedValue({ id: 'e1' } as never);
   vi.mocked(EventEntity.patch).mockReturnValue(patch as never);
+  vi.mocked(findLikelyDuplicatesOfEvent).mockResolvedValue([]);
+  vi.mocked(updateEvent).mockResolvedValue({ id: 'e1' } as never);
+  vi.mocked(updateApprovedEvent).mockResolvedValue({ id: 'e1' } as never);
+});
+
+describe('OwnerEventSchema', () => {
+  it('refuses a date that is not on the calendar', () => {
+    expect(OwnerEventSchema.safeParse({ ...input, date: '2026-02-31' }).success).toBe(false);
+    expect(OwnerEventSchema.safeParse({ ...input, startTime: '24:30' }).success).toBe(false);
+    expect(OwnerEventSchema.safeParse(input).success).toBe(true);
+  });
 });
 
 describe('createOwnerEvent', () => {
@@ -102,6 +119,15 @@ describe('createOwnerEvent', () => {
     await createOwnerEvent(input, 'u1', NOW);
     const [event] = vi.mocked(createEvent).mock.calls[0] ?? [];
     expect(event?.artists).toEqual([{ id: 'a1', name: 'Asha Rao' }, { name: 'New Person' }]);
+  });
+
+  it('leaves a likely duplicate submitted for the moderator instead of publishing it', async () => {
+    setup({});
+    vi.mocked(findLikelyDuplicatesOfEvent).mockResolvedValue([{ id: 'e0' }] as never);
+    const result = await createOwnerEvent(input, 'u1', NOW);
+    expect(result).toEqual({ eventId: 'e1', published: false, heldAsDuplicate: true });
+    expect(approveEvent).not.toHaveBeenCalled();
+    expect(patch.set).not.toHaveBeenCalled();
   });
 
   it('sends the event to review when a moderator has turned review on', async () => {
@@ -165,5 +191,64 @@ describe('updateOwnerEvent', () => {
     await updateOwnerEvent(edit, 'u1');
     expect(updateEvent).toHaveBeenCalled();
     expect(updateApprovedEvent).not.toHaveBeenCalled();
+  });
+
+  describe('cast and cleared fields', () => {
+    const stored = {
+      id: 'e1',
+      organiserId: 'o1',
+      status: 'approved',
+      timezone: 'Asia/Kolkata',
+      spaceId: 's1',
+      spaceName: 'Main hall',
+      venueCity: 'Chennai',
+      artists: [
+        { id: 'a1', name: 'Asha Rao', role: 'main', title: 'Vid.' },
+        { name: 'Ravi', role: 'accompanist' },
+      ],
+    };
+
+    it('leaves the cast alone when the form did not send the field', async () => {
+      setup({});
+      vi.mocked(getEvent).mockResolvedValue(stored as never);
+      await updateOwnerEvent({ ...edit, artists: undefined }, 'u1');
+      expect(vi.mocked(updateApprovedEvent).mock.calls[0]?.[1]).not.toHaveProperty('artists');
+    });
+
+    it('leaves the cast alone when the names are the stored ones', async () => {
+      setup({});
+      vi.mocked(getEvent).mockResolvedValue(stored as never);
+      await updateOwnerEvent({ ...edit, artists: 'Asha Rao, Ravi' }, 'u1');
+      expect(vi.mocked(updateApprovedEvent).mock.calls[0]?.[1]).not.toHaveProperty('artists');
+    });
+
+    it('keeps stored id, role and title, adds new names and drops only removed ones', async () => {
+      setup({});
+      vi.mocked(getEvent).mockResolvedValue(stored as never);
+      await updateOwnerEvent({ ...edit, artists: 'Asha Rao, New Person' }, 'u1');
+      expect(vi.mocked(updateApprovedEvent).mock.calls[0]?.[1]?.artists).toEqual([
+        { id: 'a1', name: 'Asha Rao', role: 'main', title: 'Vid.' },
+        { name: 'New Person' },
+      ]);
+    });
+
+    it('removes the space when none is picked, and the city when the venue has none', async () => {
+      setup({});
+      vi.mocked(getEvent).mockResolvedValue(stored as never);
+      vi.mocked(getVenue).mockResolvedValue({ id: 'v2', name: 'Other' } as never);
+      await updateOwnerEvent({ ...edit, venueId: 'v2', spaceId: undefined }, 'u1');
+      expect(patch.remove).toHaveBeenCalledWith(['spaceId', 'spaceName', 'venueCity']);
+    });
+
+    it('removes nothing when the space and city are kept', async () => {
+      setup({});
+      vi.mocked(getEvent).mockResolvedValue({
+        ...stored,
+        spaceId: undefined,
+        spaceName: undefined,
+      } as never);
+      await updateOwnerEvent(edit, 'u1');
+      expect(patch.remove).not.toHaveBeenCalled();
+    });
   });
 });

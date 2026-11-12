@@ -1,6 +1,7 @@
 /**
- * Rate limit on the QR scan pages (`/q/*`): 300 requests per 5 minutes per IP, which is WAF's
- * smallest window and equals the 60 a minute in the spec (SCAN_RATE_LIMIT_PER_MIN).
+ * Rate limit on the QR scan pages (`/q/*`): 1,500 requests per 5 minutes per IP, which is WAF's
+ * smallest window and equals the 300 a minute of decisions.md item 6 (SCAN_RATE_LIMIT_PER_MIN).
+ * Carrier-grade NAT puts a hall's phones behind one IP, so the limit is generous.
  *
  * The rule is scoped to `/q/` by path, so the rest of the site is never counted or blocked. A
  * blocked request gets a 429 with the Copy "Too many scans" page as a WAF custom response, so
@@ -38,7 +39,7 @@ if ($app.stage === 'prod') {
           },
           statement: {
             rateBasedStatement: {
-              limit: 300,
+              limit: 1500,
               evaluationWindowSec: 300,
               aggregateKeyType: 'IP',
               scopeDownStatement: {

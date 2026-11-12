@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ApplicationError, ErrorCode } from '../../constants';
+import { httpUrlSchema } from '../../shared/http-url';
 import { computeDiff, createChangeHistory } from '../change-history/service';
 import { OrganiserEntity } from '../organiser/entity';
 import { UpdateOrganiserSchema } from '../organiser/schema';
@@ -18,9 +19,19 @@ import { changedProfileFields } from './rules';
 export const PartnerOrganiserProfileSchema = UpdateOrganiserSchema.omit({
   venueId: true,
   venueName: true,
-}).strict();
+})
+  .extend({
+    // A `javascript:` URL passes `z.string().url()` and would run from the public page's link.
+    website: httpUrlSchema.optional(),
+    logoUrl: httpUrlSchema.optional(),
+  })
+  .strict();
 
-export const PartnerVenueProfileSchema = UpdateVenueSchema.strict();
+export const PartnerVenueProfileSchema = UpdateVenueSchema.extend({
+  website: httpUrlSchema.optional(),
+  photoUrl: httpUrlSchema.optional(),
+  mapLink: httpUrlSchema.optional(),
+}).strict();
 
 /** `input` is checked against the schema for `targetType` inside `updatePartnerProfile`. */
 export const UpdatePartnerProfileSchema = z.object({

@@ -5,6 +5,7 @@
  * per event, one follower query per *distinct* target (memoised in `run.ts`), one RSVP query per
  * event, then batch gets for users and concert-book rows. Nothing runs once per follower.
  */
+import { batchGetAll } from '../../shared/batch-get';
 import { ConcertLogEntity } from '../concert-log/entity';
 import { getEventArtists } from '../event-artist';
 import { EventEntity } from '../event/entity';
@@ -98,8 +99,11 @@ export async function loadRsvpUsers(eventIds: string[]): Promise<Map<string, str
 
 export async function loadUsers(ids: string[]): Promise<User[]> {
   const batches = await mapLimit(chunk([...new Set(ids)], BATCH_SIZE), 4, async batch => {
-    const result = await UserEntity.get(batch.map(id => ({ id }))).go();
-    return (result.data ?? []) as User[];
+    const rows = await batchGetAll(
+      batch.map(id => ({ id })),
+      keys => UserEntity.get(keys).go()
+    );
+    return rows as User[];
   });
   return batches.flat();
 }
@@ -109,8 +113,8 @@ export async function loadLoggedKeys(
   pairs: Array<{ userId: string; eventId: string }>
 ): Promise<Set<string>> {
   const batches = await mapLimit(chunk(pairs, BATCH_SIZE), 4, async batch => {
-    const result = await ConcertLogEntity.get(batch).go();
-    return (result.data ?? []).map(row => `${row.userId}:${row.eventId}`);
+    const rows = await batchGetAll(batch, keys => ConcertLogEntity.get(keys).go());
+    return rows.map(row => `${row.userId}:${row.eventId}`);
   });
   return new Set(batches.flat());
 }

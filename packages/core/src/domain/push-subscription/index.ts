@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { ApplicationError, ErrorCode } from '../../constants';
 import { PushSubscriptionEntity } from './entity';
 import type { PushSubscription } from './entity';
-import { SubscribePushSchema } from './schema';
+import { SubscribePushSchema, isAllowedPushEndpoint } from './schema';
 import type { SubscribePushInput } from './schema';
 
 export type { PushSubscription } from './entity';
@@ -23,10 +23,10 @@ export async function putPushSubscription(
   userAgent?: string
 ): Promise<PushSubscription> {
   const parsed = SubscribePushSchema.safeParse(input);
-  if (!parsed.success || !parsed.data.endpoint.startsWith('https://')) {
+  if (!parsed.success || !isAllowedPushEndpoint(parsed.data.endpoint)) {
     throw new ApplicationError(
       ErrorCode.PUSH_SUBSCRIPTION_INVALID,
-      'Push subscription needs an https endpoint and both keys'
+      'Push subscription needs an endpoint on a known push service and both keys'
     );
   }
   const { endpoint, keys } = parsed.data;

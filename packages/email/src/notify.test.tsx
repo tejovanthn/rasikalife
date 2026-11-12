@@ -94,6 +94,7 @@ describe('deliver', () => {
     send: vi.fn().mockResolvedValue(undefined),
     tokenFor: vi.fn().mockResolvedValue('tok'),
     markDigestSent: vi.fn().mockResolvedValue(undefined),
+    markReminderSent: vi.fn().mockResolvedValue(undefined),
   });
 
   it('sends a digest, marks it sent, and survives one failure', async () => {
@@ -113,8 +114,25 @@ describe('deliver', () => {
     expect(d.send.mock.calls[0]?.[0].unsubscribeUrl).toMatch(/\/unsubscribe\//);
   });
 
+  it('records the target day after an email reminder', async () => {
+    const d = deps();
+    const plan = {
+      user: user as never,
+      entries: [entry('e1', 'A') as never],
+      channel: 'email' as const,
+      targetDay: '2026-11-16',
+    };
+    expect(await deliverReminders([plan], d)).toEqual({ sent: 1, failed: 0 });
+    expect(d.markReminderSent).toHaveBeenCalledWith('u1', '2026-11-16');
+  });
+
   const pushPlan = (u: object = user) => [
-    { user: u as never, entries: [entry('e1', 'A') as never], channel: 'push' as const },
+    {
+      user: u as never,
+      entries: [entry('e1', 'A') as never],
+      channel: 'push' as const,
+      targetDay: '2026-11-16',
+    },
   ];
   const target = { endpoint: 'https://p/1', endpointHash: 'h1', p256dh: 'k', auth: 'a' };
   const pushDeps = (send: ReturnType<typeof vi.fn>, targets = [target]) => ({

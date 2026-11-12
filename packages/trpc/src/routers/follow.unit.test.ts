@@ -8,6 +8,7 @@ const follow = vi.hoisted(() => ({
   getFollowStatus: vi.fn(),
   listMyFollows: vi.fn(),
   setFollowShare: vi.fn(),
+  purgeFollowedPages: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@rasika/core', async importOriginal => {
@@ -15,6 +16,8 @@ vi.mock('@rasika/core', async importOriginal => {
   return { ...core, Follow: { ...core.Follow, ...follow } };
 });
 vi.mock('@rasika/core/site-cache', () => ({ invalidateSiteCache: vi.fn() }));
+const limiter = vi.hoisted(() => ({ hitRateLimit: vi.fn() }));
+vi.mock('@rasika/core/shared/rate-limit', () => limiter);
 
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { followRouter, toMyFollow, toTrpcError } from './follow';
@@ -24,6 +27,9 @@ const anon = followRouter.createCaller({ event: {} as never, user: null });
 
 beforeEach(() => {
   for (const fn of Object.values(follow)) fn.mockReset();
+  follow.purgeFollowedPages.mockResolvedValue(undefined);
+  limiter.hitRateLimit.mockReset();
+  limiter.hitRateLimit.mockResolvedValue({ allowed: true, hits: 1 });
 });
 
 describe('follow router', () => {
@@ -43,6 +49,26 @@ describe('follow router', () => {
     follow.getFollow.mockResolvedValueOnce({ userId: 'u1' });
     expect(await caller.toggle({ type: 'venue', id: 'v1' })).toEqual({ following: false });
     expect(follow.unfollowTarget).toHaveBeenCalledWith('u1', 'venue', 'v1');
+    // Each toggle purges that entity's page only, never the whole site.
+    expect(follow.purgeFollowedPages).toHaveBeenCalledTimes(2);
+    expect(follow.purgeFollowedPages).toHaveBeenCalledWith([{ type: 'venue', id: 'v1' }]);
+  });
+
+  it('bulkSet purges only the pages whose count moved', async () => {
+    follow.bulkSetFollows.mockResolvedValue({
+      newFollows: 1,
+      results: [
+        { type: 'venue', id: 'v1', outcome: 'followed' },
+        { type: 'organiser', id: 'o1', outcome: 'already-following' },
+        { type: 'artist', id: 'a1', outcome: 'unfollowed' },
+        { type: 'artist', id: 'a2', outcome: 'error' },
+      ],
+    });
+    await caller.bulkSet({ targets: [{ type: 'venue', id: 'v1', follow: true }] });
+    expect(follow.purgeFollowedPages).toHaveBeenCalledWith([
+      { type: 'venue', id: 'v1' },
+      { type: 'artist', id: 'a1' },
+    ]);
   });
 
   it('bulkSet passes the qr code and targets to core for the signed-in user', async () => {
@@ -53,6 +79,17 @@ describe('follow router', () => {
     };
     await caller.bulkSet(input);
     expect(follow.bulkSetFollows).toHaveBeenCalledWith('u1', input);
+  });
+
+  it('bulkSet is limited to 30 a minute per user', async () => {
+    limiter.hitRateLimit.mockResolvedValue({ allowed: false, hits: 31 });
+    await expect(
+      caller.bulkSet({ targets: [{ type: 'venue', id: 'v1', follow: true }] })
+    ).rejects.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
+    expect(limiter.hitRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'follow-bulk#u1', limit: 30, windowSec: 60 })
+    );
+    expect(follow.bulkSetFollows).not.toHaveBeenCalled();
   });
 
   it('rejects an invalid qr code before reaching core', async () => {

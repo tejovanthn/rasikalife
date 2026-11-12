@@ -26,6 +26,9 @@ const IntentSchema = z.object({
   eventId: z.string().optional(),
   // The same shape `follow.bulkSet` takes, so a tampered or stale cookie fails the same checks.
   targets: BulkSetFollowSchema.shape.targets,
+  // Binds the cookie to one sign-in attempt: `/auth/login` copies it into the session it writes
+  // for that attempt, and the callback applies the intent only when the two match.
+  nonce: z.string().min(16),
   exp: z.number(),
 });
 
@@ -64,11 +67,23 @@ function defaultCookie(): IntentCookie {
 
 /** `Set-Cookie` value that stores the intent. */
 export async function serializeQrIntent(
-  intent: QrIntent,
+  intent: Omit<QrIntent, 'nonce'> & { nonce?: string },
   now: number = Date.now(),
   cookie: IntentCookie = defaultCookie()
 ): Promise<string> {
-  return cookie.serialize({ ...intent, exp: now + QR_INTENT_TTL_SEC * 1000 });
+  return cookie.serialize({
+    ...intent,
+    nonce: intent.nonce ?? crypto.randomUUID(),
+    exp: now + QR_INTENT_TTL_SEC * 1000,
+  });
+}
+
+/** True only when the cookie's nonce is the one this sign-in attempt stored in its session. */
+export function intentMatchesAttempt(
+  intent: Pick<QrIntent, 'nonce'> | null,
+  attemptNonce: unknown
+): boolean {
+  return Boolean(intent) && typeof attemptNonce === 'string' && intent?.nonce === attemptNonce;
 }
 
 /** The intent from a request, or `null` when missing, tampered with, malformed or expired. */

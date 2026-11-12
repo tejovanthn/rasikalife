@@ -9,7 +9,13 @@ export const LIVE_WINDOW_BEFORE_MIN = 90;
 export const LIVE_WINDOW_AFTER_MIN = 30;
 export const DEFAULT_EVENT_DURATION_MIN = 180;
 export const VENUE_MODE_UPCOMING_LIMIT = 3;
-export const SCAN_RATE_LIMIT_PER_MIN = 60;
+/**
+ * Per IP on `/q/*`. Carrier-grade NAT (Jio, Airtel) puts a hall's phones behind one IP, so this
+ * is generous. WAF's smallest window is 5 minutes, so the rule is 5x this (infra/scan-rate-limit.ts).
+ */
+export const SCAN_RATE_LIMIT_PER_MIN = 300;
+/** `follow.bulkSet` calls per user per minute. */
+export const FOLLOW_BULK_LIMIT_PER_MIN = 30;
 
 export const QR_INTENT_COOKIE = 'qr_intent';
 export const QR_INTENT_TTL_SEC = 15 * 60;

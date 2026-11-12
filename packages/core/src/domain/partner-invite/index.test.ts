@@ -128,6 +128,22 @@ describe('acceptPartnerInvite', () => {
     expect(invitePatch.set).toHaveBeenCalledWith({ acceptedAt: NOW.toISOString() });
   });
 
+  it('follows a merge to the canonical target, so the grant is not left on a redirect', async () => {
+    vi.mocked(OrganiserEntity.get)
+      .mockReturnValueOnce({
+        go: vi.fn().mockResolvedValue({ data: { id: 'org1', name: 'Old', mergedIntoId: 'org2' } }),
+      } as never)
+      .mockReturnValueOnce({
+        go: vi.fn().mockResolvedValue({ data: { id: 'org2', name: 'Canon Sabha' } }),
+      } as never);
+    await acceptPartnerInvite(invite() as never, USER, NOW);
+
+    expect(addPartnerMember).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: 'org2', targetName: 'Canon Sabha' })
+    );
+    expect(OrganiserEntity.patch).toHaveBeenCalledWith({ id: 'org2' });
+  });
+
   it('verifies a venue through its own entity', async () => {
     vi.mocked(VenueEntity.get).mockReturnValue({
       go: vi.fn().mockResolvedValue({ data: { id: 'v1', name: 'Hall' } }),

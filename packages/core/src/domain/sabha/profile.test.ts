@@ -18,13 +18,31 @@ import { updateOrganiser } from '../organiser';
 import { OrganiserEntity } from '../organiser/entity';
 import { updateVenue } from '../venue';
 import { getPartnerTarget } from './dashboard';
-import { setOrganiserEventReview, updatePartnerProfile } from './profile';
+import {
+  PartnerOrganiserProfileSchema,
+  PartnerVenueProfileSchema,
+  setOrganiserEventReview,
+  updatePartnerProfile,
+} from './profile';
 
 const verified = { id: 'o1', name: 'Sabha', verifiedAt: '2026-11-01T00:00:00.000Z', phone: '111' };
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getPartnerTarget).mockResolvedValue(verified as never);
+});
+
+describe('partner profile URL fields', () => {
+  it('refuse non-http URLs', () => {
+    for (const bad of ['javascript:alert(1)', 'data:text/html,x']) {
+      expect(PartnerOrganiserProfileSchema.safeParse({ website: bad }).success).toBe(false);
+      expect(PartnerOrganiserProfileSchema.safeParse({ logoUrl: bad }).success).toBe(false);
+      expect(PartnerVenueProfileSchema.safeParse({ website: bad }).success).toBe(false);
+      expect(PartnerVenueProfileSchema.safeParse({ photoUrl: bad }).success).toBe(false);
+      expect(PartnerVenueProfileSchema.safeParse({ mapLink: bad }).success).toBe(false);
+    }
+    expect(PartnerVenueProfileSchema.safeParse({ website: 'https://a.org' }).success).toBe(true);
+  });
 });
 
 describe('updatePartnerProfile', () => {

@@ -464,7 +464,12 @@ export const eventRouter = createTRPCRouter({
     const membership = organiser
       ? await PartnerMember.getPartnerMember(ctx.user.id, 'organiser', organiser.id)
       : null;
-    if (VenueQr.mayAutoApprove(membership, organiser)) {
+    // A likely duplicate stays `submitted`; the moderator queue shows it with the usual
+    // "Possible duplicate" line.
+    if (
+      VenueQr.mayAutoApprove(membership, organiser) &&
+      (await Event.findLikelyDuplicatesOfEvent(submitted)).length === 0
+    ) {
       const approved = await Event.approveEvent(submitted.id, ctx.user.id);
       triggerReindex();
       return { eventId: approved.id, published: true as const };

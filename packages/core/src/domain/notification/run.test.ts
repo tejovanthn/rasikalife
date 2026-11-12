@@ -87,6 +87,41 @@ describe('planReminders', () => {
     expect(plans[0]?.channel).toBe('email');
   });
 
+  it('reads an event with no timezone on the hall clock, and skips a broken one', async () => {
+    const noZone = { ...event('nozone', '2026-11-16T13:00:00Z'), timezone: '' };
+    const broken = { ...event('broken', '2026-11-16T13:00:00Z'), timezone: 'Not/AZone' };
+    const { d } = deps({ users: [user('u1')], events: [broken, noZone] });
+    const plans = await planReminders(NOW, d);
+    expect(plans[0]?.entries.map(e => e.event.id)).toEqual(['nozone']);
+  });
+
+  it('skips a broken event in the digest too', async () => {
+    const broken = { ...event('broken', '2026-11-17T13:00:00Z'), timezone: 'Not/AZone' };
+    const { d } = deps({
+      users: [user('u1')],
+      events: [broken, event('ok', '2026-11-17T13:00:00Z')],
+    });
+    const run = await planDigests(NOW, d);
+    expect(run.plans[0]?.shown.map(e => e.event.id)).toEqual(['ok']);
+  });
+
+  it('plans the target day and skips a user already sent for it', async () => {
+    const events = [event('tomorrow', '2026-11-16T13:00:00Z')];
+    const users = [user('new'), user('sent', { reminderLastSentOn: '2026-11-16' })];
+    const { d } = deps({ users, events });
+    const plans = await planReminders(NOW, d);
+    expect(plans.map(p => p.user.id)).toEqual(['new']);
+    expect(plans[0]?.targetDay).toBe('2026-11-16');
+  });
+
+  it('still sends a user whose last reminder was for an earlier day', async () => {
+    const { d } = deps({
+      users: [user('u1', { reminderLastSentOn: '2026-11-15' })],
+      events: [event('tomorrow', '2026-11-16T13:00:00Z')],
+    });
+    expect(await planReminders(NOW, d)).toHaveLength(1);
+  });
+
   it('sends RSVPed events beyond the cap of three', async () => {
     const events = Array.from({ length: 6 }, (_, i) =>
       event(`e${i}`, `2026-11-16T${String(10 + i).padStart(2, '0')}:00:00Z`)

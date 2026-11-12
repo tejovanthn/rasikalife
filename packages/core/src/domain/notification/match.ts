@@ -7,6 +7,7 @@
  */
 import { addDaysToDate, dateInTimeZone, todayInTimeZone } from '../../shared/timezone';
 import {
+  DEFAULT_TIMEZONE,
   DIGEST_MAX_EVENTS,
   DIGEST_WINDOW_DAYS,
   REASON_WEIGHTS,
@@ -204,7 +205,9 @@ export function tomorrowIn(timeZone: string, now: Date): string {
 
 /** Starts tomorrow, by the clock in the event's own zone. */
 export function startsTomorrow(event: NotifyEvent, now: Date): boolean {
-  return dateInTimeZone(event.startDateTime, event.timezone) === tomorrowIn(event.timezone, now);
+  // A stored event with no zone is read on the hall's clock, not dropped.
+  const zone = event.timezone || DEFAULT_TIMEZONE;
+  return dateInTimeZone(event.startDateTime, zone) === tomorrowIn(zone, now);
 }
 
 /** Events in the next 14 days. The cut is on instants. */

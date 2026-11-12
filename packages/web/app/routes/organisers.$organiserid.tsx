@@ -18,6 +18,7 @@ import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
+import { safeHttpUrl } from '~/lib/safe-http-url';
 import {
   generateArtistUrl,
   generateEventUrl,
@@ -225,9 +226,9 @@ export default function OrganiserDetailPage() {
 
       {/* Header with logo */}
       <div className="flex items-start gap-5 mb-2">
-        {organiser.logoUrl && (
+        {safeHttpUrl(organiser.logoUrl) && (
           <img
-            src={organiser.logoUrl}
+            src={safeHttpUrl(organiser.logoUrl)}
             alt={organiser.name}
             className="w-20 h-20 rounded-lg object-cover border bg-muted shrink-0 mt-1"
           />
@@ -303,9 +304,9 @@ export default function OrganiserDetailPage() {
         )}
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          {organiser.website && (
+          {safeHttpUrl(organiser.website) && (
             <a
-              href={organiser.website}
+              href={safeHttpUrl(organiser.website)}
               target="_blank"
               rel="noopener noreferrer"
               className="no-ext-arrow inline-flex items-center gap-1 text-primary text-sm"

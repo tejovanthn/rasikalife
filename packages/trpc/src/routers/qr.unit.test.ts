@@ -36,7 +36,13 @@ describe('qr.resolve', () => {
   it('is public and passes the code to core', async () => {
     core.resolveScan.mockResolvedValue({ state: 'not-found' });
     expect(await anon.resolve({ code: 'ABCDEFGH' })).toEqual({ state: 'not-found' });
-    expect(core.resolveScan).toHaveBeenCalledWith('ABCDEFGH');
+    expect(core.resolveScan).toHaveBeenCalledWith('ABCDEFGH', expect.any(Date), { count: false });
+  });
+
+  it('counts a scan only when the caller asks (the /q/:code document loader)', async () => {
+    core.resolveScan.mockResolvedValue({ state: 'not-found' });
+    await anon.resolve({ code: 'ABCDEFGH', count: true });
+    expect(core.resolveScan).toHaveBeenCalledWith('ABCDEFGH', expect.any(Date), { count: true });
   });
 
   it('rejects a malformed code before reaching core', async () => {

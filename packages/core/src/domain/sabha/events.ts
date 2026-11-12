@@ -4,6 +4,7 @@ import { getArtistByName } from '../artist';
 import {
   approveEvent,
   createEvent,
+  findLikelyDuplicatesOfEvent,
   getEvent,
   submitEvent,
   updateApprovedEvent,
@@ -14,9 +15,16 @@ import type { Event } from '../event/entity';
 import { getOrganiser } from '../organiser';
 import { getPartnerMember } from '../partner-member';
 import { getVenue } from '../venue';
-import { concertStart, mayAutoApprove, parseArtistNames } from '../venue-qr/add-concert';
+import {
+  CalendarDateSchema,
+  ClockTimeSchema,
+  concertStart,
+  mayAutoApprove,
+  parseArtistNames,
+} from '../venue-qr/add-concert';
 import { DEFAULT_TIMEZONE } from '../venue-qr/constants';
 import { getSpace } from '../venue-space';
+import { mergeOwnerCast } from './cast';
 
 /**
  * The owner's event form. Fields are the Copy tab's "Add a concert" labels (Title, Date, Start
@@ -26,9 +34,9 @@ export const OwnerEventSchema = z.object({
   organiserId: z.string(),
   title: z.string().trim().min(1).max(300),
   /** `YYYY-MM-DD`, the day at the hall. */
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  date: CalendarDateSchema,
   /** `HH:mm` on the hall's wall clock. */
-  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+  startTime: ClockTimeSchema,
   venueId: z.string().optional(),
   spaceId: z.string().optional(),
   /** One name per line or comma-separated. */
@@ -49,15 +57,15 @@ async function requireOwnedOrganiser(organiserId: string, userId: string) {
   return { organiser, membership };
 }
 
-/** Billed names, matched to an existing artist by exact name. An artist is never created here. */
+/** One billed name, matched to an existing artist by exact name. Never creates an artist. */
+async function resolveArtist(name: string) {
+  const found = await getArtistByName(name).catch(() => null);
+  return found ? { id: found.id, name: found.name } : { name };
+}
+
+/** Billed names for a new event. */
 async function resolveArtists(text?: string) {
-  const names = parseArtistNames(text);
-  return Promise.all(
-    names.map(async ({ name }) => {
-      const found = await getArtistByName(name).catch(() => null);
-      return found ? { id: found.id, name: found.name } : { name };
-    })
-  );
+  return Promise.all(parseArtistNames(text).map(({ name }) => resolveArtist(name)));
 }
 
 async function resolveVenueAndSpace(venueId?: string, spaceId?: string) {
@@ -84,7 +92,7 @@ export async function createOwnerEvent(
   input: OwnerEventInput,
   userId: string,
   now: Date = new Date()
-): Promise<{ eventId: string; published: boolean }> {
+): Promise<{ eventId: string; published: boolean; heldAsDuplicate?: boolean }> {
   const { organiser, membership } = await requireOwnedOrganiser(input.organiserId, userId);
   const { venue, space } = await resolveVenueAndSpace(input.venueId, input.spaceId);
 
@@ -116,6 +124,12 @@ export async function createOwnerEvent(
   if (!mayAutoApprove(membership, organiser)) {
     return { eventId: submitted.id, published: false };
   }
+  // A likely duplicate is never auto-published. It stays `submitted`, and the moderator queue
+  // shows it with the "Possible duplicate" line.
+  const duplicates = await findLikelyDuplicatesOfEvent(submitted);
+  if (duplicates.length > 0) {
+    return { eventId: submitted.id, published: false, heldAsDuplicate: true };
+  }
   const approved = await approveEvent(submitted.id, userId);
   await EventEntity.patch({ id: approved.id }).set({ ownerPublishedAt: now.toISOString() }).go();
   return { eventId: approved.id, published: true };
@@ -140,6 +154,18 @@ export async function updateOwnerEvent(
   }
   const { venue, space } = await resolveVenueAndSpace(input.venueId, input.spaceId);
 
+  // `artists` undefined means the form did not send the field: leave the cast alone. Otherwise
+  // merge the typed names onto the stored cast, which keeps each stored entry's id, role and
+  // title. Nothing is written when the names are the ones already stored.
+  const cast =
+    input.artists === undefined
+      ? null
+      : await mergeOwnerCast(
+          existing.artists ?? [],
+          parseArtistNames(input.artists),
+          resolveArtist
+        );
+
   const changes = {
     title: input.title,
     startDateTime: concertStart(input.date, input.startTime, existing.timezone),
@@ -151,10 +177,25 @@ export async function updateOwnerEvent(
         }
       : {}),
     ...(space ? { spaceId: space.spaceId, spaceName: space.name } : {}),
-    artists: await resolveArtists(input.artists),
+    ...(cast ? { artists: cast } : {}),
     ...(input.notes !== undefined ? { description: input.notes } : {}),
   };
-  return existing.status === 'approved'
-    ? updateApprovedEvent(input.eventId, changes)
-    : updateEvent(input.eventId, changes);
+  const saved =
+    existing.status === 'approved'
+      ? await updateApprovedEvent(input.eventId, changes)
+      : await updateEvent(input.eventId, changes);
+
+  // `.set()` cannot clear an attribute (rule 8), so a cleared space and a city the new venue
+  // does not have are removed with `.remove()`.
+  const toRemove: Array<'spaceId' | 'spaceName' | 'venueCity'> = [];
+  if (!space) {
+    if (existing.spaceId) toRemove.push('spaceId');
+    if (existing.spaceName) toRemove.push('spaceName');
+  }
+  if (venue && !venue.city && existing.venueCity) toRemove.push('venueCity');
+  if (toRemove.length === 0) return saved;
+  const cleared = await EventEntity.patch({ id: input.eventId })
+    .remove(toRemove)
+    .go({ response: 'all_new' });
+  return (cleared.data as Event | undefined) ?? saved;
 }

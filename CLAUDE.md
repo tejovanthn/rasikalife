@@ -1893,11 +1893,19 @@ admin yet.
   `FOLLOW_SHARE_NOT_ALLOWED` to BAD_REQUEST, keeping the `ApplicationError` as `cause`.
   `mine` and `setShare` return only `targetType`, `targetId`, `targetName`, `shareWithTarget`,
   `createdAt`.
-- **Cache.** `follow` is not in `PRIVATE_ROUTERS`: a follow moves `followerCount`, which the
-  venue, organiser and artist pages show, so `toggle` and `bulkSet` clear the site cache.
-  `follow.setShare` only changes the follower's own flag, so it is in `PRIVATE_PATHS`
-  (`middleware/site-cache.ts`). Cost to watch: a burst of QR follows is one full invalidation
-  each. If that bites, show the count from a client fetch instead of the cached page.
+- **Cache.** `follow.toggle`, `follow.bulkSet` and `follow.setShare` are in `PRIVATE_PATHS`
+  (`middleware/site-cache.ts`), so a follow never purges `/*`: a concert with hundreds of QR
+  follows would purge the whole CDN hundreds of times. `toggle` and `bulkSet` instead call
+  `Follow.purgeFollowedPages` (`domain/follow/purge.ts`), which resolves the target through a
+  merge and purges only that entity's page paths with `invalidateSitePaths`
+  (`core/src/site-cache.ts`, never throws): `/venues|organisers|artists/<slug>-<id>*` and
+  `/<segment>/<id>*`. The trailing `*` covers the `.data` request and query strings. CloudFront
+  allows a wildcard only at the end, so an older slug from before a rename is not reached; the
+  route redirects it and the week-long TTL covers the rest. It is debounced to once per 30
+  minutes per target by `claimPurgeWindow`: a conditional update on a marker item
+  (`pk PURGE#<type>#<id>`, `sk MARKER`, `lastPurgedAt`), so it holds across Lambdas. If the
+  marker cannot be written, no purge happens. The public `followerCount` can lag by up to 30
+  minutes. `bulkSet` purges only targets whose outcome was `followed` or `unfollowed`.
 - **Button** `components/FollowButton.tsx`, placed through the new `actions` prop of
   `DetailPageHeader`. Signed in: a form posting to `/api/follow` (`routes/api.follow.tsx`). A
   browser form post (Accept has `text/html`) gets a redirect back; a fetcher gets data. The state
@@ -1928,7 +1936,8 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   for an unknown, unassigned or retired code.
 - **Scans.** `resolveScan` counts every existing code, retired ones too. The count starts first,
   runs beside the other reads and is awaited with errors swallowed (a Lambda can freeze after the
-  response, so a truly detached promise may never run).
+  response, so a truly detached promise may never run). Only a call with `count: true` counts:
+  the `/q/:code` document loader sends it, and the add-a-concert page reads without it.
 - **Route** `routes/q.$code.tsx`. Always `Cache-Control: private, no-store`, redirects too. No
   site header or footer on `/q/` (`root.tsx`). An unassigned code sends a moderator to
   `admin.rasika.life/qr/{code}/assign` (`adminAssignUrl`, built from the request host, so a stage
@@ -1946,10 +1955,14 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   react-router cookie signed with the `QrIntentSecret` SST secret, `exp` inside the payload,
   HttpOnly, SameSite Lax, 15 minutes) and goes to `/auth/login?redirectTo=/q/{code}`.
   `auth.callback.tsx` calls `finishQrIntent`: it applies `follow.bulkSet` with the new access
-  token, clears the cookie and lands on `/q/{code}/done`. A missing or expired cookie falls back
-  to `post_login_redirect`, which is `/q/{code}`. A cancelled sign-in goes to
-  `/q/{code}?signin=cancelled`, a failed save to `?error=save`; both keep the cookie so the ticks
-  come back. **CloudFront forwards only whitelisted cookies**, so `qr_intent` is in the cache
+  token and lands on `/q/{code}/done`. A missing or expired cookie falls back to
+  `post_login_redirect`, which is `/q/{code}`. A cancelled sign-in goes to
+  `/q/{code}?signin=cancelled`, a failed save to `?error=save`; the scan page reads the cookie
+  once to put the ticks back and clears it. **The cookie is bound to the sign-in attempt**: it
+  holds a random `nonce`. The openauth client makes its own OAuth `state` and cannot take ours,
+  so `/auth/login` copies the cookie's nonce into the session it already writes for the PKCE
+  challenge (`qr_nonce`), and the callback applies the intent only when the two match. The
+  callback clears the cookie at the end of every sign-in, applied or not. **CloudFront forwards only whitelisted cookies**, so `qr_intent` is in the cache
   policy list (`infra/site.ts`). That adds it to the cache key. `/q` is `no-store`, so no cached
   page depends on it; only a reader who is mid sign-in gets a separate cache key for 15 minutes.
   Set the secret with `sst secret set QrIntentSecret <random>` on each stage before deploy.
@@ -1968,7 +1981,11 @@ page. Copy strings are in `lib/qr-scan.ts` (`QR_COPY`), verbatim from `copy.md`.
   unknown name stays as text on the event. The poster option links to `/events/new`, which cannot
   take a venue, space or date yet.
 - **Rate limit** `infra/scan-rate-limit.ts` (prod only): WAF rate rule on paths starting `/q/`,
-  300 requests per 5 minutes per IP. A block returns 429 with the "Too many scans" page as a WAF
+  1,500 requests per 5 minutes per IP (300 a minute, `SCAN_RATE_LIMIT_PER_MIN`; carrier-grade NAT
+  puts a hall's phones behind one IP). `follow.bulkSet` is also limited to 30 calls a minute per
+  user (`FOLLOW_BULK_LIMIT_PER_MIN`), counted by `hitRateLimit` (`core/src/shared/rate-limit.ts`,
+  an atomic `ADD` on a per-user per-minute item, `expiresAt` set for TTL, fails open); over the
+  limit it is `TOO_MANY_REQUESTS`. A block returns 429 with the "Too many scans" page as a WAF
   custom response body. The ACL is in us-east-1 and attached to the web distribution.
 - `TODO(spec)`: "Publish concert" for a verified owner cannot be shown before submit; the button
   always reads "Submit for review" and the result page says which happened.
@@ -1996,7 +2013,7 @@ Push is phase 7 (next section).
   (`rasika.life`, or `<stage>.rasika.life`), with its own configuration set and SNS topics for
   bounce and complaint. Mail is `rasika.life <concerts@rasika.life>`, reply-to
   `hello@rasika.life`. `Email.sendBulk` (core) uses SESv2 `Content.Simple.Headers` for
-  `List-Unsubscribe` (mailto and https) and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
+  `List-Unsubscribe` (https only, no mailto: nothing processes one) and `List-Unsubscribe-Post: List-Unsubscribe=One-Click`.
   The SES suppression list is per AWS account, so a complaint on a digest also suppresses that
   address for Classes and approval mail. `infra/email.ts` says so.
 - **Bounce and complaint.** `notifyCrons.emailEventsHandler` reads the SNS message
@@ -2249,8 +2266,8 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   for the normal queue. A billed artist is linked only when one with that exact name exists; an
   artist is never created here. An event is edited only through its own organiser (a foreign id is
   `EVENT_NOT_FOUND`). `TODO(spec)`: an edit to an approved event is not sent back to review when
-  the switch is on, and the blocking duplicate rule (`findLikelyDuplicates`) does not run on
-  owner events, like `submitFromQr`.
+  the switch is on. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
+  `submitFromQr`); a likely duplicate stays `submitted` for the moderator queue.
 - **Overview numbers** (`core/src/domain/sabha/rules.ts`, pure, tested). Months and days are IST
   (`istMonth`). Followers: total, new this month, sharing now, stopped sharing this month. The
   30 day trend is read from the follows that exist, so it is a view of today's followers and an
@@ -2371,3 +2388,47 @@ For auth-gated mutations, use `protectedProcedure` (defined in `packages/trpc/sr
 - **Biome**: Formatting and linting
 - **React Router v7**: Frontend framework (in web package, using `@react-router/fs-routes`)
 - **Sharp**: Image processing (in image-processor package)
+### Venue QR Follow: review fixes
+
+Fixes from the review after all eight phases.
+
+- **Owner links must be http or https.** `httpUrlSchema` (`core/src/shared/http-url.ts`) is used
+  for `website`, `logoUrl`, `photoUrl` and `mapLink` in the partner profile schemas, because
+  `z.string().url()` accepts `javascript:`. Public venue and organiser pages also pass these
+  values through `safeHttpUrl` (`web/app/lib/safe-http-url.ts`), since older data or another write
+  path may hold a bad value.
+- **Reminders are idempotent and isolated (orchestrator decision).** `User.reminderLastSentOn`
+  (optional `YYYY-MM-DD`, IST) holds the target day of the last reminder sent, the way
+  `digestLastSentAt` holds the digest. `planReminders` puts `targetDay` (tomorrow in IST) on each
+  plan and skips a user whose `reminderLastSentOn` equals it. `deliverReminders` records it
+  through `markReminderSent` after a push or an email goes out; a failed record is logged and
+  does not fail the send. Event times use `event.timezone || DEFAULT_TIMEZONE`. One bad stored
+  event is logged and skipped in `planReminders` and `planDigests`, never aborting the run.
+- **Owner event edit.** `updateOwnerEvent` sends `artists` only when the form sent the field and
+  its names differ from the stored cast (`mergeOwnerCast`, `sabha/cast.ts`). Stored entries keep
+  their id, role and title, new names are added, and only names the owner removed are dropped.
+  The sabha form sends a blank field as `''` (cast emptied) and a missing one as absent (cast
+  untouched). A cleared space and a city the new venue lacks are removed with `.remove()`
+  (rule 8).
+- **Batch gets.** `batchGetAll` (`core/src/shared/batch-get.ts`) retries `unprocessed` keys with
+  backoff and throws if any remain. The follower export and the notification user and
+  concert-book reads use it, so a consented row is never dropped silently.
+- **Push endpoints** must be on `fcm.googleapis.com`, `*.push.apple.com`,
+  `updates.push.services.mozilla.com` or `*.notify.windows.com` (https, no port, no credentials).
+  Anything else is `PUSH_SUBSCRIPTION_INVALID`, so a stored endpoint cannot aim the sender at an
+  internal address.
+- **Merges** (`cascadeVenueMerge`, `cascadeOrganiserMerge`) copy `verifiedAt` (and an
+  organiser's `requireEventReview`) onto the canonical when it lacks them, blanks only.
+  `acceptPartnerInvite` follows `mergedIntoId` to the canonical target (up to 5 hops).
+- **Follow attribution.** `bulkSetFollows` drops `qrCode` unless the code exists and is active,
+  so `followCount` cannot be inflated for an arbitrary code. The follows still go through.
+- **Dates.** `CalendarDateSchema` and `ClockTimeSchema` (`venue-qr/add-concert.ts`) check a real
+  calendar day and a 24 hour time. The owner event, partner router and add-a-concert schemas use
+  them, so `2026-02-31` is a validation error.
+- **User records in API responses.** `unsubscribeToken` is a bearer secret and never appears in a
+  response. `user.me` returns `withoutSecrets(ctx.user)`. `user.list` and `user.updateRole` return
+  `toAdminListRow` (an explicit shape, WhatsApp masked as `+91 ••••• •2345` by `maskWhatsapp`).
+  The full number leaves the server only through `user.adminDetail` (admin role), shown on
+  `/admin/users/:userid`. Each call writes an audit row first, in the existing `ChangeHistory`
+  store (`entityType: 'user'`, `action: 'view'`, the admin as `userId`), and a failed audit write
+  means nothing is served. All in `core/src/domain/user/admin-view.ts`.

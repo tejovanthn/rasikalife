@@ -1264,6 +1264,56 @@ export async function cascadeArtistDeleteToMemberships(artistId: string): Promis
   } while (memberCursor);
 }
 
+/**
+ * What a merge copies from the loser onto the canonical record: only a field the canonical
+ * lacks (fill blanks only). Losing `verifiedAt` in a merge would take the Verified badge off a
+ * sabha whose owners were just moved across; `requireEventReview` is a moderator's choice and
+ * must not vanish either.
+ */
+export function partnerFlagsFill(
+  loser: Record<string, unknown> | null | undefined,
+  canonical: Record<string, unknown> | null | undefined,
+  fields: readonly string[]
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  if (!loser || !canonical) return patch;
+  for (const field of fields) {
+    if (loser[field] !== undefined && loser[field] !== null && canonical[field] == null) {
+      patch[field] = loser[field];
+    }
+  }
+  return patch;
+}
+
+async function fillPartnerFlags(
+  targetType: 'venue' | 'organiser',
+  loserId: string,
+  canonicalId: string
+): Promise<void> {
+  // Both entities expose the same `get`/`patch`; the union of their types is not callable.
+  const entity = (targetType === 'venue'
+    ? (await import('./venue/entity')).VenueEntity
+    : (await import('./organiser/entity')).OrganiserEntity) as unknown as {
+    get(key: { id: string }): { go(): Promise<{ data: unknown }> };
+    patch(key: { id: string }): { set(value: never): { go(): Promise<unknown> } };
+  };
+  const fields = targetType === 'venue' ? ['verifiedAt'] : ['verifiedAt', 'requireEventReview'];
+  const [loser, canonical] = await Promise.all([
+    entity.get({ id: loserId }).go(),
+    entity.get({ id: canonicalId }).go(),
+  ]);
+  const patch = partnerFlagsFill(
+    loser.data as Record<string, unknown> | null,
+    canonical.data as Record<string, unknown> | null,
+    fields
+  );
+  if (Object.keys(patch).length === 0) return;
+  await entity
+    .patch({ id: canonicalId })
+    .set(patch as never)
+    .go();
+}
+
 export async function cascadeVenueMerge(
   loserId: string,
   canonicalId: string,
@@ -1283,6 +1333,7 @@ export async function cascadeVenueMerge(
   await repointQrsToVenue(loserId, canonicalId, canonicalName);
   await moveFollows('venue', loserId, canonicalId, canonicalName);
   await movePartnerMembers('venue', loserId, canonicalId, canonicalName);
+  await fillPartnerFlags('venue', loserId, canonicalId);
 
   let cursor: string | null = null;
   do {
@@ -1328,6 +1379,7 @@ export async function cascadeOrganiserMerge(
   // the organiser.
   await moveFollows('organiser', loserId, canonicalId, canonicalName);
   await movePartnerMembers('organiser', loserId, canonicalId, canonicalName);
+  await fillPartnerFlags('organiser', loserId, canonicalId);
 
   let cursor: string | null = null;
   do {

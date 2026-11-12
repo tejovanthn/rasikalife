@@ -68,7 +68,9 @@ async function queueRender(batchId: string): Promise<QrBatch.QrBatch> {
 export const qrRouter = createTRPCRouter({
   resolve: publicProcedure
     .input(VenueQr.ResolveQrSchema)
-    .query(({ input }) => VenueQr.resolveScan(input.code)),
+    .query(({ input }) =>
+      VenueQr.resolveScan(input.code, new Date(), { count: input.count === true })
+    ),
 
   createBatch: moderatorProcedure.input(VenueQr.CreateQrBatchSchema).mutation(({ ctx, input }) =>
     mapQrErrors(async () => {

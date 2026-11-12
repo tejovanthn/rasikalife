@@ -22,16 +22,37 @@ export function isInviteExpired(invite: Pick<PartnerInvite, 'expiresAt'>, now: D
   return new Date(invite.expiresAt).getTime() <= now.getTime();
 }
 
+const MAX_MERGE_HOPS = 5;
+
+/**
+ * The live target for an id. A merged record points at its canonical (`mergedIntoId`); the
+ * invite may predate the merge, so it is followed (bounded) and the canonical is returned.
+ */
 async function readTarget(
   targetType: PartnerTargetType,
   targetId: string
-): Promise<{ id: string; name: string; verifiedAt?: string; deletedAt?: string } | null> {
-  const result =
-    targetType === 'organiser'
-      ? await OrganiserEntity.get({ id: targetId }).go()
-      : await VenueEntity.get({ id: targetId }).go();
-  const row = result.data as { id: string; name: string; verifiedAt?: string; deletedAt?: string };
-  return row && !row.deletedAt ? row : null;
+): Promise<{ id: string; name: string; verifiedAt?: string } | null> {
+  let id = targetId;
+  for (let hop = 0; hop <= MAX_MERGE_HOPS; hop++) {
+    const result =
+      targetType === 'organiser'
+        ? await OrganiserEntity.get({ id }).go()
+        : await VenueEntity.get({ id }).go();
+    const row = result.data as {
+      id: string;
+      name: string;
+      verifiedAt?: string;
+      deletedAt?: string;
+      mergedIntoId?: string;
+    } | null;
+    if (!row) return null;
+    if (row.mergedIntoId && row.mergedIntoId !== id) {
+      id = row.mergedIntoId;
+      continue;
+    }
+    return row.deletedAt ? null : row;
+  }
+  return null;
 }
 
 /**
@@ -124,7 +145,7 @@ export async function acceptPartnerInvite(
   const member = await addPartnerMember({
     userId: user.id,
     targetType: invite.targetType,
-    targetId: invite.targetId,
+    targetId: target.id,
     targetName: target.name,
     role: invite.role,
     invitedBy: invite.invitedBy,
@@ -134,7 +155,7 @@ export async function acceptPartnerInvite(
     try {
       const entity = invite.targetType === 'organiser' ? OrganiserEntity : VenueEntity;
       await entity
-        .patch({ id: invite.targetId })
+        .patch({ id: target.id })
         .set({ verifiedAt: now.toISOString() })
         .where((attr, op) => op.notExists(attr.verifiedAt))
         .go();

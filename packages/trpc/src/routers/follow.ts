@@ -6,6 +6,8 @@ import {
   SetShareSchema,
   ToggleFollowSchema,
 } from '@rasika/core/domain/follow/client';
+import { FOLLOW_BULK_LIMIT_PER_MIN } from '@rasika/core/domain/venue-qr/client';
+import { hitRateLimit } from '@rasika/core/shared/rate-limit';
 import { TRPCError } from '@trpc/server';
 import type { TRPC_ERROR_CODE_KEY } from '@trpc/server';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
@@ -51,22 +53,43 @@ export function toMyFollow(row: Follow.Follow) {
  * Follow routes. All are `protectedProcedure`: a signed-out reader goes through sign-in first
  * (the web app turns `?follow=1` into a call here on return).
  *
- * Cache: these are NOT in `PRIVATE_ROUTERS`. A follow moves `followerCount`, which public pages
- * show, so `toggle` and `bulkSet` clear the site cache like any write. `setShare` changes only
- * a private flag and is listed in `PRIVATE_PATHS` (`middleware/site-cache.ts`).
+ * Cache: `toggle`, `bulkSet` and `setShare` are listed in `PRIVATE_PATHS`
+ * (`middleware/site-cache.ts`), so they never purge `/*`. `toggle` and `bulkSet` purge only the
+ * followed entity's own page paths through `Follow.purgeFollowedPages`, at most once per 30
+ * minutes per target (a marker item with a conditional update). The public `followerCount` can
+ * lag by up to that long.
  */
 export const followRouter = createTRPCRouter({
   bulkSet: protectedProcedure
     .input(BulkSetFollowSchema)
     // `bulkSetFollows` also adds the new follows to the code's `followCount` and the day's
     // `QrScanDay.follows` when `qrCode` is given.
-    .mutation(({ input, ctx }) => mapErrors(() => Follow.bulkSetFollows(ctx.user.id, input))),
+    .mutation(async ({ input, ctx }) => {
+      // 30 a minute per user, counted on the table so it holds across Lambdas.
+      const { allowed } = await hitRateLimit({
+        key: `follow-bulk#${ctx.user.id}`,
+        limit: FOLLOW_BULK_LIMIT_PER_MIN,
+        windowSec: 60,
+      });
+      if (!allowed) {
+        throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many follow requests' });
+      }
+      const result = await mapErrors(() => Follow.bulkSetFollows(ctx.user.id, input));
+      // Purge only the pages whose follower count moved (debounced per target; never `/*`).
+      await Follow.purgeFollowedPages(
+        result.results
+          .filter(r => r.outcome === 'followed' || r.outcome === 'unfollowed')
+          .map(r => ({ type: r.type, id: r.id }))
+      );
+      return result;
+    }),
 
   toggle: protectedProcedure.input(ToggleFollowSchema).mutation(({ input, ctx }) =>
     mapErrors(async () => {
       const existing = await Follow.getFollow(ctx.user.id, input.type, input.id);
       if (existing) {
         await Follow.unfollowTarget(ctx.user.id, input.type, input.id);
+        await Follow.purgeFollowedPages([{ type: input.type, id: input.id }]);
         return { following: false };
       }
       await Follow.followTarget({
@@ -74,6 +97,7 @@ export const followRouter = createTRPCRouter({
         targetType: input.type,
         targetId: input.id,
       });
+      await Follow.purgeFollowedPages([{ type: input.type, id: input.id }]);
       return { following: true };
     })
   ),

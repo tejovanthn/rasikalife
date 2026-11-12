@@ -305,6 +305,11 @@ export async function setDigestLastSentAt(id: string, at: Date = new Date()): Pr
   await UserEntity.patch({ id }).set({ digestLastSentAt: at.toISOString() }).go();
 }
 
+/** Records the target day (`YYYY-MM-DD`, IST) of the reminder just sent. */
+export async function setReminderLastSentOn(id: string, day: string): Promise<void> {
+  await UserEntity.patch({ id }).set({ reminderLastSentOn: day }).go();
+}
+
 /**
  * Stores a WhatsApp number with consent. A bad number is `WHATSAPP_INVALID_NUMBER`. Changing the
  * number clears `whatsappVerifiedAt` (rule 8: `.remove`), since the new number is not verified.
@@ -353,4 +358,11 @@ export {
 } from './schema';
 export type { NotifyPrefsInput } from './schema';
 export { homeLocationLabel, resolveHomeLocation } from './home-location';
+export {
+  maskWhatsapp,
+  recordAdminUserView,
+  toAdminDetail,
+  toAdminListRow,
+  withoutSecrets,
+} from './admin-view';
 export type { HomeLocation, HomeLocationInput, HomeLocationResult } from './home-location';

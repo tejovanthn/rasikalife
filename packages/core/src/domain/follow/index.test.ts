@@ -22,7 +22,10 @@ vi.mock('./entity', async importOriginal => {
   };
 });
 vi.mock('./target', () => ({ resolveFollowTarget: vi.fn() }));
-vi.mock('../venue-qr', () => ({ recordQrFollows: vi.fn().mockResolvedValue(undefined) }));
+vi.mock('../venue-qr', () => ({
+  recordQrFollows: vi.fn().mockResolvedValue(undefined),
+  getQr: vi.fn(),
+}));
 
 import {
   bulkSetFollows,
@@ -38,7 +41,7 @@ import { dynamoClient } from '../../db/client';
 import { keyOfEntity } from '../../db/keys';
 import { ArtistEntity } from '../artist/entity';
 import { OrganiserEntity } from '../organiser/entity';
-import { recordQrFollows } from '../venue-qr';
+import { getQr, recordQrFollows } from '../venue-qr';
 import { CONSENT_VERSIONS } from '../venue-qr/constants';
 import { VenueEntity } from '../venue/entity';
 import { FollowEntity } from './entity';
@@ -127,6 +130,7 @@ function asFollow(row: Row | undefined): Follow | undefined {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(getQr).mockResolvedValue({ status: 'active' } as never);
   follows.clear();
   targets.clear();
 
@@ -490,6 +494,26 @@ describe('bulkSetFollows', () => {
       error: ErrorCode.FOLLOW_TARGET_NOT_FOUND,
     });
     expect(results[1].outcome).toBe('followed');
+  });
+
+  it('drops the code, and still follows, when the code is unknown or not active', async () => {
+    addTarget('venue', 'venue1');
+    vi.mocked(getQr).mockResolvedValueOnce(null);
+    const first = await bulkSetFollows('u1', {
+      qrCode: 'ZZZZZZZZ',
+      targets: [{ type: 'venue', id: 'venue1', follow: true }],
+    });
+    expect(first.newFollows).toBe(1);
+    expect(recordQrFollows).not.toHaveBeenCalled();
+    expect(rowFor('u1', 'venue', 'venue1')).toMatchObject({ source: 'web' });
+
+    addTarget('venue', 'venue2');
+    vi.mocked(getQr).mockResolvedValueOnce({ status: 'retired' } as never);
+    await bulkSetFollows('u1', {
+      qrCode: 'ABCDEFGH',
+      targets: [{ type: 'venue', id: 'venue2', follow: true }],
+    });
+    expect(recordQrFollows).not.toHaveBeenCalled();
   });
 
   it('adds only the new follows to the code', async () => {

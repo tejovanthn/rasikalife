@@ -28,9 +28,9 @@ describe('changesPublicPage', () => {
     expect(changesPublicPage('mutation', 'space.create', true)).toBe(false);
   });
 
-  it('clears for a follow, which moves the count public pages show, but not for sharing', () => {
-    expect(changesPublicPage('mutation', 'follow.toggle', true)).toBe(true);
-    expect(changesPublicPage('mutation', 'follow.bulkSet', true)).toBe(true);
+  it('never clears for a follow, so a QR burst cannot purge the CDN per follower', () => {
+    expect(changesPublicPage('mutation', 'follow.toggle', true)).toBe(false);
+    expect(changesPublicPage('mutation', 'follow.bulkSet', true)).toBe(false);
     expect(changesPublicPage('mutation', 'follow.setShare', true)).toBe(false);
   });
 });
