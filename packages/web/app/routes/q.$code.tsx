@@ -518,8 +518,11 @@ function FollowForm({ d }: { d: Extract<LoaderData, { kind: 'follow' }> }) {
             : QR_COPY.follow.signedOut}
       </button>
       <p className="text-base text-muted-foreground">{QR_COPY.follow.footerNote}</p>
+      {/* A new tab, so the ticks above survive: a rasika who reads this rarely finds the way back. */}
       <Link
         to="/privacy/following"
+        target="_blank"
+        rel="noopener"
         className="block min-h-11 text-base underline underline-offset-4"
       >
         {QR_COPY.follow.footerLink}
