@@ -1920,6 +1920,20 @@ admin yet.
   organisers, Venues (`groupFollows`). Unfollow shows the toast with Undo; Undo re-follows and
   restores the share choice (`refollowTarget`). Turning sharing off asks first in a dialog;
   without JavaScript the form posts directly. Linked from the header menu.
+- **`/me/following` looks like X's following list.** One `max-w-xl` column of flat rows with
+  `border-b` dividers and the three group labels. Each row: a 48px round avatar (artist or venue
+  `photoUrl`, organiser `logoUrl`, else up to two initials, `followInitials`, in
+  `bg-accent text-accent-foreground`; `alt=""`), the name in bold linking to the page, a muted
+  line from `followSecondLine` (type label, or the artist's instrument via `artistTagline`, then
+  the city), and a pill that reads "Following" and turns to "Unfollow" in destructive tokens on
+  hover or keyboard focus. Its aria-label is `unfollowLabel(name)`. A tap on a touch screen
+  unfollows at once; the Undo toast is the safety net. The share switch (venue and organiser rows)
+  sits small under the lines.
+- **Row data is one batch read.** `follow.mine` calls `Follow.getFollowTargetCards(follows)`
+  (`core/domain/follow`): one `batchGetAll` per type, so unprocessed keys are retried, never
+  dropped. It returns image, city and instrument only. A missing or soft-deleted target has no
+  card, so its row shows the stored name and initials. The router adds `imageUrl`, `city` and
+  `instrument` (each `null` when unknown) through `toMyFollowRow`; it never returns a record.
 - The public follower count label (`followerCountLabel`) is from Copy; it is hidden at 0.
 
 ### Venue QR Follow: scan page

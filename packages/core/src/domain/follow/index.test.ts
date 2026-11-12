@@ -32,6 +32,7 @@ import {
   deleteUserFollows,
   followTarget,
   getFollowStatus,
+  getFollowTargetCards,
   moveFollows,
   setFollowShare,
   unfollowTarget,
@@ -656,5 +657,73 @@ describe('deleteUserFollows', () => {
     expect(counter('organiser', 'org1')).toBe(0);
     expect(counter('artist', 'art1')).toBe(0);
     expect([...follows.values()].every(r => r.userId === 'u2')).toBe(true);
+  });
+});
+
+describe('getFollowTargetCards', () => {
+  const batch = (data: unknown[], unprocessed?: unknown[]) =>
+    ({ go: vi.fn().mockResolvedValue({ data, unprocessed }) }) as never;
+
+  it('reads each type in one batch and keeps only what the row shows', async () => {
+    const venueGet = vi
+      .spyOn(VenueEntity, 'get')
+      .mockReturnValue(
+        batch([{ id: 'v1', photoUrl: 'https://cdn/v.jpg', city: ' Chennai ', name: 'drop' }])
+      );
+    const orgGet = vi
+      .spyOn(OrganiserEntity, 'get')
+      .mockReturnValue(batch([{ id: 'o1', logoUrl: 'https://cdn/o.png' }]));
+    const artistGet = vi
+      .spyOn(ArtistEntity, 'get')
+      .mockReturnValue(batch([{ id: 'a1', photoUrl: 'https://cdn/a.jpg', instrument: 'vocal' }]));
+
+    const cards = await getFollowTargetCards([
+      { targetType: 'venue', targetId: 'v1' },
+      { targetType: 'venue', targetId: 'v1' },
+      { targetType: 'organiser', targetId: 'o1' },
+      { targetType: 'artist', targetId: 'a1' },
+    ]);
+
+    expect(venueGet).toHaveBeenCalledTimes(1);
+    expect(venueGet).toHaveBeenCalledWith([{ id: 'v1' }]);
+    expect(orgGet).toHaveBeenCalledTimes(1);
+    expect(artistGet).toHaveBeenCalledTimes(1);
+    expect(cards).toEqual({
+      'venue:v1': { imageUrl: 'https://cdn/v.jpg', city: 'Chennai', instrument: undefined },
+      'organiser:o1': { imageUrl: 'https://cdn/o.png', city: undefined, instrument: undefined },
+      'artist:a1': { imageUrl: 'https://cdn/a.jpg', city: undefined, instrument: 'vocal' },
+    });
+  });
+
+  it('leaves out a missing or deleted target and skips types with no follows', async () => {
+    const venueGet = vi
+      .spyOn(VenueEntity, 'get')
+      .mockReturnValue(
+        batch([{ id: 'v2', deletedAt: '2026-01-01T00:00:00.000Z', photoUrl: 'https://cdn/x.jpg' }])
+      );
+    const orgGet = vi.spyOn(OrganiserEntity, 'get').mockReturnValue(batch([]));
+    const artistGet = vi.spyOn(ArtistEntity, 'get');
+    artistGet.mockClear();
+
+    const cards = await getFollowTargetCards([
+      { targetType: 'venue', targetId: 'v2' },
+      { targetType: 'organiser', targetId: 'o-missing' },
+    ]);
+
+    expect(venueGet).toHaveBeenCalled();
+    expect(orgGet).toHaveBeenCalled();
+    expect(artistGet).not.toHaveBeenCalled();
+    expect(cards).toEqual({});
+  });
+
+  it('retries unprocessed keys rather than dropping those rows', async () => {
+    const go = vi
+      .fn()
+      .mockResolvedValueOnce({ data: [], unprocessed: [{ id: 'v1' }] })
+      .mockResolvedValueOnce({ data: [{ id: 'v1', city: 'Pune' }], unprocessed: [] });
+    vi.spyOn(VenueEntity, 'get').mockReturnValue({ go } as never);
+    const cards = await getFollowTargetCards([{ targetType: 'venue', targetId: 'v1' }]);
+    expect(go).toHaveBeenCalledTimes(2);
+    expect(cards['venue:v1']?.city).toBe('Pune');
   });
 });

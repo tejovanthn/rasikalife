@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   FOLLOW_COPY,
+  followInitials,
   followReturnHref,
+  followSecondLine,
+  followUrl,
   followerCountLabel,
   groupFollows,
   hasPendingFollow,
@@ -11,6 +14,7 @@ import {
   signInToFollowHref,
   stopSharingTitle,
   stripFollowParam,
+  unfollowLabel,
   unfollowedToast,
   wantsHtml,
 } from './follow';
@@ -118,5 +122,43 @@ describe('copy', () => {
     expect(shareLabel('Hall')).toBe('Share my details with Hall');
     expect(stopSharingTitle('Hall')).toBe('Stop sharing with Hall?');
     expect(FOLLOW_COPY.groups.organiser).toBe('Sabhas and organisers');
+  });
+});
+
+describe('followInitials', () => {
+  it('takes up to two initials', () => {
+    expect(followInitials('Narada Gana Sabha')).toBe('NG');
+    expect(followInitials('Aruna')).toBe('A');
+    expect(followInitials('  the  hall ')).toBe('TH');
+    expect(followInitials('(R) Sri')).toBe('RS');
+    expect(followInitials('')).toBe('');
+  });
+});
+
+describe('followSecondLine', () => {
+  it('joins the type label and city', () => {
+    expect(followSecondLine({ targetType: 'venue', city: 'Chennai' })).toBe('Venue · Chennai');
+    expect(followSecondLine({ targetType: 'organiser' })).toBe('Organiser');
+    expect(followSecondLine({ targetType: 'organiser', city: '  ' })).toBe('Organiser');
+  });
+
+  it('shows an artist instrument, else Artist', () => {
+    expect(followSecondLine({ targetType: 'artist', instrument: 'vocal', city: 'Pune' })).toBe(
+      'Vocal · Pune'
+    );
+    expect(followSecondLine({ targetType: 'artist', instrument: null })).toBe('Artist');
+    expect(followSecondLine({ targetType: 'artist', city: 'Pune' })).toBe('Artist · Pune');
+  });
+});
+
+describe('link and label', () => {
+  it('builds the entity page link for each type', () => {
+    expect(followUrl('venue', 'v1', 'Hall')).toMatch(/^\/venues\/.*v1$/);
+    expect(followUrl('organiser', 'o1', 'Sabha')).toMatch(/^\/organisers\/.*o1$/);
+    expect(followUrl('artist', 'a1', 'Aruna')).toMatch(/^\/artists\/.*a1$/);
+  });
+
+  it('composes the accessible name from Unfollow and the name', () => {
+    expect(unfollowLabel('Hall')).toBe('Unfollow Hall');
   });
 });

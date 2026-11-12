@@ -49,6 +49,16 @@ export function toMyFollow(row: Follow.Follow) {
   };
 }
 
+/** `toMyFollow` plus what the `/me/following` row shows. Explicit fields, never a record. */
+export function toMyFollowRow(row: Follow.Follow, card?: Follow.FollowTargetCard) {
+  return {
+    ...toMyFollow(row),
+    imageUrl: card?.imageUrl ?? null,
+    city: card?.city ?? null,
+    instrument: card?.instrument ?? null,
+  };
+}
+
 /**
  * Follow routes. All are `protectedProcedure`: a signed-out reader goes through sign-in first
  * (the web app turns `?follow=1` into a call here on return).
@@ -115,7 +125,11 @@ export const followRouter = createTRPCRouter({
   ),
 
   mine: protectedProcedure.query(({ ctx }) =>
-    mapErrors(async () => (await Follow.listMyFollows(ctx.user.id)).map(toMyFollow))
+    mapErrors(async () => {
+      const rows = await Follow.listMyFollows(ctx.user.id);
+      const cards = await Follow.getFollowTargetCards(rows);
+      return rows.map(row => toMyFollowRow(row, cards[`${row.targetType}:${row.targetId}`]));
+    })
   ),
 
   setShare: protectedProcedure.input(SetShareSchema).mutation(({ input, ctx }) =>

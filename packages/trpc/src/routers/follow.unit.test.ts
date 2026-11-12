@@ -7,6 +7,7 @@ const follow = vi.hoisted(() => ({
   unfollowTarget: vi.fn(),
   getFollowStatus: vi.fn(),
   listMyFollows: vi.fn(),
+  getFollowTargetCards: vi.fn(),
   setFollowShare: vi.fn(),
   purgeFollowedPages: vi.fn().mockResolvedValue(undefined),
 }));
@@ -145,6 +146,9 @@ describe('follow router', () => {
         createdAt: '2026-11-01T00:00:00.000Z',
       },
     ]);
+    follow.getFollowTargetCards.mockResolvedValue({
+      'venue:v1': { imageUrl: 'https://cdn/x.jpg', city: 'Chennai', secret: 'no' },
+    });
     expect(await caller.mine()).toEqual([
       {
         targetType: 'venue',
@@ -152,7 +156,27 @@ describe('follow router', () => {
         targetName: 'Hall',
         shareWithTarget: true,
         createdAt: '2026-11-01T00:00:00.000Z',
+        imageUrl: 'https://cdn/x.jpg',
+        city: 'Chennai',
+        instrument: null,
       },
+    ]);
+  });
+
+  it('mine gives null image, city and instrument for a missing target', async () => {
+    follow.listMyFollows.mockResolvedValue([
+      {
+        userId: 'u1',
+        targetType: 'artist',
+        targetId: 'a1',
+        targetName: 'Gone',
+        shareWithTarget: false,
+        createdAt: '2026-11-01T00:00:00.000Z',
+      },
+    ]);
+    follow.getFollowTargetCards.mockResolvedValue({});
+    expect(await caller.mine()).toEqual([
+      expect.objectContaining({ targetName: 'Gone', imageUrl: null, city: null, instrument: null }),
     ]);
   });
 });
