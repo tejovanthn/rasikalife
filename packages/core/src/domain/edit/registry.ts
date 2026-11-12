@@ -88,11 +88,42 @@ async function getOrganiserHandler() {
   };
 }
 
+/**
+ * Fields an event edit may ask to have cleared. `updateEvent` drops nulls and `.set()` cannot
+ * clear an attribute (rule 8), so a proposed value cannot express "remove this". An event edit
+ * can carry `clearFields` next to its values, and approval removes the listed fields with
+ * `.remove()`. Only these three, which the sabha event form clears.
+ */
+export const EVENT_CLEARABLE_FIELDS = ['spaceId', 'spaceName', 'venueCity'] as const;
+
+/** Splits `clearFields` off an event edit's values. Unknown names are ignored. */
+export function splitEventClears(input: unknown): {
+  values: Record<string, unknown>;
+  clear: Array<(typeof EVENT_CLEARABLE_FIELDS)[number]>;
+} {
+  const { clearFields, ...values } = (input ?? {}) as Record<string, unknown>;
+  const asked = Array.isArray(clearFields) ? clearFields : [];
+  return {
+    values,
+    clear: EVENT_CLEARABLE_FIELDS.filter(field => asked.includes(field)),
+  };
+}
+
 async function getEventHandler() {
   const mod = await import('../event');
   return {
     getEntity: mod.getEvent as GetEntityFunction<Event>,
-    updateEntity: mod.updateApprovedEvent as UpdateEntityFunction<Event>,
+    updateEntity: (async (id: string, input: unknown) => {
+      const { values, clear } = splitEventClears(input);
+      const saved = await mod.updateApprovedEvent(
+        id,
+        values as Parameters<typeof mod.updateApprovedEvent>[1]
+      );
+      if (clear.length === 0) return saved;
+      const { EventEntity } = await import('../event/entity');
+      const cleared = await EventEntity.patch({ id }).remove(clear).go({ response: 'all_new' });
+      return (cleared.data as Event | undefined) ?? saved;
+    }) as UpdateEntityFunction<Event>,
     deleteEntity: mod.softDeleteEvent as DeleteEntityFunction,
     mergeEntity: mod.mergeEvent as MergeEntityFunction,
     updateSchema: (await import('../event/schema')).UpdateEventSchema,

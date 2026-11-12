@@ -10,6 +10,12 @@ vi.mock('../event', () => ({
   updateApprovedEvent: vi.fn(),
   findLikelyDuplicatesOfEvent: vi.fn(),
 }));
+vi.mock('../edit/service', () => ({
+  createDraft: vi.fn(),
+  submitEdit: vi.fn(),
+  withdrawEdit: vi.fn(),
+  getActiveEditForEntity: vi.fn(),
+}));
 vi.mock('../event/entity', () => ({ EventEntity: { patch: vi.fn() } }));
 vi.mock('../organiser', () => ({ getOrganiser: vi.fn() }));
 vi.mock('../partner-member', () => ({ getPartnerMember: vi.fn() }));
@@ -19,6 +25,7 @@ vi.mock('../venue-space', () => ({ getSpace: vi.fn() }));
 
 import { ErrorCode } from '../../constants';
 import { getArtistByName } from '../artist';
+import { createDraft, getActiveEditForEntity, submitEdit, withdrawEdit } from '../edit/service';
 import {
   approveEvent,
   createEvent,
@@ -76,6 +83,8 @@ beforeEach(() => {
   vi.mocked(findLikelyDuplicatesOfEvent).mockResolvedValue([]);
   vi.mocked(updateEvent).mockResolvedValue({ id: 'e1' } as never);
   vi.mocked(updateApprovedEvent).mockResolvedValue({ id: 'e1' } as never);
+  vi.mocked(createDraft).mockResolvedValue({ id: 'ed1' } as never);
+  vi.mocked(getActiveEditForEntity).mockResolvedValue(null);
 });
 
 describe('OwnerEventSchema', () => {
@@ -249,6 +258,71 @@ describe('updateOwnerEvent', () => {
       } as never);
       await updateOwnerEvent(edit, 'u1');
       expect(patch.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('review switch on', () => {
+    const live = {
+      id: 'e1',
+      title: 'Old',
+      organiserId: 'o1',
+      status: 'approved',
+      timezone: 'Asia/Kolkata',
+      spaceId: 's1',
+      spaceName: 'Main hall',
+      artists: [{ id: 'a1', name: 'Asha Rao', role: 'main' }],
+    };
+
+    it('sends an edit to an approved event to review and leaves the live event alone', async () => {
+      setup({ review: true });
+      vi.mocked(getEvent).mockResolvedValue(live as never);
+      const result = await updateOwnerEvent({ ...edit, artists: 'Asha Rao, New Person' }, 'u1');
+      expect(result).toEqual({ event: live, sentToReview: true });
+      expect(updateApprovedEvent).not.toHaveBeenCalled();
+      expect(updateEvent).not.toHaveBeenCalled();
+      expect(patch.remove).not.toHaveBeenCalled();
+      const [draft] = vi.mocked(createDraft).mock.calls[0] ?? [];
+      expect(draft).toMatchObject({ entityType: 'event', entityId: 'e1', userId: 'u1' });
+      expect(draft?.proposedValues.artists).toEqual([
+        { id: 'a1', name: 'Asha Rao', role: 'main' },
+        { name: 'New Person' },
+      ]);
+      expect(submitEdit).toHaveBeenCalledWith('ed1', 'u1');
+    });
+
+    it('carries a cleared space and city as clearFields', async () => {
+      setup({ review: true });
+      vi.mocked(getEvent).mockResolvedValue({ ...live, venueCity: 'Chennai' } as never);
+      vi.mocked(getVenue).mockResolvedValue({ id: 'v2', name: 'Other' } as never);
+      await updateOwnerEvent({ ...edit, venueId: 'v2', spaceId: undefined }, 'u1');
+      const [draft] = vi.mocked(createDraft).mock.calls[0] ?? [];
+      expect(draft?.proposedValues.clearFields).toEqual(['spaceId', 'spaceName', 'venueCity']);
+    });
+
+    it('withdraws an earlier edit of this owner that is still waiting', async () => {
+      setup({ review: true });
+      vi.mocked(getEvent).mockResolvedValue(live as never);
+      vi.mocked(getActiveEditForEntity).mockResolvedValue({ id: 'old' } as never);
+      await updateOwnerEvent(edit, 'u1');
+      expect(withdrawEdit).toHaveBeenCalledWith('old', 'u1');
+    });
+
+    it('still edits a submitted event at once', async () => {
+      setup({ review: true });
+      vi.mocked(getEvent).mockResolvedValue({ ...live, status: 'submitted' } as never);
+      const result = await updateOwnerEvent(edit, 'u1');
+      expect(result.sentToReview).toBe(false);
+      expect(updateEvent).toHaveBeenCalled();
+      expect(createDraft).not.toHaveBeenCalled();
+    });
+
+    it('edits an approved event at once when the switch is off', async () => {
+      setup({ review: false });
+      vi.mocked(getEvent).mockResolvedValue(live as never);
+      const result = await updateOwnerEvent(edit, 'u1');
+      expect(result.sentToReview).toBe(false);
+      expect(updateApprovedEvent).toHaveBeenCalled();
+      expect(createDraft).not.toHaveBeenCalled();
     });
   });
 });

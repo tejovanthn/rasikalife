@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ApplicationError, ErrorCode } from '../../constants';
 import { getArtistByName } from '../artist';
+import { createDraft, getActiveEditForEntity, submitEdit, withdrawEdit } from '../edit/service';
 import {
   approveEvent,
   createEvent,
@@ -140,14 +141,19 @@ export async function createOwnerEvent(
  * of one sabha cannot touch another's concert by guessing an id. Fields the form does not carry
  * (poster, ticketing, festival) are left alone.
  *
- * TODO(spec): when a moderator has turned review on, an edit to an already approved event still
- * applies at once. Sending it back to review would take a live concert off the site over a typo.
+ * When a moderator has turned review on (`requireEventReview`) and the event is already approved,
+ * nothing is written to the live event (owner decision 13). The change goes through the Edit
+ * workflow as a submitted edit, the same path wiki edits to events use, and the live event stays
+ * as it is until a moderator approves. An earlier edit of this owner still waiting is withdrawn
+ * first, so the queue holds one. A cleared space or city cannot be a proposed value, so it
+ * travels as `clearFields`, which approval removes with `.remove()` (see `edit/registry.ts`).
+ * With the switch off, edits stay instant.
  */
 export async function updateOwnerEvent(
   input: z.infer<typeof UpdateOwnerEventSchema>,
   userId: string
-): Promise<Event> {
-  await requireOwnedOrganiser(input.organiserId, userId);
+): Promise<{ event: Event; sentToReview: boolean }> {
+  const { organiser } = await requireOwnedOrganiser(input.organiserId, userId);
   const existing = await getEvent(input.eventId);
   if (!existing || existing.organiserId !== input.organiserId) {
     throw new ApplicationError(ErrorCode.EVENT_NOT_FOUND, `Event ${input.eventId} not found`);
@@ -180,11 +186,6 @@ export async function updateOwnerEvent(
     ...(cast ? { artists: cast } : {}),
     ...(input.notes !== undefined ? { description: input.notes } : {}),
   };
-  const saved =
-    existing.status === 'approved'
-      ? await updateApprovedEvent(input.eventId, changes)
-      : await updateEvent(input.eventId, changes);
-
   // `.set()` cannot clear an attribute (rule 8), so a cleared space and a city the new venue
   // does not have are removed with `.remove()`.
   const toRemove: Array<'spaceId' | 'spaceName' | 'venueCity'> = [];
@@ -193,9 +194,28 @@ export async function updateOwnerEvent(
     if (existing.spaceName) toRemove.push('spaceName');
   }
   if (venue && !venue.city && existing.venueCity) toRemove.push('venueCity');
-  if (toRemove.length === 0) return saved;
+
+  if (existing.status === 'approved' && organiser.requireEventReview) {
+    const waiting = await getActiveEditForEntity(userId, 'event', input.eventId);
+    if (waiting) await withdrawEdit(waiting.id, userId);
+    const draft = await createDraft({
+      entityType: 'event',
+      entityId: input.eventId,
+      userId,
+      proposedValues: toRemove.length > 0 ? { ...changes, clearFields: toRemove } : changes,
+    });
+    await submitEdit(draft.id, userId);
+    return { event: existing, sentToReview: true };
+  }
+
+  const saved =
+    existing.status === 'approved'
+      ? await updateApprovedEvent(input.eventId, changes)
+      : await updateEvent(input.eventId, changes);
+
+  if (toRemove.length === 0) return { event: saved, sentToReview: false };
   const cleared = await EventEntity.patch({ id: input.eventId })
     .remove(toRemove)
     .go({ response: 'all_new' });
-  return (cleared.data as Event | undefined) ?? saved;
+  return { event: (cleared.data as Event | undefined) ?? saved, sentToReview: false };
 }

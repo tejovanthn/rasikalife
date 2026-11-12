@@ -2268,8 +2268,16 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   approved events from the last 30 days on, newest publish first). Otherwise it is `submitted`
   for the normal queue. A billed artist is linked only when one with that exact name exists; an
   artist is never created here. An event is edited only through its own organiser (a foreign id is
-  `EVENT_NOT_FOUND`). `TODO(spec)`: an edit to an approved event is not sent back to review when
-  the switch is on. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
+  `EVENT_NOT_FOUND`). **Edits while review is on** (owner decision 13,
+  2026-11-12): when the organiser has `requireEventReview` and the event is already approved,
+  `updateOwnerEvent` writes nothing to the live event. It returns `{ event, sentToReview: true }`
+  after creating and submitting an `Edit` (`edit/service.ts`, the wiki path). An earlier edit of
+  that owner still waiting is withdrawn first. The edit cannot express a cleared field (`updateEvent`
+  drops nulls, rule 8), so a cleared space or city travels as `clearFields` in `proposedValues`, and
+  the event handler in `edit/registry.ts` (`splitEventClears`, only `spaceId`, `spaceName`,
+  `venueCity`) removes them with `.remove()` after `updateApprovedEvent`, which also applies the
+  merged cast. The sabha form redirects with `?done=review`, which shows `eventsSubmitted`. Switch
+  off, or event not yet approved: edits stay instant. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
   `submitFromQr`); a likely duplicate stays `submitted` for the moderator queue.
 - **Overview numbers** (`core/src/domain/sabha/rules.ts`, pure, tested). Months and days are IST
   (`istMonth`). Followers: total, new this month, sharing now, stopped sharing this month. The
