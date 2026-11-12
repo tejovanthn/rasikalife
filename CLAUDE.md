@@ -2194,8 +2194,9 @@ follower export. Copy is in `packages/sabha/app/lib/copy.ts` (`SABHA_COPY` verba
   moderators set it (`partner.setEventReview`, on the admin partners page). With it on, an
   owner's new events wait for a moderator. `mayAutoApprove` reads it, so the scan page's "Add a
   concert" follows the same rule.
-- "`verifiedAt` on each venue an organiser manages": the model has no such link. Left as
-  `TODO(spec)` in `acceptPartnerInvite`. Only the invited target is verified.
+- **Only the invited target is verified** (owner decision 12, 2026-11-12). `Organiser.venueId` is
+  the usual hall, often rented, and proves no ownership. A sabha that owns its hall gets a second
+  invite for the venue. The Spec's "and on each venue it manages" is dropped.
 
 **Access** (`packages/trpc/src/partner-access.ts`, `trpc.ts`). `checkPartnerAccess` is one pure
 function, tested as a matrix (owner, viewer, non-member, moderator, admin, signed out). Three
