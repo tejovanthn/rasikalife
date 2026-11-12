@@ -316,9 +316,13 @@ export const partnerRouter = createTRPCRouter({
     .mutation(({ ctx, input }) =>
       mapPartnerErrors(async () => {
         const organiserId = requireOrganiserTarget(input.targetType, input.targetId);
-        const event = await Sabha.updateOwnerEvent({ ...input, organiserId }, ctx.user.id);
-        triggerReindex();
-        return toEventView(event);
+        const { event, sentToReview } = await Sabha.updateOwnerEvent(
+          { ...input, organiserId },
+          ctx.user.id
+        );
+        // Nothing changed on the live event when the edit went to review.
+        if (!sentToReview) triggerReindex();
+        return { ...toEventView(event), sentToReview };
       })
     ),
 

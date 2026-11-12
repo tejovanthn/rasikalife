@@ -492,6 +492,62 @@ describe('cascade', () => {
     });
   });
 
+  describe('cascadeSpaceNameUpdate', () => {
+    const NOW = new Date('2026-12-01T12:00:00.000Z');
+
+    it('renames future events in the space only, comparing instants', async () => {
+      const set = vi.fn().mockReturnThis();
+      const go = vi.fn().mockResolvedValue({});
+      EventEntity.patch = vi.fn().mockReturnValue({ set, go }) as never;
+      EventEntity.query.byVenue = pagedQuery([
+        {
+          data: [
+            // 2026-12-01T13:00Z: later than now, though it sorts before NOW as a string.
+            {
+              id: 'future',
+              spaceId: 's1',
+              spaceName: 'Old',
+              startDateTime: '2026-12-01T18:30:00+05:30',
+            },
+            {
+              id: 'past',
+              spaceId: 's1',
+              spaceName: 'Old',
+              startDateTime: '2026-11-01T18:30:00+05:30',
+            },
+            // 2026-12-01T11:00Z: earlier than now, though the clock text reads 16:30.
+            {
+              id: 'started',
+              spaceId: 's1',
+              spaceName: 'Old',
+              startDateTime: '2026-12-01T16:30:00+05:30',
+            },
+            {
+              id: 'other',
+              spaceId: 's2',
+              spaceName: 'Old',
+              startDateTime: '2026-12-05T18:30:00+05:30',
+            },
+            { id: 'nospace', startDateTime: '2026-12-05T18:30:00+05:30' },
+            {
+              id: 'same',
+              spaceId: 's1',
+              spaceName: 'New',
+              startDateTime: '2026-12-05T18:30:00+05:30',
+            },
+          ],
+          cursor: null,
+        },
+      ]);
+
+      const changed = await cascade.cascadeSpaceNameUpdate('venue1', 's1', 'New', NOW);
+
+      expect(changed).toBe(1);
+      expect(vi.mocked(EventEntity.patch).mock.calls).toEqual([[{ id: 'future' }]]);
+      expect(set).toHaveBeenCalledWith({ spaceName: 'New' });
+    });
+  });
+
   describe('cascadeOrganiserNameUpdate', () => {
     it('updates both awards issued by, and events organised by, the organiser', async () => {
       const awardGo = vi.fn().mockResolvedValue({ data: [{ id: 'award1' }] });

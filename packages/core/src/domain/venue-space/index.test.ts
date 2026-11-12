@@ -9,10 +9,12 @@ vi.mock('./entity', () => ({
     query: { primary: vi.fn() },
   },
 }));
+vi.mock('../cascade', () => ({ cascadeSpaceNameUpdate: vi.fn() }));
 vi.mock('../follow/target', () => ({ resolveFollowTarget: vi.fn() }));
 
 import { createSpace, listSpaces, moveSpaces, updateSpace } from '.';
 import { ErrorCode } from '../../constants';
+import { cascadeSpaceNameUpdate } from '../cascade';
 import { resolveFollowTarget } from '../follow/target';
 import { VenueSpaceEntity } from './entity';
 
@@ -70,6 +72,38 @@ describe('updateSpace', () => {
     await updateSpace({ venueId: 'v1', spaceId: 's1', name: 'New' });
 
     expect(patch.set).toHaveBeenCalledWith({ name: 'New' });
+  });
+
+  describe('rename cascade', () => {
+    function arrange() {
+      vi.mocked(VenueSpaceEntity.get).mockReturnValue(go({ spaceId: 's1', name: 'Old' }) as never);
+      const patch = { set: vi.fn().mockReturnThis(), go: vi.fn().mockResolvedValue({ data: {} }) };
+      vi.mocked(VenueSpaceEntity.patch).mockReturnValue(patch as never);
+    }
+
+    it('cascades the new name on a real rename', async () => {
+      arrange();
+      await updateSpace({ venueId: 'v1', spaceId: 's1', name: 'New' });
+      expect(cascadeSpaceNameUpdate).toHaveBeenCalledWith('v1', 's1', 'New');
+    });
+
+    it('does not cascade when the name is the stored one or not sent', async () => {
+      arrange();
+      await updateSpace({ venueId: 'v1', spaceId: 's1', name: 'Old', capacity: 100 });
+      await updateSpace({ venueId: 'v1', spaceId: 's1', capacity: 200 });
+      expect(cascadeSpaceNameUpdate).not.toHaveBeenCalled();
+    });
+
+    it('saves the rename even when the cascade throws', async () => {
+      arrange();
+      vi.mocked(cascadeSpaceNameUpdate).mockRejectedValue(new Error('boom'));
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      await expect(
+        updateSpace({ venueId: 'v1', spaceId: 's1', name: 'New' })
+      ).resolves.toBeDefined();
+      expect(spy).toHaveBeenCalled();
+      spy.mockRestore();
+    });
   });
 
   it('refuses an unknown space', async () => {

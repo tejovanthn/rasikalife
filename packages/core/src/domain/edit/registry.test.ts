@@ -55,6 +55,7 @@ vi.mock('../event', () => ({
   mergeEvent: vi.fn(),
 }));
 vi.mock('../event/schema', () => ({ UpdateEventSchema: 'event-schema' }));
+vi.mock('../event/entity', () => ({ EventEntity: { patch: vi.fn() } }));
 
 vi.mock('../festival', () => ({
   getFestival: vi.fn(),
@@ -63,7 +64,7 @@ vi.mock('../festival', () => ({
 }));
 vi.mock('../festival/schema', () => ({ UpdateFestivalSchema: 'festival-schema' }));
 
-import { getHandler } from './registry';
+import { getHandler, splitEventClears } from './registry';
 
 describe('getHandler', () => {
   beforeEach(() => {
@@ -118,5 +119,43 @@ describe('getHandler', () => {
     await expect(getHandler('unknown-type')).rejects.toThrow(
       'No handler registered for entity type: unknown-type'
     );
+  });
+});
+
+describe('splitEventClears', () => {
+  it('splits clearFields off and keeps only clearable names', () => {
+    expect(
+      splitEventClears({ title: 'T', clearFields: ['spaceId', 'title', 'venueCity'] })
+    ).toEqual({ values: { title: 'T' }, clear: ['spaceId', 'venueCity'] });
+  });
+
+  it('returns no clears when the field is absent or malformed', () => {
+    expect(splitEventClears({ title: 'T' }).clear).toEqual([]);
+    expect(splitEventClears({ clearFields: 'spaceId' }).clear).toEqual([]);
+    expect(splitEventClears(null)).toEqual({ values: {}, clear: [] });
+  });
+});
+
+describe('event handler updateEntity', () => {
+  it('applies the values through updateApprovedEvent and removes the cleared fields', async () => {
+    const { updateApprovedEvent } = await import('../event');
+    const { EventEntity } = await import('../event/entity');
+    const remove = vi.fn().mockReturnThis();
+    const go = vi.fn().mockResolvedValue({ data: { id: 'e1', title: 'T' } });
+    vi.mocked(EventEntity.patch).mockReturnValue({ remove, go } as never);
+    vi.mocked(updateApprovedEvent).mockResolvedValue({ id: 'e1' } as never);
+
+    const handler = await getHandler('event');
+    await handler.updateEntity('e1', {
+      title: 'T',
+      artists: [{ name: 'A' }],
+      clearFields: ['spaceId', 'spaceName'],
+    });
+
+    expect(updateApprovedEvent).toHaveBeenCalledWith('e1', {
+      title: 'T',
+      artists: [{ name: 'A' }],
+    });
+    expect(remove).toHaveBeenCalledWith(['spaceId', 'spaceName']);
   });
 });

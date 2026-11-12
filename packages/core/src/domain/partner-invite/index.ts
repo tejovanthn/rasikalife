@@ -116,9 +116,8 @@ export async function revokePartnerInvite(
  *   `owner` and none is set yet, then the invite is marked accepted. Every step is safe to
  *   repeat, so a crash part-way is healed by the next sign-in.
  *
- * TODO(spec): the Spec says `verifiedAt` also goes "on each venue it manages" when an organiser
- * owner accepts. Nothing in the data model says which venues an organiser manages
- * (`Organiser.venueId` is one optional home venue), so only the invited target is verified.
+ * Only the invited target is verified (owner decision 12). `Organiser.venueId` is the usual hall,
+ * often rented, so it proves no ownership of that venue.
  */
 export async function acceptPartnerInvite(
   invite: PartnerInvite,

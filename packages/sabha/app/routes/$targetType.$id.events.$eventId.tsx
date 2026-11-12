@@ -54,8 +54,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (!read.ok) return data({ error: FORM_ERRORS[read.error] }, { status: 400 });
   const trpc = await createServerClient(request);
   try {
-    await trpc.partner.updateEvent.mutate({ ...input, ...read.values });
-    return redirect(`${dashboardPath(input.targetType, input.targetId, 'events')}?done=saved`);
+    const result = await trpc.partner.updateEvent.mutate({ ...input, ...read.values });
+    const done = result.sentToReview ? 'review' : 'saved';
+    return redirect(`${dashboardPath(input.targetType, input.targetId, 'events')}?done=${done}`);
   } catch (error) {
     return data({ error: errorMessage(error) }, { status: 400 });
   }

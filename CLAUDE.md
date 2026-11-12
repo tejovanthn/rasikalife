@@ -2194,8 +2194,9 @@ follower export. Copy is in `packages/sabha/app/lib/copy.ts` (`SABHA_COPY` verba
   moderators set it (`partner.setEventReview`, on the admin partners page). With it on, an
   owner's new events wait for a moderator. `mayAutoApprove` reads it, so the scan page's "Add a
   concert" follows the same rule.
-- "`verifiedAt` on each venue an organiser manages": the model has no such link. Left as
-  `TODO(spec)` in `acceptPartnerInvite`. Only the invited target is verified.
+- **Only the invited target is verified** (owner decision 12, 2026-11-12). `Organiser.venueId` is
+  the usual hall, often rented, and proves no ownership. A sabha that owns its hall gets a second
+  invite for the venue. The Spec's "and on each venue it manages" is dropped.
 
 **Access** (`packages/trpc/src/partner-access.ts`, `trpc.ts`). `checkPartnerAccess` is one pure
 function, tested as a matrix (owner, viewer, non-member, moderator, admin, signed out). Three
@@ -2210,7 +2211,9 @@ procedures wrap it, and each reads `targetType` and `targetId` from the call's i
 
 `PARTNER_FORBIDDEN` is the error code, on a FORBIDDEN error (the formatter copies it from the
 `cause`). `partner.exportFollowers` and `partner.updateProfile` use the strict variant: followers
-consented to share with the sabha, not with staff, and "verified owners edit". `qr.statsByVenue`
+consented to share with the sabha, not with staff, and "verified owners edit". This refusal is deliberate (owner decision 11, 2026-11-12): consent named the sabha, so
+moderators get no export and no profile edit here. They edit through the existing admin and Edit
+paths, and a sabha that wants help invites a moderator as a viewer. `qr.statsByVenue`
 and `space.*` take a `venueId` and not a target pair, so they call `requireVenueAccess`
 (`partner-guard.ts`): `space.list` and `statsByVenue` admit any member, `space.create` and
 `space.update` an owner. A member of an organiser has no right to a venue's halls.
@@ -2265,9 +2268,22 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   approved events from the last 30 days on, newest publish first). Otherwise it is `submitted`
   for the normal queue. A billed artist is linked only when one with that exact name exists; an
   artist is never created here. An event is edited only through its own organiser (a foreign id is
-  `EVENT_NOT_FOUND`). `TODO(spec)`: an edit to an approved event is not sent back to review when
-  the switch is on. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
+  `EVENT_NOT_FOUND`). **Edits while review is on** (owner decision 13,
+  2026-11-12): when the organiser has `requireEventReview` and the event is already approved,
+  `updateOwnerEvent` writes nothing to the live event. It returns `{ event, sentToReview: true }`
+  after creating and submitting an `Edit` (`edit/service.ts`, the wiki path). An earlier edit of
+  that owner still waiting is withdrawn first. The edit cannot express a cleared field (`updateEvent`
+  drops nulls, rule 8), so a cleared space or city travels as `clearFields` in `proposedValues`, and
+  the event handler in `edit/registry.ts` (`splitEventClears`, only `spaceId`, `spaceName`,
+  `venueCity`) removes them with `.remove()` after `updateApprovedEvent`, which also applies the
+  merged cast. The sabha form redirects with `?done=review`, which shows `eventsSubmitted`. Switch
+  off, or event not yet approved: edits stay instant. Before an auto publish, `findLikelyDuplicatesOfEvent` runs (also in
   `submitFromQr`); a likely duplicate stays `submitted` for the moderator queue.
+- **Hall renames** (owner decision 14, 2026-11-12). `updateSpace` (used by `space.update`) calls
+  `cascadeSpaceNameUpdate` (`cascade.ts`) only when the name really changed. Events in that space
+  whose start is still in the future take the new `spaceName`; past events keep the name the hall
+  had then. Starts are compared as instants. It reads `byVenue` (no space in the key) and writes
+  with `Event` patch (rule 7). A failure is logged and does not undo the rename.
 - **Overview numbers** (`core/src/domain/sabha/rules.ts`, pure, tested). Months and days are IST
   (`istMonth`). Followers: total, new this month, sharing now, stopped sharing this month. The
   30 day trend is read from the follows that exist, so it is a view of today's followers and an

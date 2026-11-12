@@ -1,5 +1,6 @@
 import { ApplicationError, ErrorCode } from '../../constants';
 import { generateId } from '../../utils';
+import { cascadeSpaceNameUpdate } from '../cascade';
 import { resolveFollowTarget } from '../follow/target';
 import { VenueSpaceEntity } from './entity';
 import type { VenueSpace } from './entity';
@@ -62,6 +63,16 @@ export async function updateSpace(input: UpdateSpaceInput): Promise<VenueSpace> 
   })
     .set(changes)
     .go({ response: 'all_new' });
+
+  // Only a real rename cascades: the form sends the name on every save. Events that have not
+  // started take the new hall name. A failure is logged, never thrown: the rename is saved.
+  if (changes.name !== undefined && changes.name !== existing.name) {
+    try {
+      await cascadeSpaceNameUpdate(input.venueId, input.spaceId, changes.name);
+    } catch (error) {
+      console.error(`[updateSpace] name cascade failed for space ${input.spaceId}`, error);
+    }
+  }
   return result.data as VenueSpace;
 }
 
