@@ -50,3 +50,17 @@ and win where those tabs disagree.
    number shows only on the user detail page, to admins, and each view writes an audit row.
 10. **Follower counts and the page cache**: follows do not purge `/*`. Purge only the followed
     entity's page paths, debounced to at most once per 30 minutes per target.
+
+## Owner decisions on the open items (2026-11-12)
+
+11. **Moderators and sabha data**: export and profile edit stay refused to moderators. Consent named
+    the sabha. Moderators edit through the existing admin and Edit paths; a sabha that wants help
+    invites a moderator as a viewer.
+12. **Venues an organiser manages**: verify only the invited target. `Organiser.venueId` is the usual
+    hall, often rented, and proves no ownership. A sabha that owns its hall gets a second invite for
+    the venue. The Spec drops "and on each venue it manages".
+13. **Edits to approved events while the review switch is on**: go to review. The edit goes through
+    the existing Edit workflow as a submitted draft; the live event is unchanged until a moderator
+    approves. With the switch off, edits stay instant.
+14. **Hall renames**: cascade the new `spaceName` to events that have not started yet. Past events
+    keep the name the hall had at the time.
