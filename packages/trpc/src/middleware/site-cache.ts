@@ -25,8 +25,9 @@ const PRIVATE_ROUTERS = new Set([
  * Single procedures, inside a router that is otherwise public, that change no page we clear
  * for. `follow.toggle` and `follow.bulkSet` move `followerCount`, which cached venue, organiser
  * and artist pages show. They are here on purpose: a concert with hundreds of QR follows would
- * purge the whole CDN hundreds of times. The cost is that the public count can lag until the
- * next clear (at most a week). `follow.setShare` changes only the follower's own flag.
+ * purge the whole CDN hundreds of times. They purge the followed page's own paths instead
+ * (`Follow.purgeFollowedPages`, debounced to once per 30 minutes per target), so the public count
+ * can lag by up to that long. `follow.setShare` changes only the follower's own flag.
  * `partner` is not
  * private either: `updateProfile`, `createEvent`, `updateEvent` and `setEventReview` change
  * public pages, and the Verified badge is stored data that those pages read.

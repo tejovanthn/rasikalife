@@ -1894,10 +1894,18 @@ admin yet.
   `mine` and `setShare` return only `targetType`, `targetId`, `targetName`, `shareWithTarget`,
   `createdAt`.
 - **Cache.** `follow.toggle`, `follow.bulkSet` and `follow.setShare` are in `PRIVATE_PATHS`
-  (`middleware/site-cache.ts`) and do not clear the site cache. A concert with hundreds of QR
-  follows would otherwise purge the whole CDN hundreds of times. The trade: the public
-  `followerCount` on a cached venue, organiser or artist page can lag until the next clear (at
-  most a week). If that matters, show the count from a client fetch instead of the cached page.
+  (`middleware/site-cache.ts`), so a follow never purges `/*`: a concert with hundreds of QR
+  follows would purge the whole CDN hundreds of times. `toggle` and `bulkSet` instead call
+  `Follow.purgeFollowedPages` (`domain/follow/purge.ts`), which resolves the target through a
+  merge and purges only that entity's page paths with `invalidateSitePaths`
+  (`core/src/site-cache.ts`, never throws): `/venues|organisers|artists/<slug>-<id>*` and
+  `/<segment>/<id>*`. The trailing `*` covers the `.data` request and query strings. CloudFront
+  allows a wildcard only at the end, so an older slug from before a rename is not reached; the
+  route redirects it and the week-long TTL covers the rest. It is debounced to once per 30
+  minutes per target by `claimPurgeWindow`: a conditional update on a marker item
+  (`pk PURGE#<type>#<id>`, `sk MARKER`, `lastPurgedAt`), so it holds across Lambdas. If the
+  marker cannot be written, no purge happens. The public `followerCount` can lag by up to 30
+  minutes. `bulkSet` purges only targets whose outcome was `followed` or `unfollowed`.
 - **Button** `components/FollowButton.tsx`, placed through the new `actions` prop of
   `DetailPageHeader`. Signed in: a form posting to `/api/follow` (`routes/api.follow.tsx`). A
   browser form post (Accept has `text/html`) gets a redirect back; a fetcher gets data. The state

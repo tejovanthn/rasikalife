@@ -54,9 +54,10 @@ export function toMyFollow(row: Follow.Follow) {
  * (the web app turns `?follow=1` into a call here on return).
  *
  * Cache: `toggle`, `bulkSet` and `setShare` are listed in `PRIVATE_PATHS`
- * (`middleware/site-cache.ts`) and never clear the site cache, so a burst of QR follows cannot
- * purge the CDN once per follower. The public `followerCount` on a cached page can lag until the
- * next clear (at most a week).
+ * (`middleware/site-cache.ts`), so they never purge `/*`. `toggle` and `bulkSet` purge only the
+ * followed entity's own page paths through `Follow.purgeFollowedPages`, at most once per 30
+ * minutes per target (a marker item with a conditional update). The public `followerCount` can
+ * lag by up to that long.
  */
 export const followRouter = createTRPCRouter({
   bulkSet: protectedProcedure
@@ -73,7 +74,14 @@ export const followRouter = createTRPCRouter({
       if (!allowed) {
         throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Too many follow requests' });
       }
-      return mapErrors(() => Follow.bulkSetFollows(ctx.user.id, input));
+      const result = await mapErrors(() => Follow.bulkSetFollows(ctx.user.id, input));
+      // Purge only the pages whose follower count moved (debounced per target; never `/*`).
+      await Follow.purgeFollowedPages(
+        result.results
+          .filter(r => r.outcome === 'followed' || r.outcome === 'unfollowed')
+          .map(r => ({ type: r.type, id: r.id }))
+      );
+      return result;
     }),
 
   toggle: protectedProcedure.input(ToggleFollowSchema).mutation(({ input, ctx }) =>
@@ -81,6 +89,7 @@ export const followRouter = createTRPCRouter({
       const existing = await Follow.getFollow(ctx.user.id, input.type, input.id);
       if (existing) {
         await Follow.unfollowTarget(ctx.user.id, input.type, input.id);
+        await Follow.purgeFollowedPages([{ type: input.type, id: input.id }]);
         return { following: false };
       }
       await Follow.followTarget({
@@ -88,6 +97,7 @@ export const followRouter = createTRPCRouter({
         targetType: input.type,
         targetId: input.id,
       });
+      await Follow.purgeFollowedPages([{ type: input.type, id: input.id }]);
       return { following: true };
     })
   ),

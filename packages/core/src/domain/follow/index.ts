@@ -17,6 +17,7 @@ import { resolveFollowTarget } from './target';
 export type { Follow } from './entity';
 export * from './schema';
 export { resolveFollowTarget } from './target';
+export * from './purge';
 
 type TransactItem = NonNullable<TransactWriteCommandInput['TransactItems']>[number];
 type CancelReason = { Code?: string };

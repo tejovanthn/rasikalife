@@ -66,3 +66,33 @@ export async function invalidateSiteCache(reason: string): Promise<void> {
     console.error(`[site-cache] Failed to clear (${reason})`, error);
   }
 }
+
+/**
+ * Clears only the given paths (CloudFront wildcards allowed at the end of a path, like
+ * `/venues/hall-123*`). For a write that changes one page and nothing else, where `/*` would be
+ * far too much. Never throws, like `invalidateSiteCache`; the week-long TTL is the backstop.
+ */
+export async function invalidateSitePaths(paths: string[], reason: string): Promise<void> {
+  if (paths.length === 0) return;
+  try {
+    distributionId ??= loadDistributionId();
+    const id = await distributionId;
+    if (!id) {
+      console.warn(`[site-cache] No distribution id; not clearing paths (${reason})`);
+      return;
+    }
+    await cloudfront.send(
+      new CreateInvalidationCommand({
+        DistributionId: id,
+        InvalidationBatch: {
+          CallerReference: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          Paths: { Quantity: paths.length, Items: paths },
+        },
+      })
+    );
+    console.log(`[site-cache] Cleared ${paths.join(', ')} (${reason})`);
+  } catch (error) {
+    distributionId = undefined;
+    console.error(`[site-cache] Failed to clear paths (${reason})`, error);
+  }
+}
