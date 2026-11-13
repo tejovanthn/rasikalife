@@ -731,6 +731,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@rasika/core':
+        specifier: workspace:*
+        version: link:../core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -744,9 +747,15 @@ importers:
       '@types/react':
         specifier: ^18.3.28
         version: 18.3.28
+      '@types/react-dom':
+        specifier: ^18.3.7
+        version: 18.3.7(@types/react@18.3.28)
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
       tailwindcss:
         specifier: ^3.4.19
         version: 3.4.19(tsx@4.21.0)
@@ -801,6 +810,9 @@ importers:
       '@rasika/trpc':
         specifier: workspace:*
         version: link:../trpc
+      '@rasika/ui':
+        specifier: workspace:*
+        version: link:../ui
       '@react-router/fs-routes':
         specifier: ^7.13.1
         version: 7.13.1(@react-router/dev@7.13.1(@react-router/serve@7.13.1(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3))(@types/node@20.19.35)(react-router@7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(supports-color@7.2.0)(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.35)))(typescript@5.9.3)

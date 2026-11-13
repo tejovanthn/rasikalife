@@ -8,10 +8,10 @@ import {
   dashboardPath,
   dashboardTabs,
   eventFormDateTime,
-  formatEventWhen,
   inviteOutcome,
   isOwner,
   isTargetType,
+  mainSiteUrl,
   profileFields,
   readEventForm,
   readSpaceForm,
@@ -143,11 +143,9 @@ describe('trendPolyline', () => {
 });
 
 describe('event times', () => {
-  it('reads the time in the event zone, not the runtime zone', () => {
-    expect(formatEventWhen('2026-11-16T12:30:00.000Z', 'Asia/Kolkata')).toBe('Mon 16 Nov, 6:00 pm');
-    expect(formatEventWhen('2026-11-16T12:30:00.000Z', 'America/Los_Angeles')).toBe(
-      'Mon 16 Nov, 4:30 am'
-    );
+  it('builds the main site origin without a trailing slash', () => {
+    expect(mainSiteUrl({})).toBe('https://rasika.life');
+    expect(mainSiteUrl({ SITE_URL: 'https://dev.rasika.life/' })).toBe('https://dev.rasika.life');
   });
 
   it('gives the form its date and time in the event zone', () => {

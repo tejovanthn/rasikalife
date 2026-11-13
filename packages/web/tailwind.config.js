@@ -6,6 +6,8 @@ module.exports = {
     './components/**/*.{ts,tsx}',
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
+    // The shared event row and its helpers live in packages/ui.
+    '../ui/src/**/*.{ts,tsx}',
   ],
   prefix: '',
   theme: {

@@ -34,6 +34,8 @@ export const sabhaSite = new sst.aws.React('RasikaSabha', {
     STAGE: $app.stage,
     VITE_STAGE: $app.stage,
     SESSION_COOKIE_DOMAIN: getCookieDomain(),
+    // Each event row links to its public page on the main site.
+    SITE_URL: `https://${getDomain().name}`,
   },
   server: {
     timeout: '30 seconds',
