@@ -45,6 +45,12 @@ describe('the Team tab', () => {
   });
 });
 
+describe('the sabha request form', () => {
+  it('changes no public page, so a request clears nothing', () => {
+    expect(changesPublicPage('mutation', 'sabhaRequest.submit', true)).toBe(false);
+  });
+});
+
 describe('clearSiteCacheAfterMutation', () => {
   beforeEach(() => vi.mocked(invalidateSiteCache).mockClear());
 

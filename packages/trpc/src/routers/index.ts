@@ -19,6 +19,7 @@ import { partnerRouter } from './partner';
 import { qrRouter } from './qr';
 import { ragaRouter } from './raga';
 import { rsvpRouter } from './rsvp';
+import { sabhaRequestRouter } from './sabha-request';
 import { searchRouter } from './search';
 import { setlistModerationRouter } from './setlist-moderation';
 import { shortLinkRouter } from './short-link';
@@ -49,6 +50,7 @@ export const appRouter = createTRPCRouter({
   qr: qrRouter,
   raga: ragaRouter,
   rsvp: rsvpRouter,
+  sabhaRequest: sabhaRequestRouter,
   shortLink: shortLinkRouter,
   source: sourceRouter,
   space: spaceRouter,

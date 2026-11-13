@@ -1,5 +1,6 @@
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import { FOR_SABHAS_COPY } from '~/lib/for-sabhas';
 
 const NavLink = ({
   href,
@@ -101,6 +102,7 @@ export const Footer = () => {
     { href: '/community', label: 'Community' },
     { href: '/donate', label: 'Donate' },
     { href: '/classes', label: 'Rasika Classes (for teachers)' },
+    { href: '/for-sabhas', label: FOR_SABHAS_COPY.footerLink },
   ];
 
   return (

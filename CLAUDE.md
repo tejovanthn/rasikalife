@@ -2570,3 +2570,35 @@ Fixes from the review after all eight phases.
   `/admin/users/:userid`. Each call writes an audit row first, in the existing `ChangeHistory`
   store (`entityType: 'user'`, `action: 'view'`, the admin as `userId`), and a failed audit write
   means nothing is served. All in `core/src/domain/user/admin-view.ts`.
+
+### Venue QR Follow: `/for-sabhas`
+
+A public page where a sabha secretary asks for free QR codes. Route `routes/for-sabhas.tsx`.
+
+- **Indexable.** Real title and description, canonical to itself, listed in
+  `sitemap-static.xml` (`STATIC_SITEMAP_PAGES` in `lib/sitemap-static.ts`). No JSON-LD: the page
+  claims nothing about a real organisation. A commented slot holds the future pilot photo and scan
+  count; leave it empty until both are real.
+- **Strings.** `FOR_SABHAS_COPY` (`lib/for-sabhas.ts`) holds all of them. The headline, three
+  points, five labels and the thank-you line are the owner's. The rest is plain wording marked
+  "Not in the Copy tab yet (owner request 2026-11-13)". The file has no imports, so the footer
+  and organiser pages can use it at no cost. Form reading is in `lib/for-sabhas-form.ts`.
+- **The form posts to its own action and works without JavaScript.** `parseSabhaRequestForm`
+  tolerates `+91`, spaces and a leading 0, then holds the number to `WhatsappNumberSchema`
+  (`core/src/domain/user/schema.ts`, shared with the reader's own WhatsApp number). Role and dates
+  are optional free text with limits in `SABHA_REQUEST_LIMITS` (`core/src/shared/sabha-request.ts`).
+- **`sabhaRequest.submit` (public tRPC) sends one email and stores nothing.** It goes from
+  `noreply@mail.rasika.life` as "Rasika.life" to `SABHA_REQUEST_TO` (set in `infra/trpc.ts`,
+  default `hello@rasika.life`). A filled honeypot field (`website`) answers `sent` and sends
+  nothing. `hitRateLimit` allows 5 a hour per client IP (`clientIpFromHeaders`, as the scan page).
+  The result is a status (`sent`, `rate-limited`, `failed`), never a thrown error, so the visitor
+  always sees a plain message. The path is in `PRIVATE_PATHS`: it changes no public page.
+- **Caching.** Signed out, the page is the shared document cached for a week. Signed in,
+  `rasika_session` is in the cache key and the response is `private`, so the "Go to your
+  dashboard" link (shown when `partner.mine` is not empty) never reaches another reader. The page
+  never redirects. The form's responses are `private, no-store`.
+- **Links.** "Already invited? Sign in" goes to `sabha.<domain>` (`sabhaOrigin`, built from the
+  request host like `adminOrigin`). The footer's Community list and each organiser page carry a
+  muted "For sabhas" link. The sabha app's "no access" screen (where an uninvited signed-in
+  visitor lands) links back here. The app has no signed-out screen of its own: `requireUser`
+  sends a visitor straight to Google.

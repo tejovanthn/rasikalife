@@ -59,6 +59,8 @@ const trpc = new sst.aws.Function('RasikaTRPC', {
     // The partner invite email's link: sabha.rasika.life in prod, sabha.<stage>.rasika.life
     // otherwise.
     SABHA_URL: `https://${getDomain('sabha').name}`,
+    // Where `/for-sabhas` requests are emailed (packages/trpc/src/sabha-request-email.ts).
+    SABHA_REQUEST_TO: 'hello@rasika.life',
   },
 });
 

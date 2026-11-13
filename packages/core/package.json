@@ -361,6 +361,11 @@
       "import": "./src/shared/rate-limit.ts",
       "default": "./src/shared/rate-limit.ts"
     },
+    "./shared/sabha-request": {
+      "types": "./src/shared/sabha-request.ts",
+      "import": "./src/shared/sabha-request.ts",
+      "default": "./src/shared/sabha-request.ts"
+    },
     "./shared/timezone": {
       "types": "./src/shared/timezone.ts",
       "import": "./src/shared/timezone.ts",

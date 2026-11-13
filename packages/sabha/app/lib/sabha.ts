@@ -154,6 +154,11 @@ export function mainSiteUrl(env: { SITE_URL?: string } = process.env): string {
   return (env.SITE_URL || 'https://rasika.life').replace(/\/$/, '');
 }
 
+/** The public page where an uninvited sabha asks for QR codes. */
+export function forSabhasUrl(env: { SITE_URL?: string } = process.env): string {
+  return `${mainSiteUrl(env)}/for-sabhas`;
+}
+
 /** The two values of the form's Date and Start time inputs, read in the event's own zone. */
 export function eventFormDateTime(iso: string, timezone: string): { date: string; time: string } {
   const [date = '', time = ''] = zonedDateTimeInputValue(iso, timezone).split('T');

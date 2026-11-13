@@ -7,7 +7,13 @@ import type { z } from 'zod';
 import type { CreateUserSchema, UpdateUserSchema } from './schema';
 
 // Re-export schemas (Zod is browser-safe)
-export { CreateUserSchema, NotifyPrefsSchema, SetWhatsappSchema, UpdateUserSchema } from './schema';
+export {
+  CreateUserSchema,
+  NotifyPrefsSchema,
+  SetWhatsappSchema,
+  UpdateUserSchema,
+  WhatsappNumberSchema,
+} from './schema';
 
 // Export input types derived from schemas
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;

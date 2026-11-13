@@ -71,6 +71,8 @@ export const SABHA_EXTRA_COPY = {
   forbiddenBody: "You don't have access to this sabha or venue.",
   home: 'Back to your dashboards',
   chooseHeading: 'Pick one to open',
+  // Not in the Copy tab yet (owner request 2026-11-13)
+  notInvited: 'Not invited yet? Ask for free QR codes for your sabha.',
   typeLabel: { organiser: 'Organiser', venue: 'Venue' },
   roleLabel: { owner: 'Owner', viewer: 'Viewer', moderator: 'Moderator' },
   // Invite page
