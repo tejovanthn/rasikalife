@@ -10,6 +10,7 @@ import {
   dashboardPath,
   dashboardTabs,
   eventFormDateTime,
+  forSabhasUrl,
   expiryLabel,
   inviteOutcome,
   isOwner,
@@ -153,6 +154,13 @@ describe('event times', () => {
   it('builds the main site origin without a trailing slash', () => {
     expect(mainSiteUrl({})).toBe('https://rasika.life');
     expect(mainSiteUrl({ SITE_URL: 'https://dev.rasika.life/' })).toBe('https://dev.rasika.life');
+  });
+
+  it('points uninvited visitors at the request page on the main site', () => {
+    expect(forSabhasUrl({})).toBe('https://rasika.life/for-sabhas');
+    expect(forSabhasUrl({ SITE_URL: 'https://dev.rasika.life/' })).toBe(
+      'https://dev.rasika.life/for-sabhas'
+    );
   });
 
   it('gives the form its date and time in the event zone', () => {

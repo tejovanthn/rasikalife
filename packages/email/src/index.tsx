@@ -2,6 +2,7 @@ import type { ClassLearnerAccess } from '@rasika/core';
 import { render } from '@react-email/render';
 import EventApprovedEmail from '../emails/event-approved';
 import PartnerInviteEmail from '../emails/partner-invite';
+import SabhaRequestEmail from '../emails/sabha-request';
 import StudentAddedEmail from '../emails/student-added';
 
 export interface EmailContent {
@@ -110,5 +111,23 @@ export async function partnerInviteEmail(input: PartnerInviteEmailInput): Promis
         siteUrl={input.siteUrl.replace(/\/+$/, '')}
       />
     )),
+  };
+}
+
+export interface SabhaRequestEmailInput {
+  venueName: string;
+  contactName: string;
+  role?: string;
+  whatsapp: string;
+  concertDates?: string;
+  siteUrl: string;
+}
+
+/** A sabha's request for QR codes, from `/for-sabhas`. Goes to the team, not to the visitor. */
+export async function sabhaRequestEmail(input: SabhaRequestEmailInput): Promise<EmailContent> {
+  const siteUrl = input.siteUrl.replace(/\/+$/, '');
+  return {
+    subject: `QR request: ${input.venueName}`,
+    ...(await renderBoth(<SabhaRequestEmail {...input} siteUrl={siteUrl} />)),
   };
 }

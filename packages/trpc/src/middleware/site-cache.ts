@@ -45,6 +45,8 @@ const PRIVATE_PATHS = new Set([
   'partner.withdrawInvite',
   'partner.exportFollowers',
   'partner.acceptInvite',
+  // A request for QR codes becomes one email to the team and changes no page.
+  'sabhaRequest.submit',
 ]);
 
 /** Whether a finished call may have changed a public page, so the CDN copy must go. */

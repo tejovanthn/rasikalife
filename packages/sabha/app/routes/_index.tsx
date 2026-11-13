@@ -6,7 +6,7 @@ import { createServerClient } from '~/lib/api.server';
 import { requireUser } from '~/lib/auth.server';
 import { SABHA_COPY, SABHA_EXTRA_COPY } from '~/lib/copy';
 import { pageMeta } from '~/lib/meta';
-import { dashboardPath, isTargetType } from '~/lib/sabha';
+import { dashboardPath, forSabhasUrl, isTargetType } from '~/lib/sabha';
 
 export const meta = () => pageMeta();
 
@@ -28,16 +28,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (mine.length === 1 && first && isTargetType(first.targetType)) {
     throw redirect(dashboardPath(first.targetType, first.targetId));
   }
-  return { mine };
+  return { mine, requestUrl: forSabhasUrl() };
 }
 
 export default function Home() {
-  const { mine } = useLoaderData<typeof loader>();
+  const { mine, requestUrl } = useLoaderData<typeof loader>();
 
   if (mine.length === 0) {
     return (
       <Shell>
         <EmptyState title={SABHA_COPY.noAccess} />
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          <a href={requestUrl} className="inline-flex min-h-tap items-center underline">
+            {SABHA_EXTRA_COPY.notInvited}
+          </a>
+        </p>
       </Shell>
     );
   }

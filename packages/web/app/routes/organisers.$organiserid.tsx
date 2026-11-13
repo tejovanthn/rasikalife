@@ -17,6 +17,7 @@ import { affiliationPeriod } from '~/lib/affiliation-display';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
+import { FOR_SABHAS_COPY } from '~/lib/for-sabhas';
 import { eventListingDescription } from '~/lib/listing-description';
 import { safeHttpUrl } from '~/lib/safe-http-url';
 import {
@@ -248,6 +249,9 @@ export default function OrganiserDetailPage() {
                   followerCount={followerCount}
                 />
                 {isVerified(organiser) && <VerifiedBadge name={organiser.name} />}
+                <a href="/for-sabhas" className="text-xs text-muted-foreground underline">
+                  {FOR_SABHAS_COPY.footerLink}
+                </a>
               </div>
             }
             shareUrl={shareUrl}

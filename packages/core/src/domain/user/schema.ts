@@ -33,8 +33,10 @@ export const NotifyPrefsSchema = z.object({
 });
 
 /** Ten national digits, starting 6 to 9. Consent must be given, never implied. */
+export const WhatsappNumberSchema = z.string().regex(/^[6-9]\d{9}$/);
+
 export const SetWhatsappSchema = z.object({
-  number: z.string().regex(/^[6-9]\d{9}$/),
+  number: WhatsappNumberSchema,
   consent: z.literal(true),
 });
 
