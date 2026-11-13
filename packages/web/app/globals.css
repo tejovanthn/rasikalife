@@ -111,6 +111,12 @@
     @apply border-border;
   }
 
+  /* The root carries the background too. Some mobile browsers (Chrome on iOS was seen) painted
+     the area below a short page in their own grey instead of the body colour. */
+  html {
+    @apply bg-background;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: "Noto Sans", ui-sans-serif, system-ui, sans-serif;

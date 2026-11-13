@@ -163,7 +163,7 @@ function Layout({ children, theme }: { children: React.ReactNode; theme: string 
         <GlobalLoader />
         {/* The scan pages (/q/...) are one phone screen with no site chrome. */}
         {!bare && <Header />}
-        <div className={bare ? undefined : '-mt-4 md:mt-0'} id="main-content">
+        <div className={bare ? 'min-h-dvh' : '-mt-4 md:mt-0'} id="main-content">
           {children}
         </div>
         {!bare && <Footer />}
