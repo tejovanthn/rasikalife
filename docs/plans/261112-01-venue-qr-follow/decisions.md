@@ -104,3 +104,12 @@ and win where those tabs disagree.
     became a sabha owner, and the first owner turned on the public Verified badge, without seeing
     anything. Now `/invite` lists each pending invite (target, type, role, inviter) with its own
     "Accept invite" button. There is no "Decline" in v1: an unwanted invite expires after 14 days.
+
+## Owner decision on the Team tab (2026-11-13)
+
+21. **Owners invite viewers from a Team tab; only moderators create owners.** The first owner of a
+    target sets the public Verified badge, so an owner invite stays a moderator action. An owner
+    can invite a viewer by email (same 14 day expiry and email as a moderator's invite), withdraw
+    an unaccepted viewer invite, and revoke a viewer. An owner cannot revoke an owner or
+    themselves, and a viewer sees the tab read-only. A moderator does not use the tab; they use
+    the admin app. The header shows "Invites (n)" to anyone with a pending invite of their own.

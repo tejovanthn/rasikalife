@@ -2337,7 +2337,7 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   `verifiedAt`.
 - **Cache.** `partner` is not a private router: `updateProfile`, `createEvent`, `updateEvent` and
   `setEventReview` change public pages and clear the cache. `partner.invite`, `revoke`,
-  `exportFollowers` and `acceptInvite` are in `PRIVATE_PATHS` (`acceptInvite` clears it itself,
+  `inviteViewer`, `revokeViewer`, `withdrawInvite`, `exportFollowers` and `acceptInvite` are in `PRIVATE_PATHS` (`acceptInvite` clears it itself,
   only when it set `verifiedAt`).
 - **Profile** (`core/src/domain/sabha/profile.ts`). Verified owners only (`PARTNER_FORBIDDEN`
   when the target has no `verifiedAt`). The input is checked against
@@ -2407,10 +2407,39 @@ through `RasikaTRPC`. Routes: `/` resolves (no dashboard shows "No access", one 
 it, several list), `/switch` (the header "Managing" select posts here), `/invite`,
 `/:targetType/:id` (layout: one `partner.overview` call is also the access check, 403 or 404 on
 failure) with `/profile`, `/events` (`/new`, `/:eventId`), `/spaces` (venue only), `/codes`,
-`/followers` and `/export`. Tabs and what a person may change come from `lib/sabha.ts`. An
+`/followers`, `/export` and `/team`. Tabs and what a person may change come from `lib/sabha.ts`. An
 organiser has no Spaces tab. A viewer and a moderator see every screen read-only; Export shows
 "Only owners can download followers." to anyone but an owner. The export button is a form
 posted with `reloadDocument`, so the browser follows the redirect to the file.
+
+**Team tab and invites link** (owner request 2026-11-13, decision 21). The Spec says owners can
+invite viewers, and until now only moderators could invite.
+
+- **Header "Invites (n)"** (`components/shell.tsx`). The root loader reads `partner.pendingInvites`
+  once per document and again after any action, and the header reads it with
+  `useRouteLoaderData('root')`. The link shows only at one or more and goes to `/invite`. A
+  signed-out visitor or any failure gives 0, so the link hides and the page still renders.
+- **`/:targetType/:id/team`** is a tab for everyone. Members and invites waiting (unaccepted,
+  unexpired, with the expiry date in IST). An owner also sees the invite form (Email, Send invite)
+  and Revoke and Withdraw buttons. A viewer or a moderator reads it with a note. `lib/sabha.ts`
+  decides which buttons show (`canRevokeMember`, `canWithdrawInvite`); the server decides again.
+- **Procedures** (`partner` router, all three in `PRIVATE_PATHS`): `teamForTarget`
+  (`partnerProcedure`), `inviteViewer`, `revokeViewer`, `withdrawInvite` (all
+  `partnerStrictOwnerProcedure`: an owner of this target, not a moderator, who uses the admin app).
+- **Core rules.** `inviteViewer` always writes a viewer invite, so an owner cannot create an owner.
+  It refuses to overwrite a pending owner invite for the same email (a `put` would downgrade it).
+  `revokeViewerMember` removes a viewer of this target only: never an owner, never the caller,
+  never a member of another target. `withdrawPartnerInvite` removes an unaccepted invite only, and
+  leaves an owner invite to a moderator. Same 14 day expiry and the same invite email as a
+  moderator's invite (`sendPartnerInviteEmail`, transactional identity).
+- **New index.** `PartnerInvite.byTarget` (gsi1, pk `targetType` + `targetId`, sk `email`, both
+  required, rule 9) lists a target's invites. Rows written before it have no gsi1 keys and do not
+  show until renewed. Nothing is deployed yet, so there are none in prod.
+- **Focus rings.** The sabha and admin apps showed the browser's blue box on a clicked link. Both
+  `globals.css` base layers now remove the outline on focus and draw a `ring` token ring on
+  `:focus-visible` for links, buttons, selects and inputs. The header links, tabs and buttons also
+  carry the same classes.
+- The Team strings are in `SABHA_EXTRA_COPY`, marked "Not in the Copy tab yet".
 
 Owner steps:
 

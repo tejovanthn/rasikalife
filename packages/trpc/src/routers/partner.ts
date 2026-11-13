@@ -128,14 +128,15 @@ function requireOrganiserTarget(targetType: string, targetId: string): string {
  *
  * Access: `invite`, `revoke`, `members`, `setEventReview` and `ownerPublishedEvents` are for
  * moderators. `mine`, `pendingInvites` and `acceptInvite` are for any signed-in user (they are about the caller's
- * own grants). Every other route names a `targetType` and `targetId` and goes through
+ * own grants). `teamForTarget` is for members; `inviteViewer`, `revokeViewer` and `withdrawInvite`
+ * are for a real owner (`partnerStrictOwnerProcedure`), and only ever touch viewers. Every other route names a `targetType` and `targetId` and goes through
  * `partnerProcedure` (member or moderator), `partnerOwnerProcedure` (owner or moderator) or
  * `partnerStrictOwnerProcedure` (owner only: the export and the profile edit).
  *
  * Cache: `partner` is a public router, so a mutation clears the page cache, and that is right
  * for `updateProfile`, `createEvent`, `updateEvent` and `setEventReview`, which change what a
- * public page shows. `invite`, `revoke`, `exportFollowers` and `acceptInvite` are in
- * `PRIVATE_PATHS`. `acceptInvite` clears it itself when it set `verifiedAt`, since that is
+ * public page shows. `invite`, `revoke`, `inviteViewer`, `revokeViewer`, `withdrawInvite`,
+ * `exportFollowers` and `acceptInvite` are in `PRIVATE_PATHS`. `acceptInvite` clears it itself when it set `verifiedAt`, since that is
  * what turns the Verified badge on.
  */
 export const partnerRouter = createTRPCRouter({
@@ -253,6 +254,85 @@ export const partnerRouter = createTRPCRouter({
       };
     })
   ),
+
+  /**
+   * The Team tab: members with names and emails, and the invites still waiting (unaccepted,
+   * unexpired). Any member may read it; only an owner may change it (below). A moderator reads
+   * it too, and changes people in the admin app.
+   */
+  teamForTarget: partnerProcedure.input(TargetSchema).query(({ ctx, input }) =>
+    mapPartnerErrors(async () => {
+      const [members, invites] = await Promise.all([
+        PartnerMember.listPartnerMembers(input.targetType, input.targetId),
+        PartnerInvite.listPendingInvitesForTarget(input.targetType, input.targetId),
+      ]);
+      const users = await Promise.all(members.map(member => User.getUser(member.userId)));
+      return {
+        role: ctx.partner.role,
+        selfUserId: ctx.user.id,
+        members: members.map((member, i) => ({
+          userId: member.userId,
+          name: users[i]?.name ?? null,
+          email: users[i]?.email ?? null,
+          role: member.role,
+        })),
+        invites: invites.map(invite => ({
+          email: invite.email,
+          role: invite.role,
+          expiresAt: invite.expiresAt,
+        })),
+      };
+    })
+  ),
+
+  /**
+   * An owner invites a viewer by email, with the same 14 day invite and email as a moderator's.
+   * Never an owner: owners are made by moderators, since the first one turns on the Verified
+   * badge. A moderator is not admitted here (strict owner); they use the admin app.
+   */
+  inviteViewer: partnerStrictOwnerProcedure
+    .input(TargetSchema.extend({ email: z.string().trim().email() }))
+    .mutation(({ ctx, input }) =>
+      mapPartnerErrors(async () => {
+        const invite = await PartnerInvite.inviteViewer({
+          targetType: input.targetType,
+          targetId: input.targetId,
+          email: input.email,
+          invitedBy: ctx.user.id,
+        });
+        const target = await Sabha.getPartnerTarget(input.targetType, input.targetId);
+        const emailSent = await sendPartnerInviteEmail({
+          to: invite.email,
+          inviterName: ctx.user.name,
+          targetName: target?.name ?? '',
+        });
+        return { email: invite.email, role: invite.role, expiresAt: invite.expiresAt, emailSent };
+      })
+    ),
+
+  /** An owner removes a viewer of this target. Not an owner, not themselves. */
+  revokeViewer: partnerStrictOwnerProcedure
+    .input(TargetSchema.extend({ userId: z.string().min(1) }))
+    .mutation(({ ctx, input }) =>
+      mapPartnerErrors(async () => ({
+        removed: await PartnerMember.revokeViewerMember(
+          ctx.user.id,
+          input.userId,
+          input.targetType,
+          input.targetId
+        ),
+      }))
+    ),
+
+  /** An owner withdraws a viewer invite that has not been accepted. */
+  withdrawInvite: partnerStrictOwnerProcedure
+    .input(TargetSchema.extend({ email: z.string().trim().email() }))
+    .mutation(({ input }) =>
+      mapPartnerErrors(async () => {
+        await PartnerInvite.withdrawPartnerInvite(input.email, input.targetType, input.targetId);
+        return { withdrawn: true };
+      })
+    ),
 
   overview: partnerProcedure.input(TargetSchema).query(({ ctx, input }) =>
     mapPartnerErrors(async () => ({

@@ -4,14 +4,18 @@ import {
   activeTab,
   buildProfileChanges,
   canEditProfile,
+  canRevokeMember,
+  canWithdrawInvite,
   codesBySpace,
   dashboardPath,
   dashboardTabs,
   eventFormDateTime,
+  expiryLabel,
   inviteOutcome,
   isOwner,
   isTargetType,
   mainSiteUrl,
+  pendingInviteCount,
   profileFields,
   readEventForm,
   readSpaceForm,
@@ -96,6 +100,7 @@ describe('tabs', () => {
       'QR codes',
       'Followers',
       'Export',
+      'Team',
     ]);
     expect(dashboardTabs('venue', 'v1').map(t => t.label)).toEqual([
       'Overview',
@@ -105,6 +110,7 @@ describe('tabs', () => {
       'QR codes',
       'Followers',
       'Export',
+      'Team',
     ]);
   });
 
@@ -115,6 +121,7 @@ describe('tabs', () => {
     expect(activeTab(tabs, '/organiser/o1/events')).toBe('events');
     expect(activeTab(tabs, '/organiser/o1/events/new')).toBe('events');
     expect(activeTab(tabs, '/organiser/o1/export')).toBe('export');
+    expect(activeTab(tabs, '/organiser/o1/team')).toBe('team');
   });
 
   it('encodes the id in a path', () => {
@@ -293,5 +300,44 @@ describe('codesBySpace', () => {
     ]);
     expect(grouped.get('s1')?.map(c => c.code)).toEqual(['A', 'D']);
     expect(grouped.get('')?.map(c => c.code)).toEqual(['B']);
+  });
+});
+
+describe('team', () => {
+  const viewer = { userId: 'v1', role: 'viewer' };
+  it('lets an owner revoke a viewer, never an owner or themselves', () => {
+    expect(canRevokeMember('owner', 'o1', viewer)).toBe(true);
+    expect(canRevokeMember('owner', 'o1', { userId: 'o2', role: 'owner' })).toBe(false);
+    expect(canRevokeMember('owner', 'v1', viewer)).toBe(false);
+  });
+
+  it('shows no change buttons to a viewer or a moderator', () => {
+    expect(canRevokeMember('viewer', 'x', viewer)).toBe(false);
+    expect(canRevokeMember('moderator', 'x', viewer)).toBe(false);
+    expect(canWithdrawInvite('viewer', { role: 'viewer' })).toBe(false);
+    expect(canWithdrawInvite('moderator', { role: 'viewer' })).toBe(false);
+  });
+
+  it('lets an owner withdraw a viewer invite and leaves owner invites alone', () => {
+    expect(canWithdrawInvite('owner', { role: 'viewer' })).toBe(true);
+    expect(canWithdrawInvite('owner', { role: 'owner' })).toBe(false);
+  });
+
+  it('writes the expiry as a day in India', () => {
+    // 20:00 UTC is already the next day in Chennai.
+    expect(expiryLabel('2026-11-26T20:00:00.000Z')).toBe('27 Nov 2026');
+  });
+
+  it('counts pending invites and treats a missing result as none', () => {
+    expect(pendingInviteCount({ pending: [{}, {}] })).toBe(2);
+    expect(pendingInviteCount({ pending: [] })).toBe(0);
+    expect(pendingInviteCount(null)).toBe(0);
+    expect(pendingInviteCount({})).toBe(0);
+  });
+
+  it('has the new strings and no em dashes', () => {
+    expect(SABHA_EXTRA_COPY.invitesLink(2)).toBe('Invites (2)');
+    expect(SABHA_EXTRA_COPY.teamInviteSubmit).toBe('Send invite');
+    expect(JSON.stringify(SABHA_EXTRA_COPY)).not.toContain('\u2014');
   });
 });

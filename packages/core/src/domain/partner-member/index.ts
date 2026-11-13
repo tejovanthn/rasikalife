@@ -37,6 +37,28 @@ export async function addPartnerMember(input: {
   return result.data as PartnerMember;
 }
 
+/**
+ * An owner's revoke: a viewer of this target only. Never an owner (a moderator's), never the
+ * caller, and never a member of another target (the lookup names this one).
+ */
+export async function revokeViewerMember(
+  actingUserId: string,
+  userId: string,
+  targetType: PartnerTargetType,
+  targetId: string
+): Promise<boolean> {
+  if (userId === actingUserId) {
+    throw new ApplicationError(ErrorCode.PARTNER_FORBIDDEN, 'You cannot remove yourself');
+  }
+  const existing = await getPartnerMember(userId, targetType, targetId);
+  if (!existing) return false;
+  if (existing.role !== 'viewer') {
+    throw new ApplicationError(ErrorCode.PARTNER_FORBIDDEN, 'Only a moderator can remove an owner');
+  }
+  await PartnerMemberEntity.delete({ targetType, targetId, userId }).go();
+  return true;
+}
+
 /** Removes a grant. Returns false when there was none. */
 export async function revokePartnerMember(
   userId: string,

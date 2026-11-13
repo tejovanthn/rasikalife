@@ -35,6 +35,16 @@ describe('changesPublicPage', () => {
   });
 });
 
+describe('the Team tab', () => {
+  it('changes no public page, so an owner inviting a viewer clears nothing', () => {
+    expect(changesPublicPage('mutation', 'partner.inviteViewer', true)).toBe(false);
+    expect(changesPublicPage('mutation', 'partner.revokeViewer', true)).toBe(false);
+    expect(changesPublicPage('mutation', 'partner.withdrawInvite', true)).toBe(false);
+    // A profile save still does.
+    expect(changesPublicPage('mutation', 'partner.updateProfile', true)).toBe(true);
+  });
+});
+
 describe('clearSiteCacheAfterMutation', () => {
   beforeEach(() => vi.mocked(invalidateSiteCache).mockClear());
 
