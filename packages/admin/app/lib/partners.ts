@@ -15,9 +15,9 @@ export function isTargetType(value: string | undefined): value is PartnerTargetT
   return value === 'organiser' || value === 'venue';
 }
 
-/** `/partners/organiser/<id>`. The id is encoded, since it comes from stored data. */
+/** `/sabhas/organiser/<id>`. The id is encoded, since it comes from stored data. */
 export function partnerPath(targetType: PartnerTargetType, id: string): string {
-  return `/partners/${targetType}/${encodeURIComponent(id)}`;
+  return `/sabhas/${targetType}/${encodeURIComponent(id)}`;
 }
 
 const fold = (text: string) => text.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().trim();

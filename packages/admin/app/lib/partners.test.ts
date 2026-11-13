@@ -40,7 +40,7 @@ describe('searchPartnerTargets', () => {
 
 describe('partner urls', () => {
   it('builds an encoded path and checks the type', () => {
-    expect(partnerPath('venue', 'a b')).toBe('/partners/venue/a%20b');
+    expect(partnerPath('venue', 'a b')).toBe('/sabhas/venue/a%20b');
     expect(isTargetType('organiser')).toBe(true);
     expect(isTargetType('artist')).toBe(false);
     expect(isTargetType(undefined)).toBe(false);

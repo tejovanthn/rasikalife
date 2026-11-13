@@ -2395,8 +2395,8 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   back as field diffs by rollback and state-at-time, and an export changes no field. The object
   expires after 7 days (lifecycle rule in `infra/qr.ts`); the audit row stays. There is no
   screen for the audit rows yet (`listExportAudit` reads them). Artists get no export.
-- **Admin app.** `/partners` searches organisers and venues by name (GET form, no JavaScript
-  needed). `/partners/:targetType/:id` has the invite form (Email, Role (Owner, Viewer), Send
+- **Admin app.** `/sabhas` (labelled "Sabhas"; `/partners` 301s there) searches organisers and venues by name (GET form, no JavaScript
+  needed). `/sabhas/:targetType/:id` has the invite form (Email, Role (Owner, Viewer), Send
   invite, verbatim), the member list with revoke, the verified status, and for an organiser the
   review switch. `/events/spot-check` is the owner-events feed. Its strings are in Copy (12 Nov).
 
@@ -2420,7 +2420,7 @@ Owner steps:
    moderator manages nothing until invited).
 2. No new secret and no new bucket. `PrivateFiles` and its 7 day `exports/` rule came with the
    admin phase.
-3. Invite yourself as an `owner` of one organiser from `admin.rasika.life/partners`, open the
+3. Invite yourself as an `owner` of one organiser from `admin.rasika.life/sabhas`, open the
    link in the email, and check: the dashboard opens, the Verified badge shows on the public
    organiser page (the cache clears on acceptance), a profile save writes a history row, a
    concert you add appears on `/events` and in the spot-check feed, and Export downloads a file

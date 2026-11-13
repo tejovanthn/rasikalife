@@ -195,7 +195,7 @@ export default function PartnerTarget() {
       ) : null}
 
       <p className="mt-10 text-sm">
-        <Link className="text-primary underline" to="/partners">
+        <Link className="text-primary underline" to="/sabhas">
           {ADMIN_EXTRA_COPY.partners}
         </Link>
       </p>

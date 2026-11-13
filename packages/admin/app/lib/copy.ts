@@ -120,7 +120,7 @@ export const ADMIN_EXTRA_COPY = {
   codeNotFound: 'No code with that value.',
   invalidCode: 'Codes are 8 characters: digits and letters, without I, L, O or U.',
   // Partners (sabha dashboard access).
-  partners: 'Partners',
+  partners: 'Sabhas',
   partnersSearch: 'Search organisers and venues',
   partnersSearchSubmit: 'Search',
   partnersNoResults: 'No organiser or venue matches.',
