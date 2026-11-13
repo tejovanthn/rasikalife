@@ -5,7 +5,7 @@
  */
 import { isRealDate, isRealTime } from '@rasika/core/domain/venue-qr/client';
 import { zonedDateTimeInputValue } from '@rasika/core/shared/timezone';
-import { SABHA_COPY } from './copy';
+import { SABHA_COPY, SABHA_EXTRA_COPY } from './copy';
 
 export type TargetType = 'organiser' | 'venue';
 export type DashboardRole = 'owner' | 'viewer' | 'moderator';
@@ -49,6 +49,12 @@ export function dashboardTabs(targetType: TargetType, id: string): Tab[] {
     tab('codes', 'codes'),
     tab('followers', 'followers'),
     tab('export', 'export'),
+    // Everyone sees it; a viewer or a moderator reads the members and cannot change them.
+    {
+      key: 'team',
+      label: SABHA_EXTRA_COPY.teamTab,
+      path: dashboardPath(targetType, id, 'team'),
+    },
   ];
 }
 
@@ -59,6 +65,41 @@ export function activeTab(tabs: Tab[], pathname: string): string {
     .filter(tab => tab.key !== 'overview')
     .find(tab => clean === tab.path || clean.startsWith(`${tab.path}/`));
   return hit?.key ?? 'overview';
+}
+
+// ---- Team -------------------------------------------------------------------------------
+
+/**
+ * Whether the Revoke button shows on a member row. Only an owner of this target (a moderator
+ * uses the admin app), only for a viewer, never for the caller. The server checks the same
+ * again; this only keeps a button that would be refused off the screen.
+ */
+export function canRevokeMember(
+  role: DashboardRole,
+  selfUserId: string,
+  member: { userId: string; role: string }
+): boolean {
+  return role === 'owner' && member.role === 'viewer' && member.userId !== selfUserId;
+}
+
+/** Whether an invite row shows Withdraw. Owner invites are a moderator's. */
+export function canWithdrawInvite(role: DashboardRole, invite: { role: string }): boolean {
+  return role === 'owner' && invite.role === 'viewer';
+}
+
+/** "14 Nov 2026", the day in India, for an invite's expiry. */
+export function expiryLabel(iso: string): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  }).format(new Date(iso));
+}
+
+/** The number in the header's "Invites (n)". Zero, or anything unreadable, hides the link. */
+export function pendingInviteCount(result: { pending?: unknown[] } | null | undefined): number {
+  return Array.isArray(result?.pending) ? result.pending.length : 0;
 }
 
 // ---- Invite -----------------------------------------------------------------------------

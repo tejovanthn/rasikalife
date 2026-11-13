@@ -155,4 +155,32 @@ export const SABHA_EXTRA_COPY = {
     'Counts only. Names appear only in the export, for followers who chose to share them.',
   // Export
   exportHistory: 'Recent downloads',
+
+  // Not in the Copy tab yet (owner request 2026-11-13): the header's invites link and the Team
+  // tab. "Email", "Send invite" and "Revoke" are the admin app's invite strings, reused.
+  invitesLink: (count: number) => `Invites (${count})`,
+  teamTab: 'Team',
+  teamMembers: 'Members',
+  teamNoMembers: 'Nobody manages this yet.',
+  teamName: 'Name',
+  teamEmail: 'Email',
+  teamRole: 'Role',
+  teamYou: 'You',
+  teamRevoke: 'Revoke',
+  teamRevoked: 'Access removed.',
+  teamPending: 'Invites waiting',
+  teamNoPending: 'No invites are waiting.',
+  teamExpires: 'Expires',
+  teamWithdraw: 'Withdraw',
+  teamWithdrawn: 'Invite withdrawn.',
+  teamInviteHeading: 'Invite a viewer',
+  teamInviteHint:
+    'A viewer can look at this dashboard. They cannot change anything or download followers. The invite expires in 14 days. Sending again renews it.',
+  teamInviteEmail: 'Email',
+  teamInviteSubmit: 'Send invite',
+  teamInviteSent: (email: string) => `Invite sent to ${email}.`,
+  teamInviteSavedNoEmail: (email: string) =>
+    `Invite saved for ${email}, but the email could not be sent. Send it again.`,
+  teamReadOnly: 'Only owners can invite or remove people.',
+  teamOwnersNote: 'The rasika.life team adds and removes owners.',
 } as const;

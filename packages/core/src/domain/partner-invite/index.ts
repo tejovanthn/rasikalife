@@ -239,3 +239,75 @@ export async function acceptInviteForUser(
   const verified = invite.role === 'owner' && before !== null && !before.verifiedAt;
   return { member, verified };
 }
+
+/** The unaccepted, unexpired invites of one target, soonest to expire first. */
+export async function listPendingInvitesForTarget(
+  targetType: PartnerTargetType,
+  targetId: string,
+  now: Date = new Date()
+): Promise<PartnerInvite[]> {
+  const result = await PartnerInviteEntity.query
+    .byTarget({ targetType, targetId })
+    .go({ pages: 'all' });
+  return ((result.data as PartnerInvite[]) ?? [])
+    .filter(invite => !invite.acceptedAt && !isInviteExpired(invite, now))
+    .sort((a, b) => a.expiresAt.localeCompare(b.expiresAt));
+}
+
+/**
+ * An owner's invite. Always a viewer: owners are made by moderators, since the first owner sets
+ * the public Verified badge. A pending owner invite for the same email is never overwritten by
+ * a viewer one (a `put` would downgrade it). Sending again renews the 14 days, as for a
+ * moderator.
+ */
+export async function inviteViewer(
+  input: { targetType: PartnerTargetType; targetId: string; email: string; invitedBy: string },
+  now: Date = new Date()
+): Promise<PartnerInvite> {
+  const pending = await listPendingInvitesForTarget(input.targetType, input.targetId, now);
+  const email = normalizeInviteEmail(input.email);
+  if (pending.some(invite => invite.email === email && invite.role === 'owner')) {
+    throw new ApplicationError(
+      ErrorCode.PARTNER_FORBIDDEN,
+      'An owner invite is already waiting for this email'
+    );
+  }
+  return createPartnerInvite(
+    {
+      targetType: input.targetType,
+      targetId: input.targetId,
+      email: input.email,
+      invitedBy: input.invitedBy,
+      role: 'viewer',
+    },
+    now
+  );
+}
+
+/**
+ * Withdraws an invite that has not been accepted. An accepted one is a membership now (revoke
+ * that instead), and an owner invite is a moderator's to withdraw. Another target's invite is
+ * never found, since the lookup names this target.
+ */
+export async function withdrawPartnerInvite(
+  email: string,
+  targetType: PartnerTargetType,
+  targetId: string
+): Promise<void> {
+  const result = await PartnerInviteEntity.get({
+    email: normalizeInviteEmail(email),
+    targetType,
+    targetId,
+  }).go();
+  const invite = result.data as PartnerInvite | null;
+  if (!invite || invite.acceptedAt) {
+    throw new ApplicationError(ErrorCode.PARTNER_INVITE_NOT_FOUND, 'No invite is waiting');
+  }
+  if (invite.role === 'owner') {
+    throw new ApplicationError(
+      ErrorCode.PARTNER_FORBIDDEN,
+      'Only a moderator can withdraw an owner invite'
+    );
+  }
+  await revokePartnerInvite(invite.email, targetType, targetId);
+}

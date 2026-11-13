@@ -9,6 +9,19 @@
     @apply border-border;
   }
 
+  /* Keyboard focus shows a ring on the brand token; a mouse click shows nothing. The browser's
+     default blue box on a clicked link is switched off, and :focus-visible brings the ring back
+     for keyboard users. */
+  a,
+  button,
+  summary,
+  select,
+  input,
+  textarea,
+  [tabindex] {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
   html {
     /* The installed app should not rubber-band like a web page. */
     overscroll-behavior-y: none;

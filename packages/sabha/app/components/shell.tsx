@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react';
-import { Form, Link, useSubmit } from 'react-router';
+import { Form, Link, useRouteLoaderData, useSubmit } from 'react-router';
 import { SABHA_COPY, SABHA_EXTRA_COPY } from '~/lib/copy';
 import type { Tab } from '~/lib/sabha';
+
+/**
+ * A keyboard focus ring on `ring`, drawn only for `:focus-visible`. A mouse click on a link or
+ * tab leaves no box behind. The base layer in `globals.css` does the same for everything else.
+ */
+const FOCUS =
+  'rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
 export type SwitcherOption = { targetType: string; targetId: string; targetName: string };
 
@@ -30,7 +37,7 @@ function Switcher({
         name="to"
         defaultValue={value}
         onChange={event => submit(event.currentTarget.form)}
-        className="h-tap max-w-[14rem] rounded-md border border-border bg-background px-2"
+        className={`h-tap max-w-[14rem] rounded-md border border-border bg-background px-2 ${FOCUS}`}
       >
         {options.map(option => (
           <option
@@ -42,11 +49,26 @@ function Switcher({
         ))}
       </select>
       <noscript>
-        <button type="submit" className="min-h-tap px-2 underline">
+        <button type="submit" className={`min-h-tap px-2 underline ${FOCUS}`}>
           {SABHA_EXTRA_COPY.inviteOpen}
         </button>
       </noscript>
     </Form>
+  );
+}
+
+/** "Invites (2)" for the signed-in person's own pending invites. Hidden at zero. */
+function InvitesLink() {
+  const root = useRouteLoaderData('root') as { pendingInvites?: number } | undefined;
+  const count = root?.pendingInvites ?? 0;
+  if (count < 1) return null;
+  return (
+    <Link
+      to="/invite"
+      className={`inline-flex min-h-tap items-center px-2 text-sm font-medium text-primary underline ${FOCUS}`}
+    >
+      {SABHA_EXTRA_COPY.invitesLink(count)}
+    </Link>
   );
 }
 
@@ -68,16 +90,17 @@ export function Shell({
     <div className="flex min-h-[100dvh] flex-col bg-background text-foreground">
       <header className="border-b border-border">
         <div className="mx-auto flex min-h-14 w-full max-w-4xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2">
-          <Link to="/" className="font-semibold no-underline">
+          <Link to="/" className={`font-semibold no-underline ${FOCUS}`}>
             {SABHA_EXTRA_COPY.brand}
           </Link>
           <div className="flex-1">
             <Switcher options={switcher ?? []} current={current} />
           </div>
+          <InvitesLink />
           <Form method="post" action="/auth/logout">
             <button
               type="submit"
-              className="min-h-tap px-2 text-sm text-muted-foreground underline"
+              className={`min-h-tap px-2 text-sm text-muted-foreground underline ${FOCUS}`}
             >
               {SABHA_EXTRA_COPY.signOut}
             </button>
@@ -93,8 +116,8 @@ export function Shell({
                     aria-current={tab.key === activeTab ? 'page' : undefined}
                     className={
                       tab.key === activeTab
-                        ? 'inline-flex min-h-tap items-center whitespace-nowrap border-b-2 border-primary px-3 text-sm font-medium'
-                        : 'inline-flex min-h-tap items-center whitespace-nowrap border-b-2 border-transparent px-3 text-sm text-muted-foreground hover:text-foreground'
+                        ? `inline-flex min-h-tap items-center whitespace-nowrap border-b-2 border-primary px-3 text-sm font-medium ${FOCUS}`
+                        : `inline-flex min-h-tap items-center whitespace-nowrap border-b-2 border-transparent px-3 text-sm text-muted-foreground hover:text-foreground ${FOCUS}`
                     }
                   >
                     {tab.label}

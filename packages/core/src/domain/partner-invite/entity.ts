@@ -41,6 +41,17 @@ export const PartnerInviteEntity = new Entity(
           template: '${targetType}#${targetId}',
         },
       },
+      // The invites of one target, for the owner's Team tab. Both parts are required (rule 9).
+      // Rows written before this index existed have no gsi1 keys; renewing one adds them.
+      byTarget: {
+        index: 'gsi1',
+        pk: {
+          field: 'gsi1pk',
+          composite: ['targetType', 'targetId'],
+          template: 'PARTNER_INVITES#${targetType}#${targetId}',
+        },
+        sk: { field: 'gsi1sk', composite: ['email'], template: '${email}' },
+      },
     },
   },
   { client: dynamoClient, table: process.env.DYNAMODB_TABLE || 'RasikaLifeTable' }

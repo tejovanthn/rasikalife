@@ -40,6 +40,9 @@ const PRIVATE_PATHS = new Set([
   // itself, and only when it set `verifiedAt` (that turns the Verified badge on).
   'partner.invite',
   'partner.revoke',
+  'partner.inviteViewer',
+  'partner.revokeViewer',
+  'partner.withdrawInvite',
   'partner.exportFollowers',
   'partner.acceptInvite',
 ]);
