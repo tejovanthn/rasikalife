@@ -105,26 +105,12 @@ export function trendPolyline(points: TrendPoint[], width: number, height: numbe
 
 // ---- Events -----------------------------------------------------------------------------
 
-/** `Sat 16 Nov, 6:00 pm`, in the event's own zone and never the runtime's. */
-export function formatEventWhen(iso: string, timezone: string): string {
-  const date = new Date(iso);
-  const day = new Intl.DateTimeFormat('en-GB', {
-    timeZone: timezone,
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })
-    .format(date)
-    .replace(',', '');
-  const time = new Intl.DateTimeFormat('en-IN', {
-    timeZone: timezone,
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
-    .format(date)
-    .replace(/\s?([ap])m/i, (_match, letter: string) => ` ${letter.toLowerCase()}m`);
-  return `${day}, ${time}`;
+/**
+ * The origin of the main site, for a row's link to the public event page. `SITE_URL` is set by
+ * infra per stage (`https://rasika.life` in prod); the fallback is prod.
+ */
+export function mainSiteUrl(env: { SITE_URL?: string } = process.env): string {
+  return (env.SITE_URL || 'https://rasika.life').replace(/\/$/, '');
 }
 
 /** The two values of the form's Date and Start time inputs, read in the event's own zone. */

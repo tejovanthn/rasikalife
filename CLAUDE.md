@@ -54,7 +54,7 @@ An event with no poster shows a text card in the poster slot, and its share imag
 - **packages/admin**: React Router v7 app for moderators at `admin.rasika.life` (QR codes and batches; see "Venue QR Follow: admin")
 - **packages/sabha**: React Router v7 dashboard for sabha and venue managers at `sabha.rasika.life` (see "Venue QR Follow: sabha dashboard")
 - **packages/qr**: SQS-driven Lambda that renders QR sticker, table tent and poster PDFs (HarfBuzz-shaped text, pdf-lib)
-- **packages/ui**: Shared Tailwind preset, design tokens and the primitives Classes needs. Browser-only; never imports `@rasika/core` outside a `/client` subpath
+- **packages/ui**: Shared Tailwind preset, design tokens and the primitives Classes needs, and the shared event row (`EventList`, `EventCard`) with its pure helpers. Browser-only; never imports the bare `@rasika/core` entry, only browser-safe subpaths (`/client`, `shared/timezone`). Web, sabha, admin, classes and talapettige all list it as a dependency, and each Tailwind `content` must include `../ui/src/**/*.{ts,tsx}`
 - **infra/**: SST infrastructure definitions
 
 ### Core Package Architecture
@@ -1716,7 +1716,18 @@ compiles them and the app does not load Faust.
   is a list"): a leading date/time column, title, venue, cast, badge and distance, and a 64×88
   top-cropped poster with `alt=""` because the row link already names the event. Ticketed and By
   invitation badges are neutral; the raga and tala colours mean those things only. Stored credits
-  are shown through `roleLabel` ("chief-guest" → "chief guest").
+  are shown through `roleLabel` ("chief-guest" → "chief guest"). **The row lives in
+  `packages/ui`** (`src/components/event-list.tsx`), with `castLine`, `venueLine`,
+  `formatDistance`, the event-time helpers and `EventTime` beside it in `src/lib`. Web's
+  `components/EventCard.tsx` is a thin wrapper that injects the React Router `<Link>` to
+  `generateEventUrl` and `PosterImage`; `lib/event-time.ts`, `venue-line.ts`, `distance.ts`,
+  `artist-display.ts` (cast) and `events/event-time.tsx` re-export from `@rasika/ui`, so there is
+  one copy. Links and posters are injected (`renderLink`, `renderPoster`); the defaults are a
+  plain `<a href="/events/<id>">` and a lazy `<img>`. `renderAfter` puts content under a row,
+  outside its link (sabha's Edit link). `showVenue={false}` hides the venue where every row is
+  one venue (the scan page, the sabha venue dashboard). The scan page and the sabha Events
+  screen use it; sabha links each row to `${SITE_URL}/events/<id>` (`mainSiteUrl`, `SITE_URL`
+  set in `infra/sabha.ts`), and an event still in review is not a link.
 - **Artists "Popular" and "Verified"** are ranked from the search index (`artist.browse`):
   `artistPopularity` (credited approved events + RSVPs + attendance) and `verified` are written
   onto each artist document at index time, so they refresh every 6 hours. The Verified filter

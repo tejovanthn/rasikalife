@@ -27,6 +27,31 @@ export type { BadgeTone } from './components/card';
 export { Dialog } from './components/dialog';
 export { Field, Input, Label, Select, Textarea } from './components/field';
 export { AppShell, NavItem, PageTitle, SectionTitle, navItemClasses } from './components/shell';
+export { EventCard, EventList, listDayLabel } from './components/event-list';
+export type {
+  EventCardEvent,
+  EventCardProps,
+  EventLinkProps,
+  EventListProps,
+  PosterProps,
+  RenderEventLink,
+  RenderEventPoster,
+} from './components/event-list';
+export { EventTime } from './components/event-time';
+export { GENERIC_ROLES, castLine, roleLabel } from './lib/cast-line';
+export { distanceKm, formatDistance } from './lib/distance';
+export type { Point } from './lib/distance';
+export {
+  eventDateKey,
+  eventZone,
+  formatDayLabel,
+  formatEventDate,
+  formatEventTime,
+  groupByEventDate,
+  needsZoneLabel,
+  zoneLabel,
+} from './lib/event-time';
+export { venueLine } from './lib/venue-line';
 export { Table, TableScroll, Td, Th, Tr } from './components/table';
 export { ToastProvider, useToast } from './components/toast';
 export type { ToastTone } from './components/toast';
