@@ -1,8 +1,7 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { issuer } from '@openauthjs/openauth';
 import { GoogleProvider } from '@openauthjs/openauth/provider/google';
-import { ArtistClaim, Auth, ClassInvite, PartnerInvite, User } from '@rasika/core';
-import { invalidateSiteCache } from '@rasika/core/site-cache';
+import { ArtistClaim, Auth, ClassInvite, User } from '@rasika/core';
 import { handle } from 'hono/aws-lambda';
 // import sharp from 'sharp';
 import { Resource } from 'sst';
@@ -194,27 +193,10 @@ const app = issuer({
         console.error('[auth] failed to claim class invites:', err);
       }
 
-      // A moderator invited this address to manage a sabha or venue (sabha.rasika.life). This is
-      // where the grant becomes real; the first owner to accept also verifies the target, which
-      // turns the Verified badge on for public pages, so the page cache is cleared for that.
-      //
-      // On every sign-in, since an invite may be sent to someone who already has an account.
-      // Non-fatal like the two above: the invite page on the dashboard accepts it again
-      // (`partner.acceptInvites`), and every step in acceptance is safe to repeat.
-      try {
-        const { accepted } = await PartnerInvite.acceptInvitesForUser({ id: user.id, email });
-        if (accepted.length > 0) {
-          console.log(
-            `[auth] accepted ${accepted.length} partner invite(s) for ${user.id}:`,
-            accepted.map(m => `${m.targetType}:${m.targetId}`).join(', ')
-          );
-        }
-        if (accepted.some(member => member.role === 'owner')) {
-          await invalidateSiteCache('sign-in partner invite');
-        }
-      } catch (err) {
-        console.error('[auth] failed to accept partner invites:', err);
-      }
+      // Partner invites (sabha.rasika.life) are NOT accepted here. Accepting makes someone an
+      // owner and the first owner turns on the public Verified badge, so it needs an explicit
+      // tap on the invite page (owner decision 20). Sign-in never creates a `PartnerMember`
+      // or sets `verifiedAt`.
 
       return ctx.subject('user', {
         userID: user.id,

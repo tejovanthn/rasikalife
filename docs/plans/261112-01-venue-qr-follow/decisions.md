@@ -96,3 +96,11 @@ and win where those tabs disagree.
     checked when all boxes are ticked, unchecked when none, indeterminate when some. It posts
     nothing. Consent is still one checkbox per target (decision 1), stored per target with the
     share consent version. It never covers hidden targets, artists or future follows.
+
+## Owner decision on invite acceptance (2026-11-13)
+
+20. **A partner invite is accepted only by an explicit tap, never by signing in.** The auth
+    issuer used to accept every pending invite on each sign-in, so an existing rasika.life user
+    became a sabha owner, and the first owner turned on the public Verified badge, without seeing
+    anything. Now `/invite` lists each pending invite (target, type, role, inviter) with its own
+    "Accept invite" button. There is no "Decline" in v1: an unwanted invite expires after 14 days.

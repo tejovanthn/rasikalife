@@ -30,6 +30,7 @@ import {
 
 const CODE_BY_ERROR: Partial<Record<ErrorCode, TRPC_ERROR_CODE_KEY>> = {
   [ErrorCode.PARTNER_FORBIDDEN]: 'FORBIDDEN',
+  [ErrorCode.PARTNER_INVITE_NOT_FOUND]: 'NOT_FOUND',
   [ErrorCode.PARTNER_INVITE_EXPIRED]: 'BAD_REQUEST',
   [ErrorCode.PARTNER_INVITE_EMAIL_MISMATCH]: 'BAD_REQUEST',
   [ErrorCode.VENUE_NOT_FOUND]: 'NOT_FOUND',
@@ -126,16 +127,16 @@ function requireOrganiserTarget(targetType: string, targetId: string): string {
  * Sabha dashboard routes.
  *
  * Access: `invite`, `revoke`, `members`, `setEventReview` and `ownerPublishedEvents` are for
- * moderators. `mine` and `acceptInvites` are for any signed-in user (they are about the caller's
+ * moderators. `mine`, `pendingInvites` and `acceptInvite` are for any signed-in user (they are about the caller's
  * own grants). Every other route names a `targetType` and `targetId` and goes through
  * `partnerProcedure` (member or moderator), `partnerOwnerProcedure` (owner or moderator) or
  * `partnerStrictOwnerProcedure` (owner only: the export and the profile edit).
  *
  * Cache: `partner` is a public router, so a mutation clears the page cache, and that is right
  * for `updateProfile`, `createEvent`, `updateEvent` and `setEventReview`, which change what a
- * public page shows. `invite`, `revoke`, `exportFollowers` and `acceptInvites` are in
- * `PRIVATE_PATHS`. `acceptInvites` clears it itself when an owner invite was accepted, since
- * that is what turns the Verified badge on.
+ * public page shows. `invite`, `revoke`, `exportFollowers` and `acceptInvite` are in
+ * `PRIVATE_PATHS`. `acceptInvite` clears it itself when it set `verifiedAt`, since that is
+ * what turns the Verified badge on.
  */
 export const partnerRouter = createTRPCRouter({
   invite: moderatorProcedure.input(InvitePartnerSchema).mutation(({ ctx, input }) =>
@@ -202,35 +203,53 @@ export const partnerRouter = createTRPCRouter({
   ),
 
   /**
-   * Accepts the caller's pending invites. Sign-in does this too (the issuer); this covers a
-   * reader who was already signed in when the invite was sent. Expired invites are returned so
-   * the page can say so. A mismatch cannot be found from here (invites are keyed by the invited
-   * address), so the page compares the address in the invite link with the signed-in one.
+   * The caller's invites, found by their email. Nothing is accepted here or on sign-in: an
+   * invite takes effect only through `acceptInvite` (owner decision 20). `expired` are returned
+   * so the page can say so. The inviter's name is shown when that user still exists.
    */
-  acceptInvites: protectedProcedure.mutation(({ ctx }) =>
+  pendingInvites: protectedProcedure.query(({ ctx }) =>
     mapPartnerErrors(async () => {
-      const { accepted, expired } = await PartnerInvite.acceptInvitesForUser({
-        id: ctx.user.id,
+      const { pending, expired } = await PartnerInvite.listInvitesForUser({
         email: ctx.user.email,
       });
-      if (accepted.some(member => member.role === 'owner')) {
-        await invalidateSiteCache('partner.acceptInvites');
-      }
+      const inviterName = async (userId: string) => (await User.getUser(userId))?.name ?? null;
       return {
-        accepted: accepted.map(member => ({
-          targetType: member.targetType,
-          targetId: member.targetId,
-          targetName: member.targetName,
-          role: member.role,
-        })),
-        expired: await Promise.all(
-          expired.map(async invite => ({
+        pending: await Promise.all(
+          pending.map(async invite => ({
             targetType: invite.targetType,
             targetId: invite.targetId,
-            targetName: (await Sabha.getPartnerTarget(invite.targetType, invite.targetId))?.name,
-            email: invite.email,
+            targetName: invite.targetName,
+            role: invite.role,
+            expiresAt: invite.expiresAt,
+            inviterName: await inviterName(invite.invitedBy),
           }))
         ),
+        expired: expired.map(invite => ({
+          targetType: invite.targetType,
+          targetId: invite.targetId,
+          targetName: invite.targetName,
+        })),
+      };
+    })
+  ),
+
+  /**
+   * Accepts one invite for the caller. Clears the page cache only when this accept set
+   * `verifiedAt` (the Verified badge is on cached public pages); otherwise it is in
+   * `PRIVATE_PATHS`.
+   */
+  acceptInvite: protectedProcedure.input(TargetSchema).mutation(({ ctx, input }) =>
+    mapPartnerErrors(async () => {
+      const { member, verified } = await PartnerInvite.acceptInviteForUser(
+        { id: ctx.user.id, email: ctx.user.email },
+        input
+      );
+      if (verified) await invalidateSiteCache('partner.acceptInvite');
+      return {
+        targetType: member.targetType,
+        targetId: member.targetId,
+        targetName: member.targetName,
+        role: member.role,
       };
     })
   ),

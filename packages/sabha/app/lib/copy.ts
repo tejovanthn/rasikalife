@@ -79,6 +79,10 @@ export const SABHA_EXTRA_COPY = {
     `The invite for ${name} has expired. Ask the rasika.life team to send it again.`,
   inviteNothing: 'There is no invite waiting for this account.',
   inviteOpen: 'Open dashboard',
+  // Copy tab, invite email: the button's label, reused on the invite page (decision 20).
+  inviteAccept: 'Accept invite',
+  // TODO(copy): no string in copy.md for who sent the invite, shown on the invite page.
+  inviteFrom: (inviterName: string) => `Invited by ${inviterName}`,
   // Overview
   trendHeading: 'Followers, last 30 days',
   trendSummary: (from: number, to: number) =>

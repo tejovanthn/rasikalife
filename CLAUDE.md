@@ -1882,7 +1882,7 @@ Domains in `packages/core/src/domain/`, each with `/client` and index subpaths i
 - **User.** New notification and WhatsApp fields. The model version stays `2`: ElectroDB filters
   by version, so a bump would hide every existing user. Defaults apply at create, and
   `effectiveNotifyPrefs` applies them to older rows on read.
-- **Invites.** `acceptInvitesForUser` runs after `findOrCreateUser` (the issuer calls it since phase 8): membership
+- **Invites.** `acceptInviteForUser` accepts one invite on an explicit tap (sign-in no longer does; see the sabha section): membership
   first, then `verifiedAt` (only for an owner, only if unset), then the invite is marked accepted.
   Each step is safe to repeat.
 - **Account deletion.** There is no user-deletion path yet. `cascadeUserDeleteToFollowData(userId)`
@@ -2297,10 +2297,10 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
 `space.update` an owner. A member of an organiser has no right to a venue's halls.
 
 **`partner` router.** Moderators: `invite`, `revoke`, `members`, `setEventReview`,
-`ownerPublishedEvents`. Any signed-in user: `mine`, `acceptInvites`. Members: `overview`,
+`ownerPublishedEvents`. Any signed-in user: `mine`, `pendingInvites`, `acceptInvite`. Members: `overview`,
 `profile`, `events`, `spacesForVenue`. Owners: `createEvent`, `updateEvent`. Strict owner:
 `updateProfile`, `exportFollowers`. Not in the Spec table, added because a screen needs them:
-`members`, `acceptInvites`, `profile`, `events`, `spacesForVenue`, `createEvent`, `updateEvent`,
+`members`, `pendingInvites`, `acceptInvite`, `profile`, `events`, `spacesForVenue`, `createEvent`, `updateEvent`,
 `setEventReview`, `ownerPublishedEvents`.
 
 - **Invite email** (`packages/email/emails/partner-invite.tsx`, `partnerInviteEmail`,
@@ -2310,24 +2310,35 @@ and `space.*` take a `venueId` and not a target pair, so they call `requireVenue
   A failed send is logged and returned as `emailSent: false`. The invite row is stored first, and
   sending again renews it for 14 days. There is no list of pending invites per target (invites
   are keyed by email), so the admin page shows the result of the send and the members.
-- **Acceptance on sign-in.** The issuer (`packages/auth/src/issuer.ts`) calls
-  `PartnerInvite.acceptInvitesForUser` after `findOrCreateUser`, on every sign-in, non-fatal like
-  the artist-claim and class-invite steps. The first `owner` acceptance sets `verifiedAt`
-  (core, phase 1). `partner.acceptInvites` does the same for someone who was already signed in
-  when the invite was sent, and returns the expired invites. The `/invite` page calls it. The
-  mismatch state cannot be found from the server (the invite is keyed by the invited address), so
-  `/invite` compares the address in the link with the signed-in one (`inviteOutcome`) and shows
-  the Copy mismatch line without accepting anything. Expired invites show the Copy `inviteExpired` line.
+- **Acceptance is an explicit tap** (owner decision 20, 2026-11-13). Sign-in never accepts an
+  invite: the auth issuer (`packages/auth/src/issuer.ts`) does not touch `PartnerInvite`, so it
+  never creates a `PartnerMember` or sets `verifiedAt`, and `infra/auth.ts` gives the issuer no
+  site-cache permissions. Before this, every sign-in made an existing user an owner, and the
+  first owner turned on the public Verified badge, unseen. Core (`partner-invite`):
+  `listInvitesForUser` returns `pending` (unexpired, not accepted) and `expired`, found by the
+  user's email, and skips a deleted target. `acceptInviteForUser(user, {targetType, targetId})`
+  accepts one invite and returns `{member, verified}`. It finds the invite by the user's own
+  email, so another address's invite is `PARTNER_INVITE_NOT_FOUND`; an accepted invite is not
+  found either, so a revoked member cannot rejoin by replay. `acceptPartnerInvite` still
+  checks the email (`PARTNER_INVITE_EMAIL_MISMATCH`) and expiry (`PARTNER_INVITE_EXPIRED`),
+  follows `mergedIntoId`, and sets `verifiedAt` for the first owner. The `partner` router has
+  `pendingInvites` (query, adds `inviterName`) and `acceptInvite` (mutation, `{targetType,
+  targetId}`). The `/invite` page (`routes/invite.tsx`) lists each pending invite with its
+  name, type, role and inviter, and a plain form post "Accept invite" per row; after it, "You now
+  manage {name}." and "Open dashboard". With the link's address different from the signed-in one
+  it shows the mismatch line (`inviteOutcome`) and no list. Expired invites show the Copy
+  expired line. No invite: "There is no invite waiting for this account." `/` sends a user with
+  no dashboard but an invite (pending or expired) to `/invite`. There is no Decline in v1; an
+  unwanted invite expires after 14 days.
 - **Verified badge** (`web/app/components/VerifiedBadge.tsx`, `lib/verified.ts`) on the public
   organiser and venue pages: "Verified", tooltip "Managed by {name} on rasika.life". It reads the
   stored `verifiedAt`, so the cached page is the same for every reader. The writes that set it
-  clear the site cache: the issuer calls `invalidateSiteCache` when an owner invite is accepted
-  (`infra/auth.ts` gives the issuer `siteCachePermissions` and `siteCacheEnvironment`), and
-  `partner.acceptInvites` does the same.
+  clear the site cache: `partner.acceptInvite` calls `invalidateSiteCache` when its accept set
+  `verifiedAt`.
 - **Cache.** `partner` is not a private router: `updateProfile`, `createEvent`, `updateEvent` and
   `setEventReview` change public pages and clear the cache. `partner.invite`, `revoke`,
-  `exportFollowers` and `acceptInvites` are in `PRIVATE_PATHS` (`acceptInvites` clears it itself,
-  only when an owner was accepted).
+  `exportFollowers` and `acceptInvite` are in `PRIVATE_PATHS` (`acceptInvite` clears it itself,
+  only when it set `verifiedAt`).
 - **Profile** (`core/src/domain/sabha/profile.ts`). Verified owners only (`PARTNER_FORBIDDEN`
   when the target has no `verifiedAt`). The input is checked against
   `PartnerOrganiserProfileSchema` or `PartnerVenueProfileSchema`, both `.strict()`: a field outside
