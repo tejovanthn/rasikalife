@@ -2,8 +2,8 @@
 /**
  * Not in the Copy tab yet (owner request 2026-11-13)
  *
- * Headline, the three points, the five form labels and the thank-you line are the owner's own
- * words. Every other string on `/for-sabhas` is plain wording written here, for the owner to
+ * Headline, the three points, the form labels it still has (sabha or venue name, role, WhatsApp
+ * number) and the next-step line are the owner's own words. Every other string on `/for-sabhas` is plain wording written here, for the owner to
  * replace.
  */
 // Not in the Copy tab yet (owner request 2026-11-13)
@@ -23,29 +23,34 @@ export const FOR_SABHAS_COPY = {
   formHeading: 'Ask for your codes',
   labels: {
     venueName: 'Sabha or venue name',
-    contactName: 'Your name',
     role: 'Role',
     whatsapp: 'WhatsApp number',
-    concertDates: 'Upcoming concert dates',
+    email: 'Email',
   },
   hints: {
     role: 'For example, secretary or trustee. Optional.',
     whatsapp: 'A 10-digit mobile number. We will message you here.',
-    concertDates: 'For example, 22 and 24 December. Optional.',
   },
   submit: 'Request free QR codes',
-  submitting: 'Sending...',
-  thanks: "Thanks. We'll message you on WhatsApp within two days.",
+  submitting: 'Opening WhatsApp...',
+  // Shown under the button. The form opens WhatsApp, so there is no thank-you screen.
+  nextStep: "Thanks. We'll message you on WhatsApp within two days.",
+  // The WhatsApp message. {sabha}, {role}, {number} and {email} are filled in.
+  message: {
+    intro: "Hello, I'd like free QR codes for {sabha}.",
+    role: 'Role: {role}',
+    whatsapp: 'WhatsApp: +91 {number}',
+    email: 'Email: {email}',
+    source: 'From rasika.life/for-sabhas',
+  },
   alreadyInvited: 'Already invited? Sign in',
   dashboard: 'Go to your dashboard',
   footerLink: 'For sabhas',
   errors: {
     venueName: 'Enter the name of your sabha or venue.',
-    contactName: 'Enter your name.',
     whatsapp: 'Enter a 10-digit mobile number, for example 98765 43210.',
+    email: 'Enter a valid email address.',
     tooLong: 'This is too long. Please shorten it.',
     summary: 'Please check the fields marked below.',
-    failed: 'We could not send your request. Please try again in a moment.',
-    rateLimited: 'Too many requests from this network. Please try again in an hour.',
   },
 } as const;
