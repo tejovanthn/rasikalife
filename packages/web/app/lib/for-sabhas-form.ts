@@ -1,22 +1,34 @@
-import {
-  SABHA_REQUEST_LIMITS,
-  type SabhaRequest,
-  SabhaRequestSchema,
-} from '@rasika/core/shared/sabha-request';
+import { WhatsappNumberSchema } from '@rasika/core/domain/user/client';
+import { z } from 'zod';
 import { FOR_SABHAS_COPY } from '~/lib/for-sabhas';
+import { HELP_WHATSAPP_NUMBER } from '~/lib/help-request';
 import { normaliseWhatsapp } from '~/lib/qr-scan';
 
-export type SabhaFormField = keyof typeof SABHA_REQUEST_LIMITS | 'whatsapp';
+/** Short, so the `wa.me` link stays well under 2,000 characters even when every letter escapes. */
+export const SABHA_FORM_LIMITS = {
+  venueName: 100,
+  role: 60,
+  email: 100,
+} as const;
+
+export type SabhaFormField = 'venueName' | 'role' | 'whatsapp' | 'email';
 
 export interface SabhaFormValues {
   venueName: string;
-  contactName: string;
   role: string;
   whatsapp: string;
-  concertDates: string;
+  email: string;
 }
 
 export type SabhaFormErrors = Partial<Record<SabhaFormField, string>>;
+
+/** What goes into the WhatsApp message. `whatsapp` is the ten national digits. */
+export interface SabhaRequest {
+  venueName: string;
+  role?: string;
+  whatsapp: string;
+  email: string;
+}
 
 export type ParsedSabhaForm =
   | { ok: true; values: SabhaFormValues; request: SabhaRequest }
@@ -27,48 +39,61 @@ function text(form: FormData, name: string): string {
   return typeof value === 'string' ? value : '';
 }
 
-/** True when the hidden field was filled. A person never sees it. */
-export function isHoneypotFilled(form: FormData): boolean {
-  return text(form, 'website').trim() !== '';
-}
-
 /**
  * Reads the request form. Every field is checked and every error returned, so one submit shows
  * all that is wrong. The WhatsApp number may carry `+91`, spaces or a leading 0 (`normaliseWhatsapp`);
- * what is sent on is the ten digits. A blank optional field is left out, not sent as `''`.
+ * what goes on is the ten digits, held to `WhatsappNumberSchema`. A blank role is left out.
  */
 export function parseSabhaRequestForm(form: FormData): ParsedSabhaForm {
   const values: SabhaFormValues = {
     venueName: text(form, 'venueName').trim(),
-    contactName: text(form, 'contactName').trim(),
     role: text(form, 'role').trim(),
     whatsapp: text(form, 'whatsapp').trim(),
-    concertDates: text(form, 'concertDates').trim(),
+    email: text(form, 'email').trim(),
   };
   const errors: SabhaFormErrors = {};
   const { errors: e } = FOR_SABHAS_COPY;
 
   if (!values.venueName) errors.venueName = e.venueName;
-  if (!values.contactName) errors.contactName = e.contactName;
-  const whatsapp = normaliseWhatsapp(values.whatsapp);
-  if (!whatsapp) errors.whatsapp = e.whatsapp;
-  for (const field of ['venueName', 'contactName', 'role', 'concertDates'] as const) {
-    if (values[field].length > SABHA_REQUEST_LIMITS[field] && !errors[field]) {
+  const number = WhatsappNumberSchema.safeParse(normaliseWhatsapp(values.whatsapp) ?? '');
+  if (!number.success) errors.whatsapp = e.whatsapp;
+  if (!z.string().email().safeParse(values.email).success) errors.email = e.email;
+  for (const field of ['venueName', 'role', 'email'] as const) {
+    if (values[field].length > SABHA_FORM_LIMITS[field] && !errors[field]) {
       errors[field] = e.tooLong;
     }
   }
-  if (Object.keys(errors).length > 0 || !whatsapp) return { ok: false, values, errors };
+  if (Object.keys(errors).length > 0 || !number.success) return { ok: false, values, errors };
 
-  const parsed = SabhaRequestSchema.safeParse({
-    venueName: values.venueName,
-    contactName: values.contactName,
-    role: values.role || undefined,
-    whatsapp,
-    concertDates: values.concertDates || undefined,
-  });
-  // The checks above mirror the schema, so this holds. If they ever drift, fail closed.
-  if (!parsed.success) return { ok: false, values, errors: { venueName: e.summary } };
-  return { ok: true, values, request: parsed.data };
+  return {
+    ok: true,
+    values,
+    request: {
+      venueName: values.venueName,
+      ...(values.role ? { role: values.role } : {}),
+      whatsapp: number.data,
+      email: values.email,
+    },
+  };
+}
+
+/** The message the visitor sends to the owner. Plain lines; a blank role is left out. */
+export function buildSabhaMessage(request: SabhaRequest): string {
+  const m = FOR_SABHAS_COPY.message;
+  return [
+    m.intro.replace('{sabha}', () => request.venueName),
+    request.role ? m.role.replace('{role}', () => request.role ?? '') : '',
+    m.whatsapp.replace('{number}', request.whatsapp),
+    m.email.replace('{email}', () => request.email),
+    m.source,
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+/** The `wa.me` link that opens WhatsApp to the owner with the message filled in. */
+export function sabhaWhatsAppUrl(request: SabhaRequest): string {
+  return `https://wa.me/${HELP_WHATSAPP_NUMBER}?text=${encodeURIComponent(buildSabhaMessage(request))}`;
 }
 
 /**

@@ -2580,19 +2580,26 @@ A public page where a sabha secretary asks for free QR codes. Route `routes/for-
   claims nothing about a real organisation. A commented slot holds the future pilot photo and scan
   count; leave it empty until both are real.
 - **Strings.** `FOR_SABHAS_COPY` (`lib/for-sabhas.ts`) holds all of them. The headline, three
-  points, five labels and the thank-you line are the owner's. The rest is plain wording marked
-  "Not in the Copy tab yet (owner request 2026-11-13)". The file has no imports, so the footer
-  and organiser pages can use it at no cost. Form reading is in `lib/for-sabhas-form.ts`.
-- **The form posts to its own action and works without JavaScript.** `parseSabhaRequestForm`
-  tolerates `+91`, spaces and a leading 0, then holds the number to `WhatsappNumberSchema`
-  (`core/src/domain/user/schema.ts`, shared with the reader's own WhatsApp number). Role and dates
-  are optional free text with limits in `SABHA_REQUEST_LIMITS` (`core/src/shared/sabha-request.ts`).
-- **`sabhaRequest.submit` (public tRPC) sends one email and stores nothing.** It goes from
-  `noreply@mail.rasika.life` as "Rasika.life" to `SABHA_REQUEST_TO` (set in `infra/trpc.ts`,
-  default `hello@rasika.life`). A filled honeypot field (`website`) answers `sent` and sends
-  nothing. `hitRateLimit` allows 5 a hour per client IP (`clientIpFromHeaders`, as the scan page).
-  The result is a status (`sent`, `rate-limited`, `failed`), never a thrown error, so the visitor
-  always sees a plain message. The path is in `PRIVATE_PATHS`: it changes no public page.
+  points, the labels "Sabha or venue name", "Role" and "WhatsApp number", and the next-step line
+  are the owner's. "Email", the message template and the rest are plain wording marked "Not in
+  the Copy tab yet (owner request 2026-11-13)". The file has no imports, so the footer and
+  organiser pages can use it at no cost. Form reading is in `lib/for-sabhas-form.ts`.
+- **The form opens WhatsApp. It sends no email and stores nothing.** Four fields: sabha or venue
+  name (required), role (optional), WhatsApp number (required) and email (required, `z.string().email()`).
+  The route action runs `parseSabhaRequestForm`. A bad form comes back as 400 with field errors.
+  A good one answers 303 to `https://wa.me/<HELP_WHATSAPP_NUMBER>?text=<message>`
+  (`sabhaWhatsAppUrl`; the number lives only in `lib/help-request.ts`). It is a plain form post, so
+  it works without JavaScript, and it is a normal navigation, not `window.open`, which mobile
+  browsers block. The visitor sends the message from their own WhatsApp. Responses are
+  `private, no-store`. The number may carry `+91`, spaces or a leading 0 (`normaliseWhatsapp`),
+  then is held to `WhatsappNumberSchema` (`core/src/domain/user/schema.ts`).
+- **The message** is built by `buildSabhaMessage` (pure, tested): "Hello, I'd like free QR codes
+  for {sabha}.", then "Role: {role}" (only if given), "WhatsApp: +91 {number}", "Email: {email}"
+  and "From rasika.life/for-sabhas". The limits in `SABHA_FORM_LIMITS` (100, 60, 100) keep the
+  link under 2,000 characters even for a name in Tamil, where each letter escapes to nine
+  characters. "We'll message you on WhatsApp within two days" shows under the button, since no
+  thank-you screen can show after the redirect. There is no honeypot and no rate limit: nothing
+  is sent or stored on our side, so there is nothing to abuse.
 - **Caching.** Signed out, the page is the shared document cached for a week. Signed in,
   `rasika_session` is in the cache key and the response is `private`, so the "Go to your
   dashboard" link (shown when `partner.mine` is not empty) never reaches another reader. The page

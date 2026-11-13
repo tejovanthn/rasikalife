@@ -1,20 +1,20 @@
 import { Check } from 'lucide-react';
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from 'react-router';
-import { Form, data, useActionData, useLoaderData, useNavigation } from 'react-router';
-import { client, createServerClient } from '~/api.server';
+import { Form, data, redirect, useActionData, useLoaderData, useNavigation } from 'react-router';
+import { createServerClient } from '~/api.server';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { getUser } from '~/lib/auth.server';
-import { clientIpFromHeaders } from '~/lib/client-ip';
 import { FOR_SABHAS_COPY as COPY } from '~/lib/for-sabhas';
 import {
+  SABHA_FORM_LIMITS,
   type SabhaFormErrors,
   type SabhaFormField,
   type SabhaFormValues,
-  isHoneypotFilled,
   parseSabhaRequestForm,
   sabhaOrigin,
+  sabhaWhatsAppUrl,
 } from '~/lib/for-sabhas-form';
 
 const PAGE_URL = 'https://rasika.life/for-sabhas';
@@ -50,46 +50,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-type ActionData =
-  | { status: 'sent' }
-  | { status: 'invalid'; values: SabhaFormValues; errors: SabhaFormErrors }
-  | { status: 'failed' | 'rate-limited'; values: SabhaFormValues };
+type ActionData = { status: 'invalid'; values: SabhaFormValues; errors: SabhaFormErrors };
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
-/** Works as a plain form post. Never throws: a failed send is a message on the page. */
+/**
+ * Works as a plain form post. Nothing is stored or emailed: a valid form answers 303 to a
+ * `wa.me` link with the message filled in, so the visitor sends it from their own WhatsApp.
+ */
 export async function action({ request }: ActionFunctionArgs) {
-  const form = await request.formData();
-  if (isHoneypotFilled(form)) return data<ActionData>({ status: 'sent' }, { headers: NO_STORE });
-
-  const parsed = parseSabhaRequestForm(form);
+  const parsed = parseSabhaRequestForm(await request.formData());
   if (!parsed.ok) {
     return data<ActionData>(
       { status: 'invalid', values: parsed.values, errors: parsed.errors },
       { status: 400, headers: NO_STORE }
     );
   }
-  try {
-    const result = await client.sabhaRequest.submit.mutate({
-      ...parsed.request,
-      website: '',
-      clientIp: clientIpFromHeaders(request.headers),
-    });
-    if (result.status === 'sent')
-      return data<ActionData>({ status: 'sent' }, { headers: NO_STORE });
-    if (result.status === 'rate-limited') {
-      return data<ActionData>(
-        { status: 'rate-limited', values: parsed.values },
-        { status: 429, headers: NO_STORE }
-      );
-    }
-  } catch (error) {
-    console.error('Failed to submit a sabha request:', error);
-  }
-  return data<ActionData>(
-    { status: 'failed', values: parsed.values },
-    { status: 503, headers: NO_STORE }
-  );
+  return redirect(sabhaWhatsAppUrl(parsed.request), { status: 303, headers: NO_STORE });
 }
 
 function Field({
@@ -153,9 +130,8 @@ export default function ForSabhasPage() {
   const result = useActionData<typeof action>();
   const navigation = useNavigation();
   const sending = navigation.state === 'submitting';
-  const sent = result?.status === 'sent';
-  const values = result && 'values' in result ? result.values : undefined;
-  const errors = result?.status === 'invalid' ? result.errors : {};
+  const values = result?.values;
+  const errors = result?.errors ?? {};
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-3xl">
@@ -181,85 +157,59 @@ export default function ForSabhasPage() {
         <h2 id="request-heading" className="section-heading">
           {COPY.formHeading}
         </h2>
-        {sent ? (
-          <output className="rounded-lg border border-border bg-card block p-4 text-base font-medium">
-            {COPY.thanks}
-          </output>
-        ) : (
-          <Form method="post" action="/for-sabhas" className="space-y-5">
-            {result?.status === 'invalid' && (
-              <p role="alert" className="text-sm font-medium text-destructive">
-                {COPY.errors.summary}
-              </p>
-            )}
-            {result?.status === 'failed' && (
-              <p role="alert" className="text-sm font-medium text-destructive">
-                {COPY.errors.failed}
-              </p>
-            )}
-            {result?.status === 'rate-limited' && (
-              <p role="alert" className="text-sm font-medium text-destructive">
-                {COPY.errors.rateLimited}
-              </p>
-            )}
-            <Field
-              name="venueName"
-              label={COPY.labels.venueName}
-              defaultValue={values?.venueName}
-              error={errors.venueName}
-              required
-              autoComplete="organization"
-              maxLength={200}
-            />
-            <Field
-              name="contactName"
-              label={COPY.labels.contactName}
-              defaultValue={values?.contactName}
-              error={errors.contactName}
-              required
-              autoComplete="name"
-              maxLength={200}
-            />
-            <Field
-              name="role"
-              label={COPY.labels.role}
-              hint={COPY.hints.role}
-              defaultValue={values?.role}
-              error={errors.role}
-              autoComplete="organization-title"
-              maxLength={200}
-            />
-            <Field
-              name="whatsapp"
-              label={COPY.labels.whatsapp}
-              hint={COPY.hints.whatsapp}
-              defaultValue={values?.whatsapp}
-              error={errors.whatsapp}
-              required
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel-national"
-              maxLength={20}
-            />
-            <Field
-              name="concertDates"
-              label={COPY.labels.concertDates}
-              hint={COPY.hints.concertDates}
-              defaultValue={values?.concertDates}
-              error={errors.concertDates}
-              maxLength={1000}
-            />
-            {/* Honeypot. Off screen, out of the tab order and hidden from screen readers. A
-                script that fills every input fills this one, and the request is dropped. */}
-            <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
-              <label htmlFor="website">Leave this field empty</label>
-              <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
-            </div>
+        <Form method="post" action="/for-sabhas" className="space-y-5">
+          {result?.status === 'invalid' && (
+            <p role="alert" className="text-sm font-medium text-destructive">
+              {COPY.errors.summary}
+            </p>
+          )}
+          <Field
+            name="venueName"
+            label={COPY.labels.venueName}
+            defaultValue={values?.venueName}
+            error={errors.venueName}
+            required
+            autoComplete="organization"
+            maxLength={SABHA_FORM_LIMITS.venueName}
+          />
+          <Field
+            name="role"
+            label={COPY.labels.role}
+            hint={COPY.hints.role}
+            defaultValue={values?.role}
+            error={errors.role}
+            autoComplete="organization-title"
+            maxLength={SABHA_FORM_LIMITS.role}
+          />
+          <Field
+            name="whatsapp"
+            label={COPY.labels.whatsapp}
+            hint={COPY.hints.whatsapp}
+            defaultValue={values?.whatsapp}
+            error={errors.whatsapp}
+            required
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel-national"
+            maxLength={20}
+          />
+          <Field
+            name="email"
+            label={COPY.labels.email}
+            defaultValue={values?.email}
+            error={errors.email}
+            required
+            type="email"
+            autoComplete="email"
+            maxLength={SABHA_FORM_LIMITS.email}
+          />
+          <div className="space-y-2">
             <Button type="submit" size="lg" disabled={sending} className="w-full sm:w-auto">
               {sending ? COPY.submitting : COPY.submit}
             </Button>
-          </Form>
-        )}
+            <p className="text-sm text-muted-foreground">{COPY.nextStep}</p>
+          </div>
+        </Form>
       </section>
 
       <p className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-2">

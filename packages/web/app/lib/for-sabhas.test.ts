@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { FOR_SABHAS_COPY } from './for-sabhas';
-import { isHoneypotFilled, parseSabhaRequestForm, sabhaOrigin } from './for-sabhas-form';
+import {
+  buildSabhaMessage,
+  parseSabhaRequestForm,
+  sabhaOrigin,
+  sabhaWhatsAppUrl,
+} from './for-sabhas-form';
+import { HELP_WHATSAPP_NUMBER } from './help-request';
 import { STATIC_SITEMAP_PAGES } from './sitemap-static';
 
 function form(fields: Record<string, string>): FormData {
@@ -11,63 +17,64 @@ function form(fields: Record<string, string>): FormData {
 
 const good = {
   venueName: ' Bangalore Gayana Samaja ',
-  contactName: 'R. Srinivasan',
   role: '',
   whatsapp: '+91 98765 43210',
-  concertDates: '',
+  email: ' secretary@example.org ',
 };
 
 describe('parseSabhaRequestForm', () => {
-  it('accepts a valid form, trims, and leaves blank optional fields out', () => {
+  it('accepts a valid form, trims, and leaves a blank role out', () => {
     const result = parseSabhaRequestForm(form(good));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.request).toEqual({
       venueName: 'Bangalore Gayana Samaja',
-      contactName: 'R. Srinivasan',
       whatsapp: '9876543210',
+      email: 'secretary@example.org',
     });
   });
 
-  it('keeps optional text when given', () => {
-    const result = parseSabhaRequestForm(
-      form({ ...good, role: 'Secretary', concertDates: '22 Dec' })
-    );
-    expect(result.ok && result.request).toMatchObject({
-      role: 'Secretary',
-      concertDates: '22 Dec',
-    });
+  it('keeps the role when given', () => {
+    const result = parseSabhaRequestForm(form({ ...good, role: 'Secretary' }));
+    expect(result.ok && result.request).toMatchObject({ role: 'Secretary' });
   });
 
-  it('requires the sabha name, your name and a number, and says all at once', () => {
-    const result = parseSabhaRequestForm(
-      form({ ...good, venueName: '  ', contactName: '', whatsapp: '' })
-    );
+  it('requires the sabha name, a number and an email, and says all at once', () => {
+    const result = parseSabhaRequestForm(form({ venueName: '  ', whatsapp: '', email: '' }));
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.errors).toEqual({
       venueName: FOR_SABHAS_COPY.errors.venueName,
-      contactName: FOR_SABHAS_COPY.errors.contactName,
       whatsapp: FOR_SABHAS_COPY.errors.whatsapp,
+      email: FOR_SABHAS_COPY.errors.email,
     });
   });
 
   it.each(['12345', '5876543210', '98765 4321', 'abcdefghij', '+1 9876543210'])(
     'refuses the number %s',
     whatsapp => {
-      const result = parseSabhaRequestForm(form({ ...good, whatsapp }));
+      expect(parseSabhaRequestForm(form({ ...good, whatsapp })).ok).toBe(false);
+    }
+  );
+
+  it.each(['secretary', 'a@b', 'a b@example.org', '@example.org'])(
+    'refuses the email %s',
+    email => {
+      const result = parseSabhaRequestForm(form({ ...good, email }));
       expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.errors.email).toBe(FOR_SABHAS_COPY.errors.email);
     }
   );
 
   it('refuses text past the limits', () => {
     const result = parseSabhaRequestForm(
-      form({ ...good, role: 'x'.repeat(81), concertDates: 'y'.repeat(501) })
+      form({ ...good, venueName: 'x'.repeat(101), role: 'y'.repeat(61) })
     );
     expect(result.ok).toBe(false);
     if (result.ok) return;
+    expect(result.errors.venueName).toBe(FOR_SABHAS_COPY.errors.tooLong);
     expect(result.errors.role).toBe(FOR_SABHAS_COPY.errors.tooLong);
-    expect(result.errors.concertDates).toBe(FOR_SABHAS_COPY.errors.tooLong);
   });
 
   it('hands the typed values back for redisplay', () => {
@@ -77,11 +84,61 @@ describe('parseSabhaRequestForm', () => {
   });
 });
 
-describe('isHoneypotFilled', () => {
-  it('is true only when the hidden field has text', () => {
-    expect(isHoneypotFilled(form({ website: 'http://spam.example' }))).toBe(true);
-    expect(isHoneypotFilled(form({ website: '  ' }))).toBe(false);
-    expect(isHoneypotFilled(form({}))).toBe(false);
+describe('buildSabhaMessage', () => {
+  const request = {
+    venueName: 'Bangalore Gayana Samaja',
+    role: 'Secretary',
+    whatsapp: '9876543210',
+    email: 'secretary@example.org',
+  };
+
+  it('writes one line per fact', () => {
+    expect(buildSabhaMessage(request)).toBe(
+      [
+        "Hello, I'd like free QR codes for Bangalore Gayana Samaja.",
+        'Role: Secretary',
+        'WhatsApp: +91 9876543210',
+        'Email: secretary@example.org',
+        'From rasika.life/for-sabhas',
+      ].join('\n')
+    );
+  });
+
+  it('leaves the role line out when there is none', () => {
+    const { role, ...noRole } = request;
+    expect(buildSabhaMessage(noRole)).not.toContain('Role:');
+  });
+
+  it('keeps "$&" in a name as typed', () => {
+    expect(buildSabhaMessage({ ...request, venueName: 'A $& B' })).toContain('codes for A $& B.');
+  });
+
+  it('has no em dash', () => {
+    expect(buildSabhaMessage(request)).not.toContain('\u2014');
+  });
+});
+
+describe('sabhaWhatsAppUrl', () => {
+  it('goes to the owner number with the encoded message', () => {
+    const request = {
+      venueName: 'Gayana Samaja & Sons',
+      whatsapp: '9876543210',
+      email: 'a@example.org',
+    };
+    const url = sabhaWhatsAppUrl(request);
+    expect(url.startsWith(`https://wa.me/${HELP_WHATSAPP_NUMBER}?text=`)).toBe(true);
+    const text = new URL(url).searchParams.get('text');
+    expect(text).toBe(buildSabhaMessage(request));
+  });
+
+  it('stays well under 2,000 characters at the longest allowed input', () => {
+    const url = sabhaWhatsAppUrl({
+      venueName: 'ஸ'.repeat(100),
+      role: 'ஸ'.repeat(60),
+      whatsapp: '9876543210',
+      email: `${'a'.repeat(88)}@example.org`,
+    });
+    expect(url.length).toBeLessThan(2000);
   });
 });
 
@@ -104,12 +161,11 @@ describe('FOR_SABHAS_COPY', () => {
     ]);
     expect(FOR_SABHAS_COPY.labels).toEqual({
       venueName: 'Sabha or venue name',
-      contactName: 'Your name',
       role: 'Role',
       whatsapp: 'WhatsApp number',
-      concertDates: 'Upcoming concert dates',
+      email: 'Email',
     });
-    expect(FOR_SABHAS_COPY.thanks).toBe("Thanks. We'll message you on WhatsApp within two days.");
+    expect(FOR_SABHAS_COPY.nextStep).toBe("Thanks. We'll message you on WhatsApp within two days.");
   });
 
   it('fits search results, with a title under 60 and a description under 160', () => {
