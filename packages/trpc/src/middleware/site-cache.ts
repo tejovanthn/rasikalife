@@ -36,12 +36,12 @@ const PRIVATE_PATHS = new Set([
   'follow.toggle',
   'follow.bulkSet',
   'follow.setShare',
-  // Dashboard access and files change no public page. `partner.acceptInvites` clears the cache
-  // itself, and only when an owner was accepted (that turns the Verified badge on).
+  // Dashboard access and files change no public page. `partner.acceptInvite` clears the cache
+  // itself, and only when it set `verifiedAt` (that turns the Verified badge on).
   'partner.invite',
   'partner.revoke',
   'partner.exportFollowers',
-  'partner.acceptInvites',
+  'partner.acceptInvite',
 ]);
 
 /** Whether a finished call may have changed a public page, so the CDN copy must go. */

@@ -14,9 +14,10 @@ vi.mock('../partner-member', () => ({ addPartnerMember: vi.fn() }));
 
 import {
   PARTNER_INVITE_TTL_DAYS,
-  acceptInvitesForUser,
+  acceptInviteForUser,
   acceptPartnerInvite,
   createPartnerInvite,
+  listInvitesForUser,
 } from '.';
 import { ErrorCode } from '../../constants';
 import { OrganiserEntity } from '../organiser/entity';
@@ -192,40 +193,103 @@ describe('acceptPartnerInvite', () => {
   });
 });
 
-describe('acceptInvitesForUser', () => {
-  function invitesAre(rows: unknown[]) {
-    vi.mocked(PartnerInviteEntity.query.primary).mockReturnValue({
-      go: vi.fn().mockResolvedValue({ data: rows }),
-    } as never);
-  }
+function invitesAre(rows: unknown[]) {
+  vi.mocked(PartnerInviteEntity.query.primary).mockReturnValue({
+    go: vi.fn().mockResolvedValue({ data: rows }),
+  } as never);
+}
 
-  it('accepts live invites, reports expired ones, and skips accepted ones', async () => {
+describe('listInvitesForUser', () => {
+  it('lists live invites, separates expired ones, skips accepted ones, and accepts nothing', async () => {
     invitesAre([
       invite({ targetId: 'org1' }),
       invite({ targetId: 'org2', expiresAt: new Date(NOW.getTime() - DAY).toISOString() }),
       invite({ targetId: 'org3', acceptedAt: '2026-11-11T00:00:00.000Z' }),
     ]);
 
-    const result = await acceptInvitesForUser(USER, NOW);
+    const result = await listInvitesForUser(USER, NOW);
 
-    expect(result.accepted).toHaveLength(1);
+    expect(result.pending).toEqual([
+      expect.objectContaining({
+        targetType: 'organiser',
+        targetId: 'org1',
+        targetName: 'Sabha',
+        role: 'owner',
+        invitedBy: 'mod1',
+      }),
+    ]);
     expect(result.expired.map(i => i.targetId)).toEqual(['org2']);
-    expect(addPartnerMember).toHaveBeenCalledTimes(1);
+    expect(addPartnerMember).not.toHaveBeenCalled();
+    expect(PartnerInviteEntity.patch).not.toHaveBeenCalled();
+    expect(OrganiserEntity.patch).not.toHaveBeenCalled();
   });
 
   it('looks invites up by the lowercase email', async () => {
     invitesAre([]);
-    await acceptInvitesForUser(USER, NOW);
+    await listInvitesForUser(USER, NOW);
     expect(PartnerInviteEntity.query.primary).toHaveBeenCalledWith({ email: 'sec@sabha.org' });
   });
 
   it('skips an invite whose target has been deleted', async () => {
     organiserIs({ id: 'org1', name: 'Gone', deletedAt: '2026-11-01' });
     invitesAre([invite()]);
+    expect(await listInvitesForUser(USER, NOW)).toEqual({ pending: [], expired: [] });
+  });
+});
 
-    const result = await acceptInvitesForUser(USER, NOW);
+describe('acceptInviteForUser', () => {
+  it('accepts the one named invite and reports that it verified the target', async () => {
+    invitesAre([invite({ targetId: 'org1' }), invite({ targetId: 'org2' })]);
 
-    expect(result.accepted).toEqual([]);
+    const result = await acceptInviteForUser(
+      USER,
+      { targetType: 'organiser', targetId: 'org1' },
+      NOW
+    );
+
+    expect(result.verified).toBe(true);
+    expect(addPartnerMember).toHaveBeenCalledTimes(1);
+    expect(addPartnerMember).toHaveBeenCalledWith(expect.objectContaining({ targetId: 'org1' }));
+  });
+
+  it('does not report verified when the target already was, or for a viewer', async () => {
+    invitesAre([invite()]);
+    organiserIs({ id: 'org1', name: 'Sabha', verifiedAt: '2026-11-01T00:00:00.000Z' });
+    expect(
+      (await acceptInviteForUser(USER, { targetType: 'organiser', targetId: 'org1' }, NOW)).verified
+    ).toBe(false);
+
+    organiserIs({ id: 'org1', name: 'Sabha' });
+    invitesAre([invite({ role: 'viewer' })]);
+    expect(
+      (await acceptInviteForUser(USER, { targetType: 'organiser', targetId: 'org1' }, NOW)).verified
+    ).toBe(false);
+  });
+
+  it('refuses an expired invite', async () => {
+    invitesAre([invite({ expiresAt: new Date(NOW.getTime() - DAY).toISOString() })]);
+    await expect(
+      acceptInviteForUser(USER, { targetType: 'organiser', targetId: 'org1' }, NOW)
+    ).rejects.toMatchObject({ code: ErrorCode.PARTNER_INVITE_EXPIRED });
     expect(addPartnerMember).not.toHaveBeenCalled();
+  });
+
+  it('finds no invite for another target, an accepted one, or another address', async () => {
+    invitesAre([invite({ acceptedAt: '2026-11-11T00:00:00.000Z' })]);
+    await expect(
+      acceptInviteForUser(USER, { targetType: 'organiser', targetId: 'org1' }, NOW)
+    ).rejects.toMatchObject({ code: ErrorCode.PARTNER_INVITE_NOT_FOUND });
+    invitesAre([invite()]);
+    await expect(
+      acceptInviteForUser(USER, { targetType: 'venue', targetId: 'org1' }, NOW)
+    ).rejects.toMatchObject({ code: ErrorCode.PARTNER_INVITE_NOT_FOUND });
+    invitesAre([]);
+    await expect(
+      acceptInviteForUser(
+        { id: 'u2', email: 'other@x.org' },
+        { targetType: 'organiser', targetId: 'org1' },
+        NOW
+      )
+    ).rejects.toMatchObject({ code: ErrorCode.PARTNER_INVITE_NOT_FOUND });
   });
 });

@@ -114,7 +114,7 @@ export async function revokePartnerInvite(
  * - Past `expiresAt`: `PARTNER_INVITE_EXPIRED`.
  * - The membership is written first, then `verifiedAt` is set on the target when the role is
  *   `owner` and none is set yet, then the invite is marked accepted. Every step is safe to
- *   repeat, so a crash part-way is healed by the next sign-in.
+ *   repeat, so a crash part-way is healed by tapping Accept again.
  *
  * Only the invited target is verified (owner decision 12). `Organiser.venueId` is the usual hall,
  * often rented, so it proves no ownership of that venue.
@@ -175,33 +175,67 @@ export async function acceptPartnerInvite(
   return member;
 }
 
-/**
- * Called after `findOrCreateUser` on sign-in. Accepts every pending, unexpired invite for the
- * user's email. Expired ones are returned so the caller can say so; invites whose target has
- * since been deleted are skipped.
- */
-export async function acceptInvitesForUser(
-  user: { id: string; email: string },
-  now: Date = new Date()
-): Promise<{ accepted: PartnerMember[]; expired: PartnerInvite[] }> {
-  const invites = await listInvitesByEmail(user.email);
-  const accepted: PartnerMember[] = [];
-  const expired: PartnerInvite[] = [];
+export type PendingInvite = {
+  targetType: PartnerTargetType;
+  targetId: string;
+  targetName: string;
+  role: PartnerRole;
+  invitedBy: string;
+  expiresAt: string;
+};
 
+/**
+ * The invites waiting for a signed-in user, found by their email. Nothing is accepted here:
+ * acceptance is an explicit tap (`acceptInviteForUser`), never a side effect of signing in
+ * (owner decision 20). `pending` are unexpired and not yet accepted; `expired` are past
+ * `expiresAt`, returned so the page can say so. An invite whose target has been deleted is
+ * left out of both.
+ */
+export async function listInvitesForUser(
+  user: { email: string },
+  now: Date = new Date()
+): Promise<{ pending: PendingInvite[]; expired: PendingInvite[] }> {
+  const invites = await listInvitesByEmail(user.email);
+  const pending: PendingInvite[] = [];
+  const expired: PendingInvite[] = [];
   for (const invite of invites) {
     if (invite.acceptedAt) continue;
-    if (isInviteExpired(invite, now)) {
-      expired.push(invite);
-      continue;
-    }
-    try {
-      accepted.push(await acceptPartnerInvite(invite, user, now));
-    } catch (error) {
-      const gone =
-        error instanceof ApplicationError &&
-        (error.code === ErrorCode.VENUE_NOT_FOUND || error.code === ErrorCode.ORGANISER_NOT_FOUND);
-      if (!gone) throw error;
-    }
+    const target = await readTarget(invite.targetType, invite.targetId);
+    if (!target) continue;
+    const row: PendingInvite = {
+      targetType: invite.targetType,
+      targetId: invite.targetId,
+      targetName: target.name,
+      role: invite.role,
+      invitedBy: invite.invitedBy,
+      expiresAt: invite.expiresAt,
+    };
+    (isInviteExpired(invite, now) ? expired : pending).push(row);
   }
-  return { accepted, expired };
+  return { pending, expired };
+}
+
+/**
+ * Accepts one invite, named by target, for a signed-in user. The invite is looked up by the
+ * user's own email, so another address's invite is never found (`PARTNER_INVITE_NOT_FOUND`);
+ * `acceptPartnerInvite` still checks the email and expiry. An invite already accepted is not
+ * found either, so a revoked member cannot rejoin by replaying an old tap.
+ */
+export async function acceptInviteForUser(
+  user: { id: string; email: string },
+  target: { targetType: PartnerTargetType; targetId: string },
+  now: Date = new Date()
+): Promise<{ member: PartnerMember; verified: boolean }> {
+  const invites = await listInvitesByEmail(user.email);
+  const invite = invites.find(
+    row =>
+      row.targetType === target.targetType && row.targetId === target.targetId && !row.acceptedAt
+  );
+  if (!invite) {
+    throw new ApplicationError(ErrorCode.PARTNER_INVITE_NOT_FOUND, 'No invite is waiting');
+  }
+  const before = await readTarget(invite.targetType, invite.targetId);
+  const member = await acceptPartnerInvite(invite, user, now);
+  const verified = invite.role === 'owner' && before !== null && !before.verifiedAt;
+  return { member, verified };
 }

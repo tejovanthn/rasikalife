@@ -11,7 +11,7 @@ import { dashboardPath, isTargetType } from '~/lib/sabha';
 export const meta = () => pageMeta();
 
 /**
- * The resolver. No dashboard: the No access copy. Exactly one: straight into it. Several: a
+ * The resolver. No dashboard: pending invites go to `/invite`, otherwise the No access copy. Exactly one: straight into it. Several: a
  * list to pick from (the header switcher then moves between them). The server decides, so there
  * is no flash of the wrong screen.
  */
@@ -20,6 +20,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const trpc = await createServerClient(request);
   const mine = await trpc.partner.mine.query();
   const first = mine[0];
+  // No dashboard yet but an invite waiting: the invite page is where it is accepted (decision 20).
+  if (mine.length === 0) {
+    const { pending, expired } = await trpc.partner.pendingInvites.query();
+    if (pending.length > 0 || expired.length > 0) throw redirect('/invite');
+  }
   if (mine.length === 1 && first && isTargetType(first.targetType)) {
     throw redirect(dashboardPath(first.targetType, first.targetId));
   }

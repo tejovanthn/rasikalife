@@ -1,3 +1,4 @@
+import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const core = vi.hoisted(() => ({
@@ -6,7 +7,8 @@ const core = vi.hoisted(() => ({
   listPartnerMembers: vi.fn(),
   revokePartnerMember: vi.fn(),
   createPartnerInvite: vi.fn(),
-  acceptInvitesForUser: vi.fn(),
+  listInvitesForUser: vi.fn(),
+  acceptInviteForUser: vi.fn(),
   getPartnerTarget: vi.fn(),
   exportFollowers: vi.fn(),
   getPartnerOverview: vi.fn(),
@@ -39,7 +41,8 @@ vi.mock('@rasika/core', async importOriginal => {
     PartnerInvite: {
       ...actual.PartnerInvite,
       createPartnerInvite: core.createPartnerInvite,
-      acceptInvitesForUser: core.acceptInvitesForUser,
+      listInvitesForUser: core.listInvitesForUser,
+      acceptInviteForUser: core.acceptInviteForUser,
     },
     Sabha: {
       ...actual.Sabha,
@@ -236,38 +239,81 @@ describe('moderator routes', () => {
   });
 });
 
-describe('acceptInvites', () => {
-  it('returns what was accepted and expired, and clears the cache for an owner invite', async () => {
-    core.acceptInvitesForUser.mockResolvedValue({
-      accepted: [{ targetType: 'organiser', targetId: 'o1', targetName: 'Sabha', role: 'owner' }],
-      expired: [
-        { targetType: 'venue', targetId: 'v1', email: 'owner1@example.com', role: 'owner' },
+describe('pendingInvites', () => {
+  it('lists the caller invites with the inviter name, and accepts nothing', async () => {
+    core.listInvitesForUser.mockResolvedValue({
+      pending: [
+        {
+          targetType: 'organiser',
+          targetId: 'o1',
+          targetName: 'Sabha',
+          role: 'owner',
+          invitedBy: 'mod1',
+          expiresAt: '2026-12-01T00:00:00.000Z',
+        },
       ],
+      expired: [{ targetType: 'venue', targetId: 'v1', targetName: 'Hall' }],
     });
-    core.getPartnerTarget.mockResolvedValue({ id: 'v1', name: 'Hall' });
-    const result = await caller(owner).acceptInvites();
-    expect(core.acceptInvitesForUser).toHaveBeenCalledWith({
-      id: 'owner1',
-      email: 'owner1@example.com',
+    core.getUser.mockResolvedValue({ id: 'mod1', name: 'Mod One' });
+    const result = await caller(owner).pendingInvites();
+    expect(core.listInvitesForUser).toHaveBeenCalledWith({ email: 'owner1@example.com' });
+    expect(result.pending[0]).toMatchObject({
+      targetName: 'Sabha',
+      role: 'owner',
+      inviterName: 'Mod One',
     });
-    expect(result.accepted).toEqual([
-      { targetType: 'organiser', targetId: 'o1', targetName: 'Sabha', role: 'owner' },
-    ]);
-    expect(result.expired).toEqual([
-      { targetType: 'venue', targetId: 'v1', targetName: 'Hall', email: 'owner1@example.com' },
-    ]);
+    expect(result.expired).toEqual([{ targetType: 'venue', targetId: 'v1', targetName: 'Hall' }]);
+    expect(core.acceptInviteForUser).not.toHaveBeenCalled();
+    await expect(caller(null).pendingInvites()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+});
+
+describe('acceptInvite', () => {
+  const input = { targetType: 'organiser' as const, targetId: 'o1' };
+
+  it('accepts the named invite and clears the cache when it verified the target', async () => {
+    core.acceptInviteForUser.mockResolvedValue({
+      member: { targetType: 'organiser', targetId: 'o1', targetName: 'Sabha', role: 'owner' },
+      verified: true,
+    });
+    const result = await caller(owner).acceptInvite(input);
+    expect(core.acceptInviteForUser).toHaveBeenCalledWith(
+      { id: 'owner1', email: 'owner1@example.com' },
+      input
+    );
+    expect(result).toEqual({
+      targetType: 'organiser',
+      targetId: 'o1',
+      targetName: 'Sabha',
+      role: 'owner',
+    });
     expect(cache.invalidateSiteCache).toHaveBeenCalledTimes(1);
   });
 
-  it('does not clear the cache for a viewer invite or for nothing', async () => {
-    core.acceptInvitesForUser.mockResolvedValue({
-      accepted: [{ targetType: 'venue', targetId: 'v1', targetName: 'Hall', role: 'viewer' }],
-      expired: [],
+  it('does not clear the cache when nothing was verified', async () => {
+    core.acceptInviteForUser.mockResolvedValue({
+      member: { targetType: 'organiser', targetId: 'o1', targetName: 'Sabha', role: 'viewer' },
+      verified: false,
     });
-    await caller(viewer).acceptInvites();
-    core.acceptInvitesForUser.mockResolvedValue({ accepted: [], expired: [] });
-    await caller(viewer).acceptInvites();
+    await caller(viewer).acceptInvite(input);
     expect(cache.invalidateSiteCache).not.toHaveBeenCalled();
+  });
+
+  it('maps core errors and needs a signed-in user', async () => {
+    core.acceptInviteForUser.mockRejectedValue(
+      new ApplicationError(ErrorCode.PARTNER_INVITE_EXPIRED, 'expired')
+    );
+    await expect(caller(owner).acceptInvite(input)).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      cause: { code: ErrorCode.PARTNER_INVITE_EXPIRED },
+    });
+    await expect(caller(null).acceptInvite(input)).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+  });
+
+  it('is a private path', () => {
+    expect(changesPublicPage('mutation', 'partner.acceptInvite', true)).toBe(false);
   });
 });
 
@@ -326,7 +372,7 @@ describe('page cache', () => {
       'partner.invite',
       'partner.revoke',
       'partner.exportFollowers',
-      'partner.acceptInvites',
+      'partner.acceptInvite',
     ]) {
       expect(changesPublicPage('mutation', path, true)).toBe(false);
     }
