@@ -32,6 +32,13 @@ Next, in order:
    1 m (the QR box is 64 mm).
 
 Backlog:
+- **One search-select component across apps.** Three variants today: web `SearchSelect`
+  (`components/SearchSelect.tsx`, single and multi; wiki edit forms, event verify), web
+  `CompositionSearch` (concert log, also takes free text), and admin `VenuePicker`
+  (`admin/app/components/venue-picker.tsx`, a search box plus a separate select). The sabha event
+  form uses a plain select. Move `SearchSelect` into `packages/ui` (browser-only, no
+  `@rasika/core`), let each app pass its own search function or endpoint, rebuild the other two
+  on it, and retest every form that uses one.
 - **WAF on `/q/*`**, dropped for the pilot on cost (decision 17). Pricing as of 2026-11-12: $5 a
   month per web ACL, $1 per rule, $0.60 per million requests, and every request to the
   distribution is billed, not only `/q/`. That is about $7 to $10 a month here. The scan page
