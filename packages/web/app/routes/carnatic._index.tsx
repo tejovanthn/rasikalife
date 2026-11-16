@@ -1,3 +1,4 @@
+import { fromItrans } from '@rasika/core/utils/transliteration';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
@@ -9,6 +10,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { SectionHeader } from '~/components/shared/SectionHeader';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { compositionCardView } from '~/lib/composition-card-view';
+import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
 type LoaderData = {
@@ -52,8 +54,14 @@ export const loader: LoaderFunction = async ({ request }) => {
 
     return data<LoaderData>({
       recentCompositions: recentCompositions.items.map(c => compositionCardView(c, script)),
-      recentRagas: recentRagas.items,
-      recentTalas: recentTalas.items,
+      recentRagas: recentRagas.items.map(r => ({
+        ...r,
+        name: titleCaseName(fromItrans(r.name, script)),
+      })),
+      recentTalas: recentTalas.items.map(t => ({
+        ...t,
+        name: titleCaseName(fromItrans(t.name, script)),
+      })),
     });
   } catch (error) {
     console.error('Error loading carnatic homepage:', error);
