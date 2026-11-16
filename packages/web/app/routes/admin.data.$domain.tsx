@@ -158,7 +158,7 @@ export default function AdminDataDomain() {
         ) : null}
 
         {parseErrors.length > 0 ? (
-          <ul className="list-disc pl-5 space-y-1 text-sm text-amber-600 dark:text-amber-500">
+          <ul className="list-disc pl-5 space-y-1 text-sm text-warning">
             {parseErrors.map(message => (
               <li key={message}>{message}</li>
             ))}

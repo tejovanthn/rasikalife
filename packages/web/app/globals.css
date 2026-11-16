@@ -17,7 +17,7 @@
        2.97:1 as link text on --background and 3.38:1 for white button labels, both below
        WCAG AA. L 40% takes those to 4.73:1 and 5.38:1 with the hue and saturation
        untouched, so the earthenware character holds and only the value moves. */
-    --primary: 17 84.7% 40%;
+    --primary: 17 84.7% 35%;
     /* Warm white, not #fff. L 99% at the brand hue is indistinguishable as a colour but
        keeps the token on-system, and holds 5.25:1 against the primary fill. */
     --primary-foreground: 17 100% 99%;
@@ -36,7 +36,7 @@
     /* Tracks --primary. At L 53.7% the focus ring read 2.97:1 against the background, under
        the 3:1 WCAG 1.4.11 asks of a non-text indicator, and the ring is the only thing
        telling a keyboard user where they are. */
-    --ring: 17 84.7% 40%;
+    --ring: 17 84.7% 35%;
     --radius: 0.5rem;
     /* Domain semantic colors */
     --language: 220 60% 92%;
@@ -55,6 +55,18 @@
        its bright amber, which clears 10:1 on lamp black. */
     --warning: 38 92% 26%;
     --warning-foreground: 17 100% 99%;
+    --chakra-1: 0 60% 80%;
+    --chakra-2: 12 60% 80%;
+    --chakra-3: 24 60% 80%;
+    --chakra-4: 36 60% 80%;
+    --chakra-5: 48 60% 80%;
+    --chakra-6: 64 60% 80%;
+    --chakra-7: 90 60% 80%;
+    --chakra-8: 120 60% 80%;
+    --chakra-9: 150 60% 80%;
+    --chakra-10: 175 60% 80%;
+    --chakra-11: 195 60% 80%;
+    --chakra-12: 215 60% 80%;
   }
 
   .dark,
@@ -103,6 +115,18 @@
     --success-foreground: 17 20% 8%;
     --warning: 38 92% 60%;
     --warning-foreground: 17 20% 8%;
+    --chakra-1: 0 45% 30%;
+    --chakra-2: 12 45% 30%;
+    --chakra-3: 24 45% 30%;
+    --chakra-4: 36 45% 30%;
+    --chakra-5: 48 45% 30%;
+    --chakra-6: 64 45% 30%;
+    --chakra-7: 90 45% 30%;
+    --chakra-8: 120 45% 30%;
+    --chakra-9: 150 45% 30%;
+    --chakra-10: 175 45% 30%;
+    --chakra-11: 195 45% 30%;
+    --chakra-12: 215 45% 30%;
   }
 }
 

@@ -8,6 +8,8 @@ import { TalaCard } from '~/components/TalaCard';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { SectionHeader } from '~/components/shared/SectionHeader';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { compositionCardView } from '~/lib/composition-card-view';
+import { scriptSessionResolver } from '~/sessions.server';
 
 type LoaderData = {
   recentCompositions: RouterOutput['composition']['list']['items'];
@@ -39,8 +41,9 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const loader: LoaderFunction = async () => {
+export const loader: LoaderFunction = async ({ request }) => {
   try {
+    const script = await scriptSessionResolver.getScript(request);
     const [recentCompositions, recentRagas, recentTalas] = await Promise.all([
       client.composition.list.query({ limit: 8 }),
       client.raga.list.query({ limit: 6 }),
@@ -48,7 +51,7 @@ export const loader: LoaderFunction = async () => {
     ]);
 
     return data<LoaderData>({
-      recentCompositions: recentCompositions.items,
+      recentCompositions: recentCompositions.items.map(c => compositionCardView(c, script)),
       recentRagas: recentRagas.items,
       recentTalas: recentTalas.items,
     });

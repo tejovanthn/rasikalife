@@ -118,7 +118,12 @@ function DistanceControl({
       </h2>
       {!viewer.signedIn ? (
         <p className="text-sm text-muted-foreground">
-          <Link to={`/auth/login?${new URLSearchParams({ redirectTo: here })}`}>Sign in</Link> to
+          <Link
+            to={`/auth/login?${new URLSearchParams({ redirectTo: here })}`}
+            className="underline underline-offset-4"
+          >
+            Sign in
+          </Link> to
           see how far each concert is from you.
         </p>
       ) : (
@@ -224,14 +229,14 @@ function Calendar({
                 if (!day) return <td key={weekday} />;
                 const count = counts[day] ?? 0;
                 const selected = state.when === day;
-                const label = `${formatDayLabel(day)}, ${count === 0 ? 'no concerts' : pluralConcerts(count)}`;
-                // The visible digits are hidden from a screen reader, which hears the sentence
-                // instead ("Sat, 24 Oct, 7 concerts"). A link carries it as its name; a plain day
-                // carries it as hidden text, since aria-label on a span is not read.
+                // The name starts with the visible digits (WCAG 2.5.3), then adds the weekday,
+                // month and the word "concerts" as hidden text: "24 Sat, Oct 7 concerts".
+                const dayName = formatDayLabel(day).replace(/\d+\s*/, '');
                 const inner = (
-                  <span aria-hidden="true" className="flex flex-col items-center">
+                  <span className="flex flex-col items-center">
                     <span className={cn(day === today && 'underline underline-offset-4')}>
                       {Number(day.slice(8))}
+                      <span className="sr-only"> {dayName}</span>
                     </span>
                     {count > 0 && (
                       <span
@@ -244,8 +249,10 @@ function Calendar({
                         )}
                       >
                         {count}
+                        <span className="sr-only"> {count === 1 ? 'concert' : 'concerts'}</span>
                       </span>
                     )}
+                    {count === 0 && <span className="sr-only">no concerts</span>}
                   </span>
                 );
                 return (
@@ -254,7 +261,6 @@ function Calendar({
                       <Link
                         to={href(day)}
                         preventScrollReset
-                        aria-label={label}
                         aria-current={selected ? 'date' : undefined}
                         className={cn(
                           'group flex h-11 md:h-10 flex-col items-center justify-center rounded-md no-underline text-foreground hover:bg-accent',
@@ -266,7 +272,6 @@ function Calendar({
                     ) : (
                       <span className="flex h-11 md:h-10 flex-col items-center justify-center text-muted-foreground">
                         {inner}
-                        <span className="sr-only">{label}</span>
                       </span>
                     )}
                   </td>

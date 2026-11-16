@@ -1,5 +1,4 @@
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
-import { fromItrans } from '@rasika/core/utils/transliteration';
 import { data } from 'react-router';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { Link, useLoaderData, useSearchParams } from 'react-router';
@@ -8,7 +7,7 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
-import { titleCaseName } from '~/lib/utils';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -29,10 +28,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
 
       return data({
-        compositions: searchResults.compositions.map(c => ({
-          ...c,
-          title: titleCaseName(fromItrans(c.title, script)),
-        })),
+        compositions: searchResults.compositions.map(c => compositionCardView(c, script)),
         nextToken: null,
         hasMore: searchResults.compositions.length >= itemsPerPage,
         prevToken: null,
@@ -46,10 +42,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     });
 
     return data({
-      compositions: (results.items || []).map(c => ({
-        ...c,
-        title: titleCaseName(fromItrans(c.title, script)),
-      })),
+      compositions: (results.items || []).map(c => compositionCardView(c, script)),
       nextToken: results.nextToken,
       hasMore: results.hasMore,
       prevToken: nextToken,

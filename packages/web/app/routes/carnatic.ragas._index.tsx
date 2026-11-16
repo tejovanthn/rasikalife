@@ -109,11 +109,11 @@ export default function RagasIndex() {
         ) : (
           <p className="text-xl text-muted-foreground">
             A list of Carnatic ragas: the{' '}
-            <Link to="/carnatic/ragas/melakarta" className="text-primary hover:underline">
+            <Link to="/carnatic/ragas/melakarta" className="text-primary underline underline-offset-4">
               72 melakarta ragas
             </Link>{' '}
             and their{' '}
-            <Link to="/carnatic/ragas/janya" className="text-primary hover:underline">
+            <Link to="/carnatic/ragas/janya" className="text-primary underline underline-offset-4">
               janya ragas
             </Link>
             .

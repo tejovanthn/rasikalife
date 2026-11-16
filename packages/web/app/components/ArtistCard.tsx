@@ -32,6 +32,8 @@ function ArtistAvatar({ photoUrl, name }: { photoUrl?: string | null; name: stri
 
   const initials = name
     .split(' ')
+    .map(part => part.replace(/^[^\p{L}]+/u, ''))
+    .filter(Boolean)
     .slice(0, 2)
     .map(part => part[0]?.toUpperCase() ?? '')
     .join('');
@@ -41,7 +43,7 @@ function ArtistAvatar({ photoUrl, name }: { photoUrl?: string | null; name: stri
       className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0"
       aria-hidden="true"
     >
-      <span className="text-sm font-semibold text-primary">{initials}</span>
+      <span className="text-sm font-semibold text-foreground">{initials}</span>
     </div>
   );
 }
@@ -61,7 +63,6 @@ export function ArtistCard({ artist }: ArtistCardProps) {
     <Link
       to={generateArtistUrl(artist.name, artist.id)}
       className="group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
-      aria-label={`View artist: ${artist.name}`}
     >
       <Card className="h-full transition-shadow duration-150 group-hover:shadow-md group-hover:border-primary/40">
         <CardHeader className="pb-3">

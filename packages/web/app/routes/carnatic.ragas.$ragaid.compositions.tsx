@@ -16,6 +16,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -82,7 +83,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       raga,
       // The stored name is ITRANS ("kAmbhOji"). URLs keep using it; text shows this.
       displayName: titleCaseName(fromItrans(raga.name, script)),
-      compositions: result.items,
+      compositions: result.items.map(c => compositionCardView(c, script)),
       hasMore: result.hasMore,
       nextToken: result.nextToken,
       prevToken: nextToken,

@@ -94,7 +94,10 @@ export const Header = () => {
         <div className="flex items-center justify-between h-14 md:h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Link to="/">
+              <Link
+                to="/"
+                className="flex items-center justify-center min-h-11 min-w-11 md:min-h-0 md:min-w-0"
+              >
                 {/* 96px for a 32px slot (3x screens): the 192px icon was 68 kB here. */}
                 <img
                   className="h-8 w-8"

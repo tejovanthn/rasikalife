@@ -7,6 +7,8 @@ interface CompositionCardProps {
   composition: {
     id: string;
     title: string;
+    /** Stored title, for the URL slug when `title` is display text. */
+    linkTitle?: string;
     composer: {
       id: string;
       name: string;
@@ -31,11 +33,10 @@ export function CompositionCard({
 }: CompositionCardProps) {
   return (
     <Link
-      to={generateCompositionUrl(composition.title, composition.id)}
+      to={generateCompositionUrl(composition.linkTitle ?? composition.title, composition.id)}
       className="group block cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-lg"
-      aria-label={`View composition: ${composition.title} by ${composition.composer.name}`}
     >
-      <Card className="h-full transition-all duration-200 hover:shadow-md hover:border-primary/40">
+      <Card className="h-full transition-[box-shadow,border-color] duration-200 hover:shadow-md hover:border-primary/40">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg leading-tight group-hover:underline line-clamp-2">
             {composition.title}

@@ -26,7 +26,7 @@
     --card-foreground: 17 5% 10%;
     --popover: 17 100% 95%;
     --popover-foreground: 17 20% 8%;
-    --primary: 17 84.7% 40%;
+    --primary: 17 84.7% 35%;
     --primary-foreground: 17 100% 99%;
     --secondary: 17 30% 70%;
     --secondary-foreground: 17 20% 8%;
@@ -38,7 +38,7 @@
     --destructive-foreground: 17 5% 90%;
     --border: 17 30% 50%;
     --input: 17 30% 18%;
-    --ring: 17 84.7% 40%;
+    --ring: 17 84.7% 35%;
     --radius: 0.5rem;
     --language: 220 60% 92%;
     --language-foreground: 220 60% 30%;
@@ -50,6 +50,18 @@
     --success-foreground: 17 20% 8%;
     --warning: 38 92% 26%;
     --warning-foreground: 17 100% 99%;
+    --chakra-1: 0 60% 80%;
+    --chakra-2: 12 60% 80%;
+    --chakra-3: 24 60% 80%;
+    --chakra-4: 36 60% 80%;
+    --chakra-5: 48 60% 80%;
+    --chakra-6: 64 60% 80%;
+    --chakra-7: 90 60% 80%;
+    --chakra-8: 120 60% 80%;
+    --chakra-9: 150 60% 80%;
+    --chakra-10: 175 60% 80%;
+    --chakra-11: 195 60% 80%;
+    --chakra-12: 215 60% 80%;
   }
 
   .dark,
@@ -84,6 +96,18 @@
     --success-foreground: 17 20% 8%;
     --warning: 38 92% 60%;
     --warning-foreground: 17 20% 8%;
+    --chakra-1: 0 45% 30%;
+    --chakra-2: 12 45% 30%;
+    --chakra-3: 24 45% 30%;
+    --chakra-4: 36 45% 30%;
+    --chakra-5: 48 45% 30%;
+    --chakra-6: 64 45% 30%;
+    --chakra-7: 90 45% 30%;
+    --chakra-8: 120 45% 30%;
+    --chakra-9: 150 45% 30%;
+    --chakra-10: 175 45% 30%;
+    --chakra-11: 195 45% 30%;
+    --chakra-12: 215 45% 30%;
   }
 }
 
@@ -133,5 +157,17 @@
     --success-foreground: 17 20% 8%;
     --warning: 38 92% 60%;
     --warning-foreground: 17 20% 8%;
+    --chakra-1: 0 45% 30%;
+    --chakra-2: 12 45% 30%;
+    --chakra-3: 24 45% 30%;
+    --chakra-4: 36 45% 30%;
+    --chakra-5: 48 45% 30%;
+    --chakra-6: 64 45% 30%;
+    --chakra-7: 90 45% 30%;
+    --chakra-8: 120 45% 30%;
+    --chakra-9: 150 45% 30%;
+    --chakra-10: 175 45% 30%;
+    --chakra-11: 195 45% 30%;
+    --chakra-12: 215 45% 30%;
   }
 }

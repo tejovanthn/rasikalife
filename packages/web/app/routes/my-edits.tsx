@@ -16,6 +16,7 @@ import { createServerClient } from '~/api.server';
 import { DataTable } from '~/components/data-table';
 import { createColumns } from '~/components/edits-table-columns';
 import { Button } from '~/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '~/components/ui/dialog';
 import { requireUser } from '~/lib/auth.server';
 
 dayjs.extend(relativeTime);
@@ -285,32 +286,15 @@ function EditModal({
   ]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
-      onKeyDown={e => e.key === 'Escape' && onClose()}
-    >
-      <div
-        className="bg-card rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-auto"
-        onClick={e => e.stopPropagation()}
-        onKeyDown={e => e.stopPropagation()}
-      >
-        <div className="sticky top-0 bg-card border-b px-6 py-4 flex items-center justify-between">
+    <Dialog open onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto gap-0 p-0 bg-card">
+        <div className="sticky top-0 bg-card border-b px-6 py-4 pr-12 flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold capitalize">Edit Details</h2>
-            <p className="text-sm text-muted-foreground capitalize">
+            <DialogTitle className="capitalize">Edit Details</DialogTitle>
+            <DialogDescription className="capitalize">
               {edit.entityType} edit • {statusLabel(edit.status)}
-            </p>
+            </DialogDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <X className="h-5 w-5" />
-          </Button>
         </div>
 
         <div className="p-6 space-y-6">
@@ -418,8 +402,8 @@ function EditModal({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -9,9 +9,11 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { composerCompositionsMeta } from '~/lib/hub-lists';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
+import { scriptSessionResolver } from '~/sessions.server';
 
 // This page's own content is identical for every viewer, but the document it ships in is
 // not: the root loader renders the signed-in viewer's name and email into the header. The
@@ -74,10 +76,12 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
+    const script = await scriptSessionResolver.getScript(request);
+
     return data(
       {
         artist,
-        compositions: result.items,
+        compositions: result.items.map(c => compositionCardView(c, script)),
         hasMore: result.hasMore,
         nextToken: result.nextToken,
         prevToken: nextToken,

@@ -33,6 +33,7 @@ import { ragaOgImageUrl } from '~/lib/og';
 import { ragaMetaDescription, ragaMetaTitle } from '~/lib/raga-description';
 import { type RagaPageModel, ragaPageModel } from '~/lib/raga-page';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -117,7 +118,7 @@ export async function loader({
       rawName: raga.name,
       rawArohanam: raga.arohanam,
       rawAvarohanam: raga.avarohanam,
-      compositions: compositions.items,
+      compositions: compositions.items.map(c => compositionCardView(c, script)),
       hasMoreCompositions: compositions.total > compositions.items.length,
       keyCompositions: compositions.items
         .filter(c => keyIds.includes(c.id))
@@ -552,7 +553,7 @@ export default function RagaDetails() {
         )}
 
         {/* Metadata grid */}
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm sm:grid-cols-3">
           {raga.tradition && (
             <div>
               <dt className="text-muted-foreground text-xs uppercase tracking-wide">Tradition</dt>
@@ -593,7 +594,7 @@ export default function RagaDetails() {
               </dd>
             </div>
           )}
-        </div>
+        </dl>
       </section>
 
       {page.hasMovement ? (

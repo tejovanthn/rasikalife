@@ -13,8 +13,10 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const meta: MetaFunction = ({ data }) => {
   const loaderData = data as { tala: { id: string; name: string } } | undefined;
@@ -63,9 +65,11 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
+    const script = await scriptSessionResolver.getScript(request);
+
     return data({
       tala,
-      compositions: result.items,
+      compositions: result.items.map(c => compositionCardView(c, script)),
       hasMore: result.hasMore,
       nextToken: result.nextToken,
       prevToken: nextToken,

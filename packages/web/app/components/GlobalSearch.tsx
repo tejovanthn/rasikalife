@@ -1,6 +1,6 @@
 import { useDebounce } from '@uidotdev/usehooks';
 import { Clock, Search as SearchIcon, X } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useReducer, useRef, useState } from 'react';
 import { Link, useFetcher, useNavigate } from 'react-router';
 import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
 import { useHydrated } from '~/lib/progressive-enhancement';
@@ -150,18 +150,23 @@ const ResultItem = memo(function ResultItem({
   result,
   globalIndex,
   selectedIndex,
+  optionId,
   onResultClick,
 }: {
   result: SearchResultItem;
   globalIndex: number;
   selectedIndex: number;
+  optionId: string;
   onResultClick: (result: SearchResultItem) => void;
 }) {
   const url = getEntityUrl(result);
 
   return (
     <Link
-      id={`result-${result.id}`}
+      id={optionId}
+      role="option"
+      aria-selected={selectedIndex === globalIndex}
+      tabIndex={-1}
       to={url}
       onClick={() => onResultClick(result)}
       className={`block px-4 py-3 border-b border-border last:border-b-0 transition-colors ${
@@ -193,6 +198,11 @@ const ResultItem = memo(function ResultItem({
 export function GlobalSearch() {
   const [state, dispatch] = useReducer(searchReducer, initialState);
   const { isOpen, query, results, isLoading, selectedIndex, filter } = state;
+
+  const uid = useId();
+  const listboxId = `${uid}-listbox`;
+  const resultsId = `${uid}-results`;
+  const optionId = (index: number) => `${uid}-option-${index}`;
 
   const [recentEntities, setRecentEntities] = useState<RecentEntity[]>([]);
 
@@ -275,11 +285,14 @@ export function GlobalSearch() {
     return all;
   }, [results, filter]);
 
-  const scrollSelectedIntoView = useCallback((result: SearchResultItem | undefined) => {
-    if (!result) return;
-    const element = document.getElementById(`result-${result.id}`);
-    element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, []);
+  const scrollSelectedIntoView = useCallback(
+    (index: number) => {
+      if (index < 0) return;
+      const element = document.getElementById(`${uid}-option-${index}`);
+      element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    },
+    [uid]
+  );
 
   // Reset selection when results change (filter change already resets in reducer)
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional reset on results change
@@ -340,6 +353,29 @@ export function GlobalSearch() {
         previousFocus.current?.focus();
       }
 
+      if (event.key === 'Tab' && isOpen && resultsRef.current) {
+        const focusable = Array.from(
+          resultsRef.current.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        );
+        if (focusable.length === 0) {
+          event.preventDefault();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        const inside = active ? resultsRef.current.contains(active) : false;
+        if (event.shiftKey && (!inside || active === first)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && (!inside || active === last)) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+
       if (isOpen && results) {
         const visibleResults = getVisibleResults();
         const maxIndex = visibleResults.length - 1;
@@ -348,12 +384,12 @@ export function GlobalSearch() {
           case 'ArrowDown':
             event.preventDefault();
             dispatch({ type: 'SELECT_NEXT', maxIndex });
-            scrollSelectedIntoView(visibleResults[Math.min(selectedIndex + 1, maxIndex)]);
+            scrollSelectedIntoView(Math.min(selectedIndex + 1, maxIndex));
             break;
           case 'ArrowUp':
             event.preventDefault();
             dispatch({ type: 'SELECT_PREV' });
-            scrollSelectedIntoView(visibleResults[selectedIndex - 1]);
+            scrollSelectedIntoView(selectedIndex - 1);
             break;
           case 'Enter':
             if (selectedIndex >= 0 && visibleResults[selectedIndex]) {
@@ -400,6 +436,8 @@ export function GlobalSearch() {
     }
   }, [isOpen]);
 
+  const hasOptions = Boolean(results && !isLoading && getVisibleResults().length > 0);
+
   // Calculate which sections to show based on filter
   const visibleSections = useMemo(
     () => RESULT_SECTIONS.filter(section => filter === 'all' || filter === section.filterType),
@@ -416,7 +454,8 @@ export function GlobalSearch() {
             previousFocus.current = document.activeElement as HTMLElement;
             dispatch({ type: 'OPEN' });
           }}
-          className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors"
+          aria-label="Search"
+          className="flex items-center justify-center space-x-2 min-h-11 min-w-11 md:min-h-0 md:min-w-0 px-3 py-2 text-sm text-muted-foreground bg-muted rounded-md hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <SearchIcon size={16} />
           <span className="hidden sm:inline">Search...</span>
@@ -431,7 +470,7 @@ export function GlobalSearch() {
           <div className="flex min-h-screen items-start justify-center px-4 pt-16">
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: overlay is decorative, keyboard handled globally */}
             <div
-              className="fixed inset-0 bg-black bg-opacity-25"
+              className="fixed inset-0 bg-foreground/25"
               onClick={() => dispatch({ type: 'CLOSE' })}
               aria-hidden="true"
             />
@@ -443,7 +482,7 @@ export function GlobalSearch() {
               aria-label="Search"
               className="relative bg-background rounded-lg shadow-xl w-full max-w-2xl border"
             >
-              <div className="flex items-center border-b border-border px-4">
+              <div className="flex items-center border-b border-border px-4 rounded-t-lg focus-within:ring-2 focus-within:ring-ring focus-within:ring-inset">
                 <SearchIcon size={20} className="text-muted-foreground" />
                 <input
                   ref={searchRef}
@@ -453,8 +492,12 @@ export function GlobalSearch() {
                   placeholder="Search compositions, artists, ragas, events..."
                   aria-label="Search"
                   role="combobox"
-                  aria-expanded={isOpen}
-                  aria-controls="search-results"
+                  aria-expanded={hasOptions}
+                  aria-controls={listboxId}
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    hasOptions && selectedIndex >= 0 ? optionId(selectedIndex) : undefined
+                  }
                   className="flex-1 px-4 py-4 text-lg placeholder:text-muted-foreground outline-none bg-transparent"
                 />
                 <button
@@ -467,7 +510,7 @@ export function GlobalSearch() {
                 </button>
               </div>
 
-              <div className="max-h-96 overflow-y-auto" id="search-results" aria-live="polite">
+              <div className="max-h-96 overflow-y-auto" id={resultsId} aria-live="polite">
                 {isLoading && (
                   <div className="px-4 py-8 text-center text-muted-foreground">Searching...</div>
                 )}
@@ -484,7 +527,7 @@ export function GlobalSearch() {
                           type="button"
                           role="tab"
                           aria-selected={filter === type}
-                          aria-controls="search-results"
+                          aria-controls={resultsId}
                           onClick={() => handleFilterChange(type)}
                           className={`px-4 py-2 text-sm transition-colors flex-shrink-0 whitespace-nowrap ${
                             filter === type
@@ -503,11 +546,12 @@ export function GlobalSearch() {
                           const allResults = getVisibleResults();
                           if (allResults.length === 0) return null;
                           return (
-                            <div>
+                            <div role="listbox" id={listboxId} aria-label="Search results">
                               {allResults.map((result, index) => (
                                 <ResultItem
                                   key={result.id}
                                   result={result}
+                                  optionId={optionId(index)}
                                   globalIndex={index}
                                   selectedIndex={selectedIndex}
                                   onResultClick={handleResultClick}
@@ -519,7 +563,7 @@ export function GlobalSearch() {
                       : // Grouped view for specific type filters
                         (() => {
                           let globalIndex = 0;
-                          return visibleSections.map(section => {
+                          const groups = visibleSections.map(section => {
                             const sectionResults = results[section.key];
                             if (sectionResults.length === 0) return null;
 
@@ -527,8 +571,11 @@ export function GlobalSearch() {
                             globalIndex += sectionResults.length;
 
                             return (
-                              <div key={section.key}>
-                                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted flex justify-between">
+                              <div key={section.key} role="presentation">
+                                <div
+                                  role="presentation"
+                                  className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase bg-muted flex justify-between"
+                                >
                                   <span>{section.label}</span>
                                   <Link
                                     to={`${section.path}?q=${encodeURIComponent(query)}`}
@@ -542,6 +589,7 @@ export function GlobalSearch() {
                                   <ResultItem
                                     key={result.id}
                                     result={result}
+                                    optionId={optionId(sectionStartIndex + index)}
                                     globalIndex={sectionStartIndex + index}
                                     selectedIndex={selectedIndex}
                                     onResultClick={handleResultClick}
@@ -550,6 +598,11 @@ export function GlobalSearch() {
                               </div>
                             );
                           });
+                          return (
+                            <div role="listbox" id={listboxId} aria-label="Search results">
+                              {groups}
+                            </div>
+                          );
                         })()}
 
                     {Object.values(results).every(arr => arr.length === 0) && (

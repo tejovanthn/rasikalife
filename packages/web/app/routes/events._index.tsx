@@ -65,12 +65,10 @@ export default function EventsIndex() {
             {/* Shown signed out too: /events/new sends a visitor through sign-in and back. */}
             <Link
               to="/events/new"
-              aria-label="List your event"
               className={cn(buttonVariants(), 'shrink-0 min-h-11 md:min-h-10 no-underline')}
             >
               <Plus className="mr-1.5 h-4 w-4" aria-hidden="true" />
-              <span className="md:hidden">Add</span>
-              <span className="hidden md:inline">List your event</span>
+              List your event
             </Link>
           </header>
         }

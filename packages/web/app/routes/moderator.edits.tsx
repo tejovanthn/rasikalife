@@ -189,7 +189,7 @@ function statusBadge(status: string) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-800'}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[status] || 'bg-muted text-muted-foreground'}`}
     >
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>

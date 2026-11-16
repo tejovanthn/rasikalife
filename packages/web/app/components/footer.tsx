@@ -11,7 +11,7 @@ const NavLink = ({
 }) => (
   <a
     href={href}
-    className="block px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
+    className="flex items-center min-h-11 md:min-h-0 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted transition-colors"
   >
     {children}
   </a>

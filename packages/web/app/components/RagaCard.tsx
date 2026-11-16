@@ -14,8 +14,7 @@ export function RagaCard({ raga }: RagaCardProps) {
   return (
     <Link
       to={generateRagaUrl(raga.name, raga.id)}
-      className="group block cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
-      aria-label={`View raga: ${raga.name}`}
+      className="group block cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-lg"
     >
       <Card className="h-full transition-shadow duration-200 hover:shadow-md">
         <CardHeader className="pb-3">

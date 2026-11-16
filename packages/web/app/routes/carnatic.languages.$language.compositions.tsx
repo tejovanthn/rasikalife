@@ -5,7 +5,9 @@ import { client } from '~/api.server';
 import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError } from '~/lib/errors';
+import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ params, request }) => {
   const { language } = params;
@@ -27,9 +29,11 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       nextToken: nextToken || undefined,
     });
 
+    const script = await scriptSessionResolver.getScript(request);
+
     return data({
       language: decodedLanguage,
-      compositions: result.items,
+      compositions: result.items.map(c => compositionCardView(c, script)),
       hasMore: result.hasMore,
       nextToken: result.nextToken,
       prevToken: nextToken,

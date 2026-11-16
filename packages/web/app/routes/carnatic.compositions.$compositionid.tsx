@@ -13,8 +13,9 @@ import {
   BreadcrumbStructuredData,
   MusicCompositionStructuredData,
 } from '~/components/structured-data';
-import { compositionMeta } from '~/lib/composition-meta';
+import { Badge } from '~/components/ui/badge';
 import { getUser } from '~/lib/auth.server';
+import { compositionMeta } from '~/lib/composition-meta';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { compositionOgImageUrl } from '~/lib/og';
 import {
@@ -263,7 +264,7 @@ export default function CompositionDetails() {
   ];
 
   return (
-    <div className="max-w-4xl m-auto">
+    <div className="max-w-4xl m-auto pb-48 md:pb-0">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={composition.title}
@@ -287,9 +288,6 @@ export default function CompositionDetails() {
         <h2 className="text-xl font-semibold mb-4">About</h2>
         <div className="space-y-2 text-sm">
           <p>
-            <strong>Title:</strong> {composition.title}
-          </p>
-          <p>
             <strong>Composer:</strong>{' '}
             <Link
               to={generateArtistUrl(composition.composer.name, composition.composer.id)}
@@ -302,22 +300,21 @@ export default function CompositionDetails() {
             <strong>Language:</strong>{' '}
             <Link
               to={`/carnatic/languages/${encodeURIComponent(composition.language)}`}
-              className="text-primary hover:underline"
+              className="inline-flex min-h-11 items-center md:min-h-0 rounded-full no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              {composition.language}
+              <Badge variant="language">{composition.language}</Badge>
             </Link>
           </p>
           <p>
             <strong>Ragas:</strong>{' '}
             {composition.ragas && composition.ragas.length > 0 ? (
-              composition.ragas.map((raga, index) => (
-                <span key={raga.id}>
-                  {index > 0 && ', '}
+              composition.ragas.map(raga => (
+                <span key={raga.id} className="mr-2">
                   <Link
                     to={generateRagaUrl(raga.name, raga.id)}
-                    className="text-primary hover:underline"
+                    className="inline-flex min-h-11 items-center md:min-h-0 rounded-full no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
-                    {raga.name}
+                    <Badge variant="raga">{raga.name}</Badge>
                   </Link>
                 </span>
               ))
@@ -328,14 +325,13 @@ export default function CompositionDetails() {
           <p>
             <strong>Talas:</strong>{' '}
             {composition.talas && composition.talas.length > 0 ? (
-              composition.talas.map((tala, index) => (
-                <span key={tala.id}>
-                  {index > 0 && ', '}
+              composition.talas.map(tala => (
+                <span key={tala.id} className="mr-2">
                   <Link
                     to={generateTalaUrl(tala.name, tala.id)}
-                    className="text-primary hover:underline"
+                    className="inline-flex min-h-11 items-center md:min-h-0 rounded-full no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
-                    {tala.name}
+                    <Badge variant="tala">{tala.name}</Badge>
                   </Link>
                 </span>
               ))
