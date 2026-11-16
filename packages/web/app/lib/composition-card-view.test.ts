@@ -25,7 +25,12 @@ describe('compositionCardView', () => {
   });
 
   it('handles missing ragas and talas', () => {
-    const v = compositionCardView({ id: 'c2', title: 'x' }, 'roman');
+    const v = compositionCardView<{
+      id: string;
+      title: string;
+      ragas?: { id: string; name: string }[];
+      talas?: { id: string; name: string }[];
+    }>({ id: 'c2', title: 'x' }, 'roman');
     expect(v.ragas).toBeUndefined();
     expect(v.talas).toBeUndefined();
   });

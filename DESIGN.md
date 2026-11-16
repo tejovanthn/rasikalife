@@ -2,7 +2,7 @@
 name: Rasika.life
 description: A warm, community-built reference for Indian classical arts, legible at a glance in a concert hall.
 colors:
-  fired-earthenware: "#bc4110"
+  fired-earthenware: "#a5380e"
   fired-earthenware-dark: "#ed5e25"
   hall-light: "#ffede5"
   lamp-black: "#130a06"
@@ -145,7 +145,7 @@ The system explicitly rejects four things PRODUCT.md names. It is not a **cold, 
 A single warm hue at 17° runs through every surface, line, and neutral, with three cool domain hues admitted for one job each.
 
 ### Primary
-- **Fired Earthenware** (`#bc4110` light, `#ed5e25` dark): The one accent. Links, primary buttons, the focus ring, current selection. Named for the material PRODUCT.md names: earthenware, temple stone. The two values are the same clay at two temperatures, and they are deliberately different lightnesses so that link text clears 4.73:1 on warm paper and 5.78:1 on lamp black. It is never used as decoration, never as a fill behind body text, never as a gradient.
+- **Fired Earthenware** (`#a5380e` light, `#ed5e25` dark): The one accent. Links, primary buttons, the focus ring, current selection. Named for the material PRODUCT.md names: earthenware, temple stone. The two values are the same clay at two temperatures, and they are deliberately different lightnesses so that link text clears 5.81:1 on warm paper, 5.17:1 on Ash Rose cards, 4.59:1 on muted panels, and 5.78:1 on lamp black. It is never used as decoration, never as a fill behind body text, never as a gradient.
 
 ### Secondary
 - **Raga Violet** (`#ebdef7` surface / `#4d1f7a` ink): Marks a raga, and only a raga.

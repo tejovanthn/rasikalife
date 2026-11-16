@@ -1,12 +1,11 @@
 import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
 import { startOfDayInstant, todayInTimeZone } from '@rasika/core/shared/timezone';
-import type { ArtistType, CompositionWithRelations } from '@rasika/core/types/entities';
+import type { ArtistType } from '@rasika/core/types/entities';
 import type { LoaderFunction, MetaFunction } from 'react-router';
 import { data } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { client } from '~/api.server';
 import { ArtistCard } from '~/components/ArtistCard';
-import { CompositionCard } from '~/components/CompositionCard';
 import { EventList } from '~/components/EventCard';
 import { SectionHeader } from '~/components/shared';
 import { OrganizationStructuredData, WebsiteStructuredData } from '~/components/structured-data';
@@ -26,8 +25,7 @@ interface UpcomingEvent {
 }
 
 type LoaderData = {
-  popularCompositions: CompositionWithRelations[];
-  featuredArtists: ArtistType[];
+  popularArtists: ArtistType[];
   upcomingEvents: UpcomingEvent[];
   cityLinks: CityLink[];
 };
@@ -67,9 +65,9 @@ export const meta: MetaFunction = () => {
 export const loader: LoaderFunction = async () => {
   try {
     const zone = DEFAULT_EVENT_TIMEZONE;
-    const [popularCompositions, featuredArtists, listings] = await Promise.all([
-      client.composition.list.query({ limit: 6 }),
-      client.artist.list.query({ limit: 4 }),
+    const [popularArtists, listings] = await Promise.all([
+      // Ranked by popularity from the search index (the /artists "Popular" order), not A to Z.
+      client.artist.browse.query({ sort: 'popular', limit: 4 }),
       // Already sorted by start time. Carries each event's city, from its venue.
       client.event.upcomingListings.query({
         from: startOfDayInstant(todayInTimeZone(zone), zone),
@@ -77,16 +75,14 @@ export const loader: LoaderFunction = async () => {
     ]);
 
     return data<LoaderData>({
-      popularCompositions: popularCompositions.items,
-      featuredArtists: featuredArtists.items,
+      popularArtists: popularArtists.items,
       upcomingEvents: listings.slice(0, 6),
       cityLinks: homeCityLinks(listings),
     });
   } catch (error) {
     console.error('Error loading homepage data:', error);
     return data<LoaderData>({
-      popularCompositions: [],
-      featuredArtists: [],
+      popularArtists: [],
       upcomingEvents: [],
       cityLinks: homeCityLinks([]),
     });
@@ -94,45 +90,44 @@ export const loader: LoaderFunction = async () => {
 };
 
 export default function HomePage() {
-  const { popularCompositions, featuredArtists, upcomingEvents, cityLinks } =
-    useLoaderData<LoaderData>();
+  const { popularArtists, upcomingEvents, cityLinks } = useLoaderData<LoaderData>();
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-6xl">
+    <main className="container mx-auto px-4 py-4 sm:py-8 max-w-6xl">
       {/* Hero */}
-      <section className="py-12 mb-12 md:flex md:items-end md:justify-between md:gap-12">
+      <section className="py-4 mb-8 sm:py-12 sm:mb-12">
         <div className="md:max-w-xl">
-          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary mb-4">
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase text-primary mb-2 sm:mb-4">
             Carnatic &nbsp;·&nbsp; Hindustani
           </p>
-          <h1 className="hero-title text-left mt-0">
+          <h1 className="hero-title text-left mt-0 !text-3xl sm:!text-5xl mb-2 sm:mb-4">
             Indian Classical Music, <span className="text-primary">Live Near You</span>
           </h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg">
+          <p className="text-base sm:text-lg text-muted-foreground mb-4 sm:mb-8 max-w-lg">
             Discover upcoming concerts and performances. Explore compositions, ragas, artists, and
             the living tradition of Indian classical music.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <Link
               to="/events"
-              className="inline-block px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="inline-flex min-h-[44px] items-center px-4 py-2 sm:px-6 sm:py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Upcoming Events
             </Link>
             <Link
               to="/artists"
-              className="inline-block px-6 py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="inline-flex min-h-[44px] items-center px-4 py-2 sm:px-6 sm:py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Artists
             </Link>
             <Link
               to="/carnatic/compositions"
-              className="inline-block px-6 py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="inline-flex min-h-[44px] items-center px-4 py-2 sm:px-6 sm:py-3 border border-border text-foreground rounded-lg hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Compositions
             </Link>
           </div>
-          <p className="mt-5 text-sm text-muted-foreground">
+          <p className="mt-3 sm:mt-5 text-sm text-muted-foreground">
             Concerts in{' '}
             {cityLinks.map((city, i) => (
               <span key={city.slug}>
@@ -144,21 +139,6 @@ export default function HomePage() {
             ))}
           </p>
         </div>
-        <aside
-          className="hidden md:flex flex-col items-end gap-3 text-right shrink-0"
-          aria-label="Music tradition highlights"
-        >
-          {[
-            { label: 'Ragas', sub: 'melodic frameworks' },
-            { label: 'Talas', sub: 'rhythmic cycles' },
-            { label: 'Kritis', sub: 'devotional compositions' },
-          ].map(item => (
-            <div key={item.label} className="border-r-2 border-primary pr-4">
-              <div className="text-sm font-semibold text-foreground">{item.label}</div>
-              <div className="text-xs text-muted-foreground">{item.sub}</div>
-            </div>
-          ))}
-        </aside>
       </section>
 
       {/* Upcoming Events */}
@@ -171,25 +151,13 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Featured Artists */}
-      {featuredArtists.length > 0 && (
+      {/* Popular artists */}
+      {popularArtists.length > 0 && (
         <section className="mb-14">
-          <SectionHeader title="Artists" viewAllPath="/artists" />
+          <SectionHeader title="Popular artists" viewAllPath="/artists" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {featuredArtists.map(artist => (
+            {popularArtists.map(artist => (
               <ArtistCard key={artist.id} artist={artist} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Compositions */}
-      {popularCompositions.length > 0 && (
-        <section className="mb-14">
-          <SectionHeader title="Compositions" viewAllPath="/carnatic/compositions" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {popularCompositions.map(composition => (
-              <CompositionCard key={composition.id} composition={composition} />
             ))}
           </div>
         </section>

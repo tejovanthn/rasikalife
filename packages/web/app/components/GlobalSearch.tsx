@@ -164,6 +164,7 @@ const ResultItem = memo(function ResultItem({
   return (
     <Link
       id={optionId}
+      // biome-ignore lint/a11y/useSemanticElements: combobox option must be the link itself
       role="option"
       aria-selected={selectedIndex === globalIndex}
       tabIndex={-1}
@@ -477,6 +478,7 @@ export function GlobalSearch() {
 
             <div
               ref={resultsRef}
+              // biome-ignore lint/a11y/useSemanticElements: custom modal; focus is trapped by hand
               role="dialog"
               aria-modal="true"
               aria-label="Search"
@@ -546,6 +548,7 @@ export function GlobalSearch() {
                           const allResults = getVisibleResults();
                           if (allResults.length === 0) return null;
                           return (
+                            // biome-ignore lint/a11y/useFocusableInteractive lint/a11y/useSemanticElements: focus stays on the input (aria-activedescendant)
                             <div role="listbox" id={listboxId} aria-label="Search results">
                               {allResults.map((result, index) => (
                                 <ResultItem
@@ -599,6 +602,7 @@ export function GlobalSearch() {
                             );
                           });
                           return (
+                            // biome-ignore lint/a11y/useFocusableInteractive lint/a11y/useSemanticElements: focus stays on the input (aria-activedescendant)
                             <div role="listbox" id={listboxId} aria-label="Search results">
                               {groups}
                             </div>

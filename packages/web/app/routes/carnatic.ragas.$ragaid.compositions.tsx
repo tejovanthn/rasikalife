@@ -14,9 +14,9 @@ import { CompositionCard } from '~/components/CompositionCard';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
+import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
-import { compositionCardView } from '~/lib/composition-card-view';
 import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
 
