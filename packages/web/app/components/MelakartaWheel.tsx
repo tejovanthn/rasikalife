@@ -8,22 +8,9 @@ import { generateRagaUrl } from '~/lib/url-slug';
 import { cn, titleCaseName } from '~/lib/utils';
 import { ScriptContext } from './script-context';
 
-// One pastel per chakra, Indu through Aditya, so the 12 arcs read as a rainbow
-// winding clockwise from the top.
-const CHAKRA_COLORS = [
-  '#fde68a',
-  '#fdba74',
-  '#fca5a5',
-  '#fda4af',
-  '#f9a8d4',
-  '#d8b4fe',
-  '#a5b4fc',
-  '#93c5fd',
-  '#7dd3fc',
-  '#5eead4',
-  '#86efac',
-  '#bef264',
-];
+// One token per chakra (--chakra-1 to --chakra-12 in globals.css), Indu through Aditya, so
+// the 12 arcs wind clockwise from the top and follow the theme.
+const chakraFill = (chakra: number) => `hsl(var(--chakra-${chakra}))`;
 
 const SIZE = 440;
 const CX = SIZE / 2;
@@ -108,23 +95,23 @@ export function MelakartaWheel() {
 
   return (
     <section aria-labelledby="melakarta-heading" className="mb-8">
-      <button
-        type="button"
-        onClick={() => setOpen(current => !current)}
-        aria-expanded={open}
-        aria-controls="melakarta-panel"
-        className="flex w-full items-center justify-between rounded-xl px-1 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
-        <span id="melakarta-heading" className="text-xl font-semibold">
-          The 72 Melakartas
-        </span>
-        <ChevronDown
-          className={cn(
-            'h-5 w-5 text-muted-foreground transition-transform duration-200',
-            !open && '-rotate-90'
-          )}
-        />
-      </button>
+      <h2 id="melakarta-heading" className="mt-0 text-xl font-semibold">
+        <button
+          type="button"
+          onClick={() => setOpen(current => !current)}
+          aria-expanded={open}
+          aria-controls="melakarta-panel"
+          className="flex w-full items-center justify-between rounded-xl px-1 py-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span>The 72 Melakartas</span>
+          <ChevronDown
+            className={cn(
+              'h-5 w-5 text-muted-foreground transition-transform duration-200',
+              !open && '-rotate-90'
+            )}
+          />
+        </button>
+      </h2>
       <p className="mb-4 px-1 text-sm text-muted-foreground">
         The parent scales of Carnatic ragas, grouped into 12 chakras. Each segment links to the
         raga.
@@ -149,7 +136,7 @@ export function MelakartaWheel() {
                   dominantBaseline="middle"
                   fontSize="10.5"
                   fontWeight="600"
-                  fill="#64748b"
+                  className="fill-muted-foreground"
                 >
                   {name}
                 </text>
@@ -170,8 +157,8 @@ export function MelakartaWheel() {
                   <title>{`${entry.mela}. ${entry.displayName}`}</title>
                   <path
                     d={wedgePath(fromDeg, toDeg)}
-                    fill={CHAKRA_COLORS[entry.chakra - 1]}
-                    stroke="#ffffff"
+                    fill={chakraFill(entry.chakra)}
+                    stroke="hsl(var(--background))"
                     strokeWidth="1"
                     className="transition-[filter] duration-150 group-hover:brightness-[0.85] group-focus-visible:brightness-[0.85]"
                   />
@@ -182,8 +169,8 @@ export function MelakartaWheel() {
                     dominantBaseline="middle"
                     fontSize="9.5"
                     fontWeight="600"
-                    fill="#334155"
-                    stroke="#ffffff"
+                    className="fill-foreground"
+                    stroke="hsl(var(--background))"
                     strokeWidth="2.5"
                     style={{ paintOrder: 'stroke' }}
                   >
@@ -199,11 +186,17 @@ export function MelakartaWheel() {
               textAnchor="middle"
               fontSize="26"
               fontWeight="700"
-              fill="#334155"
+              className="fill-foreground"
             >
               72
             </text>
-            <text x={CX} y={CY + 14} textAnchor="middle" fontSize="11" fill="#64748b">
+            <text
+              x={CX}
+              y={CY + 14}
+              textAnchor="middle"
+              fontSize="11"
+              className="fill-muted-foreground"
+            >
               Melakartas
             </text>
           </svg>

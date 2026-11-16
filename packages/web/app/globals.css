@@ -15,11 +15,11 @@
     --popover-foreground: 17 20% 8%;
     /* Deeper than the dark-mode rust on purpose. At the shared L 53.7% this hue gives
        2.97:1 as link text on --background and 3.38:1 for white button labels, both below
-       WCAG AA. L 40% takes those to 4.73:1 and 5.38:1 with the hue and saturation
+       WCAG AA. L 35% takes those to 5.81:1 (page), 5.17:1 (card), 4.59:1 (muted) and 6.44:1 with the hue and saturation
        untouched, so the earthenware character holds and only the value moves. */
     --primary: 17 84.7% 35%;
     /* Warm white, not #fff. L 99% at the brand hue is indistinguishable as a colour but
-       keeps the token on-system, and holds 5.25:1 against the primary fill. */
+       keeps the token on-system, and holds 6.44:1 against the primary fill. */
     --primary-foreground: 17 100% 99%;
     --secondary: 17 30% 70%;
     --secondary-foreground: 17 20% 8%;
@@ -55,6 +55,8 @@
        its bright amber, which clears 10:1 on lamp black. */
     --warning: 38 92% 26%;
     --warning-foreground: 17 100% 99%;
+    /* The 12 chakra wedges of the melakarta wheel: a warm-to-cool ramp that skips violet
+       (raga only). Labels on them use --foreground; contrast.test.ts asserts every pair. */
     --chakra-1: 0 60% 80%;
     --chakra-2: 12 60% 80%;
     --chakra-3: 24 60% 80%;

@@ -123,8 +123,8 @@ function DistanceControl({
             className="underline underline-offset-4"
           >
             Sign in
-          </Link> to
-          see how far each concert is from you.
+          </Link>{' '}
+          to see how far each concert is from you.
         </p>
       ) : (
         <>

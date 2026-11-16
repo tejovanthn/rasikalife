@@ -16,7 +16,7 @@ function tokens(mode: 'light' | 'dark'): Record<string, [number, number, number]
 
   const found: Record<string, [number, number, number]> = {};
   for (const [, name, h, s, l] of block.matchAll(
-    /--([a-z-]+):\s*(-?[\d.]+)\s+([\d.]+)%\s+([\d.]+)%/g
+    /--([a-z0-9-]+):\s*(-?[\d.]+)\s+([\d.]+)%\s+([\d.]+)%/g
   )) {
     found[name] = hslToRgb(Number(h), Number(s), Number(l));
   }
@@ -34,6 +34,20 @@ describe.each(['light', 'dark'] as const)('%s theme token contrast', mode => {
 
   it('link text on the page background meets AA', () => {
     expect(contrastRatio(t.primary, t.background)).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  // Link text also sits on cards, muted panels and hover/accent fills, not only the page. At the
+  // old light L 40% it read 4.21:1 on --card (72 raga links) and 3.74:1 on --muted. Light
+  // --accent (4.02:1 at L 35%) is a hover wash behind nav text, not a link surface, so it is
+  // asserted in dark only.
+  const linkSurfaces = mode === 'light' ? ['card', 'muted'] : ['card', 'muted', 'accent'];
+  it.each(linkSurfaces)('primary as text meets AA on %s', surface => {
+    expect(contrastRatio(t.primary, t[surface])).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
+  });
+
+  // The 12 melakarta wheel wedges carry --foreground number labels.
+  it.each(Array.from({ length: 12 }, (_, i) => i + 1))('wheel label on chakra %i meets AA', n => {
+    expect(contrastRatio(t.foreground, t[`chakra-${n}`])).toBeGreaterThanOrEqual(AA_NORMAL_TEXT);
   });
 
   it('button labels on a filled primary button meet AA', () => {

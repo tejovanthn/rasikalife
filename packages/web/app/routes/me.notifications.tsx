@@ -108,9 +108,7 @@ function SwitchFace({ on }: { on: boolean }) {
       <span
         aria-hidden="true"
         className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full bg-background shadow transition-transform ${
-          on
-            ? 'left-2.5 translate-x-5 md:left-1.5 md:translate-x-4'
-            : 'left-2.5 md:left-1.5'
+          on ? 'left-2.5 translate-x-5 md:left-1.5 md:translate-x-4' : 'left-2.5 md:left-1.5'
         }`}
       />
     </>
