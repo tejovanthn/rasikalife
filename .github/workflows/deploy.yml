@@ -1,0 +1,55 @@
+name: Deploy
+
+# Deploys the prod stage on every push to main. Skips (and shows green) when the
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY repo secrets are missing.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Guard — require AWS credentials
+        id: guard
+        run: |
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "No AWS credentials configured — skipping deploy."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v6
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        if: steps.guard.outputs.skip != 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+        if: steps.guard.outputs.skip != 'true'
+
+      - name: Configure AWS credentials
+        if: steps.guard.outputs.skip != 'true'
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Deploy
+        if: steps.guard.outputs.skip != 'true'
+        run: pnpm exec sst deploy --stage prod
