@@ -3,7 +3,10 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
-## 2026-11-12: Venue QR Follow, all phases on local `main`, not pushed or deployed
+## 2026-11-12: Venue QR Follow, all phases built
+
+Deployed to prod by 2026-11-13 (admin, sabha and the /for-sabhas form are live; redeployed
+2026-11-16 with the design audit fixes). The steps below are kept until each is confirmed done.
 
 Spec, copy, build notes and owner decisions: `docs/plans/261112-01-venue-qr-follow/`. Each phase has
 a `### Venue QR Follow` section in `CLAUDE.md`. Tests pass (core 2239, web 518, trpc unit 115,
