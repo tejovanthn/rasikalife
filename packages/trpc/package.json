@@ -13,14 +13,14 @@
     "test:unit": "vitest run --config vitest.unit.config.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.1000.0",
-    "@aws-sdk/client-sqs": "^3.1166.0",
+    "@aws-sdk/client-lambda": "^3.1169.0",
+    "@aws-sdk/client-sqs": "^3.1169.0",
     "@openauthjs/openauth": "^0.4.3",
     "@rasika/core": "workspace:*",
     "@rasika/email": "workspace:*",
-    "@trpc/client": "^11.11.0",
-    "@trpc/server": "^11.11.0",
-    "fuse.js": "^7.1.0",
+    "@trpc/client": "^11.28.2",
+    "@trpc/server": "^11.28.2",
+    "fuse.js": "^7.5.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

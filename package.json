@@ -23,15 +23,15 @@
     "@uidotdev/usehooks": "^2.4.1",
     "arctic": "^3.7.0",
     "harfbuzzjs": "0.4.15",
-    "hono": "^4.12.3",
+    "hono": "^4.13.18",
     "sst": "^3.19.3"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@tsconfig/node20": "^20.1.9",
+    "@tsconfig/node20": "^20.1.11",
     "@types/aws-lambda": "8.10.138",
     "globals": "^15.15.0",
-    "tsx": "^4.21.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }
