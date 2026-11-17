@@ -1,5 +1,5 @@
 import type { ClassLearnerAccess } from '@rasika/core';
-import { Heading, Text } from '@react-email/components';
+import { Heading, Text } from 'react-email';
 import { Button } from './components/button';
 import { EmailLayout } from './components/layout';
 

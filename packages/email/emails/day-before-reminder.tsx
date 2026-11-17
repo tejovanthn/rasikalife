@@ -1,4 +1,4 @@
-import { Text } from '@react-email/components';
+import { Text } from 'react-email';
 import { Button } from './components/button';
 import { EmailLayout } from './components/layout';
 import { NotifyFooter } from './components/notify-footer';
