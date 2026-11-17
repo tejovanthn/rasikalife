@@ -520,7 +520,7 @@
     "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
-    "@types/node": "^20.19.43",
+    "@types/node": "^22",
     "@vitest/coverage-v8": "^1.6.1",
     "rimraf": "^5.0.10",
     "typescript": "^5.9.3",

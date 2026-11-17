@@ -14,7 +14,7 @@
     "@rasika/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^20.19.43",
+    "@types/node": "^22",
     "typescript": "^5.9.3"
   }
 }

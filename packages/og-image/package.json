@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.164",
-    "@types/node": "^20.19.43",
+    "@types/node": "^22",
     "@vitest/coverage-v8": "^1.6.1",
     "typescript": "^5.9.3",
     "vitest": "^1.6.1"
