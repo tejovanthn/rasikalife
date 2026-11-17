@@ -99,9 +99,9 @@ export function CompositionSearch({ value, displayValue, onSelect, onFreeText }:
           {!loading &&
             !hasError &&
             suggestions.map(s => (
-              // biome-ignore lint/a11y/useSemanticElements: role=option is correct inside a custom listbox
               <button
                 type="button"
+                // biome-ignore lint/a11y/useSemanticElements: role=option is correct inside a custom listbox
                 role="option"
                 key={s.id}
                 aria-selected={s.id === value}
@@ -112,9 +112,9 @@ export function CompositionSearch({ value, displayValue, onSelect, onFreeText }:
               </button>
             ))}
           {!loading && (
-            // biome-ignore lint/a11y/useSemanticElements: role=option is correct inside a custom listbox
             <button
               type="button"
+              // biome-ignore lint/a11y/useSemanticElements: role=option is correct inside a custom listbox
               role="option"
               aria-selected={false}
               onMouseDown={handleFreeText}

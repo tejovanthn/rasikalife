@@ -198,9 +198,7 @@ async function callGemini(
       {
         role: 'user',
         parts: [
-          ...(hint
-            ? [{ text: `ADDITIONAL CONTEXT (${hintLabel}):\n${hint}\n\n` }]
-            : []),
+          ...(hint ? [{ text: `ADDITIONAL CONTEXT (${hintLabel}):\n${hint}\n\n` }] : []),
           { text: prompt },
           { inlineData: { data: imageData.data, mimeType: imageData.mimeType } },
         ],

@@ -8,6 +8,7 @@ export function GlobalLoader() {
 
   return (
     <>
+      {/* biome-ignore lint/a11y/useSemanticElements: role=status live region; <output> adds no value here */}
       <span role="status" aria-live="polite" className="sr-only">
         Loading page
       </span>

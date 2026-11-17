@@ -22,6 +22,7 @@ type Props = {
 
 export function CompositionTypePicker({ value, onChange }: Props) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: role=group on a div; <fieldset> would change the layout
     <div className="flex flex-wrap gap-1.5" role="group" aria-label="Composition type">
       {COMPOSITION_TYPES.map(type => (
         <button

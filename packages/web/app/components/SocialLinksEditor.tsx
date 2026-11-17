@@ -61,8 +61,6 @@ export function SocialLinksEditor({
       )}
 
       {value.map((link, i) => (
-        // biome-ignore lint/suspicious/noArrayIndexKey: rows have no id until saved, and the
-        // index is what the parallel form fields are zipped by.
         <div key={i} className="flex items-center gap-2">
           <Select
             name="socialLinkPlatform"

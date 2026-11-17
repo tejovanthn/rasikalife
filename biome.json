@@ -60,7 +60,9 @@
       "**/coverage/**",
       "**/.next/**",
       "**/.react-router/**",
-      "**/*.d.ts"
+      "**/*.d.ts",
+      "docs/research/**",
+      "**/__fixtures__/**"
     ]
   },
   "vcs": {

@@ -126,6 +126,7 @@ export default function ConcertLogEdit() {
           <Button type="submit" disabled={isSaving}>
             {isSaving ? 'Saving…' : 'Save notes'}
           </Button>
+          {/* biome-ignore lint/a11y/useSemanticElements: role=status live region for the save state; <output> adds no value here */}
           <span role="status" aria-live="polite" className="text-xs text-muted-foreground">
             {fetcher.data?.success && !isSaving ? 'Saved' : ''}
           </span>

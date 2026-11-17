@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import chromium from '@sparticuz/chromium';
-import { addExtra } from 'puppeteer-extra';
 import puppeteerCore from 'puppeteer-core';
+import { addExtra } from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
 type FetchResult =

@@ -78,6 +78,7 @@ export function ImageUpload({
     <div className="space-y-2">
       <Label htmlFor={inputId}>{label}</Label>
       <div className="flex items-start gap-4">
+        {/* biome-ignore lint/a11y/useKeyWithClickEvents: mouse shortcut only; the file input beside it is the keyboard path */}
         <div
           className="relative h-24 w-24 rounded-md border-2 border-dashed border-input bg-muted flex items-center justify-center cursor-pointer overflow-hidden flex-shrink-0"
           onClick={() => !isUploading && inputRef.current?.click()}

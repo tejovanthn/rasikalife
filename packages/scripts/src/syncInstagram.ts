@@ -123,6 +123,7 @@ export async function syncInstagram(options: SyncOptions = {}): Promise<void> {
       ? undefined
       : await SocialPost.getLatestPostIdForEntity(record.entityType, record.entityId);
 
+    // biome-ignore lint/suspicious/noImplicitAnyLet: type is inferred from the single assignment in the try block
     let posts;
     try {
       posts = await scrapeInstagramProfile(record.handle, {

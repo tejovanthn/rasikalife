@@ -500,7 +500,6 @@ describe('getEventsByIds', () => {
         { id: 'e2', title: 'Removed', deletedAt: '2026-01-01T00:00:00.000Z' },
       ],
     });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).get = vi.fn().mockReturnValue({ go });
 
     const result = await getEventsByIds(['e1', 'e2']);
@@ -513,7 +512,6 @@ describe('getEventsByIds', () => {
 
   it('does not hit the table at all for an empty list', async () => {
     const { EventEntity } = await import('./entity');
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).get = vi.fn();
     expect(await getEventsByIds([])).toEqual([]);
     expect(EventEntity.get).not.toHaveBeenCalled();
@@ -532,13 +530,11 @@ describe('restoreEvent', () => {
         data: { id: 'e1', title: 'Jvalanti', artists: [] },
       }),
     });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).get = vi.fn().mockReturnValue({
       go: vi.fn().mockResolvedValue({
         data: { id: 'e1', title: 'Jvalanti', deletedAt: '2026-08-09T17:08:53.771Z' },
       }),
     });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).patch = vi.fn().mockReturnValue({ remove });
 
     const result = await restoreEvent('e1');
@@ -551,13 +547,11 @@ describe('restoreEvent', () => {
 
   it('refuses an event that was merged rather than deleted', async () => {
     const { EventEntity } = await import('./entity');
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).get = vi.fn().mockReturnValue({
       go: vi.fn().mockResolvedValue({
         data: { id: 'e1', deletedAt: '2026-08-09T17:08:53.771Z', mergedIntoId: 'e2' },
       }),
     });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).patch = vi.fn();
 
     await expect(restoreEvent('e1')).rejects.toThrow('merged into e2');
@@ -566,11 +560,9 @@ describe('restoreEvent', () => {
 
   it('leaves an event that is not deleted alone', async () => {
     const { EventEntity } = await import('./entity');
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).get = vi.fn().mockReturnValue({
       go: vi.fn().mockResolvedValue({ data: { id: 'e1', title: 'Jvalanti' } }),
     });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).patch = vi.fn();
 
     expect((await restoreEvent('e1')).id).toBe('e1');
@@ -579,7 +571,6 @@ describe('restoreEvent', () => {
 
   it('throws when there is no such event', async () => {
     const { EventEntity } = await import('./entity');
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     (EventEntity as any).get = vi.fn().mockReturnValue({
       go: vi.fn().mockResolvedValue({ data: null }),
     });

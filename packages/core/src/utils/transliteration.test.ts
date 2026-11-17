@@ -125,6 +125,7 @@ describe('formatSwaras', () => {
 
   it('never transliterates — the letters collide with ITRANS consonants', () => {
     // `fromItrans` would turn this into `ṣ ṟ2 ġ2 ṃ1 P ḍ1 ṇ2 ṣ`.
+    // biome-ignore lint/suspicious/noMisleadingCharacterClass: the test checks for combining marks on purpose
     expect(formatSwaras('S R2 G2 M1 P D1 N2 S')).not.toMatch(/[̀-̣̱ͯ]/);
   });
 

@@ -47,6 +47,7 @@ export async function mergeArtists(opts: { file: string; dryRun?: boolean }): Pr
     );
     const fields = Object.keys(patch);
     console.log(
+      // biome-ignore lint/style/useTemplate: keeps the two-line log layout
       `${opts.dryRun ? '[dry-run] ' : ''}${loser.name} → ${keep.name}` +
         (fields.length ? ` (copies ${fields.join(', ')})` : '')
     );

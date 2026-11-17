@@ -20,7 +20,6 @@ describe('ArtistMedia', () => {
     const { ArtistMediaEntity } = await import('./entity');
     vi.mocked(ArtistMediaEntity.create).mockReturnValue({
       go: vi.fn().mockResolvedValue({ data: { id: 'media-1' } }),
-      // biome-ignore lint/suspicious/noExplicitAny: entity mock
     } as any);
 
     await addArtistMedia({
@@ -50,7 +49,6 @@ describe('ArtistMedia', () => {
     const go = vi.fn().mockResolvedValue({ data: {} });
     const remove = vi.fn().mockReturnValue({ go });
     const set = vi.fn().mockReturnValue({ go, remove });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     vi.mocked(ArtistMediaEntity.patch).mockReturnValue({ set } as any);
 
     await updateArtistMedia('artist-1', 'media-1', { outlet: '', title: 'Kept' });
@@ -64,7 +62,6 @@ describe('ArtistMedia', () => {
     const go = vi.fn().mockResolvedValue({ data: {} });
     const remove = vi.fn().mockReturnValue({ go });
     const set = vi.fn().mockReturnValue({ go, remove });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     vi.mocked(ArtistMediaEntity.patch).mockReturnValue({ set } as any);
 
     await updateArtistMedia('artist-1', 'media-1', { title: 'Kept' });
@@ -76,7 +73,6 @@ describe('ArtistMedia', () => {
     const { ArtistMediaEntity } = await import('./entity');
     vi.mocked(ArtistMediaEntity.delete).mockReturnValue({
       go: vi.fn().mockResolvedValue({}),
-      // biome-ignore lint/suspicious/noExplicitAny: entity mock
     } as any);
 
     await deleteArtistMedia('artist-1', 'media-1');
@@ -96,7 +92,6 @@ describe('ArtistMedia', () => {
           { id: 'b', title: 'Newer', publishedOn: '2026-01-01' },
         ],
       }),
-      // biome-ignore lint/suspicious/noExplicitAny: entity mock
     } as any);
 
     const result = await listArtistMedia('artist-1');

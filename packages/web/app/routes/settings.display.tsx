@@ -60,6 +60,7 @@ export default function SettingsDisplay() {
 
       <Form method="post" className="space-y-6">
         <div>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: group heading; the radio inputs below have their own labels */}
           <label className="text-sm font-medium block mb-2">Theme</label>
           <div className="flex gap-3">
             {THEME_OPTIONS.map(opt => (

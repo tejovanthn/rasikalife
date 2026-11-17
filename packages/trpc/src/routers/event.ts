@@ -642,6 +642,7 @@ export const eventRouter = createTRPCRouter({
             };
             const key = normalised.id ?? Artist.normalizeArtistName(artist.name);
             if (!seen.has(key)) seen.set(key, resolveArtist(normalised));
+            // biome-ignore lint/style/noNonNullAssertion: seen.set() ran on the line above when the key was missing
             return seen.get(key)!.then(artistId => ({ ...artist, id: artistId }));
           })
         );

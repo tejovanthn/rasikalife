@@ -259,7 +259,6 @@ describe('updateArtist clearing', () => {
     const go = vi.fn().mockResolvedValue({ data: { id: 'artist-1', name: 'X' } });
     const remove = vi.fn().mockReturnValue({ go });
     const set = vi.fn().mockReturnValue({ go, remove });
-    // biome-ignore lint/suspicious/noExplicitAny: entity mock
     vi.mocked(ArtistEntity.update).mockReturnValue({ set } as any);
     return { set, remove, go };
   }
