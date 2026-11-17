@@ -1,8 +1,9 @@
 name: Deploy
 
-# Deploys the prod stage after the CI workflow passes on a push to main, and
-# deploys the exact commit CI tested. Skips (and shows green) when the
-# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY repo secrets are missing.
+# Deploys the prod stage after CI passes on a push to main. Assumes the AWS role in the repo
+# variable AWS_DEPLOY_ROLE_ARN through OIDC (no access keys). Skips (and shows
+# green) when the variable is unset. A smoke check fails the run if prod does
+# not answer.
 
 on:
   workflow_run:
@@ -24,17 +25,18 @@ jobs:
        github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     permissions:
+      id-token: write # for AWS OIDC
       contents: read
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Guard — require AWS credentials
+      - name: Guard — require AWS deploy role
         id: guard
         run: |
-          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
-            echo "No AWS credentials configured — skipping deploy."
+          if [ -z "${{ vars.AWS_DEPLOY_ROLE_ARN }}" ]; then
+            echo "No AWS_DEPLOY_ROLE_ARN configured — skipping deploy."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -57,9 +59,25 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: us-east-1
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
 
       - name: Deploy
         if: steps.guard.outputs.skip != 'true'
         run: pnpm exec sst deploy --stage prod
+
+      - name: Smoke check prod
+        # A green build is not proof the Lambdas load. Fail the run if prod doesn't answer.
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          SMOKE_URLS: >-
+            https://rasika.life/
+            https://talapettige.rasika.life/
+        run: |
+          for url in $SMOKE_URLS; do
+            for i in 1 2 3 4 5 6; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' -L --max-time 20 "$url" || echo 000)
+              if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then echo "$url -> $code"; continue 2; fi
+              echo "$url -> $code (try $i)"; sleep 10
+            done
+            echo "::error::$url returned $code after deploy"; exit 1
+          done
