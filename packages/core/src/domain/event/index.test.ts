@@ -94,6 +94,28 @@ describe('Event', () => {
       expect(event).toEqual(mockEvent);
     });
 
+    it('drops null festivalId, poster and artist fields before saving', async () => {
+      const input: CreateEventInput = {
+        title: 'Concert',
+        startDateTime: '2026-01-30T17:30:00.000Z',
+        festivalId: null,
+        posterUrl: null,
+        artists: [{ name: 'New Artist', id: null, title: null, role: 'violin' }],
+      };
+
+      const { EventEntity } = await import('./entity');
+      vi.mocked(EventEntity.create).mockReturnValue({
+        go: vi.fn().mockResolvedValue({ data: { id: 'test-id-123' } }),
+      } as any);
+
+      await createEvent(input, 'user-1');
+
+      const saved = vi.mocked(EventEntity.create).mock.calls[0][0] as Record<string, unknown>;
+      expect(saved).not.toHaveProperty('festivalId');
+      expect(saved).not.toHaveProperty('posterUrl');
+      expect(saved.artists).toEqual([{ name: 'New Artist', role: 'violin' }]);
+    });
+
     it('should create EventArtist junction records for linked artists', async () => {
       const input: CreateEventInput = {
         title: 'Concert',

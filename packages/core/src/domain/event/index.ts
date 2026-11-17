@@ -21,7 +21,16 @@ import { moveConcertLogs, moveRsvps } from './merge-junctions';
 import { savePosterHash } from './poster-hash';
 import type { CreateEventSchema, UpdateEventSchema } from './schema';
 
+// The scraper adds extraction metadata after validation. The public schema leaves it out,
+// so API clients cannot set it.
+export type ExtractionMeta = {
+  extractionConfidence?: number;
+  extractionRawResponse?: string;
+  extractionTimestamp?: string;
+};
 export type CreateEventInput = z.infer<typeof CreateEventSchema>;
+// createEvent takes the schema's input shape: the entity fills defaults such as timezone.
+export type CreateEventDraft = z.input<typeof CreateEventSchema> & ExtractionMeta;
 export type UpdateEventInput = z.infer<typeof UpdateEventSchema>;
 
 import { COLLABORATOR_INLINE_CAP } from '../artist/client';
@@ -44,22 +53,30 @@ function stripNulls(obj: Record<string, unknown>): Record<string, unknown> {
   return result;
 }
 
+// Typed variant of stripNulls: top-level null fields are removed, so their type loses null.
+function withoutNulls<T extends object>(obj: T): { [K in keyof T]: Exclude<T[K], null> } {
+  // Cast: TS cannot see that the filtered entries keep the keys of T.
+  return stripNulls(obj as Record<string, unknown>) as { [K in keyof T]: Exclude<T[K], null> };
+}
+
 export async function createEvent(
-  input: CreateEventInput,
+  input: CreateEventDraft,
   userId: string,
   options?: { status?: string }
 ): Promise<Event> {
   const id = generateId();
   const artForm = input.artForm || deriveArtForm(input.tags);
   const status = options?.status ?? 'approved';
+  // The form can send null for an empty field ("no festival", no poster). ElectroDB takes only a value or undefined.
+  const { artists, ...fields } = input;
   const result = await EventEntity.create({
     id,
-    ...input,
+    ...withoutNulls(fields),
+    ...(artists ? { artists: artists.map(a => withoutNulls(a)) } : {}),
     ...(artForm ? { artForm } : {}),
     status: status as 'draft' | 'approved' | 'submitted',
     createdBy: userId,
-    // Type-only cast: input.festivalId can be null, the entity type allows only string | undefined.
-  } as Parameters<typeof EventEntity.create>[0]).go();
+  }).go();
 
   if (!result.data) {
     throw createFailedError('event', input.title);
