@@ -16,6 +16,7 @@ import {
 import { ApplicationError, ErrorCode } from '@rasika/core/constants';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { collectFound } from '../collect-found';
 import { sendEventApprovedEmail } from '../event-approved-email';
 import { assertNoLikelyDuplicates, likelyDuplicatesOfDrafts } from '../event-duplicates';
 import { triggerReindex } from '../reindex';
@@ -666,7 +667,7 @@ export const eventRouter = createTRPCRouter({
         results.push(event);
       }
       triggerReindex();
-      return results;
+      return collectFound(results);
     }),
 
   // === MODERATOR PROCEDURES ===

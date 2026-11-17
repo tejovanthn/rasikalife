@@ -8,6 +8,7 @@ import { EntityPagination } from '~/components/EntityPagination';
 import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { compositionCardView } from '~/lib/composition-card-view';
+import { COMPOSITION_SEARCH_FILTERS } from '~/lib/composition-search';
 import { scriptSessionResolver } from '~/sessions.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -24,7 +25,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         query,
         limit: itemsPerPage,
         offset: 0,
-        filters: ['compositionTitle', 'lyrics'],
+        filters: COMPOSITION_SEARCH_FILTERS,
       });
 
       return data({

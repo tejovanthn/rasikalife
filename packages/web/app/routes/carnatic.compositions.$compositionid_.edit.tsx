@@ -213,18 +213,20 @@ export default function EditComposition() {
   const compositionUrl = generateCompositionUrl(composition.title, composition.id);
 
   // Use draft values if editing an existing draft, otherwise use current entity values
+  // Cast: proposedValues is untyped JSON; these are the fields this form proposes.
+  const proposed = (activeEdit?.proposedValues ?? {}) as Partial<{
+    title: string;
+    language: string;
+    composer: { id: string; name: string };
+    ragas: Array<{ id: string; name: string }>;
+    talas: Array<{ id: string; name: string }>;
+  }>;
   const defaultValues = {
-    title: (activeEdit?.proposedValues.title as string | undefined) || composition.title,
-    language: (activeEdit?.proposedValues.language as string | undefined) || composition.language,
-    composer: activeEdit?.proposedValues.composer
-      ? (activeEdit.proposedValues.composer as { id: string; name: string })
-      : composition.composer,
-    ragas: (activeEdit?.proposedValues.ragas as Array<{ id: string; name: string }> | undefined)
-      ? (activeEdit.proposedValues.ragas as Array<{ id: string; name: string }>)
-      : composition.ragas || [],
-    talas: (activeEdit?.proposedValues.talas as Array<{ id: string; name: string }> | undefined)
-      ? (activeEdit.proposedValues.talas as Array<{ id: string; name: string }>)
-      : composition.talas || [],
+    title: proposed.title || composition.title,
+    language: proposed.language || composition.language,
+    composer: proposed.composer ?? composition.composer,
+    ragas: proposed.ragas ?? composition.ragas ?? [],
+    talas: proposed.talas ?? composition.talas ?? [],
     userNote: activeEdit?.userNote || '',
   };
 

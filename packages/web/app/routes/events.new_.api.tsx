@@ -114,7 +114,7 @@ export const action: ActionFunction = async ({ request }) => {
         intoFestivalId: body.intoFestivalId,
         events: body.events,
       });
-      return data({ success: true, eventIds: results.map((e: { id: string }) => e.id) });
+      return data({ success: true, eventIds: results.map(e => e.id) });
     } catch (error) {
       // The server refused a likely duplicate the verify step did not catch. Say which.
       if (error instanceof Error && error.message.startsWith('Likely duplicate')) {

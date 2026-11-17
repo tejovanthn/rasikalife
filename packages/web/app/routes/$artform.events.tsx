@@ -1,6 +1,6 @@
 import { ART_FORMS, ART_FORM_LABELS } from '@rasika/core/domain/event/client';
 import { data, useLoaderData } from 'react-router';
-import type { LoaderFunction, MetaFunction } from 'react-router';
+import type { LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { client } from '~/api.server';
 import { EntityPagination } from '~/components/EntityPagination';
 import { EventList } from '~/components/EventCard';
@@ -9,7 +9,7 @@ import { BreadcrumbStructuredData, ItemListStructuredData } from '~/components/s
 import { eventListItems } from '~/lib/structured-data';
 import { generateEventUrl } from '~/lib/url-slug';
 
-export const loader: LoaderFunction = async ({ params, request }) => {
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const artForm = params.artform;
   if (!artForm || !ART_FORMS.has(artForm)) {
     throw new Response('Not Found', { status: 404 });

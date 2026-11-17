@@ -33,6 +33,7 @@ import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ragaOgImageUrl } from '~/lib/og';
 import { ragaMetaDescription, ragaMetaTitle } from '~/lib/raga-description';
 import { type RagaPageModel, ragaPageModel } from '~/lib/raga-page';
+import { repertoireView } from '~/lib/raga-repertoire';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -146,8 +147,7 @@ export async function loader({
         arohanam: r.arohanam ? formatSwaras(r.arohanam) : r.arohanam,
         avarohanam: r.avarohanam ? formatSwaras(r.avarohanam) : r.avarohanam,
       })),
-      performanceCount: repertoireStats.performanceCount,
-      topCompositions: repertoireStats.topCompositions.slice(0, 5),
+      ...repertoireView(repertoireStats),
       // Titles are stored as ITRANS. The page cards link by the raw title, so
       // only the meta copies are converted for display.
       metaTopCompositions: (repertoireStats?.topCompositions ?? [])

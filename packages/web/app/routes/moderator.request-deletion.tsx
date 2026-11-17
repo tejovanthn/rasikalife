@@ -1,5 +1,5 @@
 import { Trash2 } from 'lucide-react';
-import type { ActionFunction, LoaderFunction, MetaFunction } from 'react-router';
+import type { ActionFunction, LoaderFunctionArgs, MetaFunction } from 'react-router';
 import { Form, data, redirect, useLoaderData, useNavigation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Button } from '~/components/ui/button';
@@ -11,11 +11,7 @@ export const meta: MetaFunction = () => {
   return [{ name: 'robots', content: 'noindex, nofollow' }];
 };
 
-type LoaderData =
-  | { alreadyPending: true; entityName: string; entityType: string; entityId: string }
-  | { alreadyPending: false; entityName: string; entityType: string; entityId: string };
-
-export const loader: LoaderFunction = async ({ request }) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   await requireModerator(request);
 
   const url = new URL(request.url);
@@ -98,7 +94,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     // Ignore errors
   }
 
-  return data({ alreadyPending, entityName, entityType, entityId } as LoaderData);
+  return data({ alreadyPending, entityName, entityType, entityId });
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -128,8 +124,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function RequestDeletion() {
-  const loaderData = useLoaderData<typeof loader>() as LoaderData;
-  const { entityName, entityType, entityId, alreadyPending } = loaderData;
+  const { entityName, entityType, entityId, alreadyPending } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
 
   return (
