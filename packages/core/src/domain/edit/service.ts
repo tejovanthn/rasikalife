@@ -54,7 +54,7 @@ export async function createDraft(input: EditInput): Promise<Edit> {
     throw new ApplicationError(ErrorCode.DATABASE_ERROR, 'Failed to create draft edit');
   }
 
-  return result.data;
+  return result.data as Edit;
 }
 
 export async function submitEdit(editId: string, userId: string): Promise<Edit> {
@@ -198,7 +198,7 @@ export async function rejectEdit(
 
 export async function getEditById(editId: string): Promise<Edit | null> {
   const result = await EditEntity.get({ id: editId }).go();
-  return result.data || null;
+  return (result.data || null) as Edit | null;
 }
 
 export async function getPendingEdits(params: PendingEditFilters = {}): Promise<{
@@ -227,7 +227,7 @@ export async function getPendingEdits(params: PendingEditFilters = {}): Promise<
   });
 
   return {
-    items: result.data || [],
+    items: (result.data || []) as Edit[],
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
@@ -255,7 +255,7 @@ export async function getUserEdits(
   }
 
   return {
-    items,
+    items: items as Edit[],
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
@@ -284,7 +284,7 @@ export async function getEntityEdits(
   }
 
   return {
-    items,
+    items: items as Edit[],
     nextToken: result.cursor || undefined,
     hasMore: !!result.cursor,
   };
@@ -461,5 +461,5 @@ export async function getActiveEditForEntity(
       (edit.status === EditStatus.DRAFT || edit.status === EditStatus.SUBMITTED)
   );
 
-  return activeEdit || null;
+  return (activeEdit || null) as Edit | null;
 }

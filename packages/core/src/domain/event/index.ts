@@ -58,7 +58,8 @@ export async function createEvent(
     ...(artForm ? { artForm } : {}),
     status: status as 'draft' | 'approved' | 'submitted',
     createdBy: userId,
-  }).go();
+    // Type-only cast: input.festivalId can be null, the entity type allows only string | undefined.
+  } as Parameters<typeof EventEntity.create>[0]).go();
 
   if (!result.data) {
     throw createFailedError('event', input.title);
