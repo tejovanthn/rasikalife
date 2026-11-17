@@ -12,7 +12,7 @@
     "lint": "biome lint --write .",
     "check": "biome check .",
     "check:bundle": "node scripts/check-bundle.mjs",
-    "typecheck": "pnpm -r --no-bail --filter '!@rasika/scraper' --filter '!@rasika/scripts' --filter '!web' typecheck",
+    "typecheck": "pnpm -r --no-bail typecheck",
     "test": "pnpm -r --no-bail --filter '!@rasika/trpc' --filter '!@rasika/scripts' test && pnpm --filter @rasika/trpc test:unit"
   },
   "workspaces": ["packages/*"],

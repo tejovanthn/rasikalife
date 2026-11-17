@@ -14,7 +14,7 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - `pnpm run lint` - Lint and auto-fix code using Biome
 - `pnpm run check` - Run Biome checks (lint + format)
 - `pnpm check:bundle` - Bundle every Lambda handler listed in `infra/*.ts` with esbuild (no output). Catches bundle-only errors before deploy.
-- `pnpm typecheck` - `tsc` in every package except scraper, scripts and web. Those three have known type errors; fix them, then remove their filters in the root `package.json`.
+- `pnpm typecheck` - `tsc` in every package.
 - `pnpm test` - Every package's tests, with tRPC run as `test:unit` (its full `test` needs `sst shell`). Skips the scripts package, which has no tests.
 
 ### CI and deploy
