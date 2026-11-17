@@ -35,7 +35,6 @@ async function fetchImageData(postUrl: string): Promise<FetchResult> {
 
   const browser = await puppeteer.launch({
     args: isLocal ? [] : chromium.args,
-    defaultViewport: chromium.defaultViewport,
     executablePath,
     headless: true,
   });

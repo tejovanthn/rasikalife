@@ -32,6 +32,9 @@ export interface RawInstagramPost {
   isVideo: boolean;
 }
 
+type ProfileUser = NonNullable<ProfileApiResponse['data']['user']>;
+type TimelineMedia = ProfileUser['edge_owner_to_timeline_media'];
+
 interface ProfileApiResponse {
   data: {
     user: {
@@ -108,9 +111,7 @@ async function sleep(ms: number): Promise<void> {
 async function fetchProfilePage(
   handle: string,
   cursor?: string
-): Promise<
-  (ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'] & { userId: string }) | null
-> {
+): Promise<(TimelineMedia & { userId: string }) | null> {
   // First call: profile info endpoint (also returns first page of posts)
   if (!cursor) {
     const url = `https://www.instagram.com/api/v1/users/web_profile_info/?username=${encodeURIComponent(handle)}`;
@@ -140,7 +141,7 @@ async function fetchProfilePage(
   const json = (await res.json()) as {
     data?: {
       user?: {
-        edge_owner_to_timeline_media: ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'];
+        edge_owner_to_timeline_media: TimelineMedia;
       };
     };
   };
@@ -208,7 +209,7 @@ export async function scrapeInstagramProfile(
       const json = (await res.json()) as {
         data?: {
           user?: {
-            edge_owner_to_timeline_media: ProfileApiResponse['data']['user']['edge_owner_to_timeline_media'];
+            edge_owner_to_timeline_media: TimelineMedia;
           };
         };
       };
