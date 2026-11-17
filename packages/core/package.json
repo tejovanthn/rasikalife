@@ -521,9 +521,9 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "^5.1.0",
     "rimraf": "^5.0.10",
     "typescript": "^5.9.3",
-    "vitest": "^1.6.1"
+    "vitest": "^5.1.0"
   }
 }

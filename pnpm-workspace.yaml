@@ -21,3 +21,7 @@ supportedArchitectures:
   libc:
     - current
     - glibc
+
+# Match the lockfile. The root vitest relies on it: vitest 5 takes vite as a peer, and the root
+# has no vite of its own, so this is what installs vite 8 for it.
+autoInstallPeers: true

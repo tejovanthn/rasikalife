@@ -95,6 +95,14 @@ The core package uses a domain-driven design with:
 - Tests collocated with implementation files (`*.test.ts`)
 - Global test setup with deterministic ID and date generation
 - tRPC tests require SST environment context via `sst shell vitest run`
+- Vitest 5. It needs vite 6.4 or later, and the React Router apps (web, admin, sabha, classes,
+  talapettige) still build with vite 5. So those five do not list `vitest`: they use the root
+  `vitest` devDependency, which gets its own vite 8 through `autoInstallPeers`. Adding `vitest`
+  back to one of them links it to vite 5 and every run fails at startup.
+- **A mock that the code calls with `new` must be a class**, e.g.
+  `vi.fn(class { send = sendMock; })`. Since vitest 3 an arrow function cannot be constructed
+  ("is not a constructor"). Biome refuses `function () {}` (`useArrowFunction`), so use a class.
+  The shared DynamoDB mocks in `core/test/mocks/dynamodb.ts` already do this.
 
 ## Code Conventions
 
