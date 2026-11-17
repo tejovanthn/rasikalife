@@ -17,11 +17,29 @@ export const mockDb = {
   },
 };
 
+// The SDK clients and commands are built with `new`, and since vitest 3 a mock can only be
+// constructed when its implementation is a class or a `function`. An arrow function throws
+// "is not a constructor". So every constructed mock here is a class.
+
+// A command mock that keeps its params as fields, as the real command's `input` would.
+// `constructor.name` is set explicitly because the document client mock dispatches on it.
+function mockCommand(name: string) {
+  return vi.fn(
+    class {
+      constructor(params: Record<string, unknown>) {
+        Object.assign(this, params, { constructor: { name } });
+      }
+    }
+  );
+}
+
 // Mock DynamoDB client implementation
 export const mockDynamoDBClient = {
-  DynamoDBClient: vi.fn().mockImplementation(() => ({
-    send: vi.fn(),
-  })),
+  DynamoDBClient: vi.fn(
+    class {
+      send = vi.fn();
+    }
+  ),
 };
 
 // Mock DynamoDB Document client implementation
@@ -61,42 +79,15 @@ export const mockDynamoDBDocumentClient = {
       }),
     })),
   },
-  PutCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'PutCommand' },
-  })),
-  GetCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'GetCommand' },
-  })),
-  UpdateCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'UpdateCommand' },
-  })),
-  DeleteCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'DeleteCommand' },
-  })),
-  QueryCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'QueryCommand' },
-  })),
-  ScanCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'ScanCommand' },
-  })),
-  BatchWriteCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'BatchWriteCommand' },
-  })),
-  BatchGetCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'BatchGetCommand' },
-  })),
-  TransactWriteCommand: vi.fn().mockImplementation(params => ({
-    ...params,
-    constructor: { name: 'TransactWriteCommand' },
-  })),
+  PutCommand: mockCommand('PutCommand'),
+  GetCommand: mockCommand('GetCommand'),
+  UpdateCommand: mockCommand('UpdateCommand'),
+  DeleteCommand: mockCommand('DeleteCommand'),
+  QueryCommand: mockCommand('QueryCommand'),
+  ScanCommand: mockCommand('ScanCommand'),
+  BatchWriteCommand: mockCommand('BatchWriteCommand'),
+  BatchGetCommand: mockCommand('BatchGetCommand'),
+  TransactWriteCommand: mockCommand('TransactWriteCommand'),
 };
 
 // Mock implementations for DynamoDB Document client commands

@@ -5,8 +5,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
-  S3Client: vi.fn().mockImplementation(() => ({ send: sendMock })),
-  PutObjectCommand: vi.fn().mockImplementation(params => ({ ...params })),
+  // Classes, because the code calls these with `new` and vitest cannot construct an arrow function.
+  S3Client: vi.fn(
+    class {
+      send = sendMock;
+    }
+  ),
+  PutObjectCommand: vi.fn(
+    class {
+      constructor(params: Record<string, unknown>) {
+        Object.assign(this, params);
+      }
+    }
+  ),
 }));
 
 vi.mock('../artist', () => ({ listArtists: vi.fn() }));

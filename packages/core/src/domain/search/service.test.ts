@@ -6,8 +6,19 @@ import type { SearchDocument, SearchIndex } from './types';
 const { sendMock } = vi.hoisted(() => ({ sendMock: vi.fn() }));
 
 vi.mock('@aws-sdk/client-s3', () => ({
-  S3Client: vi.fn().mockImplementation(() => ({ send: sendMock })),
-  GetObjectCommand: vi.fn().mockImplementation(params => ({ ...params })),
+  // Classes, because the code calls these with `new` and vitest cannot construct an arrow function.
+  S3Client: vi.fn(
+    class {
+      send = sendMock;
+    }
+  ),
+  GetObjectCommand: vi.fn(
+    class {
+      constructor(params: Record<string, unknown>) {
+        Object.assign(this, params);
+      }
+    }
+  ),
 }));
 
 // service.ts imports ApplicationError/ErrorCode from the `@rasika/core` barrel (src/index.ts),

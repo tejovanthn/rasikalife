@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const generateContent = vi.fn();
 
 vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(() => ({ models: { generateContent } })),
+  // A class, because the code calls it with `new` and vitest cannot construct an arrow function.
+  GoogleGenAI: vi.fn(
+    class {
+      models = { generateContent };
+    }
+  ),
 }));
 
 import { BioExtractionSchema, extractFromBiography, rewriteBiography } from './bio-extract';

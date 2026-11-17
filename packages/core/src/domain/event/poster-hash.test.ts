@@ -3,10 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // poster-hash.ts constructs its own ElectroDB Entity in-file (no separate entity.ts
 // to mock), so intercept the `Entity` constructor itself to get a controllable stub.
 vi.mock('electrodb', () => ({
-  Entity: vi.fn().mockImplementation(() => ({
-    get: vi.fn(),
-    upsert: vi.fn(),
-  })),
+  // A class, because the code calls it with `new` and vitest cannot construct an arrow function.
+  Entity: vi.fn(
+    class {
+      get = vi.fn();
+      upsert = vi.fn();
+    }
+  ),
 }));
 
 import { PosterHashEntity, getPosterByHash, savePosterHash } from './poster-hash';

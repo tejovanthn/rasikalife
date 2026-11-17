@@ -6,9 +6,12 @@ import { DEFAULT_EVENT_TIMEZONE } from './schema';
 const mockGenerateContent = vi.fn();
 
 vi.mock('@google/genai', () => ({
-  GoogleGenAI: vi.fn(() => ({
-    models: { generateContent: mockGenerateContent },
-  })),
+  // A class, because the code calls it with `new` and vitest cannot construct an arrow function.
+  GoogleGenAI: vi.fn(
+    class {
+      models = { generateContent: mockGenerateContent };
+    }
+  ),
 }));
 
 // Mock global fetch for image download
