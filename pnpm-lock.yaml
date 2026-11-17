@@ -36,6 +36,9 @@ importers:
       '@types/aws-lambda':
         specifier: 8.10.138
         version: 8.10.138
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       globals:
         specifier: ^15.15.0
         version: 15.15.0

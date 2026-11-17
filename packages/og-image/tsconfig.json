@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -7,6 +9,7 @@
     "noEmit": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "jsx": "react-jsx",
     "outDir": "dist"
   },
   "include": ["src/**/*"]

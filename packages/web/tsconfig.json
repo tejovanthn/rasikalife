@@ -9,6 +9,8 @@
     ".react-router/types/**/*"
   ],
   "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["@react-router/node", "vite/client"],
     "isolatedModules": true,

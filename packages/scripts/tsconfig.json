@@ -1,6 +1,8 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": {
+    "incremental": true,
+    "tsBuildInfoFile": ".tsbuildinfo",
     // ES2020 rather than NodeNext, matching packages/core. NodeNext and a Bundler resolution
     // are mutually exclusive, so the previous pairing made `tsc` refuse to start — which is
     // how a call to a namespace that does not exist (`Edit.createDraft`; the edit service is

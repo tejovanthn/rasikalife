@@ -13,6 +13,14 @@ Rasika.life is an Indian classical arts community platform built as a monorepo u
 - `pnpm run format` - Format code using Biome 
 - `pnpm run lint` - Lint and auto-fix code using Biome
 - `pnpm run check` - Run Biome checks (lint + format)
+- `pnpm check:bundle` - Bundle every Lambda handler listed in `infra/*.ts` with esbuild (no output). Catches bundle-only errors before deploy.
+- `pnpm typecheck` - `tsc` in every package except scraper, scripts and web. Those three have known type errors; fix them, then remove their filters in the root `package.json`.
+- `pnpm test` - Every package's tests, with tRPC run as `test:unit` (its full `test` needs `sst shell`). Skips the scripts package, which has no tests.
+
+### CI and deploy
+- `.github/workflows/ci.yml` runs on every push to main and every pull request: Biome + bundle, typecheck (with a `.tsbuildinfo` cache), and test, as three parallel jobs.
+- `.github/workflows/deploy.yml` deploys the `prod` stage only after CI passes on a push to main, and it deploys the commit CI tested. A failed CI run means no deploy. `workflow_dispatch` still deploys on demand.
+- Biome is 1.9 and does not touch Markdown. Biome ignores `docs/research/**` and `**/__fixtures__/**` (recorded data).
 
 ### Package-specific Commands
 - **Core Package Tests**: `cd packages/core && pnpm test` or `pnpm test:watch` for watch mode

@@ -48,3 +48,6 @@ coverage
 /yarn-error.log
 
 file struct
+
+# TypeScript incremental cache
+.tsbuildinfo

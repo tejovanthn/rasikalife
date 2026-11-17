@@ -1,10 +1,13 @@
 name: Deploy
 
-# Deploys the prod stage on every push to main. Skips (and shows green) when the
+# Deploys the prod stage after the CI workflow passes on a push to main, and
+# deploys the exact commit CI tested. Skips (and shows green) when the
 # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY repo secrets are missing.
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -14,11 +17,18 @@ concurrency:
 
 jobs:
   deploy:
+    # Skip when CI failed or ran for a pull request. Manual runs always go.
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Guard — require AWS credentials
         id: guard

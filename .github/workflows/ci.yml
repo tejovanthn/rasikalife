@@ -1,0 +1,90 @@
+name: CI
+
+# Three jobs run in parallel; the run's wall time is the slowest job, not the
+# sum. Deploy (deploy.yml) waits for the whole run to pass.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    name: Biome + bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Biome check
+        run: pnpm check
+
+      - name: Bundle Lambdas
+        # Typecheck and tests don't bundle. This catches bundle-only errors
+        # (e.g. an ESM package with no default export) before the deploy does.
+        run: pnpm check:bundle
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Restore TypeScript incremental cache
+        # Each tsc package writes .tsbuildinfo (tsconfig "incremental"). tsc
+        # compares file content hashes, so a cache from an older commit is safe:
+        # unchanged packages are skipped, changed ones are checked in full.
+        uses: actions/cache@v4
+        with:
+          path: packages/*/.tsbuildinfo
+          key: tsc-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            tsc-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            tsc-${{ runner.os }}-
+
+      # scraper, scripts and web are skipped for now: they have known type errors.
+      # See the typecheck script in package.json.
+      - name: Typecheck
+        run: pnpm typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # trpc runs test:unit only. Its full test suite needs `sst shell` and AWS.
+      - name: Test
+        run: pnpm test
