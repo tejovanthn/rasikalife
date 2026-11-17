@@ -123,7 +123,7 @@ export async function bulkUpload(opts: { drop?: boolean; limit?: number } = {}) 
       return existing.id;
     }
 
-    const newArtist = await Artist.createArtist({ name });
+    const newArtist = await Artist.createArtist({ name, gurus: [] });
     artistCache.set(name, newArtist.id);
     return newArtist.id;
   }

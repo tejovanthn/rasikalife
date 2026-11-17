@@ -17,18 +17,9 @@ async function fetchAllEventSetlistRows(): Promise<
 > {
   const { EventSetlistEntity } = await import('../../core/src/domain/event-setlist/entity.js');
 
-  const rows: Array<{ compositionId?: string; ragaId?: string }> = [];
-  let cursor: string | null = null;
-
-  do {
-    const result = await EventSetlistEntity.scan.go({
-      attributes: ['compositionId', 'ragaId'] as never[],
-      cursor,
-      limit: 1000,
-    });
-    rows.push(...(result.data as Array<{ compositionId?: string; ragaId?: string }>));
-    cursor = result.cursor;
-  } while (cursor);
+  // pages: 'all' makes ElectroDB follow the cursor until the scan ends.
+  const { data } = await EventSetlistEntity.scan.go({ pages: 'all', limit: 1000 });
+  const rows = data.map(item => ({ compositionId: item.compositionId, ragaId: item.ragaId }));
 
   return rows;
 }

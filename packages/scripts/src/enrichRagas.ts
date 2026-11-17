@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { CreateRagaInput, UpdateRagaInput } from '@rasika/core/domain/raga';
 
 interface RagaJsonEntry {
   name: string;
@@ -119,7 +120,7 @@ export async function enrichRagas(opts: { dryRun?: boolean } = {}) {
       continue;
     }
 
-    const update = buildEnrichmentFields(entry) as Raga.UpdateRagaInput;
+    const update = buildEnrichmentFields(entry) as UpdateRagaInput;
     const warnings: string[] = [];
 
     if (entry.parentRaga) {
@@ -212,9 +213,9 @@ export async function enrichRagas(opts: { dryRun?: boolean } = {}) {
       continue;
     }
 
-    const createInput: Raga.CreateRagaInput = {
+    const createInput: CreateRagaInput = {
       name: entry.name,
-      ...(buildEnrichmentFields(entry) as Omit<Raga.CreateRagaInput, 'name' | 'parentRaga'>),
+      ...(buildEnrichmentFields(entry) as Omit<CreateRagaInput, 'name' | 'parentRaga'>),
     };
 
     if (parentName) {

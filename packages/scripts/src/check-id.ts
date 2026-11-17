@@ -38,7 +38,7 @@ export async function checkEvent(id: string) {
     })
   );
 
-  const matches = results.filter(r => r.item != null);
+  const matches = results.flatMap(r => (r.item ? [{ type: r.type, item: r.item }] : []));
 
   if (matches.length === 0) {
     console.error(`No entity with id ${id} found (hard deleted or never existed).`);
