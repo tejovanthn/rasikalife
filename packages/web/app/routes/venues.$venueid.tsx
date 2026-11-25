@@ -19,6 +19,7 @@ import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { eventListingDescription } from '~/lib/listing-description';
 import { adminOrigin } from '~/lib/qr-scan';
 import { safeHttpUrl } from '~/lib/safe-http-url';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { directionsUrl, exactVenueCoordinates } from '~/lib/structured-data';
 import { generateEventUrl, generateVenueUrl, parseSlug } from '~/lib/url-slug';
 import type { PanelStat } from '~/lib/venue-qr-panel';
@@ -107,6 +108,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         throw redirect(generateVenueUrl(canonical.name, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateVenueUrl(venue.name, venue.id));
+    if (stale) throw stale;
 
     await completePendingFollow({
       request,

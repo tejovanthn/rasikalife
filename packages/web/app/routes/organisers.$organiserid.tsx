@@ -20,6 +20,7 @@ import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { FOR_SABHAS_COPY } from '~/lib/for-sabhas';
 import { eventListingDescription } from '~/lib/listing-description';
 import { safeHttpUrl } from '~/lib/safe-http-url';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import {
   generateArtistUrl,
   generateEventUrl,
@@ -119,6 +120,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         throw redirect(generateOrganiserUrl(canonical.name, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateOrganiserUrl(organiser.name, organiser.id));
+    if (stale) throw stale;
 
     await completePendingFollow({
       request,

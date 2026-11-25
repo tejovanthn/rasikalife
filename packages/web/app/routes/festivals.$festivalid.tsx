@@ -17,6 +17,7 @@ import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { eventZone, groupByEventDate } from '~/lib/event-time';
 import { shortLinksFor } from '~/lib/short-links.server';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import {
   generateEventUrl,
   generateFestivalUrl,
@@ -80,6 +81,9 @@ export const loader: LoaderFunction = async ({ request, params }) => {
         throw redirect(generateFestivalUrl(keeper.name, keeper.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateFestivalUrl(festival.name, festival.id));
+    if (stale) throw stale;
 
     const events = await serverClient.event.byFestival.query({
       festivalId: id,

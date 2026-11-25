@@ -46,6 +46,7 @@ import { cityListingLoader } from '~/lib/events-page.server';
 import { resolveEventsSegment } from '~/lib/events-route';
 import { eventOgImage } from '~/lib/og';
 import { SIGNED_IN_CACHE_CONTROL } from '~/lib/page-cache';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import type { StructuredAddress } from '~/lib/structured-data';
 import {
   generateArtistUrl,
@@ -149,6 +150,9 @@ export const loader: LoaderFunction = async args => {
         throw redirect(generateEventUrl(canonical.title, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateEventUrl(event.title, event.id));
+    if (stale) throw stale;
 
     let festivalPosterUrl: string | undefined;
     let festivalEvents: FestivalEventItem[] = [];

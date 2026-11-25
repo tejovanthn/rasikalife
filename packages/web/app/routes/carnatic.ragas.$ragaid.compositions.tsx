@@ -16,6 +16,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateRagaUrl, parseSlug } from '~/lib/url-slug';
 import { titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -71,6 +72,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       throw new Response('Raga not found', { status: 404 });
     }
 
+    const stale = staleSlugRedirect(request, generateRagaUrl(raga.name, raga.id));
+    if (stale) throw stale;
+
     const result = await client.composition.byRaga.query({
       ragaId: raga.id,
       limit: itemsPerPage,
@@ -89,6 +93,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       prevToken: nextToken,
     });
   } catch (error) {
+    if (error instanceof Response) throw error;
     console.error('Failed to load raga compositions:', error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.RAGA_NOT_FOUND) {

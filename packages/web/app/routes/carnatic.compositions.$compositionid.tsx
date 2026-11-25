@@ -18,6 +18,7 @@ import { getUser } from '~/lib/auth.server';
 import { compositionMeta } from '~/lib/composition-meta';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { compositionOgImageUrl } from '~/lib/og';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import {
   generateArtistUrl,
   generateCompositionUrl,
@@ -69,6 +70,12 @@ export async function loader({
         throw redirect(generateCompositionUrl(canonical.title, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(
+      request,
+      generateCompositionUrl(composition.title, composition.id)
+    );
+    if (stale) throw stale;
 
     // Get related compositions with error handling for network issues
     let relatedCompositionsByComposer: CompositionWithRelations[] = [];

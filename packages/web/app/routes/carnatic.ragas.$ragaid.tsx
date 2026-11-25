@@ -34,6 +34,7 @@ import { ragaOgImageUrl } from '~/lib/og';
 import { ragaMetaDescription, ragaMetaTitle } from '~/lib/raga-description';
 import { type RagaPageModel, ragaPageModel } from '~/lib/raga-page';
 import { repertoireView } from '~/lib/raga-repertoire';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
 import { capitalize, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -73,6 +74,9 @@ export async function loader({
         throw redirect(generateRagaUrl(canonical.name, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateRagaUrl(raga.name, raga.id));
+    if (stale) throw stale;
 
     // Only what is cited, or a legacy field, from here on: the page, the meta description and
     // the JSON-LD all read `shown`, never the record (`sourced.ts`).

@@ -15,6 +15,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateTalaUrl, parseSlug } from '~/lib/url-slug';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -59,6 +60,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       throw new Response('Tala not found', { status: 404 });
     }
 
+    const stale = staleSlugRedirect(request, generateTalaUrl(tala.name, tala.id));
+    if (stale) throw stale;
+
     const result = await client.composition.byTala.query({
       talaId: tala.id,
       limit: itemsPerPage,
@@ -75,6 +79,7 @@ export const loader: LoaderFunction = async ({ params, request }) => {
       prevToken: nextToken,
     });
   } catch (error) {
+    if (error instanceof Response) throw error;
     console.error('Failed to load tala compositions:', error);
     if (error instanceof ApplicationError) {
       if (error.code === ErrorCode.TALA_NOT_FOUND) {

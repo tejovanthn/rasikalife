@@ -10,6 +10,7 @@ import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import { BreadcrumbStructuredData, DefinedTermStructuredData } from '~/components/structured-data';
 import { getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateSlug, generateTalaUrl, parseSlug } from '~/lib/url-slug';
 import { formatDate, titleCaseName } from '~/lib/utils';
 import { scriptSessionResolver } from '~/sessions.server';
@@ -46,6 +47,9 @@ export async function loader({
         throw redirect(generateTalaUrl(canonical.name, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateTalaUrl(tala.name, tala.id));
+    if (stale) throw stale;
 
     // Fetch compositions in this tala (limit to 6 for preview)
     const compositions = await client.composition.byTala.query({

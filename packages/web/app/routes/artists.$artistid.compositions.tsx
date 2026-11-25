@@ -12,6 +12,7 @@ import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.s
 import { compositionCardView } from '~/lib/composition-card-view';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { composerCompositionsMeta } from '~/lib/hub-lists';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 import { scriptSessionResolver } from '~/sessions.server';
 
@@ -68,6 +69,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     if (!artist) {
       throw new Response('Artist not found', { status: 404 });
     }
+
+    const stale = staleSlugRedirect(request, generateArtistUrl(artist.name, artist.id));
+    if (stale) throw stale;
 
     // Get compositions by this artist with pagination
     const result = await client.composition.byComposer.query({

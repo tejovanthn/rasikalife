@@ -10,6 +10,7 @@ import { roleLabel } from '~/lib/artist-display';
 import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
 import { artistEventsMeta } from '~/lib/composition-meta';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateArtistUrl, generateEventUrl, parseSlug } from '~/lib/url-slug';
 import { formatEventDate } from '~/lib/utils';
 
@@ -72,6 +73,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     if (!artist) {
       throw new Response('Artist not found', { status: 404 });
     }
+
+    const stale = staleSlugRedirect(request, generateArtistUrl(artist.name, artist.id));
+    if (stale) throw stale;
 
     // Past events are the long list, so they own the pagination: newest first, walking
     // backwards. Upcoming dates are few and belong at the top, so they are fetched whole

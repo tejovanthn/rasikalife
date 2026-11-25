@@ -51,6 +51,7 @@ import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
 import { artistOgImageUrl } from '~/lib/og';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import {
   generateArtistUrl,
   generateCompositionUrl,
@@ -105,6 +106,9 @@ export async function loader({
         throw redirect(generateArtistUrl(canonical.name, canonical.id), 301);
       }
     }
+
+    const stale = staleSlugRedirect(request, generateArtistUrl(artist.name, artist.id));
+    if (stale) throw stale;
 
     const user = await userPromise;
     await completePendingFollow({ request, client, user, type: 'artist', id: artist.id });

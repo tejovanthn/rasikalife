@@ -10,6 +10,7 @@ import { EmptyState } from '~/components/shared/EmptyState';
 import { BreadcrumbStructuredData } from '~/components/structured-data';
 import { PRIVATE_PAGE_CACHE_CONTROL, publicPageCacheControl } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateArtistUrl, parseSlug } from '~/lib/url-slug';
 
 interface GalleryPhoto {
@@ -70,6 +71,9 @@ export const loader: LoaderFunction = async ({ params, request }) => {
     if (!artist) {
       throw new Response('Artist not found', { status: 404 });
     }
+
+    const stale = staleSlugRedirect(request, generateArtistUrl(artist.name, artist.id));
+    if (stale) throw stale;
 
     const result = await client.artist.listPhotos.query({
       artistId: artist.id,
