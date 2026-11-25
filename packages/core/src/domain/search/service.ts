@@ -390,6 +390,38 @@ export async function getDocuments(
   };
 }
 
+export type SitemapEntity = 'artist' | 'raga' | 'composition' | 'venue' | 'organiser';
+export type SitemapLetters = Record<SitemapEntity, string[]>;
+
+const SITEMAP_ENTITIES: SitemapEntity[] = ['artist', 'raga', 'composition', 'venue', 'organiser'];
+
+/**
+ * For each alphabet sitemap, the letters that hold at least one page to list. Same rule as the
+ * child sitemap (`/sitemap/<type>s-<letter>.xml`): a document counts when its display name
+ * starts with the letter and it is not `noindex`. The sitemap index uses this to leave out the
+ * letters that would be empty, which Search Console reports as errors.
+ */
+export function sitemapLettersOf(documents: SearchDocument[]): SitemapLetters {
+  const found = Object.fromEntries(SITEMAP_ENTITIES.map(t => [t, new Set<string>()])) as Record<
+    SitemapEntity,
+    Set<string>
+  >;
+  for (const doc of documents) {
+    if (doc.noindex) continue;
+    const bucket = found[doc.entityType as SitemapEntity];
+    if (!bucket) continue;
+    const first = doc.displayName.toLowerCase().charAt(0);
+    if (first >= 'a' && first <= 'z') bucket.add(first);
+  }
+  return Object.fromEntries(SITEMAP_ENTITIES.map(t => [t, [...found[t]].sort()])) as SitemapLetters;
+}
+
+/** Reads the cached index; no database access. */
+export async function getSitemapLetters(): Promise<SitemapLetters> {
+  const index = await loadIndex();
+  return sitemapLettersOf(index.documents);
+}
+
 export interface ArtistRanking {
   ids: string[];
   total: number;

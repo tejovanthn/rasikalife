@@ -1,4 +1,5 @@
 import type { LoaderFunction } from 'react-router';
+import { client } from '~/api.server';
 
 export const loader: LoaderFunction = async () => {
   const baseUrl = 'https://rasika.life';
@@ -11,8 +12,20 @@ export const loader: LoaderFunction = async () => {
   const splitEntities = ['artists', 'compositions', 'ragas', 'venues', 'organisers'];
   const chars = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
+  // Letters with nothing to list are left out (Search Console flags an empty child sitemap).
+  // Read from the cached search index, not a scan. If it cannot be read, list every letter.
+  const letters = await client.search.sitemapLetters.query().catch(() => null);
+  const singular: Record<string, 'artist' | 'composition' | 'raga' | 'venue' | 'organiser'> = {
+    artists: 'artist',
+    compositions: 'composition',
+    ragas: 'raga',
+    venues: 'venue',
+    organisers: 'organiser',
+  };
+
   for (const entity of splitEntities) {
     for (const char of chars) {
+      if (letters && !letters[singular[entity]].includes(char)) continue;
       sitemaps.push(`${baseUrl}/sitemap/${entity}-${char}.xml`);
     }
   }

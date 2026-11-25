@@ -127,6 +127,9 @@ export const searchRouter = createTRPCRouter({
     )
     .query(({ input }) => Search.getDocuments(input?.type, input?.startsWith)),
 
+  /** Which letters of each alphabet sitemap are not empty. Read from the cached index. */
+  sitemapLetters: publicProcedure.query(() => Search.getSitemapLetters()),
+
   searchCompositions: publicProcedure
     .input(
       z.object({

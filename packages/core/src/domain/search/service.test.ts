@@ -327,3 +327,34 @@ describe('rankArtistDocuments', () => {
     ).toEqual({ ids: ['b'], total: 1, verifiedCount: 1 });
   });
 });
+
+describe('sitemapLettersOf', () => {
+  const doc = (entityType: string, displayName: string, noindex?: boolean) =>
+    ({
+      id: displayName,
+      entityType,
+      name: displayName,
+      displayName,
+      description: '',
+      indexedAt: '',
+      noindex,
+    }) as never;
+
+  it('lists the letters that have an indexable page, per type', async () => {
+    const { sitemapLettersOf } = await freshService();
+    const letters = sitemapLettersOf([
+      doc('artist', 'Sanjay'),
+      doc('artist', 'sudha'),
+      doc('artist', 'Anil'),
+      doc('raga', 'Kalyani'),
+      doc('raga', 'Kapi', true),
+      doc('raga', 'Hindola', true),
+      doc('composition', '1 song'),
+      doc('tala', 'Adi'),
+    ]);
+    expect(letters.artist).toEqual(['a', 's']);
+    expect(letters.raga).toEqual(['k']);
+    expect(letters.composition).toEqual([]);
+    expect(letters.venue).toEqual([]);
+  });
+});

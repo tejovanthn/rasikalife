@@ -5,12 +5,14 @@ export {
   searchWithFullData,
   getHealth,
   getDocuments,
+  getSitemapLetters,
+  sitemapLettersOf,
   rankArtistDocuments,
   rankArtists,
   listVenueCities,
   ragaRelatives,
 } from './service';
-export type { ArtistRanking } from './service';
+export type { ArtistRanking, SitemapLetters } from './service';
 export type { SearchWithFullDataResponse, DocumentsResponse } from './service';
 export { buildAndStoreSearchIndex } from './indexer';
 export type {
