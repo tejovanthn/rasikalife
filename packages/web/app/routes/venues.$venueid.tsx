@@ -7,6 +7,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
 import { FollowButton } from '~/components/FollowButton';
+import { SeasonLinks } from '~/components/SeasonLinks';
 import { VenueQrPanel } from '~/components/VenueQrPanel';
 import { VerifiedBadge } from '~/components/VerifiedBadge';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
@@ -438,6 +439,8 @@ export default function VenueDetailPage() {
           </>
         )}
       </section>
+
+      <SeasonLinks city={venue.address?.city} className="mt-6" />
 
       <BreadcrumbStructuredData
         items={[

@@ -8,6 +8,7 @@ import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { EventList } from '~/components/EventCard';
 import { FollowButton } from '~/components/FollowButton';
+import { SeasonLinks } from '~/components/SeasonLinks';
 import { VerifiedBadge } from '~/components/VerifiedBadge';
 import { ListEventPrompt } from '~/components/events/list-event-prompt';
 import { EmptyState } from '~/components/shared/EmptyState';
@@ -448,6 +449,8 @@ export default function OrganiserDetailPage() {
           </>
         )}
       </section>
+
+      <SeasonLinks city={organiser.city || organiser.address?.city} className="mt-6" />
 
       <BreadcrumbStructuredData
         items={[

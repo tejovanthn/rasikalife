@@ -24,6 +24,7 @@ import { ArtistGalleryHero } from '~/components/ArtistGalleryHero';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { FollowButton } from '~/components/FollowButton';
+import { SeasonLinks } from '~/components/SeasonLinks';
 import { SocialIconLink } from '~/components/SocialIconLink';
 import { Cite, RagaReferences, type SourceInfo } from '~/components/raga/raga-sources';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
@@ -189,6 +190,17 @@ export async function loader({
       ? await client.event.byIds.query({ ids: teaserEventIds })
       : [];
     const postersByEventId: Record<string, string> = {};
+    // For the meta description, from rows already read above: the soonest dated concert.
+    const first = upcoming.items[0];
+    const firstEvent = first ? teaserEvents.find(e => e.id === first.eventId) : undefined;
+    const nextConcert =
+      first && (!first.eventDatePrecision || first.eventDatePrecision === 'day')
+        ? {
+            startDateTime: first.eventStartDateTime,
+            venue: firstEvent?.venueName ?? null,
+            city: firstEvent?.venueCity ?? null,
+          }
+        : null;
     for (const event of teaserEvents) {
       if (event.posterUrl) postersByEventId[event.id] = event.posterUrl;
     }
@@ -233,6 +245,8 @@ export async function loader({
         compositions: compositions.items,
         hasMoreCompositions: compositions.hasMore,
         upcomingEvents: upcoming.items,
+        nextConcert,
+        upcomingMore: !!upcoming.hasMore,
         pastEvents: past.items,
         postersByEventId,
         featured,
@@ -303,8 +317,15 @@ export const headers: HeadersFunction = ({ loaderHeaders }) => ({
 });
 
 export const meta: MetaFunction = ({ data }) => {
-  const { artist, upcomingEvents } =
-    (data as { artist?: Artist; upcomingEvents?: unknown[] } | undefined) ?? {};
+  const { artist, upcomingEvents, nextConcert, upcomingMore } =
+    (data as
+      | {
+          artist?: Artist;
+          upcomingEvents?: unknown[];
+          nextConcert?: { startDateTime: string; venue?: string | null; city?: string | null };
+          upcomingMore?: boolean;
+        }
+      | undefined) ?? {};
   const canonicalName = artist?.name ?? '';
 
   if (artist) {
@@ -321,6 +342,8 @@ export const meta: MetaFunction = ({ data }) => {
       gurus: artist.gurus,
       specialisations: artist.specialisations,
       upcomingEventCount: upcomingEvents?.length ?? 0,
+      upcomingMore,
+      nextConcert,
     });
     return [
       { title: artistMetaTitle(artist) },
@@ -872,7 +895,6 @@ export default function ArtistDetails() {
   const notable = featured.filter(f => !upcomingIds.has(f.eventId));
   const notableIds = new Set(notable.map(f => f.eventId));
   const recentEvents = pastEvents.filter(e => !notableIds.has(e.eventId));
-  const hasEvents = upcomingEvents.length > 0 || notable.length > 0 || recentEvents.length > 0;
 
   const breadcrumbItems = [
     { label: 'Home', path: '/' },
@@ -985,6 +1007,35 @@ export default function ArtistDetails() {
           biography first and reference facts after. */}
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
         <div className="min-w-0">
+          {/* Upcoming concerts lead the page: it is what a search for the artist wants, and
+              the crawler reads it before the biography. Server-rendered, no client fetch. */}
+          {upcomingEvents.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-xl font-semibold">Upcoming concerts</h2>
+              <ul className="divide-y divide-border">
+                {upcomingEvents.map(event => (
+                  <li key={event.eventId}>
+                    <EventCard
+                      eventId={event.eventId}
+                      eventTitle={event.eventTitle}
+                      eventStartDateTime={event.eventStartDateTime}
+                      eventDatePrecision={event.eventDatePrecision}
+                      role={event.role}
+                      posterUrl={postersByEventId[event.eventId]}
+                    />
+                  </li>
+                ))}
+              </ul>
+              <Link
+                to={`${artistUrl}/events`}
+                className="mt-2 inline-flex min-h-11 items-center text-sm text-primary md:min-h-0"
+              >
+                View all events &rarr;
+              </Link>
+              <SeasonLinks city={artist.city} className="mt-2" />
+            </section>
+          )}
+
           {/* Biography — the main crawlable block, and the reason the rail exists: the facts
               that used to crowd it now sit alongside instead of underneath. */}
           {artist.biography && (
@@ -1181,32 +1232,10 @@ export default function ArtistDetails() {
             </section>
           )}
 
-          {/* Events — upcoming first, then curated highlights, then recent (§6) */}
-          {hasEvents && (
+          {/* Events — curated highlights, then recent (§6). Upcoming dates sit at the top. */}
+          {(notable.length > 0 || recentEvents.length > 0) && (
             <section className="mt-8">
               <h2 className="mb-4 text-xl font-semibold">Events</h2>
-
-              {upcomingEvents.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                    Upcoming
-                  </h3>
-                  <ul className="divide-y divide-border">
-                    {upcomingEvents.map(event => (
-                      <li key={event.eventId}>
-                        <EventCard
-                          eventId={event.eventId}
-                          eventTitle={event.eventTitle}
-                          eventStartDateTime={event.eventStartDateTime}
-                          eventDatePrecision={event.eventDatePrecision}
-                          role={event.role}
-                          posterUrl={postersByEventId[event.eventId]}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               {notable.length > 0 && (
                 <div className="mb-6">
@@ -1259,6 +1288,11 @@ export default function ArtistDetails() {
                 View all events &rarr;
               </Link>
             </section>
+          )}
+
+          {/* No concert is listed, so the link is the way on to where concerts are. */}
+          {upcomingEvents.length === 0 && !isHistorical && (
+            <SeasonLinks city={artist.city} className="mt-8" />
           )}
 
           {/* Publications & media — after Events, since it reports on them. The images are a

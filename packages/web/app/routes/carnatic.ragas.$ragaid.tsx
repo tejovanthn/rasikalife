@@ -13,6 +13,7 @@ import { Link, Outlet, useLoaderData, useLocation } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { SeasonLinks } from '~/components/SeasonLinks';
 import {
   Cite,
   RagaHelpRequest,
@@ -657,11 +658,13 @@ export default function RagaDetails() {
         <EntityCompositions
           compositions={compositions}
           entityType="raga"
-          entitySlug={`${generateSlug(raga.name)}-${raga.id}`}
+          entitySlug={`${generateSlug(rawName)}-${raga.id}`}
           showViewMore={hasMoreCompositions}
           customHeading={`Compositions in ${raga.name} raga`}
         />
       </div>
+
+      <SeasonLinks label="Hear it live" className="mt-6" />
 
       {relatives.length > 0 && (
         <section className="mt-8 pt-8 border-t" aria-labelledby="relatives-heading">

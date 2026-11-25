@@ -276,3 +276,59 @@ describe('roleLabel generic roles', () => {
     expect(castLine([{ name: 'Sandeep Narayan', role: 'main' }])).toBe('Sandeep Narayan');
   });
 });
+
+describe('artistMetaDescription with a next concert', () => {
+  const next = {
+    startDateTime: '2026-12-03T18:30:00+05:30',
+    venue: 'Narada Gana Sabha',
+    city: 'Chennai',
+  };
+
+  it('names the next concert, its place, and the count', () => {
+    const d = artistMetaDescription({
+      name: 'HN Bhaskar',
+      instrument: 'violin',
+      city: 'Mysuru',
+      upcomingEventCount: 4,
+      upcomingMore: true,
+      nextConcert: next,
+    });
+    expect(d).toBe(
+      'HN Bhaskar — Violin · Mysuru. Next: 3 Dec 2026, Narada Gana Sabha, Chennai. 4+ upcoming concerts.'
+    );
+    expect(d.length).toBeLessThanOrEqual(155);
+  });
+
+  it('uses the city alone when the venue is unknown', () => {
+    const d = artistMetaDescription({
+      name: 'A',
+      upcomingEventCount: 1,
+      nextConcert: { startDateTime: next.startDateTime, city: 'Chennai' },
+    });
+    expect(d).toContain('Next: 3 Dec 2026, Chennai. 1 upcoming concert.');
+  });
+
+  it('drops the lineage, then the venue, to stay within 155 characters', () => {
+    const d = artistMetaDescription({
+      name: 'Vidwan Somebody With A Long Name',
+      instrument: 'violin',
+      city: 'Thiruvananthapuram',
+      gurus: [{ name: 'A Very Long Guru Name' }, { name: 'Another Long Guru Name' }],
+      upcomingEventCount: 3,
+      nextConcert: { ...next, venue: 'The Music Academy Madras, Mini Hall Annexe' },
+    });
+    expect(d.length).toBeLessThanOrEqual(155);
+    expect(d).toContain('Next: 3 Dec 2026');
+    expect(d).toContain('3 upcoming concerts.');
+  });
+
+  it('keeps the current text when there is no upcoming concert', () => {
+    const d = artistMetaDescription({
+      name: 'A',
+      instrument: 'vocal',
+      upcomingEventCount: 0,
+      nextConcert: next,
+    });
+    expect(d).not.toMatch(/Next:|upcoming/);
+  });
+});

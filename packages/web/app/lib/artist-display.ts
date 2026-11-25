@@ -176,7 +176,36 @@ export function artistMetaDescription(artist: {
   gurus?: Array<{ name: string; relationship?: string }> | null;
   specialisations?: string[] | null;
   upcomingEventCount?: number;
+  /** The list is capped, so a full page means "at least this many". */
+  upcomingMore?: boolean;
+  /** The soonest concert. `place` is the venue, or the city when the venue is unknown. */
+  nextConcert?: { startDateTime: string; venue?: string | null; city?: string | null } | null;
 }): string {
+  const full = buildArtistDescription(artist, true, true);
+  if (full.length <= META_DESCRIPTION_MAX) return full;
+  // Too long: drop the lineage first, then the venue name, so the date and count stay.
+  const noLineage = buildArtistDescription(artist, false, true);
+  if (noLineage.length <= META_DESCRIPTION_MAX) return noLineage;
+  return buildArtistDescription(artist, false, false);
+}
+
+/** Google shows about this many characters of a description. */
+const META_DESCRIPTION_MAX = 155;
+
+function concertDate(startDateTime: string): string {
+  return new Date(startDateTime).toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
+function buildArtistDescription(
+  artist: Parameters<typeof artistMetaDescription>[0],
+  withLineage: boolean,
+  withVenue: boolean
+): string {
   const sentences: string[] = [];
 
   const tagline = artistTagline(artist);
@@ -199,15 +228,24 @@ export function artistMetaDescription(artist: {
     g =>
       g.name && (!g.relationship || g.relationship === 'primary' || g.relationship === 'advanced')
   );
-  if (lineage.length > 0) {
+  if (withLineage && lineage.length > 0) {
     const names = lineage.slice(0, 2).map(g => g.name);
     sentences.push(`${artist.isGroup ? 'Trained under' : 'Disciple of'} ${names.join(' and ')}.`);
   }
 
   // A historical person has no concerts to count, and the line would only ever be wrong.
   const upcoming = artist.isHistorical ? 0 : (artist.upcomingEventCount ?? 0);
+  const next = artist.isHistorical ? null : artist.nextConcert;
+  const nextTime = next ? new Date(next.startDateTime).getTime() : Number.NaN;
   if (upcoming > 0) {
-    sentences.push(`${upcoming} upcoming concert${upcoming === 1 ? '' : 's'}.`);
+    const count = `${upcoming}${artist.upcomingMore ? '+' : ''} upcoming concert${upcoming === 1 ? '' : 's'}`;
+    if (next && !Number.isNaN(nextTime)) {
+      const place = [withVenue ? next.venue?.trim() : null, next.city?.trim()]
+        .filter(Boolean)
+        .join(', ');
+      sentences.push(`Next: ${concertDate(next.startDateTime)}${place ? `, ${place}` : ''}.`);
+    }
+    sentences.push(`${count}.`);
   } else if (sentences.length === 1) {
     // Nothing specific is known, so describe the page rather than the person.
     sentences.push(
