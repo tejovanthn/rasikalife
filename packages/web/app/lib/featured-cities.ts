@@ -59,3 +59,11 @@ export function homeCityLinks(
     .sort((a, b) => (b.count ?? 0) - (a.count ?? 0) || a.name.localeCompare(b.name));
   return [...featured, ...others];
 }
+
+/** Where a bare `/<city>` (`/chennai`) goes: the city's concert page, query string kept. */
+export function bareCityRedirect(
+  slug: (typeof FEATURED_CITIES)[number]['slug'],
+  search = ''
+): string {
+  return `${listingHref({ kind: 'city', slug }, {})}${search}`;
+}

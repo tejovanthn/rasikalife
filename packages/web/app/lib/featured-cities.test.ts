@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { featuredCityLinks, homeCityLinks } from './featured-cities';
+import { bareCityRedirect, featuredCityLinks, homeCityLinks } from './featured-cities';
 
 describe('featuredCityLinks', () => {
   it('links Chennai and Bengaluru to their concert pages', () => {
@@ -37,5 +37,12 @@ describe('homeCityLinks', () => {
       ['Mysuru', 1],
     ]);
     expect(links[2].href).toBe('/events/pune');
+  });
+});
+
+describe('bareCityRedirect', () => {
+  it('sends a bare city to its concert page and keeps the query', () => {
+    expect(bareCityRedirect('chennai')).toBe('/events/chennai');
+    expect(bareCityRedirect('bengaluru', '?utm_source=x')).toBe('/events/bengaluru?utm_source=x');
   });
 });
