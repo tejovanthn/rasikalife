@@ -13,6 +13,8 @@ export const DUPLICATE_WINDOW_HOURS = 3;
 export interface DuplicateCandidate {
   id: string;
   startDateTime: string;
+  /** A year-only event has a placeholder start, so it is never near anything. */
+  datePrecision?: string | null;
   status?: string | null;
   mergedIntoId?: string | null;
   deletedAt?: string | null;
@@ -35,7 +37,7 @@ export function nearDuplicates<T extends DuplicateCandidate>(
   const windowMs = windowHours * 60 * 60 * 1000;
   return candidates
     .filter(c => !exclude.has(c.id) && !c.mergedIntoId && !c.deletedAt)
-    .filter(c => LISTED.has(c.status ?? ''))
+    .filter(c => LISTED.has(c.status ?? '') && c.datePrecision !== 'year')
     .map(c => ({ c, gap: Math.abs(Date.parse(c.startDateTime) - at) }))
     .filter(({ gap }) => gap <= windowMs)
     .sort((a, b) => a.gap - b.gap)
@@ -174,6 +176,7 @@ export function findLikelyDuplicates<T extends LikelyCandidate>(
   return candidates
     .filter(c => !exclude.has(c.id) && !confirmed.has(c.id) && !c.mergedIntoId && !c.deletedAt)
     .filter(c => LISTED.has(c.status ?? '') && c.venueId === target.venueId)
+    .filter(c => c.datePrecision !== 'year')
     .filter(c => !(target.id && c.notDuplicateOf?.includes(target.id)))
     .map(c => ({ c, gap: Math.abs(Date.parse(c.startDateTime) - at) }))
     .filter(({ gap }) => gap <= windowMs)

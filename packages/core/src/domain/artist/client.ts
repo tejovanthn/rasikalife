@@ -160,6 +160,7 @@ export interface FeaturedPerformance {
   eventId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   role?: string;
   featureRank?: number;
 }

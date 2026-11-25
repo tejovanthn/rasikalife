@@ -10,6 +10,7 @@ import { EventArtistEntity } from '../event-artist/entity';
 import { createFestival } from '../festival';
 import { createFailedError, notFoundError } from '../helpers';
 import { printedVenueAddress } from '../venue/address';
+import { normaliseStart, precisionAfterUpdate } from './date-precision';
 import { duplicateSearchRange, findLikelyDuplicates, nearDuplicates } from './duplicates';
 import type { LikelyTarget } from './duplicates';
 import { EventEntity } from './entity';
@@ -37,6 +38,7 @@ import { COLLABORATOR_INLINE_CAP } from '../artist/client';
 import { ART_FORMS } from './client';
 
 export { ART_FORM_LABELS, ART_FORMS } from './client';
+export { isEventYear } from './date-precision';
 
 function deriveArtForm(tags?: string[]): string | undefined {
   return tags?.find(t => ART_FORMS.has(t.toLowerCase()))?.toLowerCase();
@@ -60,10 +62,11 @@ function withoutNulls<T extends object>(obj: T): { [K in keyof T]: Exclude<T[K],
 }
 
 export async function createEvent(
-  input: CreateEventDraft,
+  rawInput: CreateEventDraft,
   userId: string,
   options?: { status?: string }
 ): Promise<Event> {
+  const input = normaliseStart(rawInput);
   const id = generateId();
   const artForm = input.artForm || deriveArtForm(input.tags);
   const status = options?.status ?? 'approved';
@@ -84,16 +87,14 @@ export async function createEvent(
 
   // Create EventArtist junction records only for approved events
   if (status === 'approved' && input.artists?.length) {
-    await createEventArtistJunctions(id, input.title, input.startDateTime, input.artists);
+    await createEventArtistJunctions({ ...input, id }, input.artists);
   }
 
   return result.data as Event;
 }
 
 async function createEventArtistJunctions(
-  eventId: string,
-  eventTitle: string,
-  eventStartDateTime: string,
+  event: { id: string; title: string; startDateTime: string; datePrecision?: string | null },
   artists: Array<{ id?: string | null; name: string; title?: string | null; role?: string | null }>
 ) {
   if (!artists?.length) return;
@@ -110,10 +111,11 @@ async function createEventArtistJunctions(
   await Promise.all(
     unique.map(artist =>
       EventArtistEntity.upsert({
-        eventId,
+        eventId: event.id,
         artistId: artist.id as string,
-        eventTitle,
-        eventStartDateTime,
+        eventTitle: event.title,
+        eventStartDateTime: event.startDateTime,
+        eventDatePrecision: event.datePrecision ?? undefined,
         artistName: artist.name,
         artistTitle: artist.title ?? undefined,
         role: artist.role ?? undefined,
@@ -214,7 +216,7 @@ export async function approveEvent(id: string, moderatorId: string): Promise<Eve
 
   // Create EventArtist junction records now that event is approved
   if (approved.artists?.length) {
-    await createEventArtistJunctions(id, approved.title, approved.startDateTime, approved.artists);
+    await createEventArtistJunctions(approved, approved.artists);
     await recomputeCollaboratorsForCast(approved.artists);
   }
 
@@ -374,22 +376,39 @@ export async function updateEvent(id: string, input: UpdateEventInput): Promise<
   return result.data as Event;
 }
 
-export async function updateApprovedEvent(id: string, input: UpdateEventInput): Promise<Event> {
+export async function updateApprovedEvent(id: string, rawInput: UpdateEventInput): Promise<Event> {
   const current = await getEvent(id);
   if (!current) {
     throw notFoundError('event', id);
   }
 
+  const datePrecision = precisionAfterUpdate(current, rawInput);
+  const precisionChanged = (datePrecision ?? 'exact') !== (current.datePrecision ?? 'exact');
+  let input = rawInput;
+  if (precisionChanged || rawInput.datePrecision) {
+    input = normaliseStart({
+      ...rawInput,
+      startDateTime: rawInput.startDateTime ?? current.startDateTime,
+      datePrecision,
+    });
+  }
+
   await updateEvent(id, input);
+
+  // An end time means nothing beside a placeholder start, and `updateEvent` cannot clear it.
+  if (datePrecision === 'year' && (current.endDateTime || input.endDateTime)) {
+    await EventEntity.patch({ id }).remove(['endDateTime']).go();
+  }
 
   const newTitle = input.title ?? current.title;
   const newStartDateTime = input.startDateTime ?? current.startDateTime;
 
   if (
     (input.title && input.title !== current.title) ||
-    (input.startDateTime && input.startDateTime !== current.startDateTime)
+    (input.startDateTime && input.startDateTime !== current.startDateTime) ||
+    precisionChanged
   ) {
-    await cascadeEventMetadataToArtists(id, newTitle, newStartDateTime);
+    await cascadeEventMetadataToArtists(id, newTitle, newStartDateTime, datePrecision);
   }
 
   if (input.artists !== undefined) {
@@ -407,7 +426,10 @@ export async function updateApprovedEvent(id: string, input: UpdateEventInput): 
     await Promise.all(toRemove.map(a => deleteEventArtist(id, a.artistId)));
 
     if (toAdd.length > 0) {
-      await createEventArtistJunctions(id, newTitle, newStartDateTime, toAdd);
+      await createEventArtistJunctions(
+        { id, title: newTitle, startDateTime: newStartDateTime, datePrecision },
+        toAdd
+      );
     }
 
     // Both sides need recomputing, and the removed artists especially: nothing
@@ -788,6 +810,7 @@ export async function listEventsByArtist(
     artistId: string;
     eventTitle: string;
     eventStartDateTime: string;
+    eventDatePrecision?: string;
     artistName: string;
     artistTitle?: string;
     role?: string;

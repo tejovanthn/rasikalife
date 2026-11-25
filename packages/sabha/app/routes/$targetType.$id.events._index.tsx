@@ -65,6 +65,7 @@ function Rows({
         id: event.id,
         title: event.title,
         startDateTime: event.startDateTime,
+        datePrecision: event.datePrecision,
         timezone: event.timezone,
         venueName: event.venueName,
         artists: event.artists.map(name => ({ name })),

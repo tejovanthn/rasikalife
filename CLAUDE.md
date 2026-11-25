@@ -1310,6 +1310,23 @@ and 8:00 — a running order printed on no poster, published as fact. This is th
 meta descriptions and the JSON-LD: claim nothing the source does not hold. A missing time is
 omitted or inherited from the one the poster states.
 
+**A performance may be known only by its year.** `Event.datePrecision` is `exact` or `year`
+(missing = exact; rules in `domain/event/date-precision.ts`). `startDateTime` keys five indexes,
+so a year-only event stores a placeholder, noon in India on 1 January, which is always in the
+past. Anything that prints an event's date must check the precision (`eventYearLabel`,
+`eventDateKey`, `formatEventDate(iso, precision)`), or it publishes a day nobody recorded. The
+event row, event page, text card, meta descriptions, JSON-LD (`startDate: "2019"`) and the artist
+pages do. `EventArtist.eventDatePrecision` and `featuredPerformances[].eventDatePrecision` are
+copies, kept by `cascadeEventMetadataToArtists`, which also refreshes the featured teaser.
+
+- The artist wizard's "Add performance" takes a date or a year (`lib/performance-date.ts`), and the
+  event edit form has "Year only", which also repairs an event entered with a made-up day.
+- `exact` is stored rather than the attribute removed (rule 8). An update that moves the start and
+  names no precision makes the event `exact` (`precisionAfterUpdate` compares instants).
+- No RSVP, attendance, setlist or calendar links on a year-only event: `upsertConcertLog` refuses
+  it. It is never a duplicate candidate, and its month never counts towards `year-round`.
+- Future years are refused. Awards store a year already.
+
 **A soft-deleted event can be brought back.** `Event.restoreEvent(id)` /
 `pnpm cli restore-event <id>` clears `deletedAt` through the entity, so all five GSI sort keys
 are recomputed (rule 7) and the cast's collaborators are rebuilt; it uses `.remove()` rather

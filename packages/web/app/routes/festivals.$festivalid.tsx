@@ -43,6 +43,7 @@ interface FestivalEvent {
   id: string;
   title: string;
   startDateTime: string;
+  datePrecision?: string;
   endDateTime?: string;
   timezone?: string;
   venueName?: string;
@@ -515,6 +516,7 @@ export default function FestivalDetail() {
             title: event.title,
             url: `https://rasika.life${generateEventUrl(event.title, event.id)}`,
             startDateTime: event.startDateTime,
+            datePrecision: event.datePrecision,
             endDateTime: event.endDateTime,
             venueName: event.venueName,
           })),

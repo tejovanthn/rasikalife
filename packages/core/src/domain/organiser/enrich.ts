@@ -28,6 +28,7 @@ export interface EnrichmentEvent {
   tags?: string[];
   entryType?: string;
   startDateTime?: string;
+  datePrecision?: string;
   festivalId?: string;
   contactInfo?: unknown;
 }
@@ -230,7 +231,10 @@ export function organiserTagsFromEvents({ name, events }: OrganiserTagInput): Or
     if (event.entryType === 'ticketed') bump('ticketed');
     if (event.festivalId) bump('festival-organiser');
 
-    if (event.startDateTime) months.add(event.startDateTime.slice(0, 7));
+    // A year-only event's month is a placeholder, so it is no evidence of a year-round series.
+    if (event.startDateTime && event.datePrecision !== 'year') {
+      months.add(event.startDateTime.slice(0, 7));
+    }
   }
 
   const tags = new Set<OrganiserTag>();

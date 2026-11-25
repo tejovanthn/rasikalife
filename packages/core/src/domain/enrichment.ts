@@ -67,6 +67,7 @@ interface ScannedEvent {
   tags?: string[];
   entryType?: string;
   startDateTime?: string;
+  datePrecision?: string;
   festivalId?: string;
   contactInfo?: unknown;
   deletedAt?: string;

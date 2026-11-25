@@ -1,4 +1,4 @@
-import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
+import { DEFAULT_EVENT_TIMEZONE, eventYearLabel } from '@rasika/core/domain/event/client';
 import { dateInTimeZone } from '@rasika/core/shared/timezone';
 
 /**
@@ -11,6 +11,8 @@ import { dateInTimeZone } from '@rasika/core/shared/timezone';
 
 interface Timed {
   startDateTime: string;
+  /** `year` when only the year is known. */
+  datePrecision?: string | null;
   timezone?: string | null;
 }
 
@@ -28,13 +30,14 @@ export function formatEventTime(iso: string, timeZone: string = DEFAULT_EVENT_TI
   });
 }
 
-/** The `YYYY-MM-DD` the event falls on, where it happens. */
+/** The `YYYY-MM-DD` the event falls on, where it happens, or `YYYY` when only the year is known. */
 export function eventDateKey(event: Timed): string {
-  return dateInTimeZone(event.startDateTime, eventZone(event));
+  return eventYearLabel(event) ?? dateInTimeZone(event.startDateTime, eventZone(event));
 }
 
-/** `Sat, 24 Oct` for a `YYYY-MM-DD`. Formatted at noon UTC so no zone can move the day. */
+/** `Sat, 24 Oct` for a `YYYY-MM-DD`, and `2019` for a bare year. Formatted at noon UTC so no zone can move the day. */
 export function formatDayLabel(dateOnly: string, opts: { year?: boolean } = {}): string {
+  if (/^\d{4}$/.test(dateOnly)) return dateOnly;
   return new Date(`${dateOnly}T12:00:00Z`).toLocaleDateString('en-IN', {
     timeZone: 'UTC',
     weekday: 'short',

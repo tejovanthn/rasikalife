@@ -1,3 +1,4 @@
+import { eventYearLabel } from '@rasika/core/domain/event/client';
 import { canonicalCitySlug } from '@rasika/core/shared/city';
 import { buildEventCardContent } from '@rasika/core/shared/event-card';
 import {
@@ -59,6 +60,7 @@ interface FestivalEventItem {
   id: string;
   title: string;
   startDateTime: string;
+  datePrecision?: string;
   endDateTime?: string;
   timezone?: string;
   venueName?: string;
@@ -69,6 +71,7 @@ interface RelatedEventItem {
   id: string;
   title: string;
   startDateTime: string;
+  datePrecision?: string;
   venueName?: string;
   artists?: Array<{ title?: string; name: string; role?: string }>;
   entryType?: string;
@@ -82,6 +85,7 @@ interface EventDetail {
   status?: string;
   description?: string;
   startDateTime: string;
+  datePrecision?: string;
   endDateTime?: string;
   venueName?: string;
   venueId?: string;
@@ -372,11 +376,13 @@ export const meta: MetaFunction = ({ data: loaderData }) => {
     return [{ title: 'Event Not Found - Rasika.life' }];
   }
 
-  const dateStr = formatEventDate(event.startDateTime, eventZone(event), { dateStyle: 'long' });
+  const year = eventYearLabel(event);
+  const dateStr =
+    year ?? formatEventDate(event.startDateTime, eventZone(event), { dateStyle: 'long' });
+  const when = `${year ? 'in' : 'on'} ${dateStr}`;
 
   const desc =
-    event.description ||
-    `${event.title} on ${dateStr}${event.venueName ? ` at ${event.venueName}` : ''}`;
+    event.description || `${event.title} ${when}${event.venueName ? ` at ${event.venueName}` : ''}`;
 
   const canonicalUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
 
@@ -736,7 +742,9 @@ function EventDetail() {
   const zone = eventZone(event);
   const displayPosterUrl = event.posterUrl || festivalPosterUrl;
   const shareUrl = `https://rasika.life${generateEventUrl(event.title, event.id)}`;
-  const dateStr = formatEventDate(event.startDateTime, zone, { dateStyle: 'long' });
+  const year = eventYearLabel(event);
+  const dateStr = year ?? formatEventDate(event.startDateTime, zone, { dateStyle: 'long' });
+  const when = `${year ? 'in' : 'on'} ${dateStr}`;
 
   const venueQueryStr = [event.venueName, venueAddress].filter(Boolean).join(', ');
   const mapsUrl =
@@ -792,7 +800,7 @@ function EventDetail() {
         subtitle={event.festivalName ? `Part of ${event.festivalName}` : dateStr}
         shareUrl={shareUrl}
         shareTitle={event.title}
-        shareDescription={`${event.title} on ${dateStr}${event.venueName ? ` at ${event.venueName}` : ''}`}
+        shareDescription={`${event.title} ${when}${event.venueName ? ` at ${event.venueName}` : ''}`}
         editUrl={
           user && event.status === 'approved'
             ? `${generateEventUrl(event.title, event.id)}/edit`
@@ -866,44 +874,49 @@ function EventDetail() {
             <Calendar className="h-5 w-5 text-primary" />
             <div>
               <p className="font-medium">
-                {formatEventDate(event.startDateTime, zone, {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
+                {year ??
+                  formatEventDate(event.startDateTime, zone, {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
               </p>
-              <p className="text-sm text-muted-foreground">
-                <EventTime start={event.startDateTime} end={event.endDateTime} zone={zone} />
-              </p>
+              {!year && (
+                <p className="text-sm text-muted-foreground">
+                  <EventTime start={event.startDateTime} end={event.endDateTime} zone={zone} />
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Add to Calendar */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <CalendarPlus aria-hidden="true" className="h-4 w-4 text-muted-foreground shrink-0" />
-            <a
-              href={googleCalendarUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="no-ext-arrow inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
-            >
-              Add to Google Calendar
-            </a>
-            <span aria-hidden="true" className="text-muted-foreground text-sm">
-              ·
-            </span>
-            <button
-              type="button"
-              onClick={() => downloadICS(event, venueAddress, shareUrl)}
-              className="inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
-            >
-              Download .ics
-            </button>
-          </div>
+          {/* Add to Calendar. Nothing to add when only the year is known. */}
+          {!year && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <CalendarPlus aria-hidden="true" className="h-4 w-4 text-muted-foreground shrink-0" />
+              <a
+                href={googleCalendarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-ext-arrow inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
+              >
+                Add to Google Calendar
+              </a>
+              <span aria-hidden="true" className="text-muted-foreground text-sm">
+                ·
+              </span>
+              <button
+                type="button"
+                onClick={() => downloadICS(event, venueAddress, shareUrl)}
+                className="inline-flex min-h-11 items-center text-sm text-primary hover:underline md:min-h-0"
+              >
+                Download .ics
+              </button>
+            </div>
+          )}
 
-          {/* RSVP / Attendance */}
-          {isPast ? (
+          {/* RSVP / Attendance. A concert log needs a day, so a year-only event takes none. */}
+          {year ? null : isPast ? (
             <AttendedButton
               eventId={event.id}
               isLoggedIn={!!user}
@@ -1120,12 +1133,16 @@ function EventDetail() {
                   aria-current={isCurrent ? 'page' : undefined}
                 >
                   <span className="text-muted-foreground text-xs whitespace-nowrap self-start pt-0.5">
-                    {formatEventDate(fe.startDateTime, eventZone(fe), {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                    {', '}
-                    <EventTime start={fe.startDateTime} zone={eventZone(fe)} />
+                    {eventYearLabel(fe) ?? (
+                      <>
+                        {formatEventDate(fe.startDateTime, eventZone(fe), {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                        {', '}
+                        <EventTime start={fe.startDateTime} zone={eventZone(fe)} />
+                      </>
+                    )}
                   </span>
                   <span className="truncate">{fe.title}</span>
                   {fe.artists && fe.artists.length > 0 && (
@@ -1144,7 +1161,7 @@ function EventDetail() {
       )}
 
       {/* Setlist */}
-      {isPast && (
+      {isPast && !year && (
         <section className="mt-8">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-semibold">Setlist</h2>
@@ -1271,6 +1288,7 @@ function EventDetail() {
           title: event.title,
           description: event.description,
           startDateTime: event.startDateTime,
+          datePrecision: event.datePrecision,
           endDateTime: event.endDateTime,
           // Google's Event rich result requires an address on the location, and this used to
           // pass a Place carrying nothing but a name — so every concert on the site was

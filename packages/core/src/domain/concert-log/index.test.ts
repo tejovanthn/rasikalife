@@ -54,6 +54,17 @@ describe('concert-log', () => {
   });
 
   describe('upsertConcertLog', () => {
+    it('refuses an event known only by its year', async () => {
+      vi.mocked(ConcertLogEntity.get).mockReturnValue(goResolves(null) as never);
+      vi.mocked(getEvent).mockResolvedValue({
+        id: 'e1',
+        startDateTime: '2019-01-01T06:30:00.000Z',
+        datePrecision: 'year',
+      } as never);
+      await expect(upsertConcertLog('u1', 'e1')).rejects.toThrow('no exact date');
+      expect(ConcertLogEntity.create).not.toHaveBeenCalled();
+    });
+
     it('patches notes on an existing log, keeping the old note when none is provided', async () => {
       vi.mocked(ConcertLogEntity.get).mockReturnValue(
         goResolves({ userId: 'u1', eventId: 'e1', notes: 'old note' }) as never

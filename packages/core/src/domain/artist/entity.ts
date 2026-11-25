@@ -296,6 +296,7 @@ export const ArtistEntity = new Entity(
             eventId: { type: 'string', required: true },
             eventTitle: { type: 'string', required: true },
             eventStartDateTime: { type: 'string', required: true },
+            eventDatePrecision: { type: 'string', required: false },
             role: { type: 'string', required: false },
             featureRank: { type: 'number', required: false },
           },

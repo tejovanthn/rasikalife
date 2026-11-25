@@ -10,6 +10,7 @@ interface FeaturedRow {
   artistId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   role?: string;
   isFeatured?: boolean;
   featureRank?: number;
@@ -19,6 +20,7 @@ interface FeaturedPerformance {
   eventId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   role?: string;
   featureRank?: number;
 }
@@ -53,6 +55,7 @@ export function buildFeaturedByArtist(
       eventId: row.eventId,
       eventTitle: row.eventTitle,
       eventStartDateTime: row.eventStartDateTime,
+      eventDatePrecision: row.eventDatePrecision,
       role: row.role,
       featureRank: row.featureRank,
     });

@@ -1,3 +1,4 @@
+import { isYearOnly } from '@rasika/core/domain/event/client';
 import { formatEventDate } from './utils';
 
 /**
@@ -21,6 +22,7 @@ const MAX_LENGTH = 155;
 export type ListingEvent = {
   title: string;
   startDateTime: string;
+  datePrecision?: string | null;
 };
 
 type Options = {
@@ -80,7 +82,7 @@ export function eventListingDescription({
     const recent = past[0];
     const lead = `${plural(past.length, 'past event')} ${preposition} ${where}.`;
     return clamp(
-      `${lead} Most recent: ${recent.title} on ${formatEventDate(recent.startDateTime)}.`
+      `${lead} Most recent: ${recent.title} ${isYearOnly(recent) ? 'in' : 'on'} ${formatEventDate(recent.startDateTime, recent.datePrecision)}.`
     );
   }
 

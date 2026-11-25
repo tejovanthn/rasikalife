@@ -716,6 +716,8 @@ export const eventRouter = createTRPCRouter({
       z.object({
         title: z.string().min(1).max(300),
         startDateTime: z.string().datetime({ offset: true }),
+        // 'year' when only the year of startDateTime is known.
+        datePrecision: z.enum(['exact', 'year']).optional(),
         timezone: z.string().optional(),
         venueName: z.string().max(300).optional(),
         artistId: z.string().min(1),
@@ -725,6 +727,12 @@ export const eventRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (
+        input.datePrecision === 'year' &&
+        !Event.isEventYear(Number(input.startDateTime.slice(0, 4)))
+      ) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'That year is out of range' });
+      }
       // Resolve the venue to a real entity, get-or-create by name, exactly as
       // the poster flow does at approval — otherwise this event would carry a
       // free-text venue name that never links to a venue page or dedupes.
@@ -741,6 +749,7 @@ export const eventRouter = createTRPCRouter({
         {
           title: input.title,
           startDateTime: input.startDateTime,
+          datePrecision: input.datePrecision,
           timezone: input.timezone ?? 'Asia/Kolkata',
           venueId,
           venueName,
@@ -778,7 +787,8 @@ export const eventRouter = createTRPCRouter({
       return {
         eventId: draft.id,
         eventTitle: input.title,
-        eventStartDateTime: input.startDateTime,
+        eventStartDateTime: draft.startDateTime,
+        eventDatePrecision: draft.datePrecision,
         role: input.role,
         isFeatured,
       };

@@ -29,6 +29,8 @@ export const EventEntity = new Entity(
       title: { type: 'string', required: true },
       description: { type: 'string', required: false },
       startDateTime: { type: 'string', required: true },
+      // 'year' when only the year is known; `startDateTime` is then a placeholder. Missing = exact.
+      datePrecision: { type: 'string', required: false },
       endDateTime: { type: 'string', required: false },
       timezone: { type: 'string', required: true, default: DEFAULT_EVENT_TIMEZONE },
 

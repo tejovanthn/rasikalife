@@ -71,6 +71,7 @@ interface JunctionRow {
   artistName: string;
   role?: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
 }
 
 interface EventRow {
@@ -91,6 +92,11 @@ function top(values: Array<string | undefined>, cap: number): string[] {
     if (seen.length === cap) break;
   }
   return seen;
+}
+
+/** The day of an appearance, or its year when only the year is known. */
+function seenOn(row: JunctionRow | undefined): string | undefined {
+  return row?.eventStartDateTime.slice(0, row.eventDatePrecision === 'year' ? 4 : 10);
 }
 
 /**
@@ -149,8 +155,8 @@ export function buildArtistContext(
         eventsOf.map(event => event.artForm),
         4
       ),
-      firstSeen: ordered[0]?.eventStartDateTime.slice(0, 10),
-      lastSeen: ordered[ordered.length - 1]?.eventStartDateTime.slice(0, 10),
+      firstSeen: seenOn(ordered[0]),
+      lastSeen: seenOn(ordered[ordered.length - 1]),
       performsWith: top(others, MAX_COLLABORATORS),
     });
   }

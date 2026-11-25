@@ -21,6 +21,8 @@
  * and there are none".
  */
 
+import { eventYearLabel } from '@rasika/core/domain/event/client';
+
 export const SITE_URL = 'https://rasika.life';
 
 export type JsonLdObject = Record<string, unknown>;
@@ -430,11 +432,24 @@ function eventOffers(event: {
   return undefined;
 }
 
+/** The dates to claim: the bare year, and no end, when only the year is known. */
+function eventDates(event: {
+  startDateTime: string;
+  datePrecision?: string | null;
+  endDateTime?: string | null;
+}): { startDate: string; endDate: string | undefined } {
+  const year = eventYearLabel(event);
+  return year
+    ? { startDate: year, endDate: undefined }
+    : { startDate: event.startDateTime, endDate: trimmed(event.endDateTime) };
+}
+
 export interface EventJsonLdInput {
   title: string;
   url: string;
   description?: string | null;
   startDateTime: string;
+  datePrecision?: string | null;
   endDateTime?: string | null;
   location?: EventLocationInput | null;
   organiserName?: string | null;
@@ -453,8 +468,7 @@ export function eventJsonLd(event: EventJsonLdInput): JsonLdObject {
     '@id': `${event.url}#event`,
     name: event.title,
     description: trimmed(event.description),
-    startDate: event.startDateTime,
-    endDate: trimmed(event.endDateTime),
+    ...eventDates(event),
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     eventStatus: 'https://schema.org/EventScheduled',
     image: trimmed(event.posterUrl),
@@ -486,6 +500,7 @@ export interface NestedEventInput {
   title: string;
   url: string;
   startDateTime: string;
+  datePrecision?: string | null;
   endDateTime?: string | null;
   venueName?: string | null;
   posterUrl?: string | null;
@@ -507,8 +522,7 @@ export function nestedEventJsonLd(
   return {
     '@type': 'MusicEvent',
     name: event.title,
-    startDate: event.startDateTime,
-    endDate: trimmed(event.endDateTime),
+    ...eventDates(event),
     url: event.url,
     image: trimmed(event.posterUrl),
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',

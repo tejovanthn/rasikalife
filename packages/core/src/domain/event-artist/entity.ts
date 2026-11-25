@@ -22,6 +22,7 @@ export const EventArtistEntity = new Entity(
       // Denormalized for display (avoid extra lookups)
       eventTitle: { type: 'string', required: true },
       eventStartDateTime: { type: 'string', required: true },
+      eventDatePrecision: { type: 'string', required: false },
       artistName: { type: 'string', required: true },
       artistTitle: { type: 'string', required: false },
       role: { type: 'string', required: false },

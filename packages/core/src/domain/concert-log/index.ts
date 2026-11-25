@@ -2,6 +2,7 @@ import { BatchGetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { TABLE_NAME, dynamoClient } from '../../db/client';
 import { keyOfEntity } from '../../db/keys';
 import { getEvent } from '../event';
+import { isYearOnly } from '../event/date-precision';
 import { EventEntity } from '../event/entity';
 import type { Event } from '../event/entity';
 import { RsvpEntity } from '../rsvp/entity';
@@ -38,6 +39,10 @@ export async function upsertConcertLog(
   const event = await getEvent(eventId);
   if (!event) {
     throw new Error(`Event ${eventId} not found`);
+  }
+  // A log and its setlist print the day of the concert, and this event has none to print.
+  if (isYearOnly(event)) {
+    throw new Error(`Event ${eventId} has no exact date, so it cannot be logged`);
   }
 
   const [result] = await Promise.all([

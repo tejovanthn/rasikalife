@@ -82,6 +82,7 @@ function toEventView(event: {
   title: string;
   status: string;
   startDateTime: string;
+  datePrecision?: string | null;
   endDateTime?: string | null;
   timezone: string;
   venueId?: string | null;
@@ -99,6 +100,7 @@ function toEventView(event: {
     title: event.title,
     status: event.status,
     startDateTime: event.startDateTime,
+    datePrecision: event.datePrecision ?? undefined,
     endDateTime: event.endDateTime ?? undefined,
     timezone: event.timezone,
     venueId: event.venueId ?? undefined,

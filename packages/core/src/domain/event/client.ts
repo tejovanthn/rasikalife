@@ -9,6 +9,15 @@ import type { CreateEventSchema, UpdateEventSchema } from './schema';
 // Re-export schemas (Zod is browser-safe)
 export { CreateEventSchema, DEFAULT_EVENT_TIMEZONE, UpdateEventSchema } from './schema';
 
+export {
+  type EventDatePrecision,
+  MIN_EVENT_YEAR,
+  eventYearLabel,
+  isEventYear,
+  isYearOnly,
+  yearOnlyStart,
+} from './date-precision';
+
 // Re-export extraction types (pure TypeScript interfaces, browser-safe)
 export type { ExtractionResult } from './extraction';
 
@@ -52,6 +61,8 @@ export interface Event {
   title: string;
   description?: string;
   startDateTime: string;
+  /** `year` when only the year is known. */
+  datePrecision?: string;
   endDateTime?: string;
   timezone: string;
   venueId?: string;

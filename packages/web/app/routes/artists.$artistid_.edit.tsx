@@ -17,6 +17,7 @@ import {
 } from '@rasika/core/domain/artist/client';
 import type { Edit } from '@rasika/core/domain/edit/client';
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
+import { MIN_EVENT_YEAR } from '@rasika/core/domain/event/client';
 import { SOCIAL_PLATFORM_LABELS, SocialPlatform } from '@rasika/core/domain/social-link';
 import {
   ArrowLeft,
@@ -2926,6 +2927,7 @@ type Performance = {
   eventId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   role?: string;
   isFeatured?: boolean;
   featureRank?: number;
@@ -2967,7 +2969,10 @@ function PerformanceRow({
       <div className="min-w-0">
         <div className="truncate">{performance.eventTitle}</div>
         <div className="text-xs text-muted-foreground">
-          {performance.eventStartDateTime.slice(0, 10)}
+          {performance.eventStartDateTime.slice(
+            0,
+            performance.eventDatePrecision === 'year' ? 4 : 10
+          )}
           {performance.role ? ` — ${performance.role}` : ''}
         </div>
       </div>
@@ -3015,6 +3020,7 @@ function PerformancesEditor({
   const [performances, setPerformances] = useState<Performance[]>(initialPerformances);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
+  const [year, setYear] = useState('');
   const [venueName, setVenueName] = useState('');
   const [role, setRole] = useState('');
   const featureFetcher = useFetcher<PerformanceResult>();
@@ -3049,6 +3055,7 @@ function PerformancesEditor({
     );
     setTitle('');
     setDate('');
+    setYear('');
     setVenueName('');
     setRole('');
     toast.success(`${created.eventTitle} added`);
@@ -3087,7 +3094,8 @@ function PerformancesEditor({
       <div className="space-y-2 rounded-md border border-dashed p-3">
         <p className="text-xs text-muted-foreground">
           Add a performance the listings pipeline never captured. It is created as an approved event
-          and featured on this profile.
+          and featured on this profile. If you know only the year, fill in the year and leave the
+          date blank.
         </p>
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
           <Input
@@ -3100,7 +3108,19 @@ function PerformancesEditor({
             type="date"
             aria-label="Event date"
             value={date}
+            disabled={!!year}
             onChange={e => setDate(e.target.value)}
+          />
+          <Input
+            type="number"
+            min={MIN_EVENT_YEAR}
+            max={new Date().getUTCFullYear()}
+            inputMode="numeric"
+            placeholder="Year only, if the date is not known"
+            aria-label="Event year, if the date is not known"
+            value={year}
+            disabled={!!date}
+            onChange={e => setYear(e.target.value)}
           />
           <Input
             placeholder="Venue (optional)"
@@ -3119,10 +3139,10 @@ function PerformancesEditor({
           type="button"
           variant="outline"
           size="sm"
-          disabled={!createIsIdle || !title.trim() || !date}
+          disabled={!createIsIdle || !title.trim() || (!date && !year)}
           onClick={() =>
             createFetcher.submit(
-              { intent: 'create', artistId, artistName, title, date, venueName, role },
+              { intent: 'create', artistId, artistName, title, date, year, venueName, role },
               { method: 'post', action: '/api/artist/performance' }
             )
           }

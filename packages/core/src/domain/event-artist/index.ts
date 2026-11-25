@@ -6,6 +6,7 @@ export interface CreateEventArtistInput {
   artistId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   artistName: string;
   artistTitle?: string;
   role?: string;
@@ -136,6 +137,7 @@ export async function setEventArtistFeatured(
             eventId,
             eventTitle: row.eventTitle,
             eventStartDateTime: row.eventStartDateTime,
+            eventDatePrecision: row.eventDatePrecision,
             role: row.role,
             featureRank,
           },

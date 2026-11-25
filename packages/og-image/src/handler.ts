@@ -93,6 +93,7 @@ async function handleEvent(
     content = buildEventCardContent({
       title: event.title,
       startDateTime: event.startDateTime,
+      datePrecision: event.datePrecision,
       endDateTime: event.endDateTime,
       timezone: event.timezone,
       artForm: event.artForm,

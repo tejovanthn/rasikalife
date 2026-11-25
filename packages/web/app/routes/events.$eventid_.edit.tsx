@@ -1,4 +1,5 @@
 import { EditEntityTypes, EditStatus } from '@rasika/core/domain/edit/client';
+import { MIN_EVENT_YEAR, eventYearLabel } from '@rasika/core/domain/event/client';
 import { zonedDateTimeInputValue, zonedDateTimeToIso } from '@rasika/core/shared/timezone';
 import { ArrowLeft, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -14,6 +15,7 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { getUser } from '~/lib/auth.server';
+import { readEventYear } from '~/lib/performance-date';
 import { generateEventUrl, parseSlug } from '~/lib/url-slug';
 
 export const meta: MetaFunction = () => {
@@ -125,6 +127,21 @@ export async function action({
     return data({ error: 'Please enter a valid date and time.' }, { status: 400 });
   }
 
+  const yearRaw = ((formData.get('year') as string) || '').trim();
+  if (!!startDateTimeRaw === !!yearRaw) {
+    return data(
+      { error: 'Enter either the start date and time, or only the year.' },
+      { status: 400 }
+    );
+  }
+  if (yearRaw) {
+    const when = readEventYear(yearRaw);
+    if ('error' in when) return data({ error: when.error }, { status: 400 });
+    startDateTime = when.startDateTime;
+    endDateTime = '';
+  }
+  const datePrecision = yearRaw ? 'year' : 'exact';
+
   const venueName = formData.get('venueName') as string;
   const organiserName = formData.get('organiserName') as string;
   const entryType = formData.get('entryType') as string;
@@ -158,6 +175,11 @@ export async function action({
   if (description !== (event.description || '')) proposedValues.description = description || null;
   if (startDateTime && startDateTime !== (event.startDateTime || ''))
     proposedValues.startDateTime = startDateTime;
+  // The two travel together, so a reviewer never sees a placeholder date without its meaning.
+  if (datePrecision !== (event.datePrecision || 'exact')) {
+    proposedValues.startDateTime = startDateTime;
+    proposedValues.datePrecision = datePrecision;
+  }
   if (endDateTime !== (event.endDateTime || '')) proposedValues.endDateTime = endDateTime || null;
   if (venueName !== (event.venueName || '')) proposedValues.venueName = venueName || null;
   if (organiserName !== (event.organiserName || ''))
@@ -287,15 +309,21 @@ export default function EditEvent() {
     }
   };
 
+  const when = {
+    startDateTime: (proposed.startDateTime as string | undefined) || event.startDateTime,
+    datePrecision:
+      (proposed.datePrecision as string | undefined) || (event.datePrecision as string | undefined),
+  };
+  const yearLabel = eventYearLabel(when);
+
   const defaultValues = {
     title: (proposed.title as string | undefined) || event.title,
     description:
       (proposed.description as string | undefined) ??
       (event.description as string | undefined) ??
       '',
-    startDateTime: toInputValue(
-      (proposed.startDateTime as string | undefined) || event.startDateTime
-    ),
+    startDateTime: yearLabel ? '' : toInputValue(when.startDateTime),
+    year: yearLabel ?? '',
     endDateTime: toInputValue(
       (proposed.endDateTime as string | undefined) ?? (event.endDateTime as string | undefined)
     ),
@@ -414,7 +442,6 @@ export default function EditEvent() {
                   name="startDateTime"
                   type="datetime-local"
                   defaultValue={defaultValues.startDateTime}
-                  required
                 />
               </div>
               <div className="space-y-2">
@@ -425,6 +452,22 @@ export default function EditEvent() {
                   type="datetime-local"
                   defaultValue={defaultValues.endDateTime}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="year">Year only</Label>
+                <Input
+                  id="year"
+                  name="year"
+                  type="number"
+                  min={MIN_EVENT_YEAR}
+                  max={new Date().getUTCFullYear()}
+                  inputMode="numeric"
+                  aria-describedby="year-help"
+                  defaultValue={defaultValues.year}
+                />
+                <p id="year-help" className="text-xs text-muted-foreground">
+                  For a past event whose date is not known. Clear the start date and fill this in.
+                </p>
               </div>
             </div>
 

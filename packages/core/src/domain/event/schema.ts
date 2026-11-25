@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AddressSchema, SponsorSchema } from '../shared/schemas';
+import { EVENT_DATE_PRECISIONS } from './date-precision';
 
 /**
  * Where the events are. Every form that has to attach an offset to a wall-clock time reads it
@@ -17,6 +18,8 @@ export const CreateEventSchema = z.object({
   title: z.string().min(1).max(300),
   description: z.string().max(5000).nullish(),
   startDateTime: z.string().datetime({ offset: true }),
+  /** `year`: only the year of `startDateTime` is known. See `date-precision.ts`. */
+  datePrecision: z.enum(EVENT_DATE_PRECISIONS).optional(),
   endDateTime: z.string().datetime({ offset: true }).nullish(),
   timezone: z.string().default(DEFAULT_EVENT_TIMEZONE),
   venueId: z.string().nullish(),

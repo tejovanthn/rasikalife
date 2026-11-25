@@ -473,12 +473,14 @@ function EventCard({
   eventId,
   eventTitle,
   eventStartDateTime,
+  eventDatePrecision,
   role,
   posterUrl,
 }: {
   eventId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   role?: string;
   posterUrl?: string;
 }) {
@@ -493,10 +495,12 @@ function EventCard({
       className="flex gap-3 rounded-sm px-2 py-3 no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       <time
-        dateTime={eventStartDateTime}
+        dateTime={
+          eventDatePrecision === 'year' ? eventStartDateTime.slice(0, 4) : eventStartDateTime
+        }
         className="w-[4.5rem] shrink-0 text-sm font-semibold tabular-nums text-foreground"
       >
-        {formatEventDate(eventStartDateTime)}
+        {formatEventDate(eventStartDateTime, eventDatePrecision)}
       </time>
       <div className="min-w-0 flex-1">
         <p className="font-medium leading-snug text-foreground line-clamp-2">{eventTitle}</p>
@@ -1190,6 +1194,7 @@ export default function ArtistDetails() {
                           eventId={event.eventId}
                           eventTitle={event.eventTitle}
                           eventStartDateTime={event.eventStartDateTime}
+                          eventDatePrecision={event.eventDatePrecision}
                           role={event.role}
                           posterUrl={postersByEventId[event.eventId]}
                         />
@@ -1211,6 +1216,7 @@ export default function ArtistDetails() {
                           eventId={f.eventId}
                           eventTitle={f.eventTitle}
                           eventStartDateTime={f.eventStartDateTime}
+                          eventDatePrecision={f.eventDatePrecision}
                           role={f.role}
                           posterUrl={postersByEventId[f.eventId]}
                         />
@@ -1232,6 +1238,7 @@ export default function ArtistDetails() {
                           eventId={event.eventId}
                           eventTitle={event.eventTitle}
                           eventStartDateTime={event.eventStartDateTime}
+                          eventDatePrecision={event.eventDatePrecision}
                           role={event.role}
                           posterUrl={postersByEventId[event.eventId]}
                         />

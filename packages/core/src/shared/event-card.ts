@@ -1,3 +1,4 @@
+import { eventYearLabel } from '../domain/event/date-precision';
 import { DEFAULT_EVENT_TIMEZONE } from '../domain/event/schema';
 import { isGenericTitle } from './generic-title';
 
@@ -13,6 +14,8 @@ import { isGenericTitle } from './generic-title';
 export interface EventCardInput {
   title: string;
   startDateTime: string;
+  /** `year` when only the year is known: the card prints the year and no time. */
+  datePrecision?: string | null;
   endDateTime?: string | null;
   timezone?: string | null;
   artForm?: string | null;
@@ -136,8 +139,9 @@ export function buildEventCardContent(event: EventCardInput): EventCardContent {
 
   const start = new Date(event.startDateTime);
   const valid = !Number.isNaN(start.getTime());
+  const year = eventYearLabel(event);
   let time: string | undefined;
-  if (valid) {
+  if (valid && !year) {
     const end = event.endDateTime ? new Date(event.endDateTime) : null;
     const endOk = end && !Number.isNaN(end.getTime()) && end > start;
     const range = endOk
@@ -157,7 +161,7 @@ export function buildEventCardContent(event: EventCardInput): EventCardContent {
     title: truncate(title, CARD_TITLE_MAX),
     artists: shown,
     moreArtists: Math.max(0, cast.length - shown.length),
-    ...(valid ? { date: formatDay(event.startDateTime, zone) } : {}),
+    ...(valid ? { date: year ?? formatDay(event.startDateTime, zone) } : {}),
     ...(time ? { time } : {}),
     ...(place ? { place } : {}),
   };

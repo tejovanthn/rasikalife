@@ -1,4 +1,4 @@
-import { DEFAULT_EVENT_TIMEZONE } from '@rasika/core/domain/event/client';
+import { DEFAULT_EVENT_TIMEZONE, isYearOnly } from '@rasika/core/domain/event/client';
 import { todayInTimeZone } from '@rasika/core/shared/timezone';
 import type { ReactNode } from 'react';
 import { castLine } from '../lib/cast-line';
@@ -11,6 +11,8 @@ export interface EventCardEvent {
   id: string;
   title: string;
   startDateTime: string;
+  /** `year` when only the year is known: the row prints the year and no time. */
+  datePrecision?: string | null;
   timezone?: string | null;
   venueName?: string;
   /** The venue's city, from the listing loader. */
@@ -156,9 +158,11 @@ export function EventCard({
               {listDayLabel(eventDateKey(event))}
             </span>
           )}
-          <span className={showDate ? 'block text-muted-foreground' : 'block font-semibold'}>
-            <EventTime start={event.startDateTime} zone={zone} />
-          </span>
+          {!isYearOnly(event) && (
+            <span className={showDate ? 'block text-muted-foreground' : 'block font-semibold'}>
+              <EventTime start={event.startDateTime} zone={zone} />
+            </span>
+          )}
         </div>
         <div className="min-w-0 flex-1 space-y-0.5">
           {/* The global h3 and p rules set a large size, a top margin and loose leading for

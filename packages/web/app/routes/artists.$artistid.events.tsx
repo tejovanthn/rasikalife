@@ -25,6 +25,7 @@ interface ArtistEvent {
   eventId: string;
   eventTitle: string;
   eventStartDateTime: string;
+  eventDatePrecision?: string;
   artistName: string;
   artistTitle?: string;
   role?: string;
@@ -121,10 +122,14 @@ function EventCard({ event }: { event: ArtistEvent }) {
       className="flex gap-3 rounded-sm px-2 py-3 no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       <time
-        dateTime={event.eventStartDateTime}
+        dateTime={
+          event.eventDatePrecision === 'year'
+            ? event.eventStartDateTime.slice(0, 4)
+            : event.eventStartDateTime
+        }
         className="w-[4.5rem] shrink-0 text-sm font-semibold tabular-nums text-foreground"
       >
-        {formatEventDate(event.eventStartDateTime)}
+        {formatEventDate(event.eventStartDateTime, event.eventDatePrecision)}
       </time>
       <div className="min-w-0 flex-1">
         <p className="font-medium leading-snug text-foreground line-clamp-2">{event.eventTitle}</p>

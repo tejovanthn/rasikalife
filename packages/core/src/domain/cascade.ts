@@ -9,6 +9,7 @@ import { keyOfEntity as keyOf, keysOfEntity as keysOf } from '../db/keys';
 // Type-only, so it is erased at compile time and adds no runtime cycle with artist-claim,
 // which this module already reaches through a dynamic import.
 import type { ArtistClaimStatus } from './artist/schema';
+import type { EventDatePrecision } from './event/date-precision';
 
 export const CASCADE_BATCH_SIZE = 1000;
 
@@ -315,14 +316,21 @@ export async function cascadeOrganiserNameUpdate(
 export async function cascadeEventMetadataToArtists(
   eventId: string,
   newTitle: string,
-  newStartDateTime: string
+  newStartDateTime: string,
+  datePrecision?: EventDatePrecision
 ): Promise<void> {
   const { EventArtistEntity } = await import('./event-artist/entity');
 
   let cursor: string | null = null;
   do {
     const result = (await EventArtistEntity.query.primary({ eventId }).go({ cursor })) as Page;
-    const items = (result.data as Array<{ eventId: string; artistId: string }>) || [];
+    const items =
+      (result.data as Array<{
+        eventId: string;
+        artistId: string;
+        isFeatured?: boolean;
+        featureRank?: number;
+      }>) || [];
     cursor = result.cursor;
 
     // ElectroDB, not a raw UpdateCommand. `eventStartDateTime` is the composite behind the
@@ -337,10 +345,26 @@ export async function cascadeEventMetadataToArtists(
     await Promise.all(
       items.map(item =>
         EventArtistEntity.patch({ eventId: item.eventId, artistId: item.artistId })
-          .set({ eventTitle: newTitle, eventStartDateTime: newStartDateTime })
+          .set({
+            eventTitle: newTitle,
+            eventStartDateTime: newStartDateTime,
+            ...(datePrecision ? { eventDatePrecision: datePrecision } : {}),
+          })
           .go()
       )
     );
+
+    // The profile teaser reads its own copy of these fields. Refresh it, or a corrected date
+    // stays wrong on the artist's page until the daily sweep.
+    const featured = items.filter(item => item.isFeatured);
+    if (featured.length > 0) {
+      const { setEventArtistFeatured } = await import('./event-artist');
+      await Promise.all(
+        featured.map(item =>
+          setEventArtistFeatured(item.eventId, item.artistId, true, item.featureRank)
+        )
+      );
+    }
   } while (cursor);
 }
 
@@ -541,6 +565,7 @@ export async function cascadeArtistMerge(
         artistId: string;
         eventTitle: string;
         eventStartDateTime: string;
+        eventDatePrecision?: string;
         artistTitle?: string;
         role?: string;
         isFeatured?: boolean;
@@ -570,6 +595,7 @@ export async function cascadeArtistMerge(
             artistId: canonicalId,
             eventTitle: item.eventTitle,
             eventStartDateTime: item.eventStartDateTime,
+            eventDatePrecision: item.eventDatePrecision,
             artistName: canonicalName,
             artistTitle: item.artistTitle,
             role: item.role,
@@ -1676,6 +1702,7 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
   const canonicalEvent = await EventEntity.get({ id: canonicalId }).go();
   const canonicalTitle = canonicalEvent.data?.title ?? '';
   const canonicalStartDateTime = canonicalEvent.data?.startDateTime ?? '';
+  const canonicalDatePrecision = canonicalEvent.data?.datePrecision;
 
   // Migrate loser artists to canonical
   let loserCursor: string | null = null;
@@ -1711,6 +1738,7 @@ export async function cascadeEventMerge(loserId: string, canonicalId: string): P
             artistId: item.artistId,
             eventTitle: canonicalTitle,
             eventStartDateTime: canonicalStartDateTime,
+            eventDatePrecision: canonicalDatePrecision,
             artistName: item.artistName,
             artistTitle: item.artistTitle,
             role: item.role,

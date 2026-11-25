@@ -94,8 +94,13 @@ export const formatDateLocale = (dateString: string | null | undefined): string 
 // an evening IST concert formatted in the runtime zone lands on the previous day;
 // pinning the zone keeps the displayed day right wherever the code runs. One
 // formatter, used across every date the profile shows, so no section drifts.
-export const formatEventDate = (dateString: string | null | undefined): string => {
+// A date known only by its year prints the year and nothing else.
+export const formatEventDate = (
+  dateString: string | null | undefined,
+  precision?: string | null
+): string => {
   if (!dateString) return '';
+  if (precision === 'year') return dateString.slice(0, 4);
   return new Date(dateString).toLocaleDateString('en-IN', {
     timeZone: 'Asia/Kolkata',
     weekday: 'short',

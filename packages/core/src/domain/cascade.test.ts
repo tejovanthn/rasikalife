@@ -614,6 +614,23 @@ describe('cascade', () => {
       expect(commandsSentTo(vi.mocked(dynamoClient.send), 'UpdateCommand')).toHaveLength(0);
     });
 
+    it('carries the date precision, so a year-only date never prints as a day', async () => {
+      EventArtistEntity.query.primary = pagedQuery([
+        { data: [{ eventId: 'event1', artistId: 'artist1' }], cursor: null },
+      ]);
+      const setSpy = vi.fn().mockReturnValue({ go: vi.fn().mockResolvedValue({}) });
+      EventArtistEntity.patch = vi.fn().mockReturnValue({ set: setSpy }) as never;
+
+      await cascade.cascadeEventMetadataToArtists(
+        'event1',
+        'T',
+        '2019-01-01T06:30:00.000Z',
+        'year'
+      );
+
+      expect(setSpy).toHaveBeenCalledWith(expect.objectContaining({ eventDatePrecision: 'year' }));
+    });
+
     it('derives a templated byArtist sort key, not the bare timestamp', () => {
       // Why the cascade above must not hand-write gsi1sk. The real key is prefixed; the
       // old code wrote the raw ISO string. Since '2' (0x32) sorts above '$' (0x24), such a
