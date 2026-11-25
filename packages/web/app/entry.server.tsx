@@ -1,4 +1,3 @@
-import { PassThrough } from 'node:stream';
 /**
  * By default, Remix will handle generating the HTTP Response for you.
  * You are free to delete this file if you'd like to, but if you ever want it revealed again, you can run `npx remix reveal` ✨
@@ -10,6 +9,7 @@ import { renderToPipeableStream } from 'react-dom/server';
 import type { EntryContext, HandleDataRequestFunction } from 'react-router';
 import { ServerRouter } from 'react-router';
 import { compressResponse } from '~/lib/compress.server';
+import { createHtmlStream } from '~/lib/html-stream.server';
 import { applyDefaultCacheControl } from '~/lib/page-cache';
 
 const ABORT_DELAY = 5_000;
@@ -50,7 +50,7 @@ function handleBotRequest(
       {
         onAllReady() {
           shellRendered = true;
-          const body = new PassThrough();
+          const body = createHtmlStream();
           const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set('Content-Type', 'text/html');
@@ -102,7 +102,7 @@ function handleBrowserRequest(
       {
         onShellReady() {
           shellRendered = true;
-          const body = new PassThrough();
+          const body = createHtmlStream();
           const stream = createReadableStreamFromReadable(body);
 
           responseHeaders.set('Content-Type', 'text/html');

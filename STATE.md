@@ -53,8 +53,8 @@ Backlog:
 Built: 301 for old slugs (own commit, revert alone), season links to `/events/chennai` and
 `/events/bengaluru`, `/chennai` and `/bengaluru` redirects, artist description with the next
 concert, upcoming concerts at the top of the artist page, 10-raga description experiment,
-sitemap index without empty alphabet letters, control-character strip on API responses.
-Details: CLAUDE.md (`stale-slug-redirect.ts`, `season-links.ts`, `clean-text.ts`).
+sitemap index without empty alphabet letters, NUL bytes dropped from the HTML stream (a React bug, not data).
+Details: CLAUDE.md (`stale-slug-redirect.ts`, `season-links.ts`, `html-stream.server.ts`).
 
 Next, in order:
 1. 2026-12-24: read the raga experiment (`docs/seo/raga-description-experiment-2026-11.md`).
