@@ -48,6 +48,24 @@ Backlog:
   requests per 5 minutes per IP, 429 with the "Too many scans" body). Also compare CloudFront's
   flat-rate plans, which include WAF (Pro is $15 a month for 10M requests).
 
+## 2026-11-26: SEO fixes, branch `seo/season-links-2026-11`, pushed to main
+
+Built: 301 for old slugs (own commit, revert alone), season links to `/events/chennai` and
+`/events/bengaluru`, `/chennai` and `/bengaluru` redirects, artist description with the next
+concert, upcoming concerts at the top of the artist page, 10-raga description experiment,
+sitemap index without empty alphabet letters, control-character strip on API responses.
+Details: CLAUDE.md (`stale-slug-redirect.ts`, `season-links.ts`, `clean-text.ts`).
+
+Next, in order:
+1. 2026-12-24: read the raga experiment (`docs/seo/raga-description-experiment-2026-11.md`).
+   Then keep it or remove `OFFER_LED_RAGA_IDS`.
+2. In Search Console, watch the old-slug URLs drop out and the canonical ones take the
+   impressions (kapi first). Ask for a sitemap re-read.
+3. Mid-January: the Chennai season wording turns itself off on 16 Jan. Nothing to do.
+4. Open: three Gayana Samaja venue records (duplicates, not merged); events and festivals month
+   sitemaps still list empty months; an artist's upcoming list is capped at 4, so the count
+   reads "4+".
+
 ## 2026-11-11: SEO backlog branch `seo/backlog-2026-11`, not pushed or deployed
 
 Built: `/carnatic/ragas/melakarta`, `/carnatic/ragas/janya`, `/carnatic/compositions/varnams`, composer
