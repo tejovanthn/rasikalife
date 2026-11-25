@@ -2,6 +2,7 @@ import type { AppRouter } from '@rasika/trpc';
 import { createTRPCClient, httpBatchLink } from '@trpc/client';
 import { Resource } from 'sst';
 import { getTokens } from '~/lib/auth.server';
+import { cleaningFetch } from '~/lib/clean-text';
 
 export type { RouterOutput } from '@rasika/trpc';
 
@@ -10,6 +11,7 @@ export const client = createTRPCClient<AppRouter>({
   links: [
     httpBatchLink({
       url: Resource.RasikaTRPC.url,
+      fetch: cleaningFetch(),
     }),
   ],
 });
@@ -40,6 +42,7 @@ export async function createServerClient(request?: Request) {
       httpBatchLink({
         url: Resource.RasikaTRPC.url,
         headers: () => headers,
+        fetch: cleaningFetch(),
       }),
     ],
   });
