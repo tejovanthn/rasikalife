@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ragaMetaDescription, ragaMetaTitle } from './raga-description';
+import { OFFER_LED_RAGA_IDS, ragaMetaDescription, ragaMetaTitle } from './raga-description';
 
 describe('ragaMetaDescription', () => {
   it('includes arohanam and avarohanam when stored', () => {
@@ -172,5 +172,47 @@ describe('raga meta with composition count and parent', () => {
       arohanam: 'S R2 M1 P D2 S',
     });
     expect(t).toBe('Kurinji Raga (Janya of Harikambhoji): Arohanam, Avarohanam');
+  });
+});
+
+describe('ragaMetaDescription, offer-led experiment', () => {
+  const base = {
+    name: 'Kapi',
+    arohanam: 'S R2 M1 P N2 S',
+    avarohanam: 'S N3 D2 P M1 G2 R2 S',
+    parentRaga: { name: 'Kharaharapriya' },
+    melaNumber: 22,
+    compositionCount: 52,
+    performanceCount: 14,
+    compositions: [{ title: 'A' }, { title: 'B' }],
+  };
+
+  it('leads with what the page offers, not the scale, for the ten ragas', () => {
+    const d = ragaMetaDescription({ ...base, id: '38avAHevxOrTy4Ne8Xn8VtlE1VK' });
+    expect(d).toBe(
+      'Kapi raga: 52 compositions with composer and tala and 14 logged concert performances. Janya raga of Kharaharapriya (melakarta 22).'
+    );
+    expect(d).not.toMatch(/Arohanam|Avarohanam/);
+    expect(d.length).toBeLessThanOrEqual(155);
+  });
+
+  it('lists exactly ten ids', () => {
+    expect(OFFER_LED_RAGA_IDS.size).toBe(10);
+  });
+
+  it('leaves every other raga on the standard text', () => {
+    expect(ragaMetaDescription({ ...base, id: 'someOtherId' })).toContain('Arohanam:');
+    expect(ragaMetaDescription(base)).toContain('Arohanam:');
+  });
+
+  it('keeps the standard text for a listed raga with nothing to offer', () => {
+    const d = ragaMetaDescription({
+      ...base,
+      id: '38avAHevxOrTy4Ne8Xn8VtlE1VK',
+      compositionCount: 0,
+      performanceCount: 0,
+      compositions: [],
+    });
+    expect(d).toContain('Arohanam:');
   });
 });

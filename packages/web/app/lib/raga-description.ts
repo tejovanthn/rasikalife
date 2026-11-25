@@ -14,6 +14,8 @@
  * name what is on the page, not what kind of page it is.
  */
 export function ragaMetaDescription(raga: {
+  /** Record id; the ten ragas in `OFFER_LED_RAGA_IDS` get the offer-led description. */
+  id?: string;
   name: string;
   arohanam?: string | null;
   avarohanam?: string | null;
@@ -26,6 +28,11 @@ export function ragaMetaDescription(raga: {
   /** Total compositions the page lists (the list above is only a sample). */
   compositionCount?: number;
 }): string {
+  if (raga.id && OFFER_LED_RAGA_IDS.has(raga.id)) {
+    const offer = offerLedDescription(raga);
+    if (offer) return offer;
+  }
+
   const isJanya = !!raga.parentRaga;
   const sentences = [`${raga.name} raga in Carnatic music.`];
 
@@ -80,6 +87,62 @@ export function ragaMetaDescription(raga: {
 }
 
 const DESCRIPTION_MAX = 155;
+
+/**
+ * The 2026-11 description experiment (docs/seo/raga-description-experiment-2026-11.md).
+ * Raga pages earn 37,892 impressions at 1.6% CTR and position 6.7; the snippet prints the
+ * whole arohanam and avarohanam, which may answer the search without a click. For these ten
+ * ragas the description leads with what the page offers instead. Titles are unchanged.
+ * Ended on 2026-12-24: remove the set and `offerLedDescription` once the result is read.
+ */
+export const OFFER_LED_RAGA_IDS: ReadonlySet<string> = new Set([
+  '38b95hjF0MrS1NiTJc43IJTc4Wx', // abheri
+  '38b8ZSteuPUHAfLNwVLbmiQe9jV', // hamsanandi
+  '38avAHevxOrTy4Ne8Xn8VtlE1VK', // kapi
+  '38avqwbuO5TSYDh765Ek6uVL0nF', // navarasa kannada
+  '38aw2E5kSMPYdIaV8p0cRM3fdvU', // kanada
+  '38avAQo2fDS0XmavGK7hBjwPyqq', // khamas
+  '38avRxJjxIoOjNeaorNfJDJFWRm', // kalyani
+  '38avUziLkV5coHIV2RKJ2Dm8zez', // bhairavi
+  '38avPvf9YEzoHnQjtHLjDx9OeJp', // hindola
+  '38avMmk0wVmOsfNCaSkx6hnjI4f', // kharaharapriya
+]);
+
+/**
+ * What the page holds: the composition list (with composer and tala on each card), the logged
+ * concert performances, and where the raga sits. No scale, and no claim of lyrics or audio:
+ * the raga page lists compositions and links to them, it does not play or print them.
+ * Null when there is nothing to offer, so the caller keeps the standard text.
+ */
+function offerLedDescription(raga: Parameters<typeof ragaMetaDescription>[0]): string | null {
+  const total = raga.compositionCount ?? 0;
+  const performances = raga.performanceCount ?? 0;
+  if (total === 0 && performances === 0) return null;
+
+  const parts: string[] = [];
+  if (total > 0) {
+    parts.push(`${total} composition${total === 1 ? '' : 's'} with composer and tala`);
+  }
+  if (performances > 0) {
+    parts.push(`${performances} logged concert performance${performances === 1 ? '' : 's'}`);
+  }
+
+  const sentences = [`${raga.name} raga: ${parts.join(' and ')}.`];
+  if (raga.parentRaga) {
+    const mela = raga.melaNumber ? ` (melakarta ${raga.melaNumber})` : '';
+    sentences.push(`Janya raga of ${raga.parentRaga.name}${mela}.`);
+  } else if (raga.melaNumber) {
+    sentences.push(`Melakarta raga ${raga.melaNumber}.`);
+  }
+
+  let description = sentences[0];
+  for (const sentence of sentences.slice(1)) {
+    if (`${description} ${sentence}`.length > DESCRIPTION_MAX) break;
+    description = `${description} ${sentence}`;
+  }
+  return description;
+}
+
 const TITLE_MAX = 60;
 const BRAND = ' | Rasika.life';
 

@@ -217,6 +217,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   });
 
   const description = ragaMetaDescription({
+    id: raga.id,
     name: raga.name,
     arohanam: raga.arohanam,
     avarohanam: raga.avarohanam,
