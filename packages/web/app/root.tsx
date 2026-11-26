@@ -9,7 +9,6 @@ import {
   Scripts,
   ScrollRestoration,
   data,
-  isRouteErrorResponse,
   useLocation,
   useRevalidator,
   useRouteError,
@@ -19,7 +18,7 @@ import { useFetcher, useLoaderData } from 'react-router';
 import { useTheme } from 'react-router-theme';
 import { createServerClient } from '~/api.server';
 import { type SessionUser, getUser } from '~/lib/auth.server';
-import { ApplicationError, ErrorCode } from '~/lib/errors';
+import { errorContent } from '~/lib/error-content';
 import { AuthContext } from './components/auth-context';
 import { ScriptContext } from './components/script-context';
 import { ThemeContext } from './components/theme-context';
@@ -216,88 +215,7 @@ export default function AppWithProviders() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-
-  const getErrorContent = () => {
-    if (error instanceof ApplicationError) {
-      switch (error.code) {
-        case ErrorCode.ARTIST_NOT_FOUND:
-          return {
-            title: '404 - Artist Not Found',
-            message: error.message,
-            suggestions: [
-              'Check the artist name or ID',
-              'Browse other artists',
-              'Go back to the artists list',
-            ],
-          };
-        case ErrorCode.COMPOSITION_NOT_FOUND:
-          return {
-            title: '404 - Composition Not Found',
-            message: error.message,
-            suggestions: [
-              'Check the composition title or ID',
-              'Browse other compositions',
-              'Go back to the compositions list',
-            ],
-          };
-        // Add more specific cases as needed
-        default:
-          return {
-            title: 'Application Error',
-            message: error.message,
-            suggestions: ['Go back to the homepage', 'Try again later'],
-          };
-      }
-    }
-
-    if (isRouteErrorResponse(error)) {
-      switch (error.status) {
-        case 404:
-          return {
-            title: '404 - Page Not Found',
-            message:
-              "We couldn't find the page you're looking for. It might have been moved or deleted.",
-            suggestions: [
-              'Check the URL for typos',
-              'Go back to the homepage',
-              'Browse our collections of compositions, artists, ragas, and talas',
-            ],
-          };
-        case 500:
-          return {
-            title: '500 - Server Error',
-            message: 'Something went wrong on our end. Please try again later.',
-            suggestions: [
-              'Refresh the page',
-              'Go back to the homepage',
-              'If the problem persists, please contact support',
-            ],
-          };
-        default:
-          return {
-            title: `${error.status} ${error.statusText}`,
-            message: 'An unexpected error occurred.',
-            suggestions: ['Go back to the homepage', 'Try again later'],
-          };
-      }
-    }
-
-    if (error instanceof Error) {
-      return {
-        title: 'Error',
-        message: error.message,
-        suggestions: ['Go back to the homepage', 'Try again later'],
-      };
-    }
-
-    return {
-      title: 'Unknown Error',
-      message: 'An unexpected error occurred.',
-      suggestions: ['Go back to the homepage', 'Try again later'],
-    };
-  };
-
-  const { title, message, suggestions } = getErrorContent();
+  const { title, message, kind } = errorContent(error);
 
   return (
     <html lang="en">
@@ -310,44 +228,42 @@ export function ErrorBoundary() {
         <FontStylesheet />
       </head>
       <body>
-        <div className="min-h-screen flex items-center justify-center bg-background px-4">
-          <div className="max-w-md w-full text-center space-y-6">
+        <main className="min-h-screen flex items-center justify-center bg-background px-4">
+          <div className="max-w-md w-full space-y-6">
             <div className="space-y-2">
-              <h1 className="text-6xl font-bold text-primary">
-                {isRouteErrorResponse(error) ? error.status : '⚠️'}
-              </h1>
-              <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+              <h1 className="text-3xl font-extrabold text-foreground">{title}</h1>
               <p className="text-muted-foreground">{message}</p>
             </div>
 
-            {suggestions.length > 0 && (
-              <div className="space-y-2 text-left">
-                <h3 className="text-sm font-semibold text-foreground">What you can do:</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  {suggestions.map((suggestion, index) => (
-                    <li key={suggestion}>{suggestion}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <nav aria-label="Browse" className="flex flex-wrap gap-x-5 gap-y-1">
+              {[
+                { to: '/events', label: 'Concerts' },
+                { to: '/carnatic/ragas', label: 'Ragas' },
+                { to: '/carnatic/compositions', label: 'Compositions' },
+                { to: '/artists', label: 'Artists' },
+                { to: '/', label: 'Home' },
+              ].map(link => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="inline-flex min-h-11 items-center font-medium"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-              <Link
-                to="/"
-                className="inline-flex items-center justify-center px-6 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
-              >
-                Go to Homepage
-              </Link>
+            {kind === 'failed' && (
               <button
                 type="button"
-                onClick={() => window.history.back()}
-                className="inline-flex items-center justify-center px-6 py-3 border border-border rounded-md font-medium hover:bg-muted transition-colors"
+                onClick={() => window.location.reload()}
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-border px-6 font-medium hover:bg-muted"
               >
-                Go Back
+                Try again
               </button>
-            </div>
+            )}
           </div>
-        </div>
+        </main>
         <Scripts />
       </body>
     </html>
