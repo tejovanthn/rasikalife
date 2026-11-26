@@ -304,9 +304,14 @@ from `raga/client`).
 - **`research-ingest` now keeps sources.** Each URL becomes a citation on the field it filled,
   under `web-<host>`, and the cited sites are written to `<out>.sources.csv` for import first.
 - **Where a section has nothing cited, the page asks for help** (`lib/help-request.ts`): one
-  WhatsApp request per page, at the first empty section of How it moves, Learn it from and
-  Character. The number lives in `HELP_WHATSAPP_NUMBER` only. The click fires
+  WhatsApp request per page, for the first empty section of How it moves, Learn it from and
+  Character, drawn once after the compositions and relatives (never above them). The number lives in `HELP_WHATSAPP_NUMBER` only. The click fires
   `raga_help_request`; mark it a key event in GA4.
+- **Raga page lists** (`lib/raga-page-view.ts`): `relativesView` drops the raga's own parent and
+  collapses relatives with identical note changes; `janyaParentName` puts the parent record's name in
+  the "Janya ragas of" heading (the fixed `MELAKARTA_NAMES` table is the fallback);
+  `topCompositionsView` adds a transliterated `display` for "Performed at concerts" and keeps the
+  raw `title` for the link.
 - **Relatives** (`domain/raga/relatives.ts`): ragas whose scales differ by at most two notes, from
   the search index (raga documents carry `arohanam`, `avarohanam`, and `popularity` = search
   volume). A line that uses two variants of one letter takes no part, since it is no simple

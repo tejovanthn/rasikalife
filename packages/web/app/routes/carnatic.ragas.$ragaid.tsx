@@ -34,6 +34,7 @@ import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { ragaOgImageUrl } from '~/lib/og';
 import { ragaMetaDescription, ragaMetaTitle } from '~/lib/raga-description';
 import { type RagaPageModel, ragaPageModel } from '~/lib/raga-page';
+import { janyaParentName, relativesView, topCompositionsView } from '~/lib/raga-page-view';
 import { repertoireView } from '~/lib/raga-repertoire';
 import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import { generateCompositionUrl, generateRagaUrl, generateSlug, parseSlug } from '~/lib/url-slug';
@@ -133,7 +134,7 @@ export async function loader({
           title: c.title,
           display: titleCaseName(fromItrans(c.title, script)),
         })),
-      relatives: relatives.map(r => ({
+      relatives: relativesView(relatives, shown.parentRaga?.id).map(r => ({
         id: r.id,
         rawName: r.name,
         name: titleCaseName(fromItrans(r.name, script)),
@@ -152,7 +153,10 @@ export async function loader({
         arohanam: r.arohanam ? formatSwaras(r.arohanam) : r.arohanam,
         avarohanam: r.avarohanam ? formatSwaras(r.avarohanam) : r.avarohanam,
       })),
-      ...repertoireView(repertoireStats),
+      ...(() => {
+        const view = repertoireView(repertoireStats);
+        return { ...view, topCompositions: topCompositionsView(view.topCompositions, script) };
+      })(),
       // Titles are stored as ITRANS. The page cards link by the raw title, so
       // only the meta copies are converted for display.
       metaTopCompositions: (repertoireStats?.topCompositions ?? [])
@@ -435,7 +439,7 @@ export default function RagaDetails() {
     page: RagaPageModel;
     similarRagas: RagaType[];
     performanceCount: number;
-    topCompositions: { id: string; title: string; count: number }[];
+    topCompositions: { id: string; title: string; display: string; count: number }[];
     activeEdit: Edit | null;
     isLoggedIn: boolean;
     isModerator: boolean;
@@ -603,11 +607,7 @@ export default function RagaDetails() {
         </dl>
       </section>
 
-      {page.hasMovement ? (
-        <HowItMoves raga={raga} page={page} />
-      ) : (
-        help('movement') && <div className="mt-8">{help('movement')}</div>
-      )}
+      {page.hasMovement ? <HowItMoves raga={raga} page={page} /> : null}
 
       {page.hasLearnFrom ? (
         <section className="mt-8 pt-8 border-t" aria-labelledby="learn-heading">
@@ -628,9 +628,7 @@ export default function RagaDetails() {
             ))}
           </ul>
         </section>
-      ) : (
-        help('learn') && <div className="mt-8">{help('learn')}</div>
-      )}
+      ) : null}
 
       {performanceCount > 0 && (
         <section className="mt-8 pt-8 border-t">
@@ -647,7 +645,7 @@ export default function RagaDetails() {
                   to={generateCompositionUrl(comp.title, comp.id)}
                   className="text-sm hover:underline underline-offset-2 truncate"
                 >
-                  {comp.title}
+                  {comp.display}
                 </Link>
                 <span className="text-xs text-muted-foreground shrink-0">{comp.count}×</span>
               </li>
@@ -700,7 +698,7 @@ export default function RagaDetails() {
         <section className="mt-8 pt-8 border-t">
           <div className="mb-4">
             <h2 className="text-xl font-semibold">
-              Janya ragas of {MELAKARTA_NAMES[raga.melaNumber]}
+              Janya ragas of {janyaParentName(raga.parentRaga, raga.melaNumber, MELAKARTA_NAMES)}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
               Other ragas derived from the same parent melakarta (mela {raga.melaNumber})
@@ -755,9 +753,11 @@ export default function RagaDetails() {
             )}
           </dl>
         </section>
-      ) : (
-        help('character') && <div className="mt-8">{help('character')}</div>
-      )}
+      ) : null}
+
+      {/* The help request comes after the compositions and relatives, never before them: most
+          ragas have no cited movement, and the box was the third block on nearly every page. */}
+      {page.helpSection && <div className="mt-8">{help(page.helpSection)}</div>}
 
       <RagaReferences references={page.references as Reference[]} sources={sources} />
 
