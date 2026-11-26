@@ -3,14 +3,15 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
-## 2026-11-26: Design critique fixes, branch `critique-fixes-2026-11-26` (not merged, not pushed)
+## 2026-11-26: Design critique fixes, merged to `main` and deployed
 
-Ten commits on top of main: Indic fonts and `lang`, swara strip scroll, floating buttons, Concerts
-nav, lyrics script switch, raga page names and order, artist concert rows, Badge span, error page
-copy, organiser events first. Tests, typecheck and Biome pass. No page was opened in a browser.
+Ten commits: Indic fonts and `lang`, swara strip scroll, floating buttons, Concerts nav, lyrics
+script switch, raga page names and order, artist concert rows, Badge span, error page copy,
+organiser events first. Merged as `de06ade8e` and deployed to prod by hand on 2026-11-26 (GitHub CI minutes ran out). Checked live: the CSS has
+Noto Sans Tamil, and "Concerts" is in the nav.
 
-Next step: open a raga page, a composition page and an artist page on a phone, check the swara
-strip scroll, the Lyrics script switch and the artist rows, then merge the branch.
+Next step: on a phone, open a raga page, a composition page and an artist page. Check the swara
+strip scroll, the Lyrics script switch and the artist rows.
 
 Left from the critique (`~/codes/critiques-2026-11-26/rasikalife.md`): Bindumaalini spelling in the
 description text (data), home hero (P2-15), footer links focusable while hidden (P2-16), footnote tap
@@ -23,28 +24,24 @@ Deployed to prod by 2026-11-13 (admin, sabha and the /for-sabhas form are live; 
 2026-11-16 with the design audit fixes). The steps below are kept until each is confirmed done.
 
 Spec, copy, build notes and owner decisions: `docs/plans/261112-01-venue-qr-follow/`. Each phase has
-a `### Venue QR Follow` section in `CLAUDE.md`. Tests pass (core 2239, web 518, trpc unit 115,
+a `### Venue QR Follow` section in `CLAUDE.md`. Checked 2026-11-26: `admin.rasika.life`,
+`sabha.rasika.life` and `/for-sabhas` answer 200, so the secrets are set and the deploy ran. SES:
+`rasika.life` is verified, DKIM passes, and the account has production access. Tests pass (core 2239, web 518, trpc unit 115,
 admin 27, sabha 32, qr 10, email 19). Typecheck counts are unchanged (core 7, web 21). The web,
-admin and sabha builds succeed. Nothing has run against AWS, and no page has been opened in a browser.
+admin and sabha builds succeed.
 
-Next, in order:
-1. Set secrets on prod: `QrIntentSecret`, `UnsubscribeSecret` (random strings), and the VAPID keys
-   from `npx web-push generate-vapid-keys` (`VapidPublicKey`, `VapidPrivateKey`).
-2. Deploy. This creates `admin.rasika.life`, `sabha.rasika.life`, the root `rasika.life` SES
-   identity, the PDF queue and the crons.
-3. SES: verify DKIM for `rasika.life`. Request production access before the pilot.
-4. Smoke test in this order:
+Next, in order (steps 1 to 3 of the old list are done: secrets, deploy, SES):
+1. Smoke test in this order:
    - In admin, make a batch of 4 stickers and check the PDF, including the Kannada line at
      sticker size.
    - Assign a code and scan it signed out: Google, then the confirmation screen.
    - Check `/me/following` and `/me/notifications`.
    - Invite yourself as an owner and open the sabha dashboard. Run an export.
    - Check the untested query paths named in the sabha section of `CLAUDE.md`.
-5. Still open:
-   - **Digest time:** Sunday 18:00 IST, to be checked with the pilot sabhas.
-   - Owner decisions 11 to 16 are settled and built (`decisions.md`).
-6. Before the first print run: a native speaker reviews the Kannada, and you scan a sticker from
+2. Still open: **Digest time**, Sunday 18:00 IST, to be checked with the pilot sabhas.
+3. Before the first print run: a native speaker reviews the Kannada, and you scan a sticker from
    1 m (the QR box is 64 mm).
+4. Monetisation waits until sabhas use the QR codes (owner, 2026-11-26).
 
 Backlog:
 - **One search-select component across apps.** Three variants today: web `SearchSelect`
