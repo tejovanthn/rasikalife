@@ -253,7 +253,7 @@ Quiet, legible, unafraid of density. Components are shadcn/ui over Radix primiti
 - **Mobile:** Collapses to a sheet. Nothing critical is reachable by hover alone.
 
 ### The Domain Badge
-The signature component. A pale domain surface with its own deep ink, fully rounded, carrying a raga, tala, or language name. It exists so a reader scanning a composition page can separate the three without reading, which is what makes this a reference for people in a hall rather than a database on a desk. Three variants, three meanings, no others.
+The signature component. A pale domain surface with its own deep ink, fully rounded, carrying a raga, tala, or language name. It exists so a reader scanning a composition page can separate the three without reading, which is what makes this a reference for people in a hall rather than a database on a desk. Three variants, three meanings, no others. It renders a `<span>`, so it is valid inside a paragraph.
 
 ## 6. Do's and Don'ts
 
