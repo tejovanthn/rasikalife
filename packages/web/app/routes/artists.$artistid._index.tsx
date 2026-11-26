@@ -23,6 +23,7 @@ import { createServerClient } from '~/api.server';
 import { ArtistGalleryHero } from '~/components/ArtistGalleryHero';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { EventList } from '~/components/EventCard';
 import { FollowButton } from '~/components/FollowButton';
 import { SeasonLinks } from '~/components/SeasonLinks';
 import { SocialIconLink } from '~/components/SocialIconLink';
@@ -48,6 +49,7 @@ import {
   roleLabel,
 } from '~/lib/artist-display';
 import { artistMetaDescription, artistMetaTitle } from '~/lib/artist-display';
+import { type EventMeta, artistEventRow } from '~/lib/artist-events';
 import { PRIVATE_PAGE_CACHE_CONTROL, PUBLIC_PAGE_CACHE_CONTROL, getUser } from '~/lib/auth.server';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { completePendingFollow, isFollowing } from '~/lib/follow.server';
@@ -56,7 +58,6 @@ import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import {
   generateArtistUrl,
   generateCompositionUrl,
-  generateEventUrl,
   generateOrganiserUrl,
   generateRagaUrl,
   generateSlug,
@@ -189,7 +190,7 @@ export async function loader({
     const teaserEvents = teaserEventIds.length
       ? await client.event.byIds.query({ ids: teaserEventIds })
       : [];
-    const postersByEventId: Record<string, string> = {};
+    const eventMetaById: Record<string, EventMeta> = {};
     // For the meta description, from rows already read above: the soonest dated concert.
     const first = upcoming.items[0];
     const firstEvent = first ? teaserEvents.find(e => e.id === first.eventId) : undefined;
@@ -202,7 +203,12 @@ export async function loader({
           }
         : null;
     for (const event of teaserEvents) {
-      if (event.posterUrl) postersByEventId[event.id] = event.posterUrl;
+      eventMetaById[event.id] = {
+        venueName: event.venueName,
+        venueCity: event.venueCity,
+        timezone: event.timezone,
+        posterUrl: event.posterUrl,
+      };
     }
 
     // Repertoire and featured performances are read straight off the denormalized fields
@@ -248,7 +254,7 @@ export async function loader({
         nextConcert,
         upcomingMore: !!upcoming.hasMore,
         pastEvents: past.items,
-        postersByEventId,
+        eventMetaById,
         featured,
         awards,
         membership,
@@ -496,57 +502,6 @@ function HeroAvatar({ photoUrl, name }: { photoUrl?: string; name: string }) {
   );
 }
 
-function EventCard({
-  eventId,
-  eventTitle,
-  eventStartDateTime,
-  eventDatePrecision,
-  role,
-  posterUrl,
-}: {
-  eventId: string;
-  eventTitle: string;
-  eventStartDateTime: string;
-  eventDatePrecision?: string;
-  role?: string;
-  posterUrl?: string;
-}) {
-  // A row, like every other list of events on the site (`EventCard`): the date leads, the
-  // title and the artist's own credit follow, and the poster sits small on the right. This was
-  // a bordered card once, for the poster's sake; a portrait thumbnail anchored at the top keeps
-  // the flyer's head visible without boxing every concert. An event with no poster simply has
-  // no thumbnail; the date column already lines the rows up.
-  return (
-    <Link
-      to={generateEventUrl(eventTitle, eventId)}
-      className="flex gap-3 rounded-sm px-2 py-3 no-underline transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-    >
-      <time
-        dateTime={
-          eventDatePrecision === 'year' ? eventStartDateTime.slice(0, 4) : eventStartDateTime
-        }
-        className="w-[4.5rem] shrink-0 text-sm font-semibold tabular-nums text-foreground"
-      >
-        {formatEventDate(eventStartDateTime, eventDatePrecision)}
-      </time>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium leading-snug text-foreground line-clamp-2">{eventTitle}</p>
-        {role && <p className="mt-0.5 text-sm text-muted-foreground">{roleLabel(role)}</p>}
-      </div>
-      {posterUrl && (
-        <img
-          src={posterUrl}
-          alt=""
-          loading="lazy"
-          width={64}
-          height={88}
-          className="h-[88px] w-16 shrink-0 rounded-md bg-muted object-cover object-top"
-        />
-      )}
-    </Link>
-  );
-}
-
 /**
  * One list of gurus, used twice: once for lineage and once, muted, for workshop and
  * institutional teachers. The two differ only in weight, so they share a renderer rather than
@@ -763,6 +718,12 @@ function MediaKitPanel({ artistId, artistName }: { artistId: string; artistName:
   );
 }
 
+/** The artist's role at a concert, under the shared event row (never inside its link). */
+function RoleLine({ role }: { role?: string }) {
+  if (!role) return null;
+  return <p className="-mt-1 pb-2 pl-[5.25rem] text-sm text-muted-foreground">{roleLabel(role)}</p>;
+}
+
 export default function ArtistDetails() {
   const {
     artist,
@@ -771,7 +732,7 @@ export default function ArtistDetails() {
     hasMoreCompositions,
     upcomingEvents,
     pastEvents,
-    postersByEventId,
+    eventMetaById,
     featured,
     awards,
     membership,
@@ -892,6 +853,10 @@ export default function ArtistDetails() {
   // so the same concert never renders twice. An upcoming date wins the tie — "they play
   // here next week" is worth more to a reader than "this was a highlight".
   const upcomingIds = new Set(upcomingEvents.map(e => e.eventId));
+  // The artist's own credit for each concert, shown under its row.
+  const roleOf = new Map<string, string | undefined>(
+    [...upcomingEvents, ...featured, ...pastEvents].map(e => [e.eventId, e.role])
+  );
   const notable = featured.filter(f => !upcomingIds.has(f.eventId));
   const notableIds = new Set(notable.map(f => f.eventId));
   const recentEvents = pastEvents.filter(e => !notableIds.has(e.eventId));
@@ -1012,20 +977,10 @@ export default function ArtistDetails() {
           {upcomingEvents.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-xl font-semibold">Upcoming concerts</h2>
-              <ul className="divide-y divide-border">
-                {upcomingEvents.map(event => (
-                  <li key={event.eventId}>
-                    <EventCard
-                      eventId={event.eventId}
-                      eventTitle={event.eventTitle}
-                      eventStartDateTime={event.eventStartDateTime}
-                      eventDatePrecision={event.eventDatePrecision}
-                      role={event.role}
-                      posterUrl={postersByEventId[event.eventId]}
-                    />
-                  </li>
-                ))}
-              </ul>
+              <EventList
+                events={upcomingEvents.map(e => artistEventRow(e, eventMetaById[e.eventId]))}
+                renderAfter={event => <RoleLine role={roleOf.get(event.id)} />}
+              />
               <Link
                 to={`${artistUrl}/events`}
                 className="mt-2 inline-flex min-h-11 items-center text-sm text-primary md:min-h-0"
@@ -1242,20 +1197,10 @@ export default function ArtistDetails() {
                   <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                     Notable performances
                   </h3>
-                  <ul className="divide-y divide-border">
-                    {notable.map(f => (
-                      <li key={f.eventId}>
-                        <EventCard
-                          eventId={f.eventId}
-                          eventTitle={f.eventTitle}
-                          eventStartDateTime={f.eventStartDateTime}
-                          eventDatePrecision={f.eventDatePrecision}
-                          role={f.role}
-                          posterUrl={postersByEventId[f.eventId]}
-                        />
-                      </li>
-                    ))}
-                  </ul>
+                  <EventList
+                    events={notable.map(f => artistEventRow(f, eventMetaById[f.eventId]))}
+                    renderAfter={event => <RoleLine role={roleOf.get(event.id)} />}
+                  />
                 </div>
               )}
 
@@ -1264,20 +1209,10 @@ export default function ArtistDetails() {
                   <h3 className="mb-3 text-sm font-medium uppercase tracking-wide text-muted-foreground">
                     Recent
                   </h3>
-                  <ul className="divide-y divide-border">
-                    {recentEvents.map(event => (
-                      <li key={event.eventId}>
-                        <EventCard
-                          eventId={event.eventId}
-                          eventTitle={event.eventTitle}
-                          eventStartDateTime={event.eventStartDateTime}
-                          eventDatePrecision={event.eventDatePrecision}
-                          role={event.role}
-                          posterUrl={postersByEventId[event.eventId]}
-                        />
-                      </li>
-                    ))}
-                  </ul>
+                  <EventList
+                    events={recentEvents.map(e => artistEventRow(e, eventMetaById[e.eventId]))}
+                    renderAfter={event => <RoleLine role={roleOf.get(event.id)} />}
+                  />
                 </div>
               )}
 
