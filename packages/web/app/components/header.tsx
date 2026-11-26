@@ -43,6 +43,7 @@ import {
 import type { DisplayScript } from '~/sessions.server';
 
 import { AnalyticsEvent, trackEvent } from '~/lib/analytics';
+import { MORE_LINKS, NAV_LINKS, navLinkClass } from '~/lib/nav-links';
 import { GlobalSearch } from './GlobalSearch';
 import { ModeToggle } from './mode-toggle';
 import { ScriptSelector } from './script-selector';
@@ -54,21 +55,6 @@ const SCRIPT_OPTIONS: { value: DisplayScript; label: string }[] = [
   { value: 'tamil', label: 'தமிழ்' },
   { value: 'telugu', label: 'తెలుగు' },
   { value: 'kannada', label: 'ಕನ್ನಡ' },
-];
-
-const NAV_LINKS = [
-  { href: '/carnatic/compositions', label: 'Compositions' },
-  { href: '/artists', label: 'Artists' },
-  { href: '/carnatic/ragas', label: 'Ragas' },
-];
-
-const EVENT_LINKS = [
-  { href: '/events', label: 'Upcoming' },
-  { href: '/past-events', label: 'Past Events' },
-  { href: '/festivals', label: 'Festivals' },
-  { href: '/venues', label: 'Venues' },
-  { href: '/organisers', label: 'Organisers' },
-  { href: '/events/new', label: 'List your event' },
 ];
 
 export const Header = () => {
@@ -115,24 +101,18 @@ export const Header = () => {
                   <NavLink
                     key={link.label}
                     to={link.href}
-                    className={({ isActive }) =>
-                      `px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`
-                    }
+                    className={({ isActive }) => navLinkClass(isActive)}
                   >
                     {link.label}
                   </NavLink>
                 ))}
                 <DropdownMenu>
                   <DropdownMenuTrigger className="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 text-muted-foreground hover:text-foreground flex items-center gap-1 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                    Events
+                    More
                     <ChevronDown className="h-3.5 w-3.5" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    {EVENT_LINKS.map(link => (
+                    {MORE_LINKS.map(link => (
                       <DropdownMenuItem key={link.href} asChild>
                         <Link to={link.href}>{link.label}</Link>
                       </DropdownMenuItem>
@@ -317,33 +297,21 @@ export const Header = () => {
                       key={link.label}
                       to={link.href}
                       onClick={() => setIsSidebarOpen(false)}
-                      className={({ isActive }) =>
-                        `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`
-                      }
+                      className={({ isActive }) => `block ${navLinkClass(isActive, 'base')}`}
                     >
                       {link.label}
                     </NavLink>
                   ))}
                   <div className="border-t border-border pt-2">
                     <p className="px-3 pb-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                      Events
+                      More
                     </p>
-                    {EVENT_LINKS.map(link => (
+                    {MORE_LINKS.map(link => (
                       <NavLink
                         key={link.href}
                         to={link.href}
                         onClick={() => setIsSidebarOpen(false)}
-                        className={({ isActive }) =>
-                          `block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                            isActive
-                              ? 'bg-primary text-primary-foreground'
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`
-                        }
+                        className={({ isActive }) => `block ${navLinkClass(isActive, 'base')}`}
                       >
                         {link.label}
                       </NavLink>
