@@ -3,11 +3,13 @@ import type { Edit } from '@rasika/core/domain/edit/client';
 import type { CompositionWithRelations } from '@rasika/core/types/entities';
 import { fromItrans } from '@rasika/core/utils/transliteration';
 import { Pencil } from 'lucide-react';
+import { useContext } from 'react';
 import { type LinksFunction, type MetaFunction, data, redirect } from 'react-router';
 import { Link, useLoaderData } from 'react-router';
 import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
+import { ScriptContext } from '~/components/script-context';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import {
   BreadcrumbStructuredData,
@@ -18,6 +20,7 @@ import { getUser } from '~/lib/auth.server';
 import { compositionMeta } from '~/lib/composition-meta';
 import { ApplicationError, ErrorCode } from '~/lib/errors';
 import { compositionOgImageUrl } from '~/lib/og';
+import { scriptLang } from '~/lib/script-lang';
 import { staleSlugRedirect } from '~/lib/stale-slug-redirect';
 import {
   generateArtistUrl,
@@ -225,6 +228,7 @@ export const links: LinksFunction = () => {
 };
 
 export default function CompositionDetails() {
+  const { script } = useContext(ScriptContext);
   const {
     composition,
     rawTitle,
@@ -377,7 +381,9 @@ export default function CompositionDetails() {
                 {lyric.type && (
                   <h3 className="text-lg font-semibold mb-2 capitalize">{lyric.type}</h3>
                 )}
-                <p className="whitespace-pre-line">{lyric.text}</p>
+                <p className="whitespace-pre-line" lang={scriptLang(script)}>
+                  {lyric.text}
+                </p>
                 {lyric.ragaName && (
                   <p className="text-sm text-muted-foreground mt-2">Raga: {lyric.ragaName}</p>
                 )}
