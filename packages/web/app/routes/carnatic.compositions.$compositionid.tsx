@@ -10,6 +10,7 @@ import { createServerClient } from '~/api.server';
 import { Breadcrumb } from '~/components/Breadcrumb';
 import { DetailPageHeader } from '~/components/DetailPageHeader';
 import { ScriptContext } from '~/components/script-context';
+import { LyricsScriptSwitch } from '~/components/script-switch';
 import { EntityCompositions } from '~/components/shared/EntityCompositions';
 import {
   BreadcrumbStructuredData,
@@ -374,7 +375,10 @@ export default function CompositionDetails() {
       </section>
       {composition.lyricsV1 && composition.lyricsV1.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4">Lyrics</h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold">Lyrics</h2>
+            <LyricsScriptSwitch />
+          </div>
           <div className="space-y-4">
             {composition.lyricsV1.map(lyric => (
               <div key={`${lyric.type}-${lyric.order}`} className="p-4 bg-muted rounded-lg">

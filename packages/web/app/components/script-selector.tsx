@@ -12,7 +12,7 @@ import {
 
 // `roman` leads, and is the default for anyone who has not chosen — it has to be
 // first here too, or the picker labels itself IAST on a page rendering roman.
-const SCRIPT_OPTIONS: { value: DisplayScript; label: string; sample: string }[] = [
+export const SCRIPT_OPTIONS: { value: DisplayScript; label: string; sample: string }[] = [
   { value: 'roman', label: 'Roman', sample: 'Raga' },
   { value: 'iast', label: 'IAST', sample: 'Rāga' },
   { value: 'devanagari', label: 'देवनागरी', sample: 'राग' },

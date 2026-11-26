@@ -198,7 +198,7 @@ These three are a vocabulary, not a palette. A reader who learns them once can s
 
 **The Weight Jump Rule.** Hierarchy is carried by weight, not by size alone. Display is 800 against Title's 600 against Body's 400. A flat scale where everything is semibold reads as noise, and this system leans on scanability harder than most.
 
-**The Script Parity Rule.** Indic script is never smaller, never lighter, and never a fallback. The body `font-family` names all four companions after Noto Sans (the Latin family has no Tamil, Telugu or Kannada glyphs, so a font that is loaded but not named is never used), and text in a display script carries `lang` (`scriptLang` in `app/lib/script-lang.ts`). `script-lang.test.ts` guards both. If a term exists in Tamil and in transliteration, both get the same treatment. A script selector is a first-class control, not a footnote.
+**The Script Parity Rule.** Indic script is never smaller, never lighter, and never a fallback. The body `font-family` names all four companions after Noto Sans (the Latin family has no Tamil, Telugu or Kannada glyphs, so a font that is loaded but not named is never used), and text in a display script carries `lang` (`scriptLang` in `app/lib/script-lang.ts`). `script-lang.test.ts` guards both. If a term exists in Tamil and in transliteration, both get the same treatment. A script selector is a first-class control, not a footnote. The header carries one, and the Lyrics heading carries a second (`ScriptSwitch`), because on a phone the header's is inside the menu.
 
 **The Stored Name Rule.** Person names render exactly as stored and never pass through transliteration. Musical terms (raga, tala, composition titles, lyrics) do transliterate. The split is per field, not per page.
 
