@@ -397,7 +397,7 @@ function HowItMoves({ raga, page }: { raga: ShownRaga; page: RagaPageModel }) {
         <SwaraList label="Graha swara" swaras={swaras.graha} cite={footnotes.grahaSwaras} />
       </div>
       {raga.movement && (
-        <p className="text-muted-foreground leading-relaxed max-w-prose">
+        <p className="text-foreground leading-relaxed max-w-prose">
           {raga.movement}
           <Cite numbers={footnotes.movement} />
         </p>
@@ -487,7 +487,7 @@ export default function RagaDetails() {
       />
       <section className="mb-8 space-y-6">
         {raga.description && (
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="text-foreground text-base leading-relaxed max-w-prose">
             {raga.description}
             <Cite numbers={footnotes.description} />
           </p>
@@ -499,7 +499,7 @@ export default function RagaDetails() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Scale
             </h2>
-            <div className="grid gap-2 text-sm">
+            <div className="grid gap-2 text-base">
               {raga.arohanam && (
                 <div className="flex gap-3">
                   <span className="w-28 shrink-0 text-muted-foreground">Arohanam</span>
