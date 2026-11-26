@@ -333,11 +333,39 @@ export default function OrganiserDetailPage() {
         </div>
       </div>
 
+      {/* Events come first, right after who and where: people search a sabha's name to find
+          its concerts, and on a phone they were several screens down. */}
+      <section className="mb-8">
+        <h2 className="section-heading mb-6">Events</h2>
+
+        {events.length === 0 ? (
+          <>
+            <EmptyState message="No events by this organiser yet." />
+            <ListEventPrompt question="Organising a concert for them?" />
+          </>
+        ) : (
+          <>
+            {upcomingEvents.length > 0 && <EventList events={upcomingEvents} />}
+            <ListEventPrompt question="Organising a concert for them?" />
+            {pastEvents.length > 0 && (
+              <>
+                <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">
+                  Past events
+                </h3>
+                <EventList events={pastEvents} />
+              </>
+            )}
+          </>
+        )}
+      </section>
+
+      <SeasonLinks city={organiser.city || organiser.address?.city} className="mb-8" />
+
       {/* Description */}
       {organiser.description && (
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-2">About</h2>
-          <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+          <p className="max-w-prose text-base leading-relaxed whitespace-pre-line">
             {organiser.description}
           </p>
         </section>
@@ -425,32 +453,6 @@ export default function OrganiserDetailPage() {
           </ul>
         </section>
       )}
-
-      <section className="mt-6">
-        <h2 className="section-heading mb-6">Events</h2>
-
-        {events.length === 0 ? (
-          <>
-            <EmptyState message="No events by this organiser yet." />
-            <ListEventPrompt question="Organising a concert for them?" />
-          </>
-        ) : (
-          <>
-            {upcomingEvents.length > 0 && <EventList events={upcomingEvents} />}
-            <ListEventPrompt question="Organising a concert for them?" />
-            {pastEvents.length > 0 && (
-              <>
-                <h3 className="text-lg font-semibold mt-8 mb-4 text-muted-foreground">
-                  Past events
-                </h3>
-                <EventList events={pastEvents} />
-              </>
-            )}
-          </>
-        )}
-      </section>
-
-      <SeasonLinks city={organiser.city || organiser.address?.city} className="mt-6" />
 
       <BreadcrumbStructuredData
         items={[
