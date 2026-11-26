@@ -279,6 +279,7 @@ The signature component. A pale domain surface with its own deep ink, fully roun
 - **Don't** restate the global navigation at the foot of a page. Artists, Compositions, Ragas and Events are in the site header and again in the footer; a third copy in the content column is filler wearing a link's clothes. Compacting such a block is not the fix, removing it is.
 - **Don't** nest a card inside a card, ever.
 - **Don't** let the swara strip shrink with the screen. It keeps a 564px minimum width and scrolls sideways, so its 14px labels stay 14px on a phone. The raga description, movement prose and arohanam/avarohanam are full ink at `text-base`; muted ink is for metadata.
+- **Don't** float Share on a phone. Share sits in the header row. The only floating button on a detail page is Edit (and the moderator menu), and it renders only for a signed-in user; the page reserves `pb-24` under it.
 - **Don't** animate layout properties. `prefers-reduced-motion` is honoured globally and must stay that way.
 - **Don't** rely on hover for anything critical. Many readers are on a phone in a dark hall.
 - **Don't** put a raga colour on a non-raga, or a tala colour on a warning. The vocabulary only works while it is exact.

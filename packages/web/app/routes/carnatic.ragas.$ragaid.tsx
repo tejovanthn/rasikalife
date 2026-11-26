@@ -471,7 +471,7 @@ export default function RagaDetails() {
   ].filter(Boolean);
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-4xl">
+    <main className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-4xl">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={raga.name}

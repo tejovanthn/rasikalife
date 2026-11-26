@@ -275,7 +275,7 @@ export default function CompositionDetails() {
   ];
 
   return (
-    <div className="max-w-4xl m-auto pb-48 md:pb-0">
+    <div className="max-w-4xl m-auto pb-24 md:pb-0">
       <Breadcrumb items={breadcrumbItems} />
       <DetailPageHeader
         title={composition.title}

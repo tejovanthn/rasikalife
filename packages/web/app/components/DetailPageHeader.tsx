@@ -86,11 +86,24 @@ export function DetailPageHeader({
         ? 'View edit status'
         : 'Edit';
 
+  const hasFabs = Boolean(editUrl) || Boolean(isModerator && (mergeUrl || requestDeletionUrl));
+
   return (
     <header className="mb-8">
       {media ? <div className="mb-4">{media}</div> : null}
       <div className="flex items-center gap-3 mb-2">
-        <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
+        <h1 className="min-w-0 text-3xl md:text-4xl font-bold">{title}</h1>
+
+        {/* Mobile share: in the header row, so no floating button covers the page. */}
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={handleShare}
+          className="md:hidden ml-auto h-11 w-11 shrink-0"
+          aria-label="Share"
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
 
         {/* Desktop action buttons — hidden on mobile */}
         <div className="hidden md:flex items-center gap-2 ml-auto shrink-0">
@@ -143,72 +156,64 @@ export function DetailPageHeader({
       <p className="text-lg text-muted-foreground">{subtitle}</p>
       {actions ? <div className="mt-3">{actions}</div> : null}
 
-      {/* Mobile speed-dial FABs — visible only on mobile */}
-      <div className="md:hidden fixed bottom-6 right-6 flex flex-col items-center gap-3 z-40">
-        {/* More (moderator only) — same size as Share, topmost */}
-        {isModerator && (mergeUrl || requestDeletionUrl) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                size="icon"
-                variant="secondary"
-                className="h-11 w-11 rounded-full shadow-md"
-                aria-label="More actions"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="top" className="mb-2">
-              {mergeUrl && (
-                <DropdownMenuItem asChild>
-                  <Link to={mergeUrl}>
-                    <Merge className="h-4 w-4 mr-2" />
-                    Merge
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              {requestDeletionUrl && (
-                <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
-                  <Link to={requestDeletionUrl}>
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Link>
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+      {/* Mobile speed-dial FABs: only for signed-in editors and moderators. Everyone else
+          has no floating button. A page that renders this reserves room with `pb-24`. */}
+      {hasFabs && (
+        <div className="md:hidden fixed bottom-6 right-6 flex flex-col items-center gap-3 z-40">
+          {/* More (moderator only) — same size as Share, topmost */}
+          {isModerator && (mergeUrl || requestDeletionUrl) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="h-11 w-11 rounded-full shadow-md"
+                  aria-label="More actions"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" side="top" className="mb-2">
+                {mergeUrl && (
+                  <DropdownMenuItem asChild>
+                    <Link to={mergeUrl}>
+                      <Merge className="h-4 w-4 mr-2" />
+                      Merge
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {requestDeletionUrl && (
+                  <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
+                    <Link to={requestDeletionUrl}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
-        {/* Share — smaller, above Edit */}
-        <Button
-          size="icon"
-          variant="secondary"
-          onClick={handleShare}
-          className="h-11 w-11 rounded-full shadow-md"
-          aria-label="Share"
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-
-        {/* Edit — large primary FAB, bottommost */}
-        {editUrl && (
-          <Button
-            asChild
-            size="icon"
-            className="h-14 w-14 rounded-full shadow-lg"
-            aria-label={editLabel}
-          >
-            <Link to={editHref}>
-              <span className="sr-only">{editLabel}</span>
-              {activeEdit?.status === EditStatus.SUBMITTED ? (
-                <Eye className="h-6 w-6" />
-              ) : (
-                <Pencil className="h-6 w-6" />
-              )}
-            </Link>
-          </Button>
-        )}
-      </div>
+          {/* Edit — large primary FAB, bottommost */}
+          {editUrl && (
+            <Button
+              asChild
+              size="icon"
+              className="h-14 w-14 rounded-full shadow-lg"
+              aria-label={editLabel}
+            >
+              <Link to={editHref}>
+                <span className="sr-only">{editLabel}</span>
+                {activeEdit?.status === EditStatus.SUBMITTED ? (
+                  <Eye className="h-6 w-6" />
+                ) : (
+                  <Pencil className="h-6 w-6" />
+                )}
+              </Link>
+            </Button>
+          )}
+        </div>
+      )}
     </header>
   );
 }
