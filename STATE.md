@@ -3,6 +3,20 @@
 Open items only, newest first. History moved to `docs/plans/state-archive-2026-10.md` on
 2026-10-21; runbooks live in `docs/research/`.
 
+## 2026-11-26: Design critique fixes, branch `critique-fixes-2026-11-26` (not merged, not pushed)
+
+Ten commits on top of main: Indic fonts and `lang`, swara strip scroll, floating buttons, Concerts
+nav, lyrics script switch, raga page names and order, artist concert rows, Badge span, error page
+copy, organiser events first. Tests, typecheck and Biome pass. No page was opened in a browser.
+
+Next step: open a raga page, a composition page and an artist page on a phone, check the swara
+strip scroll, the Lyrics script switch and the artist rows, then merge the branch.
+
+Left from the critique (`~/codes/critiques-2026-11-26/rasikalife.md`): Bindumaalini spelling in the
+description text (data), home hero (P2-15), footer links focusable while hidden (P2-16), footnote tap
+targets (P2-9), composition "unknown" rows (P2-6), logged performances move (P2-7), side stripe on
+sloka quotes (P3-1).
+
 ## 2026-11-12: Venue QR Follow, all phases built
 
 Deployed to prod by 2026-11-13 (admin, sabha and the /for-sabhas form are live; redeployed
